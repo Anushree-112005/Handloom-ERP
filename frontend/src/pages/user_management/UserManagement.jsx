@@ -69,6 +69,7 @@ export default function UserManagement() {
       // Data preparation
       const payload = { ...formData };
       if (!payload.password) delete payload.password; // Don't send empty password
+      if (!payload.access_expiry_date) payload.access_expiry_date = null; // Fix 422 Unprocessable Entity
 
       if (editingId) {
         payload.modified_by = "Admin"; // In a real app, from context

@@ -38,7 +38,7 @@ export default function PartyMaster() {
 
   const initialForm = {
     party_type: 'Sales Party', customer_grade: 'A', status: 'Active',
-    business_name: '', party_group: '', address: '', state_code: '',
+    company_name: '', party_group: '', address: '', state_code: '',
     pincode: '', city: '', phone: '', sales_region: '', country: '',
     currency: 'INR', contact_person: '', email: '', tally_no: '',
     address_sno: '1', tcs_applicable: 'No', tin_no: '', cst_no: '',
@@ -137,7 +137,7 @@ export default function PartyMaster() {
 
   const filteredParties = parties.filter(p => {
     const matchesSearch = searchTerm === '' ||
-      p.business_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.customer_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.phone?.includes(searchTerm);
 
@@ -166,7 +166,7 @@ export default function PartyMaster() {
     filteredParties.forEach(p => {
       const rowData = [
         p.customer_code || '-',
-        p.business_name || '-',
+        p.company_name || '-',
         p.party_type || '-',
         p.city || '-',
         p.gstin || '-',
@@ -186,7 +186,7 @@ export default function PartyMaster() {
   const exportExcel = () => {
     const wsData = filteredParties.map(p => ({
       "Customer Code": p.customer_code,
-      "Business Name": p.business_name,
+      "Business Name": p.company_name,
       "Party Type": p.party_type,
       "Party Group": p.party_group,
       "Status": p.status,
@@ -246,23 +246,19 @@ export default function PartyMaster() {
     return (
       <div className="animate-fade">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View Party Details' : editingId ? 'Edit Party Details' : 'Add New Party'}
-            </h2>
-          </div>
-          {!isReadOnly && (
-            <button type="submit" form="partyForm" className="btn btn-primary">
-              <Save size={18} /> Save Party
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
+            {isReadOnly ? 'View Party Details' : editingId ? 'Edit Party Details' : 'Add New Party'}
+          </h2>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-secondary" onClick={() => setView('list')}>
+              <X size={16} /> Close
             </button>
-          )}
+            {!isReadOnly && (
+              <button type="submit" form="partyForm" className="btn btn-primary">
+                <Save size={16} /> Save Party
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="card" style={{ padding: 32 }}>
@@ -279,7 +275,7 @@ export default function PartyMaster() {
                 </div>
                 <div className="form-group">
                   <label>Business Name *</label>
-                  <input className="form-control" name="business_name" value={formData.business_name} onChange={handleChange} required placeholder="Full legal/trade name" />
+                  <input className="form-control" name="company_name" value={formData.company_name} onChange={handleChange} required placeholder="Full legal/trade name" />
                 </div>
                 <div className="form-group">
                   <label>Party Group</label>
@@ -663,7 +659,7 @@ export default function PartyMaster() {
                       }}
                     >
                       <td style={{ fontWeight: 600 }}>{p.customer_code}</td>
-                      <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.business_name}</td>
+                      <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{p.company_name}</td>
                       <td>
                         <span className="badge badge-active" style={{ marginBottom: 4 }}>{p.party_type}</span><br />
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.party_group}</span>
@@ -698,7 +694,7 @@ export default function PartyMaster() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => handleDelete(p.id, p.business_name, e)}
+                            onClick={(e) => handleDelete(p.id, p.company_name, e)}
                             title="Delete"
                           >
                             <Trash2 size={16} color="var(--danger, #ef4444)" />
@@ -719,7 +715,7 @@ export default function PartyMaster() {
             <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
                 <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                  <Users size={18} /> {selectedViewParty.business_name}
+                  <Users size={18} /> {selectedViewParty.company_name}
                 </h3>
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewParty, false)} title="Edit"><Edit2 size={14} /></button>
