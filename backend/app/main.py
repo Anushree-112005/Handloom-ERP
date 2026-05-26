@@ -25,27 +25,16 @@ async def lifespan(app: FastAPI):
     from sqlalchemy import select
 
     async with AsyncSessionLocal() as session:
-<<<<<<< HEAD
         result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
         if not result.scalar_one_or_none():
             admin = Employee(
                 employee_code="admin",
                 name="Administrator",
-                department="IT",
-                designation="System Admin",
-                status="Active",
-                password_hash=get_password_hash("admin123")
-=======
-        result = await session.execute(select(Employee).where(Employee.user_id == "admin"))
-        if not result.scalar_one_or_none():
-            admin = Employee(
-                user_id="admin",
-                user_name="Administrator",
                 user_type="Admin",
                 email="admin@dinesh-textile.com",
                 department="IT",
                 designation="System Admin",
-                status="Enable",
+                status="Active",
                 web_access="Allow",
                 password_hash=get_password_hash("admin123"),
                 module_permissions={
@@ -53,7 +42,6 @@ async def lifespan(app: FastAPI):
                     "warping_sizing": True, "production": True, "processing": True,
                     "fabric": True, "yarn": True, "account": True, "report": True,
                 },
->>>>>>> 048802c6a0e838215281295d658f4e749ede1691
             )
             session.add(admin)
             await session.commit()

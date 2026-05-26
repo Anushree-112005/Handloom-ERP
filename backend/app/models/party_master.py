@@ -1,83 +1,59 @@
 """Party Master model — customers, vendors, agents, processors."""
-<<<<<<< HEAD
 from sqlalchemy import Column, Integer, String, DateTime, Text, Float, func
 from app.core.database import Base
-
-=======
-from sqlalchemy import Column, Integer, String, DateTime, Text, func
-from app.core.database import Base
-
-
->>>>>>> 048802c6a0e838215281295d658f4e749ede1691
 class PartyMaster(Base):
     __tablename__ = "party_master"
 
     id = Column(Integer, primary_key=True, index=True)
-<<<<<<< HEAD
-    
-    party_type = Column(String(50), nullable=False)
-    customer_code = Column(String(50), unique=True, index=True)
-    customer_grade = Column(String(10))
-    status = Column(String(20), default="Active")
-    business_name = Column(String(255), nullable=False)
-    party_group = Column(String(100))
-    address = Column(Text)
-    state_code = Column(String(50))
-    pincode = Column(String(20))
-    city = Column(String(100))
-    phone = Column(String(50))
-    sales_region = Column(String(100))
-    country = Column(String(100), default="India")
-    currency = Column(String(20), default="INR")
-    contact_person = Column(String(150))
-    email = Column(String(255))
-    tally_no = Column(String(100))
-    address_sno = Column(String(50))
-    tcs_applicable = Column(String(10))
-    tin_no = Column(String(50))
-    cst_no = Column(String(50))
-    gstin = Column(String(50))
-    gst_type = Column(String(50))
-    pan_no = Column(String(20))
-    tds = Column(String(50))
-    tds_percent = Column(Float, default=0.0)
-    pc_id = Column(String(50))
-    merchandiser = Column(String(100))
-    manager = Column(String(100))
-    bill_credit_days = Column(Integer, default=0)
-    credit_limit = Column(Float, default=0.0)
-    account_incharge = Column(String(100))
-    deliver_party_name = Column(String(150))
-    payment_terms = Column(String(100))
-    transport_name = Column(String(150))
-    delivery_address = Column(Text)
-    agent_name = Column(String(150))
-
-=======
     customer_code = Column(String(50), unique=True, index=True)
     party_type = Column(String(50), nullable=False)  # Sales, Purchase, Logistics, Agent
     company_name = Column(String(255), nullable=False)
+    party_group = Column(String(100))
     customer_grade = Column(String(10))
+    status = Column(String(20), default="Active")
+    
     address = Column(Text)
     city = Column(String(100))
     state = Column(String(100))
     state_code = Column(String(10))
-    pin_code = Column(String(10))
+    pin_code = Column(String(20))
     country = Column(String(100), default="India")
-    phone = Column(String(20))
+    sales_region = Column(String(100))
+    currency = Column(String(20), default="INR")
+    
+    phone = Column(String(50))
     mobile = Column(String(20))
     email = Column(String(255))
-    gst_no = Column(String(20))
-    pan_no = Column(String(15))
-    tin_no = Column(String(20))
-    cst_no = Column(String(20))
     contact_person = Column(String(150))
+    
+    gst_no = Column(String(50))
+    gst_type = Column(String(50))
+    pan_no = Column(String(20))
+    tin_no = Column(String(50))
+    cst_no = Column(String(50))
+    tally_no = Column(String(100))
+    address_sno = Column(String(50))
+    tcs_applicable = Column(String(10))
+    
+    tds = Column(String(50))
+    tds_percent = Column(Float, default=0.0)
+    pc_id = Column(String(50))
+    
+    merchandiser = Column(String(100))
+    manager = Column(String(100))
+    account_incharge = Column(String(100))
+    agent_name = Column(String(150))
+    
     bank_name = Column(String(150))
     bank_account = Column(String(50))
     ifsc_code = Column(String(15))
+    
     credit_days = Column(Integer, default=0)
-    credit_limit = Column(Integer, default=0)
-    status = Column(String(20), default="Active")
->>>>>>> 048802c6a0e838215281295d658f4e749ede1691
+    credit_limit = Column(Float, default=0.0)
+    
+    deliver_party_name = Column(String(150))
+    payment_terms = Column(String(100))
+    transport_name = Column(String(150))
+    delivery_address = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
