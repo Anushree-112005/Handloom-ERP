@@ -1,131 +1,231 @@
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, Package, Truck, Palette, Layers, Factory, 
-  CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin, 
-  ArrowRight, Activity
+import {
+  Users, Monitor, Layers, Factory, ClipboardCheck, Warehouse, Truck, Receipt, ArrowRight
 } from 'lucide-react';
 
-const flowPhases = [
+const workflowSteps = [
   {
-    phase: "1. Order & Procurement",
-    color: "#0ea5e9", // light blue
-    steps: [
-      { id: 'buyer-order', label: 'Buyer Order', icon: ShoppingCart, path: '/buyer-order' },
-      { id: 'yarn-po', label: 'Yarn Purchase Order', icon: Package, path: '/yarn/purchase-order' },
-    ]
+    num: 1,
+    title: "Customer & Party Management",
+    color: "#1e3a8a", // Dark Blue
+    icon: Users,
+    path: "/party-master",
+    bullets: ["Add Customer Details", "Manage Parties"]
   },
   {
-    phase: "2. Yarn Management",
-    color: "#f59e0b", // amber
-    steps: [
-      { id: 'yarn-inward', label: 'Yarn Inward', icon: ArrowRight, path: '/yarn/inward' },
-      { id: 'grey-delivery', label: 'Grey Delivery', icon: Truck, path: '/yarn/grey-delivery' },
-      { id: 'dyed-received', label: 'Dyed Yarn Received', icon: Palette, path: '/dyed-yarn/received' },
-      { id: 'dyed-delivery', label: 'Dyed Delivery', icon: Truck, path: '/dyed-yarn/delivery' },
-    ]
+    num: 2,
+    title: "Design Entry",
+    color: "#ea580c", // Orange
+    icon: Monitor,
+    path: "/design-entry",
+    bullets: ["Create Design", "Design Details", "Design Approval", "Design Library"]
   },
   {
-    phase: "3. Warping & Weaving",
-    color: "#8b5cf6", // purple
-    steps: [
-      { id: 'warp-receipt', label: 'Warp Beam Receipt', icon: Layers, path: '/warp/beam-receipt' },
-      { id: 'warp-delivery', label: 'Warp Delivery', icon: Truck, path: '/warp/delivery' },
-    ]
+    num: 3,
+    title: "Yarn & Material Procurement",
+    color: "#16a34a", // Green
+    icon: Layers,
+    path: "/yarn/purchase-order",
+    bullets: ["Purchase Yarn & Fabrics", "Inventory Control"]
   },
   {
-    phase: "4. Processing & Finishing",
-    color: "#10b981", // emerald
-    steps: [
-      { id: 'cloth-inward', label: 'Cloth Vendor Inward', icon: Factory, path: '/cloth/inward' },
-      { id: 'checking', label: 'ON Table Checking', icon: CheckSquare, path: '/cloth/checking' },
-      { id: 'cloth-delivery', label: 'Cloth Delivery', icon: Truck, path: '/cloth/delivery' },
-      { id: 'finished-fabric', label: 'Finished Fabric Inward', icon: Scissors, path: '/finished-fabric' },
-    ]
+    num: 4,
+    title: "Job Work & Production",
+    color: "#0284c7", // Light Blue
+    icon: Factory,
+    path: "/yarn/grey-delivery",
+    bullets: ["Dyeing & Weaving", "Process Tracking"]
   },
   {
-    phase: "5. Logistics & Sales",
-    color: "#f97316", // orange
-    steps: [
-      { id: 'packing', label: 'Packing / Bale Entry', icon: Box, path: '/packing' },
-      { id: 'gra', label: 'Goods Release Advice', icon: ClipboardList, path: '/goods-release' },
-      { id: 'sales', label: 'Sales Invoice', icon: Receipt, path: '/sales-invoice' },
-      { id: 'despatch', label: 'Despatch Planning', icon: MapPin, path: '/despatch' },
-    ]
+    num: 5,
+    title: "Quality Control & Inspection",
+    color: "#7c3aed", // Purple
+    icon: ClipboardCheck,
+    path: "/cloth/checking",
+    bullets: ["Inspect Finished Goods", "Approve Material"]
+  },
+  {
+    num: 6,
+    title: "Inventory & Warehousing",
+    color: "#0d9488", // Teal
+    icon: Warehouse,
+    path: "/packing",
+    bullets: ["Stock Management", "Finished Goods Storage"]
+  },
+  {
+    num: 7,
+    title: "Logistics & Shipping",
+    color: "#dc2626", // Red
+    icon: Truck,
+    path: "/despatch",
+    bullets: ["Order Fulfillment", "Global Shipping"]
+  },
+  {
+    num: 8,
+    title: "Billing & Accounting",
+    color: "#2563eb", // Blue
+    icon: Receipt,
+    path: "/sales-invoice",
+    bullets: ["Generate Invoices", "Track Payments"]
   }
 ];
 
 export default function Overview() {
   const navigate = useNavigate();
 
-  return (
-    <div className="animate-fade">
-      <div style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>Factory Process Flow Overview</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>A complete visualization of the Dinesh Textile manufacturing pipeline. Click any step to open the module.</p>
-      </div>
+  const renderRow = (steps) => {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, width: '100%' }}>
+        {steps.map((step, idx) => (
+          <div key={step.num} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+            {/* Step Card */}
+            <div
+              onClick={() => navigate(step.path)}
+              style={{
+                flex: 1,
+                background: 'var(--bg-primary)',
+                border: `1.5px solid ${step.color}40`,
+                borderRadius: '16px',
+                padding: '20px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                minHeight: '280px',
+                cursor: 'pointer',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: 'var(--shadow-sm)',
+                position: 'relative'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = step.color;
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = `0 10px 25px -5px ${step.color}25`;
+                const iconBox = e.currentTarget.querySelector('.icon-box');
+                if (iconBox) {
+                  iconBox.style.transform = 'scale(1.08) rotate(3deg)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = `${step.color}40`;
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                const iconBox = e.currentTarget.querySelector('.icon-box');
+                if (iconBox) {
+                  iconBox.style.transform = 'none';
+                }
+              }}
+            >
+              {/* Step Number Badge */}
+              <div style={{
+                position: 'absolute',
+                top: '-14px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: step.color,
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: '700',
+                fontSize: '14px',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                lineHeight: 1
+              }}>
+                {step.num}
+              </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {flowPhases.map((phase, index) => (
-          <div key={index} className="card" style={{ padding: 0, overflow: 'hidden', borderLeft: `4px solid ${phase.color}` }}>
-            <div style={{ padding: '16px 24px', background: `${phase.color}10`, borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ margin: 0, fontSize: 16, color: phase.color, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Activity size={18} />
-                {phase.phase}
-              </h3>
-            </div>
-            <div style={{ padding: '24px', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-              {phase.steps.map((step, stepIdx) => (
-                <div key={step.id} style={{ display: 'flex', alignItems: 'center' }}>
-                  <div 
-                    onClick={() => navigate(step.path)}
-                    style={{
-                      background: 'var(--bg-primary)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: '16px 20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 12,
-                      width: 160,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: 'var(--shadow-sm)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = phase.color;
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = 'var(--shadow-md)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                    }}
-                  >
-                    <div style={{ 
-                      width: 48, height: 48, borderRadius: '50%', 
-                      background: `${phase.color}15`, color: phase.color,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      <step.icon size={24} />
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 600, textAlign: 'center', color: 'var(--text-primary)' }}>
-                      {step.label}
-                    </span>
-                  </div>
+              {/* Title */}
+              <h4 style={{
+                margin: '12px 0 16px 0',
+                fontSize: '15px',
+                fontWeight: '700',
+                color: step.color,
+                textAlign: 'center',
+                lineHeight: '1.3',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {step.title}
+              </h4>
 
-                  {/* Arrow to next step within the same phase */}
-                  {stepIdx < phase.steps.length - 1 && (
-                    <div style={{ margin: '0 12px', color: 'var(--border-light)' }}>
-                      <ArrowRight size={24} />
-                    </div>
-                  )}
-                </div>
-              ))}
+              {/* Illustration / Icon Box */}
+              <div
+                className="icon-box"
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '12px',
+                  background: `${step.color}10`,
+                  color: step.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                <step.icon size={32} />
+              </div>
+
+              {/* Bullet Points */}
+              <ul style={{
+                margin: 0,
+                padding: 0,
+                listStyleType: 'none',
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}>
+                {step.bullets.map((bullet, bIdx) => (
+                  <li key={bIdx} style={{
+                    fontSize: '12px',
+                    color: 'var(--text-secondary)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '6px',
+                    lineHeight: '1.2'
+                  }}>
+                    <span style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      background: step.color,
+                      marginTop: '5px',
+                      flexShrink: 0
+                    }} />
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+
+            {/* Connection Arrow */}
+            {idx < steps.length - 1 && (
+              <div style={{ margin: '0 8px', color: 'var(--border-light)', display: 'flex', alignItems: 'center' }}>
+                <ArrowRight size={20} style={{ color: step.color, opacity: 0.6 }} />
+              </div>
+            )}
           </div>
         ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '24px' }}>
+      {/* Rows Container */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', padding: '12px 0' }}>
+        {/* Row 1 (Steps 1 - 4) */}
+        {renderRow(workflowSteps.slice(0, 4))}
+
+        {/* Row 2 (Steps 5 - 8) */}
+        {renderRow(workflowSteps.slice(4, 8))}
       </div>
     </div>
   );

@@ -41,18 +41,12 @@ export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
 };
 
-// ---- Dropdowns ----
-export const dropdownAPI = {
-  getAll: () => api.get('/dropdowns/'),
-};
-
 // ---- Party Master ----
 export const partyAPI = {
   list: (params) => api.get('/parties/', { params }),
   get: (id) => api.get(`/parties/${id}`),
   create: (data) => api.post('/parties/', data),
   update: (id, data) => api.put(`/parties/${id}`, data),
-  delete: (id) => api.delete(`/parties/${id}`),
   summary: () => api.get('/parties/stats/summary'),
 };
 
@@ -61,14 +55,6 @@ export const buyerOrderAPI = {
   list: (params) => api.get('/buyer-orders/', { params }),
   get: (id) => api.get(`/buyer-orders/${id}`),
   create: (data) => api.post('/buyer-orders/', data),
-};
-
-// ---- Employee Master ----
-export const employeeAPI = {
-  list: () => api.get('/employees/'),
-  create: (data) => api.post('/employees/', data),
-  update: (id, data) => api.put(`/employees/${id}`, data),
-  delete: (id) => api.delete(`/employees/${id}`),
 };
 
 export default api;

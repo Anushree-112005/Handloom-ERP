@@ -10,14 +10,21 @@
   },
   "dependencies": {
     "axios": "^1.7.0",
+<<<<<<< HEAD
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
+=======
+>>>>>>> 048802c6a0e838215281295d658f4e749ede1691
     "lucide-react": "^0.460.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.0",
+<<<<<<< HEAD
     "recharts": "^2.15.0",
     "xlsx": "^0.18.5"
+=======
+    "recharts": "^2.15.0"
+>>>>>>> 048802c6a0e838215281295d658f4e749ede1691
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.0",
