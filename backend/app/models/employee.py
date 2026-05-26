@@ -1,21 +1,11 @@
-<<<<<<< HEAD
-"""Employee Master Model with HR Profile."""
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, func
+"""Employee / User model with role-based access control and HR Profile."""
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, JSON, func
 from app.core.database import Base
 
-=======
-"""Employee / User model with role-based access control."""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, func
-from app.core.database import Base
-
-
->>>>>>> 048802c6a0e838215281295d658f4e749ede1691
 class Employee(Base):
     __tablename__ = "employees"
 
     id = Column(Integer, primary_key=True, index=True)
-<<<<<<< HEAD
-    
     # Identity & Login
     employee_code = Column(String(50), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=True)
@@ -28,6 +18,7 @@ class Employee(Base):
     mobile = Column(String(50))
     address = Column(String(500))
     family_details = Column(String(500))
+    email = Column(String(255), unique=True)
 
     # Employment
     department = Column(String(100))
@@ -37,6 +28,7 @@ class Employee(Base):
     production_line = Column(String(100))
     shift = Column(String(50))
     skill_level = Column(String(50))
+    user_type = Column(String(30), default="Staff")  # Admin, Manager, Staff, Operator
 
     # Identity & Statutory
     aadhaar_no = Column(String(50))
@@ -78,23 +70,19 @@ class Employee(Base):
     canteen = Column(Boolean, default=False)
     transport = Column(Boolean, default=False)
     accommodation = Column(Boolean, default=False)
-
-=======
-    user_id = Column(String(50), unique=True, nullable=False, index=True)
-    user_name = Column(String(150), nullable=False)
-    user_type = Column(String(30), default="Staff")  # Admin, Manager, Staff, Operator
-    status = Column(String(20), default="Enable")
     web_access = Column(String(20), default="Allow")
-    department = Column(String(100))
-    designation = Column(String(100))
-    email = Column(String(255), unique=True)
-    password_hash = Column(String(255), nullable=False)
     company_depl = Column(Boolean, default=False)
     company_mtm = Column(Boolean, default=False)
-    # Module permissions stored as JSON: {"master": true, "buyer_order": true, ...}
+    
+    # Permissions
     module_permissions = Column(JSON, default={})
-    # Menu-level permissions: {"A11": true, "A12": false, ...}
     menu_permissions = Column(JSON, default={})
->>>>>>> 048802c6a0e838215281295d658f4e749ede1691
+    
+    # Audit & User Management additions
+    last_login = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(String(50), nullable=True)
+    modified_by = Column(String(50), nullable=True)
+    access_expiry_date = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

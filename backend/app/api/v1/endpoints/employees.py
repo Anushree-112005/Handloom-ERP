@@ -63,6 +63,21 @@ class EmployeeBase(BaseModel):
     canteen: bool = False
     transport: bool = False
     accommodation: bool = False
+    
+    # User Management & Access Control
+    user_type: Optional[str] = "Staff"
+    web_access: Optional[str] = "Allow"
+    company_depl: bool = False
+    company_mtm: bool = False
+    module_permissions: Optional[dict] = {}
+    menu_permissions: Optional[dict] = {}
+    email: Optional[str] = None
+    
+    # Audit Fields
+    last_login: Optional[datetime] = None
+    created_by: Optional[str] = None
+    modified_by: Optional[str] = None
+    access_expiry_date: Optional[datetime] = None
 
 class EmployeeCreate(EmployeeBase):
     password: Optional[str] = None

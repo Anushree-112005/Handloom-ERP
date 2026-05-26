@@ -6,6 +6,8 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
+import EmployeeMaster from './pages/employee_master/EmployeeMaster';
+import UserManagement from './pages/user_management/UserManagement';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -173,31 +175,9 @@ export default function App() {
             icon={FileText} color="#22c55e" fields={[]} />
         } />
 
-        <Route path="employee" element={
-          <ModulePage title="Employee Master" description="User accounts, roles, and module-level permissions"
-            icon={Shield} color="#6366f1"
-            fields={[
-              {name:'User ID',type:'Text',desc:'Unique login ID'},
-              {name:'User Name',type:'Text',desc:'Employee full name'},
-              {name:'User Type',type:'Dropdown',desc:'Admin, Manager, Staff, Operator'},
-              {name:'Department',type:'Dropdown',desc:'Accounts, Production, Stores'},
-              {name:'Module Access',type:'Checkboxes',desc:'Per-module permission toggles'},
-            ]}
-          />
-        } />
+        <Route path="employee" element={<EmployeeMaster />} />
 
-        <Route path="user-management" element={
-          <ModulePage title="User Management" description="Create and manage user credentials, profiles, and portal access"
-            icon={Users} color="#6366f1"
-            fields={[
-              {name:'User ID',type:'Text',desc:'Unique login ID'},
-              {name:'User Name',type:'Text',desc:'Employee full name'},
-              {name:'User Type',type:'Dropdown',desc:'Admin, Manager, Staff, Operator'},
-              {name:'Department',type:'Dropdown',desc:'Accounts, Production, Stores'},
-              {name:'Module Access',type:'Checkboxes',desc:'Per-module permission toggles'},
-            ]}
-          />
-        } />
+        <Route path="user-management" element={<UserManagement />} />
 
         <Route path="log-report" element={
           <ModulePage title="Log Report" description="System audit trail and activity monitoring"
