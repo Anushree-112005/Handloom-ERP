@@ -57,4 +57,9 @@ export const buyerOrderAPI = {
   create: (data) => api.post('/buyer-orders/', data),
 };
 
+// ---- Dropdowns ----
+export const dropdownAPI = {
+  getAll: () => api.get('/dropdowns/'),
+};
+
 export default api;
