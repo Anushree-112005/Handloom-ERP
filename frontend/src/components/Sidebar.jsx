@@ -12,6 +12,8 @@ const modules = [
 
   { section: 'Masters' },
   { path: '/party-master', label: 'Party Master', icon: Users },
+  { path: '/employee', label: 'Employee Master', icon: Shield },
+
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
@@ -57,7 +59,6 @@ const modules = [
   { path: '/log-report', label: 'Log Report', icon: Activity },
 
   { section: 'Administration & Security' },
-  { path: '/employee', label: 'Employee Master', icon: Shield },
   { path: '/user-management', label: 'User Management', icon: Users },
 
   { section: 'System' },
