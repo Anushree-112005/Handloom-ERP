@@ -13,6 +13,9 @@ import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
 import YarnInward from './pages/yarn/YarnInward';
 import GreyYarnDelivery from './pages/yarn/GreyYarnDelivery';
 import DyedYarnReceived from './pages/yarn/DyedYarnReceived';
+import DyedYarnDelivery from './pages/yarn/DyedYarnDelivery';
+import WarpBeamReceipt from './pages/warp/WarpBeamReceipt';
+import WarpDelivery from './pages/warp/WarpDelivery';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -48,35 +51,11 @@ export default function App() {
 
         <Route path="dyed-yarn/received" element={<DyedYarnReceived />} />
 
-        <Route path="dyed-yarn/delivery" element={
-          <ModulePage title="Dyed Yarn Delivery" description="Dispatch dyed yarn with challan and logistics tracking"
-            icon={Truck} color="#a855f7"
-            fields={[
-              {name:'DC No',type:'Auto',desc:'Delivery challan number'},
-              {name:'Party Name',type:'Dropdown',desc:'Receiving party'},
-              {name:'Transport',type:'Dropdown',desc:'Transport Master'},
-              {name:'Balance Kgs',type:'Numeric',desc:'Balance after delivery'},
-            ]}
-          />
-        } />
+        <Route path="dyed-yarn/delivery" element={<DyedYarnDelivery />} />
 
-        <Route path="warp/beam-receipt" element={
-          <ModulePage title="Warp Beam Receipt" description="Receive warp beams from sizing with beam-level details"
-            icon={Layers} color="#8b5cf6"
-            fields={[
-              {name:'Ref No',type:'Text',desc:'Internal reference'},
-              {name:'Beam Type',type:'Dropdown',desc:'Beam classification'},
-              {name:'Warp Count',type:'Dropdown',desc:'Yarn count in warp'},
-              {name:'Warp Ends',type:'Numeric',desc:'Number of warp ends'},
-              {name:'Loom No',type:'Dropdown',desc:'Assigned loom'},
-            ]}
-          />
-        } />
+        <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
 
-        <Route path="warp/delivery" element={
-          <ModulePage title="Warp Delivery Entry" description="Dispatch warp beams to weavers and job workers"
-            icon={Truck} color="#0ea5e9" fields={[]} />
-        } />
+        <Route path="warp/delivery" element={<WarpDelivery />} />
 
         <Route path="cloth/inward" element={
           <ModulePage title="Cloth Vendor Inward" description="Record cloth received from vendors"
