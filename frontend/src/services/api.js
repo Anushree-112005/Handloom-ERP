@@ -50,11 +50,52 @@ export const partyAPI = {
   summary: () => api.get('/parties/stats/summary'),
 };
 
-// ---- Buyer Orders ----
 export const buyerOrderAPI = {
   list: (params) => api.get('/buyer-orders/', { params }),
   get: (id) => api.get(`/buyer-orders/${id}`),
   create: (data) => api.post('/buyer-orders/', data),
+  update: (id, data) => api.put(`/buyer-orders/${id}`, data),
+  delete: (id) => api.delete(`/buyer-orders/${id}`),
+};
+
+export const designEntryAPI = {
+  list: (params) => api.get('/design-entries/', { params }),
+  get: (id) => api.get(`/design-entries/${id}`),
+  create: (data) => api.post('/design-entries/', data),
+  update: (id, data) => api.put(`/design-entries/${id}`, data),
+  delete: (id) => api.delete(`/design-entries/${id}`),
+};
+
+export const yarnPurchaseOrderAPI = {
+  list: (params) => api.get('/yarn-purchase-orders/', { params }),
+  get: (id) => api.get(`/yarn-purchase-orders/${id}`),
+  create: (data) => api.post('/yarn-purchase-orders/', data),
+  update: (id, data) => api.put(`/yarn-purchase-orders/${id}`, data),
+  delete: (id) => api.delete(`/yarn-purchase-orders/${id}`),
+};
+
+export const yarnInwardAPI = {
+  list: (params) => api.get('/yarn-inwards/', { params }),
+  get: (id) => api.get(`/yarn-inwards/${id}`),
+  create: (data) => api.post('/yarn-inwards/', data),
+  update: (id, data) => api.put(`/yarn-inwards/${id}`, data),
+  delete: (id) => api.delete(`/yarn-inwards/${id}`),
+};
+
+export const greyYarnDeliveryAPI = {
+  list: () => api.get('/grey-yarn-deliveries'),
+  get: (id) => api.get(`/grey-yarn-deliveries/${id}`),
+  create: (data) => api.post('/grey-yarn-deliveries/', data),
+  update: (id, data) => api.put(`/grey-yarn-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/grey-yarn-deliveries/${id}`)
+};
+
+export const dyedYarnReceiptAPI = {
+  list: () => api.get('/dyed-yarn-receipts'),
+  get: (id) => api.get(`/dyed-yarn-receipts/${id}`),
+  create: (data) => api.post('/dyed-yarn-receipts', data),
+  update: (id, data) => api.put(`/dyed-yarn-receipts/${id}`, data),
+  delete: (id) => api.delete(`/dyed-yarn-receipts/${id}`)
 };
 
 // ---- Dropdowns ----

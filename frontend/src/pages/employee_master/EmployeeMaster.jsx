@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Save, ArrowLeft, Edit2, Search, Eye, Trash2, X, User, Briefcase, FileText, IndianRupee, GraduationCap, Building, ShieldAlert, Download, Filter } from 'lucide-react';
+import { Users, Plus, Save, Edit2, Search, Filter, Eye, Trash2, X, Download, Copy, Briefcase, FileText, CheckCircle, Smartphone, MapPin, Hash, User, Map, AlertCircle, Building, Calendar, Shield, ShieldAlert, IndianRupee, GraduationCap, CreditCard, ChevronDown } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -198,23 +198,19 @@ export default function EmployeeMaster() {
     return (
       <div className="animate-fade">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button 
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View HR Profile' : editingId ? 'Update HR Profile' : 'New Employee Onboarding'}
-            </h2>
-          </div>
-          {!isReadOnly && (
-            <button type="submit" form="empForm" className="btn btn-primary">
-              <Save size={18} /> {editingId ? 'Update' : 'Save'} Employee
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
+            {isReadOnly ? 'View HR Profile' : editingId ? 'Update HR Profile' : 'New Employee Onboarding'}
+          </h2>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-secondary" onClick={() => setView('list')}>
+              <X size={16} /> Close
             </button>
-          )}
+            {!isReadOnly && (
+              <button type="submit" form="empForm" className="btn btn-primary">
+                <Save size={16} /> {editingId ? 'Update' : 'Save'} Employee
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
