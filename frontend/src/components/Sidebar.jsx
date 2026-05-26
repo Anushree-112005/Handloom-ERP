@@ -15,11 +15,13 @@ const modules = [
   { path: '/employee', label: 'Employee Master', icon: Shield },
 
 
-  { section: 'Design Management' },
-  { path: '/design-entry', label: 'Design Entry', icon: Palette },
 
   { section: 'Order Management' },
   { path: '/buyer-order', label: 'Buyer Order', icon: ShoppingCart },
+
+  { section: 'Design Management' },
+  { path: '/design-entry', label: 'Design Entry', icon: Palette },
+
 
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },

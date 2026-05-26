@@ -25,12 +25,12 @@ DEFAULT_MASTERS = {
 @router.get("/")
 async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     # 1. Fetch dynamic parties
-    parties_req = await db.execute(select(PartyMaster.id, PartyMaster.business_name, PartyMaster.party_type))
+    parties_req = await db.execute(select(PartyMaster.id, PartyMaster.company_name, PartyMaster.party_type))
     parties = parties_req.all()
     
-    agents = [{"id": p.id, "name": p.business_name} for p in parties if p.party_type == "Agent"]
-    transporters = [{"id": p.id, "name": p.business_name} for p in parties if p.party_type == "Logistics"]
-    all_parties = [{"id": p.id, "name": p.business_name} for p in parties]
+    agents = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type == "Agent"]
+    transporters = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type == "Logistics"]
+    all_parties = [{"id": p.id, "name": p.company_name} for p in parties]
 
     # 2. Fetch employees for Manager, Merchandiser, A/c Incharge
     emp_req = await db.execute(select(Employee.id, Employee.name))

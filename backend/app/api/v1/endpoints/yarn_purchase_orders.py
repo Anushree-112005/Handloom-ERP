@@ -8,51 +8,82 @@ from typing import Optional, List
 from datetime import date, datetime
 
 from app.core.database import get_db
-from app.models.yarn_purchase import YarnPurchaseOrder, YarnPurchaseItem
+from app.models.yarn_purchase import YarnPurchaseOrder, YarnPurchaseCountDetail, YarnPurchaseIndentDetail
 
 router = APIRouter(prefix="/yarn-purchase-orders", tags=["Yarn Purchase Orders"])
 
-class YarnPurchaseItemIn(BaseModel):
-    yarn_type: Optional[str] = None
-    count: Optional[str] = None
-    color: Optional[str] = None
-    lot_no: Optional[str] = None
-    bags: Optional[int] = 0
-    cones: Optional[int] = 0
-    total_kgs: Optional[float] = 0
-    rate: Optional[float] = 0
-    amount: Optional[float] = 0
+class YarnPurchaseCountDetailIn(BaseModel):
+    supplier_name: Optional[str] = None
+    fibre_group: Optional[str] = None
+    yarn_count: Optional[str] = None
+    yarn_csp: Optional[float] = 0.0
+    min_cone_wgt: Optional[float] = 0.0
+    order_kgs: Optional[float] = 0.0
+    mill_name: Optional[str] = None
+    print_name: Optional[str] = None
+    tolerance_pct: Optional[float] = 0.0
+
+class YarnPurchaseIndentDetailIn(BaseModel):
+    req_ind_no: Optional[str] = None
+    design_no: Optional[str] = None
+    ibpo_no: Optional[str] = None
+    party_name: Optional[str] = None
+    fabric_name: Optional[str] = None
+    yarn_count: Optional[str] = None
+    order_mtrs: Optional[float] = 0.0
+    warp_qty: Optional[float] = 0.0
+    weft_qty: Optional[float] = 0.0
+    tot_reqd_qty: Optional[float] = 0.0
+    appd_qty: Optional[float] = 0.0
+    order_qty: Optional[float] = 0.0
 
 class YarnPurchaseOrderCreate(BaseModel):
     po_date: date
-    party_name: Optional[str] = None
-    party_id: Optional[int] = None
-    order_type: Optional[str] = None
-    design_no: Optional[str] = None
-    delivery_date: Optional[date] = None
-    payment_terms: Optional[str] = None
+    org_name: Optional[str] = None
+    internal_po_no: Optional[str] = None
+    used_for: Optional[str] = None
+    against_ref: Optional[str] = None
+    agent_name: Optional[str] = None
+    supplier_name: Optional[str] = None
+    delivery_at: Optional[str] = None
+    
+    freight_type: Optional[str] = None
+    freight_chg: Optional[float] = 0.0
+    insurance_chg: Optional[float] = 0.0
+    total_order_kgs: Optional[float] = 0.0
+    transport: Optional[str] = None
+    tax_type: Optional[str] = None
+    taxable_amount: Optional[float] = 0.0
+    dispatch_date: Optional[date] = None
+    packing_type: Optional[str] = None
+    sgst_pct: Optional[float] = 0.0
+    cgst_pct: Optional[float] = 0.0
+    igst_pct: Optional[float] = 0.0
+    labeling: Optional[str] = None
+    colour: Optional[str] = None
+    net_amount: Optional[float] = 0.0
+    due_days: Optional[int] = 0
     remarks: Optional[str] = None
-    total_amount: Optional[float] = 0
-    sgst: Optional[float] = 0
-    cgst: Optional[float] = 0
-    igst: Optional[float] = 0
-    net_amount: Optional[float] = 0
-    items: Optional[List[YarnPurchaseItemIn]] = []
+    status: Optional[str] = "Active"
+    
+    count_details: Optional[List[YarnPurchaseCountDetailIn]] = []
+    indent_details: Optional[List[YarnPurchaseIndentDetailIn]] = []
 
-class YarnPurchaseItemOut(YarnPurchaseItemIn):
+class YarnPurchaseCountDetailOut(YarnPurchaseCountDetailIn):
     id: int
     class Config:
         from_attributes = True
 
-class YarnPurchaseOrderOut(BaseModel):
+class YarnPurchaseIndentDetailOut(YarnPurchaseIndentDetailIn):
+    id: int
+    class Config:
+        from_attributes = True
+
+class YarnPurchaseOrderOut(YarnPurchaseOrderCreate):
     id: int
     po_number: str
-    po_date: date
-    party_name: Optional[str] = None
-    order_type: Optional[str] = None
-    status: str
-    net_amount: float
-    items: List[YarnPurchaseItemOut] = []
+    count_details: List[YarnPurchaseCountDetailOut] = []
+    indent_details: List[YarnPurchaseIndentDetailOut] = []
     created_at: Optional[datetime] = None
 
     class Config:
@@ -60,7 +91,10 @@ class YarnPurchaseOrderOut(BaseModel):
 
 @router.get("/", response_model=List[YarnPurchaseOrderOut])
 async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
-    q = select(YarnPurchaseOrder).options(selectinload(YarnPurchaseOrder.items)).offset(skip).limit(limit)
+    q = select(YarnPurchaseOrder).options(
+        selectinload(YarnPurchaseOrder.count_details),
+        selectinload(YarnPurchaseOrder.indent_details)
+    ).offset(skip).limit(limit)
     result = await db.execute(q)
     return result.scalars().all()
 
@@ -70,28 +104,93 @@ async def create_order(data: YarnPurchaseOrderCreate, db: AsyncSession = Depends
     count = count_r.scalar() or 0
     po_no = f"YPO-{count + 1:05d}"
 
-    items_data = data.items or []
-    order_dict = data.model_dump(exclude={"items"})
+    counts_data = data.count_details or []
+    indents_data = data.indent_details or []
+    
+    order_dict = data.model_dump(exclude={"count_details", "indent_details"})
     order = YarnPurchaseOrder(**order_dict, po_number=po_no)
 
-    for item_data in items_data:
-        order.items.append(YarnPurchaseItem(**item_data.model_dump()))
+    for c in counts_data:
+        order.count_details.append(YarnPurchaseCountDetail(**c.model_dump()))
+        
+    for i in indents_data:
+        order.indent_details.append(YarnPurchaseIndentDetail(**i.model_dump()))
 
     db.add(order)
     await db.commit()
     await db.refresh(order)
     
     result = await db.execute(
-        select(YarnPurchaseOrder).options(selectinload(YarnPurchaseOrder.items)).where(YarnPurchaseOrder.id == order.id)
+        select(YarnPurchaseOrder).options(
+            selectinload(YarnPurchaseOrder.count_details),
+            selectinload(YarnPurchaseOrder.indent_details)
+        ).where(YarnPurchaseOrder.id == order.id)
     )
     return result.scalar_one()
 
 @router.get("/{order_id}", response_model=YarnPurchaseOrderOut)
 async def get_order(order_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(YarnPurchaseOrder).options(selectinload(YarnPurchaseOrder.items)).where(YarnPurchaseOrder.id == order_id)
+        select(YarnPurchaseOrder).options(
+            selectinload(YarnPurchaseOrder.count_details),
+            selectinload(YarnPurchaseOrder.indent_details)
+        ).where(YarnPurchaseOrder.id == order_id)
     )
     order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
+
+@router.put("/{order_id}", response_model=YarnPurchaseOrderOut)
+async def update_order(order_id: int, data: YarnPurchaseOrderCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(YarnPurchaseOrder).options(
+            selectinload(YarnPurchaseOrder.count_details),
+            selectinload(YarnPurchaseOrder.indent_details)
+        ).where(YarnPurchaseOrder.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    counts_data = data.count_details or []
+    indents_data = data.indent_details or []
+    order_dict = data.model_dump(exclude={"count_details", "indent_details"})
+    
+    for key, value in order_dict.items():
+        setattr(order, key, value)
+        
+    for item in order.count_details:
+        await db.delete(item)
+    for item in order.indent_details:
+        await db.delete(item)
+        
+    order.count_details = []
+    order.indent_details = []
+    
+    for c in counts_data:
+        order.count_details.append(YarnPurchaseCountDetail(**c.model_dump()))
+    for i in indents_data:
+        order.indent_details.append(YarnPurchaseIndentDetail(**i.model_dump()))
+
+    await db.commit()
+    await db.refresh(order)
+    
+    result = await db.execute(
+        select(YarnPurchaseOrder).options(
+            selectinload(YarnPurchaseOrder.count_details),
+            selectinload(YarnPurchaseOrder.indent_details)
+        ).where(YarnPurchaseOrder.id == order_id)
+    )
+    return result.scalar_one()
+
+@router.delete("/{order_id}", status_code=204)
+async def delete_order(order_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(YarnPurchaseOrder).where(YarnPurchaseOrder.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    await db.delete(order)
+    await db.commit()
+    return None

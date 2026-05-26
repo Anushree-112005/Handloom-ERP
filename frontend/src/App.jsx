@@ -8,6 +8,11 @@ import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
+import DesignEntry from './pages/design_management/DesignEntry';
+import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
+import YarnInward from './pages/yarn/YarnInward';
+import GreyYarnDelivery from './pages/yarn/GreyYarnDelivery';
+import DyedYarnReceived from './pages/yarn/DyedYarnReceived';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -33,72 +38,15 @@ export default function App() {
 
         <Route path="buyer-order" element={<BuyerOrder />} />
 
-        <Route path="design-entry" element={
-          <ModulePage title="Design Entry" description="Create and manage fabric designs and specifications"
-            icon={Palette} color="#10b981"
-            fields={[
-              {name:'DS Ref No',type:'Auto',desc:'Auto-generated reference number'},
-              {name:'DS Date',type:'Date',desc:'Design entry date'},
-              {name:'Design No',type:'Text',desc:'Internal design number'},
-              {name:'Color',type:'Dropdown',desc:'Standard color list'},
-              {name:'Buyer Name',type:'Dropdown',desc:'Buyer name'},
-              {name:'Fabric',type:'Dropdown',desc:'Fabric composition'},
-              {name:'Weaving',type:'Dropdown',desc:'Weaving pattern'},
-              {name:'Design Type',type:'Dropdown',desc:'Normal, Special, Sample'},
-            ]}
-          />
-        } />
+        <Route path="design-entry" element={<DesignEntry />} />
 
-        <Route path="yarn/purchase-order" element={
-          <ModulePage title="Yarn Purchase Order" description="Generate purchase orders for yarn procurement"
-            icon={Package} color="#f59e0b"
-            fields={[
-              {name:'PO Number',type:'Auto',desc:'System-generated PO number'},
-              {name:'Party Name',type:'Dropdown',desc:'Yarn supplier'},
-              {name:'Yarn Type',type:'Dropdown',desc:'Type of yarn'},
-              {name:'Count',type:'Dropdown',desc:'Yarn count values'},
-              {name:'Total Kgs',type:'Numeric',desc:'Total weight ordered'},
-              {name:'Rate',type:'Numeric',desc:'Rate per kg'},
-            ]}
-          />
-        } />
+        <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
 
-        <Route path="yarn/inward" element={
-          <ModulePage title="Yarn Purchase Inward" description="Record yarn receipts and update inventory"
-            icon={ArrowRightLeft} color="#22c55e"
-            fields={[
-              {name:'Inv No',type:'Text',desc:'Invoice number'},
-              {name:'Received Type',type:'Dropdown',desc:'Direct / Against Order'},
-              {name:'Party Name',type:'Dropdown',desc:'Supplier name'},
-              {name:'Total Kgs',type:'Numeric',desc:'Total weight received'},
-            ]}
-          />
-        } />
+        <Route path="yarn/inward" element={<YarnInward />} />
 
-        <Route path="yarn/grey-delivery" element={
-          <ModulePage title="Grey Yarn Delivery" description="Dispatch grey yarn to processing units"
-            icon={Truck} color="#64748b"
-            fields={[
-              {name:'DC No',type:'Auto',desc:'Delivery challan number'},
-              {name:'Delivery Type',type:'Dropdown',desc:'Direct / Against Order'},
-              {name:'Party Name',type:'Dropdown',desc:'Receiving party'},
-              {name:'Total Kgs',type:'Numeric',desc:'Total delivered weight'},
-            ]}
-          />
-        } />
+        <Route path="yarn/grey-delivery" element={<GreyYarnDelivery />} />
 
-        <Route path="dyed-yarn/received" element={
-          <ModulePage title="Dyed Yarn Received" description="Record dyed yarn consignments with quality tracking"
-            icon={Palette} color="#ec4899"
-            fields={[
-              {name:'Inv No',type:'Text',desc:'Invoice number'},
-              {name:'Received Type',type:'Dropdown',desc:'Direct / Against Order'},
-              {name:'Design No',type:'Dropdown',desc:'Design reference'},
-              {name:'Rcvd Kgs',type:'Numeric',desc:'Actual received weight'},
-              {name:'Short %',type:'Numeric',desc:'Shortage percentage'},
-            ]}
-          />
-        } />
+        <Route path="dyed-yarn/received" element={<DyedYarnReceived />} />
 
         <Route path="dyed-yarn/delivery" element={
           <ModulePage title="Dyed Yarn Delivery" description="Dispatch dyed yarn with challan and logistics tracking"

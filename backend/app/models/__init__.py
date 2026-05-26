@@ -2,7 +2,7 @@
 from app.models.employee import Employee
 from app.models.party_master import PartyMaster
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
-from app.models.yarn_purchase import YarnPurchaseOrder, YarnPurchaseItem
+from app.models.yarn_purchase import YarnPurchaseOrder, YarnPurchaseCountDetail, YarnPurchaseIndentDetail
 from app.models.yarn_inward import YarnInward, YarnInwardItem
 from app.models.grey_yarn_delivery import GreyYarnDelivery, GreyYarnDeliveryItem
 from app.models.dyed_yarn import DyedYarnReceived, DyedYarnReceivedItem, DyedYarnDelivery, DyedYarnDeliveryItem
@@ -15,3 +15,5 @@ from app.models.sales_invoice import SalesInvoice, SalesInvoiceItem
 from app.models.despatch_planning import DespatchPlanning
 from app.models.eway_bill import EwayBill, EwayBillItem
 from app.models.log_report import LogReport
+from app.models.design_entry import DesignEntry
+from app.models.general_master import GeneralMaster
