@@ -40,5 +40,8 @@ class FinishedFabricItem(Base):
     width = Column(Numeric(6, 2), default=0)
     weight = Column(Numeric(10, 2), default=0)
     grade = Column(String(10))
+    v_loom = Column(String(50))
+    v_pc_no = Column(String(50))
+    piece_no = Column(String(50))
 
     inward = relationship("FinishedFabricInward", back_populates="items")

@@ -24,8 +24,8 @@ class TokenResponse(BaseModel):
 
 class UserOut(BaseModel):
     id: int
-    user_id: str
-    user_name: str
+    employee_code: str
+    name: str
     user_type: str
     department: Optional[str] = None
     designation: Optional[str] = None
@@ -44,7 +44,7 @@ async def get_current_user(
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     uid = payload.get("sub")
-    result = await db.execute(select(Employee).where(Employee.user_id == uid))
+    result = await db.execute(select(Employee).where(Employee.employee_code == uid))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -53,16 +53,16 @@ async def get_current_user(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Employee).where(Employee.user_id == form.username))
+    result = await db.execute(select(Employee).where(Employee.employee_code == form.username))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(form.password, user.password_hash):
+    if not user or not user.password_hash or not verify_password(form.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    if user.status != "Enable":
+    if user.status != "Active":
         raise HTTPException(status_code=403, detail="Account disabled")
-    token = create_access_token({"sub": user.user_id})
+    token = create_access_token({"sub": user.employee_code})
     return TokenResponse(
-        access_token=token, user_id=user.user_id,
-        user_name=user.user_name, user_type=user.user_type,
+        access_token=token, user_id=user.employee_code,
+        user_name=user.name, user_type=user.user_type,
     )
 
 

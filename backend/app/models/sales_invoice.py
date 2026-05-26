@@ -50,5 +50,7 @@ class SalesInvoiceItem(Base):
     qty = Column(Numeric(10, 2), default=0)
     rate = Column(Numeric(10, 2), default=0)
     amount = Column(Numeric(12, 2), default=0)
+    description = Column(String(255))
+    total_bale = Column(Integer)
 
     invoice = relationship("SalesInvoice", back_populates="items")

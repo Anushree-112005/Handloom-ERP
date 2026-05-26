@@ -6,6 +6,18 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
+import EmployeeMaster from './pages/employee_master/EmployeeMaster';
+import UserManagement from './pages/user_management/UserManagement';
+import DespatchPlanning from './pages/despatch/DespatchPlanning';
+import SalesInvoice from './pages/sales_invoice/SalesInvoice';
+import GoodsRelease from './pages/goods_release/GoodsRelease';
+import PackingSlip from './pages/packing/PackingSlip';
+import FinishedFabricInward from './pages/finished_fabric/FinishedFabricInward';
+import ClothDelivery from './pages/cloth/ClothDelivery';
+import OnTableChecking from './pages/cloth/OnTableChecking';
+import ClothInward from './pages/cloth/ClothInward';
+import LogReport from './pages/log_report/LogReport';
+import EwayBill from './pages/eway_bill/EwayBill';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -128,89 +140,29 @@ export default function App() {
             icon={Truck} color="#0ea5e9" fields={[]} />
         } />
 
-        <Route path="cloth/inward" element={
-          <ModulePage title="Cloth Vendor Inward" description="Record cloth received from vendors"
-            icon={Factory} color="#10b981" fields={[]} />
-        } />
+        <Route path="cloth/inward" element={<ClothInward />} />
 
-        <Route path="cloth/checking" element={
-          <ModulePage title="ON Table Checking" description="Quality checking with defect tracking and grading"
-            icon={CheckSquare} color="#eab308" fields={[]} />
-        } />
+        <Route path="cloth/checking" element={<OnTableChecking />} />
 
-        <Route path="cloth/delivery" element={
-          <ModulePage title="Cloth Delivery Entry" description="Dispatch cloth with GST and logistics details"
-            icon={Truck} color="#14b8a6" fields={[]} />
-        } />
+        <Route path="cloth/delivery" element={<ClothDelivery />} />
 
-        <Route path="finished-fabric" element={
-          <ModulePage title="Finished Fabric Inward" description="Receive and inspect finished fabric"
-            icon={Scissors} color="#06b6d4" fields={[]} />
-        } />
+        <Route path="finished-fabric" element={<FinishedFabricInward />} />
 
-        <Route path="packing" element={
-          <ModulePage title="Packing Slip / Bale Entry" description="Create packing slips with bale-level details"
-            icon={Box} color="#f97316" fields={[]} />
-        } />
+        <Route path="packing" element={<PackingSlip />} />
 
-        <Route path="goods-release" element={
-          <ModulePage title="Goods Release Advice" description="GRA creation with approval workflow"
-            icon={ClipboardList} color="#ef4444" fields={[]} />
-        } />
+        <Route path="goods-release" element={<GoodsRelease />} />
 
-        <Route path="sales-invoice" element={
-          <ModulePage title="Sales Invoice" description="Generate invoices with GST calculations"
-            icon={Receipt} color="#3b82f6" fields={[]} />
-        } />
+        <Route path="sales-invoice" element={<SalesInvoice />} />
 
-        <Route path="despatch" element={
-          <ModulePage title="Despatch Planning" description="Plan and schedule dispatch with tolerance tracking"
-            icon={MapPin} color="#ef4444" fields={[]} />
-        } />
+        <Route path="despatch" element={<DespatchPlanning />} />
 
-        <Route path="eway-bill" element={
-          <ModulePage title="E-Way Bill Entry" description="GST e-way bill generation and management"
-            icon={FileText} color="#22c55e" fields={[]} />
-        } />
+        <Route path="eway-bill" element={<EwayBill />} />
 
-        <Route path="employee" element={
-          <ModulePage title="Employee Master" description="User accounts, roles, and module-level permissions"
-            icon={Shield} color="#6366f1"
-            fields={[
-              {name:'User ID',type:'Text',desc:'Unique login ID'},
-              {name:'User Name',type:'Text',desc:'Employee full name'},
-              {name:'User Type',type:'Dropdown',desc:'Admin, Manager, Staff, Operator'},
-              {name:'Department',type:'Dropdown',desc:'Accounts, Production, Stores'},
-              {name:'Module Access',type:'Checkboxes',desc:'Per-module permission toggles'},
-            ]}
-          />
-        } />
+        <Route path="employee" element={<EmployeeMaster />} />
 
-        <Route path="user-management" element={
-          <ModulePage title="User Management" description="Create and manage user credentials, profiles, and portal access"
-            icon={Users} color="#6366f1"
-            fields={[
-              {name:'User ID',type:'Text',desc:'Unique login ID'},
-              {name:'User Name',type:'Text',desc:'Employee full name'},
-              {name:'User Type',type:'Dropdown',desc:'Admin, Manager, Staff, Operator'},
-              {name:'Department',type:'Dropdown',desc:'Accounts, Production, Stores'},
-              {name:'Module Access',type:'Checkboxes',desc:'Per-module permission toggles'},
-            ]}
-          />
-        } />
+        <Route path="user-management" element={<UserManagement />} />
 
-        <Route path="log-report" element={
-          <ModulePage title="Log Report" description="System audit trail and activity monitoring"
-            icon={Activity} color="#64748b"
-            fields={[
-              {name:'Module',type:'Dropdown',desc:'Filter by ERP module'},
-              {name:'Type/Mode',type:'Dropdown',desc:'Save, Update, Delete, Print'},
-              {name:'From Date',type:'Date',desc:'Start date filter'},
-              {name:'To Date',type:'Date',desc:'End date filter'},
-              {name:'User ID',type:'Dropdown',desc:'Filter by user'},
-            ]}
-          />
-        } />
+        <Route path="log-report" element={<LogReport />} />
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>
