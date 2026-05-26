@@ -1,0 +1,47 @@
+"""Despatch Planning model."""
+from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, func
+from app.core.database import Base
+
+
+class DespatchPlanning(Base):
+    __tablename__ = "despatch_planning"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ibpo = Column(String(50), index=True)
+    po_date = Column(Date)
+    ref_no = Column(String(50), unique=True, index=True)
+    planning_date = Column(Date)
+    billing_party = Column(String(255))
+    delivery_party = Column(String(255))
+    billing_address = Column(Text)
+    delivery_address = Column(Text)
+    state_code = Column(String(10))
+    design_no = Column(String(50))
+    pino = Column(String(50))
+    order_qty = Column(Numeric(10, 2), default=0)
+    amd_foc_mtr = Column(Numeric(10, 2), default=0)
+    total_qty = Column(Numeric(10, 2), default=0)
+    uom = Column(String(20), default="MTR")
+    delivery_start = Column(Date)
+    party_comp_date = Column(Date)
+    comp_date = Column(Date)
+    lc_no = Column(String(50))
+    lc_date = Column(Date)
+    ibpo_rate = Column(Numeric(10, 2), default=0)
+    currency = Column(String(10), default="INR")
+    certificate_type = Column(String(50))
+    fabric_type = Column(String(100))
+    planned_mtrs = Column(Numeric(10, 2), default=0)
+    tolerance_pct = Column(Numeric(5, 2), default=0)
+    max_dispatch_qty = Column(Numeric(10, 2), default=0)
+    stock = Column(Numeric(10, 2), default=0)
+    tot_desp_mtrs = Column(Numeric(10, 2), default=0)
+    balance_mtrs = Column(Numeric(10, 2), default=0)
+    last_desp_date = Column(Date)
+    hsn_code = Column(String(20))
+    merchant = Column(String(150))
+    city = Column(String(100))
+    point_of_contact = Column(String(150))
+    remarks = Column(Text)
+    status = Column(String(30), default="Planned")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
