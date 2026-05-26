@@ -85,7 +85,7 @@ export const yarnInwardAPI = {
 export const greyYarnDeliveryAPI = {
   list: () => api.get('/grey-yarn-deliveries'),
   get: (id) => api.get(`/grey-yarn-deliveries/${id}`),
-  create: (data) => api.post('/grey-yarn-deliveries/', data),
+  create: (data) => api.post('/grey-yarn-deliveries', data),
   update: (id, data) => api.put(`/grey-yarn-deliveries/${id}`, data),
   delete: (id) => api.delete(`/grey-yarn-deliveries/${id}`)
 };
@@ -96,6 +96,30 @@ export const dyedYarnReceiptAPI = {
   create: (data) => api.post('/dyed-yarn-receipts', data),
   update: (id, data) => api.put(`/dyed-yarn-receipts/${id}`, data),
   delete: (id) => api.delete(`/dyed-yarn-receipts/${id}`)
+};
+
+export const dyedYarnDeliveryAPI = {
+  list: () => api.get('/dyed-yarn-deliveries'),
+  get: (id) => api.get(`/dyed-yarn-deliveries/${id}`),
+  create: (data) => api.post('/dyed-yarn-deliveries', data),
+  update: (id, data) => api.put(`/dyed-yarn-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/dyed-yarn-deliveries/${id}`)
+};
+
+export const warpBeamReceiptAPI = {
+  list: () => api.get('/warp-beam-receipts'),
+  get: (id) => api.get(`/warp-beam-receipts/${id}`),
+  create: (data) => api.post('/warp-beam-receipts', data),
+  update: (id, data) => api.put(`/warp-beam-receipts/${id}`, data),
+  delete: (id) => api.delete(`/warp-beam-receipts/${id}`)
+};
+
+export const warpDeliveryAPI = {
+  list: () => api.get('/warp-deliveries'),
+  get: (id) => api.get(`/warp-deliveries/${id}`),
+  create: (data) => api.post('/warp-deliveries', data),
+  update: (id, data) => api.put(`/warp-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/warp-deliveries/${id}`)
 };
 
 // ---- Dropdowns ----

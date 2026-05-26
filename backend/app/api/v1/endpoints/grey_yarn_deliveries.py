@@ -64,14 +64,14 @@ class GreyYarnDeliveryOut(GreyYarnDeliveryCreate):
         from_attributes = True
 
 
-@router.get("/", response_model=List[GreyYarnDeliveryOut])
+@router.get("", response_model=List[GreyYarnDeliveryOut])
 async def list_deliveries(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     q = select(GreyYarnDelivery).options(selectinload(GreyYarnDelivery.items)).offset(skip).limit(limit)
     result = await db.execute(q)
     return result.scalars().all()
 
 
-@router.post("/", response_model=GreyYarnDeliveryOut, status_code=201)
+@router.post("", response_model=GreyYarnDeliveryOut, status_code=201)
 async def create_delivery(data: GreyYarnDeliveryCreate, db: AsyncSession = Depends(get_db)):
     count_r = await db.execute(select(func.count(GreyYarnDelivery.id)))
     count = count_r.scalar() or 0
