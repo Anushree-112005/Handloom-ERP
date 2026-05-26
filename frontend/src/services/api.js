@@ -136,4 +136,92 @@ export const employeeAPI = {
   delete: (id) => api.delete(`/employees/${id}`),
 };
 
+// ---- Despatch Planning ----
+export const despatchAPI = {
+  list: (params) => api.get('/despatch-planning/', { params }),
+  get: (id) => api.get(`/despatch-planning/${id}`),
+  create: (data) => api.post('/despatch-planning/', data),
+  update: (id, data) => api.put(`/despatch-planning/${id}`, data),
+  delete: (id) => api.delete(`/despatch-planning/${id}`),
+};
+
+// ---- Sales Invoice ----
+export const salesInvoiceAPI = {
+  list: (params) => api.get('/sales-invoices/', { params }),
+  get: (id) => api.get(`/sales-invoices/${id}`),
+  create: (data) => api.post('/sales-invoices/', data),
+  update: (id, data) => api.put(`/sales-invoices/${id}`, data),
+  delete: (id) => api.delete(`/sales-invoices/${id}`),
+};
+
+// ---- Goods Release ----
+export const goodsReleaseAPI = {
+  list: (params) => api.get('/goods-releases/', { params }),
+  get: (id) => api.get(`/goods-releases/${id}`),
+  create: (data) => api.post('/goods-releases/', data),
+  update: (id, data) => api.put(`/goods-releases/${id}`, data),
+  delete: (id) => api.delete(`/goods-releases/${id}`),
+};
+
+// ---- Packing Slip ----
+export const packingSlipAPI = {
+  list: (params) => api.get('/packing-slips/', { params }),
+  get: (id) => api.get(`/packing-slips/${id}`),
+  create: (data) => api.post('/packing-slips/', data),
+  update: (id, data) => api.put(`/packing-slips/${id}`, data),
+  delete: (id) => api.delete(`/packing-slips/${id}`),
+};
+
+// ---- Finished Fabric Inward ----
+export const finishedFabricAPI = {
+  list: (params) => api.get('/finished-fabrics/', { params }),
+  get: (id) => api.get(`/finished-fabrics/${id}`),
+  create: (data) => api.post('/finished-fabrics/', data),
+  update: (id, data) => api.put(`/finished-fabrics/${id}`, data),
+  delete: (id) => api.delete(`/finished-fabrics/${id}`),
+};
+
+// ---- Cloth Delivery ----
+export const clothDeliveryAPI = {
+  list: (params) => api.get('/cloth-deliveries/', { params }),
+  get: (id) => api.get(`/cloth-deliveries/${id}`),
+  create: (data) => api.post('/cloth-deliveries/', data),
+  update: (id, data) => api.put(`/cloth-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/cloth-deliveries/${id}`),
+};
+
+// ---- On-Table Checking ----
+export const onTableCheckingAPI = {
+  list: (params) => api.get('/on-table-checking/', { params }),
+  get: (id) => api.get(`/on-table-checking/${id}`),
+  create: (data) => api.post('/on-table-checking/', data),
+  update: (id, data) => api.put(`/on-table-checking/${id}`, data),
+  delete: (id) => api.delete(`/on-table-checking/${id}`),
+};
+
+// ---- Cloth Inward ----
+export const clothInwardAPI = {
+  list: (params) => api.get('/cloth-inwards/', { params }),
+  get: (id) => api.get(`/cloth-inwards/${id}`),
+  create: (data) => api.post('/cloth-inwards/', data),
+  update: (id, data) => api.put(`/cloth-inwards/${id}`, data),
+  delete: (id) => api.delete(`/cloth-inwards/${id}`),
+};
+
+// ---- Log Reports ----
+export const logReportAPI = {
+  list: (params) => api.get('/log-reports/', { params }),
+  create: (data) => api.post('/log-reports/', data),
+  delete: (id) => api.delete(`/log-reports/${id}`),
+};
+
+// ---- E-Way Bills ----
+export const ewayBillAPI = {
+  list: (params) => api.get('/eway-bills/', { params }),
+  get: (id) => api.get(`/eway-bills/${id}`),
+  create: (data) => api.post('/eway-bills/', data),
+  update: (id, data) => api.put(`/eway-bills/${id}`, data),
+  delete: (id) => api.delete(`/eway-bills/${id}`),
+};
+
 export default api;

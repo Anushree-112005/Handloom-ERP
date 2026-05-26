@@ -1,6 +1,6 @@
 """Aggregated API router — includes all module endpoints."""
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries
+from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills
 
 api_router = APIRouter()
 
@@ -11,10 +11,14 @@ api_router.include_router(buyer_orders.router)
 api_router.include_router(yarn_purchase_orders.router)
 api_router.include_router(dropdowns.router)
 api_router.include_router(employees.router)
-api_router.include_router(design_entries.router)
-api_router.include_router(yarn_inwards.router)
-api_router.include_router(grey_yarn_deliveries.router)
-api_router.include_router(dyed_yarn_receipts.router)
-api_router.include_router(dyed_yarn_deliveries.router)
-api_router.include_router(warp_beam_receipts.router)
-api_router.include_router(warp_deliveries.router)
+api_router.include_router(despatch_planning.router)
+api_router.include_router(sales_invoices.router)
+api_router.include_router(goods_releases.router)
+api_router.include_router(packing_slips.router)
+api_router.include_router(finished_fabrics.router)
+api_router.include_router(cloth_deliveries.router)
+api_router.include_router(on_table_checking.router)
+api_router.include_router(cloth_inwards.router)
+api_router.include_router(log_reports.router)
+api_router.include_router(eway_bills.router)
+

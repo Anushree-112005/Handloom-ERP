@@ -39,5 +39,8 @@ class PackingSlipItem(Base):
     meters = Column(Numeric(10, 2), default=0)
     weight = Column(Numeric(10, 2), default=0)
     grade = Column(String(10))
+    lot_no = Column(String(50))
+    loom_no = Column(String(50))
+    pass_mtr = Column(Numeric(10, 2), default=0)
 
     slip = relationship("PackingSlip", back_populates="items")
