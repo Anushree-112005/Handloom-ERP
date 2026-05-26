@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   Users, Monitor, Layers, Factory, ClipboardCheck, Warehouse, Truck, Receipt, ArrowRight
 } from 'lucide-react';
 
@@ -79,7 +79,7 @@ export default function Overview() {
         {steps.map((step, idx) => (
           <div key={step.num} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
             {/* Step Card */}
-            <div 
+            <div
               onClick={() => navigate(step.path)}
               style={{
                 flex: 1,
@@ -138,11 +138,11 @@ export default function Overview() {
               </div>
 
               {/* Title */}
-              <h4 style={{ 
-                margin: '12px 0 16px 0', 
-                fontSize: '15px', 
-                fontWeight: '700', 
-                color: step.color, 
+              <h4 style={{
+                margin: '12px 0 16px 0',
+                fontSize: '15px',
+                fontWeight: '700',
+                color: step.color,
                 textAlign: 'center',
                 lineHeight: '1.3',
                 height: '40px',
@@ -154,7 +154,7 @@ export default function Overview() {
               </h4>
 
               {/* Illustration / Icon Box */}
-              <div 
+              <div
                 className="icon-box"
                 style={{
                   width: '64px',
@@ -173,29 +173,29 @@ export default function Overview() {
               </div>
 
               {/* Bullet Points */}
-              <ul style={{ 
-                margin: 0, 
-                padding: 0, 
-                listStyleType: 'none', 
+              <ul style={{
+                margin: 0,
+                padding: 0,
+                listStyleType: 'none',
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '6px'
               }}>
                 {step.bullets.map((bullet, bIdx) => (
-                  <li key={bIdx} style={{ 
-                    fontSize: '12px', 
+                  <li key={bIdx} style={{
+                    fontSize: '12px',
                     color: 'var(--text-secondary)',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '6px',
                     lineHeight: '1.2'
                   }}>
-                    <span style={{ 
-                      width: '5px', 
-                      height: '5px', 
-                      borderRadius: '50%', 
-                      background: step.color, 
+                    <span style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      background: step.color,
                       marginTop: '5px',
                       flexShrink: 0
                     }} />
