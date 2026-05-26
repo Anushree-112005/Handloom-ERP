@@ -24,8 +24,13 @@ class TokenResponse(BaseModel):
 
 class UserOut(BaseModel):
     id: int
+<<<<<<< HEAD
     employee_code: str
     name: str
+=======
+    user_id: str
+    user_name: str
+>>>>>>> 048802c6a0e838215281295d658f4e749ede1691
     user_type: str
     department: Optional[str] = None
     designation: Optional[str] = None
@@ -44,7 +49,11 @@ async def get_current_user(
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     uid = payload.get("sub")
+<<<<<<< HEAD
     result = await db.execute(select(Employee).where(Employee.employee_code == uid))
+=======
+    result = await db.execute(select(Employee).where(Employee.user_id == uid))
+>>>>>>> 048802c6a0e838215281295d658f4e749ede1691
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -53,6 +62,7 @@ async def get_current_user(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+<<<<<<< HEAD
     result = await db.execute(select(Employee).where(Employee.employee_code == form.username))
     user = result.scalar_one_or_none()
     if not user or not user.password_hash or not verify_password(form.password, user.password_hash):
@@ -63,6 +73,18 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
     return TokenResponse(
         access_token=token, user_id=user.employee_code,
         user_name=user.name, user_type=user.designation or "Staff",
+=======
+    result = await db.execute(select(Employee).where(Employee.user_id == form.username))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(form.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if user.status != "Enable":
+        raise HTTPException(status_code=403, detail="Account disabled")
+    token = create_access_token({"sub": user.user_id})
+    return TokenResponse(
+        access_token=token, user_id=user.user_id,
+        user_name=user.user_name, user_type=user.user_type,
+>>>>>>> 048802c6a0e838215281295d658f4e749ede1691
     )
 
 

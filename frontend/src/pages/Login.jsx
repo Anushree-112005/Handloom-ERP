@@ -35,8 +35,7 @@ export default function Login() {
       <div className="login-card animate-fade">
         <div className="logo-section">
           <div className="logo-box">DT</div>
-          <h1>Dinesh Textile ERP</h1>
-          <p className="subtitle">Integrated Textile Manufacturing Management</p>
+          <h1>Dinesh Eexport Textile ERP</h1>
         </div>
 
         {error && <div className="login-error">{error}</div>}

@@ -2,28 +2,29 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
-  MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette
+  MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info
 } from 'lucide-react';
 
 const modules = [
-  { section: 'Dashboards' },
+  { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/overview', label: 'Process Flow Overview', icon: PieChart },
+  { path: '/overview', label: 'Overview', icon: PieChart },
 
   { section: 'Masters' },
   { path: '/party-master', label: 'Party Master', icon: Users },
-  { path: '/employee', label: 'Employee Master', icon: Shield },
 
-  { section: 'Orders' },
+  { section: 'Design Management' },
+  { path: '/design-entry', label: 'Design Entry', icon: Palette },
+
+  { section: 'Order Management' },
   { path: '/buyer-order', label: 'Buyer Order', icon: ShoppingCart },
-  { path: '/despatch', label: 'Despatch Planning', icon: MapPin },
+
+  { section: 'Purchase Management' },
+  { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },
 
   { section: 'Yarn Management' },
-  { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },
   { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
   { path: '/yarn/grey-delivery', label: 'Grey Yarn Delivery', icon: Truck },
-
-  { section: 'Dyed Yarn' },
   { path: '/dyed-yarn/received', label: 'Dyed Yarn Received', icon: Palette },
   { path: '/dyed-yarn/delivery', label: 'Dyed Yarn Delivery', icon: Truck },
 
@@ -31,20 +32,36 @@ const modules = [
   { path: '/warp/beam-receipt', label: 'Warp Beam Receipt', icon: Layers },
   { path: '/warp/delivery', label: 'Warp Delivery', icon: Truck },
 
-  { section: 'Cloth & Processing' },
+  { section: 'Processing / Production' },
   { path: '/cloth/inward', label: 'Cloth Inward', icon: Factory },
-  { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
   { path: '/cloth/delivery', label: 'Cloth Delivery', icon: Truck },
+  { path: '/finished-fabric', label: 'Finished Fabric', icon: Scissors },
+
+  { section: 'Quality Control' },
+  { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
+
+  { section: 'Inventory & Warehouse' },
+  { path: '/packing', label: 'Packing Slip', icon: Box },
 
   { section: 'Sales & Dispatch' },
-  { path: '/finished-fabric', label: 'Finished Fabric', icon: Scissors },
-  { path: '/packing', label: 'Packing Slip', icon: Box },
   { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
   { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
+  { path: '/despatch', label: 'Despatch Planning', icon: MapPin },
+
+  { section: 'Export & Logistics' },
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
-  { section: 'Reports' },
+  { section: 'Accounts & Finance' },
+
+  { section: 'Reports & MIS' },
   { path: '/log-report', label: 'Log Report', icon: Activity },
+
+  { section: 'Administration & Security' },
+  { path: '/employee', label: 'Employee Master', icon: Shield },
+  { path: '/user-management', label: 'User Management', icon: Users },
+
+  { section: 'System' },
+  { path: '/about', label: 'About', icon: Info },
 ];
 
 export default function Sidebar() {

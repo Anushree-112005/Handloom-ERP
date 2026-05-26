@@ -5,12 +5,11 @@ import Login from './pages/Login';
 import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import PartyMaster from './pages/party_master/PartyMaster';
-import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
-  FileText, Shield, Activity, ArrowRightLeft
+  FileText, Shield, Activity, ArrowRightLeft, Users, Info
 } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
@@ -31,6 +30,22 @@ export default function App() {
         <Route path="party-master" element={<PartyMaster />} />
 
         <Route path="buyer-order" element={<BuyerOrder />} />
+
+        <Route path="design-entry" element={
+          <ModulePage title="Design Entry" description="Create and manage fabric designs and specifications"
+            icon={Palette} color="#10b981"
+            fields={[
+              {name:'DS Ref No',type:'Auto',desc:'Auto-generated reference number'},
+              {name:'DS Date',type:'Date',desc:'Design entry date'},
+              {name:'Design No',type:'Text',desc:'Internal design number'},
+              {name:'Color',type:'Dropdown',desc:'Standard color list'},
+              {name:'Buyer Name',type:'Dropdown',desc:'Buyer name'},
+              {name:'Fabric',type:'Dropdown',desc:'Fabric composition'},
+              {name:'Weaving',type:'Dropdown',desc:'Weaving pattern'},
+              {name:'Design Type',type:'Dropdown',desc:'Normal, Special, Sample'},
+            ]}
+          />
+        } />
 
         <Route path="yarn/purchase-order" element={
           <ModulePage title="Yarn Purchase Order" description="Generate purchase orders for yarn procurement"
@@ -158,7 +173,31 @@ export default function App() {
             icon={FileText} color="#22c55e" fields={[]} />
         } />
 
-        <Route path="employee" element={<EmployeeMaster />} />
+        <Route path="employee" element={
+          <ModulePage title="Employee Master" description="User accounts, roles, and module-level permissions"
+            icon={Shield} color="#6366f1"
+            fields={[
+              {name:'User ID',type:'Text',desc:'Unique login ID'},
+              {name:'User Name',type:'Text',desc:'Employee full name'},
+              {name:'User Type',type:'Dropdown',desc:'Admin, Manager, Staff, Operator'},
+              {name:'Department',type:'Dropdown',desc:'Accounts, Production, Stores'},
+              {name:'Module Access',type:'Checkboxes',desc:'Per-module permission toggles'},
+            ]}
+          />
+        } />
+
+        <Route path="user-management" element={
+          <ModulePage title="User Management" description="Create and manage user credentials, profiles, and portal access"
+            icon={Users} color="#6366f1"
+            fields={[
+              {name:'User ID',type:'Text',desc:'Unique login ID'},
+              {name:'User Name',type:'Text',desc:'Employee full name'},
+              {name:'User Type',type:'Dropdown',desc:'Admin, Manager, Staff, Operator'},
+              {name:'Department',type:'Dropdown',desc:'Accounts, Production, Stores'},
+              {name:'Module Access',type:'Checkboxes',desc:'Per-module permission toggles'},
+            ]}
+          />
+        } />
 
         <Route path="log-report" element={
           <ModulePage title="Log Report" description="System audit trail and activity monitoring"
@@ -171,6 +210,23 @@ export default function App() {
               {name:'User ID',type:'Dropdown',desc:'Filter by user'},
             ]}
           />
+        } />
+
+        <Route path="about" element={
+          <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Info size={24} style={{ color: '#2563eb' }} /> About Dinesh Textile ERP
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '20px' }}>
+              Dinesh Textile ERP is a high-performance Enterprise Resource Planning platform tailored for textile manufacturing, procurement, inventory tracking, quality inspection, and sales/export operations.
+            </p>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
+              It features real-time data entry pipelines, process visualization, automated GST & E-Way billing modules, and comprehensive logging and audit systems.
+            </p>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', fontSize: '12px', color: 'var(--text-muted)' }}>
+              Version 1.0.0 • Developed for Dinesh Export Textile
+            </div>
+          </div>
         } />
       </Route>
     </Routes>
