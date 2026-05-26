@@ -18,6 +18,17 @@ import OnTableChecking from './pages/cloth/OnTableChecking';
 import ClothInward from './pages/cloth/ClothInward';
 import LogReport from './pages/log_report/LogReport';
 import EwayBill from './pages/eway_bill/EwayBill';
+
+// Core Yarn & Warping Imports
+import DesignEntry from './pages/design_management/DesignEntry';
+import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
+import YarnInward from './pages/yarn/YarnInward';
+import GreyYarnDelivery from './pages/yarn/GreyYarnDelivery';
+import DyedYarnReceived from './pages/yarn/DyedYarnReceived';
+import DyedYarnDelivery from './pages/yarn/DyedYarnDelivery';
+import WarpBeamReceipt from './pages/warp/WarpBeamReceipt';
+import WarpDelivery from './pages/warp/WarpDelivery';
+
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
