@@ -45,5 +45,7 @@ class GoodsReleaseItem(Base):
     meters = Column(Numeric(10, 2), default=0)
     pieces = Column(Integer, default=0)
     weight = Column(Numeric(10, 2), default=0)
+    rate = Column(Numeric(10, 2), default=0)
+    amount = Column(Numeric(12, 2), default=0)
 
     release = relationship("GoodsRelease", back_populates="items")
