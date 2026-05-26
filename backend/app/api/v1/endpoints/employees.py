@@ -67,8 +67,8 @@ class EmployeeBase(BaseModel):
     # User Management & Access Control
     user_type: Optional[str] = "Staff"
     web_access: Optional[str] = "Allow"
-    company_depl: bool = False
-    company_mtm: bool = False
+    company_depl: Optional[bool] = False
+    company_mtm: Optional[bool] = False
     module_permissions: Optional[dict] = {}
     menu_permissions: Optional[dict] = {}
     email: Optional[str] = None
