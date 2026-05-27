@@ -37,12 +37,12 @@ export default function PartyMaster() {
   });
 
   const initialForm = {
-    party_type: 'Sales Party', customer_grade: 'A', status: 'Active',
+    party_type: '', customer_grade: '', status: 'Active',
     company_name: '', party_group: '', address: '', state_code: '',
     pincode: '', city: '', phone: '', sales_region: '', country: '',
-    currency: 'INR', contact_person: '', email: '', tally_no: '',
+    currency: '', contact_person: '', email: '', tally_no: '',
     address_sno: '1', tcs_applicable: 'No', tin_no: '', cst_no: '',
-    gstin: '', gst_type: 'With GST', pan_no: '', tds: 'None', tds_percent: 0,
+    gstin: '', gst_type: '', pan_no: '', tds: '', tds_percent: 0,
     pc_id: '', merchandiser: '', manager: '', bill_credit_days: 30,
     credit_limit: 0, account_incharge: '', deliver_party_name: '',
     payment_terms: '', transport_name: '', delivery_address: '', agent_name: ''
@@ -76,15 +76,7 @@ export default function PartyMaster() {
       setFormData(party);
       setEditingId(party.id);
     } else {
-      setFormData({
-        ...initialForm,
-        party_group: options.masters?.party_group?.[0] || '',
-        state_code: options.masters?.state_code?.[0] || '',
-        city: options.masters?.city?.[0] || '',
-        sales_region: options.masters?.sales_region?.[0] || '',
-        country: options.masters?.country?.[0] || '',
-        payment_terms: options.masters?.payment_terms?.[0] || '',
-      });
+      setFormData(initialForm);
       setEditingId(null);
     }
     setIsReadOnly(readOnly);
@@ -270,22 +262,48 @@ export default function PartyMaster() {
                 <div className="form-group">
                   <label>Party Type *</label>
                   <select className="form-control" name="party_type" value={formData.party_type} onChange={handleChange} required>
-                    <option>Sales Party</option><option>Purchase Party</option><option>Logistics</option><option>Agent</option>
+                    <option value="">-- Select Party Type --</option>
+                    <option>Sales Party</option>
+                    <option>Logistics</option>
+                    <option>Processor</option>
+                    <option>Yarn Dyeing</option>
+                    <option>Yarn Coverter</option>
+                    <option>Exports party</option>
+                    <option>Own Shed</option>
+                    <option>Washing/Finishing</option>
+                    <option>Purchase Party</option>
+                    <option>Agent</option>
+                    <option>Weaving vendor</option>
+                    <option>Bit Loom Weaver</option>
+                    <option>Doubling</option>
+                    <option>Weaving Unit</option>
+                    <option>Testing Lab</option>
+                    <option>Spares Supplier</option>
+                    <option>Delivery Party</option>
+                    <option>Postage/Courier</option>
+                    <option>Warping/Sizing</option>
+                    <option>General</option>
+                    <option>Chemical Supplier</option>
+                    <option>Printing</option>
+                    <option>Fabric Dyeing</option>
+                    <option>JobWorker</option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Business Name *</label>
-                  <input className="form-control" name="company_name" value={formData.company_name} onChange={handleChange} required placeholder="Full legal/trade name" />
+                  <input className="form-control" name="company_name" value={formData.company_name} onChange={handleChange} required />
                 </div>
                 <div className="form-group">
                   <label>Party Group</label>
                   <select className="form-control" name="party_group" value={formData.party_group} onChange={handleChange}>
+                    <option value="">-- Select Party Group --</option>
                     {renderOptions('party_group')}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Customer Grade</label>
                   <select className="form-control" name="customer_grade" value={formData.customer_grade} onChange={handleChange}>
+                    <option value="">-- Select Customer Grade --</option>
                     {renderOptions('customer_grade')}
                   </select>
                 </div>
@@ -319,12 +337,14 @@ export default function PartyMaster() {
                 <div className="form-group">
                   <label>State / Code</label>
                   <select className="form-control" name="state_code" value={formData.state_code} onChange={handleChange}>
+                    <option value="">-- Select State --</option>
                     {renderOptions('state_code')}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>City</label>
                   <select className="form-control" name="city" value={formData.city} onChange={handleChange}>
+                    <option value="">-- Select City --</option>
                     {renderOptions('city')}
                   </select>
                 </div>
@@ -335,12 +355,14 @@ export default function PartyMaster() {
                 <div className="form-group">
                   <label>Sales Region</label>
                   <select className="form-control" name="sales_region" value={formData.sales_region} onChange={handleChange}>
+                    <option value="">-- Select Zone --</option>
                     {renderOptions('sales_region')}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Country</label>
                   <select className="form-control" name="country" value={formData.country} onChange={handleChange}>
+                    <option value="">-- Select Country --</option>
                     {renderOptions('country')}
                   </select>
                 </div>
@@ -351,11 +373,12 @@ export default function PartyMaster() {
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>GSTIN</label>
-                  <input className="form-control" name="gstin" value={formData.gstin} onChange={handleChange} placeholder="15-digit GST" />
+                  <input className="form-control" name="gstin" value={formData.gstin} onChange={handleChange} />
                 </div>
                 <div className="form-group">
                   <label>GST Type</label>
                   <select className="form-control" name="gst_type" value={formData.gst_type} onChange={handleChange}>
+                    <option value="">-- Select GST Type --</option>
                     {renderOptions('gst_type')}
                   </select>
                 </div>
@@ -370,6 +393,7 @@ export default function PartyMaster() {
                 <div className="form-group">
                   <label>TDS</label>
                   <select className="form-control" name="tds" value={formData.tds} onChange={handleChange}>
+                    <option value="">-- Select TDS --</option>
                     {renderOptions('tds')}
                   </select>
                 </div>
@@ -409,6 +433,7 @@ export default function PartyMaster() {
                 <div className="form-group">
                   <label>Currency</label>
                   <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
+                    <option value="">-- Select Currency --</option>
                     {renderOptions('currency')}
                   </select>
                 </div>
@@ -451,6 +476,7 @@ export default function PartyMaster() {
                 <div className="form-group">
                   <label>Payment Terms</label>
                   <select className="form-control" name="payment_terms" value={formData.payment_terms} onChange={handleChange}>
+                    <option value="">-- Select Payment Terms --</option>
                     {renderOptions('payment_terms')}
                   </select>
                 </div>
@@ -490,7 +516,7 @@ export default function PartyMaster() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage all customers, suppliers, agents and transporters.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 
           {/* Export Dropdown */}
           <div style={{ position: 'relative' }}>
@@ -613,9 +639,29 @@ export default function PartyMaster() {
           <select className="form-control" style={{ width: 150, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
             <option>All Types</option>
             <option>Sales Party</option>
-            <option>Purchase Party</option>
             <option>Logistics</option>
+            <option>Processor</option>
+            <option>Yarn Dyeing</option>
+            <option>Yarn Coverter</option>
+            <option>Exports party</option>
+            <option>Own Shed</option>
+            <option>Washing/Finishing</option>
+            <option>Purchase Party</option>
             <option>Agent</option>
+            <option>Weaving vendor</option>
+            <option>Bit Loom Weaver</option>
+            <option>Doubling</option>
+            <option>Weaving Unit</option>
+            <option>Testing Lab</option>
+            <option>Spares Supplier</option>
+            <option>Delivery Party</option>
+            <option>Postage/Courier</option>
+            <option>Warping/Sizing</option>
+            <option>General</option>
+            <option>Chemical Supplier</option>
+            <option>Printing</option>
+            <option>Fabric Dyeing</option>
+            <option>JobWorker</option>
           </select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

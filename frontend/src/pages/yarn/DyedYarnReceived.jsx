@@ -297,7 +297,7 @@ export default function DyedYarnReceived() {
               
               {activeTab === 'general' && (
                 <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Inv No</label><input className="form-control" name="inv_no" value={form.inv_no} onChange={handleChange} placeholder="Auto if empty" disabled={editingId != null} /></div>
+                  <div className="form-group"><label>Inv No</label><input className="form-control" name="inv_no" value={form.inv_no} onChange={handleChange} disabled={editingId != null} /></div>
                   <div className="form-group"><label>Inv Date</label><input type="date" className="form-control" name="inv_date" value={form.inv_date} onChange={handleChange} /></div>
                   <div className="form-group"><label>Received Type</label>
                     <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>

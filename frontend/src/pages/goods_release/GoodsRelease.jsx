@@ -552,7 +552,7 @@ export default function GoodsRelease() {
                 </div>
                 <div className="form-group">
                   <label>Prepar Time</label>
-                  <input className="form-control" name="prepar_time" value={formData.prepar_time} onChange={handleInputChange} placeholder="e.g. 12:30 PM" />
+                  <input className="form-control" name="prepar_time" value={formData.prepar_time} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Approval Status</label>
@@ -676,8 +676,7 @@ export default function GoodsRelease() {
                             type="text" 
                             className="form-control" 
                             value={item.design_no} 
-                            onChange={e => handleItemChange(index, 'design_no', e.target.value)} 
-                            placeholder="Design No"
+                            onChange={e => handleItemChange(index, 'design_no', e.target.value)}
                             required
                           />
                         </td>
@@ -686,8 +685,7 @@ export default function GoodsRelease() {
                             type="text" 
                             className="form-control" 
                             value={item.color} 
-                            onChange={e => handleItemChange(index, 'color', e.target.value)} 
-                            placeholder="Color"
+                            onChange={e => handleItemChange(index, 'color', e.target.value)}
                           />
                         </td>
                         <td>
@@ -695,8 +693,7 @@ export default function GoodsRelease() {
                             type="text" 
                             className="form-control" 
                             value={item.bale_no} 
-                            onChange={e => handleItemChange(index, 'bale_no', e.target.value)} 
-                            placeholder="Bale Nos"
+                            onChange={e => handleItemChange(index, 'bale_no', e.target.value)}
                           />
                         </td>
                         <td>
@@ -704,8 +701,7 @@ export default function GoodsRelease() {
                             type="text" 
                             className="form-control" 
                             value={item.packing_slip_no} 
-                            onChange={e => handleItemChange(index, 'packing_slip_no', e.target.value)} 
-                            placeholder="Packing Slip No"
+                            onChange={e => handleItemChange(index, 'packing_slip_no', e.target.value)}
                           />
                         </td>
                         <td>
@@ -713,8 +709,7 @@ export default function GoodsRelease() {
                             type="number" 
                             className="form-control" 
                             value={item.meters} 
-                            onChange={e => handleItemChange(index, 'meters', e.target.value)} 
-                            placeholder="Meters"
+                            onChange={e => handleItemChange(index, 'meters', e.target.value)}
                             required
                           />
                         </td>
@@ -723,8 +718,7 @@ export default function GoodsRelease() {
                             type="number" 
                             className="form-control" 
                             value={item.rate} 
-                            onChange={e => handleItemChange(index, 'rate', e.target.value)} 
-                            placeholder="Rate"
+                            onChange={e => handleItemChange(index, 'rate', e.target.value)}
                             required
                           />
                         </td>
@@ -873,14 +867,14 @@ export default function GoodsRelease() {
     <div className="animate-fade">
       
       {/* Upper header action row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <ClipboardList size={24} color="var(--primary)" /> Goods Release Advice (GRA)
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage goods release advice forms and coordinate despatching.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 
           {/* Export Menu */}
           <div style={{ position: 'relative' }}>

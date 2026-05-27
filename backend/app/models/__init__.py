@@ -17,3 +17,5 @@ from app.models.eway_bill import EwayBill, EwayBillItem
 from app.models.log_report import LogReport
 from app.models.design_entry import DesignEntry
 from app.models.general_master import GeneralMaster
+from app.models.company_setting import CompanySetting
+

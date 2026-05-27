@@ -30,16 +30,16 @@ export default function BuyerOrder() {
   const initialForm = {
     order_date: new Date().toISOString().split('T')[0],
     party_id: '', party_name: '', billing_address: '', agent_name: '',
-    order_type: 'Regular', certified_type: '', buyer_name: '',
+    order_type: '', certified_type: '', buyer_name: '',
     state: '', state_code: '', gst_no: '', pan_no: '',
-    commission_type: 'Percentage', commission_pct: 0, order_taken_by: '',
-    nomination_type: '', regular_special: 'Regular',
+    commission_type: '', commission_pct: 0, order_taken_by: '',
+    nomination_type: '', regular_special: '',
 
-    outstanding: 0, overdue: 0, due_30_days: 0, status: 'Active',
+    outstanding: 0, overdue: 0, due_30_days: 0, status: '',
     status_remark: '', max_crd_days: 0, po_credit: 0, po_max_crd: 0, bill_credit: 0,
-    payment_detail: '', payment_terms: 'Net 30', payment_file_path: '',
+    payment_detail: '', payment_terms: '', payment_file_path: '',
 
-    transport_mode: 'Road', transport_name: '', party_terms: 'FOB',
+    transport_mode: '', transport_name: '', party_terms: '',
     lr_type: '', lr_terms: '', party_comp_date: '', exfactory_date: '',
     delivery_starting: '', delivery_at: '', desp_mtr_min: 0, desp_mtr_max: 0,
     delivery_place: '', delivery_address: '',
@@ -270,16 +270,18 @@ export default function BuyerOrder() {
     <div className="animate-fade">
       {!showForm ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <ShoppingCart size={24} color="var(--primary)" /> Buyer Orders
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage all buyer orders, payments, and logistics.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-              <Plus size={16} /> New Order
-            </button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+                <Plus size={16} /> New Order
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
@@ -473,12 +475,14 @@ export default function BuyerOrder() {
                   <div className="form-group">
                     <label>Order Type</label>
                     <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
+                      <option value="">-- Select Order Type --</option>
                       <option>Regular</option><option>Export</option><option>Special</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label>Certified Type</label>
                     <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
+                      <option value="">-- Select Certified Type --</option>
                       <option value="">None</option><option>ISO</option><option>Organic</option><option>Fair Trade</option>
                     </select>
                   </div>
@@ -493,6 +497,7 @@ export default function BuyerOrder() {
                   <div className="form-group">
                     <label>Commission Type</label>
                     <select className="form-control" name="commission_type" value={form.commission_type} onChange={handleChange}>
+                      <option value="">-- Select Commission Type --</option>
                       <option>Percentage</option><option>Fixed</option>
                     </select>
                   </div>
@@ -514,6 +519,7 @@ export default function BuyerOrder() {
                   <div className="form-group">
                     <label>Regular / Special</label>
                     <select className="form-control" name="regular_special" value={form.regular_special} onChange={handleChange}>
+                      <option value="">-- Select --</option>
                       <option>Regular</option><option>Special</option>
                     </select>
                   </div>
@@ -530,6 +536,7 @@ export default function BuyerOrder() {
                   <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
                   <div className="form-group"><label>Status</label>
                     <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                      <option value="">-- Select Status --</option>
                       <option>Active</option><option>Inactive</option><option>Settled</option>
                     </select>
                   </div>
@@ -539,6 +546,7 @@ export default function BuyerOrder() {
                   <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
                   <div className="form-group"><label>Payment Terms</label>
                     <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
+                      <option value="">-- Select Payment Terms --</option>
                       <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
                     </select>
                   </div>
@@ -555,12 +563,14 @@ export default function BuyerOrder() {
                 <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                   <div className="form-group"><label>Transport Mode</label>
                     <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
+                      <option value="">-- Select Transport Mode --</option>
                       <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
                     </select>
                   </div>
                   <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
                   <div className="form-group"><label>Party Terms</label>
                     <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
+                      <option value="">-- Select Party Terms --</option>
                       <option>FOB</option><option>CIF</option><option>Ex-Works</option>
                     </select>
                   </div>
@@ -596,8 +606,8 @@ export default function BuyerOrder() {
             {activeTab === 'instructions' && (
               <div className="animate-fade">
                 <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                  <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} placeholder="comma separated" /></div>
-                  <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} placeholder="comma separated" /></div>
+                  <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} /></div>
                   <div className="form-group"><label>Process Instruction</label><textarea className="form-control" name="process_instruction" value={form.process_instruction} onChange={handleChange} /></div>
                   <div className="form-group"><label>Yarn Instruction</label><textarea className="form-control" name="yarn_instruction" value={form.yarn_instruction} onChange={handleChange} /></div>
                   <div className="form-group"><label>Production Instruction</label><textarea className="form-control" name="prod_instruction" value={form.prod_instruction} onChange={handleChange} /></div>
