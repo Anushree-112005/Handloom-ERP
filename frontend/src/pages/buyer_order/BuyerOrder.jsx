@@ -118,7 +118,16 @@ export default function BuyerOrder() {
   const handleOpenForm = async (order, readOnly = false) => {
     try {
       const { data } = await buyerOrderAPI.get(order.id);
-      const editForm = { ...initialForm, ...data };
+      
+      const sanitize = (obj) => {
+        const res = { ...obj };
+        for (const k in res) {
+          if (res[k] === null) res[k] = '';
+        }
+        return res;
+      };
+
+      const editForm = { ...initialForm, ...sanitize(data) };
       
       if (editForm.order_date) editForm.order_date = editForm.order_date.substring(0, 10);
       if (editForm.party_comp_date) editForm.party_comp_date = editForm.party_comp_date.substring(0, 10);
@@ -127,8 +136,9 @@ export default function BuyerOrder() {
       
       if (editForm.items) {
         editForm.items = editForm.items.map(i => {
-          if (i.po_date) i.po_date = i.po_date.substring(0, 10);
-          return i;
+          const s = sanitize(i);
+          if (s.po_date) s.po_date = s.po_date.substring(0, 10);
+          return s;
         });
       }
 

@@ -100,9 +100,9 @@ async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depend
 
 @router.post("/", response_model=YarnPurchaseOrderOut, status_code=201)
 async def create_order(data: YarnPurchaseOrderCreate, db: AsyncSession = Depends(get_db)):
-    count_r = await db.execute(select(func.count(YarnPurchaseOrder.id)))
-    count = count_r.scalar() or 0
-    po_no = f"YPO-{count + 1:05d}"
+    max_id_q = await db.execute(select(func.max(YarnPurchaseOrder.id)))
+    max_id = max_id_q.scalar() or 0
+    po_no = f"YPO-{max_id + 1:05d}"
 
     counts_data = data.count_details or []
     indents_data = data.indent_details or []

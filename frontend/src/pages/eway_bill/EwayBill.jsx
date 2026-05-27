@@ -97,6 +97,9 @@ export default function EwayBill() {
       if (matchingParty) {
         handleBillToChange(matchingParty.id);
         handleDispatchToChange(matchingParty.id);
+      } else {
+        setBillToName(invoice.party_name || '');
+        setDispatchToName(invoice.party_name || '');
       }
       
       // Load items from invoice
@@ -624,18 +627,27 @@ export default function EwayBill() {
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Billing To</h4>
                 
                 <div className="form-group">
-                  <label>Bill To Party</label>
+                  <label>Bill To Party (Select to auto-fill)</label>
                   <select 
                     className="form-control" 
                     value={billToPartyId} 
                     onChange={e => handleBillToChange(e.target.value)}
                     disabled={!isNew}
+                    style={{ marginBottom: 8 }}
                   >
                     <option value="">- Select Billing Party -</option>
                     {parties.map(p => (
                       <option key={p.id} value={p.id}>{p.party_name}</option>
                     ))}
                   </select>
+                  <input 
+                    className="form-control" 
+                    type="text" 
+                    placeholder="Or enter name manually..."
+                    value={billToName} 
+                    onChange={e => setBillToName(e.target.value)}
+                    disabled={!isNew}
+                  />
                 </div>
                 
                 <div className="form-group">
@@ -701,18 +713,27 @@ export default function EwayBill() {
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Dispatch To</h4>
                 
                 <div className="form-group">
-                  <label>Goods To Party</label>
+                  <label>Goods To Party (Select to auto-fill)</label>
                   <select 
                     className="form-control" 
                     value={dispatchToPartyId} 
                     onChange={e => handleDispatchToChange(e.target.value)}
                     disabled={!isNew}
+                    style={{ marginBottom: 8 }}
                   >
                     <option value="">- Select Delivery Party -</option>
                     {parties.map(p => (
                       <option key={p.id} value={p.id}>{p.party_name}</option>
                     ))}
                   </select>
+                  <input 
+                    className="form-control" 
+                    type="text" 
+                    placeholder="Or enter name manually..."
+                    value={dispatchToName} 
+                    onChange={e => setDispatchToName(e.target.value)}
+                    disabled={!isNew}
+                  />
                 </div>
                 
                 <div className="form-group">
