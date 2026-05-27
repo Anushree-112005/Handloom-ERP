@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Columns, ArrowDownToLine, Layers } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Columns, ArrowDownToLine, Layers, Download, ChevronDown, FileText } from 'lucide-react';
 import { warpBeamReceiptAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function WarpBeamReceipt() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -154,6 +158,39 @@ export default function WarpBeamReceipt() {
     return matchesSearch && matchesType && matchesDate;
   });
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Warp Beam Receipts", 14, 15);
+    const headers = [["Ref No", "Rcvd Date", "Party Name", "Type", "Status"]];
+    const rows = filteredReceipts.map(r => [
+      r.ref_no || '-',
+      r.rcvd_date || '-',
+      r.party_name || '-',
+      r.rcvd_type || '-',
+      r.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Warp_Beam_Receipts_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredReceipts.map(r => ({
+      "Ref No": r.ref_no,
+      "Rcvd Date": r.rcvd_date,
+      "Rcvd Type": r.rcvd_type,
+      "Beam Type": r.beam_type,
+      "Party Name": r.party_name,
+      "Design No": r.design_no,
+      "Order No": r.order_no,
+      "Warp Meters": r.warp_meters,
+      "Status": r.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Warp Beam Receipts");
+    XLSX.writeFile(wb, `Warp_Beam_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="animate-fade">
       {!showForm ? (
@@ -165,9 +202,41 @@ export default function WarpBeamReceipt() {
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage sizing deliveries and warp beam receipts.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-              <Plus size={18} /> New Receipt
-            </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Download size={16} /> Export <ChevronDown size={14} />
+                </button>
+
+                {showExportMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <FileText size={16} color="#ef4444" /> PDF Report
+                    </button>
+                    <button
+                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Download size={16} color="#10b981" /> Excel Sheet
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+                <Plus size={18} /> New Receipt
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>

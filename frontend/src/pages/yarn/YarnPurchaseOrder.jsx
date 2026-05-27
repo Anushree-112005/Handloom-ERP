@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown } from 'lucide-react';
 import { yarnPurchaseOrderAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function YarnPurchaseOrder() {
   const [editingId, setEditingId] = useState(null);
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -177,6 +181,38 @@ export default function YarnPurchaseOrder() {
     if (type === 'Total') setStatusFilter('All Status');
     if (type === 'Active') setStatusFilter('Active');
     if (type === 'Closed') setStatusFilter('Closed');
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Yarn Purchase Orders", 14, 15);
+    const headers = [["PO No", "Date", "Supplier", "Amount", "Status"]];
+    const rows = filteredOrders.map(o => [
+      o.po_number || '-',
+      o.po_date || '-',
+      o.supplier_name || o.org_name || '-',
+      `Rs. ${o.net_amount?.toFixed(2) || '0.00'}`,
+      o.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Yarn_POs_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredOrders.map(o => ({
+      "PO No": o.po_number,
+      "Date": o.po_date,
+      "Internal PO No": o.internal_po_no,
+      "Org Name": o.org_name,
+      "Supplier": o.supplier_name,
+      "Agent Name": o.agent_name,
+      "Amount": o.net_amount,
+      "Status": o.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Yarn POs");
+    XLSX.writeFile(wb, `Yarn_POs_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const tabs = [
