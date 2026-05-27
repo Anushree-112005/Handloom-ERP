@@ -2,8 +2,14 @@
 Dinesh Textile ERP — FastAPI application entry point.
 """
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from app.core.config import settings
 from app.core.database import engine, Base, AsyncSessionLocal
@@ -55,6 +61,21 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    error_details = exc.errors()
+    body = await request.body()
+    logger.error(f"422 Validation Error: {error_details}")
+    logger.error(f"Body: {body}")
+    with open("422_errors.log", "a") as f:
+        f.write(f"Validation Error: {error_details}\nBody: {body}\n\n")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": error_details, "body": str(exc.body)},
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
