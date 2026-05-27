@@ -293,14 +293,14 @@ export default function ClothInward() {
   return (
     <div className="animate-fade">
       {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <Factory size={24} color="#10b981" /> Cloth Vendor / Purchase Inward Entry
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Log fabric receipts from weaving mills and vendors with complete loom and sizing specs.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {view === 'list' && (
             <div style={{ position: 'relative' }}>
               <button
@@ -626,7 +626,7 @@ export default function ClothInward() {
 
                     <div className="form-group">
                       <label>Vendor DC No *</label>
-                      <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleHeaderChange} required placeholder="DC number reference" />
+                      <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleHeaderChange} required />
                     </div>
 
                     <div className="form-group">
@@ -677,22 +677,22 @@ export default function ClothInward() {
 
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Const / Fabric Type</label>
-                      <input className="form-control" name="const_fabric_type" value={formData.const_fabric_type} onChange={handleHeaderChange} placeholder="e.g. 40s Cotton Sateen Warp/Weft" />
+                      <input className="form-control" name="const_fabric_type" value={formData.const_fabric_type} onChange={handleHeaderChange} />
                     </div>
 
                     <div className="form-group">
                       <label>Reed</label>
-                      <input className="form-control" name="reed" value={formData.reed} onChange={handleHeaderChange} placeholder="e.g. 84" />
+                      <input className="form-control" name="reed" value={formData.reed} onChange={handleHeaderChange} />
                     </div>
 
                     <div className="form-group">
                       <label>Pick</label>
-                      <input className="form-control" name="pick" value={formData.pick} onChange={handleHeaderChange} placeholder="e.g. 72" />
+                      <input className="form-control" name="pick" value={formData.pick} onChange={handleHeaderChange} />
                     </div>
 
                     <div className="form-group">
                       <label>Width</label>
-                      <input className="form-control" name="width" value={formData.width} onChange={handleHeaderChange} placeholder="e.g. 58 inches" />
+                      <input className="form-control" name="width" value={formData.width} onChange={handleHeaderChange} />
                     </div>
 
                     <div className="form-group">
@@ -766,7 +766,7 @@ export default function ClothInward() {
 
                     <div className="form-group">
                       <label>Sizing (Szt) No</label>
-                      <input className="form-control" name="szt_no" value={formData.szt_no} onChange={handleHeaderChange} placeholder="e.g. S-90" />
+                      <input className="form-control" name="szt_no" value={formData.szt_no} onChange={handleHeaderChange} />
                     </div>
 
                     <div className="form-group">
@@ -786,7 +786,7 @@ export default function ClothInward() {
 
                   <div className="form-group" style={{ marginTop: 12 }}>
                     <label>Remarks</label>
-                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} placeholder="Inward details, defect checks, packing note..." />
+                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
                   </div>
 
                   {/* PROCESS SUBSECTION FROM PHOTO */}
@@ -805,7 +805,7 @@ export default function ClothInward() {
                     </div>
                     <div className="form-group">
                       <label>Process Remarks</label>
-                      <input className="form-control" name="process_remarks" value={formData.process_remarks} onChange={handleHeaderChange} placeholder="Dye recipe or mill parameters" />
+                      <input className="form-control" name="process_remarks" value={formData.process_remarks} onChange={handleHeaderChange} />
                     </div>
                   </div>
 
@@ -855,7 +855,6 @@ export default function ClothInward() {
                                   value={item.piece_no}
                                   onChange={e => handleGridCellChange(index, 'piece_no', e.target.value)}
                                   required
-                                  placeholder="Piece #"
                                 />
                               </td>
                               <td>
@@ -874,7 +873,6 @@ export default function ClothInward() {
                                   style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                                   value={item.vloom}
                                   onChange={e => handleGridCellChange(index, 'vloom', e.target.value)}
-                                  placeholder="Vendor Loom"
                                 />
                               </td>
                               <td>
@@ -883,7 +881,6 @@ export default function ClothInward() {
                                   style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                                   value={item.vpc_no}
                                   onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
-                                  placeholder="Vendor piece #"
                                 />
                               </td>
                               <td>

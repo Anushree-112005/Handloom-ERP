@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dinesh_textile_erp"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:bala2021@localhost:5432/dinesh_textile_erp"
 
     # JWT Auth
     SECRET_KEY: str = "dinesh_textile_erp_secret_change_in_production"

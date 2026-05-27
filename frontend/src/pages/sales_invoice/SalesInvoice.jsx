@@ -802,8 +802,7 @@ export default function SalesInvoice() {
                             type="text" 
                             className="form-control" 
                             value={item.design_no} 
-                            onChange={e => handleItemChange(index, 'design_no', e.target.value)} 
-                            placeholder="Design No"
+                            onChange={e => handleItemChange(index, 'design_no', e.target.value)}
                             required
                           />
                         </td>
@@ -812,8 +811,7 @@ export default function SalesInvoice() {
                             type="text" 
                             className="form-control" 
                             value={item.hsn_code} 
-                            onChange={e => handleItemChange(index, 'hsn_code', e.target.value)} 
-                            placeholder="HSN"
+                            onChange={e => handleItemChange(index, 'hsn_code', e.target.value)}
                           />
                         </td>
                         <td>
@@ -821,8 +819,7 @@ export default function SalesInvoice() {
                             type="text" 
                             className="form-control" 
                             value={item.description} 
-                            onChange={e => handleItemChange(index, 'description', e.target.value)} 
-                            placeholder="Description"
+                            onChange={e => handleItemChange(index, 'description', e.target.value)}
                           />
                         </td>
                         <td>
@@ -830,8 +827,7 @@ export default function SalesInvoice() {
                             type="number" 
                             className="form-control" 
                             value={item.total_bale} 
-                            onChange={e => handleItemChange(index, 'total_bale', e.target.value)} 
-                            placeholder="Bales"
+                            onChange={e => handleItemChange(index, 'total_bale', e.target.value)}
                           />
                         </td>
                         <td>
@@ -851,8 +847,7 @@ export default function SalesInvoice() {
                             type="number" 
                             className="form-control" 
                             value={item.qty} 
-                            onChange={e => handleItemChange(index, 'qty', e.target.value)} 
-                            placeholder="Qty"
+                            onChange={e => handleItemChange(index, 'qty', e.target.value)}
                             required
                           />
                         </td>
@@ -861,8 +856,7 @@ export default function SalesInvoice() {
                             type="number" 
                             className="form-control" 
                             value={item.rate} 
-                            onChange={e => handleItemChange(index, 'rate', e.target.value)} 
-                            placeholder="Rate"
+                            onChange={e => handleItemChange(index, 'rate', e.target.value)}
                             required
                           />
                         </td>
@@ -914,7 +908,7 @@ export default function SalesInvoice() {
                       <option value="Insurance">Insurance</option>
                       <option value="Packaging">Packaging</option>
                     </select>
-                    <input type="number" className="form-control" name="other_char_value_1" value={formData.other_char_value_1} onChange={handleInputChange} placeholder="Value" />
+                    <input type="number" className="form-control" name="other_char_value_1" value={formData.other_char_value_1} onChange={handleInputChange} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
@@ -924,7 +918,7 @@ export default function SalesInvoice() {
                       <option value="Insurance">Insurance</option>
                       <option value="Packaging">Packaging</option>
                     </select>
-                    <input type="number" className="form-control" name="other_char_value_2" value={formData.other_char_value_2} onChange={handleInputChange} placeholder="Value" />
+                    <input type="number" className="form-control" name="other_char_value_2" value={formData.other_char_value_2} onChange={handleInputChange} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
@@ -934,7 +928,7 @@ export default function SalesInvoice() {
                       <option value="Insurance">Insurance</option>
                       <option value="Packaging">Packaging</option>
                     </select>
-                    <input type="number" className="form-control" name="other_char_value_3" value={formData.other_char_value_3} onChange={handleInputChange} placeholder="Value" />
+                    <input type="number" className="form-control" name="other_char_value_3" value={formData.other_char_value_3} onChange={handleInputChange} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
@@ -944,7 +938,7 @@ export default function SalesInvoice() {
                       <option value="Insurance">Insurance</option>
                       <option value="Packaging">Packaging</option>
                     </select>
-                    <input type="number" className="form-control" name="other_char_value_4" value={formData.other_char_value_4} onChange={handleInputChange} placeholder="Value" />
+                    <input type="number" className="form-control" name="other_char_value_4" value={formData.other_char_value_4} onChange={handleInputChange} />
                   </div>
                 </div>
 
@@ -1039,14 +1033,14 @@ export default function SalesInvoice() {
     <div className="animate-fade">
       
       {/* Upper header action row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Receipt size={24} color="var(--primary)" /> Sales Invoice
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Generate invoices with GST calculations and export details.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 
           {/* Export Dropdown */}
           <div style={{ position: 'relative' }}>

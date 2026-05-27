@@ -178,7 +178,7 @@ export default function UserManagement() {
               </div>
               <div className="form-group">
                 <label>Branch / Unit Access</label>
-                <input className="form-control" name="unit" value={formData.unit} onChange={handleChange} placeholder="e.g. Unit 1" />
+                <input className="form-control" name="unit" value={formData.unit} onChange={handleChange} />
               </div>
             </div>
 
@@ -348,16 +348,18 @@ export default function UserManagement() {
 
   return (
     <div className="animate-fade">
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Key size={24} color="var(--primary)" /> User Management
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage portal access, roles, passwords, and module permissions.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> Create New User
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+            <Plus size={18} /> Create New User
+          </button>
+        </div>
       </div>
 
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)' }}>

@@ -224,4 +224,10 @@ export const ewayBillAPI = {
   delete: (id) => api.delete(`/eway-bills/${id}`),
 };
 
+// ---- Company Settings ----
+export const companySettingAPI = {
+  get: () => api.get('/company-settings/'),
+  save: (data) => api.post('/company-settings/', data),
+};
+
 export default api;

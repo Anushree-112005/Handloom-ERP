@@ -304,7 +304,7 @@ export default function WarpBeamReceipt() {
               
               {activeTab === 'general' && (
                 <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} placeholder="Auto if empty" disabled={editingId != null} /></div>
+                  <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} disabled={editingId != null} /></div>
                   <div className="form-group"><label>Rcvd Date</label><input type="date" className="form-control" name="rcvd_date" value={form.rcvd_date} onChange={handleChange} /></div>
                   <div className="form-group"><label>Rcvd Type</label>
                     <select className="form-control" name="rcvd_type" value={form.rcvd_type} onChange={handleChange}>

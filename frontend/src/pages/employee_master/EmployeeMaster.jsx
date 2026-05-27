@@ -234,11 +234,11 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group">
                       <label>Employee Code *</label>
-                      <input className="form-control" name="employee_code" value={formData.employee_code} onChange={handleChange} required placeholder="Unique ID (e.g. EMP100)" disabled={!!editingId} />
+                      <input className="form-control" name="employee_code" value={formData.employee_code} onChange={handleChange} required disabled={!!editingId} />
                     </div>
                     <div className="form-group">
                       <label>Full Name *</label>
-                      <input className="form-control" name="name" value={formData.name} onChange={handleChange} required placeholder="As per Aadhaar" />
+                      <input className="form-control" name="name" value={formData.name} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
                       <label>Date of Birth</label>
@@ -261,15 +261,15 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Mobile Number</label>
-                      <input className="form-control" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="10-digit number" />
+                      <input className="form-control" name="mobile" value={formData.mobile} onChange={handleChange} />
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Residential Address</label>
-                      <input className="form-control" name="address" value={formData.address} onChange={handleChange} placeholder="Full address" />
+                      <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Family Details</label>
-                      <input className="form-control" name="family_details" value={formData.family_details} onChange={handleChange} placeholder="Father/Spouse name" />
+                      <input className="form-control" name="family_details" value={formData.family_details} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Designation</label>
-                      <input className="form-control" name="designation" value={formData.designation} onChange={handleChange} placeholder="e.g. Supervisor, Weaver" />
+                      <input className="form-control" name="designation" value={formData.designation} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Category</label>
@@ -298,11 +298,11 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Unit</label>
-                      <input className="form-control" name="unit" value={formData.unit} onChange={handleChange} placeholder="e.g. Unit-1, Erode Unit" />
+                      <input className="form-control" name="unit" value={formData.unit} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Production Line</label>
-                      <input className="form-control" name="production_line" value={formData.production_line} onChange={handleChange} placeholder="e.g. Line A, Sizing" />
+                      <input className="form-control" name="production_line" value={formData.production_line} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Shift</label>
@@ -328,31 +328,31 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group">
                       <label>Aadhaar No</label>
-                      <input className="form-control" name="aadhaar_no" value={formData.aadhaar_no} onChange={handleChange} placeholder="12-digit number" />
+                      <input className="form-control" name="aadhaar_no" value={formData.aadhaar_no} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>PAN No</label>
-                      <input className="form-control" name="pan_no" value={formData.pan_no} onChange={handleChange} placeholder="10-digit alphanumeric" />
+                      <input className="form-control" name="pan_no" value={formData.pan_no} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Biometric ID</label>
-                      <input className="form-control" name="biometric_id" value={formData.biometric_id} onChange={handleChange} placeholder="Device ID mapping" />
+                      <input className="form-control" name="biometric_id" value={formData.biometric_id} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>PF Account No</label>
-                      <input className="form-control" name="pf_account" value={formData.pf_account} onChange={handleChange} placeholder="PF Number" />
+                      <input className="form-control" name="pf_account" value={formData.pf_account} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>UAN</label>
-                      <input className="form-control" name="uan" value={formData.uan} onChange={handleChange} placeholder="Universal Account Number" />
+                      <input className="form-control" name="uan" value={formData.uan} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>ESI No</label>
-                      <input className="form-control" name="esi_no" value={formData.esi_no} onChange={handleChange} placeholder="ESI registration" />
+                      <input className="form-control" name="esi_no" value={formData.esi_no} onChange={handleChange} />
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Medical Fitness</label>
-                      <input className="form-control" name="medical_fitness" value={formData.medical_fitness} onChange={handleChange} placeholder="Fitness status or last checkup date" />
+                      <input className="form-control" name="medical_fitness" value={formData.medical_fitness} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -398,19 +398,19 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                     <div className="form-group">
                       <label>Highest Qualification</label>
-                      <input className="form-control" name="qualification" value={formData.qualification} onChange={handleChange} placeholder="e.g. 10th, 12th, B.Sc" />
+                      <input className="form-control" name="qualification" value={formData.qualification} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>ITI / Trade Specialization</label>
-                      <input className="form-control" name="iti_trade" value={formData.iti_trade} onChange={handleChange} placeholder="e.g. Fitter, Electrician" />
+                      <input className="form-control" name="iti_trade" value={formData.iti_trade} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Machine Knowledge</label>
-                      <input className="form-control" name="machine_knowledge" value={formData.machine_knowledge} onChange={handleChange} placeholder="e.g. Toyota JAT 810, Somet" />
+                      <input className="form-control" name="machine_knowledge" value={formData.machine_knowledge} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Training Records</label>
-                      <input className="form-control" name="training_records" value={formData.training_records} onChange={handleChange} placeholder="Recent certifications or safety training" />
+                      <input className="form-control" name="training_records" value={formData.training_records} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -422,15 +422,15 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                     <div className="form-group">
                       <label>Bank Name</label>
-                      <input className="form-control" name="bank_name" value={formData.bank_name} onChange={handleChange} placeholder="e.g. State Bank of India" />
+                      <input className="form-control" name="bank_name" value={formData.bank_name} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Account Number</label>
-                      <input className="form-control" name="account_number" value={formData.account_number} onChange={handleChange} placeholder="Full account number" />
+                      <input className="form-control" name="account_number" value={formData.account_number} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>IFSC Code</label>
-                      <input className="form-control" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} placeholder="11-character IFSC" />
+                      <input className="form-control" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Payment Mode</label>
@@ -444,15 +444,15 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group">
                       <label>Emergency Contact</label>
-                      <input className="form-control" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} placeholder="Name & Phone" />
+                      <input className="form-control" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>PF Nominee</label>
-                      <input className="form-control" name="pf_nominee" value={formData.pf_nominee} onChange={handleChange} placeholder="Nominee name" />
+                      <input className="form-control" name="pf_nominee" value={formData.pf_nominee} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Gratuity Nominee</label>
-                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} placeholder="Nominee name" />
+                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
@@ -470,7 +470,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>ERP Login Password {editingId && '(Optional: Leave blank to keep current)'}</label>
-                      <input type="password" className="form-control" name="password" value={formData.password} onChange={handleChange} placeholder="Set password for ERP access" />
+                      <input type="password" className="form-control" name="password" value={formData.password} onChange={handleChange} />
                     </div>
                   </div>
 
