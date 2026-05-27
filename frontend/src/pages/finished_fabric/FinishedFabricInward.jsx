@@ -469,7 +469,7 @@ export default function FinishedFabricInward() {
                 </div>
                 <div className="form-group">
                   <label>Design No</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} placeholder="e.g. DS-402" />
+                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>IBPO (Order No)</label>
@@ -628,8 +628,7 @@ export default function FinishedFabricInward() {
                               <input 
                                 className="form-control" 
                                 value={item.piece_no} 
-                                onChange={e => handleItemChange(index, 'piece_no', e.target.value)} 
-                                placeholder="Piece No"
+                                onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
                                 required
                               />
                             </td>
@@ -638,24 +637,21 @@ export default function FinishedFabricInward() {
                                 className="form-control" 
                                 type="number"
                                 value={item.weight} 
-                                onChange={e => handleItemChange(index, 'weight', e.target.value)} 
-                                placeholder="Weight"
+                                onChange={e => handleItemChange(index, 'weight', e.target.value)}
                               />
                             </td>
                             <td>
                               <input 
                                 className="form-control" 
                                 value={item.v_loom} 
-                                onChange={e => handleItemChange(index, 'v_loom', e.target.value)} 
-                                placeholder="Vendor Loom"
+                                onChange={e => handleItemChange(index, 'v_loom', e.target.value)}
                               />
                             </td>
                             <td>
                               <input 
                                 className="form-control" 
                                 value={item.v_pc_no} 
-                                onChange={e => handleItemChange(index, 'v_pc_no', e.target.value)} 
-                                placeholder="Vendor Pc No"
+                                onChange={e => handleItemChange(index, 'v_pc_no', e.target.value)}
                               />
                             </td>
                             <td>
@@ -663,8 +659,7 @@ export default function FinishedFabricInward() {
                                 className="form-control" 
                                 type="number"
                                 value={item.meters} 
-                                onChange={e => handleItemChange(index, 'meters', e.target.value)} 
-                                placeholder="Mtr"
+                                onChange={e => handleItemChange(index, 'meters', e.target.value)}
                               />
                             </td>
                             {!isReadOnly && (
@@ -709,14 +704,14 @@ export default function FinishedFabricInward() {
     <div className="animate-fade">
       
       {/* Upper header action row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <ClipboardList size={24} color="var(--primary)" /> Finished Fabric Inward
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Log inward finished fabric pieces with loom info, widths, and inspection logs.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 
           {/* Export Menu */}
           <div style={{ position: 'relative' }}>

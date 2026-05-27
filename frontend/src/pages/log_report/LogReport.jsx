@@ -231,7 +231,6 @@ export default function LogReport() {
             <input 
               className="form-control" 
               style={{ margin: 0 }} 
-              placeholder="Filter remarks..." 
               value={remarksFilter} 
               onChange={e => setRemarksFilter(e.target.value)} 
             />
@@ -292,7 +291,6 @@ export default function LogReport() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Global Search User Name, ID, or Remarks..."
                 style={{ paddingLeft: 38, width: '100%', margin: 0 }}
                 value={textSearch}
                 onChange={e => setTextSearch(e.target.value)}

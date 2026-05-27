@@ -1,9 +1,12 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
-  MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info
+  MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings
 } from 'lucide-react';
+import { companySettingAPI } from '../services/api';
+
 
 const modules = [
   { section: 'Dashboard' },
@@ -62,18 +65,51 @@ const modules = [
   { path: '/user-management', label: 'User Management', icon: Users },
 
   { section: 'System' },
+  { path: '/company-settings', label: 'Company', icon: Settings },
   { path: '/about', label: 'About', icon: Info },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
+  const [companyProfile, setCompanyProfile] = useState({
+    company_name: 'Dinesh Textile',
+    logo: ''
+  });
+
+  useEffect(() => {
+    const loadCompany = async () => {
+      try {
+        const response = await companySettingAPI.get();
+        if (response.data && response.data.company_name) {
+          setCompanyProfile({
+            company_name: response.data.company_name,
+            logo: response.data.logo || ''
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadCompany();
+
+    window.addEventListener('company-settings-updated', loadCompany);
+    return () => {
+      window.removeEventListener('company-settings-updated', loadCompany);
+    };
+  }, []);
 
   return (
     <aside className="sidebar" id="main-sidebar">
       <div className="sidebar-brand">
-        <div className="logo-icon">DT</div>
+        {companyProfile.logo ? (
+          <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
+            <img src={companyProfile.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+        ) : (
+          <div className="logo-icon">DT</div>
+        )}
         <div>
-          <h1>Dinesh Textile</h1>
+          <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px' }}>{companyProfile.company_name}</h1>
           <span>ERP System</span>
         </div>
       </div>

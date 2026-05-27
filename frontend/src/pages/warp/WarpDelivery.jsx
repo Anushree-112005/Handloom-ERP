@@ -302,7 +302,7 @@ export default function WarpDelivery() {
                       <option>Direct</option><option>Against Order</option>
                     </select>
                   </div>
-                  <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} placeholder="Auto if empty" disabled={editingId != null} /></div>
+                  <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
                   <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
                   
                   <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Sizing Name</label><input className="form-control" name="sizing_name" value={form.sizing_name} onChange={handleChange} /></div>

@@ -153,16 +153,18 @@ export default function DesignEntry() {
     <div className="animate-fade">
       {!showForm ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Palette size={24} color="var(--primary)" /> Design Entry
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage design specifications and weaving details.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-              <Plus size={16} /> New Design
-            </button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+                <Plus size={16} /> New Design
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>

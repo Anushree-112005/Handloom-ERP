@@ -190,16 +190,18 @@ export default function YarnPurchaseOrder() {
     <div className="animate-fade">
       {!showForm ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
               <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Package size={24} color="var(--primary)" /> Yarn Purchase Orders
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage yarn procurement and indents.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-              <Plus size={18} /> New Order
-            </button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+                <Plus size={18} /> New Order
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
@@ -349,7 +351,7 @@ export default function YarnPurchaseOrder() {
                       <option value="">Select Org...</option><option>Dinesh Textile Main</option><option>Unit 2</option>
                     </select>
                   </div>
-                  <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} placeholder="DEPL-124/26-27" /></div>
+                  <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                   <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>
                   <div className="form-group"><label>Against Reference</label>
                     <select className="form-control" name="against_ref" value={form.against_ref} onChange={handleChange}>
