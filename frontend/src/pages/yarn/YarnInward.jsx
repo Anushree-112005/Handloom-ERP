@@ -363,16 +363,16 @@ export default function YarnInward() {
                   <div className="form-group"><label>Entry Date *</label><input type="date" className="form-control" name="entry_date" value={form.entry_date} onChange={handleChange} required /></div>
                   <div className="form-group"><label>Inward Date *</label><input type="date" className="form-control" name="inward_date" value={form.inward_date} onChange={handleChange} required /></div>
                   <div className="form-group"><label>Status</label><input className="form-control" name="status" value={form.status} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Recvd Type</label>
-                    <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>
-                      <option>Direct</option><option>Against PO</option>
-                    </select>
-                  </div>
-                  
                   <div className="form-group"><label>Received From</label>
                     <select className="form-control" name="received_from" value={form.received_from} onChange={handleChange}>
                       <option value="">Select Supplier...</option>
                       {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group"><label>Recvd Type</label>
+                    <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>
+                      <option>Direct</option><option>Against PO</option>
                     </select>
                   </div>
                   <div className="form-group"><label>PO No / Dt</label>

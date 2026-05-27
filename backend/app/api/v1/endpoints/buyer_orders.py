@@ -146,9 +146,9 @@ async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depend
 
 @router.post("/", response_model=OrderOut, status_code=201)
 async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db)):
-    count_r = await db.execute(select(func.count(BuyerOrder.id)))
-    count = count_r.scalar() or 0
-    ibpo = f"IBPO-{count + 1:05d}"
+    max_id_q = await db.execute(select(func.max(BuyerOrder.id)))
+    max_id = max_id_q.scalar() or 0
+    ibpo = f"IBPO-{max_id + 1:05d}"
 
     items_data = data.items or []
     order_dict = data.model_dump(exclude={"items"})

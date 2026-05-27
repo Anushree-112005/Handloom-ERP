@@ -24,3 +24,11 @@ api_router.include_router(eway_bills.router)
 api_router.include_router(company_settings.router)
 
 
+# Newly registered missing routers
+api_router.include_router(design_entries.router)
+api_router.include_router(yarn_inwards.router)
+api_router.include_router(grey_yarn_deliveries.router)
+api_router.include_router(dyed_yarn_receipts.router)
+api_router.include_router(dyed_yarn_deliveries.router)
+api_router.include_router(warp_beam_receipts.router)
+api_router.include_router(warp_deliveries.router)
