@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send, Download, ChevronDown, FileText } from 'lucide-react';
 import { dyedYarnDeliveryAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function DyedYarnDelivery() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -149,6 +153,39 @@ export default function DyedYarnDelivery() {
     }
     return matchesSearch && matchesType && matchesDate;
   });
+
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Dyed Yarn Deliveries", 14, 15);
+    const headers = [["DC No", "Date", "Party Name", "Delivery Type", "Net Amount", "Status"]];
+    const rows = filteredDeliveries.map(r => [
+      r.dc_no || '-',
+      r.dc_date || '-',
+      r.party_name || '-',
+      r.delivery_type || '-',
+      `Rs. ${parseFloat(r.net_amount || 0).toFixed(2)}`,
+      r.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Dyed_Yarn_Deliveries_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredDeliveries.map(r => ({
+      "DC No": r.dc_no,
+      "Date": r.dc_date,
+      "Party Name": r.party_name,
+      "Delivery Type": r.delivery_type,
+      "Mode": r.delivery_mode,
+      "Net Amount": r.net_amount,
+      "Total Delv Kgs": r.total_delv_kgs,
+      "Status": r.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dyed Yarn Deliveries");
+    XLSX.writeFile(wb, `Dyed_Yarn_Deliveries_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   return (
     <div className="animate-fade">

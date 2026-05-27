@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown } from 'lucide-react';
 import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -19,6 +22,7 @@ export default function YarnInward() {
   const [editingId, setEditingId] = useState(null);
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -192,6 +196,38 @@ export default function YarnInward() {
     if (type === 'AgainstPO') { setTypeFilter('Against PO'); }
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Yarn Inwards Report", 14, 15);
+    const headers = [["Ref No", "Date", "Received From", "Type", "Status"]];
+    const rows = filteredInwards.map(i => [
+      i.ref_no || '-',
+      i.inward_date || '-',
+      i.received_from || '-',
+      i.received_type || '-',
+      i.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Yarn_Inwards_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredInwards.map(i => ({
+      "Ref No": i.ref_no,
+      "Date": i.inward_date,
+      "Received From": i.received_from,
+      "Type": i.received_type,
+      "Status": i.status,
+      "Net Amount": i.net_amount,
+      "Total Kgs": i.gross_kgs,
+      "Agent Name": i.agent_name
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Yarn Inwards");
+    XLSX.writeFile(wb, `Yarn_Inwards_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const tabs = [
     { id: 'general', label: 'General Info', icon: FileText },
     { id: 'yarn', label: 'Yarn Details', icon: Package },
@@ -209,7 +245,41 @@ export default function YarnInward() {
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Record and manage yarn receipts.</p>
             </div>
+<<<<<<< HEAD
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+=======
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Download size={16} /> Export <ChevronDown size={14} />
+                </button>
+
+                {showExportMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <FileText size={16} color="#ef4444" /> PDF Report
+                    </button>
+                    <button
+                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Download size={16} color="#10b981" /> Excel Sheet
+                    </button>
+                  </div>
+                )}
+              </div>
+>>>>>>> 31762c3d (updation)
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={18} /> New Inward
               </button>
