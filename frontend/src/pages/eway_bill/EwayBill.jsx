@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, Plus, Trash2, Search, Download, ShieldCheck, MapPin, Calculator, RefreshCw, Send, X } from 'lucide-react';
-import { ewayBillAPI, partyAPI, salesInvoiceAPI } from '../../services/api';
+import { ewayBillAPI, partyAPI, salesInvoiceAPI, companySettingAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -25,21 +25,21 @@ export default function EwayBill() {
   const [result, setResult] = useState('');
   const [errorText, setErrorText] = useState('');
 
-  // Billing From (Pre-filled with Dinesh Exports)
-  const [billFromName, setBillFromName] = useState('Dinesh Exports Private Limited');
-  const [billFromAddress, setBillFromAddress] = useState('1/6-A, Aiyndhupanai, Kadachanallur post, Komarapalayam TK, Tiruchengode, Namakkal-638008-');
-  const [billFromGstin, setBillFromGstin] = useState('33AAICD0905A1ZG');
-  const [billFromPin, setBillFromPin] = useState('638008');
-  const [billFromState, setBillFromState] = useState('TamilNadu');
-  const [billFromStateCode, setBillFromStateCode] = useState('33');
+  // Billing From (Pre-filled dynamically from Company Setting if available)
+  const [billFromName, setBillFromName] = useState('');
+  const [billFromAddress, setBillFromAddress] = useState('');
+  const [billFromGstin, setBillFromGstin] = useState('');
+  const [billFromPin, setBillFromPin] = useState('');
+  const [billFromState, setBillFromState] = useState('');
+  const [billFromStateCode, setBillFromStateCode] = useState('');
 
-  // Dispatch From (Pre-filled with Dinesh Exports)
-  const [dispatchFromName, setDispatchFromName] = useState('Dinesh Exports Private Limited');
-  const [dispatchFromAddress, setDispatchFromAddress] = useState('1/6-A, Aiyndhupanai, Kadachanallur post, Komarapalayam TK, Tiruchengode, Namakkal-638008-');
-  const [dispatchFromPin, setDispatchFromPin] = useState('638008');
-  const [dispatchFromPlace, setDispatchFromPlace] = useState('Aiyndhupanai');
-  const [dispatchFromState, setDispatchFromState] = useState('TamilNadu');
-  const [dispatchFromStateCode, setDispatchFromStateCode] = useState('33');
+  // Dispatch From (Pre-filled dynamically from Company Setting if available)
+  const [dispatchFromName, setDispatchFromName] = useState('');
+  const [dispatchFromAddress, setDispatchFromAddress] = useState('');
+  const [dispatchFromPin, setDispatchFromPin] = useState('');
+  const [dispatchFromPlace, setDispatchFromPlace] = useState('');
+  const [dispatchFromState, setDispatchFromState] = useState('');
+  const [dispatchFromStateCode, setDispatchFromStateCode] = useState('');
 
   // Billing To
   const [billToPartyId, setBillToPartyId] = useState('');
@@ -73,14 +73,31 @@ export default function EwayBill() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [resBills, resParties, resInvoices] = await Promise.all([
+      const [resBills, resParties, resInvoices, resCompany] = await Promise.all([
         ewayBillAPI.list(),
         partyAPI.list ? partyAPI.list() : { data: [] },
-        salesInvoiceAPI.list ? salesInvoiceAPI.list() : { data: [] }
+        salesInvoiceAPI.list ? salesInvoiceAPI.list() : { data: [] },
+        companySettingAPI.get()
       ]);
       setBills(resBills.data || []);
       setParties(resParties.data || []);
       setInvoices(resInvoices.data || []);
+
+      // Dynamically load company settings into Billing/Dispatch From sections
+      if (resCompany.data && resCompany.data.company_name) {
+        const comp = resCompany.data;
+        setBillFromName(comp.company_name);
+        setBillFromAddress(comp.address || '');
+        setDispatchFromName(comp.company_name);
+        setDispatchFromAddress(comp.address || '');
+        // If address is available, extract a potential place/city name for dispatch From Place
+        if (comp.address) {
+          const parts = comp.address.split(',');
+          // Use the last segment or a prominent segment as the city/place
+          const place = parts.length > 1 ? parts[parts.length - 2].trim() : comp.address.trim();
+          setDispatchFromPlace(place.substring(0, 50));
+        }
+      }
     } catch (err) {
       console.error("Error loading E-Way Bill master data:", err);
     } finally {
@@ -578,33 +595,33 @@ export default function EwayBill() {
                   
                   <div className="form-group">
                     <label>Bill From</label>
-                    <input className="form-control" type="text" value={billFromName} onChange={e => setBillFromName(e.target.value)} disabled />
+                    <input className="form-control" type="text" value={billFromName} onChange={e => setBillFromName(e.target.value)} />
                   </div>
                   
                   <div className="form-group">
                     <label>Address</label>
-                    <textarea className="form-control" rows="2" value={billFromAddress} onChange={e => setBillFromAddress(e.target.value)} disabled />
+                    <textarea className="form-control" rows="2" value={billFromAddress} onChange={e => setBillFromAddress(e.target.value)} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>GSTNO</label>
-                      <input className="form-control" type="text" value={billFromGstin} onChange={e => setBillFromGstin(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={billFromGstin} onChange={e => setBillFromGstin(e.target.value)} />
                     </div>
                     <div className="form-group">
                       <label>PIN Code</label>
-                      <input className="form-control" type="text" value={billFromPin} onChange={e => setBillFromPin(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={billFromPin} onChange={e => setBillFromPin(e.target.value)} />
                     </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>Bill State</label>
-                      <input className="form-control" type="text" value={billFromState} onChange={e => setBillFromState(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={billFromState} onChange={e => setBillFromState(e.target.value)} />
                     </div>
                     <div className="form-group">
                       <label>Code</label>
-                      <input className="form-control" type="text" value={billFromStateCode} onChange={e => setBillFromStateCode(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={billFromStateCode} onChange={e => setBillFromStateCode(e.target.value)} />
                     </div>
                   </div>
                 </div>
@@ -615,33 +632,33 @@ export default function EwayBill() {
                   
                   <div className="form-group">
                     <label>Goods From</label>
-                    <input className="form-control" type="text" value={dispatchFromName} onChange={e => setDispatchFromName(e.target.value)} disabled />
+                    <input className="form-control" type="text" value={dispatchFromName} onChange={e => setDispatchFromName(e.target.value)} />
                   </div>
                   
                   <div className="form-group">
                     <label>Good From Address</label>
-                    <textarea className="form-control" rows="2" value={dispatchFromAddress} onChange={e => setDispatchFromAddress(e.target.value)} disabled />
+                    <textarea className="form-control" rows="2" value={dispatchFromAddress} onChange={e => setDispatchFromAddress(e.target.value)} />
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>From Place</label>
-                      <input className="form-control" type="text" value={dispatchFromPlace} onChange={e => setDispatchFromPlace(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={dispatchFromPlace} onChange={e => setDispatchFromPlace(e.target.value)} />
                     </div>
                     <div className="form-group">
                       <label>Good from Pin</label>
-                      <input className="form-control" type="text" value={dispatchFromPin} onChange={e => setDispatchFromPin(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={dispatchFromPin} onChange={e => setDispatchFromPin(e.target.value)} />
                     </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>State</label>
-                      <input className="form-control" type="text" value={dispatchFromState} onChange={e => setDispatchFromState(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={dispatchFromState} onChange={e => setDispatchFromState(e.target.value)} />
                     </div>
                     <div className="form-group">
                       <label>Code</label>
-                      <input className="form-control" type="text" value={dispatchFromStateCode} onChange={e => setDispatchFromStateCode(e.target.value)} disabled />
+                      <input className="form-control" type="text" value={dispatchFromStateCode} onChange={e => setDispatchFromStateCode(e.target.value)} />
                     </div>
                   </div>
                 </div>
