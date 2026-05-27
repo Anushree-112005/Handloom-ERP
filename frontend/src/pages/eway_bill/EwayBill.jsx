@@ -97,6 +97,9 @@ export default function EwayBill() {
       if (matchingParty) {
         handleBillToChange(matchingParty.id);
         handleDispatchToChange(matchingParty.id);
+      } else {
+        setBillToName(invoice.party_name || '');
+        setDispatchToName(invoice.party_name || '');
       }
       
       // Load items from invoice

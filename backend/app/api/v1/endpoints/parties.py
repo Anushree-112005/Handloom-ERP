@@ -81,9 +81,9 @@ async def list_parties(skip: int = 0, limit: int = 100, party_type: Optional[str
 @router.post("/", response_model=PartyMasterOut, status_code=201)
 async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_db)):
     # Auto-generate customer code
-    count_q = await db.execute(select(func.count(PartyMaster.id)))
-    count = count_q.scalar() or 0
-    customer_code = f"{(count + 1) + 2400}"
+    max_id_q = await db.execute(select(func.max(PartyMaster.id)))
+    max_id = max_id_q.scalar() or 0
+    customer_code = f"{max_id + 2401}"
 
     db_party = PartyMaster(**party.model_dump(), customer_code=customer_code)
     db.add(db_party)

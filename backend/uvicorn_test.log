@@ -51,3 +51,7 @@ fastapi.exceptions.ResponseValidationError: 2 validation errors:
   {'type': 'bool_type', 'loc': ('response', 0, 'company_depl'), 'msg': 'Input should be a valid boolean', 'input': None}
   {'type': 'bool_type', 'loc': ('response', 0, 'company_mtm'), 'msg': 'Input should be a valid boolean', 'input': None}
 
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [31977]
