@@ -245,41 +245,7 @@ export default function YarnInward() {
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Record and manage yarn receipts.</p>
             </div>
-<<<<<<< HEAD
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-=======
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ position: 'relative' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Download size={16} /> Export <ChevronDown size={14} />
-                </button>
-
-                {showExportMenu && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
-                    <button
-                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
-                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                    >
-                      <FileText size={16} color="#ef4444" /> PDF Report
-                    </button>
-                    <button
-                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
-                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                    >
-                      <Download size={16} color="#10b981" /> Excel Sheet
-                    </button>
-                  </div>
-                )}
-              </div>
->>>>>>> 31762c3d (updation)
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={18} /> New Inward
               </button>
