@@ -492,7 +492,7 @@ export default function PackingSlip() {
                 </div>
                 <div className="form-group">
                   <label>Bale No</label>
-                  <input className="form-control" name="bale_no" value={formData.bale_no} onChange={handleInputChange} placeholder="e.g. FG-AA-11608-27" />
+                  <input className="form-control" name="bale_no" value={formData.bale_no} onChange={handleInputChange} />
                 </div>
               </div>
 
@@ -501,7 +501,7 @@ export default function PackingSlip() {
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Design No</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} placeholder="e.g. DS-402" />
+                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Warp Lot</label>
@@ -550,7 +550,7 @@ export default function PackingSlip() {
                 </div>
                 <div className="form-group">
                   <label>Pack Dimensions (L x W x H)</label>
-                  <input className="form-control" name="pack_dimensions" value={formData.pack_dimensions} onChange={handleInputChange} placeholder="e.g. 1.2x0.8x1.0" />
+                  <input className="form-control" name="pack_dimensions" value={formData.pack_dimensions} onChange={handleInputChange} />
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Party / Customer Name</label>
@@ -599,8 +599,7 @@ export default function PackingSlip() {
                               <input 
                                 className="form-control" 
                                 value={item.piece_no} 
-                                onChange={e => handleItemChange(index, 'piece_no', e.target.value)} 
-                                placeholder="Piece No"
+                                onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
                                 required
                               />
                             </td>
@@ -608,16 +607,14 @@ export default function PackingSlip() {
                               <input 
                                 className="form-control" 
                                 value={item.lot_no} 
-                                onChange={e => handleItemChange(index, 'lot_no', e.target.value)} 
-                                placeholder="Lot No"
+                                onChange={e => handleItemChange(index, 'lot_no', e.target.value)}
                               />
                             </td>
                             <td>
                               <input 
                                 className="form-control" 
                                 value={item.loom_no} 
-                                onChange={e => handleItemChange(index, 'loom_no', e.target.value)} 
-                                placeholder="Loom No"
+                                onChange={e => handleItemChange(index, 'loom_no', e.target.value)}
                               />
                             </td>
                             <td>
@@ -625,8 +622,7 @@ export default function PackingSlip() {
                                 className="form-control" 
                                 type="number"
                                 value={item.pass_mtr} 
-                                onChange={e => handleItemChange(index, 'pass_mtr', e.target.value)} 
-                                placeholder="Mtr"
+                                onChange={e => handleItemChange(index, 'pass_mtr', e.target.value)}
                               />
                             </td>
                             <td>
@@ -634,8 +630,7 @@ export default function PackingSlip() {
                                 className="form-control" 
                                 type="number"
                                 value={item.bale_mtr} 
-                                onChange={e => handleItemChange(index, 'bale_mtr', e.target.value)} 
-                                placeholder="Bale Mtr"
+                                onChange={e => handleItemChange(index, 'bale_mtr', e.target.value)}
                               />
                             </td>
                             {!isReadOnly && (
@@ -751,14 +746,14 @@ export default function PackingSlip() {
     <div className="animate-fade">
       
       {/* Upper header action row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Box size={24} color="var(--primary)" /> Packing Slip & Bale Entry
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Log textile bale dimensions, roll counts, design numbers, and weights.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 
           {/* Export Menu */}
           <div style={{ position: 'relative' }}>

@@ -402,7 +402,7 @@ export default function ClothDelivery() {
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>DC No *</label>
-                  <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} placeholder="Auto-generated if empty" />
+                  <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>DC Date *</label>
@@ -437,7 +437,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group">
                   <label>PO No</label>
-                  <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} placeholder="PO Ref" />
+                  <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Buyer Name</label>
@@ -465,11 +465,11 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group">
                   <label>Design No</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} placeholder="e.g. DS-201" />
+                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>IBPO</label>
-                  <input className="form-control" name="ibpo" value={formData.ibpo} onChange={handleInputChange} placeholder="Internal Buyer PO" />
+                  <input className="form-control" name="ibpo" value={formData.ibpo} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>PC Type</label>
@@ -482,7 +482,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Fabric Quality Detail</label>
-                  <input className="form-control" name="fabric_detail" value={formData.fabric_detail} onChange={handleInputChange} placeholder="Cotton/Poly blended plain weave..." />
+                  <input className="form-control" name="fabric_detail" value={formData.fabric_detail} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>IBPO Order Mtr</label>
@@ -498,7 +498,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group">
                   <label>Fresh Finish Width</label>
-                  <input type="number" className="form-control" name="fresh_width" value={formData.fresh_width} onChange={handleInputChange} placeholder="inches" />
+                  <input type="number" className="form-control" name="fresh_width" value={formData.fresh_width} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Finish Fold Details</label>
@@ -511,7 +511,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group">
                   <label>LOT No</label>
-                  <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleInputChange} placeholder="Production Lot" />
+                  <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Griege Rate</label>
@@ -528,7 +528,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group">
                   <label>Optical Brightening Agent (OBA)</label>
-                  <input className="form-control" name="oba" value={formData.oba} onChange={handleInputChange} placeholder="OBA Grade" />
+                  <input className="form-control" name="oba" value={formData.oba} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Finish Pick</label>
@@ -540,7 +540,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 4' }}>
                   <label>Process Comments</label>
-                  <input className="form-control" name="process_comm" value={formData.process_comm} onChange={handleInputChange} placeholder="Special processing or calendering comments..." />
+                  <input className="form-control" name="process_comm" value={formData.process_comm} onChange={handleInputChange} />
                 </div>
               </div>
 
@@ -567,7 +567,6 @@ export default function ClothDelivery() {
                             className="form-control"
                             value={item.piece_no}
                             onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
-                            placeholder="Piece Number"
                             required
                           />
                         </td>
@@ -576,7 +575,6 @@ export default function ClothDelivery() {
                             className="form-control"
                             value={item.lot_no}
                             onChange={e => handleItemChange(index, 'lot_no', e.target.value)}
-                            placeholder="Lot Number"
                           />
                         </td>
                         <td>
@@ -585,7 +583,6 @@ export default function ClothDelivery() {
                             className="form-control"
                             value={item.ok_mtr}
                             onChange={e => handleItemChange(index, 'ok_mtr', e.target.value)}
-                            placeholder="Meters"
                             required
                           />
                         </td>
@@ -595,7 +592,6 @@ export default function ClothDelivery() {
                             className="form-control"
                             value={item.fold_mtr}
                             onChange={e => handleItemChange(index, 'fold_mtr', e.target.value)}
-                            placeholder="Folded Meters"
                           />
                         </td>
                         {!isReadOnly && (
@@ -646,7 +642,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 4' }}>
                   <label>Detailed Remarks</label>
-                  <input className="form-control" name="detailed_remarks" value={formData.detailed_remarks} onChange={handleInputChange} placeholder="Accounting adjustments or payment remarks..." />
+                  <input className="form-control" name="detailed_remarks" value={formData.detailed_remarks} onChange={handleInputChange} />
                 </div>
               </div>
 
@@ -664,7 +660,7 @@ export default function ClothDelivery() {
                 </div>
                 <div className="form-group">
                   <label>Vehicle No</label>
-                  <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} placeholder="e.g. TN-33-AB-1234" />
+                  <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
                   <label>Driver Name</label>
@@ -688,14 +684,14 @@ export default function ClothDelivery() {
     <div className="animate-fade">
       
       {/* Upper header action row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Truck size={24} color="var(--primary)" /> Cloth Delivery Entry
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage delivery challans, piece grids, accounting vouchers, and gate pass details.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 
           {/* Export Menu */}
           <div style={{ position: 'relative' }}>

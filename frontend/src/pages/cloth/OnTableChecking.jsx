@@ -333,14 +333,14 @@ export default function OnTableChecking() {
   return (
     <div className="animate-fade">
       {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <CheckSquare size={24} color="#eab308" /> ON Table Quality Checking
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Fabric quality inspection with defect tracking, barcode scanning, and grading.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {view === 'list' && (
             <div style={{ position: 'relative' }}>
               <button
@@ -650,15 +650,15 @@ export default function OnTableChecking() {
                 </div>
                 <div className="form-group">
                   <label>Design Number</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} placeholder="e.g. D-901" />
+                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
                 </div>
                 <div className="form-group">
                   <label>Buyer Order No</label>
-                  <input className="form-control" name="order_no" value={formData.order_no} onChange={handleHeaderChange} placeholder="e.g. BPO-8291" />
+                  <input className="form-control" name="order_no" value={formData.order_no} onChange={handleHeaderChange} />
                 </div>
                 <div className="form-group">
                   <label>Lot Number</label>
-                  <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} placeholder="e.g. L-540" />
+                  <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
                 </div>
                 <div className="form-group">
                   <label>QC Status</label>
@@ -671,7 +671,7 @@ export default function OnTableChecking() {
               </div>
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>QC General Remarks / Instructions</label>
-                <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} placeholder="QC observations, process guidelines..." />
+                <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
               </div>
 
               {/* BARCODE SCAN SIMULATION */}
@@ -684,7 +684,6 @@ export default function OnTableChecking() {
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="Scan fabric roll / type Piece No and press Enter (e.g. ROLL-901)"
                       style={{ flex: 1, margin: 0 }}
                       value={barcodeInput}
                       onChange={e => setBarcodeInput(e.target.value)}
@@ -754,7 +753,6 @@ export default function OnTableChecking() {
                               value={item.piece_no}
                               onChange={e => handleGridCellChange(index, 'piece_no', e.target.value)}
                               required
-                              placeholder="e.g. ROLL-001"
                             />
                           </td>
                           <td>
@@ -763,7 +761,6 @@ export default function OnTableChecking() {
                               style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                               value={item.vpc_no}
                               onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
-                              placeholder="Vendor piece #"
                             />
                           </td>
                           <td>
@@ -772,7 +769,6 @@ export default function OnTableChecking() {
                               style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                               value={item.inv_pin}
                               onChange={e => handleGridCellChange(index, 'inv_pin', e.target.value)}
-                              placeholder="Inward pin"
                             />
                           </td>
                           <td>
@@ -781,7 +777,6 @@ export default function OnTableChecking() {
                               style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                               value={item.checking_pin}
                               onChange={e => handleGridCellChange(index, 'checking_pin', e.target.value)}
-                              placeholder="Checking pin"
                             />
                           </td>
                           <td>
@@ -822,7 +817,6 @@ export default function OnTableChecking() {
                               style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                               value={item.defect_type}
                               onChange={e => handleGridCellChange(index, 'defect_type', e.target.value)}
-                              placeholder="e.g. Weft Slub, Stain"
                               disabled={item.pc_type === 'Pass'}
                             />
                           </td>
@@ -845,7 +839,6 @@ export default function OnTableChecking() {
                               style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                               value={item.swex}
                               onChange={e => handleGridCellChange(index, 'swex', e.target.value)}
-                              placeholder="Special remarks"
                             />
                           </td>
                           <td>
@@ -855,28 +848,24 @@ export default function OnTableChecking() {
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_1}
                                 onChange={e => handleGridCellChange(index, 'pc_1', e.target.value)}
-                                placeholder="PC1: Weft check"
                               />
                               <input
                                 className="form-control"
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_2}
                                 onChange={e => handleGridCellChange(index, 'pc_2', e.target.value)}
-                                placeholder="PC2: Warp check"
                               />
                               <input
                                 className="form-control"
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_3}
                                 onChange={e => handleGridCellChange(index, 'pc_3', e.target.value)}
-                                placeholder="PC3: Selvedge check"
                               />
                               <input
                                 className="form-control"
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_4}
                                 onChange={e => handleGridCellChange(index, 'pc_4', e.target.value)}
-                                placeholder="PC4: Printing alignment"
                               />
                             </div>
                           </td>
@@ -887,21 +876,18 @@ export default function OnTableChecking() {
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_5}
                                 onChange={e => handleGridCellChange(index, 'pc_5', e.target.value)}
-                                placeholder="PC5: Color fastness"
                               />
                               <input
                                 className="form-control"
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_6}
                                 onChange={e => handleGridCellChange(index, 'pc_6', e.target.value)}
-                                placeholder="PC6: Width inspection"
                               />
                               <input
                                 className="form-control"
                                 style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
                                 value={item.pc_7}
                                 onChange={e => handleGridCellChange(index, 'pc_7', e.target.value)}
-                                placeholder="PC7: Weight compliance"
                               />
                             </div>
                           </td>
@@ -911,7 +897,6 @@ export default function OnTableChecking() {
                               style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                               value={item.remarks}
                               onChange={e => handleGridCellChange(index, 'remarks', e.target.value)}
-                              placeholder="Notes"
                             />
                           </td>
                           {!isReadOnly && (

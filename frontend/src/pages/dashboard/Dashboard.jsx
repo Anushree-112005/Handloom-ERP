@@ -514,7 +514,27 @@ export default function Dashboard() {
       {/* Panels Grid */}
       {renderMetricGrid('A. Daily Operations Panel', operations)}
 
-
+      {/* Daily Operations Activity Chart - Full Width */}
+      <div className="card" style={{ padding: '20px 24px', marginBottom: 24 }}>
+        <div style={{ marginBottom: 16 }}>
+          <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Daily Activity Summary</h4>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Daily volume for Vendor Inward (Rolls), QC Checking (Lots), and Grey Delivery (Batches)</span>
+        </div>
+        <div style={{ height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={dailyProduction} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+              <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+              <Bar name="Vendor Inward (Rolls)" dataKey="Vendor" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar name="QC Checking (Lots)" dataKey="Checking" fill="#eab308" radius={[4, 4, 0, 0]} />
+              <Bar name="Grey Delivery (Batches)" dataKey="GreyDelivery" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20, marginBottom: 24 }}>
         
@@ -578,28 +598,6 @@ export default function Dashboard() {
               <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-primary)', fontWeight: 600 }} />
               <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }} cursor={{fill: 'var(--bg-hover)'}}/>
               <Bar dataKey="qty" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Daily Operations Activity Chart - Full Width */}
-      <div className="card" style={{ padding: '20px 24px', marginBottom: 24 }}>
-        <div style={{ marginBottom: 16 }}>
-          <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Daily Activity Summary</h4>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Daily volume for Vendor Inward (Rolls), QC Checking (Lots), and Grey Delivery (Batches)</span>
-        </div>
-        <div style={{ height: 260 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dailyProduction} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }} />
-              <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-              <Bar name="Vendor Inward (Rolls)" dataKey="Vendor" fill="#10b981" radius={[4, 4, 0, 0]} />
-              <Bar name="QC Checking (Lots)" dataKey="Checking" fill="#eab308" radius={[4, 4, 0, 0]} />
-              <Bar name="Grey Delivery (Batches)" dataKey="GreyDelivery" fill="#3b82f6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

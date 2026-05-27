@@ -18,6 +18,8 @@ import OnTableChecking from './pages/cloth/OnTableChecking';
 import ClothInward from './pages/cloth/ClothInward';
 import LogReport from './pages/log_report/LogReport';
 import EwayBill from './pages/eway_bill/EwayBill';
+import CompanySetting from './pages/settings/CompanySetting';
+
 
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
@@ -93,6 +95,8 @@ export default function App() {
         <Route path="user-management" element={<UserManagement />} />
 
         <Route path="log-report" element={<LogReport />} />
+
+        <Route path="company-settings" element={<CompanySetting />} />
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>

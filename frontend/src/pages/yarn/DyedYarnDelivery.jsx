@@ -161,9 +161,11 @@ export default function DyedYarnDelivery() {
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage dispatch of dyed yarn with challans.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-              <Plus size={18} /> New Delivery
-            </button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+                <Plus size={18} /> New Delivery
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
@@ -304,7 +306,7 @@ export default function DyedYarnDelivery() {
               
               {activeTab === 'general' && (
                 <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} placeholder="Auto if empty" disabled={editingId != null} /></div>
+                  <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
                   <div className="form-group"><label>DC No (second field)</label><input className="form-control" name="dc_no_alt" value={form.dc_no_alt} onChange={handleChange} /></div>
                   <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
                   <div className="form-group"><label>Add Date</label><input type="date" className="form-control" name="add_date" value={form.add_date} onChange={handleChange} /></div>

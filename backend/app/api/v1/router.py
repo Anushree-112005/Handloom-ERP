@@ -1,6 +1,6 @@
 """Aggregated API router — includes all module endpoints."""
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills
+from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings
 
 api_router = APIRouter()
 
@@ -21,4 +21,6 @@ api_router.include_router(on_table_checking.router)
 api_router.include_router(cloth_inwards.router)
 api_router.include_router(log_reports.router)
 api_router.include_router(eway_bills.router)
+api_router.include_router(company_settings.router)
+
 
