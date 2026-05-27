@@ -11,33 +11,16 @@ import { despatchAPI } from '../../services/api';
 
 // Dynamic Date Formatter Utility
 const getFormattedDate = (d = new Date()) => {
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return d.toISOString().split('T')[0];
 };
 
 const formatForAPI = (dateStr) => {
-  if (!dateStr) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    const [dd, mm, yyyy] = parts;
-    return `${yyyy}-${mm}-${dd}`;
-  }
-  return dateStr;
+  return dateStr || null;
 };
 
 const formatFromAPI = (dateStr) => {
   if (!dateStr) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      const [yyyy, mm, dd] = parts;
-      return `${dd}/${mm}/${yyyy}`;
-    }
-  }
-  return dateStr;
+  return dateStr.split('T')[0];
 };
 
 const mapRecordToForm = (r) => {
@@ -335,16 +318,12 @@ export default function DespatchPlanning() {
     let matchesDate = true;
     // Basic date checking
     if (r.date) {
-      // Parse DD/MM/YYYY to date objects
-      const parts = r.date.split('/');
-      if (parts.length === 3) {
-        const recordDate = new Date(parts[2], parts[1] - 1, parts[0]);
-        if (fromDate) matchesDate = matchesDate && recordDate >= new Date(fromDate);
-        if (toDate) {
-          const tDate = new Date(toDate);
-          tDate.setHours(23, 59, 59);
-          matchesDate = matchesDate && recordDate <= tDate;
-        }
+      const recordDate = new Date(r.date);
+      if (fromDate) matchesDate = matchesDate && recordDate >= new Date(fromDate);
+      if (toDate) {
+        const tDate = new Date(toDate);
+        tDate.setHours(23, 59, 59);
+        matchesDate = matchesDate && recordDate <= tDate;
       }
     }
 
@@ -668,7 +647,7 @@ export default function DespatchPlanning() {
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>PO Date</label>
-                  <input type="text" className="form-control" name="po_date" value={formData.po_date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
+                  <input type="date" className="form-control" name="po_date" value={formData.po_date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Ref No</label>
@@ -676,7 +655,7 @@ export default function DespatchPlanning() {
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Date</label>
-                  <input type="text" className="form-control" name="date" value={formData.date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
+                  <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
                 </div>
               </div>
 
@@ -713,7 +692,7 @@ export default function DespatchPlanning() {
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Delivery Starting</label>
-                    <input className="form-control" name="delivery_starting" value={formData.delivery_starting} onChange={handleChange} />
+                    <input type="date" className="form-control" name="delivery_starting" value={formData.delivery_starting} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>IBPO Rate</label>
@@ -741,7 +720,7 @@ export default function DespatchPlanning() {
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Party Comp Date</label>
-                    <input className="form-control" name="party_comp_date" value={formData.party_comp_date} onChange={handleChange} />
+                    <input type="date" className="form-control" name="party_comp_date" value={formData.party_comp_date} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Currency</label>
@@ -753,7 +732,7 @@ export default function DespatchPlanning() {
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Last Desp Date</label>
-                    <input className="form-control" name="last_desp_date" value={formData.last_desp_date} onChange={handleChange} />
+                    <input type="date" className="form-control" name="last_desp_date" value={formData.last_desp_date} onChange={handleChange} />
                   </div>
                 </div>
 
@@ -780,7 +759,7 @@ export default function DespatchPlanning() {
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>LC / TT Date</label>
-                    <input className="form-control" name="lc_tt_date" value={formData.lc_tt_date} onChange={handleChange} />
+                    <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Total</label>
@@ -797,7 +776,7 @@ export default function DespatchPlanning() {
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Comp Date</label>
-                    <input className="form-control" name="comp_date" value={formData.comp_date} onChange={handleChange} />
+                    <input type="date" className="form-control" name="comp_date" value={formData.comp_date} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Fabric Type</label>
@@ -894,7 +873,7 @@ export default function DespatchPlanning() {
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planning Date</label>
-                    <input className="form-control" name="planning_date" value={formData.planning_date} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                    <input type="date" className="form-control" name="planning_date" value={formData.planning_date} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Rate</label>

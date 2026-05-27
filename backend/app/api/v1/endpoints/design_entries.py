@@ -63,9 +63,9 @@ async def list_design_entries(skip: int = 0, limit: int = 100, db: AsyncSession 
 
 @router.post("/", response_model=DesignEntryOut, status_code=201)
 async def create_design_entry(data: DesignEntryCreate, db: AsyncSession = Depends(get_db)):
-    count_r = await db.execute(select(func.count(DesignEntry.id)))
-    count = count_r.scalar() or 0
-    ds_ref = f"DS-{count + 1:05d}"
+    max_id_q = await db.execute(select(func.max(DesignEntry.id)))
+    max_id = max_id_q.scalar() or 0
+    ds_ref = f"DS-{max_id + 1:05d}"
     
     entry = DesignEntry(**data.model_dump(), ds_ref_no=ds_ref)
     db.add(entry)
