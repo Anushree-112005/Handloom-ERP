@@ -92,6 +92,7 @@ export default function DespatchPlanning() {
   const [editingId, setEditingId] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -620,17 +621,47 @@ export default function DespatchPlanning() {
         </>
       ) : (
         /* INPUT FORM COMPONENT - ACCORDING TO CLIENT PICTURE */
-        <form onSubmit={handleSubmit}>
-          <div className="card" style={{ padding: '24px 32px', marginBottom: 24 }}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* SECTION 1: GREEN TOP BAR SECTION */}
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Despatch Plan' : editingId ? 'Edit Despatch Plan' : 'New Despatch Plan'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="despatchForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Plan' : 'Save Plan'}</button>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: '1. Basic Details' }, { id: 'planning', label: '2. Planning & Delivery' }, { id: 'order', label: '3. Order Info' }, { id: 'logistics', label: '4. Logistics & Stock' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="despatchForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+{/* SECTION 1: GREEN TOP BAR SECTION */}
               <div style={{ 
                 background: 'rgba(16, 185, 129, 0.08)', 
                 borderLeft: '4px solid #10b981', 
                 borderRadius: '8px', 
                 padding: '16px 20px', 
-                marginBottom: 24,
+                margin: '0 0 16px 0',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gap: 16
@@ -658,9 +689,13 @@ export default function DespatchPlanning() {
                   <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* SECTION 2: THREE COLUMN GRID SECTION */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28, marginBottom: 24 }}>
+                {activeTab === 'planning' && (
+                  <div className="animate-fade">
+{/* SECTION 2: THREE COLUMN GRID SECTION */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28, margin: '0 0 16px 0' }}>
                 
                 {/* COLUMN 1 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -793,14 +828,18 @@ export default function DespatchPlanning() {
                 </div>
 
               </div>
+                  </div>
+                )}
 
-              {/* SECTION 3: YELLOW ACCENT BAR */}
+                {activeTab === 'order' && (
+                  <div className="animate-fade">
+{/* SECTION 3: YELLOW ACCENT BAR */}
               <div style={{ 
                 background: 'rgba(234, 179, 8, 0.08)', 
                 borderLeft: '4px solid #eab308', 
                 borderRadius: '8px', 
                 padding: '20px 24px', 
-                marginBottom: 24
+                margin: '0 0 16px 0'
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                   <div className="form-group" style={{ margin: 0 }}>
@@ -840,14 +879,18 @@ export default function DespatchPlanning() {
                   </div>
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* SECTION 4: BLUE ACCENT BAR */}
+                {activeTab === 'logistics' && (
+                  <div className="animate-fade">
+{/* SECTION 4: BLUE ACCENT BAR */}
               <div style={{ 
                 background: 'rgba(59, 130, 246, 0.08)', 
                 borderLeft: '4px solid #3b82f6', 
                 borderRadius: '8px', 
                 padding: '20px 24px', 
-                marginBottom: 32
+                margin: '0 0 16px 0'
               }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                   <div className="form-group" style={{ margin: 0 }}>
@@ -894,31 +937,13 @@ export default function DespatchPlanning() {
                   </div>
                 </div>
               </div>
-
-              {/* LOWER ROW: FORM BUTTONS */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-                {!isReadOnly && (
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary" 
-                    style={{ minWidth: 120, background: '#22c55e', color: '#fff', border: 'none' }}
-                  >
-                    Save
-                  </button>
+                  </div>
                 )}
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => setView('list')}
-                  style={{ minWidth: 120, background: '#ef4444', color: '#fff', border: 'none' }}
-                >
-                  Cancel
-                </button>
-              </div>
-
-            </fieldset>
+              </fieldset>
+            </form>
           </div>
-        </form>
+        </div>
+
       )}
     </div>
   );

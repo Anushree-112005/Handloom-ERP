@@ -22,6 +22,7 @@ export default function GoodsRelease() {
 
   // Split view state
   const [selectedViewRelease, setSelectedViewRelease] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -491,32 +492,42 @@ export default function GoodsRelease() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View GRA Details' : editingId ? 'Edit Goods Release Advice' : 'Add New Goods Release Advice'}
-            </h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View GRA Details' : editingId ? 'Edit Goods Release Advice' : 'Add New Goods Release Advice'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="goodsReleaseForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Advice' : 'Save Advice'}</button>
+              )}
+            </div>
           </div>
-          {!isReadOnly && (
-            <button type="submit" form="goodsReleaseForm" className="btn btn-primary">
-              <Save size={18} /> Save Advice
-            </button>
-          )}
-        </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="goodsReleaseForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* Group 1: Goods Release Advice Headers */}
-              <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Goods Release Advice Basic Info</h4>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: '1. GRA Info' }, { id: 'location', label: '2. Party & Destinations' }, { id: 'items', label: '3. Despatch Grid' }, { id: 'logistics', label: '4. Summary & Logistics' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="goodsReleaseForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+{/* Group 1: Goods Release Advice Headers */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Goods Release Advice Basic Info</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>GRA No *</label>
@@ -567,9 +578,13 @@ export default function GoodsRelease() {
                   <input className="form-control" name="approved_by" value={formData.approved_by} onChange={handleInputChange} />
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 2: Party & Delivery Destinations */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Location Destinations</h4>
+                {activeTab === 'location' && (
+                  <div className="animate-fade">
+{/* Group 2: Party & Delivery Destinations */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Location Destinations</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Party Name *</label>
@@ -649,9 +664,13 @@ export default function GoodsRelease() {
                   <input className="form-control" name="delivery_ins" value={formData.delivery_ins} onChange={handleInputChange} style={{ background: '#fef08a' }} />
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 3: Despatch Detail (Grid Table) */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Despatch Details</h4>
+                {activeTab === 'items' && (
+                  <div className="animate-fade">
+{/* Group 3: Despatch Detail (Grid Table) */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Despatch Details</h4>
               <div style={{ overflowX: 'auto', marginBottom: 20 }}>
                 <table className="data-table" style={{ width: '100%' }}>
                   <thead>
@@ -754,9 +773,13 @@ export default function GoodsRelease() {
                   + Add Item Row
                 </button>
               )}
+                  </div>
+                )}
 
-              {/* Group 4: Charges & Logistics Summary */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Grand Summary & Logistics Details</h4>
+                {activeTab === 'logistics' && (
+                  <div className="animate-fade">
+{/* Group 4: Charges & Logistics Summary */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Grand Summary & Logistics Details</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Total Bales</label>
@@ -855,8 +878,12 @@ export default function GoodsRelease() {
                   <input className="form-control" name="narration" value={formData.narration} onChange={handleInputChange} />
                 </div>
               </div>
-            </fieldset>
-          </form>
+                  </div>
+                )}
+
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );
