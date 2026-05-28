@@ -348,7 +348,7 @@ export default function CompanySetting() {
           </div>
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, opacity: 0.7 }}>
-            <span>Dinesh Textile ERP Platform</span>
+            <span>DINESH EXPORTS ERP Platform</span>
             <span>Profile Status: Active</span>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Bell } from 'lucide-react';
+import defaultLogo from '../assets/logo.svg';
 
 export default function Header({ title }) {
   const navigate = useNavigate();
@@ -13,7 +14,16 @@ export default function Header({ title }) {
 
   return (
     <header className="header" id="main-header">
-      <h2 className="header-title">{title}</h2>
+      <div style={{ flex: 1, overflow: 'hidden', marginRight: '32px' }}>
+        <h2 className="header-title" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '15px' }}>
+          <marquee behavior="scroll" direction="left" scrollamount="6">
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', verticalAlign: 'middle' }}>
+              <img src={defaultLogo} alt="Logo" style={{ height: '18px', width: 'auto', objectFit: 'contain' }} />
+              <span style={{ fontWeight: 600 }}>{title}</span>
+            </div>
+          </marquee>
+        </h2>
+      </div>
       <div className="header-actions">
         <button className="btn btn-secondary" style={{ padding: '8px' }} title="Notifications">
           <Bell size={18} />
