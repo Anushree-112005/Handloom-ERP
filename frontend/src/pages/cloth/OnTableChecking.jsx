@@ -22,6 +22,7 @@ export default function OnTableChecking() {
 
   // Split view state
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -613,12 +614,32 @@ export default function OnTableChecking() {
         </>
       ) : (
         /* CREATE / EDIT FORM VIEW */
-        <div className="card" style={{ padding: 32 }}>
-          <form id="checkingForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* SECTION 1: HEADER GENERAL INFO */}
-              <h4 style={{ color: '#eab308', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+            {[{ id: 'general', label: '1. General Info & Barcode' }, { id: 'items', label: '2. Inspection Grid' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="checkingForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+{/* SECTION 1: HEADER GENERAL INFO */}
+              <h4 style={{ color: '#eab308', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
                 1. General Inspection Info
               </h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -702,9 +723,13 @@ export default function OnTableChecking() {
                   </span>
                 </div>
               )}
+                  </div>
+                )}
 
-              {/* SECTION 2: GRID ITEMS TABLE */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 16 }}>
+                {activeTab === 'items' && (
+                  <div className="animate-fade">
+{/* SECTION 2: GRID ITEMS TABLE */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
                 <h4 style={{ color: '#eab308', margin: 0, fontSize: 16, fontWeight: 700 }}>
                   2. Inspected Pieces / Rolls Grid
                 </h4>
@@ -936,11 +961,13 @@ export default function OnTableChecking() {
                   <span style={{ fontSize: 18, fontWeight: 700, color: '#ef4444' }}>{formData.reject_meters} Mtr</span>
                 </div>
               </div>
+                  </div>
+                )}
 
-            </fieldset>
-          </form>
-        </div>
-      )}
+              </fieldset>
+            </form>
+          </div>
+        </div>      )}
     </div>
   );
 }

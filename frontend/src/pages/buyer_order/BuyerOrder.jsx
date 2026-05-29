@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, FileText, CreditCard, Truck, Settings, MessageSquare, ClipboardList, Edit2, Filter, CheckCircle, ShoppingCart, Briefcase, Users, Star } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, FileText, CreditCard, Truck, Settings, MessageSquare, ClipboardList, Edit2, Filter, CheckCircle, ShoppingCart, Briefcase, Users, Star, Download, ChevronDown } from 'lucide-react';
 import { buyerOrderAPI, partyAPI, employeeAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -19,6 +22,7 @@ export default function BuyerOrder() {
   const [editingId, setEditingId] = useState(null);
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -266,6 +270,41 @@ export default function BuyerOrder() {
     }
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Buyer Orders Report", 14, 15);
+    const headers = [["IBPO No", "Date", "Party Name", "Order Type", "Agent", "Status"]];
+    const rows = filteredOrders.map(o => [
+      o.ibpo_number || '-',
+      o.order_date ? new Date(o.order_date).toLocaleDateString() : '-',
+      o.party_name || '-',
+      o.order_type || '-',
+      o.agent_name || '-',
+      o.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Buyer_Orders_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredOrders.map(o => ({
+      "IBPO No": o.ibpo_number,
+      "Order Date": o.order_date ? new Date(o.order_date).toLocaleDateString() : '-',
+      "Party Name": o.party_name,
+      "Order Type": o.order_type,
+      "Certified Type": o.certified_type,
+      "Buyer Name": o.buyer_name,
+      "Agent Name": o.agent_name,
+      "Payment Terms": o.payment_terms,
+      "Delivery Place": o.delivery_place,
+      "Status": o.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Buyer Orders");
+    XLSX.writeFile(wb, `Buyer_Orders_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="animate-fade">
       {!showForm ? (
@@ -278,6 +317,24 @@ export default function BuyerOrder() {
               <p style={{ color: 'var(--text-muted)' }}>Manage all buyer orders, payments, and logistics.</p>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button className="btn btn-secondary" onClick={() => setShowExportMenu(!showExportMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Download size={16} /> Export
+                </button>
+                {showExportMenu && (
+                  <>
+                    <div onClick={() => setShowExportMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', zIndex: 100, minWidth: 160, overflow: 'hidden' }}>
+                      <button onClick={() => { setShowExportMenu(false); exportPDF(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <FileText size={16} color="#ef4444" /> PDF Report
+                      </button>
+                      <button onClick={() => { setShowExportMenu(false); exportExcel(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <Download size={16} color="#10b981" /> Excel Sheet
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={16} /> New Order
               </button>

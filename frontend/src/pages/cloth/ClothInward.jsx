@@ -30,6 +30,7 @@ export default function ClothInward() {
 
   // Split view state
   const [selectedInward, setSelectedInward] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -570,20 +571,32 @@ export default function ClothInward() {
           </div>
         </>
       ) : (
-        /* FORM ENTRY VIEW (RECREATES LAPTOP SCREEN) */
-        <div className="card" style={{ padding: 32 }}>
-          <form id="inwardForm" onSubmit={handleSubmit}>
+        /* FORM ENTRY VIEW */
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: 'General Spec & Headers' }, { id: 'process', label: 'Processing Steps' }, { id: 'items', label: 'Piece-wise Inward Grid' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.id === 'general' ? <FileText size={16}/> : tab.id === 'process' ? <Settings size={16}/> : <Barcode size={16}/>}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <form id="inwardForm" onSubmit={handleSubmit} style={{ padding: 32 }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32 }}>
-                
-                {/* LEFT COLUMN: DETAILED SPEC FORM */}
-                <div>
-                  <h4 style={{ color: '#10b981', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 15, fontWeight: 700 }}>
-                    1. Cloth General Specification & Headers
-                  </h4>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px 24px' }}>
+              {activeTab === 'general' && (
+                <div className="animate-fade">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px' }}>
                     <div className="form-group">
                       <label>Inward Type *</label>
                       <select className="form-control" name="inward_type" value={formData.inward_type} onChange={handleHeaderChange} required>
@@ -768,7 +781,23 @@ export default function ClothInward() {
                       <label>Sizing (Szt) No</label>
                       <input className="form-control" name="szt_no" value={formData.szt_no} onChange={handleHeaderChange} />
                     </div>
+                  </div>
+                </div>
+              )}
 
+              {activeTab === 'process' && (
+                <div className="animate-fade">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px' }}>
+                    <div className="form-group">
+                      <label>Process Type</label>
+                      <select className="form-control" name="process_type" value={formData.process_type} onChange={handleHeaderChange}>
+                        <option>Dyeing</option>
+                        <option>Bleaching</option>
+                        <option>Sanforizing</option>
+                        <option>Finishing</option>
+                      </select>
+                    </div>
+                    
                     <div className="form-group">
                       <label>Inspection Type</label>
                       <select className="form-control" name="inspection_type" value={formData.inspection_type} onChange={handleHeaderChange}>
@@ -782,49 +811,34 @@ export default function ClothInward() {
                       <label>Inv Pin</label>
                       <input className="form-control" name="inv_pin" value={formData.inv_pin} onChange={handleHeaderChange} />
                     </div>
-                  </div>
-
-                  <div className="form-group" style={{ marginTop: 12 }}>
-                    <label>Remarks</label>
-                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
-                  </div>
-
-                  {/* PROCESS SUBSECTION FROM PHOTO */}
-                  <h4 style={{ color: '#10b981', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 15, fontWeight: 700 }}>
-                    2. Next Processing Steps
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 24px' }}>
-                    <div className="form-group">
-                      <label>Process Type</label>
-                      <select className="form-control" name="process_type" value={formData.process_type} onChange={handleHeaderChange}>
-                        <option>Dyeing</option>
-                        <option>Bleaching</option>
-                        <option>Sanforizing</option>
-                        <option>Finishing</option>
-                      </select>
-                    </div>
+                    
                     <div className="form-group">
                       <label>Process Remarks</label>
                       <input className="form-control" name="process_remarks" value={formData.process_remarks} onChange={handleHeaderChange} />
                     </div>
+                    
+                    <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                      <label>General Remarks</label>
+                      <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
+                    </div>
                   </div>
-
                 </div>
+              )}
 
-                {/* RIGHT COLUMN: CLOTH INWARD PIECE GRID */}
-                <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 24 }}>
+              {activeTab === 'items' && (
+                <div className="animate-fade">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <h4 style={{ color: '#10b981', margin: 0, fontSize: 15, fontWeight: 700 }}>
-                      3. Piece-wise Inward Weight & Length Grid
+                    <h4 style={{ color: 'var(--text-primary)', margin: 0, fontSize: 16, fontWeight: 600 }}>
+                      Piece-wise Inward Details
                     </h4>
                     {!isReadOnly && (
                       <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
-                        + Add Piece
+                        <Plus size={16} /> Add Piece
                       </button>
                     )}
                   </div>
 
-                  <div style={{ maxHeight: '600px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
                     <table className="data-table" style={{ margin: 0 }}>
                       <thead>
                         <tr>
@@ -840,8 +854,8 @@ export default function ClothInward() {
                       <tbody>
                         {formData.items.length === 0 ? (
                           <tr>
-                            <td colSpan={isReadOnly ? 6 : 7} style={{ textAlign: 'center', padding: '40px var(--text-muted)', color: 'var(--text-muted)' }}>
-                              No cloth pieces added yet. Click "+ Add Piece" to insert piece specifications.
+                            <td colSpan={isReadOnly ? 6 : 7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                              No cloth pieces added yet. Click "Add Piece" to insert piece specifications.
                             </td>
                           </tr>
                         ) : (
@@ -851,7 +865,7 @@ export default function ClothInward() {
                               <td>
                                 <input
                                   className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
                                   value={item.piece_no}
                                   onChange={e => handleGridCellChange(index, 'piece_no', e.target.value)}
                                   required
@@ -862,7 +876,7 @@ export default function ClothInward() {
                                   type="number"
                                   step="0.01"
                                   className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
                                   value={item.weight}
                                   onChange={e => handleGridCellChange(index, 'weight', Number(e.target.value))}
                                 />
@@ -870,7 +884,7 @@ export default function ClothInward() {
                               <td>
                                 <input
                                   className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
                                   value={item.vloom}
                                   onChange={e => handleGridCellChange(index, 'vloom', e.target.value)}
                                 />
@@ -878,7 +892,7 @@ export default function ClothInward() {
                               <td>
                                 <input
                                   className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
                                   value={item.vpc_no}
                                   onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
                                 />
@@ -888,7 +902,7 @@ export default function ClothInward() {
                                   type="number"
                                   step="0.1"
                                   className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
                                   value={item.meters}
                                   onChange={e => handleGridCellChange(index, 'meters', Number(e.target.value))}
                                   required
@@ -913,20 +927,18 @@ export default function ClothInward() {
                   </div>
 
                   {/* SUMMARY SECTION */}
-                  <div style={{ marginTop: 24, padding: 16, background: 'var(--bg-secondary)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ marginTop: 24, padding: '16px 24px', background: 'var(--bg-secondary)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Pieces (Pc)</span>
-                      <div style={{ fontSize: 18, fontWeight: 700 }}>{formData.total_pieces} Pcs</div>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Pieces</span>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{formData.total_pieces} Pcs</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Meters (Mtr)</span>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>{formData.total_meters} Mtr</div>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Meters</span>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{formData.total_meters} Mtr</div>
                     </div>
                   </div>
-
                 </div>
-
-              </div>
+              )}
 
             </fieldset>
           </form>
@@ -935,3 +947,4 @@ export default function ClothInward() {
     </div>
   );
 }
+

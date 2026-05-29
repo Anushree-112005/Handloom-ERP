@@ -22,6 +22,7 @@ export default function PackingSlip() {
 
   // Split view state
   const [selectedViewSlip, setSelectedViewSlip] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -414,32 +415,42 @@ export default function PackingSlip() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View Packing Slip Details' : editingId ? 'Edit Packing Slip' : 'Add New Packing Slip / Bale Entry'}
-            </h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Packing Slip Details' : editingId ? 'Edit Packing Slip' : 'Add New Packing Slip / Bale Entry'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="packingSlipForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Slip' : 'Save Slip'}</button>
+              )}
+            </div>
           </div>
-          {!isReadOnly && (
-            <button type="submit" form="packingSlipForm" className="btn btn-primary">
-              <Save size={18} /> Save Packing Slip
-            </button>
-          )}
-        </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="packingSlipForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* Group 1: Packing Advice Headers */}
-              <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Packing Slip Reference Information</h4>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: '1. Reference Info' }, { id: 'specs', label: '2. Technical & Lot Info' }, { id: 'items', label: '3. Despatch Details' }, { id: 'weights', label: '4. Weights & Summary' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="packingSlipForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+{/* Group 1: Packing Advice Headers */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Packing Slip Reference Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Ref No *</label>
@@ -495,9 +506,13 @@ export default function PackingSlip() {
                   <input className="form-control" name="bale_no" value={formData.bale_no} onChange={handleInputChange} />
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 2: Product & Lot Information */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Technical & Lot Info</h4>
+                {activeTab === 'specs' && (
+                  <div className="animate-fade">
+{/* Group 2: Product & Lot Information */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Technical & Lot Info</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Design No</label>
@@ -570,9 +585,13 @@ export default function PackingSlip() {
                   </select>
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 3: Split view for Despatch Detail Table & Right preview list */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Despatch Details & Bale Summary</h4>
+                {activeTab === 'items' && (
+                  <div className="animate-fade">
+{/* Group 3: Split view for Despatch Detail Table & Right preview list */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Despatch Details & Bale Summary</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 24 }}>
                 
                 {/* Left side: Despatch detail editor */}
@@ -693,9 +712,13 @@ export default function PackingSlip() {
                 </div>
 
               </div>
+                  </div>
+                )}
 
-              {/* Group 4: Weights & Footer Summary */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Weights & Summary Details</h4>
+                {activeTab === 'weights' && (
+                  <div className="animate-fade">
+{/* Group 4: Weights & Footer Summary */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Weights & Summary Details</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Total Pieces</label>
@@ -734,8 +757,12 @@ export default function PackingSlip() {
                   <label htmlFor="auto_weight" style={{ margin: 0, fontWeight: 600, cursor: 'pointer' }}>Enable Auto Weight Calculation (Calculated weight + packing weight)</label>
                 </div>
               </div>
-            </fieldset>
-          </form>
+                  </div>
+                )}
+
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );

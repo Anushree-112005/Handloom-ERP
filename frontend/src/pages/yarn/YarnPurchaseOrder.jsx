@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown } from 'lucide-react';
 import { yarnPurchaseOrderAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function YarnPurchaseOrder() {
   const [editingId, setEditingId] = useState(null);
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -179,6 +183,38 @@ export default function YarnPurchaseOrder() {
     if (type === 'Closed') setStatusFilter('Closed');
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Yarn Purchase Orders", 14, 15);
+    const headers = [["PO No", "Date", "Supplier", "Amount", "Status"]];
+    const rows = filteredOrders.map(o => [
+      o.po_number || '-',
+      o.po_date || '-',
+      o.supplier_name || o.org_name || '-',
+      `Rs. ${o.net_amount?.toFixed(2) || '0.00'}`,
+      o.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Yarn_POs_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredOrders.map(o => ({
+      "PO No": o.po_number,
+      "Date": o.po_date,
+      "Internal PO No": o.internal_po_no,
+      "Org Name": o.org_name,
+      "Supplier": o.supplier_name,
+      "Agent Name": o.agent_name,
+      "Amount": o.net_amount,
+      "Status": o.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Yarn POs");
+    XLSX.writeFile(wb, `Yarn_POs_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const tabs = [
     { id: 'main', label: 'Order Info', icon: FileText },
     { id: 'yarn', label: 'Yarn Count Details', icon: Package },
@@ -198,6 +234,24 @@ export default function YarnPurchaseOrder() {
               <p style={{ color: 'var(--text-muted)' }}>Manage yarn procurement and indents.</p>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button className="btn btn-secondary" onClick={() => setShowExportMenu(!showExportMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Download size={16} /> Export
+                </button>
+                {showExportMenu && (
+                  <>
+                    <div onClick={() => setShowExportMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', zIndex: 100, minWidth: 160, overflow: 'hidden' }}>
+                      <button onClick={() => { setShowExportMenu(false); exportPDF(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <FileText size={16} color="#ef4444" /> PDF Report
+                      </button>
+                      <button onClick={() => { setShowExportMenu(false); exportExcel(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <Download size={16} color="#10b981" /> Excel Sheet
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={18} /> New Order
               </button>
