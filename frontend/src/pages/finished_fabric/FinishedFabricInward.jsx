@@ -30,6 +30,7 @@ export default function FinishedFabricInward() {
 
   // Split view state
   const [selectedViewInward, setSelectedViewInward] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -407,31 +408,41 @@ export default function FinishedFabricInward() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View Fabric Inward Entry' : editingId ? 'Edit Fabric Inward Entry' : 'Add Finished Fabric Inward Entry'}
-            </h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Fabric Inward Entry' : editingId ? 'Edit Fabric Inward Entry' : 'Add Finished Fabric Inward Entry'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="fabricInwardForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Inward' : 'Save Inward'}</button>
+              )}
+            </div>
           </div>
-          {!isReadOnly && (
-            <button type="submit" form="fabricInwardForm" className="btn btn-primary">
-              <Save size={18} /> Save Inward Entry
-            </button>
-          )}
-        </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="fabricInwardForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* Section 1: Inward Reference details */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: '1. Inward Reference Info' }, { id: 'specs', label: '2. Fabric Specs & Metrics' }, { id: 'items', label: '3. Despatch Grid Details' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="fabricInwardForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+{/* Section 1: Inward Reference details */}
               <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Upper Inward Reference Info</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
@@ -509,11 +520,13 @@ export default function FinishedFabricInward() {
                 </div>
               </div>
 
-              {/* Split layout: Left detail fields and Right items grid */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Fabric Specifications & Grid Entry</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.2fr', gap: 24, alignItems: 'start' }}>
-                
-                {/* Left Side: Technical detail form columns */}
+              
+                  </div>
+                )}
+
+                {activeTab === 'specs' && (
+                  <div className="animate-fade">
+{/* Left Side: Technical detail form columns */}
                 <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: 18 }}>
                   <h5 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>Fabric Specs & Metrics</h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -603,8 +616,12 @@ export default function FinishedFabricInward() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                {/* Right Side: Pieces detail grid table */}
+                {activeTab === 'items' && (
+                  <div className="animate-fade">
+{/* Right Side: Pieces detail grid table */}
                 <div>
                   <h5 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>Despatch Grid Details</h5>
                   <div style={{ overflowX: 'auto', maxHeight: '550px', overflowY: 'auto' }}>
@@ -689,11 +706,12 @@ export default function FinishedFabricInward() {
                     </button>
                   )}
                 </div>
+                  </div>
+                )}
 
-              </div>
-
-            </fieldset>
-          </form>
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );

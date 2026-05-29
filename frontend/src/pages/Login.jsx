@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { authAPI } from '../services/api';
+import defaultLogo from '../assets/logo.svg';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -34,8 +35,10 @@ export default function Login() {
     <div className="login-page">
       <div className="login-card animate-fade">
         <div className="logo-section">
-          <div className="logo-box">DT</div>
-          <h1>Dinesh Eexport Textile ERP</h1>
+          <div className="logo-box" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
+            <img src={defaultLogo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
+          <h1>DINESH EXPORTS ERP</h1>
         </div>
 
         {error && <div className="login-error">{error}</div>}

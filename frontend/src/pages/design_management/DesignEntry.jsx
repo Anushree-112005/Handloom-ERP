@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown } from 'lucide-react';
 import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -19,6 +22,8 @@ export default function DesignEntry() {
   const [editingId, setEditingId] = useState(null);
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Filters
@@ -78,6 +83,7 @@ export default function DesignEntry() {
       setForm({ ...initialForm, ...data });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
+      setActiveTab('basic');
       setShowForm(true);
       setSelectedViewEntry(null);
     } catch (err) {
@@ -149,6 +155,39 @@ export default function DesignEntry() {
     if (type === 'Special') setTypeFilter('Special');
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Design Entry Report", 14, 15);
+    const headers = [["DS Ref No", "Date", "Design No", "Buyer", "Fabric", "Weaving"]];
+    const rows = filteredEntries.map(e => [
+      e.ds_ref_no || '-',
+      e.ds_date || '-',
+      e.design_no || '-',
+      e.buyer_name || '-',
+      e.fabric || '-',
+      e.weaving || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Design_Entries_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredEntries.map(e => ({
+      "DS Ref No": e.ds_ref_no,
+      "DS Date": e.ds_date,
+      "Design No": e.design_no,
+      "Buyer": e.buyer_name,
+      "Fabric": e.fabric,
+      "Weaving": e.weaving,
+      "Design Type": e.design_type,
+      "Created By": e.created_by
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Design Entries");
+    XLSX.writeFile(wb, `Design_Entries_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="animate-fade">
       {!showForm ? (
@@ -160,8 +199,38 @@ export default function DesignEntry() {
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage design specifications and weaving details.</p>
             </div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Download size={16} /> Export <ChevronDown size={14} />
+                </button>
+
+                {showExportMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <FileText size={16} color="#ef4444" /> PDF Report
+                    </button>
+                    <button
+                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Download size={16} color="#10b981" /> Excel Sheet
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); }}>
                 <Plus size={16} /> New Design
               </button>
             </div>
@@ -287,16 +356,38 @@ export default function DesignEntry() {
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
               {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Design' : 'Save Design'}</button>
+                <button type="submit" form="designForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Design' : 'Save Design'}</button>
               )}
             </div>
+          </div>
+
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'basic', label: '1. Basic & Buyer Info' }, 
+              { id: 'fabric', label: '2. Fabric & Weaving' },
+              { id: 'metrics', label: '3. Metrics & Lengths' },
+              { id: 'allowances', label: '4. Allowances & Percentages' }
+             ].map(tab => (
+              <button 
+                key={tab.id} onClick={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
+                type="button"
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               <form id="designForm" onSubmit={handleCreate}>
-                <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Basic & Buyer Info</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                {/* Group 1: Basic & Buyer Info */}
+                {activeTab === 'basic' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                   <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
                   <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
                   <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
@@ -319,10 +410,12 @@ export default function DesignEntry() {
                     </select>
                   </div>
                   <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} /></div>
-                </div>
+                  </div>
+                )}
 
-                <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Fabric & Weaving</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                {/* Group 2: Fabric & Weaving */}
+                {activeTab === 'fabric' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                   <div className="form-group"><label>Fabric</label>
                     <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
                       <option>Cotton</option><option>Polyester</option><option>Blended</option><option>Silk</option>
@@ -343,10 +436,12 @@ export default function DesignEntry() {
                   <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
                   <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
                   <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} /></div>
-                </div>
+                  </div>
+                )}
 
-                <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Metrics & Lengths</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                {/* Group 3: Metrics & Lengths */}
+                {activeTab === 'metrics' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                   <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
                   <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
                   <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
@@ -358,17 +453,20 @@ export default function DesignEntry() {
                   <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
                   <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
                   <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} /></div>
-                </div>
+                  </div>
+                )}
 
-                <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Allowances & Percentages</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                {/* Group 4: Allowances & Percentages */}
+                {activeTab === 'allowances' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                   <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
                   <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
                   <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
                   <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
                   <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
                   <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
-                </div>
+                  </div>
+                )}
               </form>
             </fieldset>
           </div>

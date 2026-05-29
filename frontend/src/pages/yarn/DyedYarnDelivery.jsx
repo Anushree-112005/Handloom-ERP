@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send, Download, ChevronDown, FileText } from 'lucide-react';
 import { dyedYarnDeliveryAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function DyedYarnDelivery() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -150,6 +154,39 @@ export default function DyedYarnDelivery() {
     return matchesSearch && matchesType && matchesDate;
   });
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Dyed Yarn Deliveries", 14, 15);
+    const headers = [["DC No", "Date", "Party Name", "Delivery Type", "Net Amount", "Status"]];
+    const rows = filteredDeliveries.map(r => [
+      r.dc_no || '-',
+      r.dc_date || '-',
+      r.party_name || '-',
+      r.delivery_type || '-',
+      `Rs. ${parseFloat(r.net_amount || 0).toFixed(2)}`,
+      r.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Dyed_Yarn_Deliveries_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredDeliveries.map(r => ({
+      "DC No": r.dc_no,
+      "Date": r.dc_date,
+      "Party Name": r.party_name,
+      "Delivery Type": r.delivery_type,
+      "Mode": r.delivery_mode,
+      "Net Amount": r.net_amount,
+      "Total Delv Kgs": r.total_delv_kgs,
+      "Status": r.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dyed Yarn Deliveries");
+    XLSX.writeFile(wb, `Dyed_Yarn_Deliveries_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="animate-fade">
       {!showForm ? (
@@ -162,6 +199,24 @@ export default function DyedYarnDelivery() {
               <p style={{ color: 'var(--text-muted)' }}>Manage dispatch of dyed yarn with challans.</p>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button className="btn btn-secondary" onClick={() => setShowExportMenu(!showExportMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Download size={16} /> Export
+                </button>
+                {showExportMenu && (
+                  <>
+                    <div onClick={() => setShowExportMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', zIndex: 100, minWidth: 160, overflow: 'hidden' }}>
+                      <button onClick={() => { setShowExportMenu(false); exportPDF(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <FileText size={16} color="#ef4444" /> PDF Report
+                      </button>
+                      <button onClick={() => { setShowExportMenu(false); exportExcel(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <Download size={16} color="#10b981" /> Excel Sheet
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={18} /> New Delivery
               </button>

@@ -6,6 +6,7 @@ import {
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
+import defaultLogo from '../assets/logo.svg';
 
 
 const modules = [
@@ -72,7 +73,7 @@ const modules = [
 export default function Sidebar() {
   const location = useLocation();
   const [companyProfile, setCompanyProfile] = useState({
-    company_name: 'Dinesh Textile',
+    company_name: 'DINESH EXPORTS',
     logo: ''
   });
 
@@ -106,11 +107,13 @@ export default function Sidebar() {
             <img src={companyProfile.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
         ) : (
-          <div className="logo-icon">DT</div>
+          <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
+            <img src={defaultLogo} alt="Default Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
         )}
         <div>
           <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px' }}>{companyProfile.company_name}</h1>
-          <span>ERP System</span>
+          <span>THE HOUSE OF FABRICS</span>
         </div>
       </div>
       <nav className="sidebar-nav">

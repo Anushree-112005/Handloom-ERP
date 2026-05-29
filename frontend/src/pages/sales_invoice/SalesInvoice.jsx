@@ -22,6 +22,7 @@ export default function SalesInvoice() {
 
   // Split view state
   const [selectedViewInvoice, setSelectedViewInvoice] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -557,32 +558,42 @@ export default function SalesInvoice() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View Invoice Details' : editingId ? 'Edit Sales Invoice' : 'Add New Sales Invoice'}
-            </h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Invoice Details' : editingId ? 'Edit Sales Invoice' : 'Add New Sales Invoice'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="salesInvoiceForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Invoice' : 'Save Invoice'}</button>
+              )}
+            </div>
           </div>
-          {!isReadOnly && (
-            <button type="submit" form="salesInvoiceForm" className="btn btn-primary">
-              <Save size={18} /> Save Invoice
-            </button>
-          )}
-        </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="salesInvoiceForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* Group 1: Basic Invoice Information */}
-              <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Basic Invoice Information</h4>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: '1. Basic Info' }, { id: 'party', label: '2. Party Info' }, { id: 'logistics', label: '3. Transport' }, { id: 'items', label: '4. Line Items' }, { id: 'summary', label: '5. Summary' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="salesInvoiceForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+{/* Group 1: Basic Invoice Information */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Basic Invoice Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Invoice Type (ID) *</label>
@@ -634,9 +645,13 @@ export default function SalesInvoice() {
                   </select>
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 2: Party & Address Information */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Billing Information</h4>
+                {activeTab === 'party' && (
+                  <div className="animate-fade">
+{/* Group 2: Party & Address Information */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Billing Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Pay Name (Billing Party) *</label>
@@ -726,9 +741,13 @@ export default function SalesInvoice() {
                   <input className="form-control" name="pmt_ref_no" value={formData.pmt_ref_no} onChange={handleInputChange} />
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 3: Transport & Freight Information */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Transport & Freight Logistics</h4>
+                {activeTab === 'logistics' && (
+                  <div className="animate-fade">
+{/* Group 3: Transport & Freight Information */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Transport & Freight Logistics</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Transport Name</label>
@@ -774,9 +793,13 @@ export default function SalesInvoice() {
                   </select>
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 4: Invoice Line Items */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Invoice Line Items</h4>
+                {activeTab === 'items' && (
+                  <div className="animate-fade">
+{/* Group 4: Invoice Line Items */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Invoice Line Items</h4>
               <div style={{ overflowX: 'auto', marginBottom: 20 }}>
                 <table className="data-table" style={{ width: '100%' }}>
                   <thead>
@@ -892,9 +915,13 @@ export default function SalesInvoice() {
                   + Add Line Item
                 </button>
               )}
-
-              {/* Group 5: Other Charges & Totals Summary */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>5. Charges & Grand Summary</h4>
+                  </div>
+                )}
+                
+                {activeTab === 'summary' && (
+                  <div className="animate-fade">
+{/* Group 5: Other Charges & Totals Summary */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>5. Charges & Grand Summary</h4>
               <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 40 }}>
                 
                 {/* Left side: Other Charges inputs */}
@@ -1021,8 +1048,12 @@ export default function SalesInvoice() {
                   </div>
                 </div>
               </div>
-            </fieldset>
-          </form>
+                  </div>
+                )}
+
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );

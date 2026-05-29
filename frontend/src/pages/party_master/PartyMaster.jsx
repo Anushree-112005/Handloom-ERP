@@ -19,6 +19,7 @@ export default function PartyMaster() {
   const [editingId, setEditingId] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
 
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
@@ -80,6 +81,7 @@ export default function PartyMaster() {
       setEditingId(null);
     }
     setIsReadOnly(readOnly);
+    setActiveTab('basic');
     setView('form');
   };
 
@@ -253,12 +255,35 @@ export default function PartyMaster() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="partyForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              {/* Group 1: Basic Details */}
-              <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Basic Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'basic', label: '1. Basic Information' }, 
+              { id: 'location', label: '2. Location & Address' },
+              { id: 'tax', label: '3. Tax & Legal Info' },
+              { id: 'financial', label: '4. Financial & Logistics' }
+             ].map(tab => (
+              <button 
+                key={tab.id} onClick={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
+                type="button"
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ padding: 24, background: '#fff' }}>
+            <form id="partyForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                {/* Group 1: Basic Details */}
+                {activeTab === 'basic' && (
+                  <div className="animate-fade">
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Party Type *</label>
                   <select className="form-control" name="party_type" value={formData.party_type} onChange={handleChange} required>
@@ -326,10 +351,12 @@ export default function PartyMaster() {
                   <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} />
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Group 2: Location & Address */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Location & Address</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                {/* Group 2: Location & Address */}
+                {activeTab === 'location' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Complete Address</label>
                   <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
@@ -367,10 +394,11 @@ export default function PartyMaster() {
                   </select>
                 </div>
               </div>
+            )}
 
-              {/* Group 3: Tax & Legal Info */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Tax & Legal Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            {/* Group 3: Tax & Legal Info */}
+                {activeTab === 'tax' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>GSTIN</label>
                   <input className="form-control" name="gstin" value={formData.gstin} onChange={handleChange} />
@@ -426,10 +454,11 @@ export default function PartyMaster() {
                   <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} />
                 </div>
               </div>
+            )}
 
-              {/* Group 4: Account & Logistics */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Financial & Logistics</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            {/* Group 4: Account & Logistics */}
+                {activeTab === 'financial' && (
+                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Currency</label>
                   <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
@@ -499,8 +528,10 @@ export default function PartyMaster() {
                   <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} />
                 </div>
               </div>
-            </fieldset>
-          </form>
+                )}
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );
