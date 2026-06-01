@@ -6,6 +6,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
+import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
@@ -16,9 +17,22 @@ import FinishedFabricInward from './pages/finished_fabric/FinishedFabricInward';
 import ClothDelivery from './pages/cloth/ClothDelivery';
 import OnTableChecking from './pages/cloth/OnTableChecking';
 import ClothInward from './pages/cloth/ClothInward';
+import FabricTransaction from './pages/cloth/FabricTransaction';
+import GreigeTransaction from './pages/cloth/GreigeTransaction';
 import LogReport from './pages/log_report/LogReport';
+import ReportsDashboard from './pages/reports_dashboard/ReportsDashboard';
 import EwayBill from './pages/eway_bill/EwayBill';
 import CompanySetting from './pages/settings/CompanySetting';
+import GateInward from './pages/gate/GateInward';
+import GateOutward from './pages/gate/GateOutward';
+import GatePass from './pages/gate/GatePass';
+import GateReports from './pages/gate/GateReports';
+import SparesTransaction from './pages/spares/SparesTransaction';
+import SparesMaster from './pages/spares/SparesMaster';
+import SparesReport from './pages/spares/SparesReport';
+import SparesApproval from './pages/spares/SparesApproval';
+import VoucherEntry from './pages/accounts/VoucherEntry';
+import AccountsTransaction from './pages/accounts/AccountsTransaction';
 
 
 
@@ -32,6 +46,7 @@ import DyedYarnReceived from './pages/yarn/DyedYarnReceived';
 import DyedYarnDelivery from './pages/yarn/DyedYarnDelivery';
 import WarpBeamReceipt from './pages/warp/WarpBeamReceipt';
 import WarpDelivery from './pages/warp/WarpDelivery';
+import WarpSizingTransaction from './pages/warp/WarpSizingTransaction';
 
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
@@ -57,6 +72,10 @@ export default function App() {
         <Route path="party-master" element={<PartyMaster />} />
 
         <Route path="buyer-order" element={<BuyerOrder />} />
+        <Route path="work-order/desk" element={<WorkOrderDesk defaultSection="Transactions" />} />
+        <Route path="work-order/transaction" element={<WorkOrderDesk defaultSection="Transactions" />} />
+        <Route path="work-order/completion" element={<WorkOrderDesk defaultSection="Completions" />} />
+        <Route path="work-order/approval" element={<WorkOrderDesk defaultSection="Approvals" />} />
 
         <Route path="design-entry" element={<DesignEntry />} />
 
@@ -73,12 +92,15 @@ export default function App() {
         <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
 
         <Route path="warp/delivery" element={<WarpDelivery />} />
+        <Route path="warp/transaction" element={<WarpSizingTransaction />} />
 
         <Route path="cloth/inward" element={<ClothInward />} />
 
         <Route path="cloth/checking" element={<OnTableChecking />} />
 
         <Route path="cloth/delivery" element={<ClothDelivery />} />
+        <Route path="fabric/transaction" element={<FabricTransaction />} />
+        <Route path="greige/transaction" element={<GreigeTransaction />} />
 
         <Route path="finished-fabric" element={<FinishedFabricInward />} />
 
@@ -116,7 +138,20 @@ export default function App() {
 
         <Route path="log-report" element={<LogReport />} />
 
+        <Route path="reports-dashboard" element={<ReportsDashboard />} />
+
         <Route path="company-settings" element={<CompanySetting />} />
+
+        <Route path="gate/inward" element={<GateInward />} />
+        <Route path="gate/outward" element={<GateOutward />} />
+        <Route path="gate/pass" element={<GatePass />} />
+        <Route path="gate/reports" element={<GateReports />} />
+        <Route path="spares/master" element={<SparesMaster />} />
+        <Route path="spares/transaction" element={<SparesTransaction />} />
+        <Route path="spares/approval" element={<SparesApproval />} />
+        <Route path="spares/report" element={<SparesReport />} />
+        <Route path="accounts/voucher-entry" element={<VoucherEntry />} />
+        <Route path="accounts/transaction" element={<AccountsTransaction />} />
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>

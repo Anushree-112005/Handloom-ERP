@@ -1,0 +1,240 @@
+================================================================================
+DINESH EXPORTS ERP — CLIENT REPORTS & SPARES INTEGRATION GUIDE
+================================================================================
+
+This integration guide explains how to map, configure, and connect all 18 reports
+shown in your client's legacy menus (Image 1: "Reports" Dropdown, and Image 2: 
+"Spares Report" Dropdown) into our newly created, high-performance Reports 
+& MIS Dashboard.
+
+By following this guide, you can perfectly consolidate your client's old workflow
+into the new modern UI without disturbing any existing code or flow.
+
+--------------------------------------------------------------------------------
+PART 1: MAPPING ARCHITECTURE (LEGACY TO MODERN DASHBOARD DOMAINS)
+--------------------------------------------------------------------------------
+
+We will group all 18 reports from the first two images into 5 clean, highly
+harmonized domain category cards on the new dashboard:
+
+1. PRODUCTION REPORTS (🏭 icon)
+   - Loom Production (Existing)
+   - Warping/Sizing Reports (From Image 1 -> Warping/Sizing Reports)
+   - Dyeing Status (Existing)
+   - Production Efficiency (Existing)
+
+2. YARN REPORTS (🧶 icon)
+   - Yarn Stock (Existing)
+   - Yarn Consumption (Existing)
+   - Yarn Purchase Order / DC (Existing & Image 1 -> Single SP/IBPO-All Status)
+   - Yarn Delivery Challan (Existing)
+
+3. FABRIC REPORTS (👕 icon)
+   - Cloth Reports (From Image 1 -> Cloth Reports / Party Master View)
+   - Grey Cloth Reports (From Image 1 -> Grey Cloth Reports / Gry Invoice/Packing)
+   - Invoice / Packing List Print (From Image 1 -> Invoice/Packing list Print)
+   - Export Invoice / Packing Print (From Image 1 -> Export Invoice/Packing list Print)
+
+4. INVENTORY REPORTS (📦 icon)
+   - Store Stock Summary (Existing)
+   - Material Consumption (Existing)
+   - Inventory Aging (Existing)
+   - Warehouse Location Stock (Existing)
+
+5. NEW DOMAIN: SPARES & MAINTENANCE REPORTS (⚙️ icon)
+   - PO / DC Printing (From Image 2 -> Purchase Order / DC Printing)
+   - PO / Req. Indent Status (From Image 2 -> Purchase Order / Req.Indent Status)
+   - Received Reports (From Image 2 -> Purchase / Received Reports)
+   - Consumption & Delivery (From Image 2 -> Consumption / Delivery Reports)
+   - Spare Stock Reports (From Image 2 -> Stock Reports)
+
+*(Note: If your client wants Sales and Accounts back, you can simply append them
+to the REPORT_CATEGORIES array shown in Part 2 below!)*
+
+--------------------------------------------------------------------------------
+PART 2: CODE IMPLEMENTATION — UPDATING REPORT CATEGORIES
+--------------------------------------------------------------------------------
+
+To make these options appear instantly in the left sidebar selector under the
+respective categories, open:
+  📂 frontend/src/pages/reports_dashboard/ReportsDashboard.jsx
+
+Navigate to "const REPORT_CATEGORIES" (around Line 479) and replace it with this
+comprehensive configuration:
+
+```javascript
+const REPORT_CATEGORIES = [
+  {
+    id: 'production',
+    name: 'Production Reports',
+    icon: Factory,
+    color: '#10b981',
+    count: 4,
+    reports: [
+      { id: 'loom_production', name: 'Loom Production' },
+      { id: 'warping_sizing', name: 'Warping & Sizing Reports' },
+      { id: 'dyeing_status', name: 'Dyeing Status' },
+      { id: 'prod_efficiency', name: 'Production Efficiency' }
+    ]
+  },
+  {
+    id: 'yarn',
+    name: 'Yarn Reports',
+    icon: Layers,
+    color: '#8b5cf6',
+    count: 4,
+    reports: [
+      { id: 'yarn_stock', name: 'Yarn Stock' },
+      { id: 'yarn_consumption', name: 'Yarn Consumption' },
+      { id: 'yarn_purchase', name: 'Yarn Purchase (SP/IBPO)' },
+      { id: 'yarn_delivery', name: 'Yarn Delivery Challans' }
+    ]
+  },
+  {
+    id: 'fabric',
+    name: 'Fabric Reports',
+    icon: Scissors,
+    color: '#f59e0b',
+    count: 4,
+    reports: [
+      { id: 'cloth_reports', name: 'Cloth & Party Master View' },
+      { id: 'grey_cloth_reports', name: 'Grey Cloth Reports' },
+      { id: 'invoice_packing_print', name: 'Invoice / Packing List' },
+      { id: 'export_invoice_print', name: 'Export Invoice / Packing' }
+    ]
+  },
+  {
+    id: 'inventory',
+    name: 'Inventory Reports',
+    icon: Box,
+    color: '#06b6d4',
+    count: 4,
+    reports: [
+      { id: 'stock_summary', name: 'Store Stock Summary' },
+      { id: 'material_consumption', name: 'Material Consumption' },
+      { id: 'inv_aging', name: 'Inventory Aging' },
+      { id: 'warehouse_stock', name: 'Warehouse Location' }
+    ]
+  },
+  {
+    id: 'spares',
+    name: 'Spares Reports',
+    icon: Settings,
+    color: '#ef4444',
+    count: 5,
+    reports: [
+      { id: 'spares_po_print', name: 'PO / DC Printing' },
+      { id: 'spares_req_status', name: 'PO / Req Indent Status' },
+      { id: 'spares_received', name: 'Purchase Received Summary' },
+      { id: 'spares_consumption', name: 'Consumption & Delivery' },
+      { id: 'spares_stock', name: 'Spares Stock Reports' }
+    ]
+  }
+];
+```
+
+--------------------------------------------------------------------------------
+PART 3: CONFIGURING MOCK DATA & SCHEMAS FOR THE NEW CLIENT REPORTS
+--------------------------------------------------------------------------------
+
+In `/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/frontend/src/pages/reports_dashboard/ReportsDashboard.jsx`,
+add the schemas and rows for your client's reports inside the `MOCK_REPORTS_DATA`
+object (around Line 21).
+
+Here are the template mock structures for the new reports:
+
+```javascript
+const MOCK_REPORTS_DATA = {
+  ...
+  // --- New Client Spares & Invoice Reports ---
+  'spares_stock': {
+    title: 'Spares Stock Inventory Report',
+    columns: [
+      { key: 'spare_id', label: 'Part ID' },
+      { key: 'spare_name', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'loom_model', label: 'Compatible Loom' },
+      { key: 'qty', label: 'Current Qty' },
+      { key: 'min_level', label: 'Min Level' },
+      { key: 'unit_cost', label: 'Unit Cost' }
+    ],
+    rows: [
+      { spare_id: 'SP-WE-402', spare_name: 'Rapier Gripper Right', category: 'Mechanical Spares', loom_model: 'Picanol OptiMax', qty: 24, min_level: 10, unit_cost: 4200 },
+      { spare_id: 'SP-WE-091', spare_name: 'Weft Selector Needle', category: 'Electronic Spares', loom_model: 'Sulzer G6500', qty: 15, min_level: 20, unit_cost: 1850 },
+      { spare_id: 'SP-SP-112', spare_name: 'Spindle Drive Belt 12mm', category: 'Spinning Belts', loom_model: 'LMW LR9', qty: 45, min_level: 15, unit_cost: 950 }
+    ]
+  },
+  'invoice_packing_print': {
+    title: 'Local Invoice & Packing List Status',
+    columns: [
+      { key: 'invoice_no', label: 'Invoice No' },
+      { key: 'buyer', label: 'Buyer Name' },
+      { key: 'rolls', label: 'Total Rolls' },
+      { key: 'net_wt', label: 'Net Weight (Kgs)' },
+      { key: 'gross_wt', label: 'Gross Weight (Kgs)' },
+      { key: 'taxable_amt', label: 'Taxable Amount' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: [
+      { invoice_no: 'DE-2026-904', buyer: 'Raymond Ltd', rolls: 42, net_wt: 1240, gross_wt: 1285, taxable_amt: 382000, status: 'Completed' },
+      { invoice_no: 'DE-2026-905', buyer: 'Reliance Retail', rolls: 60, net_wt: 1850, gross_wt: 1910, taxable_amt: 540000, status: 'Pending' }
+    ]
+  }
+};
+```
+
+--------------------------------------------------------------------------------
+PART 4: STEP-BY-STEP FOR CONNECTING REAL API ENDPOINTS (FASTAPI BACKEND)
+--------------------------------------------------------------------------------
+
+Once your client approves the mock data, you can connect the React tables to your
+live PostgreSQL database by querying your FastAPI backend:
+
+1. In the backend, define a router endpoint under `backend/app/routers/reports.py`:
+```python
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.db.database import get_db
+
+router = APIRouter(prefix="/api/reports", tags=["Reports"])
+
+@router.get("/spares-stock")
+def get_spares_stock_report(db: Session = Depends(get_db)):
+    # Query your spares database table
+    results = db.execute("SELECT id, name, category, compatible_loom, current_qty, min_level, unit_cost FROM spares_stock").fetchall()
+    return [dict(r) for r in results]
+```
+
+2. In the React frontend, replace `MOCK_REPORTS_DATA` with a unified fetching
+   hook inside `ReportsDashboard.jsx`:
+```javascript
+  const [reportRows, setReportRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/reports/${activeReportId}`)
+      .then(res => res.json())
+      .then(data => {
+        setReportRows(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error loading report from FastAPI:", err);
+        setLoading(false);
+      });
+  }, [activeReportId]);
+```
+
+--------------------------------------------------------------------------------
+PART 5: KEY FEATURES COMPATIBILITY MATRIX
+--------------------------------------------------------------------------------
+
+All client reports added using this structure automatically receive:
+- ✅ Multi-column sorting (ascending and descending headers).
+- ✅ Instant client-side text filtering and date-range processing.
+- ✅ Universal **Excel compilation** (using XLSX file headers).
+- ✅ Clean **PDF layouts** (auto-expanding margins depending on columns).
+- ✅ Automated WhatsApp & Email **Report Scheduling** workflows.
+- ✅ AI Smart Analytics interactive alerts.
+================================================================================
