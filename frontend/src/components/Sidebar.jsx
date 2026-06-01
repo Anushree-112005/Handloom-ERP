@@ -6,6 +6,7 @@ import {
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
+import defaultLogo from '../assets/logo.svg';
 
 
 const modules = [
@@ -42,6 +43,9 @@ const modules = [
   { path: '/cloth/delivery', label: 'Cloth Delivery', icon: Truck },
   { path: '/finished-fabric', label: 'Finished Fabric', icon: Scissors },
 
+  { section: 'LAB & Shade Management' },
+
+
   { section: 'Quality Control' },
   { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
 
@@ -72,7 +76,8 @@ const modules = [
 export default function Sidebar() {
   const location = useLocation();
   const [companyProfile, setCompanyProfile] = useState({
-    company_name: 'Dinesh Textile',
+    company_name: 'DINESH EXPORTS',
+    description: 'THE HOUSE OF FABRICS',
     logo: ''
   });
 
@@ -80,9 +85,10 @@ export default function Sidebar() {
     const loadCompany = async () => {
       try {
         const response = await companySettingAPI.get();
-        if (response.data && response.data.company_name) {
+        if (response.data) {
           setCompanyProfile({
-            company_name: response.data.company_name,
+            company_name: response.data.company_name || 'DINESH EXPORTS',
+            description: response.data.description || 'THE HOUSE OF FABRICS',
             logo: response.data.logo || ''
           });
         }
@@ -106,11 +112,13 @@ export default function Sidebar() {
             <img src={companyProfile.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
         ) : (
-          <div className="logo-icon">DT</div>
+          <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
+            <img src={defaultLogo} alt="Default Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          </div>
         )}
         <div>
           <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px' }}>{companyProfile.company_name}</h1>
-          <span>ERP System</span>
+          <span>{companyProfile.description}</span>
         </div>
       </div>
       <nav className="sidebar-nav">

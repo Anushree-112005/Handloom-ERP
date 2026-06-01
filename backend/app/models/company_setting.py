@@ -6,6 +6,7 @@ class CompanySetting(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     company_name = Column(String(200), nullable=False)
+    description = Column(String)  # Holds description/subtitle (e.g. THE HOUSE OF FABRICS)
     logo = Column(String)  # Holds base64 string or URL
     address = Column(String)
     email = Column(String(100))

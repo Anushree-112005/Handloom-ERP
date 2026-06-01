@@ -21,6 +21,8 @@ import EwayBill from './pages/eway_bill/EwayBill';
 import CompanySetting from './pages/settings/CompanySetting';
 
 
+
+
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
 import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
@@ -48,7 +50,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
 
       <Route path="/" element={
-        <ProtectedRoute><Layout title="Dinesh Textile ERP" /></ProtectedRoute>
+        <ProtectedRoute><Layout title="DINESH EXPORTS - THE HOUSE OF FABRICS" /></ProtectedRoute>
       }>
         <Route index element={<Dashboard />} />
         <Route path="overview" element={<Overview />} />
@@ -80,6 +82,24 @@ export default function App() {
 
         <Route path="finished-fabric" element={<FinishedFabricInward />} />
 
+        {/* LAB & Shade Management Routes */}
+        <Route path="lab/lab-dip" element={
+          <ModulePage 
+            title="Lab Dip Entry" 
+            description="Manage color shade recipes, spectrophotometer matching, and dyeing recipes." 
+            icon={Palette} 
+            color="#3b82f6" 
+          />
+        } />
+        <Route path="lab/shade-matching" element={
+          <ModulePage 
+            title="Shade Matching" 
+            description="Inspect production lot shades and verify consistency against standard lab dips." 
+            icon={CheckSquare} 
+            color="#10b981" 
+          />
+        } />
+
         <Route path="packing" element={<PackingSlip />} />
 
         <Route path="goods-release" element={<GoodsRelease />} />
@@ -101,16 +121,16 @@ export default function App() {
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>
             <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Info size={24} style={{ color: '#2563eb' }} /> About Dinesh Textile ERP
+              <Info size={24} style={{ color: '#2563eb' }} /> About DINESH EXPORTS ERP
             </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '20px' }}>
-              Dinesh Textile ERP is a high-performance Enterprise Resource Planning platform tailored for textile manufacturing, procurement, inventory tracking, quality inspection, and sales/export operations.
+              DINESH EXPORTS ERP is a high-performance Enterprise Resource Planning platform tailored for textile manufacturing, procurement, inventory tracking, quality inspection, and sales/export operations.
             </p>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
               It features real-time data entry pipelines, process visualization, automated GST & E-Way billing modules, and comprehensive logging and audit systems.
             </p>
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Version 1.0.0 • Developed for Dinesh Export Textile
+              Version 1.0.0 • Developed for DINESH EXPORTS
             </div>
           </div>
         } />

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Columns, ArrowDownToLine, Layers } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Columns, ArrowDownToLine, Layers, Download, ChevronDown, FileText } from 'lucide-react';
 import { warpBeamReceiptAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function WarpBeamReceipt() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -117,6 +121,23 @@ export default function WarpBeamReceipt() {
   };
 
   const handleChange = (e) => {
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
     setForm({ ...form, [name]: value });
@@ -154,6 +175,39 @@ export default function WarpBeamReceipt() {
     return matchesSearch && matchesType && matchesDate;
   });
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Warp Beam Receipts", 14, 15);
+    const headers = [["Ref No", "Rcvd Date", "Party Name", "Type", "Status"]];
+    const rows = filteredReceipts.map(r => [
+      r.ref_no || '-',
+      r.rcvd_date || '-',
+      r.party_name || '-',
+      r.rcvd_type || '-',
+      r.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Warp_Beam_Receipts_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredReceipts.map(r => ({
+      "Ref No": r.ref_no,
+      "Rcvd Date": r.rcvd_date,
+      "Rcvd Type": r.rcvd_type,
+      "Beam Type": r.beam_type,
+      "Party Name": r.party_name,
+      "Design No": r.design_no,
+      "Order No": r.order_no,
+      "Warp Meters": r.warp_meters,
+      "Status": r.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Warp Beam Receipts");
+    XLSX.writeFile(wb, `Warp_Beam_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="animate-fade">
       {!showForm ? (
@@ -165,9 +219,41 @@ export default function WarpBeamReceipt() {
               </h2>
               <p style={{ color: 'var(--text-muted)' }}>Manage sizing deliveries and warp beam receipts.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-              <Plus size={18} /> New Receipt
-            </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Download size={16} /> Export <ChevronDown size={14} />
+                </button>
+
+                {showExportMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <FileText size={16} color="#ef4444" /> PDF Report
+                    </button>
+                    <button
+                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Download size={16} color="#10b981" /> Excel Sheet
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+                <Plus size={18} /> New Receipt
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
@@ -303,33 +389,70 @@ export default function WarpBeamReceipt() {
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               
               {activeTab === 'general' && (
-                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} disabled={editingId != null} /></div>
-                  <div className="form-group"><label>Rcvd Date</label><input type="date" className="form-control" name="rcvd_date" value={form.rcvd_date} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Rcvd Type</label>
-                    <select className="form-control" name="rcvd_type" value={form.rcvd_type} onChange={handleChange}>
-                      <option>Direct</option><option>Against Order</option>
-                    </select>
+                <div className="animate-fade">
+                  {/* Section 1: Top Section Fields */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} disabled={editingId != null} /></div>
+                    <div className="form-group"><label>Rcvd Date</label><input type="date" className="form-control" name="rcvd_date" value={form.rcvd_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Rcvd Type</label>
+                      <select className="form-control" name="rcvd_type" value={form.rcvd_type} onChange={handleChange}>
+                        <option>Direct</option><option>Against Order</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Beam Type</label><input className="form-control" name="beam_type" value={form.beam_type} onChange={handleChange} /></div>
+                    
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
+                      <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
+                        <option value="">Select Party...</option>
+                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Warp Count</label><input className="form-control" name="warp_count" value={form.warp_count} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Warp Ends</label><input type="number" className="form-control" name="warp_ends" value={form.warp_ends} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Warp Meters</label><input type="number" className="form-control" name="warp_meters" value={form.warp_meters} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Set No</label><input className="form-control" name="set_no" value={form.set_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Siz DC No</label><input className="form-control" name="siz_dc_no" value={form.siz_dc_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Siz DC Date</label><input type="date" className="form-control" name="siz_dc_date" value={form.siz_dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'beam_no')} /></div>
                   </div>
-                  <div className="form-group"><label>Beam Type</label><input className="form-control" name="beam_type" value={form.beam_type} onChange={handleChange} /></div>
-                  
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
-                    <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
-                      <option value="">Select Party...</option>
-                      {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                    </select>
+
+                  {/* Section 2: Warp Beam Details */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Warp Beam Details</h4>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
                   </div>
-                  <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Warp Count</label><input className="form-control" name="warp_count" value={form.warp_count} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Warp Ends</label><input type="number" className="form-control" name="warp_ends" value={form.warp_ends} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Warp Meters</label><input type="number" className="form-control" name="warp_meters" value={form.warp_meters} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Set No</label><input className="form-control" name="set_no" value={form.set_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Siz DC No</label><input className="form-control" name="siz_dc_no" value={form.siz_dc_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Siz DC Date</label><input type="date" className="form-control" name="siz_dc_date" value={form.siz_dc_date} onChange={handleChange} /></div>
+                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Beam No</th><th>Warp Mtrs</th><th>Type</th><th>Delivery To Weaver</th>
+                          <th>Order No</th><th>DC No</th><th>DC Date</th><th>Loom No</th><th>Loading Date</th><th>Total Meters</th><th>X</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {form.beams.map((item, idx) => (
+                          <tr key={idx}>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.beam_no} onChange={e => updateItem(idx, 'beam_no', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.warp_mtrs} onChange={e => updateItem(idx, 'warp_mtrs', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.beam_type} onChange={e => updateItem(idx, 'beam_type', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 140, padding: '6px' }} value={item.delivery_to_weaver} onChange={e => updateItem(idx, 'delivery_to_weaver', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.order_no} onChange={e => updateItem(idx, 'order_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.dc_no} onChange={e => updateItem(idx, 'dc_no', e.target.value)} /></td>
+                            <td><input type="date" className="form-control" style={{ width: 120, padding: '6px' }} value={item.dc_date} onChange={e => updateItem(idx, 'dc_date', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
+                            <td><input type="date" className="form-control" style={{ width: 120, padding: '6px' }} value={item.loading_date} onChange={e => updateItem(idx, 'loading_date', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.total_meters} onChange={e => updateItem(idx, 'total_meters', e.target.value)} /></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
 
