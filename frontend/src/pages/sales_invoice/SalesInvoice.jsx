@@ -22,6 +22,7 @@ export default function SalesInvoice() {
 
   // Split view state
   const [selectedViewInvoice, setSelectedViewInvoice] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -345,6 +346,23 @@ export default function SalesInvoice() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
       
@@ -557,86 +575,487 @@ export default function SalesInvoice() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View Invoice Details' : editingId ? 'Edit Sales Invoice' : 'Add New Sales Invoice'}
-            </h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Invoice Details' : editingId ? 'Edit Sales Invoice' : 'Add New Sales Invoice'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="salesInvoiceForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Invoice' : 'Save Invoice'}</button>
+              )}
+            </div>
           </div>
-          {!isReadOnly && (
-            <button type="submit" form="salesInvoiceForm" className="btn btn-primary">
-              <Save size={18} /> Save Invoice
-            </button>
-          )}
-        </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="salesInvoiceForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* Group 1: Basic Invoice Information */}
-              <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Basic Invoice Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group">
-                  <label>Invoice Type (ID) *</label>
-                  <select className="form-control" name="invoice_type_id" value={formData.invoice_type_id} onChange={handleInputChange} required>
-                    <option value="">-- Select Type --</option>
-                    <option value="GST Domestic">GST Domestic</option>
-                    <option value="Export Invoice">Export Invoice</option>
-                    <option value="SEZ Billing">SEZ Billing</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Type</label>
-                  <input className="form-control" name="type" value={formData.type} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Invoice No *</label>
-                  <input className="form-control" name="invoice_no" value={formData.invoice_no} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Invoice Date *</label>
-                  <input type="date" className="form-control" name="invoice_date" value={formData.invoice_date} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>GRA No</label>
-                  <select className="form-control" name="gra_no" value={formData.gra_no} onChange={handleInputChange}>
-                    <option value="">-- Select GRA --</option>
-                    <option value="GRA-881">GRA-881</option>
-                    <option value="GRA-882">GRA-882</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Date</label>
-                  <input type="date" className="form-control" name="date" value={formData.date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>DIS No</label>
-                  <input className="form-control" name="dis_no" value={formData.dis_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>DIS Date</label>
-                  <input type="date" className="form-control" name="dis_date" value={formData.dis_date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="Draft">Draft</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: 'Basic Info' }, { id: 'party', label: 'Party Info' }, { id: 'logistics', label: 'Transport' }, { id: 'items', label: 'Line Items' }, { id: 'summary', label: 'Summary' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-              {/* Group 2: Party & Address Information */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Billing Information</h4>
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="salesInvoiceForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+                
+                {activeTab === 'general' && (
+                  <div className="animate-fade">
+                    {/* Group 1: Basic Invoice Information */}
+                    <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic Invoice Information</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Invoice Type (ID) *</label>
+                        <select className="form-control" name="invoice_type_id" value={formData.invoice_type_id} onChange={handleInputChange} required>
+                          <option value="">-- Select Type --</option>
+                          <option value="GST Domestic">GST Domestic</option>
+                          <option value="Export Invoice">Export Invoice</option>
+                          <option value="SEZ Billing">SEZ Billing</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Type</label>
+                        <input className="form-control" name="type" value={formData.type} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Invoice No *</label>
+                        <input className="form-control" name="invoice_no" value={formData.invoice_no} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Invoice Date *</label>
+                        <input type="date" className="form-control" name="invoice_date" value={formData.invoice_date} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>GRA No</label>
+                        <select className="form-control" name="gra_no" value={formData.gra_no} onChange={handleInputChange}>
+                          <option value="">-- Select GRA --</option>
+                          <option value="GRA-881">GRA-881</option>
+                          <option value="GRA-882">GRA-882</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Date</label>
+                        <input type="date" className="form-control" name="date" value={formData.date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>DIS No</label>
+                        <input className="form-control" name="dis_no" value={formData.dis_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>DIS Date</label>
+                        <input type="date" className="form-control" name="dis_date" value={formData.dis_date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Status</label>
+                        <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'party', 'pay_name')}>
+                          <option value="Draft">Draft</option>
+                          <option value="Paid">Paid</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Group 2: Party & Address Information */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Party & Billing Information</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Pay Name (Billing Party) *</label>
+                        <select 
+                          className="form-control" 
+                          name="pay_name" 
+                          value={formData.pay_name} 
+                          onChange={e => handlePartyChange(e.target.value)}
+                          required
+                        >
+                          <option value="">-- Select Billing Party --</option>
+                          {options.all_parties.map(p => (
+                            <option key={p.id} value={p.name}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery (Shipping Party)</label>
+                        <select 
+                          className="form-control" 
+                          name="delivery" 
+                          value={formData.delivery} 
+                          onChange={e => handleDeliveryChange(e.target.value)}
+                        >
+                          <option value="">-- Same as Billing Party --</option>
+                          {options.all_parties.map(p => (
+                            <option key={p.id} value={p.name}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>GST No</label>
+                        <input className="form-control" name="gst_no" value={formData.gst_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Invoice Address</label>
+                        <input className="form-control" name="invoice_address" value={formData.invoice_address} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>State / Code</label>
+                        <input className="form-control" name="state_code" value={formData.state_code} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Delivery Address</label>
+                        <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Dly-State / Code</label>
+                        <input className="form-control" name="dly_state_code" value={formData.dly_state_code} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>PO No</label>
+                        <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>PO Date</label>
+                        <input type="date" className="form-control" name="po_date" value={formData.po_date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Agent Name</label>
+                        <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleInputChange}>
+                          <option value="">-- Select Agent --</option>
+                          {options.agents.map(a => (
+                            <option key={a.id} value={a.name}>{a.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Due Days</label>
+                        <input type="number" className="form-control" name="due_days" value={formData.due_days} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Due Date</label>
+                        <input type="date" className="form-control" name="due_date" value={formData.due_date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Payment Mode</label>
+                        <select className="form-control" name="payment" value={formData.payment} onChange={handleInputChange}>
+                          <option value="">-- Select --</option>
+                          <option value="Credit">Credit</option>
+                          <option value="Advance">Advance</option>
+                          <option value="COD">COD</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>PMT Ref No</label>
+                        <input className="form-control" name="pmt_ref_no" value={formData.pmt_ref_no} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'logistics', 'transport')} />
+                      </div>
+                    </div>
+
+                    {/* Group 3: Transport & Freight Information */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Transport & Freight Logistics</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Transport Name</label>
+                        <select className="form-control" name="transport" value={formData.transport} onChange={handleInputChange}>
+                          <option value="">-- Select --</option>
+                          {options.transporters.map(t => (
+                            <option key={t.id} value={t.name}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Truck No</label>
+                        <input className="form-control" name="truck_no" value={formData.truck_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Transport Mode</label>
+                        <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={handleInputChange}>
+                          <option value="">-- Select --</option>
+                          <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option><option value="Ship">Ship</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Freight Mode</label>
+                        <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={handleInputChange}>
+                          <option value="">-- Select --</option>
+                          <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>LR No</label>
+                        <input className="form-control" name="lr_no" value={formData.lr_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>LR Date</label>
+                        <input type="date" className="form-control" name="lr_date" value={formData.lr_date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>LR Team</label>
+                        <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')}>
+                          <option value="">-- Select --</option>
+                          <option value="Primary Logistics">Primary Logistics</option>
+                          <option value="Secondary Delivery">Secondary Delivery</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Group 4: Invoice Line Items */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Invoice Line Items</h4>
+                    <div style={{ overflowX: 'auto', marginBottom: 20 }}>
+                      <table className="data-table" style={{ width: '100%' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ width: 60, textAlign: 'center' }}>S.No</th>
+                            <th>Design No *</th>
+                            <th style={{ width: 140 }}>HSN Code</th>
+                            <th>Description</th>
+                            <th style={{ width: 100 }}>Total Bale</th>
+                            <th style={{ width: 100 }}>UOM</th>
+                            <th style={{ width: 100 }}>Qty *</th>
+                            <th style={{ width: 100 }}>Rate *</th>
+                            <th style={{ width: 130, textAlign: 'right' }}>Amount</th>
+                            {!isReadOnly && <th style={{ width: 80, textAlign: 'center' }}>Action</th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  value={item.design_no} 
+                                  onChange={e => handleItemChange(index, 'design_no', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  value={item.hsn_code} 
+                                  onChange={e => handleItemChange(index, 'hsn_code', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  value={item.description} 
+                                  onChange={e => handleItemChange(index, 'description', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="number" 
+                                  className="form-control" 
+                                  value={item.total_bale} 
+                                  onChange={e => handleItemChange(index, 'total_bale', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <select 
+                                  className="form-control" 
+                                  value={item.uom} 
+                                  onChange={e => handleItemChange(index, 'uom', e.target.value)}
+                                >
+                                  <option value="MTR">MTR</option>
+                                  <option value="YDS">YDS</option>
+                                  <option value="KGS">KGS</option>
+                                  <option value="PCS">PCS</option>
+                                </select>
+                              </td>
+                              <td>
+                                <input 
+                                  type="number" 
+                                  className="form-control" 
+                                  value={item.qty} 
+                                  onChange={e => handleItemChange(index, 'qty', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="number" 
+                                  className="form-control" 
+                                  value={item.rate} 
+                                  onChange={e => handleItemChange(index, 'rate', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                                ₹{Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </td>
+                              {!isReadOnly && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => removeItemRow(index)} 
+                                    className="btn btn-secondary" 
+                                    style={{ padding: '6px 10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                                    disabled={items.length === 1}
+                                  >
+                                    Remove
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {!isReadOnly && (
+                      <button 
+                        type="button" 
+                        onClick={addItemRow} 
+                        className="btn btn-secondary"
+                        style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 6, fontWeight: 600, cursor: 'pointer', marginBottom: 24 }}
+                      >
+                        + Add Line Item
+                      </button>
+                    )}
+
+                    {/* Group 5: Other Charges & Totals Summary */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Charges & Grand Summary</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                      
+                      {/* Left side: Other Charges inputs */}
+                      <div>
+                        <h5 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>Other Charges & Additions</h5>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
+                          <select className="form-control" name="other_char_1" value={formData.other_char_1} onChange={handleInputChange}>
+                            <option value="">Select Charge...</option>
+                            <option value="Freight">Freight</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Packaging">Packaging</option>
+                          </select>
+                          <input type="number" className="form-control" name="other_char_value_1" value={formData.other_char_value_1} onChange={handleInputChange} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
+                          <select className="form-control" name="other_char_2" value={formData.other_char_2} onChange={handleInputChange}>
+                            <option value="">Select Charge...</option>
+                            <option value="Freight">Freight</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Packaging">Packaging</option>
+                          </select>
+                          <input type="number" className="form-control" name="other_char_value_2" value={formData.other_char_value_2} onChange={handleInputChange} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
+                          <select className="form-control" name="other_char_3" value={formData.other_char_3} onChange={handleInputChange}>
+                            <option value="">Select Charge...</option>
+                            <option value="Freight">Freight</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Packaging">Packaging</option>
+                          </select>
+                          <input type="number" className="form-control" name="other_char_value_3" value={formData.other_char_value_3} onChange={handleInputChange} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: 10, marginBottom: 8 }}>
+                          <select className="form-control" name="other_char_4" value={formData.other_char_4} onChange={handleInputChange}>
+                            <option value="">Select Charge...</option>
+                            <option value="Freight">Freight</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Packaging">Packaging</option>
+                          </select>
+                          <input type="number" className="form-control" name="other_char_value_4" value={formData.other_char_value_4} onChange={handleInputChange} />
+                        </div>
+                      </div>
+
+                      {/* Right side: Summary fields & calculations */}
+                      <div style={{ background: 'var(--bg-secondary)', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <h5 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>Summary Calculations</h5>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Total Quantity:</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{formData.total_qty}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Gross Weight (Wg):</span>
+                          <input 
+                            type="number" 
+                            name="gross_weight" 
+                            value={formData.gross_weight} 
+                            onChange={handleInputChange} 
+                            className="form-control"
+                            style={{ width: 120, textAlign: 'right', margin: 0, height: 32 }}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Gross Amount:</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.gross_amount.toFixed(2)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Discount (%):</span>
+                          <input 
+                            type="number" 
+                            name="discount_pct" 
+                            value={formData.discount_pct} 
+                            onChange={handleInputChange} 
+                            className="form-control"
+                            style={{ width: 80, textAlign: 'right', margin: 0, height: 32 }}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Discount Amount:</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.discount_amount.toFixed(2)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Taxable Amount:</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.taxable_amount.toFixed(2)}</span>
+                        </div>
+
+                        {formData.cgst > 0 && (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>CGST (2.5%):</span>
+                              <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.cgst.toFixed(2)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>SGST (2.5%):</span>
+                              <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.sgst.toFixed(2)}</span>
+                            </div>
+                          </>
+                        )}
+
+                        {formData.igst > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>IGST (5%):</span>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.igst.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Round Off:</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>₹{formData.round_off.toFixed(2)}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--border)', paddingTop: 10, marginTop: 10 }}>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>Net Amount:</span>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>₹{formData.net_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'party' && (
+                  <div className="animate-fade">
+{/* Group 2: Party & Address Information */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Billing Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Pay Name (Billing Party) *</label>
@@ -723,12 +1142,16 @@ export default function SalesInvoice() {
                 </div>
                 <div className="form-group">
                   <label>PMT Ref No</label>
-                  <input className="form-control" name="pmt_ref_no" value={formData.pmt_ref_no} onChange={handleInputChange} />
+                  <input className="form-control" name="pmt_ref_no" value={formData.pmt_ref_no} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'logistics', 'transport')} />
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 3: Transport & Freight Information */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Transport & Freight Logistics</h4>
+                {activeTab === 'logistics' && (
+                  <div className="animate-fade">
+{/* Group 3: Transport & Freight Information */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Transport & Freight Logistics</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Transport Name</label>
@@ -767,16 +1190,20 @@ export default function SalesInvoice() {
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>LR Team</label>
-                  <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange}>
+                  <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')}>
                     <option value="">-- Select --</option>
                     <option value="Primary Logistics">Primary Logistics</option>
                     <option value="Secondary Delivery">Secondary Delivery</option>
                   </select>
                 </div>
               </div>
+                  </div>
+                )}
 
-              {/* Group 4: Invoice Line Items */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Invoice Line Items</h4>
+                {activeTab === 'items' && (
+                  <div className="animate-fade">
+{/* Group 4: Invoice Line Items */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Invoice Line Items</h4>
               <div style={{ overflowX: 'auto', marginBottom: 20 }}>
                 <table className="data-table" style={{ width: '100%' }}>
                   <thead>
@@ -892,9 +1319,13 @@ export default function SalesInvoice() {
                   + Add Line Item
                 </button>
               )}
-
-              {/* Group 5: Other Charges & Totals Summary */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>5. Charges & Grand Summary</h4>
+                  </div>
+                )}
+                
+                {activeTab === 'summary' && (
+                  <div className="animate-fade">
+{/* Group 5: Other Charges & Totals Summary */}
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>5. Charges & Grand Summary</h4>
               <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 40 }}>
                 
                 {/* Left side: Other Charges inputs */}
@@ -1021,8 +1452,12 @@ export default function SalesInvoice() {
                   </div>
                 </div>
               </div>
-            </fieldset>
-          </form>
+                  </div>
+                )}
+
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );

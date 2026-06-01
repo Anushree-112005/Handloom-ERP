@@ -1,5 +1,6 @@
 /* ============================================
-   Dinesh Textile ERP — Light Design System
+   DINESH EXPORTS ERP — Light Design System
+   Core Variables & Modern CSS Reset
    ============================================ */
 
 :root {
@@ -51,7 +52,7 @@
 
 /* ---- Reset ---- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; scroll-behavior: smooth; }
+html { font-size: 15px; scroll-behavior: smooth; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
@@ -103,21 +104,21 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 20px;
   color: white;
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
 }
 
 .sidebar-brand h1 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
 }
 
 .sidebar-brand span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   display: block;
 }
@@ -133,7 +134,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 
 .nav-section {
   padding: 8px 16px 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 1.2px;
   text-transform: uppercase;
@@ -149,7 +150,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   margin: 2px 8px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   transition: all var(--transition-fast);
   border: none;
@@ -203,7 +204,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 }
 
 .header-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -234,7 +235,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14px;
   color: white;
 }
 
@@ -267,7 +268,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -326,13 +327,13 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 .stat-icon.blue { background: rgba(37, 99, 235, 0.1); color: var(--info); }
 
 .stat-info h3 {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .stat-info p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -344,7 +345,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   border: none;
   transition: all var(--transition-fast);
@@ -385,7 +386,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 .data-table thead th {
   padding: 12px 16px;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .8px;
@@ -402,7 +403,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 
 .data-table tbody td {
   padding: 14px 16px;
-  font-size: 13px;
+  font-size: 14px;
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
 }
@@ -414,7 +415,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   gap: 4px;
   padding: 4px 10px;
   border-radius: 100px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -431,7 +432,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 .form-group label {
   display: block;
   margin-bottom: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -445,7 +446,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
   transition: all var(--transition-fast);
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
 }
@@ -506,18 +507,18 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .module-card h3 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   margin-bottom: 6px;
   color: var(--text-primary);
 }
 
 .module-card p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -530,8 +531,8 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 }
 
 .empty-state svg { margin-bottom: 16px; opacity: .6; }
-.empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text-primary); }
-.empty-state p { font-size: 13px; }
+.empty-state h3 { font-size: 20px; margin-bottom: 8px; color: var(--text-primary); }
+.empty-state p { font-size: 14px; }
 
 /* ---- Login Page ---- */
 .login-page {
@@ -588,7 +589,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 800;
   color: white;
   margin-bottom: 16px;
@@ -596,21 +597,21 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 }
 
 .login-card h1 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .login-card .subtitle {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
   margin-top: 4px;
 }
 
 .login-card .btn-primary {
   width: 100%;
   padding: 12px;
-  font-size: 14px;
+  font-size: 15px;
   justify-content: center;
   margin-top: 8px;
 }
@@ -621,7 +622,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   color: var(--danger);
-  font-size: 13px;
+  font-size: 14px;
   margin-bottom: 16px;
 }
 

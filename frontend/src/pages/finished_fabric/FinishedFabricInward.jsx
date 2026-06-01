@@ -30,6 +30,7 @@ export default function FinishedFabricInward() {
 
   // Split view state
   const [selectedViewInward, setSelectedViewInward] = useState(null);
+  const [activeTab, setActiveTab] = useState('general');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -233,6 +234,24 @@ export default function FinishedFabricInward() {
     }));
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      document.getElementById(`${nextTab}-section`)?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
   const handleItemChange = (index, field, value) => {
     setItems(prev => {
       const copy = [...prev];
@@ -407,293 +426,305 @@ export default function FinishedFabricInward() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button
-                onClick={() => setView('list')}
-                className="btn btn-secondary"
-                style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <ArrowLeft size={20} />
-              </button>
-              {isReadOnly ? 'View Fabric Inward Entry' : editingId ? 'Edit Fabric Inward Entry' : 'Add Finished Fabric Inward Entry'}
-            </h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Fabric Inward Entry' : editingId ? 'Edit Fabric Inward Entry' : 'Add Finished Fabric Inward Entry'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              {!isReadOnly && (
+                <button type="submit" form="fabricInwardForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Inward' : 'Save Inward'}</button>
+              )}
+            </div>
           </div>
-          {!isReadOnly && (
-            <button type="submit" form="fabricInwardForm" className="btn btn-primary">
-              <Save size={18} /> Save Inward Entry
-            </button>
-          )}
-        </div>
 
-        <div className="card" style={{ padding: 32 }}>
-          <form id="fabricInwardForm" onSubmit={handleSubmit}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
-              {/* Section 1: Inward Reference details */}
-              <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Upper Inward Reference Info</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>Inward Type</label>
-                  <select className="form-control" name="received_type" value={formData.received_type} onChange={handleInputChange}>
-                    <option value="Purchase">Purchase</option>
-                    <option value="Job Inward">Job Inward</option>
-                    <option value="Sales Return">Sales Return</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Inw ID (Ref No) *</label>
-                  <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Inw Date *</label>
-                  <input type="date" className="form-control" name="inv_date" value={formData.inv_date} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Vendor Name</label>
-                  <select className="form-control" name="party_name" value={formData.party_name} onChange={handleInputChange}>
-                    <option value="">-- Select Vendor --</option>
-                    {options.all_parties.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Vendor DC No</label>
-                  <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>DC Date</label>
-                  <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Design No</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>IBPO (Order No)</label>
-                  <input className="form-control" name="order_no" value={formData.order_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Vendor Order</label>
-                  <input className="form-control" name="vendor_order" value={formData.vendor_order} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Gry DC No</label>
-                  <input className="form-control" name="gry_dc_no" value={formData.gry_dc_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Vendor Order Mtr</label>
-                  <input className="form-control" type="number" name="vendor_order_mtr" value={formData.vendor_order_mtr} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Gry Delivery Mtr</label>
-                  <input className="form-control" type="number" name="gry_delivery_mtr" value={formData.gry_delivery_mtr} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Received Mtr</label>
-                  <input className="form-control" type="number" name="received_mtr" value={formData.received_mtr} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group">
-                  <label>Balance Mtr</label>
-                  <input className="form-control" type="number" name="balance_mtr" value={formData.balance_mtr} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="Received">Received</option>
-                    <option value="Inspected">Inspected</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {[{ id: 'general', label: 'Inward Reference Info' }, { id: 'specs', label: 'Fabric Specs & Metrics' }, { id: 'items', label: 'Despatch Grid Details' }].map(tab => (
+              <button 
+                type="button"
+                key={tab.id} onClick={() => {
+                  setActiveTab(tab.id);
+                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-              {/* Split layout: Left detail fields and Right items grid */}
-              <h4 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Fabric Specifications & Grid Entry</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.2fr', gap: 24, alignItems: 'start' }}>
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="fabricInwardForm" onSubmit={handleSubmit}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
                 
-                {/* Left Side: Technical detail form columns */}
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: 18 }}>
-                  <h5 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>Fabric Specs & Metrics</h5>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Section 1: Inward Reference details */}
+                  <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Upper Inward Reference Info</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
-                      <label style={{ fontSize: 11 }}>Const / Fabric Type</label>
-                      <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="fabric_type" value={formData.fabric_type} onChange={handleInputChange} />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Reed</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="reed" value={formData.reed} onChange={handleInputChange} />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Pick</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="pick" value={formData.pick} onChange={handleInputChange} />
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Width</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="width" value={formData.width} onChange={handleInputChange} />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Order Mtr</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="order_mtr" value={formData.order_mtr} onChange={handleInputChange} />
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Warp Mtr</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="warp_mtr" value={formData.warp_mtr} onChange={handleInputChange} />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Inward Mtr</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#f1f5f9' }} name="inward_mtr" value={formData.inward_mtr} readOnly />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label style={{ fontSize: 11 }}>Shed No</label>
-                      <select className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="shed_no" value={formData.shed_no} onChange={handleInputChange}>
-                        <option value="">-- Select Shed --</option>
-                        <option value="Shed 1">Shed 1</option>
-                        <option value="Shed 2">Shed 2</option>
+                      <label>Inward Type</label>
+                      <select className="form-control" name="received_type" value={formData.received_type} onChange={handleInputChange}>
+                        <option value="Purchase">Purchase</option>
+                        <option value="Job Inward">Job Inward</option>
+                        <option value="Sales Return">Sales Return</option>
                       </select>
                     </div>
                     <div className="form-group">
-                      <label style={{ fontSize: 11 }}>Balance Mtr</label>
-                      <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#22c55e20', color: '#15803d', fontWeight: 'bold' }} name="detail_balance_mtr" value={formData.detail_balance_mtr} readOnly />
+                      <label>Inw ID (Ref No) *</label>
+                      <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleInputChange} required />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Lot No</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="lot_no" value={formData.lot_no} onChange={handleInputChange} />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Atti No</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="atti_no" value={formData.atti_no} onChange={handleInputChange} />
-                      </div>
+                    <div className="form-group">
+                      <label>Inw Date *</label>
+                      <input type="date" className="form-control" name="inv_date" value={formData.inv_date} onChange={handleInputChange} required />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Total Pc</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#f1f5f9' }} value={formData.total_pieces} readOnly />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Total Mtr</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#f1f5f9' }} value={formData.total_meters} readOnly />
-                      </div>
+                    <div className="form-group">
+                      <label>Vendor Name</label>
+                      <select className="form-control" name="party_name" value={formData.party_name} onChange={handleInputChange}>
+                        <option value="">-- Select Vendor --</option>
+                        {options.all_parties.map(p => (
+                          <option key={p.id} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 10 }}>
+                    <div className="form-group">
+                      <label>Vendor DC No</label>
+                      <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>DC Date</label>
+                      <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Design No</label>
+                      <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>IBPO (Order No)</label>
+                      <input className="form-control" name="order_no" value={formData.order_no} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Vendor Order</label>
+                      <input className="form-control" name="vendor_order" value={formData.vendor_order} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Gry DC No</label>
+                      <input className="form-control" name="gry_dc_no" value={formData.gry_dc_no} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Vendor Order Mtr</label>
+                      <input className="form-control" type="number" name="vendor_order_mtr" value={formData.vendor_order_mtr} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Gry Delivery Mtr</label>
+                      <input className="form-control" type="number" name="gry_delivery_mtr" value={formData.gry_delivery_mtr} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Received Mtr</label>
+                      <input className="form-control" type="number" name="received_mtr" value={formData.received_mtr} readOnly style={{ background: '#f1f5f9' }} />
+                    </div>
+                    <div className="form-group">
+                      <label>Balance Mtr</label>
+                      <input className="form-control" type="number" name="balance_mtr" value={formData.balance_mtr} readOnly style={{ background: '#f1f5f9' }} />
+                    </div>
+                    <div className="form-group">
+                      <label>Status</label>
+                      <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'specs', 'fabric_type')}>
+                        <option value="Received">Received</option>
+                        <option value="Inspected">Inspected</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="specs-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Section 2: Technical detail form columns */}
+                  <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric Specs & Metrics</h4>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, padding: 18 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Inspection Type</label>
-                        <select className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="inspection_type" value={formData.inspection_type} onChange={handleInputChange}>
-                          <option value="">-- Select --</option>
-                          <option value="Self Inspection">Self Inspection</option>
-                          <option value="Third Party">Third Party</option>
+                        <label style={{ fontSize: 11 }}>Const / Fabric Type</label>
+                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="fabric_type" value={formData.fabric_type} onChange={handleInputChange} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Reed</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="reed" value={formData.reed} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Pick</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="pick" value={formData.pick} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Width</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="width" value={formData.width} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Order Mtr</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="order_mtr" value={formData.order_mtr} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Warp Mtr</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="warp_mtr" value={formData.warp_mtr} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Inward Mtr</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#f1f5f9' }} name="inward_mtr" value={formData.inward_mtr} readOnly />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ fontSize: 11 }}>Shed No</label>
+                        <select className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="shed_no" value={formData.shed_no} onChange={handleInputChange}>
+                          <option value="">-- Select Shed --</option>
+                          <option value="Shed 1">Shed 1</option>
+                          <option value="Shed 2">Shed 2</option>
                         </select>
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: 11 }}>Inw Pin</label>
-                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="inw_pin" value={formData.inw_pin} onChange={handleInputChange} />
+                        <label style={{ fontSize: 11 }}>Balance Mtr</label>
+                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#22c55e20', color: '#15803d', fontWeight: 'bold' }} name="detail_balance_mtr" value={formData.detail_balance_mtr} readOnly />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Lot No</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="lot_no" value={formData.lot_no} onChange={handleInputChange} />
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Atti No</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="atti_no" value={formData.atti_no} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Total Pc</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#f1f5f9' }} value={formData.total_pieces} readOnly />
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Total Mtr</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto', background: '#f1f5f9' }} value={formData.total_meters} readOnly />
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 10 }}>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Inspection Type</label>
+                          <select className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="inspection_type" value={formData.inspection_type} onChange={handleInputChange}>
+                            <option value="">-- Select --</option>
+                            <option value="Self Inspection">Self Inspection</option>
+                            <option value="Third Party">Third Party</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label style={{ fontSize: 11 }}>Inw Pin</label>
+                          <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="inw_pin" value={formData.inw_pin} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label style={{ fontSize: 11 }}>Remarks</label>
+                        <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="remarks" value={formData.remarks} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
                       </div>
                     </div>
-                    <div className="form-group">
-                      <label style={{ fontSize: 11 }}>Remarks</label>
-                      <input className="form-control" style={{ padding: '6px 10px', height: 'auto' }} name="remarks" value={formData.remarks} onChange={handleInputChange} />
-                    </div>
                   </div>
                 </div>
 
-                {/* Right Side: Pieces detail grid table */}
-                <div>
-                  <h5 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12 }}>Despatch Grid Details</h5>
-                  <div style={{ overflowX: 'auto', maxHeight: '550px', overflowY: 'auto' }}>
-                    <table className="data-table" style={{ width: '100%' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ width: 50, textAlign: 'center' }}>S.No</th>
-                          <th>Pcno *</th>
-                          <th>Weight</th>
-                          <th>VLoom</th>
-                          <th>VPc No</th>
-                          <th>Mtr</th>
-                          {!isReadOnly && <th style={{ width: 50, textAlign: 'center' }}></th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((item, index) => (
-                          <tr key={index}>
-                            <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
-                            <td>
-                              <input 
-                                className="form-control" 
-                                value={item.piece_no} 
-                                onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
-                                required
-                              />
-                            </td>
-                            <td>
-                              <input 
-                                className="form-control" 
-                                type="number"
-                                value={item.weight} 
-                                onChange={e => handleItemChange(index, 'weight', e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input 
-                                className="form-control" 
-                                value={item.v_loom} 
-                                onChange={e => handleItemChange(index, 'v_loom', e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input 
-                                className="form-control" 
-                                value={item.v_pc_no} 
-                                onChange={e => handleItemChange(index, 'v_pc_no', e.target.value)}
-                              />
-                            </td>
-                            <td>
-                              <input 
-                                className="form-control" 
-                                type="number"
-                                value={item.meters} 
-                                onChange={e => handleItemChange(index, 'meters', e.target.value)}
-                              />
-                            </td>
-                            {!isReadOnly && (
-                              <td style={{ textAlign: 'center' }}>
-                                <button 
-                                  type="button" 
-                                  onClick={() => removeItemRow(index)} 
-                                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-                                >
-                                  <X size={16} />
-                                </button>
-                              </td>
-                            )}
+                <div id="items-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Section 3: Pieces detail grid table */}
+                  <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Despatch Grid Details</h4>
+                  <div>
+                    <div style={{ overflowX: 'auto', maxHeight: '550px', overflowY: 'auto' }}>
+                      <table className="data-table" style={{ width: '100%' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ width: 50, textAlign: 'center' }}>S.No</th>
+                            <th>Pcno *</th>
+                            <th>Weight</th>
+                            <th>VLoom</th>
+                            <th>VPc No</th>
+                            <th>Mtr</th>
+                            {!isReadOnly && <th style={{ width: 50, textAlign: 'center' }}></th>}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                              <td>
+                                <input 
+                                  className="form-control" 
+                                  value={item.piece_no} 
+                                  onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  className="form-control" 
+                                  type="number"
+                                  value={item.weight} 
+                                  onChange={e => handleItemChange(index, 'weight', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  className="form-control" 
+                                  value={item.v_loom} 
+                                  onChange={e => handleItemChange(index, 'v_loom', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  className="form-control" 
+                                  value={item.v_pc_no} 
+                                  onChange={e => handleItemChange(index, 'v_pc_no', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  className="form-control" 
+                                  type="number"
+                                  value={item.meters} 
+                                  onChange={e => handleItemChange(index, 'meters', e.target.value)}
+                                />
+                              </td>
+                              {!isReadOnly && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => removeItemRow(index)} 
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {!isReadOnly && (
+                      <button 
+                        type="button" 
+                        onClick={addItemRow} 
+                        className="btn btn-secondary"
+                        style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginTop: 12 }}
+                      >
+                        + Add Row
+                      </button>
+                    )}
                   </div>
-                  {!isReadOnly && (
-                    <button 
-                      type="button" 
-                      onClick={addItemRow} 
-                      className="btn btn-secondary"
-                      style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginTop: 12 }}
-                    >
-                      + Add Row
-                    </button>
-                  )}
                 </div>
 
-              </div>
-
-            </fieldset>
-          </form>
+              </fieldset>
+            </form>
+          </div>
         </div>
       </div>
     );

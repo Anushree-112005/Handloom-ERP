@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send, Download, ChevronDown, FileText } from 'lucide-react';
 import { dyedYarnDeliveryAPI, partyAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -18,6 +21,7 @@ export default function DyedYarnDelivery() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,6 +114,23 @@ export default function DyedYarnDelivery() {
   };
 
   const handleChange = (e) => {
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
     setForm({ ...form, [name]: value });
@@ -150,6 +171,39 @@ export default function DyedYarnDelivery() {
     return matchesSearch && matchesType && matchesDate;
   });
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Dyed Yarn Deliveries", 14, 15);
+    const headers = [["DC No", "Date", "Party Name", "Delivery Type", "Net Amount", "Status"]];
+    const rows = filteredDeliveries.map(r => [
+      r.dc_no || '-',
+      r.dc_date || '-',
+      r.party_name || '-',
+      r.delivery_type || '-',
+      `Rs. ${parseFloat(r.net_amount || 0).toFixed(2)}`,
+      r.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Dyed_Yarn_Deliveries_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredDeliveries.map(r => ({
+      "DC No": r.dc_no,
+      "Date": r.dc_date,
+      "Party Name": r.party_name,
+      "Delivery Type": r.delivery_type,
+      "Mode": r.delivery_mode,
+      "Net Amount": r.net_amount,
+      "Total Delv Kgs": r.total_delv_kgs,
+      "Status": r.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dyed Yarn Deliveries");
+    XLSX.writeFile(wb, `Dyed_Yarn_Deliveries_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="animate-fade">
       {!showForm ? (
@@ -162,6 +216,24 @@ export default function DyedYarnDelivery() {
               <p style={{ color: 'var(--text-muted)' }}>Manage dispatch of dyed yarn with challans.</p>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button className="btn btn-secondary" onClick={() => setShowExportMenu(!showExportMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Download size={16} /> Export
+                </button>
+                {showExportMenu && (
+                  <>
+                    <div onClick={() => setShowExportMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', zIndex: 100, minWidth: 160, overflow: 'hidden' }}>
+                      <button onClick={() => { setShowExportMenu(false); exportPDF(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <FileText size={16} color="#ef4444" /> PDF Report
+                      </button>
+                      <button onClick={() => { setShowExportMenu(false); exportExcel(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <Download size={16} color="#10b981" /> Excel Sheet
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={18} /> New Delivery
               </button>
@@ -305,42 +377,96 @@ export default function DyedYarnDelivery() {
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               
               {activeTab === 'general' && (
-                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
-                  <div className="form-group"><label>DC No (second field)</label><input className="form-control" name="dc_no_alt" value={form.dc_no_alt} onChange={handleChange} /></div>
-                  <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Add Date</label><input type="date" className="form-control" name="add_date" value={form.add_date} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Delivery Type</label>
-                    <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
-                      <option>Direct</option><option>Against Order</option>
-                    </select>
+                <div className="animate-fade">
+                  {/* Section 1: Top Section Fields */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
+                    <div className="form-group"><label>DC No (second field)</label><input className="form-control" name="dc_no_alt" value={form.dc_no_alt} onChange={handleChange} /></div>
+                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Add Date</label><input type="date" className="form-control" name="add_date" value={form.add_date} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Delivery Type</label>
+                      <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
+                        <option>Direct</option><option>Against Order</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Delivery Mode</label>
+                      <select className="form-control" name="delivery_mode" value={form.delivery_mode} onChange={handleChange}>
+                        <option>Road</option><option>Rail</option><option>Courier</option><option>Against Order</option>
+                      </select>
+                    </div>
+                    
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
+                      <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
+                        <option value="">Select Party...</option>
+                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Design Type</label><input className="form-control" name="design_type" value={form.design_type} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Certificate Type</label><input className="form-control" name="certificate_type" value={form.certificate_type} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Time</label><input type="time" className="form-control" name="delivery_time" value={form.delivery_time} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Total Delv Kgs</label><input type="number" className="form-control" name="total_delv_kgs" value={form.total_delv_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Total Rin Kgs</label><input type="number" className="form-control" name="total_rin_kgs" value={form.total_rin_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'shade_no')} /></div>
                   </div>
-                  <div className="form-group"><label>Delivery Mode</label>
-                    <select className="form-control" name="delivery_mode" value={form.delivery_mode} onChange={handleChange}>
-                      <option>Road</option><option>Rail</option><option>Courier</option><option>Against Order</option>
-                    </select>
+
+                  {/* Section 2: Table Section Fields */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Table Section Fields</h4>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
                   </div>
-                  
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
-                    <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
-                      <option value="">Select Party...</option>
-                      {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                    </select>
+                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>S.No</th><th>Yarn Type</th><th>Count</th><th>Colour</th><th>Lot No.</th><th>Stock</th>
+                          <th>Bag</th><th>Cones</th><th>Tot Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {form.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td>{idx + 1}</td>
+                            <td><input className="form-control" style={{ width: 120, padding: '6px' }} value={item.yarn_type} onChange={e => updateItem(idx, 'yarn_type', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.count} onChange={e => updateItem(idx, 'count', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Design Type</label><input className="form-control" name="design_type" value={form.design_type} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Certificate Type</label><input className="form-control" name="certificate_type" value={form.certificate_type} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Time</label><input type="time" className="form-control" name="delivery_time" value={form.delivery_time} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Total Delv Kgs</label><input type="number" className="form-control" name="total_delv_kgs" value={form.total_delv_kgs} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Rin Kgs</label><input type="number" className="form-control" name="total_rin_kgs" value={form.total_rin_kgs} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} /></div>
+
+                  {/* Section 3: Bottom Section (Financials) */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Bottom Section (Financials)</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>COST</label><input type="number" className="form-control" name="cost" value={form.cost} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Insurance</label><input type="number" className="form-control" name="insurance" value={form.insurance} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Others</label><input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Gr.Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} /></div>
+                    <div className="form-group"><label>SGST</label><input type="number" className="form-control" name="sgst" value={form.sgst} onChange={handleChange} /></div>
+                    <div className="form-group"><label>IGST</label><input type="number" className="form-control" name="igst" value={form.igst} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Total GST</label><input type="number" className="form-control" name="total_gst" value={form.total_gst} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Round off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Net Amount</label><input type="number" className="form-control" name="net_amount" value={form.net_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+                  </div>
                 </div>
               )}
 

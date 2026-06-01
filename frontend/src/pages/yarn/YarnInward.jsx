@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown } from 'lucide-react';
 import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -19,6 +22,7 @@ export default function YarnInward() {
   const [editingId, setEditingId] = useState(null);
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -136,6 +140,23 @@ export default function YarnInward() {
   };
 
   const handleChange = (e) => {
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
     setForm({ ...form, [name]: value });
@@ -192,6 +213,38 @@ export default function YarnInward() {
     if (type === 'AgainstPO') { setTypeFilter('Against PO'); }
   };
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Yarn Inwards Report", 14, 15);
+    const headers = [["Ref No", "Date", "Received From", "Type", "Status"]];
+    const rows = filteredInwards.map(i => [
+      i.ref_no || '-',
+      i.inward_date || '-',
+      i.received_from || '-',
+      i.received_type || '-',
+      i.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Yarn_Inwards_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredInwards.map(i => ({
+      "Ref No": i.ref_no,
+      "Date": i.inward_date,
+      "Received From": i.received_from,
+      "Type": i.received_type,
+      "Status": i.status,
+      "Net Amount": i.net_amount,
+      "Total Kgs": i.gross_kgs,
+      "Agent Name": i.agent_name
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Yarn Inwards");
+    XLSX.writeFile(wb, `Yarn_Inwards_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   const tabs = [
     { id: 'general', label: 'General Info', icon: FileText },
     { id: 'yarn', label: 'Yarn Details', icon: Package },
@@ -210,6 +263,24 @@ export default function YarnInward() {
               <p style={{ color: 'var(--text-muted)' }}>Record and manage yarn receipts.</p>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button className="btn btn-secondary" onClick={() => setShowExportMenu(!showExportMenu)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Download size={16} /> Export
+                </button>
+                {showExportMenu && (
+                  <>
+                    <div onClick={() => setShowExportMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />
+                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', zIndex: 100, minWidth: 160, overflow: 'hidden' }}>
+                      <button onClick={() => { setShowExportMenu(false); exportPDF(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <FileText size={16} color="#ef4444" /> PDF Report
+                      </button>
+                      <button onClick={() => { setShowExportMenu(false); exportExcel(); }} style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <Download size={16} color="#10b981" /> Excel Sheet
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
                 <Plus size={18} /> New Inward
               </button>
@@ -359,61 +430,130 @@ export default function YarnInward() {
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               
               {activeTab === 'general' && (
-                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Entry Date *</label><input type="date" className="form-control" name="entry_date" value={form.entry_date} onChange={handleChange} required /></div>
-                  <div className="form-group"><label>Inward Date *</label><input type="date" className="form-control" name="inward_date" value={form.inward_date} onChange={handleChange} required /></div>
-                  <div className="form-group"><label>Status</label><input className="form-control" name="status" value={form.status} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Received From</label>
-                    <select className="form-control" name="received_from" value={form.received_from} onChange={handleChange}>
-                      <option value="">Select Supplier...</option>
-                      {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                    </select>
+                <div className="animate-fade">
+                  {/* Section 1: General Info */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>General Info</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>Entry Date *</label><input type="date" className="form-control" name="entry_date" value={form.entry_date} onChange={handleChange} required /></div>
+                    <div className="form-group"><label>Inward Date *</label><input type="date" className="form-control" name="inward_date" value={form.inward_date} onChange={handleChange} required /></div>
+                    <div className="form-group"><label>Status</label><input className="form-control" name="status" value={form.status} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Received From</label>
+                      <select className="form-control" name="received_from" value={form.received_from} onChange={handleChange}>
+                        <option value="">Select Supplier...</option>
+                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                      </select>
+                    </div>
+                    
+                    <div className="form-group"><label>Recvd Type</label>
+                      <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>
+                        <option>Direct</option><option>Against PO</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>PO No / Dt</label>
+                      <select className="form-control" name="po_no_dt" value={form.po_no_dt} onChange={handleChange} disabled={form.received_type === 'Direct'}>
+                        <option value="">Select PO...</option>
+                        {pos.map(po => <option key={po.id} value={`${po.po_number} / ${po.po_date}`}>{po.po_number} / {po.po_date}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Stock Godown</label><input className="form-control" name="stock_godown" value={form.stock_godown} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Godown ID</label><input type="number" className="form-control" name="godown_id" value={form.godown_id} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Cone Type</label>
+                      <select className="form-control" name="cone_type" value={form.cone_type} onChange={handleChange}>
+                        <option>Full Cone</option><option>Half Cone</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" name="order_kgs" value={form.order_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Received Kgs</label><input type="number" className="form-control" name="received_kgs" value={form.received_kgs} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Pc ID</label><input className="form-control" name="pc_id" value={form.pc_id} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" name="tolerance_pct" value={form.tolerance_pct} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Bill No</label><input className="form-control" name="bill_no" value={form.bill_no} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Bill Amount</label><input type="number" className="form-control" name="bill_amount" value={form.bill_amount} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Gross Kgs</label><input type="number" className="form-control" name="gross_kgs" value={form.gross_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Net Kgs</label><input type="number" className="form-control" name="net_kgs" value={form.net_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Chipnam</label><input className="form-control" name="chipnam" value={form.chipnam} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Veh No</label><input className="form-control" name="veh_no" value={form.veh_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Total Bags</label><input type="number" className="form-control" name="total_bags" value={form.total_bags} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>E-Way Bill</label><input className="form-control" name="eway_bill" value={form.eway_bill} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Org GRN No</label><input className="form-control" name="org_grn_no" value={form.org_grn_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Gate No</label><input className="form-control" name="gate_no" value={form.gate_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Weighbridge No</label><input className="form-control" name="wbridge_no" value={form.wbridge_no} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>W Weight</label><input type="number" className="form-control" name="w_weight" value={form.w_weight} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'yarn', 'yarn_type')} /></div>
                   </div>
-                  
-                  <div className="form-group"><label>Recvd Type</label>
-                    <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>
-                      <option>Direct</option><option>Against PO</option>
-                    </select>
+
+                  {/* Section 2: Yarn Details */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Yarn Details</h4>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
                   </div>
-                  <div className="form-group"><label>PO No / Dt</label>
-                    <select className="form-control" name="po_no_dt" value={form.po_no_dt} onChange={handleChange} disabled={form.received_type === 'Direct'}>
-                      <option value="">Select PO...</option>
-                      {pos.map(po => <option key={po.id} value={`${po.po_number} / ${po.po_date}`}>{po.po_number} / {po.po_date}</option>)}
-                    </select>
+                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>SNo</th><th>Yarn Count</th><th>Mill</th><th>Colour</th><th>Color Code</th><th>Lot No</th><th>Our Id</th>
+                          <th>Bags</th><th>Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {form.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td>{idx + 1}</td>
+                            <td><input className="form-control" style={{ width: 100 }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 120 }} value={item.mill_name} onChange={e => updateItem(idx, 'mill_name', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 100 }} value={item.colour} onChange={e => updateItem(idx, 'colour', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80 }} value={item.color_code} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80 }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80 }} value={item.our_id} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.amount} onChange={e => updateItem(idx, 'amount', e.target.value)} disabled /></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Stock Godown</label><input className="form-control" name="stock_godown" value={form.stock_godown} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Godown ID</label><input type="number" className="form-control" name="godown_id" value={form.godown_id} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Cone Type</label>
-                    <select className="form-control" name="cone_type" value={form.cone_type} onChange={handleChange}>
-                      <option>Full Cone</option><option>Half Cone</option>
-                    </select>
+
+                  {/* Section 3: Tax & Logistics */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>Packing</label>
+                      <select className="form-control" name="packing" value={form.packing} onChange={handleChange}>
+                        <option>Bags</option><option>Boxes</option><option>Pallets</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
+                    <div className="form-group"><label>TAX Type</label>
+                      <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
+                        <option>GST</option><option>IGST</option><option>Exempt</option>
+                      </select>
+                    </div>
+                    
+                    <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                    <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                    <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
+                    <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Other Remarks</label><input className="form-control" name="other_remarks" value={form.other_remarks} onChange={handleChange} /></div>
                   </div>
-                  <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" name="order_kgs" value={form.order_kgs} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Received Kgs</label><input type="number" className="form-control" name="received_kgs" value={form.received_kgs} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Pc ID</label><input className="form-control" name="pc_id" value={form.pc_id} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" name="tolerance_pct" value={form.tolerance_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Bill No</label><input className="form-control" name="bill_no" value={form.bill_no} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Bill Amount</label><input type="number" className="form-control" name="bill_amount" value={form.bill_amount} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Gross Kgs</label><input type="number" className="form-control" name="gross_kgs" value={form.gross_kgs} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Net Kgs</label><input type="number" className="form-control" name="net_kgs" value={form.net_kgs} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Chipnam</label><input className="form-control" name="chipnam" value={form.chipnam} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Veh No</label><input className="form-control" name="veh_no" value={form.veh_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Bags</label><input type="number" className="form-control" name="total_bags" value={form.total_bags} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>E-Way Bill</label><input className="form-control" name="eway_bill" value={form.eway_bill} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Org GRN No</label><input className="form-control" name="org_grn_no" value={form.org_grn_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Gate No</label><input className="form-control" name="gate_no" value={form.gate_no} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Weighbridge No</label><input className="form-control" name="wbridge_no" value={form.wbridge_no} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>W Weight</label><input type="number" className="form-control" name="w_weight" value={form.w_weight} onChange={handleChange} /></div>
                 </div>
               )}
 
