@@ -6,6 +6,9 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
+import IPOInvoice from './pages/buyer_order/IPOInvoice';
+import OrderSubModule from './pages/buyer_order/OrderSubModule';
+import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
@@ -57,6 +60,33 @@ export default function App() {
         <Route path="party-master" element={<PartyMaster />} />
 
         <Route path="buyer-order" element={<BuyerOrder />} />
+        <Route path="ipo-invoice" element={<IPOInvoice />} />
+        <Route path="buyer-order/order" element={<OrderSubModule />} />
+        <Route path="buyer-order/dispatch-expense" element={<DispatchExpenseSubModule />} />
+        <Route path="work-order/transaction" element={
+          <ModulePage 
+            title="Work Order Transaction" 
+            description="Create and manage work orders for processing and production." 
+            icon={ClipboardList} 
+            color="#3b82f6" 
+          />
+        } />
+        <Route path="work-order/completion" element={
+          <ModulePage 
+            title="Work Order Completion" 
+            description="Track and record the completion status of assigned work orders." 
+            icon={CheckSquare} 
+            color="#10b981" 
+          />
+        } />
+        <Route path="work-order/approval" element={
+          <ModulePage 
+            title="Work Order Approval" 
+            description="Review and approve completed work orders before finalization." 
+            icon={Shield} 
+            color="#f59e0b" 
+          />
+        } />
 
         <Route path="design-entry" element={<DesignEntry />} />
 
