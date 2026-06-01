@@ -56,6 +56,36 @@ export const buyerOrderAPI = {
   create: (data) => api.post('/buyer-orders/', data),
   update: (id, data) => api.put(`/buyer-orders/${id}`, data),
   delete: (id) => api.delete(`/buyer-orders/${id}`),
+  
+  // Schedules
+  listSchedules: () => api.get('/buyer-orders/schedules/'),
+  createSchedule: (data) => api.post('/buyer-orders/schedules/', data),
+  deleteSchedule: (id) => api.delete(`/buyer-orders/schedules/${id}`),
+
+  // Sequences
+  listSequences: () => api.get('/buyer-orders/sequences/'),
+  createSequence: (data) => api.post('/buyer-orders/sequences/', data),
+  deleteSequence: (id) => api.delete(`/buyer-orders/sequences/${id}`),
+
+  // Amendments
+  listAmendments: () => api.get('/buyer-orders/amendments/'),
+  createAmendment: (data) => api.post('/buyer-orders/amendments/', data),
+  deleteAmendment: (id) => api.delete(`/buyer-orders/amendments/${id}`),
+
+  // Completions
+  listCompletions: () => api.get('/buyer-orders/completions/'),
+  createCompletion: (data) => api.post('/buyer-orders/completions/', data),
+  deleteCompletion: (id) => api.delete(`/buyer-orders/completions/${id}`),
+
+  // Dispatches
+  listDispatches: () => api.get('/buyer-orders/dispatches/'),
+  createDispatch: (data) => api.post('/buyer-orders/dispatches/', data),
+  deleteDispatch: (id) => api.delete(`/buyer-orders/dispatches/${id}`),
+
+  // Expenses
+  listExpenses: () => api.get('/buyer-orders/expenses/'),
+  createExpense: (data) => api.post('/buyer-orders/expenses/', data),
+  deleteExpense: (id) => api.delete(`/buyer-orders/expenses/${id}`)
 };
 
 export const designEntryAPI = {

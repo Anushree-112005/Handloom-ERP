@@ -51,7 +51,7 @@ export default function BuyerOrder() {
     process_sequence: '',
     process_instruction: '', email_to: '', email_cc: '',
     yarn_instruction: '', prod_instruction: '', delivery_instruction: '', remarks: '',
-    
+
     items: [{
       party_po_no: '', po_date: '', point_of_contact: '', order_mtrs: 0, uom: 'MTR',
       tolerance_pct: 0, total_mtr_yard: 0, hsn_code: '', sample_mtr: 0, buyer_style: '',
@@ -93,7 +93,7 @@ export default function BuyerOrder() {
     try {
       const payload = { ...form };
       if (!payload.party_id) payload.party_id = null;
-      
+
       ['party_comp_date', 'exfactory_date', 'delivery_starting'].forEach(field => {
         if (!payload[field]) payload[field] = null;
       });
@@ -108,7 +108,7 @@ export default function BuyerOrder() {
       } else {
         await buyerOrderAPI.create(payload);
       }
-      
+
       setShowForm(false);
       setEditingId(null);
       setForm(initialForm);
@@ -122,7 +122,7 @@ export default function BuyerOrder() {
   const handleOpenForm = async (order, readOnly = false) => {
     try {
       const { data } = await buyerOrderAPI.get(order.id);
-      
+
       const sanitize = (obj) => {
         const res = { ...obj };
         for (const k in res) {
@@ -132,12 +132,12 @@ export default function BuyerOrder() {
       };
 
       const editForm = { ...initialForm, ...sanitize(data) };
-      
+
       if (editForm.order_date) editForm.order_date = editForm.order_date.substring(0, 10);
       if (editForm.party_comp_date) editForm.party_comp_date = editForm.party_comp_date.substring(0, 10);
       if (editForm.exfactory_date) editForm.exfactory_date = editForm.exfactory_date.substring(0, 10);
       if (editForm.delivery_starting) editForm.delivery_starting = editForm.delivery_starting.substring(0, 10);
-      
+
       if (editForm.items) {
         editForm.items = editForm.items.map(i => {
           const s = sanitize(i);
@@ -195,22 +195,22 @@ export default function BuyerOrder() {
   };
 
   const handleChange = (e) => {
-  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      setActiveTab(nextTab);
-      setTimeout(() => {
-        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        } else {
-          // Fallback to first focusable element
-          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-          if (fallback) fallback.focus();
-        }
-      }, 100);
-    }
-  };
+    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        setActiveTab(nextTab);
+        setTimeout(() => {
+          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+          if (nextInput) {
+            nextInput.focus();
+          } else {
+            // Fallback to first focusable element
+            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+            if (fallback) fallback.focus();
+          }
+        }, 100);
+      }
+    };
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
@@ -219,15 +219,15 @@ export default function BuyerOrder() {
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
   const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
-  
+
   const updateItem = (index, field, value) => {
     const newItems = [...form.items];
     let val = value;
     if (['order_mtrs', 'rate', 'tolerance_pct', 'sample_mtr', 'pick_on_table', 'finish_reed', 'finish_pick', 'finish_width', 'cuttable_width', 'packing_charge', 'gsm', 'price', 'gst_pct', 'gst_rate'].includes(field)) {
-        val = parseFloat(value) || 0;
+      val = parseFloat(value) || 0;
     }
     newItems[index][field] = val;
-    
+
     if (field === 'order_mtrs' || field === 'rate') {
       const mtrs = field === 'order_mtrs' ? val : (newItems[index].order_mtrs || 0);
       const rate = field === 'rate' ? val : (newItems[index].rate || 0);
@@ -412,8 +412,8 @@ export default function BuyerOrder() {
                     ) : filteredOrders.length === 0 ? (
                       <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
                     ) : filteredOrders.map(o => (
-                      <tr 
-                        key={o.id} 
+                      <tr
+                        key={o.id}
                         onClick={() => handleRowClick(o)}
                         style={{ cursor: 'pointer', background: selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}
                       >
@@ -495,10 +495,10 @@ export default function BuyerOrder() {
               )}
             </div>
           </div>
-          
+
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
             {tabs.map(tab => (
-              <button 
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
@@ -508,415 +508,415 @@ export default function BuyerOrder() {
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
                 }}
               >
-                <tab.icon size={16}/> {tab.label}
+                <tab.icon size={16} /> {tab.label}
               </button>
             ))}
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-            {/* MAIN DETAILS */}
-            {activeTab === 'main' && (
-              <div className="animate-fade">
-                {/* Section 1: Main Details */}
-                <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Main Details</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group">
-                    <label>Order Date *</label>
-                    <input type="date" className="form-control" name="order_date" value={form.order_date} onChange={handleChange} required />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label>Party Name *</label>
-                    <select className="form-control" required value={form.party_id} onChange={handlePartyChange}>
-                      <option value="">Select Party...</option>
-                      {parties.map(p => <option key={p.id} value={p.id}>{p.company_name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Buyer Name</label>
-                    <input className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label>Address</label>
-                    <input className="form-control" name="billing_address" value={form.billing_address} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>State</label>
-                    <input className="form-control" name="state" value={form.state} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Agent Name</label>
-                    <input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Order Type</label>
-                    <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
-                      <option value="">-- Select Order Type --</option>
-                      <option>Regular</option><option>Export</option><option>Special</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Certified Type</label>
-                    <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
-                      <option value="">-- Select Certified Type --</option>
-                      <option value="">None</option><option>ISO</option><option>Organic</option><option>Fair Trade</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>GST No</label>
-                    <input className="form-control" name="gst_no" value={form.gst_no} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>PAN No</label>
-                    <input className="form-control" name="pan_no" value={form.pan_no} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Commission Type</label>
-                    <select className="form-control" name="commission_type" value={form.commission_type} onChange={handleChange}>
-                      <option value="">-- Select Commission Type --</option>
-                      <option>Percentage</option><option>Fixed</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Commission Value</label>
-                    <input type="number" className="form-control" name="commission_pct" value={form.commission_pct} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Order Taken By</label>
-                    <select className="form-control" name="order_taken_by" value={form.order_taken_by} onChange={handleChange}>
-                      <option value="">Select Employee...</option>
-                      {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Nomination</label>
-                    <input className="form-control" name="nomination_type" value={form.nomination_type} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Regular / Special</label>
-                    <select className="form-control" name="regular_special" value={form.regular_special} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'payment', 'outstanding')}>
-                      <option value="">-- Select --</option>
-                      <option>Regular</option><option>Special</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Section 2: Payment Details */}
-                <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Payment Details</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
-                  <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Status</label>
-                    <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                      <option value="">-- Select Status --</option>
-                      <option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Settled">Settled</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
-                  <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
-                  <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Payment Terms</label>
-                    <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
-                      <option value="">-- Select Payment Terms --</option>
-                      <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
-                  <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
-                </div>
-
-                {/* Section 3: Party PO Details */}
-                <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Party PO Details</h4>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                  <button type="button" className="btn btn-primary" onClick={addItem}><Plus size={16} /> Add Another PO Item</button>
-                </div>
-                {form.items.map((item, index) => (
-                  <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
-                    <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14}/></button>
-                    <h5 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)', fontSize: 14, fontWeight: 600 }}>Item #{index + 1} Details</h5>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                      <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
-                      <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
-                      <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
-                      <div className="form-group"><label>Fabric Type</label>
-                        <select className="form-control" value={item.fabric_type} onChange={e => updateItem(index, 'fabric_type', e.target.value)}>
-                          <option>Cotton</option><option>Polyester</option><option>Blended</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Color</label><input className="form-control" value={item.color} onChange={e => updateItem(index, 'color', e.target.value)} /></div>
-                      
-                      <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
-                      <div className="form-group"><label>UOM</label>
-                        <select className="form-control" value={item.uom} onChange={e => updateItem(index, 'uom', e.target.value)}>
-                          <option>MTR</option><option>YARD</option><option>PCS</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
-                      <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
-                      <div className="form-group"><label>HSN Code</label><input className="form-control" value={item.hsn_code} onChange={e => updateItem(index, 'hsn_code', e.target.value)} /></div>
-
-                      <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
-                      <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
-                      <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
-                      <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
-                      <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
-
-                      <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
-                      <div className="form-group"><label>Weaving Type</label>
-                        <select className="form-control" value={item.weaving_type} onChange={e => updateItem(index, 'weaving_type', e.target.value)}>
-                          <option>Plain</option><option>Twill</option><option>Satin</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
-                      <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-                      <div className="form-group"><label>Pattern</label>
-                        <select className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)}>
-                          <option>Solid</option><option>Stripe</option><option>Check</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group"><label>Packing Type</label>
-                        <select className="form-control" value={item.packing_type} onChange={e => updateItem(index, 'packing_type', e.target.value)}>
-                          <option>Roll</option><option>Bale</option><option>Box</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>End Use</label>
-                        <select className="form-control" value={item.end_use} onChange={e => updateItem(index, 'end_use', e.target.value)}>
-                          <option>Apparel</option><option>Home Textile</option><option>Industrial</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Season</label>
-                        <select className="form-control" value={item.season} onChange={e => updateItem(index, 'season', e.target.value)}>
-                          <option>All Season</option><option>Summer</option><option>Winter</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
-                      <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+              {/* MAIN DETAILS */}
+              {activeTab === 'main' && (
+                <div className="animate-fade">
+                  {/* Section 1: Main Details */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Main Details</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Order Date *</label>
+                      <input type="date" className="form-control" name="order_date" value={form.order_date} onChange={handleChange} required />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Party Name *</label>
+                      <select className="form-control" required value={form.party_id} onChange={handlePartyChange}>
+                        <option value="">Select Party...</option>
+                        {parties.map(p => <option key={p.id} value={p.id}>{p.company_name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Buyer Name</label>
+                      <input className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Address</label>
+                      <input className="form-control" name="billing_address" value={form.billing_address} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>State</label>
+                      <input className="form-control" name="state" value={form.state} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Agent Name</label>
+                      <input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Order Type</label>
+                      <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
+                        <option value="">-- Select Order Type --</option>
+                        <option>Regular</option><option>Export</option><option>Special</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Certified Type</label>
+                      <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
+                        <option value="">-- Select Certified Type --</option>
+                        <option value="">None</option><option>ISO</option><option>Organic</option><option>Fair Trade</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>GST No</label>
+                      <input className="form-control" name="gst_no" value={form.gst_no} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>PAN No</label>
+                      <input className="form-control" name="pan_no" value={form.pan_no} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Commission Type</label>
+                      <select className="form-control" name="commission_type" value={form.commission_type} onChange={handleChange}>
+                        <option value="">-- Select Commission Type --</option>
+                        <option>Percentage</option><option>Fixed</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Commission Value</label>
+                      <input type="number" className="form-control" name="commission_pct" value={form.commission_pct} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Order Taken By</label>
+                      <select className="form-control" name="order_taken_by" value={form.order_taken_by} onChange={handleChange}>
+                        <option value="">Select Employee...</option>
+                        {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Nomination</label>
+                      <input className="form-control" name="nomination_type" value={form.nomination_type} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Regular / Special</label>
+                      <select className="form-control" name="regular_special" value={form.regular_special} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'payment', 'outstanding')}>
+                        <option value="">-- Select --</option>
+                        <option>Regular</option><option>Special</option>
+                      </select>
                     </div>
                   </div>
-                ))}
 
-                {/* Section 4: Transport & Delivery */}
-                <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Transport & Delivery</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                  <div className="form-group"><label>Transport Mode</label>
-                    <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
-                      <option value="">-- Select Transport Mode --</option>
-                      <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Party Terms</label>
-                    <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
-                      <option value="">-- Select Party Terms --</option>
-                      <option>FOB</option><option>CIF</option><option>Ex-Works</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>LR Type</label><input className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange} /></div>
-                  <div className="form-group"><label>LR Terms</label><input className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Desp Mtr Min</label><input type="number" className="form-control" name="desp_mtr_min" value={form.desp_mtr_min} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Desp Mtr Max</label><input type="number" className="form-control" name="desp_mtr_max" value={form.desp_mtr_max} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Place</label><input className="form-control" name="delivery_place" value={form.delivery_place} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'process', 'process_sequence')} /></div>
-                </div>
-
-                {/* Section 5: Process Follow */}
-                <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Process Follow</h4>
-                <div className="form-group">
-                  <label>Process Follow Sequence</label>
-                  <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
-                    <option value="">-- Select Process Sequence --</option>
-                    <option>Weaving {"->"} Processing {"->"} Dispatch</option>
-                    <option>Yarn Dyeing {"->"} Weaving {"->"} Finishing</option>
-                    <option>Direct Dispatch (Trading)</option>
-                  </select>
-                </div>
-
-                {/* Section 6: Instructions */}
-                <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Instructions</h4>
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                  <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Process Instruction</label><textarea className="form-control" name="process_instruction" value={form.process_instruction} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Yarn Instruction</label><textarea className="form-control" name="yarn_instruction" value={form.yarn_instruction} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Production Instruction</label><textarea className="form-control" name="prod_instruction" value={form.prod_instruction} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Instruction</label><textarea className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>General Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-                </div>
-              </div>
-            )}
-
-            {/* PAYMENT DETAILS */}
-            {activeTab === 'payment' && (
-              <div className="animate-fade">
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
-                  <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Status</label>
-                    <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                      <option value="">-- Select Status --</option>
-                      <option>Active</option><option>Inactive</option><option>Settled</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
-                  <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
-                  <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Payment Terms</label>
-                    <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
-                      <option value="">-- Select Payment Terms --</option>
-                      <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
-                  <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
-                </div>
-              </div>
-            )}
-
-            {/* TRANSPORT & DELIVERY */}
-            {activeTab === 'transport' && (
-              <div className="animate-fade">
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                  <div className="form-group"><label>Transport Mode</label>
-                    <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
-                      <option value="">-- Select Transport Mode --</option>
-                      <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Party Terms</label>
-                    <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
-                      <option value="">-- Select Party Terms --</option>
-                      <option>FOB</option><option>CIF</option><option>Ex-Works</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>LR Type</label><input className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange} /></div>
-                  <div className="form-group"><label>LR Terms</label><input className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Desp Mtr Min</label><input type="number" className="form-control" name="desp_mtr_min" value={form.desp_mtr_min} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Desp Mtr Max</label><input type="number" className="form-control" name="desp_mtr_max" value={form.desp_mtr_max} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Place</label><input className="form-control" name="delivery_place" value={form.delivery_place} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'process', 'process_sequence')} /></div>
-                </div>
-              </div>
-            )}
-
-            {/* PROCESS FOLLOW & INSTRUCTIONS */}
-            {activeTab === 'process' && (
-              <div className="animate-fade">
-                <div className="form-group">
-                  <label>Process Follow Sequence</label>
-                  <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
-                    <option value="">-- Select Process Sequence --</option>
-                    <option>Weaving {"->"} Processing {"->"} Dispatch</option>
-                    <option>Yarn Dyeing {"->"} Weaving {"->"} Finishing</option>
-                    <option>Direct Dispatch (Trading)</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'instructions' && (
-              <div className="animate-fade">
-                <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                  <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Process Instruction</label><textarea className="form-control" name="process_instruction" value={form.process_instruction} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Yarn Instruction</label><textarea className="form-control" name="yarn_instruction" value={form.yarn_instruction} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Production Instruction</label><textarea className="form-control" name="prod_instruction" value={form.prod_instruction} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Delivery Instruction</label><textarea className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>General Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-                </div>
-              </div>
-            )}
-
-            {/* PARTY PO DETAILS (LINE ITEMS) */}
-            {activeTab === 'items' && (
-              <div className="animate-fade">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                  <button type="button" className="btn btn-primary" onClick={addItem}><Plus size={16} /> Add Another PO Item</button>
-                </div>
-                
-                {form.items.map((item, index) => (
-                  <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
-                    <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14}/></button>
-                    <h4 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)' }}>Item #{index + 1} Details</h4>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                      <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
-                      <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
-                      <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
-                      <div className="form-group"><label>Fabric Type</label>
-                        <select className="form-control" value={item.fabric_type} onChange={e => updateItem(index, 'fabric_type', e.target.value)}>
-                          <option>Cotton</option><option>Polyester</option><option>Blended</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Color</label><input className="form-control" value={item.color} onChange={e => updateItem(index, 'color', e.target.value)} /></div>
-                      
-                      <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
-                      <div className="form-group"><label>UOM</label>
-                        <select className="form-control" value={item.uom} onChange={e => updateItem(index, 'uom', e.target.value)}>
-                          <option>MTR</option><option>YARD</option><option>PCS</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
-                      <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
-                      <div className="form-group"><label>HSN Code</label><input className="form-control" value={item.hsn_code} onChange={e => updateItem(index, 'hsn_code', e.target.value)} /></div>
-
-                      <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
-                      <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
-                      <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
-                      <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
-                      <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
-
-                      <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
-                      <div className="form-group"><label>Weaving Type</label>
-                        <select className="form-control" value={item.weaving_type} onChange={e => updateItem(index, 'weaving_type', e.target.value)}>
-                          <option>Plain</option><option>Twill</option><option>Satin</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
-                      <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-                      <div className="form-group"><label>Pattern</label>
-                        <select className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)}>
-                          <option>Solid</option><option>Stripe</option><option>Check</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group"><label>Packing Type</label>
-                        <select className="form-control" value={item.packing_type} onChange={e => updateItem(index, 'packing_type', e.target.value)}>
-                          <option>Roll</option><option>Bale</option><option>Box</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>End Use</label>
-                        <select className="form-control" value={item.end_use} onChange={e => updateItem(index, 'end_use', e.target.value)}>
-                          <option>Apparel</option><option>Home Textile</option><option>Industrial</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Season</label>
-                        <select className="form-control" value={item.season} onChange={e => updateItem(index, 'season', e.target.value)}>
-                          <option>All Season</option><option>Summer</option><option>Winter</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
-                      <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                  {/* Section 2: Payment Details */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Payment Details</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
+                    <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Status</label>
+                      <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                        <option value="">-- Select Status --</option>
+                        <option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Settled">Settled</option>
+                      </select>
                     </div>
+                    <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
+                    <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
+                    <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Payment Terms</label>
+                      <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
+                        <option value="">-- Select Payment Terms --</option>
+                        <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
+                    <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  {/* Section 3: Party PO Details */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Party PO Details</h4>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-primary" onClick={addItem}><Plus size={16} /> Add Another PO Item</button>
+                  </div>
+                  {form.items.map((item, index) => (
+                    <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
+                      <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
+                      <h5 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)', fontSize: 14, fontWeight: 600 }}>Item #{index + 1} Details</h5>
+                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                        <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
+                        <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
+                        <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
+                        <div className="form-group"><label>Fabric Type</label>
+                          <select className="form-control" value={item.fabric_type} onChange={e => updateItem(index, 'fabric_type', e.target.value)}>
+                            <option>Cotton</option><option>Polyester</option><option>Blended</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Color</label><input className="form-control" value={item.color} onChange={e => updateItem(index, 'color', e.target.value)} /></div>
+
+                        <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
+                        <div className="form-group"><label>UOM</label>
+                          <select className="form-control" value={item.uom} onChange={e => updateItem(index, 'uom', e.target.value)}>
+                            <option>MTR</option><option>YARD</option><option>PCS</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
+                        <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
+                        <div className="form-group"><label>HSN Code</label><input className="form-control" value={item.hsn_code} onChange={e => updateItem(index, 'hsn_code', e.target.value)} /></div>
+
+                        <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
+                        <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
+                        <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
+                        <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
+                        <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
+
+                        <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
+                        <div className="form-group"><label>Weaving Type</label>
+                          <select className="form-control" value={item.weaving_type} onChange={e => updateItem(index, 'weaving_type', e.target.value)}>
+                            <option>Plain</option><option>Twill</option><option>Satin</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
+                        <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
+                        <div className="form-group"><label>Pattern</label>
+                          <select className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)}>
+                            <option>Solid</option><option>Stripe</option><option>Check</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group"><label>Packing Type</label>
+                          <select className="form-control" value={item.packing_type} onChange={e => updateItem(index, 'packing_type', e.target.value)}>
+                            <option>Roll</option><option>Bale</option><option>Box</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>End Use</label>
+                          <select className="form-control" value={item.end_use} onChange={e => updateItem(index, 'end_use', e.target.value)}>
+                            <option>Apparel</option><option>Home Textile</option><option>Industrial</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Season</label>
+                          <select className="form-control" value={item.season} onChange={e => updateItem(index, 'season', e.target.value)}>
+                            <option>All Season</option><option>Summer</option><option>Winter</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
+                        <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Section 4: Transport & Delivery */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Transport & Delivery</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group"><label>Transport Mode</label>
+                      <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
+                        <option value="">-- Select Transport Mode --</option>
+                        <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Party Terms</label>
+                      <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
+                        <option value="">-- Select Party Terms --</option>
+                        <option>FOB</option><option>CIF</option><option>Ex-Works</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>LR Type</label><input className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange} /></div>
+                    <div className="form-group"><label>LR Terms</label><input className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Desp Mtr Min</label><input type="number" className="form-control" name="desp_mtr_min" value={form.desp_mtr_min} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Desp Mtr Max</label><input type="number" className="form-control" name="desp_mtr_max" value={form.desp_mtr_max} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Place</label><input className="form-control" name="delivery_place" value={form.delivery_place} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'process', 'process_sequence')} /></div>
+                  </div>
+
+                  {/* Section 5: Process Follow */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Process Follow</h4>
+                  <div className="form-group">
+                    <label>Process Follow Sequence</label>
+                    <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
+                      <option value="">-- Select Process Sequence --</option>
+                      <option>Weaving {"->"} Processing {"->"} Dispatch</option>
+                      <option>Yarn Dyeing {"->"} Weaving {"->"} Finishing</option>
+                      <option>Direct Dispatch (Trading)</option>
+                    </select>
+                  </div>
+
+                  {/* Section 6: Instructions */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Instructions</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                    <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Process Instruction</label><textarea className="form-control" name="process_instruction" value={form.process_instruction} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Yarn Instruction</label><textarea className="form-control" name="yarn_instruction" value={form.yarn_instruction} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Production Instruction</label><textarea className="form-control" name="prod_instruction" value={form.prod_instruction} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Instruction</label><textarea className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>General Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+                  </div>
+                </div>
+              )}
+
+              {/* PAYMENT DETAILS */}
+              {activeTab === 'payment' && (
+                <div className="animate-fade">
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
+                    <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Status</label>
+                      <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                        <option value="">-- Select Status --</option>
+                        <option>Active</option><option>Inactive</option><option>Settled</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
+                    <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
+                    <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Payment Terms</label>
+                      <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
+                        <option value="">-- Select Payment Terms --</option>
+                        <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
+                    <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                  </div>
+                </div>
+              )}
+
+              {/* TRANSPORT & DELIVERY */}
+              {activeTab === 'transport' && (
+                <div className="animate-fade">
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group"><label>Transport Mode</label>
+                      <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
+                        <option value="">-- Select Transport Mode --</option>
+                        <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Party Terms</label>
+                      <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
+                        <option value="">-- Select Party Terms --</option>
+                        <option>FOB</option><option>CIF</option><option>Ex-Works</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>LR Type</label><input className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange} /></div>
+                    <div className="form-group"><label>LR Terms</label><input className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Desp Mtr Min</label><input type="number" className="form-control" name="desp_mtr_min" value={form.desp_mtr_min} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Desp Mtr Max</label><input type="number" className="form-control" name="desp_mtr_max" value={form.desp_mtr_max} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Place</label><input className="form-control" name="delivery_place" value={form.delivery_place} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'process', 'process_sequence')} /></div>
+                  </div>
+                </div>
+              )}
+
+              {/* PROCESS FOLLOW & INSTRUCTIONS */}
+              {activeTab === 'process' && (
+                <div className="animate-fade">
+                  <div className="form-group">
+                    <label>Process Follow Sequence</label>
+                    <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
+                      <option value="">-- Select Process Sequence --</option>
+                      <option>Weaving {"->"} Processing {"->"} Dispatch</option>
+                      <option>Yarn Dyeing {"->"} Weaving {"->"} Finishing</option>
+                      <option>Direct Dispatch (Trading)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'instructions' && (
+                <div className="animate-fade">
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                    <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Process Instruction</label><textarea className="form-control" name="process_instruction" value={form.process_instruction} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Yarn Instruction</label><textarea className="form-control" name="yarn_instruction" value={form.yarn_instruction} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Production Instruction</label><textarea className="form-control" name="prod_instruction" value={form.prod_instruction} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Instruction</label><textarea className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>General Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+                  </div>
+                </div>
+              )}
+
+              {/* PARTY PO DETAILS (LINE ITEMS) */}
+              {activeTab === 'items' && (
+                <div className="animate-fade">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-primary" onClick={addItem}><Plus size={16} /> Add Another PO Item</button>
+                  </div>
+
+                  {form.items.map((item, index) => (
+                    <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
+                      <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
+                      <h4 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)' }}>Item #{index + 1} Details</h4>
+                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                        <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
+                        <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
+                        <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
+                        <div className="form-group"><label>Fabric Type</label>
+                          <select className="form-control" value={item.fabric_type} onChange={e => updateItem(index, 'fabric_type', e.target.value)}>
+                            <option>Cotton</option><option>Polyester</option><option>Blended</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Color</label><input className="form-control" value={item.color} onChange={e => updateItem(index, 'color', e.target.value)} /></div>
+
+                        <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
+                        <div className="form-group"><label>UOM</label>
+                          <select className="form-control" value={item.uom} onChange={e => updateItem(index, 'uom', e.target.value)}>
+                            <option>MTR</option><option>YARD</option><option>PCS</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
+                        <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
+                        <div className="form-group"><label>HSN Code</label><input className="form-control" value={item.hsn_code} onChange={e => updateItem(index, 'hsn_code', e.target.value)} /></div>
+
+                        <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
+                        <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
+                        <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
+                        <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
+                        <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
+
+                        <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
+                        <div className="form-group"><label>Weaving Type</label>
+                          <select className="form-control" value={item.weaving_type} onChange={e => updateItem(index, 'weaving_type', e.target.value)}>
+                            <option>Plain</option><option>Twill</option><option>Satin</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
+                        <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
+                        <div className="form-group"><label>Pattern</label>
+                          <select className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)}>
+                            <option>Solid</option><option>Stripe</option><option>Check</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group"><label>Packing Type</label>
+                          <select className="form-control" value={item.packing_type} onChange={e => updateItem(index, 'packing_type', e.target.value)}>
+                            <option>Roll</option><option>Bale</option><option>Box</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>End Use</label>
+                          <select className="form-control" value={item.end_use} onChange={e => updateItem(index, 'end_use', e.target.value)}>
+                            <option>Apparel</option><option>Home Textile</option><option>Industrial</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Season</label>
+                          <select className="form-control" value={item.season} onChange={e => updateItem(index, 'season', e.target.value)}>
+                            <option>All Season</option><option>Summer</option><option>Winter</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
+                        <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </fieldset>
           </div>
         </div>
