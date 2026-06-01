@@ -43,6 +43,9 @@ const modules = [
   { path: '/cloth/delivery', label: 'Cloth Delivery', icon: Truck },
   { path: '/finished-fabric', label: 'Finished Fabric', icon: Scissors },
 
+  { section: 'LAB & Shade Management' },
+
+
   { section: 'Quality Control' },
   { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
 
@@ -74,6 +77,7 @@ export default function Sidebar() {
   const location = useLocation();
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'DINESH EXPORTS',
+    description: 'THE HOUSE OF FABRICS',
     logo: ''
   });
 
@@ -81,9 +85,10 @@ export default function Sidebar() {
     const loadCompany = async () => {
       try {
         const response = await companySettingAPI.get();
-        if (response.data && response.data.company_name) {
+        if (response.data) {
           setCompanyProfile({
-            company_name: response.data.company_name,
+            company_name: response.data.company_name || 'DINESH EXPORTS',
+            description: response.data.description || 'THE HOUSE OF FABRICS',
             logo: response.data.logo || ''
           });
         }
@@ -113,7 +118,7 @@ export default function Sidebar() {
         )}
         <div>
           <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px' }}>{companyProfile.company_name}</h1>
-          <span>THE HOUSE OF FABRICS</span>
+          <span>{companyProfile.description}</span>
         </div>
       </div>
       <nav className="sidebar-nav">

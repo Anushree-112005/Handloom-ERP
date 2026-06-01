@@ -308,6 +308,24 @@ export default function GoodsRelease() {
     });
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      document.getElementById(`${nextTab}-section`)?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
   const handleItemChange = (index, field, value) => {
     setItems(prev => {
       const copy = [...prev];
@@ -504,10 +522,13 @@ export default function GoodsRelease() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: '1. GRA Info' }, { id: 'location', label: '2. Party & Destinations' }, { id: 'items', label: '3. Despatch Grid' }, { id: 'logistics', label: '4. Summary & Logistics' }].map(tab => (
+            {[{ id: 'general', label: 'GRA Info' }, { id: 'location', label: 'Party & Destinations' }, { id: 'items', label: 'Despatch Grid' }, { id: 'logistics', label: 'Summary & Logistics' }].map(tab => (
               <button 
                 type="button"
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                key={tab.id} onClick={() => {
+                  setActiveTab(tab.id);
+                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{
                   padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
                   border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
@@ -524,362 +545,354 @@ export default function GoodsRelease() {
             <form id="goodsReleaseForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
                 
-                {activeTab === 'general' && (
-                  <div className="animate-fade">
-{/* Group 1: Goods Release Advice Headers */}
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Goods Release Advice Basic Info</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>GRA No *</label>
-                  <input className="form-control" name="gra_no" value={formData.gra_no} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>GRA Date *</label>
-                  <input type="date" className="form-control" name="gra_date" value={formData.gra_date} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Inv Mode</label>
-                  <select className="form-control" name="inv_mode" value={formData.inv_mode} onChange={handleInputChange}>
-                    <option value="Regular">Regular</option>
-                    <option value="Sample">Sample</option>
-                    <option value="FOC">Free of Cost</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Bale Type</label>
-                  <select className="form-control" name="bale_type" value={formData.bale_type} onChange={handleInputChange}>
-                    <option value="Regular">Regular</option>
-                    <option value="Box Packing">Box Packing</option>
-                    <option value="Loose Pack">Loose Pack</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="Draft">Draft</option>
-                    <option value="Released">Released</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Prepar Time</label>
-                  <input className="form-control" name="prepar_time" value={formData.prepar_time} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Approval Status</label>
-                  <select className="form-control" name="approval_status" value={formData.approval_status} onChange={handleInputChange}>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Approved By</label>
-                  <input className="form-control" name="approved_by" value={formData.approved_by} onChange={handleInputChange} />
-                </div>
-              </div>
+                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Group 1: Goods Release Advice Headers */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Goods Release Advice Basic Info</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group">
+                      <label>GRA No *</label>
+                      <input className="form-control" name="gra_no" value={formData.gra_no} onChange={handleInputChange} required />
+                    </div>
+                    <div className="form-group">
+                      <label>GRA Date *</label>
+                      <input type="date" className="form-control" name="gra_date" value={formData.gra_date} onChange={handleInputChange} required />
+                    </div>
+                    <div className="form-group">
+                      <label>Inv Mode</label>
+                      <select className="form-control" name="inv_mode" value={formData.inv_mode} onChange={handleInputChange}>
+                        <option value="Regular">Regular</option>
+                        <option value="Sample">Sample</option>
+                        <option value="FOC">Free of Cost</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Bale Type</label>
+                      <select className="form-control" name="bale_type" value={formData.bale_type} onChange={handleInputChange}>
+                        <option value="Regular">Regular</option>
+                        <option value="Box Packing">Box Packing</option>
+                        <option value="Loose Pack">Loose Pack</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Status</label>
+                      <select className="form-control" name="status" value={formData.status} onChange={handleInputChange}>
+                        <option value="Draft">Draft</option>
+                        <option value="Released">Released</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Prepar Time</label>
+                      <input className="form-control" name="prepar_time" value={formData.prepar_time} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Approval Status</label>
+                      <select className="form-control" name="approval_status" value={formData.approval_status} onChange={handleInputChange}>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Approved By</label>
+                      <input className="form-control" name="approved_by" value={formData.approved_by} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'location', 'party_name')} />
+                    </div>
                   </div>
-                )}
+                </div>
 
-                {activeTab === 'location' && (
-                  <div className="animate-fade">
-{/* Group 2: Party & Delivery Destinations */}
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Party & Location Destinations</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group">
-                  <label>Party Name *</label>
-                  <select 
-                    className="form-control" 
-                    name="party_name" 
-                    value={formData.party_name} 
-                    onChange={e => handlePartyChange(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Select Party --</option>
-                    {options.all_parties.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>DIS No</label>
-                  <select className="form-control" name="dis_no" value={formData.dis_no} onChange={handleInputChange}>
-                    <option value="">-- Select DIS --</option>
-                    <option value="DIS-901">DIS-901</option>
-                    <option value="DIS-902">DIS-902</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Date</label>
-                  <input type="date" className="form-control" name="date" value={formData.date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Delivery At (Destination)</label>
-                  <select className="form-control" name="delivery_at" value={formData.delivery_at} onChange={handleInputChange}>
-                    <option value="">-- Select Destination --</option>
-                    <option value="Warehouse A">Warehouse A</option>
-                    <option value="Erode Mill">Erode Mill</option>
-                    <option value="Direct to Client">Direct to Client</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Invoice At (Billing Address)</label>
-                  <input className="form-control" name="invoice_at" value={formData.invoice_at} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Agent</label>
-                  <select className="form-control" name="agent" value={formData.agent} onChange={handleInputChange}>
-                    <option value="">-- Select Agent --</option>
-                    {options.agents.map(a => (
-                      <option key={a.id} value={a.name}>{a.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Comm %</label>
-                  <input className="form-control" type="number" step="0.01" name="comm_pct" value={formData.comm_pct} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Rate / Mtr</label>
-                  <input className="form-control" type="number" step="0.01" name="rate_mtr" value={formData.rate_mtr} onChange={handleInputChange} />
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Delivery At Address</label>
-                  <input className="form-control" name="delivery_at_address" value={formData.delivery_at_address} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Delivery St</label>
-                  <input className="form-control" name="delivery_st" value={formData.delivery_st} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Due Days</label>
-                  <input className="form-control" type="number" name="due_days" value={formData.due_days} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Due Date</label>
-                  <input type="date" className="form-control" name="due_date" value={formData.due_date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Delivery Instructions</label>
-                  <input className="form-control" name="delivery_ins" value={formData.delivery_ins} onChange={handleInputChange} style={{ background: '#fef08a' }} />
-                </div>
-              </div>
+                <div id="location-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Group 2: Party & Delivery Destinations */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Party & Location Destinations</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Party Name *</label>
+                      <select 
+                        className="form-control" 
+                        name="party_name" 
+                        value={formData.party_name} 
+                        onChange={e => handlePartyChange(e.target.value)}
+                        required
+                      >
+                        <option value="">-- Select Party --</option>
+                        {options.all_parties.map(p => (
+                          <option key={p.id} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>DIS No</label>
+                      <select className="form-control" name="dis_no" value={formData.dis_no} onChange={handleInputChange}>
+                        <option value="">-- Select DIS --</option>
+                        <option value="DIS-901">DIS-901</option>
+                        <option value="DIS-902">DIS-902</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Date</label>
+                      <input type="date" className="form-control" name="date" value={formData.date} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Delivery At (Destination)</label>
+                      <select className="form-control" name="delivery_at" value={formData.delivery_at} onChange={handleInputChange}>
+                        <option value="">-- Select Destination --</option>
+                        <option value="Warehouse A">Warehouse A</option>
+                        <option value="Erode Mill">Erode Mill</option>
+                        <option value="Direct to Client">Direct to Client</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Invoice At (Billing Address)</label>
+                      <input className="form-control" name="invoice_at" value={formData.invoice_at} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Agent</label>
+                      <select className="form-control" name="agent" value={formData.agent} onChange={handleInputChange}>
+                        <option value="">-- Select Agent --</option>
+                        {options.agents.map(a => (
+                          <option key={a.id} value={a.name}>{a.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Comm %</label>
+                      <input className="form-control" type="number" step="0.01" name="comm_pct" value={formData.comm_pct} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Rate / Mtr</label>
+                      <input className="form-control" type="number" step="0.01" name="rate_mtr" value={formData.rate_mtr} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Delivery At Address</label>
+                      <input className="form-control" name="delivery_at_address" value={formData.delivery_at_address} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Delivery St</label>
+                      <input className="form-control" name="delivery_st" value={formData.delivery_st} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Due Days</label>
+                      <input className="form-control" type="number" name="due_days" value={formData.due_days} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Due Date</label>
+                      <input type="date" className="form-control" name="due_date" value={formData.due_date} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Delivery Instructions</label>
+                      <input className="form-control" name="delivery_ins" value={formData.delivery_ins} onChange={handleInputChange} style={{ background: '#fef08a' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                    </div>
                   </div>
-                )}
+                </div>
 
-                {activeTab === 'items' && (
-                  <div className="animate-fade">
-{/* Group 3: Despatch Detail (Grid Table) */}
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Despatch Details</h4>
-              <div style={{ overflowX: 'auto', marginBottom: 20 }}>
-                <table className="data-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: 60, textAlign: 'center' }}>S.No</th>
-                      <th>Design No *</th>
-                      <th>Design Color</th>
-                      <th>Bale Nos</th>
-                      <th>Pin (Slip No)</th>
-                      <th style={{ width: 120 }}>Mtr *</th>
-                      <th style={{ width: 120 }}>Rate *</th>
-                      <th style={{ width: 140, textAlign: 'right' }}>Amount</th>
-                      {!isReadOnly && <th style={{ width: 80, textAlign: 'center' }}>Action</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, index) => (
-                      <tr key={index}>
-                        <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control" 
-                            value={item.design_no} 
-                            onChange={e => handleItemChange(index, 'design_no', e.target.value)}
-                            required
-                          />
-                        </td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control" 
-                            value={item.color} 
-                            onChange={e => handleItemChange(index, 'color', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control" 
-                            value={item.bale_no} 
-                            onChange={e => handleItemChange(index, 'bale_no', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control" 
-                            value={item.packing_slip_no} 
-                            onChange={e => handleItemChange(index, 'packing_slip_no', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <input 
-                            type="number" 
-                            className="form-control" 
-                            value={item.meters} 
-                            onChange={e => handleItemChange(index, 'meters', e.target.value)}
-                            required
-                          />
-                        </td>
-                        <td>
-                          <input 
-                            type="number" 
-                            className="form-control" 
-                            value={item.rate} 
-                            onChange={e => handleItemChange(index, 'rate', e.target.value)}
-                            required
-                          />
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                          ₹{Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                        </td>
-                        {!isReadOnly && (
-                          <td style={{ textAlign: 'center' }}>
-                            <button 
-                              type="button" 
-                              onClick={() => removeItemRow(index)} 
-                              className="btn btn-secondary" 
-                              style={{ padding: '6px 10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-                              disabled={items.length === 1}
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {!isReadOnly && (
-                <button 
-                  type="button" 
-                  onClick={addItemRow} 
-                  className="btn btn-secondary"
-                  style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 6, fontWeight: 600, cursor: 'pointer', marginBottom: 24 }}
-                >
-                  + Add Item Row
-                </button>
-              )}
+                <div id="items-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Group 3: Despatch Detail (Grid Table) */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Despatch Details</h4>
+                  <div style={{ overflowX: 'auto', marginBottom: 20 }}>
+                    <table className="data-table" style={{ width: '100%' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ width: 60, textAlign: 'center' }}>S.No</th>
+                          <th>Design No *</th>
+                          <th>Design Color</th>
+                          <th>Bale Nos</th>
+                          <th>Pin (Slip No)</th>
+                          <th style={{ width: 120 }}>Mtr *</th>
+                          <th style={{ width: 120 }}>Rate *</th>
+                          <th style={{ width: 140, textAlign: 'right' }}>Amount</th>
+                          {!isReadOnly && <th style={{ width: 80, textAlign: 'center' }}>Action</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item, index) => (
+                          <tr key={index}>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                            <td>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={item.design_no} 
+                                onChange={e => handleItemChange(index, 'design_no', e.target.value)}
+                                required
+                              />
+                            </td>
+                            <td>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={item.color} 
+                                onChange={e => handleItemChange(index, 'color', e.target.value)}
+                              />
+                            </td>
+                            <td>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={item.bale_no} 
+                                onChange={e => handleItemChange(index, 'bale_no', e.target.value)}
+                              />
+                            </td>
+                            <td>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={item.packing_slip_no} 
+                                onChange={e => handleItemChange(index, 'packing_slip_no', e.target.value)}
+                              />
+                            </td>
+                            <td>
+                              <input 
+                                type="number" 
+                                className="form-control" 
+                                value={item.meters} 
+                                onChange={e => handleItemChange(index, 'meters', e.target.value)}
+                                required
+                              />
+                            </td>
+                            <td>
+                              <input 
+                                type="number" 
+                                className="form-control" 
+                                value={item.rate} 
+                                onChange={e => handleItemChange(index, 'rate', e.target.value)}
+                                required
+                              />
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                              ₹{Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </td>
+                            {!isReadOnly && (
+                              <td style={{ textAlign: 'center' }}>
+                                <button 
+                                  type="button" 
+                                  onClick={() => removeItemRow(index)} 
+                                  className="btn btn-secondary" 
+                                  style={{ padding: '6px 10px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                                  disabled={items.length === 1}
+                                >
+                                  Remove
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
 
-                {activeTab === 'logistics' && (
-                  <div className="animate-fade">
-{/* Group 4: Charges & Logistics Summary */}
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Grand Summary & Logistics Details</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group">
-                  <label>Total Bales</label>
-                  <input className="form-control" type="number" value={formData.total_bales} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group">
-                  <label>Total Mtr</label>
-                  <input className="form-control" type="number" value={formData.total_meters} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group">
-                  <label>Gross Amount</label>
-                  <input className="form-control" value={`₹${Number(formData.gross_amount).toFixed(2)}`} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                
-                <div className="form-group">
-                  <label>TCS Value</label>
-                  <input className="form-control" type="number" name="tcs_value" value={formData.tcs_value} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>TCS%</label>
-                  <input className="form-control" name="tcs_pct" value={formData.tcs_pct} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>TCS Amt</label>
-                  <input className="form-control" value={`₹${formData.tcs_amt.toFixed(2)}`} readOnly style={{ background: '#f1f5f9' }} />
+                  {!isReadOnly && (
+                    <button 
+                      type="button" 
+                      onClick={addItemRow} 
+                      className="btn btn-secondary"
+                      style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 6, fontWeight: 600, cursor: 'pointer', marginBottom: 24 }}
+                    >
+                      + Add Item Row
+                    </button>
+                  )}
                 </div>
 
-                <div className="form-group">
-                  <label>Gross Wt</label>
-                  <input className="form-control" type="number" name="gross_weight" value={formData.gross_weight} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Net Wt</label>
-                  <input className="form-control" type="number" name="net_weight" value={formData.net_weight} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Discount%</label>
-                  <input className="form-control" type="number" name="discount_pct" value={formData.discount_pct} onChange={handleInputChange} />
-                </div>
+                <div id="logistics-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* Group 4: Charges & Logistics Summary */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Grand Summary & Logistics Details</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Total Bales</label>
+                      <input className="form-control" type="number" value={formData.total_bales} readOnly style={{ background: '#f1f5f9' }} />
+                    </div>
+                    <div className="form-group">
+                      <label>Total Mtr</label>
+                      <input className="form-control" type="number" value={formData.total_meters} readOnly style={{ background: '#f1f5f9' }} />
+                    </div>
+                    <div className="form-group">
+                      <label>Gross Amount</label>
+                      <input className="form-control" value={`₹${Number(formData.gross_amount).toFixed(2)}`} readOnly style={{ background: '#f1f5f9' }} />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>TCS Value</label>
+                      <input className="form-control" type="number" name="tcs_value" value={formData.tcs_value} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>TCS%</label>
+                      <input className="form-control" name="tcs_pct" value={formData.tcs_pct} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>TCS Amt</label>
+                      <input className="form-control" value={`₹${formData.tcs_amt.toFixed(2)}`} readOnly style={{ background: '#f1f5f9' }} />
+                    </div>
 
-                <div className="form-group">
-                  <label>Transport Name</label>
-                  <select className="form-control" name="transport" value={formData.transport} onChange={handleInputChange}>
-                    <option value="">-- Select Transport --</option>
-                    {options.transporters.map(t => (
-                      <option key={t.id} value={t.name}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Transport Mode</label>
-                  <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={handleInputChange}>
-                    <option value="">-- Select Mode --</option>
-                    <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Freight Mode</label>
-                  <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={handleInputChange}>
-                    <option value="">-- Select Freight --</option>
-                    <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
-                  </select>
-                </div>
+                    <div className="form-group">
+                      <label>Gross Wt</label>
+                      <input className="form-control" type="number" name="gross_weight" value={formData.gross_weight} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Net Wgt</label>
+                      <input className="form-control" type="number" name="net_weight" value={formData.net_weight} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Discount%</label>
+                      <input className="form-control" type="number" name="discount_pct" value={formData.discount_pct} onChange={handleInputChange} />
+                    </div>
 
-                <div className="form-group">
-                  <label>Vehicle No</label>
-                  <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>LR Team</label>
-                  <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange}>
-                    <option value="">-- Select Team --</option>
-                    <option value="Primary Logistics">Primary Logistics</option>
-                    <option value="Secondary Delivery">Secondary Delivery</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>LR No</label>
-                  <input className="form-control" name="lr_no" value={formData.lr_no} onChange={handleInputChange} />
-                </div>
+                    <div className="form-group">
+                      <label>Transport Name</label>
+                      <select className="form-control" name="transport" value={formData.transport} onChange={handleInputChange}>
+                        <option value="">-- Select Transport --</option>
+                        {options.transporters.map(t => (
+                          <option key={t.id} value={t.name}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Transport Mode</label>
+                      <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={handleInputChange}>
+                        <option value="">-- Select Mode --</option>
+                        <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Freight Mode</label>
+                      <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={handleInputChange}>
+                        <option value="">-- Select Freight --</option>
+                        <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
+                      </select>
+                    </div>
 
-                <div className="form-group">
-                  <label>LR Date</label>
-                  <input type="date" className="form-control" name="lr_date" value={formData.lr_date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Tax Value</label>
-                  <input className="form-control" type="number" name="tax_value" value={formData.tax_value} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Others</label>
-                  <input className="form-control" name="others" value={formData.others} onChange={handleInputChange} />
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 3' }}>
-                  <label>Narration</label>
-                  <input className="form-control" name="narration" value={formData.narration} onChange={handleInputChange} />
-                </div>
-              </div>
+                    <div className="form-group">
+                      <label>Vehicle No</label>
+                      <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>LR Team</label>
+                      <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange}>
+                        <option value="">-- Select Team --</option>
+                        <option value="Primary Logistics">Primary Logistics</option>
+                        <option value="Secondary Delivery">Secondary Delivery</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>LR No</label>
+                      <input className="form-control" name="lr_no" value={formData.lr_no} onChange={handleInputChange} />
+                    </div>
+
+                    <div className="form-group">
+                      <label>LR Date</label>
+                      <input type="date" className="form-control" name="lr_date" value={formData.lr_date} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Tax Value</label>
+                      <input className="form-control" type="number" name="tax_value" value={formData.tax_value} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Others</label>
+                      <input className="form-control" name="others" value={formData.others} onChange={handleInputChange} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                      <label>Narration</label>
+                      <input className="form-control" name="narration" value={formData.narration} onChange={handleInputChange} />
+                    </div>
                   </div>
-                )}
+                </div>
 
               </fieldset>
             </form>

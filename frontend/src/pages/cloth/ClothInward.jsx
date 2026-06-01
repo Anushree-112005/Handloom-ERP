@@ -185,6 +185,23 @@ export default function ClothInward() {
 
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -596,7 +613,9 @@ export default function ClothInward() {
               
               {activeTab === 'general' && (
                 <div className="animate-fade">
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px' }}>
+                  {/* Section 1: General Spec & Headers */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>General Spec & Headers</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', marginBottom: 32 }}>
                     <div className="form-group">
                       <label>Inward Type *</label>
                       <select className="form-control" name="inward_type" value={formData.inward_type} onChange={handleHeaderChange} required>
@@ -779,7 +798,158 @@ export default function ClothInward() {
 
                     <div className="form-group">
                       <label>Sizing (Szt) No</label>
-                      <input className="form-control" name="szt_no" value={formData.szt_no} onChange={handleHeaderChange} />
+                      <input className="form-control" name="szt_no" value={formData.szt_no} onChange={handleHeaderChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'process', 'process_type')} />
+                    </div>
+                  </div>
+
+                  {/* Section 2: Processing Steps */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Processing Steps</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', marginBottom: 32 }}>
+                    <div className="form-group">
+                      <label>Process Type</label>
+                      <select className="form-control" name="process_type" value={formData.process_type} onChange={handleHeaderChange}>
+                        <option>Dyeing</option>
+                        <option>Bleaching</option>
+                        <option>Sanforizing</option>
+                        <option>Finishing</option>
+                      </select>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Inspection Type</label>
+                      <select className="form-control" name="inspection_type" value={formData.inspection_type} onChange={handleHeaderChange}>
+                        <option>Standard Check</option>
+                        <option>Full Table Checking</option>
+                        <option>AQL 2.5 Audit</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Inv Pin</label>
+                      <input className="form-control" name="inv_pin" value={formData.inv_pin} onChange={handleHeaderChange} />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Process Remarks</label>
+                      <input className="form-control" name="process_remarks" value={formData.process_remarks} onChange={handleHeaderChange} />
+                    </div>
+                    
+                    <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                      <label>General Remarks</label>
+                      <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                    </div>
+                  </div>
+
+                  {/* Section 3: Piece-wise Inward Grid */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Piece-wise Inward Grid</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <h5 style={{ color: 'var(--text-primary)', margin: 0, fontSize: 14, fontWeight: 600 }}>
+                      Piece-wise Inward Details
+                    </h5>
+                    {!isReadOnly && (
+                      <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
+                        <Plus size={16} /> Add Piece
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24 }}>
+                    <table className="data-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ width: 60 }}>S.No</th>
+                          <th>Pcno *</th>
+                          <th>Weight (kg)</th>
+                          <th>VLoom</th>
+                          <th>VPc No</th>
+                          <th>Mtr *</th>
+                          {!isReadOnly && <th style={{ width: 50 }}></th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formData.items.length === 0 ? (
+                          <tr>
+                            <td colSpan={isReadOnly ? 6 : 7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                              No cloth pieces added yet. Click "Add Piece" to insert piece specifications.
+                            </td>
+                          </tr>
+                        ) : (
+                          formData.items.map((item, index) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.piece_no}
+                                  onChange={e => handleGridCellChange(index, 'piece_no', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.weight}
+                                  onChange={e => handleGridCellChange(index, 'weight', Number(e.target.value))}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.vloom}
+                                  onChange={e => handleGridCellChange(index, 'vloom', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.vpc_no}
+                                  onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.meters}
+                                  onChange={e => handleGridCellChange(index, 'meters', Number(e.target.value))}
+                                  required
+                                />
+                              </td>
+                              {!isReadOnly && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
+                                    onClick={() => handleRemoveItemRow(index)}
+                                  >
+                                    <Trash2 size={16} color="#ef4444" />
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* SUMMARY SECTION */}
+                  <div style={{ marginTop: 24, padding: '16px 24px', background: 'var(--bg-secondary)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Pieces</span>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{formData.total_pieces} Pcs</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Meters</span>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{formData.total_meters} Mtr</div>
                     </div>
                   </div>
                 </div>
@@ -819,7 +989,7 @@ export default function ClothInward() {
                     
                     <div className="form-group" style={{ gridColumn: 'span 4' }}>
                       <label>General Remarks</label>
-                      <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
+                      <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
                     </div>
                   </div>
                 </div>

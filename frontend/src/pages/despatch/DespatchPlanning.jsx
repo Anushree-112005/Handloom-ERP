@@ -308,6 +308,24 @@ export default function DespatchPlanning() {
     });
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      document.getElementById(`${nextTab}-section`)?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
   // Filter list
   const filteredRecords = records.filter(r => {
     const matchesSearch = searchTerm === '' ||
@@ -633,10 +651,13 @@ export default function DespatchPlanning() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: '1. Basic Details' }, { id: 'planning', label: '2. Planning & Delivery' }, { id: 'order', label: '3. Order Info' }, { id: 'logistics', label: '4. Logistics & Stock' }].map(tab => (
+            {[{ id: 'general', label: 'Basic Details' }, { id: 'planning', label: 'Planning & Delivery' }, { id: 'order', label: 'Order Info' }, { id: 'logistics', label: 'Logistics & Stock' }].map(tab => (
               <button 
                 type="button"
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                key={tab.id} onClick={() => {
+                  setActiveTab(tab.id);
+                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{
                   padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
                   border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
@@ -653,292 +674,289 @@ export default function DespatchPlanning() {
             <form id="despatchForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
                 
-                {activeTab === 'general' && (
-                  <div className="animate-fade">
-{/* SECTION 1: GREEN TOP BAR SECTION */}
-              <div style={{ 
-                background: 'rgba(16, 185, 129, 0.08)', 
-                borderLeft: '4px solid #10b981', 
-                borderRadius: '8px', 
-                padding: '16px 20px', 
-                margin: '0 0 16px 0',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 16
-              }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>IBPO</label>
-                  <select className="form-control" name="ibpo" value={formData.ibpo} onChange={handleChange} style={{ borderColor: '#a7f3d0' }}>
-                    <option value="">Select IBPO</option>
-                    <option value="IBPO-1678">IBPO-1678</option>
-                    <option value="IBPO-984">IBPO-984</option>
-                    <option value="IBPO-1202">IBPO-1202</option>
-                    <option value="IBPO-2241">IBPO-2241</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>PO Date</label>
-                  <input type="date" className="form-control" name="po_date" value={formData.po_date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Ref No</label>
-                  <input type="text" className="form-control" name="ref_no" value={formData.ref_no} onChange={handleChange} required style={{ borderColor: '#a7f3d0' }} />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Date</label>
-                  <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
-                </div>
-              </div>
-                  </div>
-                )}
-
-                {activeTab === 'planning' && (
-                  <div className="animate-fade">
-{/* SECTION 2: THREE COLUMN GRID SECTION */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28, margin: '0 0 16px 0' }}>
-                
-                {/* COLUMN 1 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Billing Party</label>
-                    <select className="form-control" name="billing_party" value={formData.billing_party} onChange={handleChange}>
-                      <option value="">Select Billing Party</option>
-                      {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Billing Address</label>
-                    <textarea className="form-control" name="billing_address" value={formData.billing_address} onChange={handleChange} rows={2} style={{ resize: 'none' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>State/Code</label>
-                    <input className="form-control" name="state_code" value={formData.state_code} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Design No</label>
-                    <select className="form-control" name="design_no" value={formData.design_no} onChange={handleChange}>
-                      <option value="">Select Design No</option>
-                      {designsList.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Order</label>
-                    <input className="form-control" name="order_no" value={formData.order_no} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Delivery Starting</label>
-                    <input type="date" className="form-control" name="delivery_starting" value={formData.delivery_starting} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>IBPO Rate</label>
-                    <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Certificate Type</label>
-                    <input className="form-control" name="certificate_type" value={formData.certificate_type} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Total Planning</label>
-                    <input className="form-control" name="total_planning" value={formData.total_planning} onChange={handleChange} />
+                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* SECTION 1: GREEN TOP BAR SECTION */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Basic Details</h4>
+                  <div style={{ 
+                    background: 'rgba(16, 185, 129, 0.08)', 
+                    borderLeft: '4px solid #10b981', 
+                    borderRadius: '8px', 
+                    padding: '16px 20px', 
+                    margin: '0 0 16px 0',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 16
+                  }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>IBPO</label>
+                      <select className="form-control" name="ibpo" value={formData.ibpo} onChange={handleChange} style={{ borderColor: '#a7f3d0' }}>
+                        <option value="">Select IBPO</option>
+                        <option value="IBPO-1678">IBPO-1678</option>
+                        <option value="IBPO-984">IBPO-984</option>
+                        <option value="IBPO-1202">IBPO-1202</option>
+                        <option value="IBPO-2241">IBPO-2241</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>PO Date</label>
+                      <input type="date" className="form-control" name="po_date" value={formData.po_date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Ref No</label>
+                      <input type="text" className="form-control" name="ref_no" value={formData.ref_no} onChange={handleChange} required style={{ borderColor: '#a7f3d0' }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Date</label>
+                      <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'planning', 'billing_party')} />
+                    </div>
                   </div>
                 </div>
 
-                {/* COLUMN 2 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>PINO</label>
-                    <input className="form-control" name="pino" value={formData.pino} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>AMD/FOC Mtr</label>
-                    <input className="form-control" name="amd_foc_mtr" value={formData.amd_foc_mtr} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Party Comp Date</label>
-                    <input type="date" className="form-control" name="party_comp_date" value={formData.party_comp_date} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Currency</label>
-                    <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
-                      <option value="INR">INR - Indian Rupee</option>
-                      <option value="USD">USD - US Dollar</option>
-                      <option value="EUR">EUR - Euro</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Last Desp Date</label>
-                    <input type="date" className="form-control" name="last_desp_date" value={formData.last_desp_date} onChange={handleChange} />
+                <div id="planning-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* SECTION 2: THREE COLUMN GRID SECTION */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Planning & Delivery</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28, margin: '0 0 16px 0' }}>
+                    
+                    {/* COLUMN 1 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Billing Party</label>
+                        <select className="form-control" name="billing_party" value={formData.billing_party} onChange={handleChange}>
+                          <option value="">Select Billing Party</option>
+                          {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Billing Address</label>
+                        <textarea className="form-control" name="billing_address" value={formData.billing_address} onChange={handleChange} rows={2} style={{ resize: 'none' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>State/Code</label>
+                        <input className="form-control" name="state_code" value={formData.state_code} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Design No</label>
+                        <select className="form-control" name="design_no" value={formData.design_no} onChange={handleChange}>
+                          <option value="">Select Design No</option>
+                          {designsList.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Order</label>
+                        <input className="form-control" name="order_no" value={formData.order_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Delivery Starting</label>
+                        <input type="date" className="form-control" name="delivery_starting" value={formData.delivery_starting} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>IBPO Rate</label>
+                        <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Certificate Type</label>
+                        <input className="form-control" name="certificate_type" value={formData.certificate_type} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Total Planning</label>
+                        <input className="form-control" name="total_planning" value={formData.total_planning} onChange={handleChange} />
+                      </div>
+                    </div>
+
+                    {/* COLUMN 2 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>PINO</label>
+                        <input className="form-control" name="pino" value={formData.pino} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>AMD/FOC Mtr</label>
+                        <input className="form-control" name="amd_foc_mtr" value={formData.amd_foc_mtr} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Party Comp Date</label>
+                        <input type="date" className="form-control" name="party_comp_date" value={formData.party_comp_date} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Currency</label>
+                        <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
+                          <option value="INR">INR - Indian Rupee</option>
+                          <option value="USD">USD - US Dollar</option>
+                          <option value="EUR">EUR - Euro</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Last Desp Date</label>
+                        <input type="date" className="form-control" name="last_desp_date" value={formData.last_desp_date} onChange={handleChange} />
+                      </div>
+                    </div>
+
+                    {/* COLUMN 3 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Delivery Party</label>
+                        <select className="form-control" name="delivery_party" value={formData.delivery_party} onChange={handleChange}>
+                          <option value="">Select Delivery Party</option>
+                          {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Delivery Address</label>
+                        <textarea className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} rows={2} style={{ resize: 'none' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>State/Code</label>
+                        <input className="form-control" name="del_state_code" value={formData.del_state_code} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>LC No / TT No</label>
+                        <input className="form-control" name="lc_no_tt_no" value={formData.lc_no_tt_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>LC / TT Date</label>
+                        <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Total</label>
+                        <input className="form-control" name="total" value={formData.total} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>UOM</label>
+                        <select className="form-control" name="uom" value={formData.uom} onChange={handleChange}>
+                          <option value="Meters">Meters</option>
+                          <option value="Yards">Yards</option>
+                          <option value="Kgs">Kgs</option>
+                          <option value="Rolls">Rolls</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Comp Date</label>
+                        <input type="date" className="form-control" name="comp_date" value={formData.comp_date} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Fabric Type</label>
+                        <input className="form-control" name="fabric_type" value={formData.fabric_type} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Tot Desp Mtrs</label>
+                        <input className="form-control" name="tot_desp_mtrs" value={formData.tot_desp_mtrs} onChange={handleChange} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label>Balance Mtrs</label>
+                        <input className="form-control" name="balance_mtrs" value={formData.balance_mtrs} onChange={handleChange} readOnly style={{ background: 'var(--bg-secondary)' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'order', 'poc_no')} />
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
-                {/* COLUMN 3 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Delivery Party</label>
-                    <select className="form-control" name="delivery_party" value={formData.delivery_party} onChange={handleChange}>
-                      <option value="">Select Delivery Party</option>
-                      {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Delivery Address</label>
-                    <textarea className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} rows={2} style={{ resize: 'none' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>State/Code</label>
-                    <input className="form-control" name="del_state_code" value={formData.del_state_code} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>LC No / TT No</label>
-                    <input className="form-control" name="lc_no_tt_no" value={formData.lc_no_tt_no} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>LC / TT Date</label>
-                    <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Total</label>
-                    <input className="form-control" name="total" value={formData.total} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>UOM</label>
-                    <select className="form-control" name="uom" value={formData.uom} onChange={handleChange}>
-                      <option value="Meters">Meters</option>
-                      <option value="Yards">Yards</option>
-                      <option value="Kgs">Kgs</option>
-                      <option value="Rolls">Rolls</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Comp Date</label>
-                    <input type="date" className="form-control" name="comp_date" value={formData.comp_date} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Fabric Type</label>
-                    <input className="form-control" name="fabric_type" value={formData.fabric_type} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Tot Desp Mtrs</label>
-                    <input className="form-control" name="tot_desp_mtrs" value={formData.tot_desp_mtrs} onChange={handleChange} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Balance Mtrs</label>
-                    <input className="form-control" name="balance_mtrs" value={formData.balance_mtrs} onChange={handleChange} readOnly style={{ background: 'var(--bg-secondary)' }} />
+                <div id="order-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* SECTION 3: YELLOW ACCENT BAR */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Order Info</h4>
+                  <div style={{ 
+                    background: 'rgba(234, 179, 8, 0.08)', 
+                    borderLeft: '4px solid #eab308', 
+                    borderRadius: '8px', 
+                    padding: '20px 24px', 
+                    margin: '0 0 16px 0'
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Point of Contact/No</label>
+                        <input className="form-control" name="poc_no" value={formData.poc_no} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Buyer PO No</label>
+                        <input className="form-control" name="buyer_po_no" value={formData.buyer_po_no} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Qty</label>
+                        <input className="form-control" name="qty" value={formData.qty} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Patten</label>
+                        <input className="form-control" name="patten" value={formData.patten} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Party Style</label>
+                        <input className="form-control" name="party_style" value={formData.party_style} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>PO Upload</label>
+                        <input type="file" className="form-control" style={{ borderColor: '#fef08a', padding: '4px 12px' }} disabled={isReadOnly} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Print Name</label>
+                        <input className="form-control" name="print_name" value={formData.print_name} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Merchand</label>
+                        <select className="form-control" name="merchand" value={formData.merchand} onChange={handleChange} style={{ borderColor: '#fef08a' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'logistics', 'planned_mtrs')}>
+                          <option value="">Select Merchandiser</option>
+                          {merchandList.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-              </div>
-                  </div>
-                )}
-
-                {activeTab === 'order' && (
-                  <div className="animate-fade">
-{/* SECTION 3: YELLOW ACCENT BAR */}
-              <div style={{ 
-                background: 'rgba(234, 179, 8, 0.08)', 
-                borderLeft: '4px solid #eab308', 
-                borderRadius: '8px', 
-                padding: '20px 24px', 
-                margin: '0 0 16px 0'
-              }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Point of Contact/No</label>
-                    <input className="form-control" name="poc_no" value={formData.poc_no} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Buyer PO No</label>
-                    <input className="form-control" name="buyer_po_no" value={formData.buyer_po_no} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Qty</label>
-                    <input className="form-control" name="qty" value={formData.qty} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Patten</label>
-                    <input className="form-control" name="patten" value={formData.patten} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Party Style</label>
-                    <input className="form-control" name="party_style" value={formData.party_style} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>PO Upload</label>
-                    <input type="file" className="form-control" style={{ borderColor: '#fef08a', padding: '4px 12px' }} disabled={isReadOnly} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Print Name</label>
-                    <input className="form-control" name="print_name" value={formData.print_name} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Merchand</label>
-                    <select className="form-control" name="merchand" value={formData.merchand} onChange={handleChange} style={{ borderColor: '#fef08a' }}>
-                      <option value="">Select Merchandiser</option>
-                      {merchandList.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-                  </div>
-                )}
-
-                {activeTab === 'logistics' && (
-                  <div className="animate-fade">
-{/* SECTION 4: BLUE ACCENT BAR */}
-              <div style={{ 
-                background: 'rgba(59, 130, 246, 0.08)', 
-                borderLeft: '4px solid #3b82f6', 
-                borderRadius: '8px', 
-                padding: '20px 24px', 
-                margin: '0 0 16px 0'
-              }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planned Mtrs</label>
-                    <input className="form-control" name="planned_mtrs" value={formData.planned_mtrs} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Tolerance %</label>
-                    <select className="form-control" name="tolerance_percent" value={formData.tolerance_percent} onChange={handleChange} style={{ borderColor: '#bfdbfe' }}>
-                      <option value="0">0%</option>
-                      <option value="5">5%</option>
-                      <option value="10">10%</option>
-                      <option value="15">15%</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Max Despatch Qty</label>
-                    <input className="form-control" name="max_despatch_qty" value={formData.max_despatch_qty} onChange={handleChange} readOnly style={{ borderColor: '#bfdbfe', background: 'var(--bg-secondary)' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Stock</label>
-                    <input className="form-control" name="stock" value={formData.stock} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planning Date</label>
-                    <input type="date" className="form-control" name="planning_date" value={formData.planning_date} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Rate</label>
-                    <input className="form-control" name="rate" value={formData.rate} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Other Charge</label>
-                    <select className="form-control" name="other_charge" value={formData.other_charge} onChange={handleChange} style={{ borderColor: '#bfdbfe' }}>
-                      <option value="-">-</option>
-                      <option value="Freight">Freight</option>
-                      <option value="Loading">Loading charges</option>
-                      <option value="Insurance">Transit Insurance</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Other Charges Value</label>
-                    <input className="form-control" name="other_charges_value" value={formData.other_charges_value} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                <div id="logistics-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* SECTION 4: BLUE ACCENT BAR */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Logistics & Stock</h4>
+                  <div style={{ 
+                    background: 'rgba(59, 130, 246, 0.08)', 
+                    borderLeft: '4px solid #3b82f6', 
+                    borderRadius: '8px', 
+                    padding: '20px 24px', 
+                    margin: '0 0 16px 0'
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planned Mtrs</label>
+                        <input className="form-control" name="planned_mtrs" value={formData.planned_mtrs} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Tolerance %</label>
+                        <select className="form-control" name="tolerance_percent" value={formData.tolerance_percent} onChange={handleChange} style={{ borderColor: '#bfdbfe' }}>
+                          <option value="0">0%</option>
+                          <option value="5">5%</option>
+                          <option value="10">10%</option>
+                          <option value="15">15%</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Max Despatch Qty</label>
+                        <input className="form-control" name="max_despatch_qty" value={formData.max_despatch_qty} onChange={handleChange} readOnly style={{ borderColor: '#bfdbfe', background: 'var(--bg-secondary)' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Stock</label>
+                        <input className="form-control" name="stock" value={formData.stock} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planning Date</label>
+                        <input type="date" className="form-control" name="planning_date" value={formData.planning_date} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Rate</label>
+                        <input className="form-control" name="rate" value={formData.rate} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Other Charge</label>
+                        <select className="form-control" name="other_charge" value={formData.other_charge} onChange={handleChange} style={{ borderColor: '#bfdbfe' }}>
+                          <option value="-">-</option>
+                          <option value="Freight">Freight</option>
+                          <option value="Loading">Loading charges</option>
+                          <option value="Insurance">Transit Insurance</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Other Charges Value</label>
+                        <input className="form-control" name="other_charges_value" value={formData.other_charges_value} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-                  </div>
-                )}
+
               </fieldset>
             </form>
           </div>

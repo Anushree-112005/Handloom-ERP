@@ -233,6 +233,23 @@ export default function ClothDelivery() {
   };
 
   const handleInputChange = (e) => {
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -386,7 +403,7 @@ export default function ClothDelivery() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: '1. General Info' }, { id: 'specs', label: '2. Fabrication Specs' }, { id: 'items', label: '3. Pieces Grid' }, { id: 'logistics', label: '4. Vouchers & Logistics' }].map(tab => (
+            {[{ id: 'general', label: 'General Info' }, { id: 'specs', label: 'Fabrication Specs' }, { id: 'items', label: 'Pieces Grid' }, { id: 'logistics', label: 'Vouchers & Logistics' }].map(tab => (
               <button 
                 type="button"
                 key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -407,302 +424,515 @@ export default function ClothDelivery() {
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
                 {activeTab === 'general' && (
                   <div className="animate-fade">
-{/* Group 1: General Delivery Info */}
-              <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>1. Delivery & Party Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>DC No *</label>
-                  <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>DC Date *</label>
-                  <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Delivery Type</label>
-                  <select className="form-control" name="delivery_type" value={formData.delivery_type} onChange={handleInputChange}>
-                    <option value="Job Work">Job Work</option>
-                    <option value="Return">Return</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Sales">Sales Dispatch</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Delivery Mode</label>
-                  <select className="form-control" name="delivery_mode" value={formData.delivery_mode} onChange={handleInputChange}>
-                    <option value="Road">Road</option>
-                    <option value="Rail">Rail</option>
-                    <option value="Courier">Courier</option>
-                    <option value="Air">Air</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Party Name *</label>
-                  <select className="form-control" name="party_name" value={formData.party_name} onChange={handleInputChange} required>
-                    <option value="">-- Select Party --</option>
-                    {options.all_parties.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>PO No</label>
-                  <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Buyer Name</label>
-                  <select className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleInputChange}>
-                    <option value="">-- Same as Party --</option>
-                    {options.all_parties.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                    {/* Section 1: Delivery & Party Information */}
+                    <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery & Party Information</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
+                      <div className="form-group">
+                        <label>DC No *</label>
+                        <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>DC Date *</label>
+                        <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Type</label>
+                        <select className="form-control" name="delivery_type" value={formData.delivery_type} onChange={handleInputChange}>
+                          <option value="Job Work">Job Work</option>
+                          <option value="Return">Return</option>
+                          <option value="Processing">Processing</option>
+                          <option value="Sales">Sales Dispatch</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Mode</label>
+                        <select className="form-control" name="delivery_mode" value={formData.delivery_mode} onChange={handleInputChange}>
+                          <option value="Road">Road</option>
+                          <option value="Rail">Rail</option>
+                          <option value="Courier">Courier</option>
+                          <option value="Air">Air</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Party Name *</label>
+                        <select className="form-control" name="party_name" value={formData.party_name} onChange={handleInputChange} required>
+                          <option value="">-- Select Party --</option>
+                          {options.all_parties.map(p => (
+                            <option key={p.id} value={p.name}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>PO No</label>
+                        <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Buyer Name</label>
+                        <select className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'specs', 'process_type')}>
+                          <option value="">-- Same as Party --</option>
+                          {options.all_parties.map(p => (
+                            <option key={p.id} value={p.name}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
 
-              
+                    {/* Section 2: Fabrication & Technical Specification */}
+                    <h4 style={{ color: 'var(--primary)', margin: "32px 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabrication & Technical Specification</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
+                      <div className="form-group">
+                        <label>Process Type</label>
+                        <select className="form-control" name="process_type" value={formData.process_type} onChange={handleInputChange}>
+                          <option value="Weaving">Weaving</option>
+                          <option value="Dyeing">Dyeing</option>
+                          <option value="Sizing">Sizing</option>
+                          <option value="Finishing">Finishing</option>
+                          <option value="Printing">Printing</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Design No</label>
+                        <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>IBPO</label>
+                        <input className="form-control" name="ibpo" value={formData.ibpo} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>PC Type</label>
+                        <select className="form-control" name="pc_type" value={formData.pc_type} onChange={handleInputChange}>
+                          <option value="Grey">Grey Fabric</option>
+                          <option value="Finished">Finished Fabric</option>
+                          <option value="Dyed">Dyed Fabric</option>
+                          <option value="Sample">Sample Piece</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Fabric Quality Detail</label>
+                        <input className="form-control" name="fabric_detail" value={formData.fabric_detail} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>IBPO Order Mtr</label>
+                        <input type="number" className="form-control" name="ibpo_order_mtr" value={formData.ibpo_order_mtr} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Mtr (Sum)</label>
+                        <input type="number" className="form-control" value={formData.delivery_mtr} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group">
+                        <label>Balance Mtr</label>
+                        <input type="number" className="form-control" value={formData.balance} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group">
+                        <label>Fresh Finish Width</label>
+                        <input type="number" className="form-control" name="fresh_width" value={formData.fresh_width} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Finish Fold Details</label>
+                        <select className="form-control" name="finish_fold" value={formData.finish_fold} onChange={handleInputChange}>
+                          <option value="Standard">Standard Roll</option>
+                          <option value="Book Fold">Book Fold</option>
+                          <option value="Lapping">Lapping</option>
+                          <option value="Bale Fold">Bale Fold</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>LOT No</label>
+                        <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Griege Rate</label>
+                        <input type="number" className="form-control" name="griege_rate" value={formData.griege_rate} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Return Type</label>
+                        <select className="form-control" name="return_type" value={formData.return_type} onChange={handleInputChange}>
+                          <option value="None">None</option>
+                          <option value="Defect Return">Defect Return</option>
+                          <option value="Excess Grey Return">Excess Grey Return</option>
+                          <option value="Rejected Return">Rejected Return</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Optical Brightening Agent (OBA)</label>
+                        <input className="form-control" name="oba" value={formData.oba} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Finish Pick</label>
+                        <input type="number" className="form-control" name="finish_pick" value={formData.finish_pick} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>GLM</label>
+                        <input type="number" className="form-control" name="glm" value={formData.glm} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                        <label>Process Comments</label>
+                        <input className="form-control" name="process_comm" value={formData.process_comm} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                      </div>
+                    </div>
+
+                    {/* Section 3: Piece-wise Dispatch Entry Grid */}
+                    <h4 style={{ color: 'var(--primary)', margin: "32px 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Piece-wise Dispatch Entry Grid</h4>
+                    <div style={{ overflowX: 'auto', marginBottom: 20 }}>
+                      <table className="data-table" style={{ width: '100%' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ width: 60, textAlign: 'center' }}>S.No</th>
+                            <th>PC No / Piece No *</th>
+                            <th>Lot No</th>
+                            <th>OK Meters *</th>
+                            <th>Fold Meters</th>
+                            {!isReadOnly && <th style={{ width: 50, textAlign: 'center' }}></th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  value={item.piece_no}
+                                  onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  value={item.lot_no}
+                                  onChange={e => handleItemChange(index, 'lot_no', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  value={item.ok_mtr}
+                                  onChange={e => handleItemChange(index, 'ok_mtr', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  value={item.fold_mtr}
+                                  onChange={e => handleItemChange(index, 'fold_mtr', e.target.value)}
+                                />
+                              </td>
+                              {!isReadOnly && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItemRow(index)}
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={addItemRow}
+                        className="btn btn-secondary"
+                        style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginBottom: 32 }}
+                      >
+                        + Add Piece
+                      </button>
+                    )}
+
+                    {/* Section 4: Voucher Entry (Accounting Reference) */}
+                    <h4 style={{ color: 'var(--primary)', margin: "32px 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Voucher Entry (Accounting Reference)</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
+                      <div className="form-group">
+                        <label>Voucher No</label>
+                        <input className="form-control" name="voucher_no" value={formData.voucher_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Voucher Date</label>
+                        <input type="date" className="form-control" name="voucher_date" value={formData.voucher_date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Rate / Meter Rs.</label>
+                        <input type="number" className="form-control" name="rate_mtr" value={formData.rate_mtr} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Debited Amount Rs.</label>
+                        <input type="number" className="form-control" value={formData.debited_amount} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                        <label>Detailed Remarks</label>
+                        <input className="form-control" name="detailed_remarks" value={formData.detailed_remarks} onChange={handleInputChange} />
+                      </div>
+                    </div>
+
+                    {/* Section 5: Gate Pass & Logistics */}
+                    <h4 style={{ color: 'var(--primary)', margin: "32px 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Gate Pass & Logistics</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Transport Name</label>
+                        <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleInputChange}>
+                          <option value="">-- Select Transport --</option>
+                          {options.transporters.map(t => (
+                            <option key={t.id} value={t.name}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Vehicle No</label>
+                        <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Driver Name</label>
+                        <input className="form-control" name="driver_name" value={formData.driver_name} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Driver Mobile No</label>
+                        <input className="form-control" name="mobile_no" value={formData.mobile_no} onChange={handleInputChange} />
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'specs' && (
                   <div className="animate-fade">
-{/* Group 2: Fabrication & Quality Details */}
-              <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>2. Fabrication & Technical Specification</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>Process Type</label>
-                  <select className="form-control" name="process_type" value={formData.process_type} onChange={handleInputChange}>
-                    <option value="Weaving">Weaving</option>
-                    <option value="Dyeing">Dyeing</option>
-                    <option value="Sizing">Sizing</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Printing">Printing</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Design No</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>IBPO</label>
-                  <input className="form-control" name="ibpo" value={formData.ibpo} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>PC Type</label>
-                  <select className="form-control" name="pc_type" value={formData.pc_type} onChange={handleInputChange}>
-                    <option value="Grey">Grey Fabric</option>
-                    <option value="Finished">Finished Fabric</option>
-                    <option value="Dyed">Dyed Fabric</option>
-                    <option value="Sample">Sample Piece</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Fabric Quality Detail</label>
-                  <input className="form-control" name="fabric_detail" value={formData.fabric_detail} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>IBPO Order Mtr</label>
-                  <input type="number" className="form-control" name="ibpo_order_mtr" value={formData.ibpo_order_mtr} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Delivery Mtr (Sum)</label>
-                  <input type="number" className="form-control" value={formData.delivery_mtr} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group">
-                  <label>Balance Mtr</label>
-                  <input type="number" className="form-control" value={formData.balance} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group">
-                  <label>Fresh Finish Width</label>
-                  <input type="number" className="form-control" name="fresh_width" value={formData.fresh_width} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Finish Fold Details</label>
-                  <select className="form-control" name="finish_fold" value={formData.finish_fold} onChange={handleInputChange}>
-                    <option value="Standard">Standard Roll</option>
-                    <option value="Book Fold">Book Fold</option>
-                    <option value="Lapping">Lapping</option>
-                    <option value="Bale Fold">Bale Fold</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>LOT No</label>
-                  <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Griege Rate</label>
-                  <input type="number" className="form-control" name="griege_rate" value={formData.griege_rate} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Return Type</label>
-                  <select className="form-control" name="return_type" value={formData.return_type} onChange={handleInputChange}>
-                    <option value="None">None</option>
-                    <option value="Defect Return">Defect Return</option>
-                    <option value="Excess Grey Return">Excess Grey Return</option>
-                    <option value="Rejected Return">Rejected Return</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Optical Brightening Agent (OBA)</label>
-                  <input className="form-control" name="oba" value={formData.oba} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Finish Pick</label>
-                  <input type="number" className="form-control" name="finish_pick" value={formData.finish_pick} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>GLM</label>
-                  <input type="number" className="form-control" name="glm" value={formData.glm} onChange={handleInputChange} />
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 4' }}>
-                  <label>Process Comments</label>
-                  <input className="form-control" name="process_comm" value={formData.process_comm} onChange={handleInputChange} />
-                </div>
-              </div>
-
-              
+                    {/* Section 2: Fabrication & Technical Specification */}
+                    <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Fabrication & Technical Specification</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Process Type</label>
+                        <select className="form-control" name="process_type" value={formData.process_type} onChange={handleInputChange}>
+                          <option value="Weaving">Weaving</option>
+                          <option value="Dyeing">Dyeing</option>
+                          <option value="Sizing">Sizing</option>
+                          <option value="Finishing">Finishing</option>
+                          <option value="Printing">Printing</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Design No</label>
+                        <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>IBPO</label>
+                        <input className="form-control" name="ibpo" value={formData.ibpo} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>PC Type</label>
+                        <select className="form-control" name="pc_type" value={formData.pc_type} onChange={handleInputChange}>
+                          <option value="Grey">Grey Fabric</option>
+                          <option value="Finished">Finished Fabric</option>
+                          <option value="Dyed">Dyed Fabric</option>
+                          <option value="Sample">Sample Piece</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Fabric Quality Detail</label>
+                        <input className="form-control" name="fabric_detail" value={formData.fabric_detail} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>IBPO Order Mtr</label>
+                        <input type="number" className="form-control" name="ibpo_order_mtr" value={formData.ibpo_order_mtr} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Mtr (Sum)</label>
+                        <input type="number" className="form-control" value={formData.delivery_mtr} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group">
+                        <label>Balance Mtr</label>
+                        <input type="number" className="form-control" value={formData.balance} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group">
+                        <label>Fresh Finish Width</label>
+                        <input type="number" className="form-control" name="fresh_width" value={formData.fresh_width} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Finish Fold Details</label>
+                        <select className="form-control" name="finish_fold" value={formData.finish_fold} onChange={handleInputChange}>
+                          <option value="Standard">Standard Roll</option>
+                          <option value="Book Fold">Book Fold</option>
+                          <option value="Lapping">Lapping</option>
+                          <option value="Bale Fold">Bale Fold</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>LOT No</label>
+                        <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Griege Rate</label>
+                        <input type="number" className="form-control" name="griege_rate" value={formData.griege_rate} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Return Type</label>
+                        <select className="form-control" name="return_type" value={formData.return_type} onChange={handleInputChange}>
+                          <option value="None">None</option>
+                          <option value="Defect Return">Defect Return</option>
+                          <option value="Excess Grey Return">Excess Grey Return</option>
+                          <option value="Rejected Return">Rejected Return</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Optical Brightening Agent (OBA)</label>
+                        <input className="form-control" name="oba" value={formData.oba} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Finish Pick</label>
+                        <input type="number" className="form-control" name="finish_pick" value={formData.finish_pick} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>GLM</label>
+                        <input type="number" className="form-control" name="glm" value={formData.glm} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                        <label>Process Comments</label>
+                        <input className="form-control" name="process_comm" value={formData.process_comm} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'items' && (
                   <div className="animate-fade">
-{/* Group 3: Pieces Grid Details */}
-              <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>3. Piece-wise Dispatch Entry Grid</h4>
-              <div style={{ overflowX: 'auto', marginBottom: 20 }}>
-                <table className="data-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: 60, textAlign: 'center' }}>S.No</th>
-                      <th>PC No / Piece No *</th>
-                      <th>Lot No</th>
-                      <th>OK Meters *</th>
-                      <th>Fold Meters</th>
-                      {!isReadOnly && <th style={{ width: 50, textAlign: 'center' }}></th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, index) => (
-                      <tr key={index}>
-                        <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
-                        <td>
-                          <input
-                            className="form-control"
-                            value={item.piece_no}
-                            onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
-                            required
-                          />
-                        </td>
-                        <td>
-                          <input
-                            className="form-control"
-                            value={item.lot_no}
-                            onChange={e => handleItemChange(index, 'lot_no', e.target.value)}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={item.ok_mtr}
-                            onChange={e => handleItemChange(index, 'ok_mtr', e.target.value)}
-                            required
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={item.fold_mtr}
-                            onChange={e => handleItemChange(index, 'fold_mtr', e.target.value)}
-                          />
-                        </td>
-                        {!isReadOnly && (
-                          <td style={{ textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => removeItemRow(index)}
-                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-                            >
-                              <X size={16} />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {!isReadOnly && (
-                <button
-                  type="button"
-                  onClick={addItemRow}
-                  className="btn btn-secondary"
-                  style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginBottom: 20 }}
-                >
-                  + Add Piece
-                </button>
-              )}
-
-              
+                    {/* Section 3: Piece-wise Dispatch Entry Grid */}
+                    <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Piece-wise Dispatch Entry Grid</h4>
+                    <div style={{ overflowX: 'auto', marginBottom: 20 }}>
+                      <table className="data-table" style={{ width: '100%' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ width: 60, textAlign: 'center' }}>S.No</th>
+                            <th>PC No / Piece No *</th>
+                            <th>Lot No</th>
+                            <th>OK Meters *</th>
+                            <th>Fold Meters</th>
+                            {!isReadOnly && <th style={{ width: 50, textAlign: 'center' }}></th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  value={item.piece_no}
+                                  onChange={e => handleItemChange(index, 'piece_no', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  value={item.lot_no}
+                                  onChange={e => handleItemChange(index, 'lot_no', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  value={item.ok_mtr}
+                                  onChange={e => handleItemChange(index, 'ok_mtr', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  value={item.fold_mtr}
+                                  onChange={e => handleItemChange(index, 'fold_mtr', e.target.value)}
+                                />
+                              </td>
+                              {!isReadOnly && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItemRow(index)}
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        onClick={addItemRow}
+                        className="btn btn-secondary"
+                        style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginBottom: 20 }}
+                      >
+                        + Add Piece
+                      </button>
+                    )}
                   </div>
                 )}
 
                 {activeTab === 'logistics' && (
                   <div className="animate-fade">
-{/* Group 4: Voucher & Accounting Section */}
-              <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>4. Voucher Entry (Accounting Reference)</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>Voucher No</label>
-                  <input className="form-control" name="voucher_no" value={formData.voucher_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Voucher Date</label>
-                  <input type="date" className="form-control" name="voucher_date" value={formData.voucher_date} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Rate / Meter Rs.</label>
-                  <input type="number" className="form-control" name="rate_mtr" value={formData.rate_mtr} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Debited Amount Rs.</label>
-                  <input type="number" className="form-control" value={formData.debited_amount} readOnly style={{ background: '#f1f5f9' }} />
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 4' }}>
-                  <label>Detailed Remarks</label>
-                  <input className="form-control" name="detailed_remarks" value={formData.detailed_remarks} onChange={handleInputChange} />
-                </div>
-              </div>
+                    {/* Section 4: Voucher Entry (Accounting Reference) */}
+                    <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Voucher Entry (Accounting Reference)</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Voucher No</label>
+                        <input className="form-control" name="voucher_no" value={formData.voucher_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Voucher Date</label>
+                        <input type="date" className="form-control" name="voucher_date" value={formData.voucher_date} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Rate / Meter Rs.</label>
+                        <input type="number" className="form-control" name="rate_mtr" value={formData.rate_mtr} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Debited Amount Rs.</label>
+                        <input type="number" className="form-control" value={formData.debited_amount} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                        <label>Detailed Remarks</label>
+                        <input className="form-control" name="detailed_remarks" value={formData.detailed_remarks} onChange={handleInputChange} />
+                      </div>
+                    </div>
 
-              
                     <br/>
-{/* Group 5: Gate Pass & Logistics Section */}
-              <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>5. Gate Pass & Logistics</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>Transport Name</label>
-                  <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleInputChange}>
-                    <option value="">-- Select Transport --</option>
-                    {options.transporters.map(t => (
-                      <option key={t.id} value={t.name}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Vehicle No</label>
-                  <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Driver Name</label>
-                  <input className="form-control" name="driver_name" value={formData.driver_name} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Driver Mobile No</label>
-                  <input className="form-control" name="mobile_no" value={formData.mobile_no} onChange={handleInputChange} />
-                </div>
-              </div>
-
-
+                    {/* Section 5: Gate Pass & Logistics */}
+                    <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Gate Pass & Logistics</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Transport Name</label>
+                        <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleInputChange}>
+                          <option value="">-- Select Transport --</option>
+                          {options.transporters.map(t => (
+                            <option key={t.id} value={t.name}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Vehicle No</label>
+                        <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Driver Name</label>
+                        <input className="form-control" name="driver_name" value={formData.driver_name} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Driver Mobile No</label>
+                        <input className="form-control" name="mobile_no" value={formData.mobile_no} onChange={handleInputChange} />
+                      </div>
+                    </div>
                   </div>
                 )}
               </fieldset>

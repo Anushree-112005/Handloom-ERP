@@ -104,6 +104,19 @@ export default function EmployeeMaster() {
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setFormTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }, 100);
+    }
+  };
+
   const filteredEmployees = employees.filter(e => {
     const term = searchTerm.toLowerCase();
     const matchSearch = e.name?.toLowerCase().includes(term) || 
@@ -269,8 +282,222 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Family Details</label>
-                      <input className="form-control" name="family_details" value={formData.family_details} onChange={handleChange} />
+                      <input className="form-control" name="family_details" value={formData.family_details} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'employment', 'department')} />
                     </div>
+                  </div>
+
+                  {/* Section 2: Employment */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    Employment
+                  </h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Department</label>
+                      <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
+                        <option value="">-- Select --</option>
+                        <option>Production</option><option>Quality</option><option>Maintenance</option><option>HR</option><option>Accounts</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Designation</label>
+                      <input className="form-control" name="designation" value={formData.designation} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Category</label>
+                      <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
+                        <option>Permanent</option><option>Contract</option><option>Casual</option><option>Trainee</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Unit</label>
+                      <input className="form-control" name="unit" value={formData.unit} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Production Line</label>
+                      <input className="form-control" name="production_line" value={formData.production_line} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Shift</label>
+                      <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
+                        <option value="">-- Select --</option>
+                        <option>General Shift</option><option>Shift 1 (Morning)</option><option>Shift 2 (Evening)</option><option>Shift 3 (Night)</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Skill Level</label>
+                      <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
+                        <option value="">-- Select --</option>
+                        <option>Skilled</option><option>Semi-Skilled</option><option>Unskilled</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Statutory & ID */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    Statutory & ID
+                  </h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Aadhaar No</label>
+                      <input className="form-control" name="aadhaar_no" value={formData.aadhaar_no} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>PAN No</label>
+                      <input className="form-control" name="pan_no" value={formData.pan_no} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Biometric ID</label>
+                      <input className="form-control" name="biometric_id" value={formData.biometric_id} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>PF Account No</label>
+                      <input className="form-control" name="pf_account" value={formData.pf_account} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>UAN</label>
+                      <input className="form-control" name="uan" value={formData.uan} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>ESI No</label>
+                      <input className="form-control" name="esi_no" value={formData.esi_no} onChange={handleChange} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Medical Fitness</label>
+                      <input className="form-control" name="medical_fitness" value={formData.medical_fitness} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'salary', 'wage_type')} />
+                    </div>
+                  </div>
+
+                  {/* Section 4: Salary */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    Salary
+                  </h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Wage Type</label>
+                      <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
+                        <option>Monthly</option><option>Daily</option><option>Piece Rate</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Basic Salary</label>
+                      <input type="number" className="form-control" name="basic_salary" value={formData.basic_salary} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>HRA</label>
+                      <input type="number" className="form-control" name="hra" value={formData.hra} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>DA (Dearness Allowance)</label>
+                      <input type="number" className="form-control" name="da" value={formData.da} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Other Allowances</label>
+                      <input type="number" className="form-control" name="allowances" value={formData.allowances} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>PF/ESI % (Deduction)</label>
+                      <input type="number" step="0.1" className="form-control" name="pf_esi_percent" value={formData.pf_esi_percent} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'education', 'qualification')} />
+                    </div>
+                  </div>
+
+                  {/* Section 5: Education & Exp. */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    Education & Exp.
+                  </h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Highest Qualification</label>
+                      <input className="form-control" name="qualification" value={formData.qualification} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>ITI / Trade Specialization</label>
+                      <input className="form-control" name="iti_trade" value={formData.iti_trade} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Machine Knowledge</label>
+                      <input className="form-control" name="machine_knowledge" value={formData.machine_knowledge} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Training Records</label>
+                      <input className="form-control" name="training_records" value={formData.training_records} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'bank', 'bank_name')} />
+                    </div>
+                  </div>
+
+                  {/* Section 6: Bank Details */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    Bank Details
+                  </h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Bank Name</label>
+                      <input className="form-control" name="bank_name" value={formData.bank_name} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Account Number</label>
+                      <input className="form-control" name="account_number" value={formData.account_number} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>IFSC Code</label>
+                      <input className="form-control" name="ifsc_code" value={formData.ifsc_code} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Payment Mode</label>
+                      <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
+                        <option>NEFT</option><option>Cash</option><option>Cheque</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <h5 style={{ color: 'var(--primary)', marginTop: 24, marginBottom: 16, borderBottom: '1px dashed var(--border)', paddingBottom: 8, fontSize: 14, fontWeight: 600 }}>Emergency & Nominee Info</h5>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Emergency Contact</label>
+                      <input className="form-control" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>PF Nominee</label>
+                      <input className="form-control" name="pf_nominee" value={formData.pf_nominee} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Gratuity Nominee</label>
+                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'flags', 'status')} />
+                    </div>
+                  </div>
+
+                  {/* Section 7: Status & Flags */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    Status & Flags
+                  </h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
+                    <div className="form-group">
+                      <label>Employment Status</label>
+                      <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
+                        <option>Active</option><option>Resigned</option><option>Terminated</option><option>Suspended</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>ERP Login Password {editingId && '(Optional: Leave blank to keep current)'}</label>
+                      <input type="password" className="form-control" name="password" value={formData.password} onChange={handleChange} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                      <input type="checkbox" name="biometric_link" checked={formData.biometric_link} onChange={handleChange} style={{ width: 18, height: 18 }} />
+                      <span style={{ fontWeight: 500 }}>Biometric Linked</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                      <input type="checkbox" name="canteen" checked={formData.canteen} onChange={handleChange} style={{ width: 18, height: 18 }} />
+                      <span style={{ fontWeight: 500 }}>Canteen Facility</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                      <input type="checkbox" name="transport" checked={formData.transport} onChange={handleChange} style={{ width: 18, height: 18 }} />
+                      <span style={{ fontWeight: 500 }}>Transport Facility</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                      <input type="checkbox" name="accommodation" checked={formData.accommodation} onChange={handleChange} style={{ width: 18, height: 18 }} />
+                      <span style={{ fontWeight: 500 }}>Accommodation</span>
+                    </label>
                   </div>
                 </div>
               )}
@@ -313,7 +540,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Skill Level</label>
-                      <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange}>
+                      <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
                         <option value="">-- Select --</option>
                         <option>Skilled</option><option>Semi-Skilled</option><option>Unskilled</option>
                       </select>
@@ -352,7 +579,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Medical Fitness</label>
-                      <input className="form-control" name="medical_fitness" value={formData.medical_fitness} onChange={handleChange} />
+                      <input className="form-control" name="medical_fitness" value={formData.medical_fitness} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'salary', 'wage_type')} />
                     </div>
                   </div>
                 </div>
@@ -386,7 +613,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>PF/ESI % (Deduction)</label>
-                      <input type="number" step="0.1" className="form-control" name="pf_esi_percent" value={formData.pf_esi_percent} onChange={handleChange} />
+                      <input type="number" step="0.1" className="form-control" name="pf_esi_percent" value={formData.pf_esi_percent} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'education', 'qualification')} />
                     </div>
                   </div>
                 </div>
@@ -410,7 +637,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Training Records</label>
-                      <input className="form-control" name="training_records" value={formData.training_records} onChange={handleChange} />
+                      <input className="form-control" name="training_records" value={formData.training_records} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'bank', 'bank_name')} />
                     </div>
                   </div>
                 </div>
@@ -452,7 +679,7 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Gratuity Nominee</label>
-                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} />
+                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'flags', 'status')} />
                     </div>
                   </div>
                 </div>

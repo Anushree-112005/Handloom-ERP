@@ -119,6 +119,19 @@ export default function DesignEntry() {
     setForm({ ...form, [name]: value });
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }, 100);
+    }
+  };
+
   const filteredEntries = entries.filter(e => {
     const matchesSearch = searchTerm === '' ||
       e.ds_ref_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -362,10 +375,10 @@ export default function DesignEntry() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'basic', label: '1. Basic & Buyer Info' }, 
-              { id: 'fabric', label: '2. Fabric & Weaving' },
-              { id: 'metrics', label: '3. Metrics & Lengths' },
-              { id: 'allowances', label: '4. Allowances & Percentages' }
+            {[{ id: 'basic', label: 'Basic & Buyer Info' }, 
+              { id: 'fabric', label: 'Fabric & Weaving' },
+              { id: 'metrics', label: 'Metrics & Lengths' },
+              { id: 'allowances', label: 'Allowances & Percentages' }
              ].map(tab => (
               <button 
                 key={tab.id} onClick={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
@@ -385,31 +398,86 @@ export default function DesignEntry() {
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               <form id="designForm" onSubmit={handleCreate}>
-                {/* Group 1: Basic & Buyer Info */}
                 {activeTab === 'basic' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
-                  <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
-                  <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Created By</label>
-                    <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
-                      <option value="">Select Employee...</option>
-                      {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Buyer Name</label>
-                    <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
-                      <option value="">Select Buyer...</option>
-                      {buyers.map(b => <option key={b.id} value={b.company_name}>{b.company_name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group"><label>IBPO No</label>
-                    <select className="form-control" name="ibpo_no" value={form.ibpo_no} onChange={handleChange}>
-                      <option value="">Select Order...</option>
-                      {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} /></div>
+                  <div className="animate-fade">
+                    {/* Section 1: Basic & Buyer Info */}
+                    <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic & Buyer Info</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
+                      <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
+                      <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Created By</label>
+                        <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
+                          <option value="">Select Employee...</option>
+                          {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group"><label>Buyer Name</label>
+                        <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
+                          <option value="">Select Buyer...</option>
+                          {buyers.map(b => <option key={b.id} value={b.company_name}>{b.company_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group"><label>IBPO No</label>
+                        <select className="form-control" name="ibpo_no" value={form.ibpo_no} onChange={handleChange}>
+                          <option value="">Select Order...</option>
+                          {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'fabric', 'fabric')} /></div>
+                    </div>
+
+                    {/* Section 2: Fabric & Weaving */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric & Weaving</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group"><label>Fabric</label>
+                        <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
+                          <option>Cotton</option><option>Polyester</option><option>Blended</option><option>Silk</option>
+                        </select>
+                      </div>
+                      <div className="form-group"><label>Weaving</label>
+                        <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
+                          <option>Plain</option><option>Twill</option><option>Satin</option><option>Jacquard</option>
+                        </select>
+                      </div>
+                      <div className="form-group"><label>Design Type</label>
+                        <select className="form-control" name="design_type" value={form.design_type} onChange={handleChange}>
+                          <option>Normal</option><option>Special</option><option>Sample</option>
+                        </select>
+                      </div>
+                      <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'metrics', 'order_mtr')} /></div>
+                    </div>
+
+                    {/* Section 3: Metrics & Lengths */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics & Lengths</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                      <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
+                      
+                      <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
+                      <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'allowances', 'crimp_pct')} /></div>
+                    </div>
+
+                    {/* Section 4: Allowances & Percentages */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Allowances & Percentages</h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                      <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
+                      <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
+                      <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
+                    </div>
                   </div>
                 )}
 
@@ -435,7 +503,7 @@ export default function DesignEntry() {
                   <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
                   <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
                   <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'metrics', 'order_mtr')} /></div>
                   </div>
                 )}
 
@@ -452,7 +520,7 @@ export default function DesignEntry() {
                   <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
                   <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
                   <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
-                  <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} /></div>
+                  <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'allowances', 'crimp_pct')} /></div>
                   </div>
                 )}
 

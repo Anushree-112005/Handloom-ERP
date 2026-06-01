@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Building2, Mail, Phone, MapPin, Upload, Save, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Upload, Save, CheckCircle, AlertCircle, Trash2, FileText } from 'lucide-react';
 import { companySettingAPI } from '../../services/api';
 
 export default function CompanySetting() {
   const [formData, setFormData] = useState({
     company_name: '',
+    description: '',
     logo: '',
     address: '',
     email: '',
@@ -25,6 +26,7 @@ export default function CompanySetting() {
       if (response.data) {
         setFormData({
           company_name: response.data.company_name || '',
+          description: response.data.description || '',
           logo: response.data.logo || '',
           address: response.data.address || '',
           email: response.data.email || '',
@@ -166,6 +168,22 @@ export default function CompanySetting() {
               </div>
             </div>
 
+            <div className="form-group">
+              <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>Company Subtitle / Description</label>
+              <div style={{ position: 'relative' }}>
+                <FileText size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  name="description"
+                  className="form-control"
+                  style={{ paddingLeft: 38, width: '100%', margin: 0 }}
+                  placeholder="e.g. THE HOUSE OF FABRICS"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
               <div className="form-group">
                 <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>Email Address</label>
@@ -218,6 +236,22 @@ export default function CompanySetting() {
             <div className="form-group">
               <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>Company Logo</label>
               <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                {formData.logo && (
+                  <div style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 6,
+                    border: '1px solid var(--border)',
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    <img src={formData.logo} alt="Current Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  </div>
+                )}
                 <label
                   style={{
                     display: 'flex',
@@ -308,6 +342,7 @@ export default function CompanySetting() {
               <div>
                 <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.7, fontWeight: 700 }}>ERP Profile Preview</span>
                 <h4 style={{ margin: '4px 0 0 0', fontSize: 20, fontWeight: 800 }}>{formData.company_name || 'Your Company Name'}</h4>
+                <p style={{ margin: '2px 0 0 0', fontSize: 11, opacity: 0.8, fontWeight: 500 }}>{formData.description || 'THE HOUSE OF FABRICS'}</p>
               </div>
               <div
                 style={{
