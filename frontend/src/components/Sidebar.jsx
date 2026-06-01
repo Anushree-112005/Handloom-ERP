@@ -99,11 +99,28 @@ const modules = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const [openMenus, setOpenMenus] = useState({});
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'DINESH EXPORTS',
     description: 'THE HOUSE OF FABRICS',
     logo: ''
   });
+
+  // Auto-expand menu if active route is a child
+  useEffect(() => {
+    modules.forEach(mod => {
+      if (mod.children) {
+        const isActiveChild = mod.children.some(child => location.pathname.startsWith(child.path));
+        if (isActiveChild) {
+          setOpenMenus(prev => ({ ...prev, [mod.label]: true }));
+        }
+      }
+    });
+  }, [location.pathname]);
+
+  const toggleMenu = (label) => {
+    setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
+  };
 
   useEffect(() => {
     const loadCompany = async () => {
@@ -149,6 +166,38 @@ export default function Sidebar() {
         {modules.map((item, i) =>
           item.section ? (
             <div key={i} className="nav-section">{item.section}</div>
+          ) : item.children ? (
+            <div key={item.label} className="nav-group">
+              <button 
+                className={`nav-item ${openMenus[item.label] ? 'open' : ''}`} 
+                onClick={() => toggleMenu(item.label)}
+                style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </div>
+                {openMenus[item.label] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+              {openMenus[item.label] && (
+                <div className="nav-children animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
+                  {item.children.map(child => (
+                    <NavLink
+                      key={child.path}
+                      to={child.path}
+                      end={child.path === '/'}
+                      className={({ isActive }) =>
+                        `nav-item ${isActive ? 'active' : ''}`
+                      }
+                      style={{ padding: '8px 16px 8px 48px', fontSize: '13px', margin: '1px 8px' }}
+                    >
+                      <child.icon style={{ width: 14, height: 14 }} />
+                      <span>{child.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             <NavLink
               key={item.path}
