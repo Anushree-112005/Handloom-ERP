@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
-  ChevronDown, ChevronRight
+  Lock, Wrench, ArrowDownLeft, ArrowUpRight
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -21,19 +21,10 @@ const modules = [
 
 
   { section: 'Order Management' },
-  { 
-    label: 'Buyer Order', 
-    icon: ShoppingCart,
-    children: [
-      { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
-      { path: '/buyer-order/order', label: 'Order Processing', icon: Settings },
-      { path: '/buyer-order/dispatch-expense', label: 'Dispatch & Expense', icon: Truck },
-      { path: '/ipo-invoice', label: 'IPO Invoice', icon: FileText },
-    ]
-  },
-  { path: '/work-order/transaction', label: 'Work Order Transaction', icon: ClipboardList },
+  { path: '/buyer-order', label: 'Buyer Order', icon: ShoppingCart },
+  { path: '/work-order/transaction', label: 'Work Order Transaction', icon: Layers },
   { path: '/work-order/completion', label: 'Work Order Completion', icon: CheckSquare },
-  { path: '/work-order/approval', label: 'Work Order Approval', icon: Shield },
+  { path: '/work-order/approval', label: 'Work Order Approval', icon: Settings },
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
@@ -48,13 +39,18 @@ const modules = [
   { path: '/dyed-yarn/delivery', label: 'Dyed Yarn Delivery', icon: Truck },
 
   { section: 'Warping & Weaving' },
-  { path: '/warp/beam-receipt', label: 'Warp Beam Receipt', icon: Layers },
-  { path: '/warp/delivery', label: 'Warp Delivery', icon: Truck },
+  { path: '/warp/beam-receipt', label: 'Warp Beam Received Entry', icon: Layers },
+  { path: '/warp/delivery', label: 'Warp Beam Delivery Entry', icon: Truck },
+  { path: '/warp/transaction', label: 'Sizing & Warping Desk', icon: Settings },
+
+  { section: 'Greige Transaction' },
+  { path: '/greige/transaction', label: 'Greige Transactions', icon: Layers },
 
   { section: 'Processing / Production' },
   { path: '/cloth/inward', label: 'Cloth Inward', icon: Factory },
   { path: '/cloth/delivery', label: 'Cloth Delivery', icon: Truck },
   { path: '/finished-fabric', label: 'Finished Fabric', icon: Scissors },
+  { path: '/fabric/transaction', label: 'Fabric Transactions', icon: Scissors },
 
   { section: 'LAB & Shade Management' },
 
@@ -65,6 +61,18 @@ const modules = [
   { section: 'Inventory & Warehouse' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
 
+  { section: 'Maintenance & Spares' },
+  { path: '/spares/master', label: 'Spares Masters', icon: Settings },
+  { path: '/spares/transaction', label: 'Spares Transactions', icon: Wrench },
+  { path: '/spares/approval', label: 'Spares Approvals', icon: CheckSquare },
+  { path: '/spares/report', label: 'Spares Report', icon: FileText },
+
+  { section: 'Gate & Security' },
+  { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
+  { path: '/gate/outward', label: 'Gate Outward', icon: ArrowUpRight },
+  { path: '/gate/pass', label: 'Gate Pass Creation', icon: FileText },
+  { path: '/gate/reports', label: 'Gate Reports', icon: PieChart },
+
   { section: 'Sales & Dispatch' },
   { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
   { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
@@ -74,8 +82,11 @@ const modules = [
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
   { section: 'Accounts & Finance' },
+  { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: Receipt },
+  { path: '/accounts/transaction', label: 'Accounts Transaction', icon: ArrowRightLeft },
 
   { section: 'Reports & MIS' },
+  { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
   { path: '/log-report', label: 'Log Report', icon: Activity },
 
   { section: 'Administration & Security' },
