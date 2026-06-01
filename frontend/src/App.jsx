@@ -21,6 +21,8 @@ import EwayBill from './pages/eway_bill/EwayBill';
 import CompanySetting from './pages/settings/CompanySetting';
 
 
+
+
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
 import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
@@ -79,6 +81,24 @@ export default function App() {
         <Route path="cloth/delivery" element={<ClothDelivery />} />
 
         <Route path="finished-fabric" element={<FinishedFabricInward />} />
+
+        {/* LAB & Shade Management Routes */}
+        <Route path="lab/lab-dip" element={
+          <ModulePage 
+            title="Lab Dip Entry" 
+            description="Manage color shade recipes, spectrophotometer matching, and dyeing recipes." 
+            icon={Palette} 
+            color="#3b82f6" 
+          />
+        } />
+        <Route path="lab/shade-matching" element={
+          <ModulePage 
+            title="Shade Matching" 
+            description="Inspect production lot shades and verify consistency against standard lab dips." 
+            icon={CheckSquare} 
+            color="#10b981" 
+          />
+        } />
 
         <Route path="packing" element={<PackingSlip />} />
 

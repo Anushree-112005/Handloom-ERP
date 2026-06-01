@@ -123,6 +123,19 @@ export default function PartyMaster() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }, 100);
+    }
+  };
+
   const renderOptions = (category) => {
     return (options.masters[category] || []).map(val => (
       <option key={val} value={val}>{val}</option>
@@ -257,10 +270,10 @@ export default function PartyMaster() {
 
         <div className="card" style={{ padding: 0 }}>
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'basic', label: '1. Basic Information' }, 
-              { id: 'location', label: '2. Location & Address' },
-              { id: 'tax', label: '3. Tax & Legal Info' },
-              { id: 'financial', label: '4. Financial & Logistics' }
+            {[{ id: 'basic', label: 'Basic Information' }, 
+              { id: 'location', label: 'Location & Address' },
+              { id: 'tax', label: 'Tax & Legal Info' },
+              { id: 'financial', label: 'Financial & Logistics' }
              ].map(tab => (
               <button 
                 key={tab.id} onClick={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
@@ -284,75 +297,254 @@ export default function PartyMaster() {
                 {activeTab === 'basic' && (
                   <div className="animate-fade">
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group">
-                  <label>Party Type *</label>
-                  <select className="form-control" name="party_type" value={formData.party_type} onChange={handleChange} required>
-                    <option value="">-- Select Party Type --</option>
-                    <option>Sales Party</option>
-                    <option>Logistics</option>
-                    <option>Processor</option>
-                    <option>Yarn Dyeing</option>
-                    <option>Yarn Coverter</option>
-                    <option>Exports party</option>
-                    <option>Own Shed</option>
-                    <option>Washing/Finishing</option>
-                    <option>Purchase Party</option>
-                    <option>Agent</option>
-                    <option>Weaving vendor</option>
-                    <option>Bit Loom Weaver</option>
-                    <option>Doubling</option>
-                    <option>Weaving Unit</option>
-                    <option>Testing Lab</option>
-                    <option>Spares Supplier</option>
-                    <option>Delivery Party</option>
-                    <option>Postage/Courier</option>
-                    <option>Warping/Sizing</option>
-                    <option>General</option>
-                    <option>Chemical Supplier</option>
-                    <option>Printing</option>
-                    <option>Fabric Dyeing</option>
-                    <option>JobWorker</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Business Name *</label>
-                  <input className="form-control" name="company_name" value={formData.company_name} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Party Group</label>
-                  <select className="form-control" name="party_group" value={formData.party_group} onChange={handleChange}>
-                    <option value="">-- Select Party Group --</option>
-                    {renderOptions('party_group')}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Customer Grade</label>
-                  <select className="form-control" name="customer_grade" value={formData.customer_grade} onChange={handleChange}>
-                    <option value="">-- Select Customer Grade --</option>
-                    {renderOptions('customer_grade')}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Status</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
-                    <option>Active</option><option>Inactive</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Point of Contact</label>
-                  <input className="form-control" name="contact_person" value={formData.contact_person} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Phone No</label>
-                  <input className="form-control" name="phone" value={formData.phone} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Mail ID</label>
-                  <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} />
-                </div>
-              </div>
-            </div>
-          )}
+                      <div className="form-group">
+                        <label>Party Type *</label>
+                        <select className="form-control" name="party_type" value={formData.party_type} onChange={handleChange} required>
+                          <option value="">-- Select Party Type --</option>
+                          <option>Sales Party</option>
+                          <option>Logistics</option>
+                          <option>Processor</option>
+                          <option>Yarn Dyeing</option>
+                          <option>Yarn Coverter</option>
+                          <option>Exports party</option>
+                          <option>Own Shed</option>
+                          <option>Washing/Finishing</option>
+                          <option>Purchase Party</option>
+                          <option>Agent</option>
+                          <option>Weaving vendor</option>
+                          <option>Bit Loom Weaver</option>
+                          <option>Doubling</option>
+                          <option>Weaving Unit</option>
+                          <option>Testing Lab</option>
+                          <option>Spares Supplier</option>
+                          <option>Delivery Party</option>
+                          <option>Postage/Courier</option>
+                          <option>Warping/Sizing</option>
+                          <option>General</option>
+                          <option>Chemical Supplier</option>
+                          <option>Printing</option>
+                          <option>Fabric Dyeing</option>
+                          <option>JobWorker</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Business Name *</label>
+                        <input className="form-control" name="company_name" value={formData.company_name} onChange={handleChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Party Group</label>
+                        <select className="form-control" name="party_group" value={formData.party_group} onChange={handleChange}>
+                          <option value="">-- Select Party Group --</option>
+                          {renderOptions('party_group')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Customer Grade</label>
+                        <select className="form-control" name="customer_grade" value={formData.customer_grade} onChange={handleChange}>
+                          <option value="">-- Select Customer Grade --</option>
+                          {renderOptions('customer_grade')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Status</label>
+                        <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
+                          <option>Active</option><option>Inactive</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Point of Contact</label>
+                        <input className="form-control" name="contact_person" value={formData.contact_person} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Phone No</label>
+                        <input className="form-control" name="phone" value={formData.phone} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Mail ID</label>
+                        <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'location', 'address')} />
+                      </div>
+                    </div>
+
+                    {/* Section 2: Location & Address */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Location & Address
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Complete Address</label>
+                        <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>State / Code</label>
+                        <select className="form-control" name="state_code" value={formData.state_code} onChange={handleChange}>
+                          <option value="">-- Select State --</option>
+                          {renderOptions('state_code')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>City</label>
+                        <select className="form-control" name="city" value={formData.city} onChange={handleChange}>
+                          <option value="">-- Select City --</option>
+                          {renderOptions('city')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Pincode</label>
+                        <input className="form-control" name="pincode" value={formData.pincode} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Sales Region</label>
+                        <select className="form-control" name="sales_region" value={formData.sales_region} onChange={handleChange}>
+                          <option value="">-- Select Zone --</option>
+                          {renderOptions('sales_region')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Country</label>
+                        <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gstin')}>
+                          <option value="">-- Select Country --</option>
+                          {renderOptions('country')}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Tax & Legal Info */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Tax & Legal Info
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="form-group">
+                        <label>GSTIN</label>
+                        <input className="form-control" name="gstin" value={formData.gstin} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>GST Type</label>
+                        <select className="form-control" name="gst_type" value={formData.gst_type} onChange={handleChange}>
+                          <option value="">-- Select GST Type --</option>
+                          {renderOptions('gst_type')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>PAN No</label>
+                        <input className="form-control" name="pan_no" value={formData.pan_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Tally No</label>
+                        <input className="form-control" name="tally_no" value={formData.tally_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>TDS</label>
+                        <select className="form-control" name="tds" value={formData.tds} onChange={handleChange}>
+                          <option value="">-- Select TDS --</option>
+                          {renderOptions('tds')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>TDS %</label>
+                        <input type="number" step="0.1" className="form-control" name="tds_percent" value={formData.tds_percent} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>TCS Applicable</label>
+                        <select className="form-control" name="tcs_applicable" value={formData.tcs_applicable} onChange={handleChange}>
+                          <option>No</option><option>Yes</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Address SNo</label>
+                        <select className="form-control" name="address_sno" value={formData.address_sno} onChange={handleChange}>
+                          <option>1</option><option>2</option><option>3</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>TIN No</label>
+                        <input className="form-control" name="tin_no" value={formData.tin_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>CST No</label>
+                        <input className="form-control" name="cst_no" value={formData.cst_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Pc ID</label>
+                        <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'financial', 'currency')} />
+                      </div>
+                    </div>
+
+                    {/* Section 4: Financial & Logistics */}
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Financial & Logistics
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Currency</label>
+                        <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
+                          <option value="">-- Select Currency --</option>
+                          {renderOptions('currency')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Bill Credit Days</label>
+                        <input type="number" className="form-control" name="bill_credit_days" value={formData.bill_credit_days} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Credit Limit Rs.</label>
+                        <input type="number" className="form-control" name="credit_limit" value={formData.credit_limit} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Merchandiser</label>
+                        <select className="form-control" name="merchandiser" value={formData.merchandiser} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Manager</label>
+                        <select className="form-control" name="manager" value={formData.manager} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>A/c Incharge</label>
+                        <select className="form-control" name="account_incharge" value={formData.account_incharge} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Agent Name</label>
+                        <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Payment Terms</label>
+                        <select className="form-control" name="payment_terms" value={formData.payment_terms} onChange={handleChange}>
+                          <option value="">-- Select Payment Terms --</option>
+                          {renderOptions('payment_terms')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Transport Name</label>
+                        <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Deliver Party Name</label>
+                        <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
+                          <option value="">-- Same as Business Name --</option>
+                          {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Delivery Address</label>
+                        <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Group 2: Location & Address */}
                 {activeTab === 'location' && (
@@ -388,7 +580,7 @@ export default function PartyMaster() {
                 </div>
                 <div className="form-group">
                   <label>Country</label>
-                  <select className="form-control" name="country" value={formData.country} onChange={handleChange}>
+                  <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gstin')}>
                     <option value="">-- Select Country --</option>
                     {renderOptions('country')}
                   </select>
@@ -451,7 +643,7 @@ export default function PartyMaster() {
                 </div>
                 <div className="form-group">
                   <label>Pc ID</label>
-                  <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} />
+                  <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'financial', 'currency')} />
                 </div>
               </div>
             )}

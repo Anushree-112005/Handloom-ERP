@@ -175,6 +175,24 @@ export default function OnTableChecking() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      document.getElementById(`${nextTab}-section`)?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          // Fallback to first focusable element
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
   // --- Grid Management ---
   const handleAddItemRow = () => {
     const newSNo = formData.items.length + 1;
@@ -616,10 +634,13 @@ export default function OnTableChecking() {
         /* CREATE / EDIT FORM VIEW */
         <div className="card" style={{ padding: 0 }}>
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
-            {[{ id: 'general', label: '1. General Info & Barcode' }, { id: 'items', label: '2. Inspection Grid' }].map(tab => (
+            {[{ id: 'general', label: 'General Info & Barcode' }, { id: 'items', label: 'Inspection Grid' }].map(tab => (
               <button 
                 type="button"
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
+                key={tab.id} onClick={() => {
+                  setActiveTab(tab.id);
+                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 style={{
                   padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
                   border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
@@ -636,333 +657,329 @@ export default function OnTableChecking() {
             <form id="checkingForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
                 
-                {activeTab === 'general' && (
-                  <div className="animate-fade">
-{/* SECTION 1: HEADER GENERAL INFO */}
-              <h4 style={{ color: '#eab308', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
-                1. General Inspection Info
-              </h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group">
-                  <label>Ref No *</label>
-                  <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleHeaderChange} required disabled />
-                </div>
-                <div className="form-group">
-                  <label>Checking Date *</label>
-                  <input type="date" className="form-control" name="checking_date" value={formData.checking_date} onChange={handleHeaderChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Inspection Table *</label>
-                  <select className="form-control" name="table_no" value={formData.table_no} onChange={handleHeaderChange} required>
-                    <option>Table 1</option>
-                    <option>Table 2</option>
-                    <option>Table 3</option>
-                    <option>Table 4</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Buyer / Party *</label>
-                  <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
-                    <option value="">-- Select Buyer --</option>
-                    {options.all_parties.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Design Number</label>
-                  <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
-                </div>
-                <div className="form-group">
-                  <label>Buyer Order No</label>
-                  <input className="form-control" name="order_no" value={formData.order_no} onChange={handleHeaderChange} />
-                </div>
-                <div className="form-group">
-                  <label>Lot Number</label>
-                  <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
-                </div>
-                <div className="form-group">
-                  <label>QC Status</label>
-                  <select className="form-control" name="status" value={formData.status} onChange={handleHeaderChange}>
-                    <option>Checked</option>
-                    <option>Pending Approval</option>
-                    <option>Approved</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-group" style={{ marginTop: 12 }}>
-                <label>QC General Remarks / Instructions</label>
-                <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
-              </div>
-
-              {/* BARCODE SCAN SIMULATION */}
-              {!isReadOnly && (
-                <div style={{ margin: '24px 0', padding: 16, border: '2px dashed var(--primary)', borderRadius: 8, background: 'rgba(37,99,235,0.02)' }}>
-                  <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: 'var(--primary)', marginBottom: 12 }}>
-                    <Barcode size={18} /> Barcode Scanner Simulation
+                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* SECTION 1: HEADER GENERAL INFO */}
+                  <h4 style={{ color: '#eab308', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                    General Inspection Info
                   </h4>
-                  <div style={{ display: 'flex', gap: 12 }}>
-                    <input
-                      type="text"
-                      className="form-control"
-                      style={{ flex: 1, margin: 0 }}
-                      value={barcodeInput}
-                      onChange={e => setBarcodeInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          handleBarcodeSubmit(e);
-                        }
-                      }}
-                    />
-                    <button type="button" className="btn btn-secondary" onClick={handleBarcodeSubmit}>
-                      Scan Code
-                    </button>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group">
+                      <label>Ref No *</label>
+                      <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleHeaderChange} required disabled />
+                    </div>
+                    <div className="form-group">
+                      <label>Checking Date *</label>
+                      <input type="date" className="form-control" name="checking_date" value={formData.checking_date} onChange={handleHeaderChange} required />
+                    </div>
+                    <div className="form-group">
+                      <label>Inspection Table *</label>
+                      <select className="form-control" name="table_no" value={formData.table_no} onChange={handleHeaderChange} required>
+                        <option>Table 1</option>
+                        <option>Table 2</option>
+                        <option>Table 3</option>
+                        <option>Table 4</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Buyer / Party *</label>
+                      <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
+                        <option value="">-- Select Buyer --</option>
+                        {options.all_parties.map(p => (
+                          <option key={p.id} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Design Number</label>
+                      <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Buyer Order No</label>
+                      <input className="form-control" name="order_no" value={formData.order_no} onChange={handleHeaderChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Lot Number</label>
+                      <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>QC Status</label>
+                      <select className="form-control" name="status" value={formData.status} onChange={handleHeaderChange}>
+                        <option>Checked</option>
+                        <option>Pending Approval</option>
+                        <option>Approved</option>
+                      </select>
+                    </div>
                   </div>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'inline-block' }}>
-                    Type a piece barcode number and hit Enter to simulate quick-scan insertion into the inspection grid.
-                  </span>
+                  <div className="form-group" style={{ marginTop: 12 }}>
+                    <label>QC General Remarks / Instructions</label>
+                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                  </div>
+
+                  {/* BARCODE SCAN SIMULATION */}
+                  {!isReadOnly && (
+                    <div style={{ margin: '24px 0', padding: 16, border: '2px dashed var(--primary)', borderRadius: 8, background: 'rgba(37,99,235,0.02)' }}>
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: 'var(--primary)', marginBottom: 12 }}>
+                        <Barcode size={18} /> Barcode Scanner Simulation
+                      </h4>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ flex: 1, margin: 0 }}
+                          value={barcodeInput}
+                          onChange={e => setBarcodeInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              handleBarcodeSubmit(e);
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-secondary" onClick={handleBarcodeSubmit}>
+                          Scan Code
+                        </button>
+                      </div>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'inline-block' }}>
+                        Type a piece barcode number and hit Enter to simulate quick-scan insertion into the inspection grid.
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-                  </div>
-                )}
 
-                {activeTab === 'items' && (
-                  <div className="animate-fade">
-{/* SECTION 2: GRID ITEMS TABLE */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
-                <h4 style={{ color: '#eab308', margin: 0, fontSize: 16, fontWeight: 700 }}>
-                  2. Inspected Pieces / Rolls Grid
-                </h4>
-                {!isReadOnly && (
-                  <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
-                    <Plus size={14} /> Add Raw Row
-                  </button>
-                )}
-              </div>
-
-              <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24 }}>
-                <table className="data-table" style={{ margin: 0, minWidth: 1400 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: 50 }}>S.No</th>
-                      <th style={{ width: 140 }}>PC No *</th>
-                      <th style={{ width: 140 }}>VPC No</th>
-                      <th style={{ width: 120 }}>Inv Pin</th>
-                      <th style={{ width: 120 }}>Checking Pin</th>
-                      <th style={{ width: 120 }}>Meters *</th>
-                      <th style={{ width: 140 }}>Inspection QC *</th>
-                      <th style={{ width: 150 }}>Defect Type</th>
-                      <th style={{ width: 110 }}>Grade *</th>
-                      <th style={{ width: 140 }}>SWEX (Special)</th>
-                      <th style={{ width: 180 }}>QC Checks (PC 1 to PC 4)</th>
-                      <th style={{ width: 180 }}>QC Checks (PC 5 to PC 7)</th>
-                      <th style={{ width: 150 }}>Item Remarks</th>
-                      {!isReadOnly && <th style={{ width: 60 }}>Action</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.items.length === 0 ? (
-                      <tr>
-                        <td colSpan={isReadOnly ? 13 : 14} style={{ textAlign: 'center', padding: '30px var(--text-muted)', color: 'var(--text-muted)' }}>
-                          No pieces checked yet. Use the barcode scanner simulation box above or click "Add Raw Row" to start adding inspection pieces.
-                        </td>
-                      </tr>
-                    ) : (
-                      formData.items.map((item, index) => (
-                        <tr key={index}>
-                          <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.piece_no}
-                              onChange={e => handleGridCellChange(index, 'piece_no', e.target.value)}
-                              required
-                            />
-                          </td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.vpc_no}
-                              onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.inv_pin}
-                              onChange={e => handleGridCellChange(index, 'inv_pin', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.checking_pin}
-                              onChange={e => handleGridCellChange(index, 'checking_pin', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="number"
-                              step="0.1"
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.meters}
-                              onChange={e => handleGridCellChange(index, 'meters', Number(e.target.value))}
-                              required
-                            />
-                          </td>
-                          <td>
-                            <select
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 4px' }}
-                              value={item.pc_type}
-                              onChange={e => {
-                                const val = e.target.value;
-                                const isFail = val === 'Fail' || val === 'Reject';
-                                handleGridCellChange(index, 'pc_type', val);
-                                if (isFail) {
-                                  handleGridCellChange(index, 'grade', 'Fail');
-                                } else if (item.grade === 'Fail') {
-                                  handleGridCellChange(index, 'grade', 'A');
-                                }
-                              }}
-                            >
-                              <option value="Pass">Pass</option>
-                              <option value="Fail">Fail</option>
-                              <option value="Reject">Reject</option>
-                            </select>
-                          </td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.defect_type}
-                              onChange={e => handleGridCellChange(index, 'defect_type', e.target.value)}
-                              disabled={item.pc_type === 'Pass'}
-                            />
-                          </td>
-                          <td>
-                            <select
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 4px' }}
-                              value={item.grade}
-                              onChange={e => handleGridCellChange(index, 'grade', e.target.value)}
-                            >
-                              <option value="A">Grade A</option>
-                              <option value="B">Grade B</option>
-                              <option value="C">Grade C</option>
-                              <option value="Fail">Fail</option>
-                            </select>
-                          </td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.swex}
-                              onChange={e => handleGridCellChange(index, 'swex', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_1}
-                                onChange={e => handleGridCellChange(index, 'pc_1', e.target.value)}
-                              />
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_2}
-                                onChange={e => handleGridCellChange(index, 'pc_2', e.target.value)}
-                              />
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_3}
-                                onChange={e => handleGridCellChange(index, 'pc_3', e.target.value)}
-                              />
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_4}
-                                onChange={e => handleGridCellChange(index, 'pc_4', e.target.value)}
-                              />
-                            </div>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_5}
-                                onChange={e => handleGridCellChange(index, 'pc_5', e.target.value)}
-                              />
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_6}
-                                onChange={e => handleGridCellChange(index, 'pc_6', e.target.value)}
-                              />
-                              <input
-                                className="form-control"
-                                style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                value={item.pc_7}
-                                onChange={e => handleGridCellChange(index, 'pc_7', e.target.value)}
-                              />
-                            </div>
-                          </td>
-                          <td>
-                            <input
-                              className="form-control"
-                              style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                              value={item.remarks}
-                              onChange={e => handleGridCellChange(index, 'remarks', e.target.value)}
-                            />
-                          </td>
-                          {!isReadOnly && (
-                            <td style={{ textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
-                                onClick={() => handleRemoveItemRow(index)}
-                              >
-                                <Trash2 size={16} color="#ef4444" />
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      ))
+                <div id="items-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                  {/* SECTION 2: GRID ITEMS TABLE */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
+                    <h4 style={{ color: '#eab308', margin: 0, fontSize: 16, fontWeight: 700 }}>
+                      Inspected Pieces / Rolls Grid
+                    </h4>
+                    {!isReadOnly && (
+                      <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
+                        <Plus size={14} /> Add Raw Row
+                      </button>
                     )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* CALCULATION SUMMARY CARDS */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginTop: 24, padding: 20, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Inspected Pieces</span>
-                  <span style={{ fontSize: 18, fontWeight: 700 }}>{formData.total_pieces} Pcs</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Inspected Meters</span>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>{formData.total_meters} Mtr</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QC Approved Volume</span>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>{formData.pass_meters} Mtr</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QC Rejected Volume</span>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: '#ef4444' }}>{formData.reject_meters} Mtr</span>
-                </div>
-              </div>
                   </div>
-                )}
+
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24 }}>
+                    <table className="data-table" style={{ margin: 0, minWidth: 1400 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ width: 50 }}>S.No</th>
+                          <th style={{ width: 140 }}>PC No *</th>
+                          <th style={{ width: 140 }}>VPC No</th>
+                          <th style={{ width: 120 }}>Inv Pin</th>
+                          <th style={{ width: 120 }}>Checking Pin</th>
+                          <th style={{ width: 120 }}>Meters *</th>
+                          <th style={{ width: 140 }}>Inspection QC *</th>
+                          <th style={{ width: 150 }}>Defect Type</th>
+                          <th style={{ width: 110 }}>Grade *</th>
+                          <th style={{ width: 140 }}>SWEX (Special)</th>
+                          <th style={{ width: 180 }}>QC Checks (PC 1 to PC 4)</th>
+                          <th style={{ width: 180 }}>QC Checks (PC 5 to PC 7)</th>
+                          <th style={{ width: 150 }}>Item Remarks</th>
+                          {!isReadOnly && <th style={{ width: 60 }}>Action</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {formData.items.length === 0 ? (
+                          <tr>
+                            <td colSpan={isReadOnly ? 13 : 14} style={{ textAlign: 'center', padding: '30px var(--text-muted)', color: 'var(--text-muted)' }}>
+                              No pieces checked yet. Use the barcode scanner simulation box above or click "Add Raw Row" to start adding inspection pieces.
+                            </td>
+                          </tr>
+                        ) : (
+                          formData.items.map((item, index) => (
+                            <tr key={index}>
+                              <td style={{ textAlign: 'center', fontWeight: 600 }}>{index + 1}</td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.piece_no}
+                                  onChange={e => handleGridCellChange(index, 'piece_no', e.target.value)}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.vpc_no}
+                                  onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.inv_pin}
+                                  onChange={e => handleGridCellChange(index, 'inv_pin', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.checking_pin}
+                                  onChange={e => handleGridCellChange(index, 'checking_pin', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.meters}
+                                  onChange={e => handleGridCellChange(index, 'meters', Number(e.target.value))}
+                                  required
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 4px' }}
+                                  value={item.pc_type}
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    const isFail = val === 'Fail' || val === 'Reject';
+                                    handleGridCellChange(index, 'pc_type', val);
+                                    if (isFail) {
+                                      handleGridCellChange(index, 'grade', 'Fail');
+                                    } else if (item.grade === 'Fail') {
+                                      handleGridCellChange(index, 'grade', 'A');
+                                    }
+                                  }}
+                                >
+                                  <option value="Pass">Pass</option>
+                                  <option value="Fail">Fail</option>
+                                  <option value="Reject">Reject</option>
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.defect_type}
+                                  onChange={e => handleGridCellChange(index, 'defect_type', e.target.value)}
+                                  disabled={item.pc_type === 'Pass'}
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 4px' }}
+                                  value={item.grade}
+                                  onChange={e => handleGridCellChange(index, 'grade', e.target.value)}
+                                >
+                                  <option value="A">Grade A</option>
+                                  <option value="B">Grade B</option>
+                                  <option value="C">Grade C</option>
+                                  <option value="Fail">Fail</option>
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.swex}
+                                  onChange={e => handleGridCellChange(index, 'swex', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_1}
+                                    onChange={e => handleGridCellChange(index, 'pc_1', e.target.value)}
+                                  />
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_2}
+                                    onChange={e => handleGridCellChange(index, 'pc_2', e.target.value)}
+                                  />
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_3}
+                                    onChange={e => handleGridCellChange(index, 'pc_3', e.target.value)}
+                                  />
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_4}
+                                    onChange={e => handleGridCellChange(index, 'pc_4', e.target.value)}
+                                  />
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_5}
+                                    onChange={e => handleGridCellChange(index, 'pc_5', e.target.value)}
+                                  />
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_6}
+                                    onChange={e => handleGridCellChange(index, 'pc_6', e.target.value)}
+                                  />
+                                  <input
+                                    className="form-control"
+                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
+                                    value={item.pc_7}
+                                    onChange={e => handleGridCellChange(index, 'pc_7', e.target.value)}
+                                  />
+                                </div>
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
+                                  value={item.remarks}
+                                  onChange={e => handleGridCellChange(index, 'remarks', e.target.value)}
+                                />
+                              </td>
+                              {!isReadOnly && (
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
+                                    onClick={() => handleRemoveItemRow(index)}
+                                  >
+                                    <Trash2 size={16} color="#ef4444" />
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* CALCULATION SUMMARY CARDS */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginTop: 24, padding: 20, background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Inspected Pieces</span>
+                      <span style={{ fontSize: 18, fontWeight: 700 }}>{formData.total_pieces} Pcs</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Inspected Meters</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>{formData.total_meters} Mtr</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QC Approved Volume</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>{formData.pass_meters} Mtr</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QC Rejected Volume</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: '#ef4444' }}>{formData.reject_meters} Mtr</span>
+                    </div>
+                  </div>
+                </div>
 
               </fieldset>
             </form>

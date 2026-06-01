@@ -12,6 +12,7 @@ router = APIRouter(prefix="/company-settings", tags=["Company Settings"])
 
 class CompanySettingBase(BaseModel):
     company_name: str
+    description: Optional[str] = None
     logo: Optional[str] = None
     address: Optional[str] = None
     email: Optional[str] = None

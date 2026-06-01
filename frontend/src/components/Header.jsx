@@ -1,10 +1,40 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
 
-export default function Header({ title }) {
+export default function Header() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [companyProfile, setCompanyProfile] = useState({
+    company_name: 'DINESH EXPORTS',
+    description: 'THE HOUSE OF FABRICS',
+    logo: ''
+  });
+
+  useEffect(() => {
+    const loadCompany = async () => {
+      try {
+        const response = await companySettingAPI.get();
+        if (response.data) {
+          setCompanyProfile({
+            company_name: response.data.company_name || 'DINESH EXPORTS',
+            description: response.data.description || 'THE HOUSE OF FABRICS',
+            logo: response.data.logo || ''
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadCompany();
+
+    window.addEventListener('company-settings-updated', loadCompany);
+    return () => {
+      window.removeEventListener('company-settings-updated', loadCompany);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -18,8 +48,8 @@ export default function Header({ title }) {
         <h2 className="header-title" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '15px' }}>
           <marquee behavior="scroll" direction="left" scrollamount="6">
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', verticalAlign: 'middle' }}>
-              <img src={defaultLogo} alt="Logo" style={{ height: '18px', width: 'auto', objectFit: 'contain' }} />
-              <span style={{ fontWeight: 600 }}>{title}</span>
+              <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ height: '18px', width: 'auto', objectFit: 'contain' }} />
+              <span style={{ fontWeight: 600 }}>{companyProfile.company_name} - {companyProfile.description}</span>
             </div>
           </marquee>
         </h2>
