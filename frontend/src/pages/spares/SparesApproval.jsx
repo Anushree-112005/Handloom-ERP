@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { 
-  CheckSquare, Search, Plus, Trash2, Edit, Check, X, Download, 
-  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, PlusCircle, Wrench 
+import {
+  CheckSquare, Search, Plus, Trash2, Edit, Check, X, Download,
+  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, PlusCircle, Wrench
 } from 'lucide-react';
 
 export default function SparesApproval() {
@@ -173,7 +173,7 @@ export default function SparesApproval() {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      
+
       {!isFormOpen ? (
         /* ========================================================================= */
         /* =========================== 1. LIST LEDGER MODE ========================= */
@@ -202,17 +202,17 @@ export default function SparesApproval() {
           {/* DYNAMIC CARD-BASED TAB SELECTORS */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '24px' }}>
             {[
-              { 
-                key: 'IndentApproval', 
-                label: 'Request Indent Approval', 
-                desc: 'Audit and authorize internal machine spare part requests raised by weaving / spinning floors.', 
-                icon: FolderKanban 
+              {
+                key: 'IndentApproval',
+                label: 'Request Indent Approval',
+                desc: 'Audit and authorize internal machine spare part requests raised by weaving / spinning floors.',
+                icon: FolderKanban
               },
-              { 
-                key: 'POApproval', 
-                label: 'Purchase PO Approval', 
-                desc: 'Authorize outbound spare part purchase orders and approved rates for preferred vendors.', 
-                icon: ShoppingBag 
+              {
+                key: 'POApproval',
+                label: 'Purchase PO Approval',
+                desc: 'Authorize outbound spare part purchase orders and approved rates for preferred vendors.',
+                icon: ShoppingBag
               }
             ].map(tab => {
               const isSelected = activeTab === tab.key;
@@ -254,18 +254,18 @@ export default function SparesApproval() {
                     <IconComponent size={22} />
                   </div>
                   <div>
-                    <h4 style={{ 
-                      fontWeight: '850', 
-                      fontSize: '15px', 
-                      color: isSelected ? '#7c3aed' : 'var(--text-primary)', 
-                      margin: 0 
+                    <h4 style={{
+                      fontWeight: '850',
+                      fontSize: '15px',
+                      color: isSelected ? '#7c3aed' : 'var(--text-primary)',
+                      margin: 0
                     }}>
                       {tab.label}
                     </h4>
-                    <p style={{ 
-                      fontSize: '12px', 
-                      color: 'var(--text-secondary)', 
-                      margin: '4px 0 0 0', 
+                    <p style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)',
+                      margin: '4px 0 0 0',
                       fontWeight: '500',
                       lineHeight: '1.4'
                     }}>
@@ -280,7 +280,7 @@ export default function SparesApproval() {
           {/* DYNAMIC DATA TABLE */}
           <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
             <div style={{ overflowX: 'auto' }}>
-              
+
               {activeTab === 'IndentApproval' ? (
                 <table className="data-table" style={{ width: '100%', margin: 0 }}>
                   <thead>
@@ -367,7 +367,7 @@ export default function SparesApproval() {
         /* =========================== 2. FORM VIEW MODE =========================== */
         /* ========================================================================= */
         <div className="card animate-fade" style={{ padding: '32px', minHeight: '600px', background: 'white' }}>
-          
+
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '24px' }}>
             <div>
@@ -414,11 +414,11 @@ export default function SparesApproval() {
 
           {/* Form Scroll Area */}
           <div style={{ minHeight: '400px' }}>
-            
+
             {activeFormTab === 'Reference Info' && (
               <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Basic Transaction Linkage & Dates</h4>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                   <div className="form-group">
                     <label>Approval Voucher ID</label>
@@ -463,7 +463,7 @@ export default function SparesApproval() {
             {activeFormTab === 'Approval Setup Details' && (
               <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Detailed Settings & Remarks</h4>
-                
+
                 {activeTab === 'IndentApproval' ? (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                     <div className="form-group">
@@ -521,9 +521,9 @@ export default function SparesApproval() {
 
                 <div className="form-group">
                   <label>Approval Remarks / Justifications *</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
+                  <textarea
+                    className="form-control"
+                    rows="3"
                     placeholder="Enter approval comments..."
                     value={activeTab === 'IndentApproval' ? iapRemarks : poaRemarks}
                     onChange={e => {
@@ -538,7 +538,7 @@ export default function SparesApproval() {
 
             {activeFormTab === 'Grid Details Matrix' && (
               <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                
+
                 {activeTab === 'IndentApproval' ? (
                   <>
                     <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Approved Indent Quantities</h4>
