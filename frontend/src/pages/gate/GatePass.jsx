@@ -21,10 +21,7 @@ export default function GatePass() {
   ];
 
   // Mock Gate Passes Database
-  const [passes, setPasses] = useState([
-    { id: 'GP-2026-001', passDate: '2026-06-01', passType: 'Returnable', partyName: 'Raymond Ltd', partyAddress: 'Plot 4, Textile SEZ, Erode, Tamil Nadu', contactPerson: 'Mr. Arvind Raymond', mobileNo: '9443322110', vehicleNo: 'TN-37-BY-1204', items: [{ name: 'Heavy Warp Beam 400mm', qty: 2, unit: 'Nos', returnable: 'Yes', expectedReturn: '2026-06-15' }], authorizedBy: 'Senthil Kumar (General Manager)', validTill: '2026-06-05', purpose: 'Beam sizing adjustment and testing', remarks: 'Check return date strictly', status: 'Open', printedBy: 'Security Desk Admin' },
-    { id: 'GP-2026-002', passDate: '2026-05-30', passType: 'Non-Returnable', partyName: 'Vardhman Spinning', partyAddress: 'Spinning Mill Compound, Salem Bypass, Karur, Tamil Nadu', contactPerson: 'Mr. Saravanan K.', mobileNo: '9842776655', vehicleNo: 'TN-45-AX-3921', items: [{ name: 'Dyed Cotton Yarn Lot A', qty: 40, unit: 'Kg', returnable: 'No', expectedReturn: '' }], authorizedBy: 'Mani Bharathi (Store Head)', validTill: '2026-06-02', purpose: 'Sample quality feedback dispatch', remarks: 'No return needed', status: 'Used', printedBy: 'Security Desk Admin' }
-  ]);
+  const [passes, setPasses] = useState([]);
 
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);

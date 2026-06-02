@@ -14,11 +14,8 @@ export default function IPOInvoice() {
     { title: 'Open Invoice', icon: FileCheck, color: '#10b981', desc: 'Finalized active invoices' }
   ];
 
-  // Dummy data representing linked invoices
-  const dummyInvoices = [
-    { id: 1, invoice_no: 'PI-2026-001', order_ref: 'IBPO-1001', date: '2026-06-01', party_name: 'Alpha Textiles', design_no: 'DSN-A01', status: 'Draft' },
-    { id: 2, invoice_no: 'PI-2026-002', order_ref: 'IBPO-1005', date: '2026-06-02', party_name: 'Global Fabrics', design_no: 'DSN-B99', status: 'Confirmed' }
-  ];
+  // Linked invoices database
+  const [invoices, setInvoices] = useState([]);
 
   return (
     <div className="page-container animate-fade">
@@ -136,7 +133,7 @@ export default function IPOInvoice() {
               </tr>
             </thead>
             <tbody>
-              {activeCard === 'Proforma Invoice' ? dummyInvoices.map((inv) => (
+              {activeCard === 'Proforma Invoice' && invoices.length > 0 ? invoices.map((inv) => (
                 <tr key={inv.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--primary)' }}>{inv.invoice_no}</td>
                   <td style={{ padding: '12px 16px', fontWeight: 500 }}>{inv.order_ref}</td>

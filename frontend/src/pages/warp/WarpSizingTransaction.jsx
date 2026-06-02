@@ -32,39 +32,25 @@ export default function WarpSizingTransaction() {
   // =========================================================================
 
   // 1. WARPING SET REPORT
-  const [warpingReports, setWarpingReports] = useState([
-    { id: 'WSR-2026-001', date: '2026-06-01', setNo: 'SET-9912', shift: 'Morning (6AM-2PM)', machineNo: 'M-12', operatorName: 'Murugan Swamy', designNo: 'DES-4091', totalEnds: 4200, width: 62, warpLength: 3000, noOfBeams: 4, actualProduction: 2950, efficiency: 98.3, status: 'Active' }
-  ]);
+  const [warpingReports, setWarpingReports] = useState([]);
 
   // 2. SIZING SET REPORT
-  const [sizingReports, setSizingReports] = useState([
-    { id: 'SSR-2026-001', date: '2026-06-01', setNo: 'SET-9912', warpingSetRef: 'WSR-2026-001', shift: 'Afternoon (2PM-10PM)', machineNo: 'SZ-02', operatorName: 'Senthil Kumar (General Manager)', designNo: 'DES-4091', beamLength: 3200, warpBeamsUsed: 4, sizedBeamsOut: 4, actualProduction: 3180, efficiency: 99.3, status: 'Active' }
-  ]);
+  const [sizingReports, setSizingReports] = useState([]);
 
   // 3. WARP BEAM RECEIVED ENTRY
-  const [beamReceipts, setBeamReceipts] = useState([
-    { id: 'WBR-2026-001', date: '2026-06-01', receiptType: 'New Beam from Vendor', fromParty: 'Standard Weaving Co.', gateInwardRef: 'GIN-9902', dcNo: 'DC-8812', dcDate: '2026-05-30', totalBeams: 5, totalWeight: 480, receivedBy: 'Mani Bharathi (Store Head)', status: 'Approved' }
-  ]);
+  const [beamReceipts, setBeamReceipts] = useState([]);
 
   // 4. WARP BEAM DELIVERY ENTRY
-  const [beamDeliveries, setBeamDeliveries] = useState([
-    { id: 'WBD-2026-001', date: '2026-06-01', deliveryType: 'To Weaving Section (Internal)', toParty: 'Weaving Unit A', setNo: 'SET-9912', designNo: 'DES-4091', totalBeams: 4, expectedReturn: '2026-06-15', deliveredBy: 'Murugan Swamy', status: 'Dispatched' }
-  ]);
+  const [beamDeliveries, setBeamDeliveries] = useState([]);
 
   // 5. EMPTY BEAM ENTRY
-  const [emptyBeams, setEmptyBeams] = useState([
-    { id: 'EBE-2026-001', date: '2026-06-01', transactionType: 'Empty Beam Received (from weaving)', fromSection: 'Weaving Unit B', totalBeams: 2, totalWeight: 80, receivedBy: 'Mani Bharathi (Store Head)', status: 'Active' }
-  ]);
+  const [emptyBeams, setEmptyBeams] = useState([]);
 
   // 6. WARPING/SIZING BILLS ENTRY
-  const [jobBills, setJobBills] = useState([
-    { id: 'WSB-2026-001', date: '2026-06-01', vendorName: 'Standard Weaving Co.', vendorType: 'Warping + Sizing Combined', vendorBillNo: 'BILL-WS-112', vendorBillDate: '2026-05-28', processType: 'Warping + Sizing', setNo: 'SET-9912', taxableAmount: 32000, netPayable: 33600, dueDays: '30 Days', status: 'Approved' }
-  ]);
+  const [jobBills, setJobBills] = useState([]);
 
   // 7. SET DETAIL AMENDMENT ENTRY
-  const [setAmendments, setSetAmendments] = useState([
-    { id: 'SAM-2026-001', date: '2026-06-01', amendmentType: 'Beam Length Correction', originalReportType: 'Warping Set Report', originalReportRef: 'WSR-2026-001', setNo: 'SET-9912', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved' }
-  ]);
+  const [setAmendments, setSetAmendments] = useState([]);
 
   // =========================================================================
   // DYNAMIC FORM FIELDS (GENERAL BINDINGS)

@@ -38,64 +38,40 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   // =========================================================================
 
   // 1. DESIGN CREATE
-  const [designOrders, setDesignOrders] = useState([
-    { id: 'DES-ORD-001', date: '2026-06-01', buyerName: 'Raymond Ltd', buyerOrderRef: 'ORD-9912', season: 'Summer 2026', designNo: 'DES-4091', designName: 'Vibrant Satin Stripe', category: 'Satin', fabricType: 'Satin Cotton', composition: '100% Cotton', width: 58, weight: 140, weaveType: 'Satin Weave', color: 'Midnight Navy', targetRate: 145, targetDelivery: '2026-07-15', status: 'Active' }
-  ]);
+  const [designOrders, setDesignOrders] = useState([]);
 
   // 2. SHORT AMD
-  const [shortAmendments, setShortAmendments] = useState([
-    { id: 'SHT-AMD-001', date: '2026-06-01', originalOrderType: 'Buyer Order', originalOrderRef: 'ORD-9912', buyerName: 'Raymond Ltd', designNo: 'DES-4091', amendmentCategory: 'Quantity Short', originalQuantity: 5000, originalRate: 145, amendedQuantity: 4200, amendedRate: 145, shortQuantity: 800, shortValue: 116000, reason: 'Yarn Shortage', status: 'Approved' }
-  ]);
+  const [shortAmendments, setShortAmendments] = useState([]);
 
   // 3. HSN CODE AMD
-  const [hsnAmendments, setHsnAmendments] = useState([
-    { id: 'HSN-AMD-001', date: '2026-06-01', documentType: 'Buyer Order', documentRefNo: 'ORD-9912', partyName: 'Raymond Ltd', originalHsn: '5208', originalGst: 5, amendedHsn: '520839', amendedGst: 12, gstDifference: 7, totalGstImpact: 35000, status: 'Approved' }
-  ]);
+  const [hsnAmendments, setHsnAmendments] = useState([]);
 
   // 4. VENDOR ORDER
-  const [vendorOrders, setVendorOrders] = useState([
-    { id: 'VND-ORD-001', date: '2026-06-01', vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Weaver', buyerOrderRef: 'ORD-9912', designNo: 'DES-4091', orderType: 'Weaving Jobwork', fabricType: 'Grey Satin', orderedQty: 5000, rate: 18, amount: 90000, yarnSuppliedBy: 'Self', totalValue: 90000, status: 'Approved' }
-  ]);
+  const [vendorOrders, setVendorOrders] = useState([]);
 
   // 5. DYEING ORDER
-  const [dyeingOrders, setDyeingOrders] = useState([
-    { id: 'DYE-ORD-001', date: '2026-06-01', dyeingType: 'Yarn Dyeing', vendorName: 'Standard Dyehouse A', buyerOrderRef: 'ORD-9912', designNo: 'DES-4091', totalQty: 1200, totalValue: 48000, status: 'Approved' }
-  ]);
+  const [dyeingOrders, setDyeingOrders] = useState([]);
 
   // 6. DOUBLING/TWISTING ORDER
-  const [twistingOrders, setTwistingOrders] = useState([
-    { id: 'DBL-ORD-001', date: '2026-06-01', processType: 'Doubling', vendorName: 'Senthil Twisters Ltd', inputQty: 2500, expectedOutput: 2450, totalValue: 37500, status: 'Approved' }
-  ]);
+  const [twistingOrders, setTwistingOrders] = useState([]);
 
   // 7. WARPING/SIZING ORDER
-  const [warpingOrders, setWarpingOrders] = useState([
-    { id: 'WSO-ORD-001', date: '2026-06-01', orderType: 'Warping + Sizing', vendorName: 'Standard Sizers Unit', designNo: 'DES-4091', buyerOrderRef: 'ORD-9912', totalEnds: 4200, warpLength: 3000, noOfBeams: 4, totalOrderValue: 56000, status: 'Approved' }
-  ]);
+  const [warpingOrders, setWarpingOrders] = useState([]);
 
   // 8. INTERNAL FABRIC REQUEST
-  const [fabricRequests, setFabricRequests] = useState([
-    { id: 'IFR-2026-001', date: '2026-06-01', requestingDept: 'Sampling Section', requestedBy: 'Murugan Swamy', purpose: 'Sample Making', designNo: 'DES-4091', requiredQty: 250, availableStock: 1200, status: 'Approved' }
-  ]);
+  const [fabricRequests, setFabricRequests] = useState([]);
 
   // 9. CLOTH PURCHASE ORDER
-  const [clothPurchaseOrders, setClothPurchaseOrders] = useState([
-    { id: 'CPO-2026-001', date: '2026-06-01', supplierName: 'Standard Weaving Co.', designNo: 'DES-4091', totalQuantity: 3000, totalValue: 450000, gstAmount: 22500, grandTotal: 472500, status: 'Approved' }
-  ]);
+  const [clothPurchaseOrders, setClothPurchaseOrders] = useState([]);
 
   // 10. CLOTH DYEING/PROCESSING ORDER
-  const [clothProcessingOrders, setClothProcessingOrders] = useState([
-    { id: 'CPO-PRC-001', date: '2026-06-01', processType: 'Dyeing', vendorName: 'Standard Dyehouse A', designNo: 'DES-4091', greigeMeters: 5000, expectedOutput: 4800, totalValue: 120000, status: 'Approved' }
-  ]);
+  const [clothProcessingOrders, setClothProcessingOrders] = useState([]);
 
   // 11. DEVELOPMENT/BULK ORDER
-  const [bulkOrders, setBulkOrders] = useState([
-    { id: 'DBO-2026-001', date: '2026-06-01', orderType: 'Development + Bulk', buyerName: 'Raymond Ltd', season: 'Summer 2026', totalDevQty: 500, totalBulkQty: 5000, totalDevValue: 85000, totalBulkValue: 725000, status: 'Active' }
-  ]);
+  const [bulkOrders, setBulkOrders] = useState([]);
 
   // 12. DEVELOPMENT/BULK FOLLOWUP
-  const [orderFollowups, setOrderFollowups] = useState([
-    { id: 'DBF-2026-001', date: '2026-06-01', orderRefNo: 'DBO-2026-001', buyerName: 'Raymond Ltd', designNo: 'DES-4091', overallComplete: 65, nextAction: 'Send dyed sample for buyer approval', nextFollowup: '2026-06-05', status: 'In-Progress' }
-  ]);
+  const [orderFollowups, setOrderFollowups] = useState([]);
 
   // =========================================================================
   // DYNAMIC FORM FIELDS (GENERAL BINDINGS)

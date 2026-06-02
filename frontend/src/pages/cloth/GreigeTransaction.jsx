@@ -32,39 +32,25 @@ export default function GreigeTransaction() {
   // =========================================================================
 
   // 1. VENDOR INWARD
-  const [vendorInwards, setVendorInwards] = useState([
-    { id: 'GRY-IN-001', date: '2026-06-01', vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Vendor', gateInwardRef: 'GIN-7712', dcNo: 'DC-88102', dcDate: '2026-05-30', designNo: 'DES-4091', fabricType: 'Grey Satin', totalPieces: 10, totalMeters: 1000, totalWeight: 220, totalValue: 65000, status: 'Completed' }
-  ]);
+  const [vendorInwards, setVendorInwards] = useState([]);
 
   // 2. ON TABLE CHECKING (GREIGE)
-  const [greigeCheckings, setGreigeCheckings] = useState([
-    { id: 'GRY-CHK-001', date: '2026-06-01', vendorInwardRef: 'GRY-IN-001', vendorName: 'Standard Weaving Co.', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', totalPieces: 10, warpDefects: 2, weftDefects: 3, pointsPer100m: 12, grade: 'A — Exportable', mendingRequired: false, checkedBy: 'Murugan Swamy', status: 'Approved' }
-  ]);
+  const [greigeCheckings, setGreigeCheckings] = useState([]);
 
   // 3. CLOTH MENDING ENTRY
-  const [clothMendings, setClothMendings] = useState([
-    { id: 'GRY-MND-001', date: '2026-06-01', otCheckingRef: 'GRY-CHK-001', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', vendorName: 'Standard Weaving Co.', pieceNo: 1, mendingType: 'Weaving Repair', menderName: 'Senthil Kumar (General Manager)', totalPiecesMended: 1, mendingCharges: 150, supervisedBy: 'Mani Bharathi (Store Head)' }
-  ]);
+  const [clothMendings, setClothMendings] = useState([]);
 
   // 4. CLOTH DELIVERY (GREIGE)
-  const [greigeDeliveries, setGreigeDeliveries] = useState([
-    { id: 'GRY-DEL-001', date: '2026-06-01', deliveryType: 'Sale Delivery', partyName: 'Raymond Ltd', graRef: 'GRY-GRA-001', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', totalPieces: 8, totalMeters: 800, totalWeight: 180, totalAmount: 52000, dcNo: 'DC-GRY-9901', vehicleNo: 'TN-37-BY-8891', driverName: 'Selvam', status: 'Dispatched' }
-  ]);
+  const [greigeDeliveries, setGreigeDeliveries] = useState([]);
 
   // 7. CLOTH PACKING (GREIGE)
-  const [greigePackings, setGreigePackings] = useState([
-    { id: 'GRY-PKG-001', date: '2026-06-01', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', packingType: 'Standard Bale', buyerName: 'Raymond Ltd', totalBales: 4, totalPieces: 40, totalMeters: 4000, totalNetWeight: 920, packedBy: 'Murugan Swamy', status: 'Approved' }
-  ]);
+  const [greigePackings, setGreigePackings] = useState([]);
 
   // 10. GREIGE GOODS RELEASE ADVICE (GRA)
-  const [greigeGras, setGreigeGras] = useState([
-    { id: 'GRY-GRA-001', date: '2026-06-01', buyerName: 'Raymond Ltd', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', releaseType: 'Sale', totalMeters: 1000, totalWeight: 220, totalAmount: 65000, deliveryAddress: 'Salem Warehouse', expectedDispatch: '2026-06-05', status: 'Approved' }
-  ]);
+  const [greigeGras, setGreigeGras] = useState([]);
 
   // 11. GRY SALES INVOICE
-  const [greigeInvoices, setGreigeInvoices] = useState([
-    { id: 'GRY-INV-001', date: '2026-06-01', invoiceType: 'Tax Invoice', buyerName: 'Raymond Ltd', graRef: 'GRY-GRA-001', subtotal: 65000, totalGst: 3250, grandTotal: 68250, paymentTerms: '30 Days', status: 'Approved' }
-  ]);
+  const [greigeInvoices, setGreigeInvoices] = useState([]);
 
   // =========================================================================
   // DYNAMIC FORM FIELDS (GENERAL BINDINGS)
