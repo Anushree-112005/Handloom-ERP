@@ -5,7 +5,8 @@ import {
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
-  ShoppingBag, Database, Briefcase, FileDigit, FolderKanban
+  ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
+  CreditCard, DollarSign, Target, Percent, BookOpen
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';

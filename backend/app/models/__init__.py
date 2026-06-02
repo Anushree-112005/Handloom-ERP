@@ -18,9 +18,5 @@ from app.models.log_report import LogReport
 from app.models.design_entry import DesignEntry
 from app.models.general_master import GeneralMaster
 from app.models.company_setting import CompanySetting
-<<<<<<< HEAD
 from app.models.sub_master import SubMaster
-
-=======
 from app.models.work_order import WorkOrderTransaction
->>>>>>> 9ff6a4cad59e83114dc2a88b00be3b11b654d151

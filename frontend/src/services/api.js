@@ -260,6 +260,15 @@ export const companySettingAPI = {
   save: (data) => api.post('/company-settings/', data),
 };
 
+// ---- Work Order Transactions ----
+export const workOrderTransactionAPI = {
+  list: (params) => api.get('/work-order-transactions/', { params }),
+  get: (id) => api.get(`/work-order-transactions/${id}`),
+  create: (data) => api.post('/work-order-transactions/', data),
+  update: (id, data) => api.put(`/work-order-transactions/${id}`, data),
+  delete: (id) => api.delete(`/work-order-transactions/${id}`),
+};
+
 // ---- Sub Masters (Dynamic/Generic) ----
 export const subMasterAPI = {
   list: (entity, params) => api.get(`/sub-masters/${entity}`, { params }),
