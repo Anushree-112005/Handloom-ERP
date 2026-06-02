@@ -24,6 +24,8 @@ export default function DispatchExpenseSubModule() {
     payment_mode: 'Bank Transfer', vendor_name: '', invoice_ref: '', remarks: ''
   });
 
+  const [buyerOrders, setBuyerOrders] = useState([]);
+
   const cards = [
     { title: 'Dispatch Indent', icon: Truck, color: '#3b82f6', desc: 'Manage logistics instructions and dispatch slips' },
     { title: 'Expense Entry', icon: DollarSign, color: '#f59e0b', desc: 'Record additional costs and freight charges' }
@@ -32,7 +34,15 @@ export default function DispatchExpenseSubModule() {
   useEffect(() => {
     fetchDispatches();
     fetchExpenses();
+    fetchBuyerOrders();
   }, []);
+
+  const fetchBuyerOrders = async () => {
+    try {
+      const res = await buyerOrderAPI.list();
+      setBuyerOrders(res.data);
+    } catch(e) { console.error(e); }
+  };
 
   const fetchDispatches = async () => {
     try {
@@ -265,7 +275,12 @@ export default function DispatchExpenseSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <input type="text" className="form-control" placeholder="e.g. IBPO-2026-001" value={dispatchForm.order_id_ref} onChange={e => setDispatchForm({...dispatchForm, order_id_ref: e.target.value})} />
+                      <select className="form-control" value={dispatchForm.order_id_ref} onChange={e => setDispatchForm({...dispatchForm, order_id_ref: e.target.value})}>
+                        <option value="">Select Buyer Order...</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Dispatch Date</label>
@@ -441,7 +456,12 @@ export default function DispatchExpenseSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <input type="text" className="form-control" placeholder="e.g. IBPO-2026-001" value={expenseForm.order_id_ref} onChange={e => setExpenseForm({...expenseForm, order_id_ref: e.target.value})} />
+                      <select className="form-control" value={expenseForm.order_id_ref} onChange={e => setExpenseForm({...expenseForm, order_id_ref: e.target.value})}>
+                        <option value="">Select Buyer Order...</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Expense Type</label>
