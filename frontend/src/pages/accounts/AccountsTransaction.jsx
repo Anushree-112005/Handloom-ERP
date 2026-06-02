@@ -30,79 +30,49 @@ export default function AccountsTransaction() {
   // =========================================================================
   
   // 1. CREDITORS BILLS RECEIVED
-  const [billsReceived, setBillsReceived] = useState([
-    { id: 'CBR-2026-001', date: '2026-06-01', creditorName: 'Vardhman Spinning', creditorType: 'Yarn Supplier', supplierBillNo: 'SUP-4491', supplierBillDate: '2026-05-28', billType: 'Yarn Purchase Bill', againstPoNo: 'PO-2026-90', againstGrnNo: 'GRN-2026-11', totalAmount: 185000, dueDate: '2026-06-30', narration: 'Yarn raw materials inward bill', status: 'Received', items: [{ desc: 'Carded Cotton Yarn 40s', hsn: '5205', qty: 1000, unit: 'Kg', rate: 185, amount: 185000, taxAmount: 0 }] }
-  ]);
+  const [billsReceived, setBillsReceived] = useState([]);
 
   // 2. GENERAL / OTHER BILLS
-  const [generalBills, setGeneralBills] = useState([
-    { id: 'GEN-2026-001', date: '2026-06-01', category: 'Electricity Bill', partyName: 'State Electricity Board', billNo: 'ELEC-9981', billDate: '2026-05-30', expenseHead: 'Power & Fuel', department: 'Production', billAmount: 45000, gstApplicable: true, gstPercent: 18, gstAmount: 8100, tdsApplicable: false, tdsPercent: 0, tdsAmount: 0, netPayable: 53100, dueDate: '2026-06-15', costCenter: 'Weaving Floor A', narration: 'Factory power charges', status: 'Approved' }
-  ]);
+  const [generalBills, setGeneralBills] = useState([]);
 
   // 3. CREDITORS BILLS APPROVAL
-  const [billsApproved, setBillsApproved] = useState([
-    { id: 'CBA-2026-001', date: '2026-06-01', billReceiptRef: 'CBR-2026-001', creditorName: 'Vardhman Spinning', supplierBillNo: 'SUP-4491', billAmount: 185000, gstAmount: 9250, tdsAmount: 1850, netPayable: 192400, poVerified: true, grnVerified: true, rateMatched: true, qtyMatched: true, approvedAmount: 192400, diffAmount: 0, diffReason: '', approvalStatus: 'Approved', approvedBy: 'Mani Bharathi (Store Head)', remarks: 'Bill verified against PO/GRN' }
-  ]);
+  const [billsApproved, setBillsApproved] = useState([]);
 
   // 4. CREDITORS DEBIT NOTE
-  const [creditorsDebitNotes, setCreditorsDebitNotes] = useState([
-    { id: 'CDN-2026-001', date: '2026-06-01', creditorName: 'Vardhman Spinning', againstBillNo: 'CBR-2026-001', againstPoNo: 'PO-2026-90', debitNoteType: 'Material Return', totalDebitAmount: 18500, reason: 'Short supply returned', adjustmentType: 'Bill Adjustment', narration: 'Debit note for defective yarn', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved', items: [{ name: 'Carded Cotton Yarn 40s', returnQty: 100, unit: 'Kg', rate: 185, amount: 18500, taxAmount: 0 }] }
-  ]);
+  const [creditorsDebitNotes, setCreditorsDebitNotes] = useState([]);
 
   // 5. EXPORT INVOICE
-  const [exportInvoices, setExportInvoices] = useState([
-    { id: 'EXP-2026-001', date: '2026-06-01', buyerName: 'Reliance Retail', buyerAddress: 'Mumbai HQ', country: 'United Kingdom', portLoading: 'Tuticorin', portDischarge: 'London Gateway', shippingBillNo: 'SB-882910', shippingBillDate: '2026-05-30', lcNo: 'LC-99011', currency: 'USD', exchangeRate: 83, foreignTotal: 12000, inrTotal: 996000, freight: 850, insurance: 150, paymentTerms: '60 Days LC', incoterms: 'FOB', bankDetails: 'SBI A/C: 10098901', status: 'Shipped', items: [{ designNo: 'DES-102', desc: 'Printed Cotton Satin Fabric', qty: 3000, rateForeign: 4, rateInr: 332, amountForeign: 12000, amountInr: 996000 }] }
-  ]);
+  const [exportInvoices, setExportInvoices] = useState([]);
 
   // 6. SALES AMENDMENT
-  const [salesAmendments, setSalesAmendments] = useState([
-    { id: 'SAM-2026-001', date: '2026-06-01', originalInvoiceNo: 'INV-2026-01', originalInvoiceDate: '2026-05-25', buyerName: 'Raymond Ltd', amendmentType: 'Rate Change', reason: 'Agreed rate revision discount', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved', items: [{ name: 'Dyed Linen Fabric', qty: 2000, originalRate: 150, amendedRate: 145, diffAmount: -10000, gstImpact: -1800 }] }
-  ]);
+  const [salesAmendments, setSalesAmendments] = useState([]);
 
   // 7. GREY SALES AMENDMENT
-  const [greyAmendments, setGreyAmendments] = useState([
-    { id: 'GSM-2026-001', date: '2026-06-01', originalInvoiceNo: 'INV-2026-15', buyerName: 'Raymond Ltd', fabricType: 'Grey Cotton Drill', originalQty: 5000, amendedQty: 4950, originalRate: 85, amendedRate: 85, originalAmount: 425000, amendedAmount: 420750, weightDiff: -15, qualityRemarks: 'Weight difference adjusted', reason: 'Physical weight short-fall correction', authorizedBy: 'Mani Bharathi (Store Head)', status: 'Approved' }
-  ]);
+  const [greyAmendments, setGreyAmendments] = useState([]);
 
   // 8. DIRECT SALES INVOICE
-  const [directInvoices, setDirectInvoices] = useState([
-    { id: 'DSI-2026-001', date: '2026-06-01', buyerName: 'Raymond Ltd', buyerAddress: 'Bangalore Complex', gstin: '29AAAER4402Q1ZX', placeOfSupply: 'Karnataka', invoiceType: 'Tax Invoice', totalTaxable: 140000, totalGst: 25200, grandTotal: 165200, paymentTerms: 'Direct Pay', bankDetails: 'HDFC A/C: 98112', status: 'Completed', items: [{ itemNo: 'D-8012 Cotton', hsn: '5208', qty: 1000, rate: 140, amount: 140000, gstPercent: 18, gstAmount: 25200, total: 165200 }] }
-  ]);
+  const [directInvoices, setDirectInvoices] = useState([]);
 
   // 9. DIRECT SALES EINVOICE
-  const [eInvoices, setEInvoices] = useState([
-    { id: 'EIN-2026-001', irnNo: '8f7a9e6b5d4c3b2a1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b', ackNo: '1102910', ackDate: '2026-06-01', invoiceRef: 'DSI-2026-001', buyerGstin: '29AAAER4402Q1ZX', supplyType: 'B2B', status: 'Active' }
-  ]);
+  const [eInvoices, setEInvoices] = useState([]);
 
   // 10. TALLY SALES EXPORT
-  const [tallyExports, setTallyExports] = useState([
-    { id: 'TLY-2026-001', dateRangeFrom: '2026-05-01', dateRangeTo: '2026-05-31', exportType: 'Sales Vouchers', format: 'XML Format', includeGst: true, includeTds: true, filePath: 'C:/TallyData/Sales_Export.xml', lastExportDate: '2026-06-01', status: 'Exported' }
-  ]);
+  const [tallyExports, setTallyExports] = useState([]);
 
   // 11. CANCEL SALES INVOICE
-  const [cancelledInvoices, setCancelledInvoices] = useState([
-    { id: 'CNL-2026-001', date: '2026-06-01', invoiceNo: 'INV-2026-08', invoiceDate: '2026-05-20', buyerName: 'Reliance Retail', invoiceAmount: 245000, gstAmount: 44100, irnNo: '8f7a9e6b...', reason: 'Buyer Cancelled Order', detailedReason: 'Order cancelled due to delayed logistics approval', authorizedBy: 'Dinesh Balasamy (MD)', cancellationDate: '2026-06-01', status: 'Cancelled' }
-  ]);
+  const [cancelledInvoices, setCancelledInvoices] = useState([]);
 
   // 12. BULK INVOICE PRINT
-  const [bulkPrints, setBulkPrints] = useState([
-    { id: 'PRT-2026-001', dateRangeFrom: '2026-06-01', dateRangeTo: '2026-06-01', printFormat: 'Standard GST Format', copies: 3, status: 'Success', invoices: [{ invoiceNo: 'INV-2026-01', buyer: 'Raymond Ltd', amount: 150000 }] }
-  ]);
+  const [bulkPrints, setBulkPrints] = useState([]);
 
   // 13. LC DETAIL
-  const [lcDetails, setLcDetails] = useState([
-    { id: 'LCD-2026-001', lcNoBank: 'UKB-99012', lcDate: '2026-06-01', buyerName: 'Reliance Retail', buyerCountry: 'United Kingdom', issuingBank: 'Barclays Bank London', advisingBank: 'SBI Mumbai Branch', lcType: 'Sight LC', lcCurrency: 'USD', lcAmountForeign: 150000, exchangeRate: 83, lcAmountInr: 12450000, expiryDate: '2026-09-30', shipmentDate: '2026-09-15', loadingPort: 'Tuticorin', dischargePort: 'London Gateway', tolerancePercent: 5, status: 'Active' }
-  ]);
+  const [lcDetails, setLcDetails] = useState([]);
 
   // 14. LC HUNDI ENTRY
-  const [lcHundis, setLcHundis] = useState([
-    { id: 'HND-2026-001', date: '2026-06-01', lcRefNo: 'LCD-2026-001', buyerName: 'Reliance Retail', exportInvoiceNo: 'EXP-2026-001', hundiType: 'Sight Hundi', hundiAmountForeign: 12000, exchangeRate: 83, hundiAmountInr: 996000, usanceDays: 0, dueDate: '2026-06-01', presentingBank: 'SBI Corporate Salem', negotiatingBank: 'Barclays Trade Services', documentLadingNo: 'BL-990812', documentLadingDate: '2026-06-01', discountCharges: 1200, bankCharges: 450, netRealization: 994350, status: 'Realized' }
-  ]);
+  const [lcHundis, setLcHundis] = useState([]);
 
   // 15. LC COMPLETION
-  const [lcCompletions, setLcCompletions] = useState([
-    { id: 'LCC-2026-001', date: '2026-06-01', lcRefNo: 'LCD-2026-001', buyerName: 'Reliance Retail', lcAmount: 12450000, totalShippedValue: 12450000, totalReceivedAmount: 12450000, balanceAmount: 0, forexGainLoss: 12500, bankChargesTotal: 2500, remarks: 'LC fulfilled completely with full dollar realizations', closedBy: 'Dinesh Balasamy (MD)', status: 'Completed' }
-  ]);
+  const [lcCompletions, setLcCompletions] = useState([]);
 
   // =========================================================================
   // DYNAMIC FORM FIELDS (GENERAL STATE BINDINGS)

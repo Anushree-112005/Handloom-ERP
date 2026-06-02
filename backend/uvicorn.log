@@ -1,0 +1,14 @@
+INFO:     Started server process [88890]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:39628 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44536 - "GET /api/v1/work-order-transactions/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44544 - "POST /api/v1/work-order-transactions/ HTTP/1.1" 201 Created
+INFO:     127.0.0.1:44940 - "GET /api/v1/work-order-transactions/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44362 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44388 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44398 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44372 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44412 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44428 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK

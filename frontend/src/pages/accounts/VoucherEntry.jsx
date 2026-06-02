@@ -23,9 +23,7 @@ export default function VoucherEntry() {
   // ----------------------------------------------------
   // 1. BILL PASSING DATABASES & FORM STATES
   // ----------------------------------------------------
-  const [bills, setBills] = useState([
-    { id: 'BP-2026-001', date: '2026-06-01', creditorName: 'Vardhman Spinning', creditorType: 'Yarn Supplier', billNo: 'VSM-88910', billDate: '2026-05-28', billAmount: 150000, gstNo: '33AAACV9801R1Z8', gstType: 'CGST/SGST', gstPercent: 12, gstAmount: 18000, tdsPercent: 1, tdsAmount: 1500, netPayable: 166500, poNo: 'PO-YRN-902', grnNo: 'GRN-YRN-7721', paymentTerms: '30 Days', dueDate: '2026-06-27', narration: 'Yarn supply bill approved', approvedBy: 'Anjali Devi (Accounts Head)', status: 'Approved' }
-  ]);
+  const [bills, setBills] = useState([]);
 
   // Form Fields for Bill Passing
   const [bpCreditorName, setBpCreditorName] = useState('Vardhman Spinning');
@@ -58,9 +56,7 @@ export default function VoucherEntry() {
   // ----------------------------------------------------
   // 2. PAYMENT ADVISE DATABASES & FORM STATES
   // ----------------------------------------------------
-  const [advises, setAdvises] = useState([
-    { id: 'PA-2026-001', date: '2026-06-01', creditorName: 'Vardhman Spinning', billPassingRef: 'BP-2026-001', billAmount: 166500, prevOutstanding: 45000, totalPayable: 211500, paymentAmount: 166500, paymentMode: 'NEFT', bankName: 'HDFC Bank', chequeNo: 'UTR-9912048', chequeDate: '', neftRef: 'N330261199', paymentDate: '2026-06-01', tdsDeducted: 0, discountGiven: 500, netPayment: 166000, narration: 'NEFT advice for VS bill', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Advised' }
-  ]);
+  const [advises, setAdvises] = useState([]);
 
   // Form fields for Payment Advise
   const [paCreditorName, setPaCreditorName] = useState('Vardhman Spinning');
@@ -86,9 +82,7 @@ export default function VoucherEntry() {
   // ----------------------------------------------------
   // 3. DEBIT NOTE RECEIVED DATABASES & FORM STATES
   // ----------------------------------------------------
-  const [debitNotes, setDebitNotes] = useState([
-    { id: 'DNR-2026-001', date: '2026-06-01', buyerName: 'Raymond Ltd', buyerDebitNo: 'DN-RAY-889', buyerDebitDate: '2026-05-30', againstInvoice: 'INV-2026-8802', invoiceDate: '2026-05-15', invoiceAmount: 480000, debitAmount: 25000, reason: 'Quality Issue', gstApplicable: 'Yes', gstPercent: 5, gstAmount: 1250, netDebitAmount: 26250, items: [{ designNo: 'D-9902', qty: 50, rate: 500, amount: 25000 }], narration: 'Quality defect claims on cotton satin lot', status: 'Received' }
-  ]);
+  const [debitNotes, setDebitNotes] = useState([]);
 
   // Form fields for Debit Note Received
   const [dnBuyerName, setDnBuyerName] = useState('Raymond Ltd');
@@ -136,9 +130,7 @@ export default function VoucherEntry() {
   // ----------------------------------------------------
   // 4. DEBIT NOTE APPROVAL DATABASES & FORM STATES
   // ----------------------------------------------------
-  const [approvals, setApprovals] = useState([
-    { id: 'APP-2026-001', date: '2026-06-01', debitRef: 'DNR-2026-001', buyerName: 'Raymond Ltd', debitNo: 'DN-RAY-889', debitAmount: 26250, reason: 'Quality Issue', remarks: 'Fabric lot inspection verified', approvedAmount: 25000, rejectedAmount: 1250, approvalStatus: 'Partially Approved', approvedBy: 'Anjali Devi (Accounts Head)', approvalDate: '2026-06-01', action: 'Issue Credit Note', creditNoteIssue: 'Yes', creditNoteAmount: 25000, narration: 'Partially approved' }
-  ]);
+  const [approvals, setApprovals] = useState([]);
 
   // Form Fields for Approval
   const [apDebitRef, setApDebitRef] = useState('DNR-2026-001');
@@ -161,9 +153,7 @@ export default function VoucherEntry() {
   // ----------------------------------------------------
   // 5. RECEIPT ENTRY DATABASES & FORM STATES
   // ----------------------------------------------------
-  const [receipts, setReceipts] = useState([
-    { id: 'REC-2026-001', date: '2026-06-01', receiptType: 'Against Invoice', receivedFrom: 'Raymond Ltd', againstInvoice: 'INV-2026-8802', invoiceAmount: 480000, prevOutstanding: 120000, totalReceivable: 600000, receiptAmount: 450000, paymentMode: 'RTGS', bankName: 'ICICI Bank', chequeNo: 'UTR-RTGS88091', chequeDate: '', transactionDate: '2026-06-01', tdsDeducted: 4800, discountAllowed: 1200, netReceipt: 444000, balanceOutstanding: 150000, narration: 'Invoice part settlement', receivedBy: 'Anjali Devi (Accounts Head)', status: 'Confirmed' }
-  ]);
+  const [receipts, setReceipts] = useState([]);
 
   // Form Fields for Receipt Entry
   const [rcReceiptType, setRcReceiptType] = useState('Against Invoice');

@@ -8,10 +8,7 @@ import autoTable from 'jspdf-autotable';
 
 export default function GateOutward() {
   // Mock Outwards Database
-  const [outwards, setOutwards] = useState([
-    { id: 'GOT-2026-001', dateTime: '2026-06-01', inwardRef: 'GIN-2026-001', vehicleNo: 'TN-37-BY-1204', driverName: 'Ramesh Kumar', driverMobile: '9876543210', partyName: 'Vardhman Spinning', materialType: 'Yarn', purpose: 'Material Return', dcNo: 'DC-OUT-7789', invoiceNo: 'INV-2026-8801', itemDesc: 'Empty Bobbins & Pallets', qty: 250, unit: 'Nos', weight: 450, packages: 10, gatePassNo: 'GP-9011', guardName: 'S. Rajendran', outTime: '11:15', remarks: 'Verification cleared', status: 'Closed' },
-    { id: 'GOT-2026-002', dateTime: '2026-06-01', inwardRef: '', vehicleNo: 'TN-30-AA-8877', driverName: 'M. Selvam', driverMobile: '9123456789', partyName: 'Raymond Ltd', materialType: 'Fabric / Cloth', purpose: 'Sales Delivery', dcNo: 'DC-OUT-7790', invoiceNo: 'INV-2026-8802', itemDesc: 'Finished Printed Cotton Satin', qty: 110, unit: 'Meter', weight: 4300, packages: 110, gatePassNo: 'GP-9014', guardName: 'K. Palanisamy', outTime: '16:30', remarks: 'Gate pass verified', status: 'Closed' }
-  ]);
+  const [outwards, setOutwards] = useState([]);
 
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);

@@ -269,4 +269,14 @@ export const workOrderTransactionAPI = {
   delete: (id) => api.delete(`/work-order-transactions/${id}`),
 };
 
+// ---- Sub Masters (Dynamic/Generic) ----
+export const subMasterAPI = {
+  list: (entity, params) => api.get(`/sub-masters/${entity}`, { params }),
+  stats: (entity) => api.get(`/sub-masters/${entity}/stats`),
+  create: (entity, data) => api.post(`/sub-masters/${entity}`, data),
+  update: (entity, id, data) => api.put(`/sub-masters/${entity}/${id}`, data),
+  delete: (entity, id) => api.delete(`/sub-masters/${entity}/${id}`),
+  listEntities: () => api.get('/sub-masters/'),
+};
+
 export default api;

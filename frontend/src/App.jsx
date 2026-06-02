@@ -36,6 +36,7 @@ import SparesReport from './pages/spares/SparesReport';
 import SparesApproval from './pages/spares/SparesApproval';
 import VoucherEntry from './pages/accounts/VoucherEntry';
 import AccountsTransaction from './pages/accounts/AccountsTransaction';
+import SubMasterPage from './pages/masters/SubMasterPage';
 
 
 
@@ -73,6 +74,9 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="overview" element={<Overview />} />
         <Route path="party-master" element={<PartyMaster />} />
+
+        {/* Dynamic Sub-Master route — handles all 38 generic master forms */}
+        <Route path="sub-master/:entity" element={<SubMasterPage />} />
 
         <Route path="buyer-order" element={<BuyerOrder />} />
         <Route path="buyer-order/processing" element={<OrderSubModule />} />
