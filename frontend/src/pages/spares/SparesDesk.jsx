@@ -1,14 +1,12 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import { 
   Wrench, Search, Plus, Trash2, Edit, Check, X, Download, 
-  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, PlusCircle, Layers, FileText, FileDigit, CheckSquare
+  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, PlusCircle 
 } from 'lucide-react';
 
-export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
-  const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState(defaultSection);
-  const [activeTab, setActiveTab] = useState(null);
+export default function SparesTransaction() {
+  // Main Category Tab: 'OpeningStock' | 'RequestIndent' | 'IndentApproval' | 'PurchaseOrder' | 'POApproval' | 'PurchaseEntry' | 'WorkOrder' | 'Consumption' | 'JobWorkIssue' | 'JobWorkRecv'
+  const [activeTab, setActiveTab] = useState('OpeningStock');
 
   // Search Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,48 +16,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   const [currentFormId, setCurrentFormId] = useState('');
   const [activeFormTab, setActiveFormTab] = useState('Reference Info');
 
-  useEffect(() => {
-    setActiveSection(defaultSection);
-    const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === defaultSection);
-    if (firstSubModule) {
-      setActiveTab(firstSubModule.key);
-    } else {
-      setActiveTab(null);
-    }
-    setIsFormOpen(false);
-  }, [defaultSection]);
-
-  const PAGES_METADATA = {
-    // 1. Master Setup
-    Sections: { key: 'Sections', label: "Section Creation", category: 'Master Setup', desc: "Define loom rooms and shop floors", icon: Layers, color: '#7c3aed' },
-    Spares: { key: 'Spares', label: "Spares Creation", category: 'Master Setup', desc: "Catalog inventory for machinery spares", icon: Wrench, color: '#7c3aed' },
-    OpeningStock: { key: 'OpeningStock', label: "Opening Stock Entry", category: 'Master Setup', desc: "Define initial physical spares balances", icon: FolderKanban, color: '#7c3aed' },
-
-    // 2. Requests & Approvals (Changed from Orange to Blue)
-    RequestIndent: { key: 'RequestIndent', label: "Spares Request Indent Entry", category: 'Requests & Approvals', desc: "Raise internal spare part requests", icon: FolderKanban, color: '#2563eb' },
-    IndentApproval: { key: 'IndentApproval', label: "Request Indent Approval", category: 'Requests & Approvals', desc: "Audit and authorize requests", icon: CheckSquare, color: '#2563eb' },
-
-    // 3. Purchase & Work Orders
-    PurchaseOrder: { key: 'PurchaseOrder', label: "Purchase Order Entry - Spares", category: 'Purchase & Work Orders', desc: "Draft outbound supplier purchase orders", icon: ShoppingBag, color: '#10b981' },
-    POApproval: { key: 'POApproval', label: "Purchase Order Approval", category: 'Purchase & Work Orders', desc: "Authorize outbound purchase orders", icon: CheckSquare, color: '#10b981' },
-    WorkOrder: { key: 'WorkOrder', label: "Work Order Entry", category: 'Purchase & Work Orders', desc: "Schedule breakdown/preventive repairs", icon: Wrench, color: '#10b981' },
-    PurchaseEntry: { key: 'PurchaseEntry', label: "Purchase Entry", category: 'Purchase & Work Orders', desc: "Register incoming supplier deliveries", icon: ShoppingBag, color: '#10b981' },
-
-    // 4. Consumption & Jobwork (Changed from Pink to Cyan/Teal)
-    Consumption: { key: 'Consumption', label: "Consumption Entry", category: 'Consumption & Jobwork', desc: "Log physical parts used during repairs", icon: Factory, color: '#0891b2' },
-    JobWorkIssue: { key: 'JobWorkIssue', label: "JobWork / HandLoan Issue Entry", category: 'Consumption & Jobwork', desc: "Dispatch parts for external servicing", icon: AlertTriangle, color: '#0891b2' },
-    JobWorkRecv: { key: 'JobWorkRecv', label: "JobWork / HandLoan Received Entry", category: 'Consumption & Jobwork', desc: "Log parts returned from external services", icon: Check, color: '#0891b2' }
-  };
-
-  const handleOpenPage = (p) => {
-    if (p.isLink) {
-      navigate(p.route);
-    } else {
-      setActiveTab(p.key);
-      setIsFormOpen(false);
-    }
-  };
-
   // Static reference lists
   const SECTIONS = ['Weaving Division A', 'Dyeing Processing', 'Warping Section B', 'Sizing Room C'];
   const SPARES = [
@@ -68,53 +24,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   ];
   const SUPPLIERS = ['Standard Gears Ltd', 'Zenith Electricals', 'Chemical Traders', 'Sai Logistics'];
   const EMPLOYEES = ['Senthil Kumar (General Manager)', 'Mani Bharathi (Store Head)', 'Dinesh Balasamy (MD)', 'Murugan Swamy (Maintenance In-charge)'];
-
-  // ----------------------------------------------------
-  // SECTION & SPARES MASTER DATA & FORM STATES
-  // ----------------------------------------------------
-  const [sections, setSections] = useState([
-    { id: 'SEC-001', name: 'Weaving Division A', type: 'Weaving', dept: 'Production', incharge: 'Murugan Swamy (Maintenance In-charge)', machines: 24, desc: 'High-speed airjet loom section', status: 'Active' },
-    { id: 'SEC-002', name: 'Dyeing Processing', type: 'Dyeing', dept: 'Processing', incharge: 'Senthil Kumar (General Manager)', machines: 12, desc: 'Yarn and package dyeing unit', status: 'Active' }
-  ]);
-
-  const [secName, setSecName] = useState('');
-  const [secType, setSecType] = useState('Weaving');
-  const [secDept, setSecDept] = useState('Production');
-  const [secIncharge, setSecIncharge] = useState('Murugan Swamy (Maintenance In-charge)');
-  const [secMachines, setSecMachines] = useState('');
-  const [secDesc, setSecDesc] = useState('');
-  const [secStatus, setSecStatus] = useState('Active');
-
-  const [spares, setSpares] = useState([
-    { id: 'SPR-001', name: 'Airjet Loom Solenoid Valve', category: 'Loom Parts', section: 'Weaving Division A', machineType: 'Airjet Loom', brand: 'Toyota', modelNo: 'TY-AJ-800', partNo: 'SLND-4409', uom: 'Nos', reorder: 5, minStock: 2, maxStock: 20, standardRate: 4500, hsnCode: '8448', gstPercent: 18, preferredSupplier: 'Standard Gears Ltd', leadTime: 7, status: 'Active' },
-    { id: 'SPR-002', name: 'Syntron Lubricant oil T6', category: 'Lubricants', section: 'Dyeing Processing', machineType: 'Dyeing Vessel', brand: 'Mobil', modelNo: 'T6-Lub', partNo: 'LUB-8891', uom: 'Nos', reorder: 10, minStock: 5, maxStock: 50, standardRate: 850, hsnCode: '2710', gstPercent: 18, preferredSupplier: 'Chemical Traders', leadTime: 3, status: 'Active' }
-  ]);
-
-  const [sprName, setSprName] = useState('');
-  const [sprCategory, setSprCategory] = useState('Mechanical Parts');
-  const [sprSection, setSprSection] = useState('Weaving Division A');
-  const [sprMachineType, setSprMachineType] = useState('Airjet Loom');
-  const [sprBrand, setSprBrand] = useState('');
-  const [sprModelNo, setSprModelNo] = useState('');
-  const [sprPartNo, setSprPartNo] = useState('');
-  const [sprUom, setSprUom] = useState('Nos');
-  const [sprReorder, setSprReorder] = useState('');
-  const [sprMinStock, setSprMinStock] = useState('');
-  const [sprMaxStock, setSprMaxStock] = useState('');
-  const [sprStandardRate, setSprStandardRate] = useState('');
-  const [sprHsn, setSprHsn] = useState('');
-  const [sprGst, setSprGst] = useState(18);
-  const [sprSupplier, setSprSupplier] = useState('Standard Gears Ltd');
-  const [sprLeadTime, setSprLeadTime] = useState('');
-  const [sprStatus, setSprStatus] = useState('Active');
-
-  const filteredSections = useMemo(() => {
-    return sections.filter(sec => sec.name.toLowerCase().includes(searchTerm.toLowerCase()) || sec.id.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [sections, searchTerm]);
-
-  const filteredSpares = useMemo(() => {
-    return spares.filter(spr => spr.name.toLowerCase().includes(searchTerm.toLowerCase()) || spr.id.toLowerCase().includes(searchTerm.toLowerCase()) || spr.partNo.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [spares, searchTerm]);
 
   // ----------------------------------------------------
   // 1. OPENING STOCK DATA & FORM STATES
@@ -499,14 +408,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   // ----------------------------------------------------
   const handleCreateNew = () => {
     let nextId = '';
-    if (activeTab === 'Sections') {
-      nextId = `SEC-00${sections.length + 1}`;
-      setSecName(''); setSecType('Weaving'); setSecDept('Production'); setSecIncharge('Murugan Swamy (Maintenance In-charge)'); setSecMachines(''); setSecDesc(''); setSecStatus('Active');
-    }
-    if (activeTab === 'Spares') {
-      nextId = `SPR-00${spares.length + 1}`;
-      setSprName(''); setSprCategory('Mechanical Parts'); setSprSection('Weaving Division A'); setSprMachineType('Airjet Loom'); setSprBrand(''); setSprModelNo(''); setSprPartNo(''); setSprUom('Nos'); setSprReorder(''); setSprMinStock(''); setSprMaxStock(''); setSprStandardRate(''); setSprHsn(''); setSprGst(18); setSprSupplier('Standard Gears Ltd'); setSprLeadTime(''); setSprStatus('Active');
-    }
     if (activeTab === 'OpeningStock') nextId = `OS-2026-00${openingStocks.length + 1}`;
     if (activeTab === 'RequestIndent') nextId = `IND-2026-00${indents.length + 1}`;
     if (activeTab === 'IndentApproval') nextId = `IAP-2026-00${indentApprovals.length + 1}`;
@@ -526,21 +427,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   const handleSave = (e) => {
     e.preventDefault();
     const dateToday = new Date().toISOString().substring(0, 10);
-
-    if (activeTab === 'Sections') {
-      if (!secName) { alert("Please enter the section name!"); return; }
-      const isExisting = sections.some(s => s.id === currentFormId);
-      const newSec = { id: currentFormId, name: secName, type: secType, dept: secDept, incharge: secIncharge, machines: Number(secMachines) || 0, desc: secDesc, status: secStatus };
-      if (isExisting) setSections(sections.map(s => s.id === currentFormId ? newSec : s));
-      else setSections([...sections, newSec]);
-    }
-    if (activeTab === 'Spares') {
-      if (!sprName || !sprReorder || !sprStandardRate) { alert("Please fill in spare name, reorder level, and rates!"); return; }
-      const isExisting = spares.some(s => s.id === currentFormId);
-      const newSpr = { id: currentFormId, name: sprName, category: sprCategory, section: sprSection, machineType: sprMachineType, brand: sprBrand, modelNo: sprModelNo, partNo: sprPartNo, uom: sprUom, reorder: Number(sprReorder), minStock: Number(sprMinStock), maxStock: Number(sprMaxStock), standardRate: Number(sprStandardRate), hsnCode: sprHsn, gstPercent: Number(sprGst) || 18, preferredSupplier: sprSupplier, leadTime: Number(sprLeadTime) || 0, status: sprStatus };
-      if (isExisting) setSpares(spares.map(s => s.id === currentFormId ? newSpr : s));
-      else setSpares([...spares, newSpr]);
-    }
 
     if (activeTab === 'OpeningStock') {
       const isExisting = openingStocks.some(o => o.id === currentFormId);
@@ -778,12 +664,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
 
   const handleEdit = (row) => {
     setCurrentFormId(row.id);
-    if (activeTab === 'Sections') {
-      setSecName(row.name); setSecType(row.type); setSecDept(row.dept); setSecIncharge(row.incharge); setSecMachines(row.machines); setSecDesc(row.desc); setSecStatus(row.status);
-    }
-    if (activeTab === 'Spares') {
-      setSprName(row.name); setSprCategory(row.category); setSprSection(row.section); setSprMachineType(row.machineType); setSprBrand(row.brand); setSprModelNo(row.modelNo); setSprPartNo(row.partNo); setSprUom(row.uom); setSprReorder(row.reorder); setSprMinStock(row.minStock); setSprMaxStock(row.maxStock); setSprStandardRate(row.standardRate); setSprHsn(row.hsnCode); setSprGst(row.gstPercent); setSprSupplier(row.preferredSupplier); setSprLeadTime(row.leadTime); setSprStatus(row.status);
-    }
     if (activeTab === 'OpeningStock') {
       setOsFY(row.financialYear);
       setOsSection(row.section);
@@ -902,8 +782,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this spares transaction record?")) {
-      if (activeTab === 'Sections') setSections(sections.filter(s => s.id !== id));
-      if (activeTab === 'Spares') setSpares(spares.filter(s => s.id !== id));
       if (activeTab === 'OpeningStock') setOpeningStocks(openingStocks.filter(o => o.id !== id));
       if (activeTab === 'RequestIndent') setIndents(indents.filter(i => i.id !== id));
       if (activeTab === 'IndentApproval') setIndentApprovals(indentApprovals.filter(iap => iap.id !== id));
@@ -935,160 +813,134 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
                 Track machinery setups, spare requisitions, purchase flows, work orders, consumption records, and offsite job works.
               </p>
             </div>
-            {/* Buttons moved below the cards */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn btn-secondary" onClick={() => alert('Exporting ledger files...')}>
+                <Download size={15} /> Export Ledger
+              </button>
+              <button className="btn btn-primary" onClick={handleCreateNew} style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#7c3aed', borderColor: '#7c3aed' }}>
+                <Plus size={16} /> Add Transaction
+              </button>
+            </div>
           </div>
 
-          {/* DYNAMIC CARD-BASED TRANSACTION SELECTORS */}
-          <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap', gap: 16, marginBottom: 24, paddingBottom: 8 }}>
-            {Object.values(PAGES_METADATA).filter(p => p.category === activeSection).map(p => {
-              const isSelected = activeTab === p.key;
-              const IconComp = p.icon;
-              const cardColor = p.color || '#7c3aed';
-              const r = parseInt(cardColor.slice(1, 3), 16) || 124;
-              const g = parseInt(cardColor.slice(3, 5), 16) || 58;
-              const b = parseInt(cardColor.slice(5, 7), 16) || 237;
-
+          {/* DYNAMIC CARD-BASED TRANSACTION SELECTORS (4-COLUMNS GRID) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+            {[
+              { 
+                key: 'OpeningStock', 
+                label: 'Opening Stock Entry', 
+                desc: 'Define initial physical spares balances.', 
+                icon: FolderKanban 
+              },
+              { 
+                key: 'RequestIndent', 
+                label: 'Spares Request Indent', 
+                desc: 'Raise internal spare part requests.', 
+                icon: FolderKanban 
+              },
+              { 
+                key: 'PurchaseOrder', 
+                label: 'PO Entry - Spares', 
+                desc: 'Draft outbound supplier purchase orders.', 
+                icon: ShoppingBag 
+              },
+              { 
+                key: 'PurchaseEntry', 
+                label: 'Purchase Entry', 
+                desc: 'Register incoming supplier deliveries.', 
+                icon: ShoppingBag 
+              },
+              { 
+                key: 'WorkOrder', 
+                label: 'Work Order Entry', 
+                desc: 'Schedule breakdown/preventive repairs.', 
+                icon: Wrench 
+              },
+              { 
+                key: 'Consumption', 
+                label: 'Consumption Entry', 
+                desc: 'Log physical parts used during repairs.', 
+                icon: Factory 
+              },
+              { 
+                key: 'JobWorkIssue', 
+                label: 'JobWork/HandLoan Issue', 
+                desc: 'Dispatch parts for external servicing.', 
+                icon: AlertTriangle 
+              },
+              { 
+                key: 'JobWorkRecv', 
+                label: 'JobWork/HandLoan Received', 
+                desc: 'Log parts returned from external services.', 
+                icon: Check 
+              }
+            ].map(tab => {
+              const isSelected = activeTab === tab.key;
+              const IconComponent = tab.icon;
               return (
-                <div 
-                  key={p.key}
-                  onClick={() => handleOpenPage(p)}
-                  className="card"
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                    setSearchTerm('');
+                  }}
                   style={{
-                    flex: '1 0 220px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 12,
-                    padding: 16,
+                    gap: '12px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: 'white',
+                    border: isSelected ? '2px solid #7c3aed' : '1px solid var(--border)',
                     cursor: 'pointer',
-                    border: isSelected ? `2px solid ${cardColor}` : '1px solid var(--border)',
-                    background: isSelected ? `rgba(${r},${g},${b}, 0.05)` : 'var(--bg-secondary)',
                     transition: 'all 0.2s ease',
+                    textAlign: 'left',
+                    boxShadow: isSelected ? '0 10px 15px -3px rgba(124, 58, 237, 0.08)' : 'none',
                     transform: isSelected ? 'translateY(-2px)' : 'none',
-                    boxShadow: isSelected ? `0 10px 15px -3px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)'
+                    outline: 'none'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ padding: 12, borderRadius: 10, background: cardColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 12px rgba(0,0,0,0.15)` }}>
-                      <IconComp size={20} />
-                    </div>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</h3>
-                      <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                         <span style={{ fontWeight: 800, color: cardColor }}>-</span> Records
-                      </p>
-                    </div>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: isSelected ? 'rgba(124, 58, 237, 0.1)' : 'rgba(100, 116, 139, 0.06)',
+                    color: isSelected ? '#7c3aed' : '#64748b',
+                    flexShrink: 0
+                  }}>
+                    <IconComponent size={18} />
                   </div>
-                </div>
+                  <div>
+                    <h4 style={{ 
+                      fontWeight: '850', 
+                      fontSize: '13px', 
+                      color: isSelected ? '#7c3aed' : 'var(--text-primary)', 
+                      margin: 0 
+                    }}>
+                      {tab.label}
+                    </h4>
+                    <p style={{ 
+                      fontSize: '11px', 
+                      color: 'var(--text-secondary)', 
+                      margin: '4px 0 0 0', 
+                      fontWeight: '500',
+                      lineHeight: '1.3'
+                    }}>
+                      {tab.desc}
+                    </p>
+                  </div>
+                </button>
               );
             })}
           </div>
 
           {/* DYNAMIC DATA TABLE PER ACTIVE TAB */}
           <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-            
-            {/* Toolbar for the Data Table */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: '#f9fafb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {PAGES_METADATA[activeTab]?.label || 'Transaction Records'}
-              </h3>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="btn btn-secondary" onClick={() => alert('Exporting ledger files...')} style={{ fontSize: '13px', padding: '6px 12px' }}>
-                  <Download size={14} style={{ marginRight: '6px' }} /> Export Ledger
-                </button>
-                <button className="btn btn-primary" onClick={handleCreateNew} style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#7c3aed', borderColor: '#7c3aed', fontSize: '13px', padding: '6px 12px' }}>
-                  <Plus size={14} /> Add Transaction
-                </button>
-              </div>
-            </div>
-
             <div style={{ overflowX: 'auto' }}>
               
-              {/* SECTIONS LIST */}
-              {activeTab === 'Sections' && (
-                <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                  <thead>
-                    <tr>
-                      <th>SECTION CODE</th>
-                      <th>SECTION NAME</th>
-                      <th>TYPE</th>
-                      <th>DEPARTMENT</th>
-                      <th>IN-CHARGE</th>
-                      <th style={{ textAlign: 'center' }}>MACHINE COUNT</th>
-                      <th>STATUS</th>
-                      <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSections.map(row => (
-                      <tr key={row.id}>
-                        <td style={{ fontWeight: 700 }}>{row.id}</td>
-                        <td style={{ fontWeight: 650 }}>{row.name}</td>
-                        <td>{row.type}</td>
-                        <td>{row.dept}</td>
-                        <td>{row.incharge}</td>
-                        <td style={{ textAlign: 'center', fontWeight: 700 }}>{row.machines} Loom units</td>
-                        <td>
-                          <span className={`badge ${row.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{row.status}</span>
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '6px' }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id)}><Trash2 size={12} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              {/* SPARES LIST */}
-              {activeTab === 'Spares' && (
-                <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                  <thead>
-                    <tr>
-                      <th>SPARE CODE</th>
-                      <th>SPARE NAME</th>
-                      <th>CATEGORY</th>
-                      <th>SECTION</th>
-                      <th>BRAND / MODEL / PART</th>
-                      <th>UOM</th>
-                      <th style={{ textAlign: 'right' }}>STD RATE</th>
-                      <th style={{ textAlign: 'center' }}>REORDER / MIN / MAX</th>
-                      <th>STATUS</th>
-                      <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSpares.map(row => (
-                      <tr key={row.id}>
-                        <td style={{ fontWeight: 700 }}>{row.id}</td>
-                        <td style={{ fontWeight: 650 }}>{row.name}</td>
-                        <td>{row.category}</td>
-                        <td style={{ fontWeight: 550 }}>{row.section}</td>
-                        <td style={{ color: 'var(--text-secondary)' }}>
-                          {row.brand} | {row.modelNo || 'N/A'} | Pt: {row.partNo || 'N/A'}
-                        </td>
-                        <td>{row.uom}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 750 }}>₹ {row.standardRate.toLocaleString()}</td>
-                        <td style={{ textAlign: 'center', fontWeight: 650, color: '#2563eb' }}>
-                          {row.reorder} / {row.minStock} / {row.maxStock}
-                        </td>
-                        <td>
-                          <span className={`badge ${row.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{row.status}</span>
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '6px' }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id)}><Trash2 size={12} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
               {/* OPENING STOCK */}
               {activeTab === 'OpeningStock' && (
                 <table className="data-table" style={{ width: '100%', margin: 0 }}>
@@ -1510,8 +1362,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '24px' }}>
             <div>
               <h2 style={{ fontSize: '20px', fontWeight: 850, color: 'var(--text-primary)', margin: 0 }}>
-                {activeTab === 'Sections' && `Master Section Registry Setup — ${currentFormId}`}
-                {activeTab === 'Spares' && `Spares Identifier Catalog Entry — ${currentFormId}`}
                 {activeTab === 'OpeningStock' && `Opening Stock Entry Slip — ${currentFormId}`}
                 {activeTab === 'RequestIndent' && `Spares Request Indent Form — ${currentFormId}`}
                 {activeTab === 'IndentApproval' && `Request Indent Clearance Approval — ${currentFormId}`}
@@ -1537,7 +1387,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
 
           {/* Multi-section tabs */}
           <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px' }}>
-            {(activeTab === 'Sections' || activeTab === 'Spares' ? ['Reference Info'] : ['Reference Info', 'Transaction Setup Details', 'Grid Details Matrix']).map(tab => {
+            {['Reference Info', 'Transaction Setup Details', 'Grid Details Matrix'].map(tab => {
               const isSelected = activeFormTab === tab;
               return (
                 <button
@@ -1573,40 +1423,6 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
                     <label>Transaction No</label>
                     <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
                   </div>
-
-                  {activeTab === 'Sections' && (
-                    <>
-                      <div className="form-group"><label>Section Name *</label><input type="text" className="form-control" value={secName} onChange={e => setSecName(e.target.value)} required /></div>
-                      <div className="form-group"><label>Type</label><input type="text" className="form-control" value={secType} onChange={e => setSecType(e.target.value)} /></div>
-                      <div className="form-group"><label>Department</label><input type="text" className="form-control" value={secDept} onChange={e => setSecDept(e.target.value)} /></div>
-                      <div className="form-group"><label>In-Charge</label><select className="form-control" value={secIncharge} onChange={e => setSecIncharge(e.target.value)}>{EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}</select></div>
-                      <div className="form-group"><label>Machine Count</label><input type="number" className="form-control" value={secMachines} onChange={e => setSecMachines(e.target.value)} /></div>
-                      <div className="form-group"><label>Description</label><input type="text" className="form-control" value={secDesc} onChange={e => setSecDesc(e.target.value)} /></div>
-                      <div className="form-group"><label>Status</label><select className="form-control" value={secStatus} onChange={e => setSecStatus(e.target.value)}><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                    </>
-                  )}
-
-                  {activeTab === 'Spares' && (
-                    <>
-                      <div className="form-group"><label>Spare Name *</label><input type="text" className="form-control" value={sprName} onChange={e => setSprName(e.target.value)} required /></div>
-                      <div className="form-group"><label>Category</label><input type="text" className="form-control" value={sprCategory} onChange={e => setSprCategory(e.target.value)} /></div>
-                      <div className="form-group"><label>Section</label><select className="form-control" value={sprSection} onChange={e => setSprSection(e.target.value)}>{SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-                      <div className="form-group"><label>Machine Type</label><input type="text" className="form-control" value={sprMachineType} onChange={e => setSprMachineType(e.target.value)} /></div>
-                      <div className="form-group"><label>Brand</label><input type="text" className="form-control" value={sprBrand} onChange={e => setSprBrand(e.target.value)} /></div>
-                      <div className="form-group"><label>Model No</label><input type="text" className="form-control" value={sprModelNo} onChange={e => setSprModelNo(e.target.value)} /></div>
-                      <div className="form-group"><label>Part No</label><input type="text" className="form-control" value={sprPartNo} onChange={e => setSprPartNo(e.target.value)} /></div>
-                      <div className="form-group"><label>UOM</label><select className="form-control" value={sprUom} onChange={e => setSprUom(e.target.value)}><option value="Nos">Nos</option><option value="Kgs">Kgs</option><option value="Mtrs">Mtrs</option><option value="Ltrs">Ltrs</option></select></div>
-                      <div className="form-group"><label>Reorder Level *</label><input type="number" className="form-control" value={sprReorder} onChange={e => setSprReorder(e.target.value)} required /></div>
-                      <div className="form-group"><label>Min Stock Level</label><input type="number" className="form-control" value={sprMinStock} onChange={e => setSprMinStock(e.target.value)} /></div>
-                      <div className="form-group"><label>Max Stock Level</label><input type="number" className="form-control" value={sprMaxStock} onChange={e => setSprMaxStock(e.target.value)} /></div>
-                      <div className="form-group"><label>Standard Rate (₹) *</label><input type="number" className="form-control" value={sprStandardRate} onChange={e => setSprStandardRate(e.target.value)} required /></div>
-                      <div className="form-group"><label>HSN Code</label><input type="text" className="form-control" value={sprHsn} onChange={e => setSprHsn(e.target.value)} /></div>
-                      <div className="form-group"><label>GST %</label><input type="number" className="form-control" value={sprGst} onChange={e => setSprGst(e.target.value)} /></div>
-                      <div className="form-group"><label>Preferred Supplier</label><select className="form-control" value={sprSupplier} onChange={e => setSprSupplier(e.target.value)}>{SUPPLIERS.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-                      <div className="form-group"><label>Lead Time (Days)</label><input type="number" className="form-control" value={sprLeadTime} onChange={e => setSprLeadTime(e.target.value)} /></div>
-                      <div className="form-group"><label>Status</label><select className="form-control" value={sprStatus} onChange={e => setSprStatus(e.target.value)}><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
-                    </>
-                  )}
 
                   {activeTab === 'OpeningStock' && (
                     <>
