@@ -4,8 +4,8 @@ import {
   LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
-  Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight,
-  CreditCard, DollarSign, Target, Percent, BookOpen
+  Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
+  ShoppingBag, Database, Briefcase, FileDigit, FolderKanban
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -118,9 +118,33 @@ const modules = [
       { path: '/ipo-invoice', label: 'IPO Invoice', icon: Receipt }
     ]
   },
-  { path: '/work-order/transaction', label: 'Work Order Transaction', icon: Layers },
-  { path: '/work-order/completion', label: 'Work Order Completion', icon: CheckSquare },
-  { path: '/work-order/approval', label: 'Work Order Approval', icon: Settings },
+  {
+    label: 'Work Order Transaction',
+    icon: Layers,
+    children: [
+      { path: '/work-order/transaction/design', label: 'Design & Development', icon: FileText },
+      { path: '/work-order/transaction/management', label: 'Order Management', icon: Factory },
+      { path: '/work-order/transaction/processing', label: 'Processing', icon: Palette },
+      { path: '/work-order/transaction/prep', label: 'Yarn & Fabric Prep', icon: Layers },
+      { path: '/work-order/transaction/amendments', label: 'Amendments & Codes', icon: Edit }
+    ]
+  },
+  {
+    label: 'Work Order Completion',
+    icon: CheckSquare,
+    children: [
+      { path: '/work-order/completion/vendor-purchase', label: 'Vendor & Purchase Completion', icon: ShoppingCart },
+      { path: '/work-order/completion/processing-fabric', label: 'Processing & Fabric Completion', icon: Layers }
+    ]
+  },
+  {
+    label: 'Work Order Approval',
+    icon: Settings,
+    children: [
+      { path: '/work-order/approval/external', label: 'External Order Approvals', icon: Globe },
+      { path: '/work-order/approval/material-yarn', label: 'Material & Yarn Approvals', icon: Package }
+    ]
+  },
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
@@ -137,16 +161,39 @@ const modules = [
   { section: 'Warping & Weaving' },
   { path: '/warp/beam-receipt', label: 'Warp Beam Received Entry', icon: Layers },
   { path: '/warp/delivery', label: 'Warp Beam Delivery Entry', icon: Truck },
-  { path: '/warp/transaction', label: 'Sizing & Warping Desk', icon: Settings },
+  {
+    label: 'Warping/Sizing Transaction',
+    icon: Settings,
+    children: [
+      { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
+      { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
+    ]
+  },
 
   { section: 'Greige Transaction' },
-  { path: '/greige/transaction', label: 'Greige Transactions', icon: Layers },
+  {
+    label: 'Greige Transactions',
+    icon: Layers,
+    children: [
+      { path: '/greige/transaction/operations', label: 'Greige Operations', icon: Factory },
+      { path: '/greige/transaction/administration', label: 'Greige Administration', icon: ClipboardList }
+    ]
+  },
 
   { section: 'Processing / Production' },
-  { path: '/cloth/inward', label: 'Cloth Inward', icon: Factory },
-  { path: '/cloth/delivery', label: 'Cloth Delivery', icon: Truck },
-  { path: '/finished-fabric', label: 'Finished Fabric', icon: Scissors },
-  { path: '/fabric/transaction', label: 'Fabric Transactions', icon: Scissors },
+  {
+    label: 'Fabric Production Desk',
+    icon: Scissors,
+    children: [
+      { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
+      { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
+      { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
+      { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
+      { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
+      { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
+      { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
+    ]
+  },
 
   { section: 'LAB & Shade Management' },
 
@@ -158,9 +205,16 @@ const modules = [
   { path: '/packing', label: 'Packing Slip', icon: Box },
 
   { section: 'Maintenance & Spares' },
-  { path: '/spares/master', label: 'Spares Masters', icon: Settings },
-  { path: '/spares/transaction', label: 'Spares Transactions', icon: Wrench },
-  { path: '/spares/approval', label: 'Spares Approvals', icon: CheckSquare },
+  {
+    label: 'Maintenance & Spares Desk',
+    icon: Wrench,
+    children: [
+      { path: '/spares/desk/master-setup', label: 'Master Setup', icon: Settings },
+      { path: '/spares/desk/requests-approvals', label: 'Requests & Approvals', icon: FolderKanban },
+      { path: '/spares/desk/purchase-work-orders', label: 'Purchase & Work Orders', icon: ShoppingBag },
+      { path: '/spares/desk/consumption-jobwork', label: 'Consumption & Jobwork', icon: Factory }
+    ]
+  },
   { path: '/spares/report', label: 'Spares Report', icon: FileText },
 
   { section: 'Gate & Security' },
@@ -178,8 +232,18 @@ const modules = [
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
   { section: 'Accounts & Finance' },
+  {
+    label: 'Account Transaction',
+    icon: Briefcase,
+    children: [
+      { path: '/finance/desk/bills', label: 'Bills & Approvals', icon: Receipt },
+      { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileDigit },
+      { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
+      { path: '/finance/desk/lc', label: 'LC Management', icon: Briefcase }
+    ]
+  },
   { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: Receipt },
-  { path: '/accounts/transaction', label: 'Accounts Transaction', icon: ArrowRightLeft },
+  // { path: '/accounts/transaction', label: 'Accounts Transaction', icon: ArrowRightLeft },
 
   { section: 'Reports & MIS' },
   { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
@@ -264,8 +328,8 @@ export default function Sidebar() {
             <div key={i} className="nav-section">{item.section}</div>
           ) : item.children ? (
             <div key={item.label} className="nav-group">
-              <button 
-                className={`nav-item ${openMenus[item.label] ? 'open' : ''}`} 
+              <button
+                className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
                 onClick={() => toggleMenu(item.label)}
                 style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
               >

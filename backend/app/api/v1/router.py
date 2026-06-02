@@ -33,4 +33,10 @@ api_router.include_router(dyed_yarn_receipts.router)
 api_router.include_router(dyed_yarn_deliveries.router)
 api_router.include_router(warp_beam_receipts.router)
 api_router.include_router(warp_deliveries.router)
+<<<<<<< HEAD
 api_router.include_router(sub_masters.router)
+=======
+
+from app.api.v1.endpoints import work_order_transactions
+api_router.include_router(work_order_transactions.router)
+>>>>>>> 9ff6a4cad59e83114dc2a88b00be3b11b654d151

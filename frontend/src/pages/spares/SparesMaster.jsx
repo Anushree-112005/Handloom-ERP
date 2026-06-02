@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { 
-  Plus, Search, Trash2, Edit, Check, X, 
-  Settings, Wrench, Layers, Users, ShieldAlert, Download 
+import {
+  Plus, Search, Trash2, Edit, Check, X,
+  Settings, Wrench, Layers, Users, ShieldAlert, Download
 } from 'lucide-react';
 
 export default function SparesMaster() {
@@ -217,7 +217,7 @@ export default function SparesMaster() {
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
-      
+
       {!isFormOpen ? (
         /* ========================================================================= */
         /* =========================== 1. LIST MASTER MODE ========================= */
@@ -246,17 +246,17 @@ export default function SparesMaster() {
           {/* MASTER CATEGORY NAVIGATION TABS (PREMIUM ICON CARDS) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '24px' }}>
             {[
-              { 
-                key: 'Sections', 
-                label: 'Section Creation Master', 
-                desc: 'Define and audit loom rooms, shop floors, and active mechanical divisions.', 
-                icon: Layers 
+              {
+                key: 'Sections',
+                label: 'Section Creation Master',
+                desc: 'Define and audit loom rooms, shop floors, and active mechanical divisions.',
+                icon: Layers
               },
-              { 
-                key: 'Spares', 
-                label: 'Spares Creation Master', 
-                desc: 'Create, catalog, and manage inventory levels for all machinery spare parts.', 
-                icon: Wrench 
+              {
+                key: 'Spares',
+                label: 'Spares Creation Master',
+                desc: 'Create, catalog, and manage inventory levels for all machinery spare parts.',
+                icon: Wrench
               }
             ].map(tab => {
               const isSelected = activeTab === tab.key;
@@ -298,18 +298,18 @@ export default function SparesMaster() {
                     <IconComponent size={22} />
                   </div>
                   <div>
-                    <h4 style={{ 
-                      fontWeight: '850', 
-                      fontSize: '15px', 
-                      color: isSelected ? '#7c3aed' : 'var(--text-primary)', 
-                      margin: 0 
+                    <h4 style={{
+                      fontWeight: '850',
+                      fontSize: '15px',
+                      color: isSelected ? '#7c3aed' : 'var(--text-primary)',
+                      margin: 0
                     }}>
                       {tab.label}
                     </h4>
-                    <p style={{ 
-                      fontSize: '12px', 
-                      color: 'var(--text-secondary)', 
-                      margin: '4px 0 0 0', 
+                    <p style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)',
+                      margin: '4px 0 0 0',
                       fontWeight: '500',
                       lineHeight: '1.4'
                     }}>
@@ -323,7 +323,7 @@ export default function SparesMaster() {
 
           {/* MASTER SUMMARY KPI METRICS GRID */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
-            
+
             <div className="card" style={{ padding: '20px', borderLeft: '4px solid #7c3aed', background: 'white' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Sections Created</span>
               <h3 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: '8px 0 0 0' }}>{totalSectionsCount}</h3>
@@ -348,15 +348,15 @@ export default function SparesMaster() {
 
           {/* DUAL MASTER DATA TABLES */}
           <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-            
+
             {/* Global search filter toolbar */}
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: '#f9fafb' }}>
               <div style={{ position: 'relative', maxWidth: '380px' }}>
                 <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  placeholder={activeTab === 'Sections' ? "Search Section Code or Name..." : "Search Spares Code, Name, or Part No..."} 
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder={activeTab === 'Sections' ? "Search Section Code or Name..." : "Search Spares Code, Name, or Part No..."}
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   style={{ paddingLeft: '32px', margin: 0, fontSize: '13px' }}
@@ -454,7 +454,7 @@ export default function SparesMaster() {
         /* =========================== 2. FORM VIEW MODE =========================== */
         /* ========================================================================= */
         <div className="card animate-fade" style={{ padding: '32px', minHeight: '520px', background: 'white' }}>
-          
+
           {/* Form Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '24px' }}>
             <div>
@@ -507,7 +507,7 @@ export default function SparesMaster() {
                 {activeFormTab === 'General Info' && (
                   <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Section Master Basic Setup</h4>
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                       <div className="form-group">
                         <label>Section Code</label>
