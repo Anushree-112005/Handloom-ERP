@@ -18,4 +18,5 @@ from app.models.log_report import LogReport
 from app.models.design_entry import DesignEntry
 from app.models.general_master import GeneralMaster
 from app.models.company_setting import CompanySetting
+from app.models.sub_master import SubMaster
 from app.models.work_order import WorkOrderTransaction

@@ -5,7 +5,8 @@ import {
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
-  ShoppingBag, Database, Briefcase, FileDigit, FolderKanban
+  ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
+  CreditCard, DollarSign, Target, Percent, BookOpen
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -19,6 +20,92 @@ const modules = [
   { section: 'Masters' },
   { path: '/party-master', label: 'Party Master', icon: Users },
   { path: '/employee', label: 'Employee Master', icon: Shield },
+  
+  { section: 'Sub Masters' },
+  {
+    label: 'Core System Basics',
+    icon: Package,
+    children: [
+      { path: '/sub-master/currency_master', label: 'Currency Master', icon: Receipt },
+      { path: '/sub-master/unit_master', label: 'Unit Master', icon: Layers },
+      { path: '/sub-master/yarn_type_master', label: 'Yarn Type Master', icon: Layers },
+      { path: '/sub-master/yarn_count_master', label: 'Yarn Count Master', icon: Layers },
+      { path: '/sub-master/color_master', label: 'Color Master', icon: Palette },
+      { path: '/sub-master/design_type_master', label: 'Design Type Master', icon: Palette },
+      { path: '/sub-master/process_type_master', label: 'Process Type Master', icon: Settings },
+      { path: '/sub-master/hsn_code_master', label: 'HSN Code Master', icon: FileText },
+      { path: '/sub-master/loom_master', label: 'Loom Master', icon: Factory },
+      { path: '/sub-master/loom_type_master', label: 'Loom Type Master', icon: Factory },
+      { path: '/sub-master/party_type_group', label: 'Party Type / Group', icon: Users },
+      { path: '/sub-master/payment_terms_master', label: 'Payment Terms', icon: Receipt },
+      { path: '/sub-master/godown_master', label: 'Godown Master', icon: Box },
+      { path: '/sub-master/gate_location_master', label: 'Gate Location', icon: MapPin },
+      { path: '/sub-master/mill_name_master', label: 'Mill Name Master', icon: Factory },
+      { path: '/sub-master/district_city_master', label: 'District & City', icon: MapPin },
+      { path: '/sub-master/order_type_master', label: 'Order Type Master', icon: ClipboardList },
+      { path: '/sub-master/sales_region_master', label: 'Sales Region', icon: MapPin },
+    ],
+  },
+  {
+    label: 'Operations & Processing',
+    icon: Wrench,
+    children: [
+      { path: '/sub-master/checker_name_master', label: 'Checker Name', icon: CheckSquare },
+      { path: '/sub-master/grey_checker_name', label: 'Grey Checker Name', icon: CheckSquare },
+      { path: '/sub-master/checking_table_machine', label: 'Checking Table/Machine', icon: Settings },
+      { path: '/sub-master/category_master', label: 'Category Master', icon: Layers },
+      { path: '/sub-master/fabric_master', label: 'Fabric Master', icon: Scissors },
+      { path: '/sub-master/chemical_group_master', label: 'Chemical Group', icon: Layers },
+      { path: '/sub-master/sizing_chemical_master', label: 'Sizing Chemical', icon: Layers },
+      { path: '/sub-master/damage_master', label: 'Damage Master', icon: Shield },
+      { path: '/sub-master/design_color_master', label: 'Design Color', icon: Palette },
+      { path: '/sub-master/finishing_type_master', label: 'Finishing Type', icon: Wrench },
+      { path: '/sub-master/printing_technique_master', label: 'Printing Technique', icon: Palette },
+      { path: '/sub-master/process_sequences_master', label: 'Process Sequences', icon: ClipboardList },
+      { path: '/sub-master/debit_credit_reason_master', label: 'Debit/Credit Reason', icon: FileText },
+      { path: '/sub-master/expenses_group_head', label: 'Expenses Group/Head', icon: Receipt },
+      { path: '/sub-master/fibre_count_master', label: 'Fibre Count', icon: Layers },
+      { path: '/sub-master/tds_bill_type_master', label: 'TDS Bill Type', icon: FileText },
+      { path: '/sub-master/test_parameter_master', label: 'Test Parameter', icon: Activity },
+      { path: '/sub-master/remarks_master', label: 'Remarks Master', icon: FileText },
+      { path: '/sub-master/duty_master', label: 'Duty Master', icon: Receipt },
+      { path: '/sub-master/weaving_master', label: 'Weaving Master', icon: Layers },
+    ],
+  },
+  {
+    label: 'Complex Masters',
+    icon: Layers,
+    children: [
+      { path: '/sub-master/buyer_kyc_form', label: 'Buyer KYC Form', icon: Shield },
+      { path: '/sub-master/buyer_sub_master', label: 'Buyer Sub Master', icon: Users },
+      { path: '/sub-master/company_bank_master', label: 'Company Bank Master', icon: CreditCard },
+      { path: '/sub-master/lc_bank_master', label: 'LC Bank Master', icon: Factory },
+      { path: '/sub-master/fabric_costing_engine', label: 'Fabric Costing Engine', icon: DollarSign },
+    ],
+  },
+  {
+    label: 'Amendment Masters',
+    icon: ClipboardList,
+    children: [
+      { path: '/sub-master/cloth_lot_no_amd', label: 'Cloth LOT No. AMD', icon: ClipboardList },
+      { path: '/sub-master/invoice_amd', label: 'Invoice AMD', icon: FileText },
+      { path: '/sub-master/despatch_request_amd', label: 'Despatch Request AMD', icon: Truck },
+      { path: '/sub-master/point_amd', label: 'Point AMD', icon: Target },
+      { path: '/sub-master/vendor_order_amd', label: 'Vendor Order AMD', icon: ShoppingCart },
+    ],
+  },
+  {
+    label: 'System Config & Utilities',
+    icon: Settings,
+    children: [
+      { path: '/sub-master/approval_settings', label: 'Approval Settings', icon: Settings },
+      { path: '/sub-master/direct_invoice_limits', label: 'Direct Invoice Limits', icon: Percent },
+      { path: '/sub-master/sub_menu_master', label: 'Sub Menu Master', icon: ClipboardList },
+      { path: '/sub-master/control_service', label: 'Control Service', icon: Shield },
+      { path: '/sub-master/log_report_util', label: 'Log Report', icon: FileText },
+      { path: '/sub-master/old_year_menu', label: 'Old Year Menu', icon: BookOpen },
+    ],
+  },
 
 
   { section: 'Order Management' },

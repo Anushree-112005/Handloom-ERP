@@ -6,15 +6,10 @@ import {
 
 export default function GateTransaction() {
   // Mock gate transactions database
-  const [transactions, setTransactions] = useState([
-    { id: 'GT-2026-001', passNo: 'GP-9011', vehicleNo: 'TN-37-BY-1204', type: 'Inward', party: 'Vardhman Spinning', material: 'Cotton Yarn Combed 40s', qty: '40 Bags', driverName: 'Ramesh Kumar', inTime: '2026-06-01 09:30', outTime: '2026-06-01 11:15', weightTare: 3400, weightGross: 6200, weightNet: 2800, status: 'Completed', remarks: 'Gate entry verified' },
-    { id: 'GT-2026-002', passNo: 'GP-9012', vehicleNo: 'KA-01-MH-5566', type: 'Outward', party: 'Reliance Retail', material: 'Finished Cotton Satin', qty: '84 Rolls', driverName: 'Sanjay Singh', inTime: '2026-06-01 10:15', outTime: '', weightTare: 3200, weightGross: 5800, weightNet: 2600, status: 'Checked In', remarks: 'Loading in progress' },
-    { id: 'GT-2026-003', passNo: 'GP-9013', vehicleNo: 'MH-12-PQ-9988', type: 'Inward', party: 'Chemical Traders', material: 'Sizing Chemical Starch', qty: '120 Drums', driverName: 'Anil Patel', inTime: '2026-06-01 12:45', outTime: '', weightTare: 4100, weightGross: 9300, weightNet: 5200, status: 'Checked In', remarks: 'Unloading initiated' },
-    { id: 'GT-2026-004', passNo: 'GP-9014', vehicleNo: 'TN-30-AA-8877', type: 'Outward', party: 'Raymond Ltd', material: 'Grey Fabric Weave 120gsm', qty: '110 Rolls', driverName: 'M. Selvam', inTime: '2026-05-31 14:00', outTime: '2026-05-31 16:30', weightTare: 3500, weightGross: 7800, weightNet: 4300, status: 'Completed', remarks: 'Dispatch cleared' }
-  ]);
+  const [transactions, setTransactions] = useState([]);
 
   // Form State
-  const [selectedId, setSelectedId] = useState(transactions[0].id);
+  const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');

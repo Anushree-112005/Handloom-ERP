@@ -22,9 +22,7 @@ export default function SparesApproval() {
   // ----------------------------------------------------
   // 1. REQUEST INDENT APPROVAL DATA & FORM STATES
   // ----------------------------------------------------
-  const [indentApprovals, setIndentApprovals] = useState([
-    { id: 'IAP-2026-001', date: '2026-06-01', indentRef: 'IND-2026-001', section: 'Weaving Division A', requestedBy: 'Murugan Swamy', priority: 'High', approvalStatus: 'Approve', approvedBy: 'Mani Bharathi (Store Head)', remarks: 'Urgent stock clearance', forwardToPurchase: 'Yes', items: [{ name: 'Airjet Loom Solenoid Valve', reqQty: 2, currentStock: 12, approvedQty: 2, remarks: 'Cleared', action: 'Approve' }] }
-  ]);
+  const [indentApprovals, setIndentApprovals] = useState([]);
 
   // Form fields for Indent Approval
   const [iapIndentRef, setIapIndentRef] = useState('IND-2026-001');
@@ -49,9 +47,7 @@ export default function SparesApproval() {
   // ----------------------------------------------------
   // 2. PURCHASE ORDER APPROVAL DATA & FORM STATES
   // ----------------------------------------------------
-  const [poApprovals, setPoApprovals] = useState([
-    { id: 'POA-2026-001', date: '2026-06-01', poRef: 'SPO-2026-001', supplierName: 'Standard Gears Ltd', totalPOValue: 10620, approvalStatus: 'Approved', approvedBy: 'Dinesh Balasamy (MD)', remarks: 'PO verified and sanctioned', sendToSupplier: 'Yes', items: [{ name: 'Airjet Loom Solenoid Valve', qty: 2, rate: 4500, approvedRate: 4500, amount: 9000 }] }
-  ]);
+  const [poApprovals, setPoApprovals] = useState([]);
 
   // Form Fields for PO Approval
   const [poaPoRef, setPoaPoRef] = useState('SPO-2026-001');
