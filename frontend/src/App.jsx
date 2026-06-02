@@ -6,6 +6,9 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
+import OrderSubModule from './pages/buyer_order/OrderSubModule';
+import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
+import IPOInvoice from './pages/buyer_order/IPOInvoice';
 import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
@@ -33,6 +36,7 @@ import SparesReport from './pages/spares/SparesReport';
 import SparesApproval from './pages/spares/SparesApproval';
 import VoucherEntry from './pages/accounts/VoucherEntry';
 import AccountsTransaction from './pages/accounts/AccountsTransaction';
+import SubMasterPage from './pages/masters/SubMasterPage';
 
 
 
@@ -71,7 +75,13 @@ export default function App() {
         <Route path="overview" element={<Overview />} />
         <Route path="party-master" element={<PartyMaster />} />
 
+        {/* Dynamic Sub-Master route — handles all 38 generic master forms */}
+        <Route path="sub-master/:entity" element={<SubMasterPage />} />
+
         <Route path="buyer-order" element={<BuyerOrder />} />
+        <Route path="buyer-order/processing" element={<OrderSubModule />} />
+        <Route path="buyer-order/dispatch-expense" element={<DispatchExpenseSubModule />} />
+        <Route path="ipo-invoice" element={<IPOInvoice />} />
         <Route path="work-order/desk" element={<WorkOrderDesk defaultSection="Transactions" />} />
         <Route path="work-order/transaction" element={<WorkOrderDesk defaultSection="Transactions" />} />
         <Route path="work-order/completion" element={<WorkOrderDesk defaultSection="Completions" />} />

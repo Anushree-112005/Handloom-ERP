@@ -7,7 +7,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { despatchAPI } from '../../services/api';
+import { despatchAPI, buyerOrderAPI } from '../../services/api';
 
 // Dynamic Date Formatter Utility
 const getFormattedDate = (d = new Date()) => {
@@ -93,6 +93,7 @@ export default function DespatchPlanning() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [buyerOrdersList, setBuyerOrdersList] = useState([]);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -182,7 +183,17 @@ export default function DespatchPlanning() {
   // Load from database on mount
   useEffect(() => {
     loadRecords();
+    loadBuyerOrders();
   }, []);
+
+  const loadBuyerOrders = async () => {
+    try {
+      const res = await buyerOrderAPI.list();
+      setBuyerOrdersList(res.data);
+    } catch (e) {
+      console.error("Error loading buyer orders", e);
+    }
+  };
 
   const handleOpenForm = (record = null, readOnly = false) => {
     if (record) {
@@ -307,6 +318,35 @@ export default function DespatchPlanning() {
       return updated;
     });
   };
+
+  const handleIbpoChange = (e) => {
+    const value = e.target.value;
+    handleChange(e);
+
+    if (!value) return;
+
+    const order = buyerOrdersList.find(o => o.ibpo_number === value);
+    if (order) {
+      setFormData(prev => ({
+        ...prev,
+        ibpo: value,
+        po_date: order.order_date ? formatFromAPI(order.order_date) : prev.po_date,
+        billing_party: order.party_name || prev.billing_party,
+        billing_address: order.billing_address || prev.billing_address,
+        delivery_address: order.delivery_address || prev.delivery_address,
+        state_code: order.state_code || prev.state_code,
+        design_no: order.items && order.items.length > 0 ? order.items[0].design_no : prev.design_no,
+        qty: order.items && order.items.length > 0 ? String(order.items[0].order_mtrs) : prev.qty,
+        buyer_po_no: order.items && order.items.length > 0 ? order.items[0].party_po_no : prev.buyer_po_no,
+        total_planning: order.items && order.items.length > 0 ? String(order.items[0].order_mtrs) : prev.total_planning,
+        merchand: order.order_taken_by || prev.merchand,
+      }));
+    }
+  };
+
+
+
+
 
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
@@ -688,13 +728,14 @@ export default function DespatchPlanning() {
                     gap: 16
                   }}>
                     <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>IBPO</label>
-                      <select className="form-control" name="ibpo" value={formData.ibpo} onChange={handleChange} style={{ borderColor: '#a7f3d0' }}>
-                        <option value="">Select IBPO</option>
-                        <option value="IBPO-1678">IBPO-1678</option>
-                        <option value="IBPO-984">IBPO-984</option>
-                        <option value="IBPO-1202">IBPO-1202</option>
-                        <option value="IBPO-2241">IBPO-2241</option>
+                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>IBPO (Select to Auto-Fill)</label>
+                      <select className="form-control" name="ibpo" value={formData.ibpo} onChange={handleIbpoChange} style={{ borderColor: '#a7f3d0' }}>
+                        <option value="">Select IBPO - Party Name</option>
+                        {buyerOrdersList.map(o => (
+                          <option key={o.id} value={o.ibpo_number}>
+                            {o.ibpo_number} - {o.party_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>

@@ -32,6 +32,7 @@ export default function BuyerOrder() {
   const [toDate, setToDate] = useState('');
 
   const initialForm = {
+    ibpo_number: '',
     order_date: new Date().toISOString().split('T')[0],
     party_id: '', party_name: '', billing_address: '', agent_name: '',
     order_type: '', certified_type: '', buyer_name: '',
@@ -186,11 +187,11 @@ export default function BuyerOrder() {
     setForm({
       ...form,
       party_id: partyId,
-      party_name: party ? party.company_name : '',
-      billing_address: party ? party.address : '',
-      state: party ? party.state : '',
-      gst_no: party ? party.gst_number : '',
-      pan_no: party ? party.pan_number : '',
+      party_name: party?.company_name || '',
+      billing_address: party?.address || '',
+      state: party?.state || '',
+      gst_no: party?.gst_no || '',
+      pan_no: party?.pan_no || '',
     });
   };
 
@@ -521,6 +522,10 @@ export default function BuyerOrder() {
                   {/* Section 1: Main Details */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Main Details</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group">
+                      <label>IBPO Number</label>
+                      <input type="text" className="form-control" value={form.ibpo_number || 'AUTO-GENERATED'} disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600, color: 'var(--primary)' }} />
+                    </div>
                     <div className="form-group">
                       <label>Order Date *</label>
                       <input type="date" className="form-control" name="order_date" value={form.order_date} onChange={handleChange} required />
