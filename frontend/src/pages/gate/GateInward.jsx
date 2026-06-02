@@ -8,10 +8,7 @@ import autoTable from 'jspdf-autotable';
 
 export default function GateInward() {
   // Mock Inwards Database
-  const [inwards, setInwards] = useState([
-    { id: 'GIN-2026-001', dateTime: '2026-06-01', vehicleNo: 'TN-37-BY-1204', driverName: 'Ramesh Kumar', driverMobile: '9876543210', partyName: 'Vardhman Spinning', materialType: 'Yarn', purpose: 'Material Delivery', dcNo: 'DC-8812', dcDate: '2026-05-31', itemDesc: 'Cotton Yarn 40s Combed', qty: 40, unit: 'Kg', weight: 2800, packages: 40, guardName: 'K. Palanisamy', inwardTime: '09:30', remarks: 'Good condition', status: 'Closed' },
-    { id: 'GIN-2026-002', dateTime: '2026-06-01', vehicleNo: 'MH-12-PQ-9988', driverName: 'Anil Patel', driverMobile: '9988776655', partyName: 'Chemical Traders', materialType: 'Dyes & Chemicals', purpose: 'Material Delivery', dcNo: 'CH-90231', dcDate: '2026-06-01', itemDesc: 'Sizing Chemical Starch', qty: 120, unit: 'Nos', weight: 5200, packages: 120, guardName: 'S. Rajendran', inwardTime: '12:45', remarks: 'Unloading near bay 3', status: 'Open' }
-  ]);
+  const [inwards, setInwards] = useState([]);
 
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);

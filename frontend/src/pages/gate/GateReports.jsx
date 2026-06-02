@@ -17,14 +17,7 @@ export default function GateReports() {
   ];
 
   // Combined master report dataset
-  const [masterLogs, setMasterLogs] = useState([
-    { id: 'GIN-2026-001', type: 'Inward', dateTime: '2026-06-01 09:30', partyName: 'Vardhman Spinning', vehicleNo: 'TN-37-BY-1204', item: 'Cotton Yarn 40s', qty: 40, unit: 'Kg', purpose: 'Material Delivery', guard: 'K. Palanisamy', status: 'Closed' },
-    { id: 'GOT-2026-001', type: 'Outward', dateTime: '2026-06-01 11:15', partyName: 'Vardhman Spinning', vehicleNo: 'TN-37-BY-1204', item: 'Empty Bobbins & Pallets', qty: 250, unit: 'Nos', purpose: 'Material Return', guard: 'S. Rajendran', status: 'Closed' },
-    { id: 'GIN-2026-002', type: 'Inward', dateTime: '2026-06-01 12:45', partyName: 'Chemical Traders', vehicleNo: 'MH-12-PQ-9988', item: 'Sizing Chemical Starch', qty: 120, unit: 'Nos', purpose: 'Material Delivery', guard: 'S. Rajendran', status: 'Open' },
-    { id: 'GP-2026-001', type: 'Gate Pass', dateTime: '2026-06-01 14:00', partyName: 'Raymond Ltd', vehicleNo: 'TN-37-BY-1204', item: 'Heavy Warp Beam 400mm', qty: 2, unit: 'Nos', purpose: 'Beam sizing adjustment', guard: 'K. Palanisamy', status: 'Open', passType: 'Returnable', validTill: '2026-06-05' },
-    { id: 'GOT-2026-002', type: 'Outward', dateTime: '2026-06-01 16:30', partyName: 'Raymond Ltd', vehicleNo: 'TN-30-AA-8877', item: 'Finished Printed Cotton Satin', qty: 110, unit: 'Meter', purpose: 'Sales Delivery', guard: 'K. Palanisamy', status: 'Closed', passType: 'Returnable' },
-    { id: 'GP-2026-002', type: 'Gate Pass', dateTime: '2026-05-30 10:00', partyName: 'Vardhman Spinning', vehicleNo: 'TN-45-AX-3921', item: 'Dyed Cotton Yarn Lot A', qty: 40, unit: 'Kg', purpose: 'Sample quality dispatch', guard: 'Security Desk', status: 'Used', passType: 'Non-Returnable', validTill: '2026-06-02' }
-  ]);
+  const [masterLogs, setMasterLogs] = useState([]);
 
   // Tab State
   const [activeTab, setActiveTab] = useState('Inward'); // 'Inward' | 'Outward' | 'Pass' | 'PendingPass' | 'Vehicle' | 'Summary'

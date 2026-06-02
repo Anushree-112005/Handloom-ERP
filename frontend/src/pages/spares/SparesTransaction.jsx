@@ -28,9 +28,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 1. OPENING STOCK DATA & FORM STATES
   // ----------------------------------------------------
-  const [openingStocks, setOpeningStocks] = useState([
-    { id: 'OS-2026-001', date: '2026-06-01', financialYear: '2026-2027', section: 'Weaving Division A', totalValue: 54000, narration: 'Initial physical spares stock entry', enteredBy: 'Mani Bharathi (Store Head)', status: 'Confirmed', items: [{ spareCode: 'SPR-001', spareName: 'Airjet Loom Solenoid Valve', unit: 'Nos', qty: 12, rate: 4500, value: 54000 }] }
-  ]);
+  const [openingStocks, setOpeningStocks] = useState([]);
 
   // Form Fields for Opening Stock
   const [osFY, setOsFY] = useState('2026-2027');
@@ -71,9 +69,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 2. SPARES REQUEST INDENT DATA & FORM STATES
   // ----------------------------------------------------
-  const [indents, setIndents] = useState([
-    { id: 'IND-2026-001', date: '2026-06-01', section: 'Weaving Division A', machineNo: 'L-A12', machineType: 'Airjet Loom', priority: 'High', requiredDate: '2026-06-05', requestedBy: 'Murugan Swamy (Maintenance In-charge)', reason: 'Solenoid coil burnout reported', narration: 'Immediate replacements required', status: 'Pending Approval', items: [{ spareCode: 'SPR-001', spareName: 'Airjet Loom Solenoid Valve', currentStock: 12, requiredQty: 2, unit: 'Nos', purpose: 'L-A12 maintenance' }] }
-  ]);
+  const [indents, setIndents] = useState([]);
 
   // Form fields for Indent
   const [indSection, setIndSection] = useState('Weaving Division A');
@@ -114,9 +110,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 3. REQUEST INDENT APPROVAL DATA & FORM STATES
   // ----------------------------------------------------
-  const [indentApprovals, setIndentApprovals] = useState([
-    { id: 'IAP-2026-001', date: '2026-06-01', indentRef: 'IND-2026-001', section: 'Weaving Division A', requestedBy: 'Murugan Swamy', priority: 'High', approvalStatus: 'Approve', approvedBy: 'Mani Bharathi (Store Head)', remarks: 'Urgent stock clearance', forwardToPurchase: 'Yes', items: [{ name: 'Airjet Loom Solenoid Valve', reqQty: 2, currentStock: 12, approvedQty: 2, remarks: 'Cleared', action: 'Approve' }] }
-  ]);
+  const [indentApprovals, setIndentApprovals] = useState([]);
 
   // Form fields for Indent Approval
   const [iapIndentRef, setIapIndentRef] = useState('IND-2026-001');
@@ -141,9 +135,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 4. PURCHASE ORDER ENTRY DATA & FORM STATES
   // ----------------------------------------------------
-  const [purchaseOrders, setPurchaseOrders] = useState([
-    { id: 'SPO-2026-001', date: '2026-06-01', indentRef: 'IAP-2026-001', supplierName: 'Standard Gears Ltd', address: 'Plot 10, Industrial Estate, Salem', contactPerson: 'Mr. Subramaniam', mobileNo: '9443210987', gstin: '33AAAES9890P1ZX', expectedDate: '2026-06-10', totalValue: 9000, paymentTerms: '30 Days', narration: 'Urgent spare parts purchase order', status: 'Pending Approval', items: [{ spareCode: 'SPR-001', spareName: 'Airjet Loom Solenoid Valve', qty: 2, unit: 'Nos', rate: 4500, gstPercent: 18, gstAmount: 1620, totalAmount: 10620 }] }
-  ]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
 
   // Form Fields for PO
   const [poIndentRef, setPoIndentRef] = useState('IAP-2026-001');
@@ -191,9 +183,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 5. PURCHASE ORDER APPROVAL DATA & FORM STATES
   // ----------------------------------------------------
-  const [poApprovals, setPoApprovals] = useState([
-    { id: 'POA-2026-001', date: '2026-06-01', poRef: 'SPO-2026-001', supplierName: 'Standard Gears Ltd', totalPOValue: 10620, approvalStatus: 'Approved', approvedBy: 'Dinesh Balasamy (MD)', remarks: 'PO verified and sanctioned', sendToSupplier: 'Yes', items: [{ name: 'Airjet Loom Solenoid Valve', qty: 2, rate: 4500, approvedRate: 4500, amount: 9000 }] }
-  ]);
+  const [poApprovals, setPoApprovals] = useState([]);
 
   // Form Fields for PO Approval
   const [poaPoRef, setPoaPoRef] = useState('SPO-2026-001');
@@ -221,9 +211,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 6. PURCHASE ENTRY DATA & FORM STATES
   // ----------------------------------------------------
-  const [purchaseEntries, setPurchaseEntries] = useState([
-    { id: 'PE-2026-001', date: '2026-06-01', poRef: 'SPO-2026-001', supplierName: 'Standard Gears Ltd', invoiceNo: 'INV-SP-8821', invoiceDate: '2026-05-30', gateInwardRef: 'GIN-2026-001', totalAmount: 9000, gstAmount: 1620, netAmount: 10620, storeLocation: 'Rack A-2', receivedBy: 'Mani Bharathi (Store Head)', remarks: 'Cargo inspected', items: [{ name: 'Airjet Loom Solenoid Valve', poQty: 2, receivedQty: 2, pendingQty: 0, rate: 4500, amount: 9000, condition: 'Good' }] }
-  ]);
+  const [purchaseEntries, setPurchaseEntries] = useState([]);
 
   // Form Fields
   const [pePoRef, setPePoRef] = useState('SPO-2026-001');
@@ -256,9 +244,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 7. WORK ORDER DATA & FORM STATES
   // ----------------------------------------------------
-  const [workOrders, setWorkOrders] = useState([
-    { id: 'WO-2026-001', date: '2026-06-01', type: 'Breakdown Maintenance', section: 'Weaving Division A', machineNo: 'L-A12', machineType: 'Airjet Loom', problem: 'Loom auto stop failure', priority: 'High', assignedTo: 'Murugan Swamy', expectedDate: '2026-06-02', estimatedCost: 5000, status: 'Assigned', items: [{ name: 'Airjet Loom Solenoid Valve', qty: 1 }] }
-  ]);
+  const [workOrders, setWorkOrders] = useState([]);
 
   // Form Fields
   const [woType, setWoType] = useState('Breakdown Maintenance');
@@ -292,9 +278,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 8. CONSUMPTION DATA & FORM STATES
   // ----------------------------------------------------
-  const [consumptions, setConsumptions] = useState([
-    { id: 'CON-2026-001', date: '2026-06-01', workOrderRef: 'WO-2026-001', section: 'Weaving Division A', machineNo: 'L-A12', indentRef: 'IAP-2026-001', issuedBy: 'Mani Bharathi (Store Head)', receivedBy: 'Murugan Swamy', totalValue: 4500, purpose: 'Breakdown nozzle repair', remarks: 'Replaced solenoid valve', items: [{ spareCode: 'SPR-001', spareName: 'Airjet Loom Solenoid Valve', availableStock: 12, consumedQty: 1, unit: 'Nos', rate: 4500, amount: 4500 }] }
-  ]);
+  const [consumptions, setConsumptions] = useState([]);
 
   // Form Fields
   const [conWoRef, setConWoRef] = useState('WO-2026-001');
@@ -333,9 +317,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 9. JOBWORK / HANDLOAN ISSUE DATA & FORM STATES
   // ----------------------------------------------------
-  const [issues, setIssues] = useState([
-    { id: 'JWI-2026-001', date: '2026-06-01', type: 'Job Work', partyName: 'Standard Gears Ltd', contactPerson: 'Subramaniam', mobileNo: '9443210987', gatePassNo: 'GP-2026-001', expectedReturnDate: '2026-06-10', purpose: 'Precision milling and grinding of nozzle core', authorizedBy: 'Dinesh Balasamy (MD)', remarks: 'Critical parts', status: 'Issued', items: [{ spareCode: 'SPR-001', spareName: 'Airjet Loom Solenoid Valve', qty: 2, unit: 'Nos', rate: 4500, amount: 9000 }] }
-  ]);
+  const [issues, setIssues] = useState([]);
 
   // Form Fields
   const [jwType, setJwType] = useState('Job Work');
@@ -374,9 +356,7 @@ export default function SparesTransaction() {
   // ----------------------------------------------------
   // 10. JOBWORK / HANDLOAN RECEIVED DATA & FORM STATES
   // ----------------------------------------------------
-  const [receipts, setReceipts] = useState([
-    { id: 'JWR-2026-001', date: '2026-06-01', issueRef: 'JWI-2026-001', partyName: 'Standard Gears Ltd', issueDate: '2026-06-01', gateInwardNo: 'GIN-2026-001', charges: 1200, qcDone: 'Yes', receivedBy: 'Murugan Swamy', remarks: 'Repaired valve core installed', status: 'Full', items: [{ name: 'Airjet Loom Solenoid Valve', issuedQty: 2, prevReceived: 0, receivedQty: 2, pendingQty: 0, condition: 'Good', remarks: 'Smooth operation' }] }
-  ]);
+  const [receipts, setReceipts] = useState([]);
 
   // Form Fields
   const [jwrIssueRef, setJwrIssueRef] = useState('JWI-2026-001');

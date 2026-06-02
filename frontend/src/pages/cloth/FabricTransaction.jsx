@@ -35,64 +35,40 @@ export default function FabricTransaction() {
   // =========================================================================
 
   // 1. DESIGN UPLOAD
-  const [designs, setDesigns] = useState([
-    { id: 'DES-4091', date: '2026-06-01', name: 'Premium Cotton Satin', category: 'Satin', buyerName: 'Raymond Ltd', season: 'Summer 2026', fabricType: 'Woven Fabric', composition: '100% Cotton', width: 58, weight: 140, weaveType: 'Satin Weave', color: 'Midnight Blue', status: 'Active' }
-  ]);
+  const [designs, setDesigns] = useState([]);
 
   // 2. CLOTH CHECKING
-  const [clothCheckings, setClothCheckings] = useState([
-    { id: 'CHK-2026-001', date: '2026-06-01', supplierName: 'Standard Processing Unit', gateInwardRef: 'GIN-9901', designNo: 'DES-4091', lotNo: 'LOT-SAT-10', totalPieces: 15, totalMeters: 1500, acceptedMeters: 1485, rejectedMeters: 15, rejectionPercent: 1, checkedBy: 'Murugan Swamy', status: 'Approved' }
-  ]);
+  const [clothCheckings, setClothCheckings] = useState([]);
 
   // 4. CLOTH LOT COMPLETION
-  const [lotCompletions, setLotCompletions] = useState([
-    { id: 'LTC-2026-001', date: '2026-06-01', lotNo: 'LOT-SAT-10', designNo: 'DES-4091', supplier: 'Standard Processing Unit', totalPieces: 15, totalMeters: 1500, acceptedMeters: 1485, rejectedMeters: 15, gradeA: 1400, gradeB: 70, gradeC: 15, status: 'Completed', completedBy: 'Mani Bharathi (Store Head)' }
-  ]);
+  const [lotCompletions, setLotCompletions] = useState([]);
 
   // 6. CLOTH PURCHASE BILLS
-  const [purchaseBills, setPurchaseBills] = useState([
-    { id: 'CPB-2026-001', date: '2026-06-01', supplierName: 'Standard Processing Unit', supplierBillNo: 'BILL-44120', supplierBillDate: '2026-05-30', clothInwardRef: 'CIN-88021', designNo: 'DES-4091', lotNo: 'LOT-SAT-10', taxableAmount: 222750, gstAmount: 11137.5, totalBillAmount: 233887.5, paymentTerms: '30 Days', status: 'Pending Approval' }
-  ]);
+  const [purchaseBills, setPurchaseBills] = useState([]);
 
   // 7. CLOTH DELIVERY PC-WISE
-  const [pcWiseDeliveries, setPcWiseDeliveries] = useState([
-    { id: 'DEL-PC-001', date: '2026-06-01', buyerName: 'Raymond Ltd', orderRef: 'ORD-99012', designNo: 'DES-4091', lotNo: 'LOT-SAT-10', totalPieces: 10, totalMeters: 1000, totalAmount: 150000, vehicleNo: 'TN-37-BY-8891', driverName: 'Selvam', status: 'Dispatched' }
-  ]);
+  const [pcWiseDeliveries, setPcWiseDeliveries] = useState([]);
 
   // 8. MILL TO MILL DELIVERY
-  const [m2mDeliveries, setM2mDeliveries] = useState([
-    { id: 'M2M-2026-001', date: '2026-06-01', fromMill: 'Weaving Unit A', toMill: 'Dyeing House B', transferType: 'Processing', designNo: 'DES-4091', lotNo: 'LOT-SAT-10', totalMeters: 2500, totalPieces: 25, vehicleNo: 'TN-30-C-9901', status: 'In-Transit' }
-  ]);
+  const [m2mDeliveries, setM2mDeliveries] = useState([]);
 
   // 10. CLOTH BALE DELIVERY
-  const [baleDeliveries, setBaleDeliveries] = useState([
-    { id: 'BDL-2026-001', date: '2026-06-01', buyerName: 'Raymond Ltd', orderRef: 'ORD-99012', designNo: 'DES-4091', lotNo: 'LOT-SAT-10', totalBales: 5, totalMeters: 2500, totalWeight: 620, totalAmount: 375000, vehicleNo: 'TN-33-AF-4412' }
-  ]);
+  const [baleDeliveries, setBaleDeliveries] = useState([]);
 
   // 11. LOT APPROVAL ENTRY
-  const [lotApprovals, setLotApprovals] = useState([
-    { id: 'LAP-2026-001', date: '2026-06-01', lotNo: 'LOT-SAT-10', designNo: 'DES-4091', buyerName: 'Raymond Ltd', totalMeters: 1500, approvedMeters: 1485, rejectedMeters: 15, approvalStatus: 'Approved', approvedBy: 'Dinesh Balasamy (MD)' }
-  ]);
+  const [lotApprovals, setLotApprovals] = useState([]);
 
   // 13. CLOTH BALE PACKING
-  const [balePackings, setBalePackings] = useState([
-    { id: 'PKG-2026-001', date: '2026-06-01', lotApprovalRef: 'LAP-2026-001', designNo: 'DES-4091', buyerName: 'Raymond Ltd', totalBales: 5, totalMeters: 2500, totalWeight: 620, packedBy: 'Murugan Swamy' }
-  ]);
+  const [balePackings, setBalePackings] = useState([]);
 
   // 15. NEW GOODS RELEASE ADVICE
-  const [goodsReleaseAdvices, setGoodsReleaseAdvices] = useState([
-    { id: 'GRA-2026-001', date: '2026-06-01', buyerName: 'Raymond Ltd', buyerOrderRef: 'ORD-99012', lotApprovalRef: 'LAP-2026-001', designNo: 'DES-4091', totalMeters: 2500, totalAmount: 375000, deliveryAddress: 'Salem Warehouse', expectedDispatch: '2026-06-05', status: 'Approved' }
-  ]);
+  const [goodsReleaseAdvices, setGoodsReleaseAdvices] = useState([]);
 
   // 18. VENDOR BILLS ENTRY
-  const [vendorBills, setVendorBills] = useState([
-    { id: 'VND-2026-001', date: '2026-06-01', vendorName: 'Standard Processing Unit', vendorType: 'Dyeing Vendor', supplierBillNo: 'VND-B-998', supplierBillDate: '2026-05-28', netPayable: 45000, dueDate: '2026-06-30', status: 'Approved' }
-  ]);
+  const [vendorBills, setVendorBills] = useState([]);
 
   // 21. SURPLUS STOCK OPENING
-  const [surplusOpening, setSurplusOpening] = useState([
-    { id: 'SSO-2026-001', date: '2026-06-01', financialYear: '2026-2027', totalMeters: 500, totalValue: 45000, status: 'Confirmed' }
-  ]);
+  const [surplusOpening, setSurplusOpening] = useState([]);
 
   // =========================================================================
   // DYNAMIC FORM FIELDS (GENERAL BINDINGS)
