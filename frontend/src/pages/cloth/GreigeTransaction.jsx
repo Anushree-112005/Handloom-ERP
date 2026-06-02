@@ -1,21 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Scissors, Search, Plus, Trash2, Edit, Check, X, Download, 
-  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
-  PlusCircle, FileText, CheckSquare, Truck, Globe, Printer, BookOpen, 
-  MapPin, HelpCircle, Sparkles, Database, Shield, Layers 
+  Layers, Search, Plus, Trash2, Edit, Check, X, Download, 
+  Settings, Factory, CheckSquare, ShoppingBag, Truck, FileText, Globe, Sparkles
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { workOrderTransactionAPI } from '../../services/api';
 
-export default function GreigeTransaction() {
+export default function GreigeTransaction({ defaultSection = 'Greige Operations' }) {
   const navigate = useNavigate();
 
-  // Top Section Tabs: 'InwardChecking' | 'Delivery' | 'PackingBale' | 'DispatchInvoice'
-  const [activeSection, setActiveSection] = useState('InwardChecking');
-
-  // Currently open sub-page
+  const [activeSection, setActiveSection] = useState(defaultSection);
   const [activePage, setActivePage] = useState(null);
+
+  useEffect(() => {
+    setActiveSection(defaultSection);
+    const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === defaultSection);
+    if (firstSubModule) {
+      setActivePage(firstSubModule.key);
+    } else {
+      setActivePage(null);
+    }
+    setIsFormOpen(false);
+  }, [defaultSection]);
 
   // Form toggle states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -31,45 +38,37 @@ export default function GreigeTransaction() {
   // STATE STORE FOR NEW WORKSPACES
   // =========================================================================
 
-  // 1. VENDOR INWARD
-  const [vendorInwards, setVendorInwards] = useState([
-    { id: 'GRY-IN-001', date: '2026-06-01', vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Vendor', gateInwardRef: 'GIN-7712', dcNo: 'DC-88102', dcDate: '2026-05-30', designNo: 'DES-4091', fabricType: 'Grey Satin', totalPieces: 10, totalMeters: 1000, totalWeight: 220, totalValue: 65000, status: 'Completed' }
-  ]);
+  const [vendorInwards, setVendorInwards] = useState([]);
+  const [greigeCheckings, setGreigeCheckings] = useState([]);
+  const [clothMendings, setClothMendings] = useState([]);
+  const [greigeDeliveries, setGreigeDeliveries] = useState([]);
+  const [greigePackings, setGreigePackings] = useState([]);
+  const [greigeGras, setGreigeGras] = useState([]);
+  const [greigeInvoices, setGreigeInvoices] = useState([]);
 
-  // 2. ON TABLE CHECKING (GREIGE)
-  const [greigeCheckings, setGreigeCheckings] = useState([
-    { id: 'GRY-CHK-001', date: '2026-06-01', vendorInwardRef: 'GRY-IN-001', vendorName: 'Standard Weaving Co.', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', totalPieces: 10, warpDefects: 2, weftDefects: 3, pointsPer100m: 12, grade: 'A — Exportable', mendingRequired: false, checkedBy: 'Murugan Swamy', status: 'Approved' }
-  ]);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // 3. CLOTH MENDING ENTRY
-  const [clothMendings, setClothMendings] = useState([
-    { id: 'GRY-MND-001', date: '2026-06-01', otCheckingRef: 'GRY-CHK-001', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', vendorName: 'Standard Weaving Co.', pieceNo: 1, mendingType: 'Weaving Repair', menderName: 'Senthil Kumar (General Manager)', totalPiecesMended: 1, mendingCharges: 150, supervisedBy: 'Mani Bharathi (Store Head)' }
-  ]);
+  const loadData = async () => {
+    try {
+      const response = await workOrderTransactionAPI.getAll();
+      const allTxns = response.data;
+      const mapTxn = (t) => ({ ...t.details, id: t.transaction_no, db_id: t.id, status: t.status });
 
-  // 4. CLOTH DELIVERY (GREIGE)
-  const [greigeDeliveries, setGreigeDeliveries] = useState([
-    { id: 'GRY-DEL-001', date: '2026-06-01', deliveryType: 'Sale Delivery', partyName: 'Raymond Ltd', graRef: 'GRY-GRA-001', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', totalPieces: 8, totalMeters: 800, totalWeight: 180, totalAmount: 52000, dcNo: 'DC-GRY-9901', vehicleNo: 'TN-37-BY-8891', driverName: 'Selvam', status: 'Dispatched' }
-  ]);
+      setVendorInwards(allTxns.filter(t => t.module_type === 'vendor_inward').map(mapTxn));
+      setGreigeCheckings(allTxns.filter(t => t.module_type === 'ot_checking').map(mapTxn));
+      setClothMendings(allTxns.filter(t => t.module_type === 'cloth_mending').map(mapTxn));
+      setGreigeDeliveries(allTxns.filter(t => ['cloth_delivery', 'bale_delivery'].includes(t.module_type)).map(mapTxn));
+      setGreigePackings(allTxns.filter(t => ['cloth_packing', 'bale_amd', 'lot_amd'].includes(t.module_type)).map(mapTxn));
+      setGreigeGras(allTxns.filter(t => t.module_type === 'goods_release').map(mapTxn));
+      setGreigeInvoices(allTxns.filter(t => t.module_type === 'gry_invoice').map(mapTxn));
+    } catch (err) {
+      console.error("Failed to load greige transactions", err);
+    }
+  };
 
-  // 7. CLOTH PACKING (GREIGE)
-  const [greigePackings, setGreigePackings] = useState([
-    { id: 'GRY-PKG-001', date: '2026-06-01', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', packingType: 'Standard Bale', buyerName: 'Raymond Ltd', totalBales: 4, totalPieces: 40, totalMeters: 4000, totalNetWeight: 920, packedBy: 'Murugan Swamy', status: 'Approved' }
-  ]);
-
-  // 10. GREIGE GOODS RELEASE ADVICE (GRA)
-  const [greigeGras, setGreigeGras] = useState([
-    { id: 'GRY-GRA-001', date: '2026-06-01', buyerName: 'Raymond Ltd', designNo: 'DES-4091', lotNo: 'LOT-GRY-10', releaseType: 'Sale', totalMeters: 1000, totalWeight: 220, totalAmount: 65000, deliveryAddress: 'Salem Warehouse', expectedDispatch: '2026-06-05', status: 'Approved' }
-  ]);
-
-  // 11. GRY SALES INVOICE
-  const [greigeInvoices, setGreigeInvoices] = useState([
-    { id: 'GRY-INV-001', date: '2026-06-01', invoiceType: 'Tax Invoice', buyerName: 'Raymond Ltd', graRef: 'GRY-GRA-001', subtotal: 65000, totalGst: 3250, grandTotal: 68250, paymentTerms: '30 Days', status: 'Approved' }
-  ]);
-
-  // =========================================================================
-  // DYNAMIC FORM FIELDS (GENERAL BINDINGS)
-  // =========================================================================
-  const [fields, setFields] = useState({});
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -83,25 +82,35 @@ export default function GreigeTransaction() {
   // SECTIONS & PAGES DEFINITIONS
   // =========================================================================
   const PAGES_METADATA = {
-    // Inward Checking
-    vendor_inward: { key: 'vendor_inward', label: "Vendor Inward", section: 'InwardChecking', desc: "Record grey/greige fabric received from weaving vendors", icon: Factory },
-    ot_checking: { key: 'ot_checking', label: "ON Table Checking", section: 'InwardChecking', desc: "Quality inspection of greige/grey fabric on checking table", icon: CheckSquare },
-    cloth_mending: { key: 'cloth_mending', label: "Cloth Mending Entry", section: 'InwardChecking', desc: "Record repair/mending work done on defective greige fabric", icon: Layers },
+    // Greige Operations
+    vendor_inward: { key: 'vendor_inward', label: "Vendor Inward", section: 'InwardChecking', category: 'Greige Operations', desc: "Record grey/greige fabric received from weaving vendors", icon: Factory, color: '#2563eb' },
+    ot_checking: { key: 'ot_checking', label: "ON Table Checking", section: 'InwardChecking', category: 'Greige Operations', desc: "Quality inspection of greige/grey fabric on checking table", icon: CheckSquare, color: '#2563eb' },
+    cloth_mending: { key: 'cloth_mending', label: "Cloth Mending Entry", section: 'InwardChecking', category: 'Greige Operations', desc: "Record repair/mending work done on defective greige fabric", icon: Layers, color: '#2563eb' },
+    cloth_packing: { key: 'cloth_packing', label: "Cloth Packing (Greige)", section: 'PackingBale', category: 'Greige Operations', desc: "Pack greige fabric into bales for dispatch", icon: ShoppingBag, color: '#0d9488' },
+    cloth_delivery: { key: 'cloth_delivery', label: "Cloth Delivery (Greige)", section: 'Delivery', category: 'Greige Operations', desc: "Record piece-wise delivery of greige/grey cloth to buyers", icon: Truck, color: '#0d9488' },
+    bale_delivery: { key: 'bale_delivery', label: "Bale Delivery (Greige)", section: 'Delivery', category: 'Greige Operations', desc: "Record greige cloth delivery in bale format", icon: ShoppingBag, color: '#0d9488' },
 
-    // Delivery
-    cloth_delivery: { key: 'cloth_delivery', label: "Cloth Delivery (Greige)", section: 'Delivery', desc: "Record piece-wise delivery of greige/grey cloth to buyers", icon: Truck },
-    bale_delivery: { key: 'bale_delivery', label: "Bale Delivery (Greige)", section: 'Delivery', desc: "Record greige cloth delivery in bale format", icon: ShoppingBag },
-    eway_bill: { key: 'eway_bill', label: "Cloth Delivery Eway Bill (Greige)", section: 'Delivery', desc: "Generate E-Way Bill for greige cloth delivery (Link)", icon: Globe, isLink: true, route: '/eway-bill' },
+    // Greige Administration
+    bale_amd: { key: 'bale_amd', label: "Greige Bale AMD", section: 'PackingBale', category: 'Greige Administration', desc: "Amend greige bale details after packing if corrections needed", icon: Edit, color: '#475569' },
+    lot_amd: { key: 'lot_amd', label: "Greige LOT AMD", section: 'PackingBale', category: 'Greige Administration', desc: "Amend greige lot details for corrections in lot-level data", icon: Edit, color: '#475569' },
+    goods_release: { key: 'goods_release', label: "Greige Goods Release Advice", section: 'DispatchInvoice', category: 'Greige Administration', desc: "Authorize release of greige stock for dispatch", icon: FileText, color: '#10b981' },
+    gry_invoice: { key: 'gry_invoice', label: "Gry Sales Invoice", section: 'DispatchInvoice', category: 'Greige Administration', desc: "Generate sales invoice specifically for grey/greige fabric sales", icon: FileText, color: '#10b981' },
+    eway_bill: { key: 'eway_bill', label: "Cloth Delivery Eway Bill (Greige)", section: 'Delivery', category: 'Greige Administration', desc: "Generate E-Way Bill for greige cloth delivery (Link)", icon: Globe, isLink: true, route: '/eway-bill', color: '#8b5cf6' },
+    einvoice_eway: { key: 'einvoice_eway', label: "Einvoice / Eway Bill (Greige)", section: 'DispatchInvoice', category: 'Greige Administration', desc: "Generate GST E-Invoice and E-Way Bill for greige sales", icon: Sparkles, color: '#8b5cf6' }
+  };
 
-    // Packing & Bale
-    cloth_packing: { key: 'cloth_packing', label: "Cloth Packing (Greige)", section: 'PackingBale', desc: "Pack greige fabric into bales for dispatch", icon: ShoppingBag },
-    bale_amd: { key: 'bale_amd', label: "Greige Bale AMD", section: 'PackingBale', desc: "Amend greige bale details after packing if corrections needed", icon: Edit },
-    lot_amd: { key: 'lot_amd', label: "Greige LOT AMD", section: 'PackingBale', desc: "Amend greige lot details for corrections in lot-level data", icon: Edit },
-
-    // Dispatch & Invoice
-    goods_release: { key: 'goods_release', label: "Greige Goods Release Advice", section: 'DispatchInvoice', desc: "Authorize release of greige stock for dispatch", icon: FileText },
-    gry_invoice: { key: 'gry_invoice', label: "Gry Sales Invoice", section: 'DispatchInvoice', desc: "Generate sales invoice specifically for grey/greige fabric sales", icon: FileText },
-    einvoice_eway: { key: 'einvoice_eway', label: "Einvoice / Eway Bill (Greige)", section: 'DispatchInvoice', desc: "Generate GST E-Invoice and E-Way Bill for greige sales", icon: Sparkles }
+  const getSubModuleCount = (key) => {
+    switch(key) {
+      case 'vendor_inward': return vendorInwards.length;
+      case 'ot_checking': return greigeCheckings.length;
+      case 'cloth_mending': return clothMendings.length;
+      case 'cloth_delivery': return greigeDeliveries.length;
+      case 'bale_delivery': return greigeDeliveries.length;
+      case 'cloth_packing': return greigePackings.length;
+      case 'goods_release': return greigeGras.length;
+      case 'gry_invoice': return greigeInvoices.length;
+      default: return 0;
+    }
   };
 
   // =========================================================================
@@ -117,107 +126,79 @@ export default function GreigeTransaction() {
   };
 
   const handleCreateNew = () => {
-    let nextId = '';
     const dateToday = new Date().toISOString().substring(0, 10);
+    let initFields = { date: dateToday, status: 'Active' };
 
     if (activePage === 'vendor_inward') {
-      nextId = `GRY-IN-${vendorInwards.length + 1}`;
-      setFields({ id: nextId, date: dateToday, vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Vendor', gateInwardRef: '', dcNo: '', dcDate: dateToday, designNo: 'DES-4091', fabricType: 'Grey Satin', totalPieces: '', totalMeters: '', totalWeight: '', totalValue: '', status: 'Completed' });
-    }
-    else if (activePage === 'ot_checking') {
-      nextId = `GRY-CHK-00${greigeCheckings.length + 1}`;
-      setFields({ id: nextId, date: dateToday, vendorInwardRef: 'GRY-IN-001', vendorName: 'Standard Weaving Co.', designNo: 'DES-4091', lotNo: '', totalPieces: '', warpDefects: 0, weftDefects: 0, pointsPer100m: 0, grade: 'A — Exportable', mendingRequired: false, checkedBy: 'Murugan Swamy', status: 'Approved' });
-    }
-    else if (activePage === 'cloth_mending') {
-      nextId = `GRY-MND-00${clothMendings.length + 1}`;
-      setFields({ id: nextId, date: dateToday, otCheckingRef: 'GRY-CHK-001', designNo: 'DES-4091', lotNo: '', vendorName: 'Standard Weaving Co.', pieceNo: 1, mendingType: 'Weaving Repair', menderName: 'Senthil Kumar (General Manager)', totalPiecesMended: '', mendingCharges: '', supervisedBy: 'Mani Bharathi (Store Head)' });
-    }
-    else if (activePage === 'cloth_delivery') {
-      nextId = `GRY-DEL-00${greigeDeliveries.length + 1}`;
-      setFields({ id: nextId, date: dateToday, deliveryType: 'Sale Delivery', partyName: 'Raymond Ltd', graRef: '', designNo: 'DES-4091', lotNo: '', totalPieces: '', totalMeters: '', totalWeight: '', totalAmount: '', dcNo: '', vehicleNo: '', driverName: '', status: 'Dispatched' });
-    }
-    else if (activePage === 'cloth_packing') {
-      nextId = `GRY-PKG-00${greigePackings.length + 1}`;
-      setFields({ id: nextId, date: dateToday, designNo: 'DES-4091', lotNo: '', packingType: 'Standard Bale', buyerName: 'Raymond Ltd', totalBales: '', totalPieces: '', totalMeters: '', totalNetWeight: '', packedBy: 'Murugan Swamy', status: 'Approved' });
-    }
-    else if (activePage === 'goods_release') {
-      nextId = `GRY-GRA-00${greigeGras.length + 1}`;
-      setFields({ id: nextId, date: dateToday, buyerName: 'Raymond Ltd', designNo: 'DES-4091', lotNo: '', releaseType: 'Sale', totalMeters: '', totalWeight: '', totalAmount: '', deliveryAddress: '', expectedDispatch: dateToday, status: 'Approved' });
-    }
-    else if (activePage === 'gry_invoice') {
-      nextId = `GRY-INV-00${greigeInvoices.length + 1}`;
-      setFields({ id: nextId, date: dateToday, invoiceType: 'Tax Invoice', buyerName: 'Raymond Ltd', graRef: '', subtotal: '', totalGst: '', grandTotal: '', paymentTerms: '30 Days', status: 'Approved' });
-    }
-    else {
-      // General Fallback
-      nextId = `TXN-GRY-00${designs.length + 1}`;
-      setFields({ id: nextId, date: dateToday, remarks: '', status: 'Active' });
+      initFields = { ...initFields, vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Vendor', gateInwardRef: '', dcNo: '', dcDate: dateToday, designNo: 'DES-4091', fabricType: 'Grey Satin', totalPieces: '', totalMeters: '', totalWeight: '', totalValue: '', status: 'Completed' };
+    } else if (activePage === 'ot_checking') {
+      initFields = { ...initFields, vendorInwardRef: 'GRY-IN-001', vendorName: 'Standard Weaving Co.', designNo: 'DES-4091', lotNo: '', totalPieces: '', warpDefects: 0, weftDefects: 0, pointsPer100m: 0, grade: 'A — Exportable', mendingRequired: false, checkedBy: 'Murugan Swamy', status: 'Approved' };
+    } else if (activePage === 'cloth_mending') {
+      initFields = { ...initFields, otCheckingRef: 'GRY-CHK-001', designNo: 'DES-4091', lotNo: '', vendorName: 'Standard Weaving Co.', pieceNo: 1, mendingType: 'Weaving Repair', menderName: 'Senthil Kumar (General Manager)', totalPiecesMended: '', mendingCharges: '', supervisedBy: 'Mani Bharathi (Store Head)' };
+    } else if (activePage === 'cloth_delivery') {
+      initFields = { ...initFields, deliveryType: 'Sale Delivery', partyName: 'Raymond Ltd', graRef: '', designNo: 'DES-4091', lotNo: '', totalPieces: '', totalMeters: '', totalWeight: '', totalAmount: '', dcNo: '', vehicleNo: '', driverName: '', status: 'Dispatched' };
+    } else if (activePage === 'cloth_packing') {
+      initFields = { ...initFields, designNo: 'DES-4091', lotNo: '', packingType: 'Standard Bale', buyerName: 'Raymond Ltd', totalBales: '', totalPieces: '', totalMeters: '', totalNetWeight: '', packedBy: 'Murugan Swamy', status: 'Approved' };
+    } else if (activePage === 'goods_release') {
+      initFields = { ...initFields, buyerName: 'Raymond Ltd', designNo: 'DES-4091', lotNo: '', releaseType: 'Sale', totalMeters: '', totalWeight: '', totalAmount: '', deliveryAddress: '', expectedDispatch: dateToday, status: 'Approved' };
+    } else if (activePage === 'gry_invoice') {
+      initFields = { ...initFields, invoiceType: 'Tax Invoice', buyerName: 'Raymond Ltd', graRef: '', subtotal: '', totalGst: '', grandTotal: '', paymentTerms: '30 Days', status: 'Approved' };
+    } else {
+      initFields = { ...initFields, remarks: '' };
     }
 
-    setCurrentFormId(nextId);
+    setFields(initFields);
+    setSelectedRecord(null);
+    setCurrentFormId('NEW RECORD');
     setActiveFormTab('General Info');
     setIsFormOpen(true);
   };
 
   const handleEdit = (row) => {
+    setSelectedRecord(row);
     setCurrentFormId(row.id);
     setFields({ ...row });
     setActiveFormTab('General Info');
     setIsFormOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
 
-    if (activePage === 'vendor_inward') {
-      const exists = vendorInwards.some(d => d.id === currentFormId);
-      if (exists) setVendorInwards(vendorInwards.map(d => d.id === currentFormId ? fields : d));
-      else setVendorInwards([fields, ...vendorInwards]);
-    }
-    else if (activePage === 'ot_checking') {
-      const exists = greigeCheckings.some(d => d.id === currentFormId);
-      if (exists) setGreigeCheckings(greigeCheckings.map(d => d.id === currentFormId ? fields : d));
-      else setGreigeCheckings([fields, ...greigeCheckings]);
-    }
-    else if (activePage === 'cloth_mending') {
-      const exists = clothMendings.some(d => d.id === currentFormId);
-      if (exists) setClothMendings(clothMendings.map(d => d.id === currentFormId ? fields : d));
-      else setClothMendings([fields, ...clothMendings]);
-    }
-    else if (activePage === 'cloth_delivery') {
-      const exists = greigeDeliveries.some(d => d.id === currentFormId);
-      if (exists) setGreigeDeliveries(greigeDeliveries.map(d => d.id === currentFormId ? fields : d));
-      else setGreigeDeliveries([fields, ...greigeDeliveries]);
-    }
-    else if (activePage === 'cloth_packing') {
-      const exists = greigePackings.some(d => d.id === currentFormId);
-      if (exists) setGreigePackings(greigePackings.map(d => d.id === currentFormId ? fields : d));
-      else setGreigePackings([fields, ...greigePackings]);
-    }
-    else if (activePage === 'goods_release') {
-      const exists = greigeGras.some(d => d.id === currentFormId);
-      if (exists) setGreigeGras(greigeGras.map(d => d.id === currentFormId ? fields : d));
-      else setGreigeGras([fields, ...greigeGras]);
-    }
-    else if (activePage === 'gry_invoice') {
-      const exists = greigeInvoices.some(d => d.id === currentFormId);
-      if (exists) setGreigeInvoices(greigeInvoices.map(d => d.id === currentFormId ? fields : d));
-      else setGreigeInvoices([fields, ...greigeInvoices]);
-    }
+    const payload = {
+      module_type: activePage,
+      date: fields.date || new Date().toISOString().substring(0, 10),
+      buyer_name: fields.buyerName || fields.partyName || fields.vendorName || "Internal",
+      status: fields.status || 'Active',
+      details: fields
+    };
 
-    setIsFormOpen(false);
-    alert("Greige production record processed and saved!");
+    try {
+      if (selectedRecord && selectedRecord.db_id) {
+        await workOrderTransactionAPI.update(selectedRecord.db_id, payload);
+      } else {
+        await workOrderTransactionAPI.create(payload);
+      }
+      setIsFormOpen(false);
+      loadData();
+      alert("Greige production record processed and saved!");
+    } catch (err) {
+      console.error("Failed to save", err);
+      alert("Failed to save record.");
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (db_id) => {
+    if (!db_id) return;
     if (confirm("Are you sure you want to remove this greige transaction entry?")) {
-      if (activePage === 'vendor_inward') setVendorInwards(vendorInwards.filter(d => d.id !== id));
-      if (activePage === 'ot_checking') setGreigeCheckings(greigeCheckings.filter(d => d.id !== id));
-      if (activePage === 'cloth_mending') setClothMendings(clothMendings.filter(d => d.id !== id));
-      if (activePage === 'cloth_delivery') setGreigeDeliveries(greigeDeliveries.filter(d => d.id !== id));
-      if (activePage === 'cloth_packing') setGreigePackings(greigePackings.filter(d => d.id !== id));
-      if (activePage === 'goods_release') setGreigeGras(greigeGras.filter(d => d.id !== id));
-      if (activePage === 'gry_invoice') setGreigeInvoices(greigeInvoices.filter(d => d.id !== id));
+      try {
+        await workOrderTransactionAPI.delete(db_id);
+        if (selectedRecord?.db_id === db_id) setSelectedRecord(null);
+        loadData();
+      } catch (err) {
+        console.error("Failed to delete", err);
+        alert("Failed to delete record.");
+      }
     }
   };
 
@@ -225,125 +206,66 @@ export default function GreigeTransaction() {
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
 
       {/* HEADER TITLE BAR */}
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-        <div>
-          <h2 style={{ fontSize: '22px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-            <Layers size={24} style={{ color: '#2563eb' }} /> Greige Transaction Desk
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '13px', fontWeight: '500' }}>
-            {activePage ? `Operational Sub-Page: ${PAGES_METADATA[activePage].label}` : "Manage raw/grey fabric prior to finishing, processing, and domestic sales."}
-          </p>
+      {!isFormOpen && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Layers size={24} color="#2563eb" /> {activeSection}
+            </h2>
+            <p style={{ color: 'var(--text-muted)' }}>
+              Manage {activeSection.toLowerCase()} operations, approvals, and records.
+            </p>
+          </div>
         </div>
-        <div>
-          {activePage ? (
-            <button className="btn btn-secondary" onClick={() => setActivePage(null)} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <X size={15} /> Exit Workspace
-            </button>
-          ) : (
-            <span style={{ fontSize: '12px', padding: '6px 12px', background: 'rgba(37, 99, 235, 0.08)', color: '#2563eb', borderRadius: '4px', fontWeight: 800 }}>
-              Greige Raw Fabric Ledger
-            </span>
-          )}
-        </div>
-      </div>
+      )}
 
-      {/* TOP DESK 4 DIVISION SWITCH TABS */}
-      {!activePage && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '28px' }}>
-            {[
-              { key: 'InwardChecking', label: 'Inward & Checking' },
-              { key: 'Delivery', label: 'Delivery Workflows' },
-              { key: 'PackingBale', label: 'Packing & Bale' },
-              { key: 'DispatchInvoice', label: 'Dispatch & Invoice' }
-            ].map(sec => {
-              const isSelected = activeSection === sec.key;
+      {/* STAT CARDS ACTING AS SUB-MODULE SWITCHERS */}
+      {!isFormOpen && (
+        <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap', gap: 16, marginBottom: 24, paddingBottom: 8 }}>
+          {Object.values(PAGES_METADATA)
+            .filter(p => p.category === activeSection)
+            .map(p => {
+              const IconComp = p.icon;
+              const cardColor = p.color || '#3b82f6';
+              const r = parseInt(cardColor.slice(1, 3), 16);
+              const g = parseInt(cardColor.slice(3, 5), 16);
+              const b = parseInt(cardColor.slice(5, 7), 16);
+              const isSelected = activePage === p.key;
+
               return (
-                <button
-                  key={sec.key}
-                  onClick={() => setActiveSection(sec.key)}
+                <div 
+                  key={p.key}
+                  onClick={() => handleOpenPage(p)}
+                  className="card"
                   style={{
-                    padding: '12px 6px',
-                    fontSize: '12px',
-                    fontWeight: '850',
-                    borderRadius: '8px',
+                    flex: '1 0 220px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    padding: 16,
                     cursor: 'pointer',
-                    background: isSelected ? 'rgba(37, 99, 235, 0.08)' : 'white',
-                    color: isSelected ? '#2563eb' : 'var(--text-secondary)',
-                    border: isSelected ? '2px solid #2563eb' : '1px solid var(--border)',
-                    transition: 'all 0.15s ease',
-                    textAlign: 'center'
+                    border: isSelected ? `2px solid ${cardColor}` : '1px solid var(--border)',
+                    background: isSelected ? `rgba(${r},${g},${b}, 0.05)` : 'var(--bg-secondary)',
+                    transition: 'all 0.2s ease',
+                    transform: isSelected ? 'translateY(-2px)' : 'none',
+                    boxShadow: isSelected ? `0 10px 15px -3px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)'
                   }}
                 >
-                  {sec.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ACTIVE DIVISION'S SUB-MODULE CARDS GRID */}
-          <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
-            📂 Select {activeSection} Module
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '40px' }}>
-            {Object.values(PAGES_METADATA)
-              .filter(p => p.section === activeSection)
-              .map(p => {
-                const IconComp = p.icon;
-                return (
-                  <button
-                    key={p.key}
-                    onClick={() => handleOpenPage(p)}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      padding: '20px',
-                      borderRadius: '12px',
-                      background: 'white',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      textAlign: 'left',
-                      boxShadow: 'none',
-                      outline: 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#2563eb';
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.04)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'rgba(37, 99, 235, 0.05)',
-                      color: '#2563eb'
-                    }}>
-                      <IconComp size={18} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ padding: 12, borderRadius: 10, background: cardColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 12px rgba(0,0,0,0.15)` }}>
+                      <IconComp size={20} />
                     </div>
                     <div>
-                      <h4 style={{ fontWeight: '850', fontSize: '13px', color: 'var(--text-primary)', margin: 0 }}>
-                        {p.label}
-                      </h4>
-                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: '500', lineHeight: '1.3' }}>
-                        {p.desc}
+                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</h3>
+                      <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                         <span style={{ fontWeight: 800, color: cardColor }}>{getSubModuleCount(p.key)}</span> Records
                       </p>
                     </div>
-                  </button>
-                );
-              })}
-          </div>
-        </>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
       )}
 
       {/* SUB PAGE WORKSPACE CONTAINER */}
@@ -399,7 +321,7 @@ export default function GreigeTransaction() {
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
                               <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id)}><Trash2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Scissors, Search, Plus, Trash2, Edit, Check, X, Download, 
@@ -8,14 +8,22 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-export default function FabricTransaction() {
+export default function FabricTransaction({ defaultSection = 'Fabric Checking' }) {
   const navigate = useNavigate();
 
-  // Top Section Tabs: 'Checking' | 'Inward' | 'Delivery' | 'LotBale' | 'GateDispatch' | 'VendorBills' | 'Surplus'
-  const [activeSection, setActiveSection] = useState('Checking');
-
-  // Currently open sub-page: null means dashboard/list, else the specific page key (e.g. 'design_upload')
+  const [activeSection, setActiveSection] = useState(defaultSection);
   const [activePage, setActivePage] = useState(null);
+
+  useEffect(() => {
+    setActiveSection(defaultSection);
+    const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === defaultSection);
+    if (firstSubModule) {
+      setActivePage(firstSubModule.key);
+    } else {
+      setActivePage(null);
+    }
+    setIsFormOpen(false);
+  }, [defaultSection]);
 
   // Search Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,46 +120,46 @@ export default function FabricTransaction() {
   // =========================================================================
   const PAGES_METADATA = {
     // Fabric Checking
-    design_upload: { key: 'design_upload', label: "Design Upload", section: 'Checking', desc: "Upload and manage fabric design files digitally", icon: FileText },
-    cloth_checking: { key: 'cloth_checking', label: "Cloth Checking Entry", section: 'Checking', desc: "Record quality checking of cloth before inward", icon: CheckSquare },
-    ot_checking: { key: 'ot_checking', label: "ON Table Checking Entry", section: 'Checking', desc: "Detailed on-table fabric quality inspection (Link)", icon: Layers, isLink: true, route: '/cloth/checking' },
-    lot_completion: { key: 'lot_completion', label: "Cloth LOT Completion", section: 'Checking', desc: "Mark fabric lot as complete after all checking done", icon: CheckSquare },
+    design_upload: { key: 'design_upload', label: "Design Upload", category: 'Fabric Checking', desc: "Upload and manage fabric design files digitally", icon: FileText, color: '#3b82f6' },
+    cloth_checking: { key: 'cloth_checking', label: "Cloth Checking Entry", category: 'Fabric Checking', desc: "Record quality checking of cloth before inward", icon: CheckSquare, color: '#3b82f6' },
+    ot_checking: { key: 'ot_checking', label: "ON Table Checking Entry", category: 'Fabric Checking', desc: "Detailed on-table fabric quality inspection (Link)", icon: Layers, isLink: true, route: '/cloth/checking', color: '#3b82f6' },
+    lot_completion: { key: 'lot_completion', label: "Cloth LOT Completion", category: 'Fabric Checking', desc: "Mark fabric lot as complete after all checking done", icon: CheckSquare, color: '#3b82f6' },
 
     // Fabric Inward
-    cloth_inward: { key: 'cloth_inward', label: "Cloth Inward", section: 'Inward', desc: "Record stock receiving and rack allocation (Link)", icon: Factory, isLink: true, route: '/cloth/inward' },
-    cloth_purchase_bill: { key: 'cloth_purchase_bill', label: "Cloth Purchase Bills Entry", section: 'Inward', desc: "Record purchase bills for cloth/fabric bought", icon: FileText },
+    cloth_inward: { key: 'cloth_inward', label: "Cloth Inward", category: 'Fabric Inward', desc: "Record stock receiving and rack allocation (Link)", icon: Factory, isLink: true, route: '/cloth/inward', color: '#10b981' },
+    cloth_purchase_bill: { key: 'cloth_purchase_bill', label: "Cloth Purchase Bills Entry", category: 'Fabric Inward', desc: "Record purchase bills for cloth/fabric bought", icon: FileText, color: '#10b981' },
 
     // Fabric Delivery
-    del_pcwise: { key: 'del_pcwise', label: "Cloth Delivery PC-Wise Entry", section: 'Delivery', desc: "Record cloth delivery piece-by-piece to buyers", icon: Truck },
-    m2m_delivery: { key: 'm2m_delivery', label: "Mill to Mill Delivery Entry", section: 'Delivery', desc: "Record fabric transfer between mills/units", icon: Layers },
-    del_eway: { key: 'del_eway', label: "Cloth Delivery Eway Bill", section: 'Delivery', desc: "Generate E-Way Bill for cloth delivery (Link)", icon: Globe, isLink: true, route: '/eway-bill' },
-    bale_delivery: { key: 'bale_delivery', label: "Cloth Bale Delivery Entry", section: 'Delivery', desc: "Record delivery of cloth in bale format", icon: ShoppingBag },
+    del_pcwise: { key: 'del_pcwise', label: "Cloth Delivery PC-Wise Entry", category: 'Fabric Delivery', desc: "Record cloth delivery piece-by-piece to buyers", icon: Truck, color: '#6366f1' },
+    m2m_delivery: { key: 'm2m_delivery', label: "Mill to Mill Delivery Entry", category: 'Fabric Delivery', desc: "Record fabric transfer between mills/units", icon: Layers, color: '#6366f1' },
+    del_eway: { key: 'del_eway', label: "Cloth Delivery Eway Bill", category: 'Fabric Delivery', desc: "Generate E-Way Bill for cloth delivery (Link)", icon: Globe, isLink: true, route: '/eway-bill', color: '#6366f1' },
+    bale_delivery: { key: 'bale_delivery', label: "Cloth Bale Delivery Entry", category: 'Fabric Delivery', desc: "Record delivery of cloth in bale format", icon: ShoppingBag, color: '#6366f1' },
 
     // Lot & Bale
-    lot_approval: { key: 'lot_approval', label: "Lot Approval Entry", section: 'LotBale', desc: "Formal approval of fabric lot for dispatch/sale", icon: CheckSquare },
-    bale_amend: { key: 'bale_amend', label: "Bale Amendment Entry", section: 'LotBale', desc: "Amend bale details after packing if corrections needed", icon: Edit },
-    bale_packing: { key: 'bale_packing', label: "Cloth Bale Packing", section: 'LotBale', desc: "Record packing of cloth into bales for dispatch", icon: ShoppingBag },
-    pl_checking: { key: 'pl_checking', label: "Packinglist Checking", section: 'LotBale', desc: "Verify packing list before dispatch", icon: CheckSquare },
+    lot_approval: { key: 'lot_approval', label: "Lot Approval Entry", category: 'Lot & Bale', desc: "Formal approval of fabric lot for dispatch/sale", icon: CheckSquare, color: '#0284c7' },
+    bale_amend: { key: 'bale_amend', label: "Bale Amendment Entry", category: 'Lot & Bale', desc: "Amend bale details after packing if corrections needed", icon: Edit, color: '#0284c7' },
+    bale_packing: { key: 'bale_packing', label: "Cloth Bale Packing", category: 'Lot & Bale', desc: "Record packing of cloth into bales for dispatch", icon: ShoppingBag, color: '#0284c7' },
+    pl_checking: { key: 'pl_checking', label: "Packinglist Checking", category: 'Lot & Bale', desc: "Verify packing list before dispatch", icon: CheckSquare, color: '#0284c7' },
 
     // Gate & Dispatch
-    goods_release: { key: 'goods_release', label: "New Goods Release Advice", section: 'GateDispatch', desc: "Authorize release of goods from warehouse for dispatch (Link)", icon: FileText, isLink: true, route: '/goods-release' },
-    gate_pass: { key: 'gate_pass', label: "Cloth Gate Pass Entry", section: 'GateDispatch', desc: "Create gate pass specifically for cloth dispatch", icon: Layers },
-    sales_invoice: { key: 'sales_invoice', label: "Sales Invoice", section: 'GateDispatch', desc: "Link to central sales invoicing module (Link)", icon: FileText, isLink: true, route: '/sales-invoice' },
-    einvoice_eway: { key: 'einvoice_eway', label: "Einvoice / Eway Bill", section: 'GateDispatch', desc: "Generate combined E-Invoice and E-Way Bill for fabric", icon: Sparkles },
+    goods_release: { key: 'goods_release', label: "New Goods Release Advice", category: 'Gate & Dispatch', desc: "Authorize release of goods from warehouse for dispatch (Link)", icon: FileText, isLink: true, route: '/goods-release', color: '#0d9488' },
+    gate_pass: { key: 'gate_pass', label: "Cloth Gate Pass Entry", category: 'Gate & Dispatch', desc: "Create gate pass specifically for cloth dispatch", icon: Layers, color: '#0d9488' },
+    sales_invoice: { key: 'sales_invoice', label: "Sales Invoice", category: 'Gate & Dispatch', desc: "Link to central sales invoicing module (Link)", icon: FileText, isLink: true, route: '/sales-invoice', color: '#0d9488' },
+    einvoice_eway: { key: 'einvoice_eway', label: "Einvoice / Eway Bill", category: 'Gate & Dispatch', desc: "Generate combined E-Invoice and E-Way Bill for fabric", icon: Sparkles, color: '#0d9488' },
 
     // Vendor Bills
-    vendor_bills: { key: 'vendor_bills', label: "Vendor Bills Entry", section: 'VendorBills', desc: "Record bills from fabric processing vendors", icon: FileText },
-    printing_bills: { key: 'printing_bills', label: "Printing/Washing Bills Entry", section: 'VendorBills', desc: "Record bills from printing and washing job workers", icon: Printer },
-    dl_development: { key: 'dl_development', label: "DL Development Bills Entry", section: 'VendorBills', desc: "Record bills for design/development work done by vendors", icon: Settings },
+    vendor_bills: { key: 'vendor_bills', label: "Vendor Bills Entry", category: 'Vendor Bills', desc: "Record bills from fabric processing vendors", icon: FileText, color: '#64748b' },
+    printing_bills: { key: 'printing_bills', label: "Printing/Washing Bills Entry", category: 'Vendor Bills', desc: "Record bills from printing and washing job workers", icon: Printer, color: '#64748b' },
+    dl_development: { key: 'dl_development', label: "DL Development Bills Entry", category: 'Vendor Bills', desc: "Record bills for design/development work done by vendors", icon: Settings, color: '#64748b' },
 
     // Surplus Stock
-    surplus_opening: { key: 'surplus_opening', label: "Surplus Stock Opening", section: 'Surplus', desc: "Enter opening surplus/excess stock when starting system", icon: Database },
-    surplus_report: { key: 'surplus_report', label: "Surplus Stock Report", section: 'Surplus', desc: "View current surplus stock position", icon: FileText },
-    surplus_download: { key: 'surplus_download', label: "Surplus Stock Excel Download", section: 'Surplus', desc: "Export surplus stock data directly to Excel sheet", icon: Download },
-    surplus_report_new: { key: 'surplus_report_new', label: "Surplus Stock Report New", section: 'Surplus', desc: "Enhanced surplus stock report with seasonal filters", icon: FileText },
-    surplus_inward: { key: 'surplus_inward', label: "Surplus Stock Inward", section: 'Surplus', desc: "Record surplus stock coming back from buyers/market", icon: Factory },
-    surplus_delivery: { key: 'surplus_delivery', label: "Surplus Stock Delivery", section: 'Surplus', desc: "Record delivery of surplus stock to buyers/traders", icon: Truck },
-    customer_hanger: { key: 'customer_hanger', label: "Customer Enquiry Hanger", section: 'Surplus', desc: "Manage customer enquiries for fabric hangers/samples", icon: ShoppingBag }
+    surplus_opening: { key: 'surplus_opening', label: "Surplus Stock Opening", category: 'Surplus Stock', desc: "Enter opening surplus/excess stock when starting system", icon: Database, color: '#0ea5e9' },
+    surplus_report: { key: 'surplus_report', label: "Surplus Stock Report", category: 'Surplus Stock', desc: "View current surplus stock position", icon: FileText, color: '#0ea5e9' },
+    surplus_download: { key: 'surplus_download', label: "Surplus Stock Excel Download", category: 'Surplus Stock', desc: "Export surplus stock data directly to Excel sheet", icon: Download, color: '#0ea5e9' },
+    surplus_report_new: { key: 'surplus_report_new', label: "Surplus Stock Report New", category: 'Surplus Stock', desc: "Enhanced surplus stock report with seasonal filters", icon: FileText, color: '#0ea5e9' },
+    surplus_inward: { key: 'surplus_inward', label: "Surplus Stock Inward", category: 'Surplus Stock', desc: "Record surplus stock coming back from buyers/market", icon: Factory, color: '#0ea5e9' },
+    surplus_delivery: { key: 'surplus_delivery', label: "Surplus Stock Delivery", category: 'Surplus Stock', desc: "Record delivery of surplus stock to buyers/traders", icon: Truck, color: '#0ea5e9' },
+    customer_hanger: { key: 'customer_hanger', label: "Customer Enquiry Hanger", category: 'Surplus Stock', desc: "Manage customer enquiries for fabric hangers/samples", icon: ShoppingBag, color: '#0ea5e9' }
   };
 
   // =========================================================================
@@ -325,128 +333,66 @@ export default function FabricTransaction() {
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
 
       {/* HEADER TITLE BAR */}
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-        <div>
-          <h2 style={{ fontSize: '22px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-            <Scissors size={24} style={{ color: '#7c3aed' }} /> Central Fabric Production Workspace
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '13px', fontWeight: '500' }}>
-            {activePage ? `Operational Sub-Page: ${PAGES_METADATA[activePage].label}` : "Massive Fabric inspection matrices, Mill transfers, Packing lists, and Surplus stock parameters."}
-          </p>
+      {!isFormOpen && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Scissors size={24} color="#7c3aed" /> {activeSection}
+            </h2>
+            <p style={{ color: 'var(--text-muted)' }}>
+              Manage {activeSection.toLowerCase()} operations, approvals, and records.
+            </p>
+          </div>
         </div>
-        <div>
-          {activePage ? (
-            <button className="btn btn-secondary" onClick={() => setActivePage(null)} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <X size={15} /> Exit Workspace
-            </button>
-          ) : (
-            <span style={{ fontSize: '12px', padding: '6px 12px', background: 'rgba(124, 58, 237, 0.08)', color: '#7c3aed', borderRadius: '4px', fontWeight: 800 }}>
-              Audit-Ready Production Flow
-            </span>
-          )}
-        </div>
-      </div>
+      )}
 
-      {/* TOP DESK 7 DIVISION SWITCH TABS */}
-      {!activePage && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '28px' }}>
-            {[
-              { key: 'Checking', label: 'Fabric Checking' },
-              { key: 'Inward', label: 'Fabric Inward' },
-              { key: 'Delivery', label: 'Fabric Delivery' },
-              { key: 'LotBale', label: 'Lot & Bale' },
-              { key: 'GateDispatch', label: 'Gate & Dispatch' },
-              { key: 'VendorBills', label: 'Vendor Bills' },
-              { key: 'Surplus', label: 'Surplus Stock' }
-            ].map(sec => {
-              const isSelected = activeSection === sec.key;
+      {/* STAT CARDS ACTING AS SUB-MODULE SWITCHERS */}
+      {!isFormOpen && (
+        <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap', gap: 16, marginBottom: 24, paddingBottom: 8 }}>
+          {Object.values(PAGES_METADATA)
+            .filter(p => p.category === activeSection)
+            .map(p => {
+              const IconComp = p.icon;
+              const cardColor = p.color || '#3b82f6';
+              const r = parseInt(cardColor.slice(1, 3), 16);
+              const g = parseInt(cardColor.slice(3, 5), 16);
+              const b = parseInt(cardColor.slice(5, 7), 16);
+              const isSelected = activePage === p.key;
+
               return (
-                <button
-                  key={sec.key}
-                  onClick={() => setActiveSection(sec.key)}
+                <div 
+                  key={p.key}
+                  onClick={() => handleOpenPage(p)}
+                  className="card"
                   style={{
-                    padding: '12px 6px',
-                    fontSize: '12px',
-                    fontWeight: '850',
-                    borderRadius: '8px',
+                    flex: '1 0 220px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    padding: 16,
                     cursor: 'pointer',
-                    background: isSelected ? 'rgba(124, 58, 237, 0.08)' : 'white',
-                    color: isSelected ? '#7c3aed' : 'var(--text-secondary)',
-                    border: isSelected ? '2px solid #7c3aed' : '1px solid var(--border)',
-                    transition: 'all 0.15s ease',
-                    textAlign: 'center'
+                    border: isSelected ? `2px solid ${cardColor}` : '1px solid var(--border)',
+                    background: isSelected ? `rgba(${r},${g},${b}, 0.05)` : 'var(--bg-secondary)',
+                    transition: 'all 0.2s ease',
+                    transform: isSelected ? 'translateY(-2px)' : 'none',
+                    boxShadow: isSelected ? `0 10px 15px -3px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)'
                   }}
                 >
-                  {sec.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ACTIVE DIVISION'S SUB-MODULE CARDS GRID */}
-          <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
-            📂 Select {activeSection} Module
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '40px' }}>
-            {Object.values(PAGES_METADATA)
-              .filter(p => p.section === activeSection)
-              .map(p => {
-                const IconComp = p.icon;
-                return (
-                  <button
-                    key={p.key}
-                    onClick={() => handleOpenPage(p)}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      padding: '20px',
-                      borderRadius: '12px',
-                      background: 'white',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      textAlign: 'left',
-                      boxShadow: 'none',
-                      outline: 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#7c3aed';
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.04)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'rgba(124, 58, 237, 0.05)',
-                      color: '#7c3aed'
-                    }}>
-                      <IconComp size={18} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ padding: 12, borderRadius: 10, background: cardColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 12px rgba(0,0,0,0.15)` }}>
+                      <IconComp size={20} />
                     </div>
                     <div>
-                      <h4 style={{ fontWeight: '850', fontSize: '13px', color: 'var(--text-primary)', margin: 0 }}>
-                        {p.label}
-                      </h4>
-                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: '500', lineHeight: '1.3' }}>
-                        {p.desc}
+                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</h3>
+                      <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                         <span style={{ fontWeight: 800, color: cardColor }}>-</span> Records
                       </p>
                     </div>
-                  </button>
-                );
-              })}
-          </div>
-        </>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
       )}
 
       {/* SUB PAGE WORKSPACE CONTAINER */}
