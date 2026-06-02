@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Layers, Search, Plus, Trash2, Edit, Check, X, Download, 
@@ -7,15 +7,24 @@ import {
   MapPin, HelpCircle, Sparkles, Database, Shield, Scissors
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { workOrderTransactionAPI } from '../../services/api';
 
-export default function WarpSizingTransaction() {
+export default function WarpSizingTransaction({ defaultSection = 'Beam & Transaction Entries' }) {
   const navigate = useNavigate();
 
-  // Active category: 'Reports' | 'BeamManagement' | 'Bills' | 'Amendment'
-  const [activeSection, setActiveSection] = useState('Reports');
-
-  // Currently active sub-page
+  const [activeSection, setActiveSection] = useState(defaultSection);
   const [activePage, setActivePage] = useState(null);
+
+  useEffect(() => {
+    setActiveSection(defaultSection);
+    const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === defaultSection);
+    if (firstSubModule) {
+      setActivePage(firstSubModule.key);
+    } else {
+      setActivePage(null);
+    }
+    setIsFormOpen(false);
+  }, [defaultSection]);
 
   // Form toggle states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -31,40 +40,37 @@ export default function WarpSizingTransaction() {
   // STATE STORE FOR ALL 7 NEW WORKSPACES
   // =========================================================================
 
-  // 1. WARPING SET REPORT
-  const [warpingReports, setWarpingReports] = useState([
-    { id: 'WSR-2026-001', date: '2026-06-01', setNo: 'SET-9912', shift: 'Morning (6AM-2PM)', machineNo: 'M-12', operatorName: 'Murugan Swamy', designNo: 'DES-4091', totalEnds: 4200, width: 62, warpLength: 3000, noOfBeams: 4, actualProduction: 2950, efficiency: 98.3, status: 'Active' }
-  ]);
+  const [warpingReports, setWarpingReports] = useState([]);
+  const [sizingReports, setSizingReports] = useState([]);
+  const [beamReceipts, setBeamReceipts] = useState([]);
+  const [beamDeliveries, setBeamDeliveries] = useState([]);
+  const [emptyBeams, setEmptyBeams] = useState([]);
+  const [jobBills, setJobBills] = useState([]);
+  const [setAmendments, setSetAmendments] = useState([]);
 
-  // 2. SIZING SET REPORT
-  const [sizingReports, setSizingReports] = useState([
-    { id: 'SSR-2026-001', date: '2026-06-01', setNo: 'SET-9912', warpingSetRef: 'WSR-2026-001', shift: 'Afternoon (2PM-10PM)', machineNo: 'SZ-02', operatorName: 'Senthil Kumar (General Manager)', designNo: 'DES-4091', beamLength: 3200, warpBeamsUsed: 4, sizedBeamsOut: 4, actualProduction: 3180, efficiency: 99.3, status: 'Active' }
-  ]);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // 3. WARP BEAM RECEIVED ENTRY
-  const [beamReceipts, setBeamReceipts] = useState([
-    { id: 'WBR-2026-001', date: '2026-06-01', receiptType: 'New Beam from Vendor', fromParty: 'Standard Weaving Co.', gateInwardRef: 'GIN-9902', dcNo: 'DC-8812', dcDate: '2026-05-30', totalBeams: 5, totalWeight: 480, receivedBy: 'Mani Bharathi (Store Head)', status: 'Approved' }
-  ]);
+  const loadData = async () => {
+    try {
+      const response = await workOrderTransactionAPI.getAll();
+      const allTxns = response.data;
+      const mapTxn = (t) => ({ ...t.details, id: t.transaction_no, db_id: t.id, status: t.status });
 
-  // 4. WARP BEAM DELIVERY ENTRY
-  const [beamDeliveries, setBeamDeliveries] = useState([
-    { id: 'WBD-2026-001', date: '2026-06-01', deliveryType: 'To Weaving Section (Internal)', toParty: 'Weaving Unit A', setNo: 'SET-9912', designNo: 'DES-4091', totalBeams: 4, expectedReturn: '2026-06-15', deliveredBy: 'Murugan Swamy', status: 'Dispatched' }
-  ]);
+      setWarpingReports(allTxns.filter(t => t.module_type === 'warping_report').map(mapTxn));
+      setSizingReports(allTxns.filter(t => t.module_type === 'sizing_report').map(mapTxn));
+      setBeamReceipts(allTxns.filter(t => t.module_type === 'beam_received').map(mapTxn));
+      setBeamDeliveries(allTxns.filter(t => t.module_type === 'beam_delivery').map(mapTxn));
+      setEmptyBeams(allTxns.filter(t => t.module_type === 'empty_beam').map(mapTxn));
+      setJobBills(allTxns.filter(t => t.module_type === 'ws_bills').map(mapTxn));
+      setSetAmendments(allTxns.filter(t => t.module_type === 'set_amend').map(mapTxn));
+    } catch (err) {
+      console.error("Failed to load warping/sizing transactions", err);
+    }
+  };
 
-  // 5. EMPTY BEAM ENTRY
-  const [emptyBeams, setEmptyBeams] = useState([
-    { id: 'EBE-2026-001', date: '2026-06-01', transactionType: 'Empty Beam Received (from weaving)', fromSection: 'Weaving Unit B', totalBeams: 2, totalWeight: 80, receivedBy: 'Mani Bharathi (Store Head)', status: 'Active' }
-  ]);
-
-  // 6. WARPING/SIZING BILLS ENTRY
-  const [jobBills, setJobBills] = useState([
-    { id: 'WSB-2026-001', date: '2026-06-01', vendorName: 'Standard Weaving Co.', vendorType: 'Warping + Sizing Combined', vendorBillNo: 'BILL-WS-112', vendorBillDate: '2026-05-28', processType: 'Warping + Sizing', setNo: 'SET-9912', taxableAmount: 32000, netPayable: 33600, dueDays: '30 Days', status: 'Approved' }
-  ]);
-
-  // 7. SET DETAIL AMENDMENT ENTRY
-  const [setAmendments, setSetAmendments] = useState([
-    { id: 'SAM-2026-001', date: '2026-06-01', amendmentType: 'Beam Length Correction', originalReportType: 'Warping Set Report', originalReportRef: 'WSR-2026-001', setNo: 'SET-9912', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved' }
-  ]);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   // =========================================================================
   // DYNAMIC FORM FIELDS (GENERAL BINDINGS)
@@ -83,20 +89,29 @@ export default function WarpSizingTransaction() {
   // SECTIONS & PAGES DEFINITIONS
   // =========================================================================
   const PAGES_METADATA = {
-    // Reports
-    warping_report: { key: 'warping_report', label: "Warping Set Report Entry", section: 'Reports', desc: "Record complete details of each warping set — yarn consumed, beam details, efficiency", icon: FileText },
-    sizing_report: { key: 'sizing_report', label: "Sizing Set Report Entry", section: 'Reports', desc: "Record sizing process details — chemical consumption, beam details, efficiency", icon: FileText },
+    // Beam & Transaction Entries
+    beam_received: { key: 'beam_received', label: "Warp Beam Received Entry", section: 'BeamManagement', category: 'Beam & Transaction Entries', desc: "Record warp beams received from vendors or returned from weaving", icon: Factory, color: '#3b82f6' },
+    beam_delivery: { key: 'beam_delivery', label: "Warp Beam Delivery Entry", section: 'BeamManagement', category: 'Beam & Transaction Entries', desc: "Record warp beams sent to weaving section or outside vendors", icon: Truck, color: '#3b82f6' },
+    empty_beam: { key: 'empty_beam', label: "Empty Beam Entry", section: 'BeamManagement', category: 'Beam & Transaction Entries', desc: "Track empty beams returned from weaving after fabric production", icon: Database, color: '#3b82f6' },
 
-    // Beam Management
-    beam_received: { key: 'beam_received', label: "Warp Beam Received Entry", section: 'BeamManagement', desc: "Record warp beams received from vendors or returned from weaving", icon: Factory },
-    beam_delivery: { key: 'beam_delivery', label: "Warp Beam Delivery Entry", section: 'BeamManagement', desc: "Record warp beams sent to weaving section or outside vendors", icon: Truck },
-    empty_beam: { key: 'empty_beam', label: "Empty Beam Entry", section: 'BeamManagement', desc: "Track empty beams returned from weaving after fabric production", icon: Database },
+    // Reports, Bills & Amendments
+    warping_report: { key: 'warping_report', label: "Warping Set Report Entry", section: 'Reports', category: 'Reports, Bills & Amendments', desc: "Record complete details of each warping set — yarn consumed, beam details, efficiency", icon: FileText, color: '#8b5cf6' },
+    sizing_report: { key: 'sizing_report', label: "Sizing Set Report Entry", section: 'Reports', category: 'Reports, Bills & Amendments', desc: "Record sizing process details — chemical consumption, beam details, efficiency", icon: FileText, color: '#8b5cf6' },
+    ws_bills: { key: 'ws_bills', label: "Warping/Sizing Bills Entry", section: 'Bills', category: 'Reports, Bills & Amendments', desc: "Record bills from warping and sizing job workers/vendors", icon: FileText, color: '#10b981' },
+    set_amend: { key: 'set_amend', label: "SET Detail Amendment Entry", section: 'Amendment', category: 'Reports, Bills & Amendments', desc: "Correct or amend warping/sizing set details after entry", icon: Edit, color: '#475569' }
+  };
 
-    // Bills
-    ws_bills: { key: 'ws_bills', label: "Warping/Sizing Bills Entry", section: 'Bills', desc: "Record bills from warping and sizing job workers/vendors", icon: FileText },
-
-    // Amendment
-    set_amend: { key: 'set_amend', label: "SET Detail Amendment Entry", section: 'Amendment', desc: "Correct or amend warping/sizing set details after entry", icon: Edit }
+  const getSubModuleCount = (key) => {
+    switch(key) {
+      case 'warping_report': return warpingReports.length;
+      case 'sizing_report': return sizingReports.length;
+      case 'beam_received': return beamReceipts.length;
+      case 'beam_delivery': return beamDeliveries.length;
+      case 'empty_beam': return emptyBeams.length;
+      case 'ws_bills': return jobBills.length;
+      case 'set_amend': return setAmendments.length;
+      default: return 0;
+    }
   };
 
   // =========================================================================
@@ -108,102 +123,77 @@ export default function WarpSizingTransaction() {
   };
 
   const handleCreateNew = () => {
-    let nextId = '';
     const dateToday = new Date().toISOString().substring(0, 10);
+    let initFields = { date: dateToday, status: 'Active' };
 
     if (activePage === 'warping_report') {
-      nextId = `WSR-2026-00${warpingReports.length + 1}`;
-      setFields({ id: nextId, date: dateToday, setNo: '', shift: 'Morning (6AM-2PM)', machineNo: 'M-12', operatorName: 'Murugan Swamy', designNo: 'DES-4091', totalEnds: '', width: '', warpLength: '', noOfBeams: '', actualProduction: '', efficiency: 100, status: 'Active' });
-    }
-    else if (activePage === 'sizing_report') {
-      nextId = `SSR-2026-00${sizingReports.length + 1}`;
-      setFields({ id: nextId, date: dateToday, setNo: '', warpingSetRef: '', shift: 'Afternoon (2PM-10PM)', machineNo: 'SZ-02', operatorName: 'Senthil Kumar (General Manager)', designNo: 'DES-4091', beamLength: '', warpBeamsUsed: '', sizedBeamsOut: '', actualProduction: '', efficiency: 100, status: 'Active' });
-    }
-    else if (activePage === 'beam_received') {
-      nextId = `WBR-2026-00${beamReceipts.length + 1}`;
-      setFields({ id: nextId, date: dateToday, receiptType: 'New Beam from Vendor', fromParty: 'Standard Weaving Co.', gateInwardRef: '', dcNo: '', dcDate: dateToday, totalBeams: '', totalWeight: '', receivedBy: 'Mani Bharathi (Store Head)', status: 'Approved' });
-    }
-    else if (activePage === 'beam_delivery') {
-      nextId = `WBD-2026-00${beamDeliveries.length + 1}`;
-      setFields({ id: nextId, date: dateToday, deliveryType: 'To Weaving Section (Internal)', toParty: 'Weaving Unit A', setNo: '', designNo: 'DES-4091', totalBeams: '', expectedReturn: dateToday, deliveredBy: 'Murugan Swamy', status: 'Dispatched' });
-    }
-    else if (activePage === 'empty_beam') {
-      nextId = `EBE-2026-00${emptyBeams.length + 1}`;
-      setFields({ id: nextId, date: dateToday, transactionType: 'Empty Beam Received (from weaving)', fromSection: 'Weaving Unit B', totalBeams: '', totalWeight: '', receivedBy: 'Mani Bharathi (Store Head)', status: 'Active' });
-    }
-    else if (activePage === 'ws_bills') {
-      nextId = `WSB-2026-00${jobBills.length + 1}`;
-      setFields({ id: nextId, date: dateToday, vendorName: 'Standard Weaving Co.', vendorType: 'Warping + Sizing Combined', vendorBillNo: '', vendorBillDate: dateToday, processType: 'Warping + Sizing', setNo: '', taxableAmount: '', netPayable: '', dueDays: '30 Days', status: 'Approved' });
-    }
-    else if (activePage === 'set_amend') {
-      nextId = `SAM-2026-00${setAmendments.length + 1}`;
-      setFields({ id: nextId, date: dateToday, amendmentType: 'Beam Length Correction', originalReportType: 'Warping Set Report', originalReportRef: '', setNo: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved' });
+      initFields = { ...initFields, setNo: '', shift: 'Morning (6AM-2PM)', machineNo: '', operatorName: 'Murugan Swamy', designNo: 'DES-4091', totalEnds: '', width: '', warpLength: '', noOfBeams: '', actualProduction: '', efficiency: '' };
+    } else if (activePage === 'sizing_report') {
+      initFields = { ...initFields, setNo: '', warpingSetRef: '', shift: 'Afternoon (2PM-10PM)', machineNo: '', operatorName: 'Senthil Kumar (General Manager)', designNo: 'DES-4091', beamLength: '', warpBeamsUsed: '', sizedBeamsOut: '', actualProduction: '', efficiency: '' };
+    } else if (activePage === 'beam_received') {
+      initFields = { ...initFields, receiptType: 'New Beam from Vendor', fromParty: 'Standard Weaving Co.', gateInwardRef: '', dcNo: '', dcDate: dateToday, totalBeams: '', totalWeight: '', receivedBy: 'Mani Bharathi (Store Head)', status: 'Approved' };
+    } else if (activePage === 'beam_delivery') {
+      initFields = { ...initFields, deliveryType: 'To Weaving Section (Internal)', toParty: 'Weaving Unit A', setNo: '', designNo: 'DES-4091', totalBeams: '', expectedReturn: dateToday, deliveredBy: 'Murugan Swamy', status: 'Dispatched' };
+    } else if (activePage === 'empty_beam') {
+      initFields = { ...initFields, transactionType: 'Empty Beam Received (from weaving)', fromSection: 'Weaving Unit B', totalBeams: '', totalWeight: '', receivedBy: 'Mani Bharathi (Store Head)' };
+    } else if (activePage === 'ws_bills') {
+      initFields = { ...initFields, vendorName: 'Standard Weaving Co.', vendorType: 'Warping + Sizing Combined', vendorBillNo: '', vendorBillDate: dateToday, processType: 'Warping + Sizing', setNo: '', taxableAmount: '', netPayable: '', dueDays: '30 Days', status: 'Approved' };
+    } else if (activePage === 'set_amend') {
+      initFields = { ...initFields, amendmentType: 'Beam Length Correction', originalReportType: 'Warping Set Report', originalReportRef: '', setNo: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved' };
     }
 
-    setCurrentFormId(nextId);
+    setFields(initFields);
+    setSelectedRecord(null);
+    setCurrentFormId('NEW RECORD');
     setActiveFormTab('General Info');
     setIsFormOpen(true);
   };
 
   const handleEdit = (row) => {
+    setSelectedRecord(row);
     setCurrentFormId(row.id);
     setFields({ ...row });
     setActiveFormTab('General Info');
     setIsFormOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
 
-    if (activePage === 'warping_report') {
-      const exists = warpingReports.some(d => d.id === currentFormId);
-      if (exists) setWarpingReports(warpingReports.map(d => d.id === currentFormId ? fields : d));
-      else setWarpingReports([fields, ...warpingReports]);
-    }
-    else if (activePage === 'sizing_report') {
-      const exists = sizingReports.some(d => d.id === currentFormId);
-      if (exists) setSizingReports(sizingReports.map(d => d.id === currentFormId ? fields : d));
-      else setSizingReports([fields, ...sizingReports]);
-    }
-    else if (activePage === 'beam_received') {
-      const exists = beamReceipts.some(d => d.id === currentFormId);
-      if (exists) setBeamReceipts(beamReceipts.map(d => d.id === currentFormId ? fields : d));
-      else setBeamReceipts([fields, ...beamReceipts]);
-    }
-    else if (activePage === 'beam_delivery') {
-      const exists = beamDeliveries.some(d => d.id === currentFormId);
-      if (exists) setBeamDeliveries(beamDeliveries.map(d => d.id === currentFormId ? fields : d));
-      else setBeamDeliveries([fields, ...beamDeliveries]);
-    }
-    else if (activePage === 'empty_beam') {
-      const exists = emptyBeams.some(d => d.id === currentFormId);
-      if (exists) setEmptyBeams(emptyBeams.map(d => d.id === currentFormId ? fields : d));
-      else setEmptyBeams([fields, ...emptyBeams]);
-    }
-    else if (activePage === 'ws_bills') {
-      const exists = jobBills.some(d => d.id === currentFormId);
-      if (exists) setJobBills(jobBills.map(d => d.id === currentFormId ? fields : d));
-      else setJobBills([fields, ...jobBills]);
-    }
-    else if (activePage === 'set_amend') {
-      const exists = setAmendments.some(d => d.id === currentFormId);
-      if (exists) setSetAmendments(setAmendments.map(d => d.id === currentFormId ? fields : d));
-      else setSetAmendments([fields, ...setAmendments]);
-    }
+    const payload = {
+      module_type: activePage,
+      date: fields.date || new Date().toISOString().substring(0, 10),
+      buyer_name: fields.vendorName || fields.toParty || fields.fromParty || "Internal",
+      status: fields.status || 'Active',
+      details: fields
+    };
 
-    setIsFormOpen(false);
-    alert("Warping/Sizing production record processed and saved!");
+    try {
+      if (selectedRecord && selectedRecord.db_id) {
+        await workOrderTransactionAPI.update(selectedRecord.db_id, payload);
+      } else {
+        await workOrderTransactionAPI.create(payload);
+      }
+      setIsFormOpen(false);
+      loadData();
+      alert("Warping/Sizing production record processed and saved!");
+    } catch (err) {
+      console.error("Failed to save", err);
+      alert("Failed to save record.");
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (db_id) => {
+    if (!db_id) return;
     if (confirm("Are you sure you want to remove this warping/sizing entry?")) {
-      if (activePage === 'warping_report') setWarpingReports(warpingReports.filter(d => d.id !== id));
-      if (activePage === 'sizing_report') setSizingReports(sizingReports.filter(d => d.id !== id));
-      if (activePage === 'beam_received') setBeamReceipts(beamReceipts.filter(d => d.id !== id));
-      if (activePage === 'beam_delivery') setBeamDeliveries(beamDeliveries.filter(d => d.id !== id));
-      if (activePage === 'empty_beam') setEmptyBeams(emptyBeams.filter(d => d.id !== id));
-      if (activePage === 'ws_bills') setJobBills(jobBills.filter(d => d.id !== id));
-      if (activePage === 'set_amend') setSetAmendments(setAmendments.filter(d => d.id !== id));
+      try {
+        await workOrderTransactionAPI.delete(db_id);
+        if (selectedRecord?.db_id === db_id) setSelectedRecord(null);
+        loadData();
+      } catch (err) {
+        console.error("Failed to delete", err);
+        alert("Failed to delete record.");
+      }
     }
   };
 
@@ -211,125 +201,66 @@ export default function WarpSizingTransaction() {
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
 
       {/* HEADER TITLE BAR */}
-      <div className="card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', border: '1px solid var(--border)', borderRadius: '8px' }}>
-        <div>
-          <h2 style={{ fontSize: '22px', fontWeight: '850', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-            <Layers size={24} style={{ color: '#059669' }} /> Warping & Sizing Transaction Desk
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: '13px', fontWeight: '500' }}>
-            {activePage ? `Operational Sub-Page: ${PAGES_METADATA[activePage].label}` : "Complete Warping efficiency reports, chemical consumption, and Beam deliveries."}
-          </p>
+      {!isFormOpen && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Layers size={24} color="#059669" /> {activeSection}
+            </h2>
+            <p style={{ color: 'var(--text-muted)' }}>
+              Manage {activeSection.toLowerCase()} operations, approvals, and records.
+            </p>
+          </div>
         </div>
-        <div>
-          {activePage ? (
-            <button className="btn btn-secondary" onClick={() => setActivePage(null)} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <X size={15} /> Exit Workspace
-            </button>
-          ) : (
-            <span style={{ fontSize: '12px', padding: '6px 12px', background: 'rgba(5, 150, 105, 0.08)', color: '#059669', borderRadius: '4px', fontWeight: 800 }}>
-              Audit-Ready Sizing Desk
-            </span>
-          )}
-        </div>
-      </div>
+      )}
 
-      {/* TOP DESK 4 CATEGORY SWITCH TABS */}
-      {!activePage && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '28px' }}>
-            {[
-              { key: 'Reports', label: 'Warping & Sizing Reports' },
-              { key: 'BeamManagement', label: 'Beam Management' },
-              { key: 'Bills', label: 'Job Worker Bills' },
-              { key: 'Amendment', label: 'Set Amendments' }
-            ].map(sec => {
-              const isSelected = activeSection === sec.key;
+      {/* STAT CARDS ACTING AS SUB-MODULE SWITCHERS */}
+      {!isFormOpen && (
+        <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap', gap: 16, marginBottom: 24, paddingBottom: 8 }}>
+          {Object.values(PAGES_METADATA)
+            .filter(p => p.category === activeSection)
+            .map(p => {
+              const IconComp = p.icon;
+              const cardColor = p.color || '#3b82f6';
+              const r = parseInt(cardColor.slice(1, 3), 16);
+              const g = parseInt(cardColor.slice(3, 5), 16);
+              const b = parseInt(cardColor.slice(5, 7), 16);
+              const isSelected = activePage === p.key;
+
               return (
-                <button
-                  key={sec.key}
-                  onClick={() => setActiveSection(sec.key)}
+                <div 
+                  key={p.key}
+                  onClick={() => handleOpenPage(p)}
+                  className="card"
                   style={{
-                    padding: '12px 6px',
-                    fontSize: '12px',
-                    fontWeight: '850',
-                    borderRadius: '8px',
+                    flex: '1 0 220px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    padding: 16,
                     cursor: 'pointer',
-                    background: isSelected ? 'rgba(5, 150, 105, 0.08)' : 'white',
-                    color: isSelected ? '#059669' : 'var(--text-secondary)',
-                    border: isSelected ? '2px solid #059669' : '1px solid var(--border)',
-                    transition: 'all 0.15s ease',
-                    textAlign: 'center'
+                    border: isSelected ? `2px solid ${cardColor}` : '1px solid var(--border)',
+                    background: isSelected ? `rgba(${r},${g},${b}, 0.05)` : 'var(--bg-secondary)',
+                    transition: 'all 0.2s ease',
+                    transform: isSelected ? 'translateY(-2px)' : 'none',
+                    boxShadow: isSelected ? `0 10px 15px -3px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)'
                   }}
                 >
-                  {sec.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ACTIVE DIVISION'S SUB-MODULE CARDS GRID */}
-          <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>
-            📂 Select {activeSection} Module
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '40px' }}>
-            {Object.values(PAGES_METADATA)
-              .filter(p => p.section === activeSection)
-              .map(p => {
-                const IconComp = p.icon;
-                return (
-                  <button
-                    key={p.key}
-                    onClick={() => handleOpenPage(p)}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      padding: '20px',
-                      borderRadius: '12px',
-                      background: 'white',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      textAlign: 'left',
-                      boxShadow: 'none',
-                      outline: 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#059669';
-                      e.currentTarget.style.transform = 'translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.04)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'rgba(5, 150, 105, 0.05)',
-                      color: '#059669'
-                    }}>
-                      <IconComp size={18} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ padding: 12, borderRadius: 10, background: cardColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 12px rgba(0,0,0,0.15)` }}>
+                      <IconComp size={20} />
                     </div>
                     <div>
-                      <h4 style={{ fontWeight: '850', fontSize: '13px', color: 'var(--text-primary)', margin: 0 }}>
-                        {p.label}
-                      </h4>
-                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: '500', lineHeight: '1.3' }}>
-                        {p.desc}
+                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</h3>
+                      <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                         <span style={{ fontWeight: 800, color: cardColor }}>{getSubModuleCount(p.key)}</span> Records
                       </p>
                     </div>
-                  </button>
-                );
-              })}
-          </div>
-        </>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
       )}
 
       {/* SUB PAGE WORKSPACE CONTAINER */}
@@ -387,7 +318,7 @@ export default function WarpSizingTransaction() {
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
                               <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id)}><Trash2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
