@@ -190,6 +190,7 @@ async def delete_schedule(sch_id: int, db: AsyncSession = Depends(get_db)):
     return None
 
 class SequenceCreate(BaseModel):
+    order_id_ref: Optional[str] = None
     prefix: Optional[str] = "IBPO"
     fin_year: Optional[str] = "2026-27"
     running_no: Optional[int] = 1

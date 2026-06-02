@@ -21,7 +21,7 @@ export default function OrderSubModule() {
 
   const [sequences, setSequences] = useState([]);
   const [seqForm, setSeqForm] = useState({
-    prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
+    order_id_ref: '', prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
     order_type: 'Domestic', category: 'Fabric', buyer_ref: '', created_by: 'Administrator'
   });
 
@@ -45,6 +45,8 @@ export default function OrderSubModule() {
     delivery_place: '', transporter_name: '', buyer_ref: '', remarks: ''
   });
 
+  const [buyerOrders, setBuyerOrders] = useState([]);
+
   const cards = [
     { title: 'Buyer Order Schedule', icon: Calendar, color: '#3b82f6', desc: 'Manage delivery and shipment dates' },
     { title: 'Buyer Order Sequences', icon: Settings, color: '#8b5cf6', desc: 'Configure auto-generated Order IDs' },
@@ -57,7 +59,15 @@ export default function OrderSubModule() {
     fetchSequences();
     fetchAmendments();
     fetchCompletions();
+    fetchBuyerOrders();
   }, []);
+
+  const fetchBuyerOrders = async () => {
+    try {
+      const res = await buyerOrderAPI.list();
+      setBuyerOrders(res.data);
+    } catch(e) { console.error(e); }
+  };
 
   const fetchCompletions = async () => {
     try {
@@ -137,7 +147,7 @@ export default function OrderSubModule() {
       fetchSequences();
       setShowAddSequence(false);
       setSeqForm({
-        prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
+        order_id_ref: '', prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
         order_type: 'Domestic', category: 'Fabric', buyer_ref: '', created_by: 'Administrator'
       });
       alert("Sequence Configuration Saved Successfully!");
@@ -382,7 +392,12 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <input type="text" className="form-control" placeholder="e.g. IBPO-2026-001" value={schForm.order_id_ref} onChange={e => setSchForm({...schForm, order_id_ref: e.target.value})} />
+                      <select className="form-control" value={schForm.order_id_ref} onChange={e => setSchForm({...schForm, order_id_ref: e.target.value})}>
+                        <option value="">Select Buyer Order...</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Buyer Reference No</label>
@@ -496,10 +511,10 @@ export default function OrderSubModule() {
                     <thead style={{ background: 'var(--bg-secondary)' }}>
                       <tr>
                         <th>Sequence ID</th>
+                        <th>Order ID (IBPO)</th>
                         <th>Generated Order No</th>
                         <th>Buyer / Party</th>
                         <th>Type / Category</th>
-                        <th>Created By</th>
                         <th style={{ textAlign: 'right' }}>Actions</th>
                       </tr>
                     </thead>
@@ -514,10 +529,10 @@ export default function OrderSubModule() {
                           }}
                         >
                           <td style={{ fontWeight: 600 }}>{seq.sequence_id}</td>
+                          <td style={{ color: 'var(--primary)' }}>{seq.order_id_ref || '-'}</td>
                           <td style={{ color: '#8b5cf6', fontWeight: 600 }}>{seq.generated_order_no}</td>
                           <td>{seq.buyer_name || '-'} / {seq.party_name || '-'}</td>
                           <td>{seq.order_type} / {seq.category}</td>
-                          <td>{seq.created_by}</td>
                           <td style={{ textAlign: 'right' }}>
                             <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); setSelectedSequence(seq); }}><Eye size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleSeqDelete(seq.id); }}><Trash2 size={14} /></button>
@@ -547,6 +562,7 @@ export default function OrderSubModule() {
                       <div>
                         <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Identifiers</p>
                         <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Sequence ID:</strong> {selectedSequence.sequence_id}</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Order ID (IBPO):</strong> {selectedSequence.order_id_ref || 'N/A'}</p>
                         <p style={{ margin: '4px 0 0', fontSize: 13, color: '#8b5cf6', fontWeight: 700 }}><strong>Order No:</strong> {selectedSequence.generated_order_no}</p>
                         <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Prefix:</strong> {selectedSequence.prefix}</p>
                         <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Running No:</strong> {selectedSequence.running_no}</p>
@@ -579,6 +595,15 @@ export default function OrderSubModule() {
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Sequence ID</label>
                       <input type="text" className="form-control" defaultValue="AUTO-GENERATED" disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600 }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
+                      <select className="form-control" value={seqForm.order_id_ref} onChange={e => setSeqForm({...seqForm, order_id_ref: e.target.value})}>
+                        <option value="">Select Buyer Order...</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Prefix</label>
@@ -781,7 +806,12 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <input type="text" className="form-control" placeholder="e.g. IBPO-2026-001" value={amdForm.order_id_ref} onChange={e => setAmdForm({...amdForm, order_id_ref: e.target.value})} />
+                      <select className="form-control" value={amdForm.order_id_ref} onChange={e => setAmdForm({...amdForm, order_id_ref: e.target.value})}>
+                        <option value="">Select Buyer Order...</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Amendment Date</label>
@@ -973,7 +1003,12 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <input type="text" className="form-control" placeholder="e.g. IBPO-2026-001" value={cmpForm.order_id_ref} onChange={e => setCmpForm({...cmpForm, order_id_ref: e.target.value})} />
+                      <select className="form-control" value={cmpForm.order_id_ref} onChange={e => setCmpForm({...cmpForm, order_id_ref: e.target.value})}>
+                        <option value="">Select Buyer Order...</option>
+                        {buyerOrders.map(bo => (
+                          <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Completion Date</label>
