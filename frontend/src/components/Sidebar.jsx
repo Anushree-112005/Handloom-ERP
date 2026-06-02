@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
-  Lock, Wrench, ArrowDownLeft, ArrowUpRight
+  Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -21,7 +21,16 @@ const modules = [
 
 
   { section: 'Order Management' },
-  { path: '/buyer-order', label: 'Buyer Order', icon: ShoppingCart },
+  {
+    label: 'Buyer Order',
+    icon: ShoppingCart,
+    children: [
+      { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
+      { path: '/buyer-order/processing', label: 'Order Processing', icon: Layers },
+      { path: '/buyer-order/dispatch-expense', label: 'Dispatch & Expense', icon: Truck },
+      { path: '/ipo-invoice', label: 'IPO Invoice', icon: Receipt }
+    ]
+  },
   { path: '/work-order/transaction', label: 'Work Order Transaction', icon: Layers },
   { path: '/work-order/completion', label: 'Work Order Completion', icon: CheckSquare },
   { path: '/work-order/approval', label: 'Work Order Approval', icon: Settings },
