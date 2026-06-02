@@ -10,6 +10,7 @@ class SalesInvoice(Base):
     id = Column(Integer, primary_key=True, index=True)
     invoice_no = Column(String(50), unique=True, index=True)
     invoice_date = Column(Date, nullable=False)
+    invoice_type = Column(String(50), default="Proforma Invoice")
     party_name = Column(String(255))
     party_id = Column(Integer, ForeignKey("party_master.id"))
     ibpo = Column(String(50))
@@ -34,6 +35,16 @@ class SalesInvoice(Base):
     net_amount = Column(Numeric(14, 2), default=0)
     remarks = Column(Text)
     status = Column(String(30), default="Draft")
+
+    # Export specific fields
+    currency = Column(String(10), default="INR")
+    exchange_rate = Column(Numeric(10, 4), default=1.0)
+    rodtep_amount = Column(Numeric(12, 2), default=0)
+    drawback_amount = Column(Numeric(12, 2), default=0)
+    ad_code = Column(String(50))
+    iec_number = Column(String(50))
+    firc_reference = Column(String(100))
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     items = relationship("SalesInvoiceItem", back_populates="invoice", cascade="all, delete-orphan")

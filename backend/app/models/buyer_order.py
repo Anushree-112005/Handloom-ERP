@@ -152,6 +152,7 @@ class BuyerOrderSequence(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     sequence_id = Column(String(50), unique=True, index=True)
+    order_id_ref = Column(String(50))
     prefix = Column(String(50))
     fin_year = Column(String(20))
     running_no = Column(Integer)
