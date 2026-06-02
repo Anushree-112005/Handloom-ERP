@@ -67,6 +67,7 @@ class SalesInvoiceItemOut(SalesInvoiceItemBase):
 class SalesInvoiceBase(BaseModel):
     invoice_no: Optional[str] = None
     invoice_date: Optional[date] = None
+    invoice_type: Optional[str] = "Proforma Invoice"
     party_name: Optional[str] = None
     billing_address: Optional[str] = None
     delivery_address: Optional[str] = None
@@ -88,6 +89,14 @@ class SalesInvoiceBase(BaseModel):
     net_amount: Optional[Decimal] = Decimal("0.0")
     remarks: Optional[str] = None
     status: Optional[str] = "Draft"
+
+    currency: Optional[str] = "INR"
+    exchange_rate: Optional[Decimal] = Decimal("1.0")
+    rodtep_amount: Optional[Decimal] = Decimal("0.0")
+    drawback_amount: Optional[Decimal] = Decimal("0.0")
+    ad_code: Optional[str] = None
+    iec_number: Optional[str] = None
+    firc_reference: Optional[str] = None
 
     @field_validator('invoice_date', mode='before')
     @classmethod
