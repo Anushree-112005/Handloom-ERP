@@ -1,6 +1,6 @@
 import asyncio
 from app.core.database import engine, Base
-import app.models.buyer_order
+import app.models
 
 async def create_all():
     async with engine.begin() as conn:

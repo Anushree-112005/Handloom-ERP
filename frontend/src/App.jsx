@@ -79,9 +79,19 @@ export default function App() {
         <Route path="buyer-order/dispatch-expense" element={<DispatchExpenseSubModule />} />
         <Route path="ipo-invoice" element={<IPOInvoice />} />
         <Route path="work-order/desk" element={<WorkOrderDesk defaultSection="Transactions" />} />
-        <Route path="work-order/transaction" element={<WorkOrderDesk defaultSection="Transactions" />} />
-        <Route path="work-order/completion" element={<WorkOrderDesk defaultSection="Completions" />} />
-        <Route path="work-order/approval" element={<WorkOrderDesk defaultSection="Approvals" />} />
+        <Route path="work-order/transaction" element={<Navigate to="/work-order/transaction/design" replace />} />
+        <Route path="work-order/transaction/design" element={<WorkOrderDesk defaultSection="Design & Development" />} />
+        <Route path="work-order/transaction/management" element={<WorkOrderDesk defaultSection="Order Management" />} />
+        <Route path="work-order/transaction/processing" element={<WorkOrderDesk defaultSection="Processing" />} />
+        <Route path="work-order/transaction/prep" element={<WorkOrderDesk defaultSection="Yarn & Fabric Prep" />} />
+        <Route path="work-order/transaction/amendments" element={<WorkOrderDesk defaultSection="Amendments & Codes" />} />
+        <Route path="work-order/completion" element={<Navigate to="/work-order/completion/vendor-purchase" replace />} />
+        <Route path="work-order/completion/vendor-purchase" element={<WorkOrderDesk defaultSection="Vendor & Purchase Completion" />} />
+        <Route path="work-order/completion/processing-fabric" element={<WorkOrderDesk defaultSection="Processing & Fabric Completion" />} />
+
+        <Route path="work-order/approval" element={<Navigate to="/work-order/approval/external" replace />} />
+        <Route path="work-order/approval/external" element={<WorkOrderDesk defaultSection="External Order Approvals" />} />
+        <Route path="work-order/approval/material-yarn" element={<WorkOrderDesk defaultSection="Material & Yarn Approvals" />} />
 
         <Route path="design-entry" element={<DesignEntry />} />
 
@@ -98,33 +108,43 @@ export default function App() {
         <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
 
         <Route path="warp/delivery" element={<WarpDelivery />} />
-        <Route path="warp/transaction" element={<WarpSizingTransaction />} />
+        <Route path="warp/transaction" element={<Navigate to="/warp/transaction/entries" replace />} />
+        <Route path="warp/transaction/entries" element={<WarpSizingTransaction defaultSection="Beam & Transaction Entries" />} />
+        <Route path="warp/transaction/reports" element={<WarpSizingTransaction defaultSection="Reports, Bills & Amendments" />} />
 
         <Route path="cloth/inward" element={<ClothInward />} />
-
         <Route path="cloth/checking" element={<OnTableChecking />} />
-
         <Route path="cloth/delivery" element={<ClothDelivery />} />
-        <Route path="fabric/transaction" element={<FabricTransaction />} />
-        <Route path="greige/transaction" element={<GreigeTransaction />} />
-
         <Route path="finished-fabric" element={<FinishedFabricInward />} />
+
+        <Route path="fabric/transaction" element={<Navigate to="/fabric/transaction/checking" replace />} />
+        <Route path="fabric/transaction/checking" element={<FabricTransaction defaultSection="Fabric Checking" />} />
+        <Route path="fabric/transaction/inward" element={<FabricTransaction defaultSection="Fabric Inward" />} />
+        <Route path="fabric/transaction/delivery" element={<FabricTransaction defaultSection="Fabric Delivery" />} />
+        <Route path="fabric/transaction/lotbale" element={<FabricTransaction defaultSection="Lot & Bale" />} />
+        <Route path="fabric/transaction/gate" element={<FabricTransaction defaultSection="Gate & Dispatch" />} />
+        <Route path="fabric/transaction/bills" element={<FabricTransaction defaultSection="Vendor Bills" />} />
+        <Route path="fabric/transaction/surplus" element={<FabricTransaction defaultSection="Surplus Stock" />} />
+
+        <Route path="greige/transaction" element={<Navigate to="/greige/transaction/operations" replace />} />
+        <Route path="greige/transaction/operations" element={<GreigeTransaction defaultSection="Greige Operations" />} />
+        <Route path="greige/transaction/administration" element={<GreigeTransaction defaultSection="Greige Administration" />} />
 
         {/* LAB & Shade Management Routes */}
         <Route path="lab/lab-dip" element={
-          <ModulePage 
-            title="Lab Dip Entry" 
-            description="Manage color shade recipes, spectrophotometer matching, and dyeing recipes." 
-            icon={Palette} 
-            color="#3b82f6" 
+          <ModulePage
+            title="Lab Dip Entry"
+            description="Manage color shade recipes, spectrophotometer matching, and dyeing recipes."
+            icon={Palette}
+            color="#3b82f6"
           />
         } />
         <Route path="lab/shade-matching" element={
-          <ModulePage 
-            title="Shade Matching" 
-            description="Inspect production lot shades and verify consistency against standard lab dips." 
-            icon={CheckSquare} 
-            color="#10b981" 
+          <ModulePage
+            title="Shade Matching"
+            description="Inspect production lot shades and verify consistency against standard lab dips."
+            icon={CheckSquare}
+            color="#10b981"
           />
         } />
 
@@ -153,9 +173,14 @@ export default function App() {
         <Route path="gate/pass" element={<GatePass />} />
         <Route path="gate/reports" element={<GateReports />} />
         <Route path="spares/master" element={<SparesMaster />} />
-        <Route path="spares/transaction" element={<SparesTransaction />} />
         <Route path="spares/approval" element={<SparesApproval />} />
         <Route path="spares/report" element={<SparesReport />} />
+
+        <Route path="spares/desk" element={<Navigate to="/spares/desk/master-setup" replace />} />
+        <Route path="spares/desk/master-setup" element={<SparesTransaction defaultSection="Master Setup" />} />
+        <Route path="spares/desk/requests-approvals" element={<SparesTransaction defaultSection="Requests & Approvals" />} />
+        <Route path="spares/desk/purchase-work-orders" element={<SparesTransaction defaultSection="Purchase & Work Orders" />} />
+        <Route path="spares/desk/consumption-jobwork" element={<SparesTransaction defaultSection="Consumption & Jobwork" />} />
         <Route path="accounts/voucher-entry" element={<VoucherEntry />} />
         <Route path="accounts/transaction" element={<AccountsTransaction />} />
 
