@@ -187,11 +187,11 @@ export default function BuyerOrder() {
     setForm({
       ...form,
       party_id: partyId,
-      party_name: party ? party.company_name : '',
-      billing_address: party ? party.address : '',
-      state: party ? party.state : '',
-      gst_no: party ? party.gst_number : '',
-      pan_no: party ? party.pan_number : '',
+      party_name: party?.company_name || '',
+      billing_address: party?.address || '',
+      state: party?.state || '',
+      gst_no: party?.gst_no || '',
+      pan_no: party?.pan_no || '',
     });
   };
 
