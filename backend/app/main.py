@@ -20,11 +20,19 @@ from app.api.v1.router import api_router
 import app.models  # noqa: F401
 
 
+RESET_DATABASE = False  # Change to True to clear all data from tables on restart
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables on startup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        if RESET_DATABASE:
+            logger.info("RESET_DATABASE is True. Deleting all data from tables (keeping structure)...")
+            # Delete data in reverse dependency order to prevent foreign key errors
+            for table in reversed(Base.metadata.sorted_tables):
+                await conn.execute(table.delete())
 
     # Seed default admin user
     from app.models.employee import Employee
