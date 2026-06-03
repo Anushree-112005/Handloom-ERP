@@ -20,6 +20,7 @@ export default function PartyMaster() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
 
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
@@ -85,17 +86,9 @@ export default function PartyMaster() {
     setView('form');
   };
 
-  const handleDelete = async (id, name, e) => {
+  const handleDelete = (id, name, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
-      try {
-        await partyAPI.delete(id);
-        if (selectedViewParty?.id === id) setSelectedViewParty(null);
-        fetchParties();
-      } catch (err) {
-        alert("Error deleting party. It may be in use.");
-      }
-    }
+    setDeleteConfirm({ show: true, id, name });
   };
 
   const handleSubmit = async (e) => {
@@ -1026,6 +1019,86 @@ export default function PartyMaster() {
         )}
 
       </div>
+
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong>? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary" 
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                className="btn btn-primary" 
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await partyAPI.delete(id);
+                    if (selectedViewParty?.id === id) setSelectedViewParty(null);
+                    fetchParties();
+                  } catch (err) {
+                    alert("Error deleting party. It may be in use.");
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

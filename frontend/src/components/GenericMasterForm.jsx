@@ -28,6 +28,7 @@ export default function GenericMasterForm({ config }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [stats, setStats] = useState({ total: 0, active: 0 });
   const firstInputRef = useRef(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
 
   // Build initial form state from config fields
   const buildInitialForm = () => {
@@ -126,16 +127,8 @@ export default function GenericMasterForm({ config }) {
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Delete "${name}" from ${title}?`)) return;
-    try {
-      await subMasterAPI.delete(entity, id);
-      if (editingId === id) handleNew();
-      fetchRecords();
-      fetchStats();
-    } catch (err) {
-      alert('Error deleting record.');
-    }
+  const handleDelete = (id, name) => {
+    setDeleteConfirm({ show: true, id, name });
   };
 
   // ── Filtering ──
@@ -440,6 +433,87 @@ export default function GenericMasterForm({ config }) {
           </div>
         </div>
       </div>
+
+      {/* Premium React Delete Confirmation Modal Popup */}
+      {deleteConfirm.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card animate-scale" style={{
+            width: 420,
+            padding: 24,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            borderRadius: 16,
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              border: '1px solid #fee2e2'
+            }}>
+              <Trash2 size={24} />
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+              Confirm Deletion
+            </h3>
+
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: 'var(--text-primary)' }}>"{deleteConfirm.name}"</strong> from {title}? This action cannot be undone.
+            </p>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary" 
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
+                onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                className="btn btn-primary" 
+                style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+                onClick={async () => {
+                  const { id } = deleteConfirm;
+                  setDeleteConfirm({ show: false, id: null, name: '' });
+                  try {
+                    await subMasterAPI.delete(entity, id);
+                    if (editingId === id) handleNew();
+                    fetchRecords();
+                    fetchStats();
+                  } catch (err) {
+                    alert('Error deleting record.');
+                  }
+                }}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

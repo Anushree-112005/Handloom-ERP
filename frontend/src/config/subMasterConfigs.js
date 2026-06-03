@@ -734,6 +734,311 @@ export const OLD_YEAR_MENU = {
 
 
 // ═══════════════════════════════════════════════════════════
+//  ADDITIONAL MISSING MASTERS (IMPLEMENTED)
+// ═══════════════════════════════════════════════════════════
+
+export const AC_INCHARGE_MASTER = {
+  entity: 'ac_incharge',
+  title: 'A/C Incharge',
+  icon: Users,
+  color: '#6366f1',
+  description: 'Manage Account Incharge personnel.',
+  fields: [
+    { name: 'name', label: 'Incharge Name', type: 'text', required: true, placeholder: 'e.g. Anand Kumar' },
+    { name: 'code', label: 'Incharge Code', type: 'text', placeholder: 'e.g. ACI-01' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const BUYER_MASTER = {
+  entity: 'buyer',
+  title: 'Buyer Master',
+  icon: Users,
+  color: '#3b82f6',
+  description: 'Manage primary buyer details.',
+  fields: [
+    { name: 'name', label: 'Buyer Name', type: 'text', required: true, placeholder: 'e.g. Alpha Textiles' },
+    { name: 'code', label: 'Buyer Code', type: 'text', required: true, placeholder: 'e.g. BUY-001' },
+    { name: 'description', label: 'Address & Contact Details', type: 'textarea' },
+  ],
+};
+
+export const CERTIFIED_TYPE = {
+  entity: 'certified_type',
+  title: 'Certified Type',
+  icon: Shield,
+  color: '#10b981',
+  description: 'Manage certification types (e.g., GOTS, OEKO-TEX).',
+  fields: [
+    { name: 'name', label: 'Certification Name', type: 'text', required: true, placeholder: 'e.g. GOTS Certified' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. GOTS' },
+    { name: 'description', label: 'Certification Description', type: 'textarea' },
+  ],
+};
+
+export const CLOTH_DYEING_ORDER_PROCESS_TYPE = {
+  entity: 'cloth_dyeing_order_process_type',
+  title: 'Cloth Dyeing Order Process Type',
+  icon: Settings,
+  color: '#ec4899',
+  description: 'Manage processing types for cloth dyeing orders.',
+  fields: [
+    { name: 'name', label: 'Process Type Name', type: 'text', required: true, placeholder: 'e.g. Jet Dyeing' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. JTD' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const COUNT_SYSTEM = {
+  entity: 'count_system',
+  title: 'Count System',
+  icon: Hash,
+  color: '#f59e0b',
+  description: 'Manage yarn count measurement systems.',
+  fields: [
+    { name: 'name', label: 'System Name', type: 'text', required: true, placeholder: 'e.g. English System (Ne)' },
+    { name: 'code', label: 'System Code', type: 'text', placeholder: 'e.g. NE' },
+    { name: 'description', label: 'Description', type: 'textarea' },
+  ],
+};
+
+export const DESIGNER_MASTER = {
+  entity: 'designer',
+  title: 'Designer Master',
+  icon: Palette,
+  color: '#8b5cf6',
+  description: 'Manage textile designers and design developers.',
+  fields: [
+    { name: 'name', label: 'Designer Name', type: 'text', required: true, placeholder: 'e.g. Priya Sharma' },
+    { name: 'code', label: 'Designer ID', type: 'text', placeholder: 'e.g. DSG-05' },
+    { name: 'description', label: 'Specialization/Notes', type: 'textarea' },
+  ],
+};
+
+export const DYEING_CLY = {
+  entity: 'dyeing_cly',
+  title: 'Dyeing Cly',
+  icon: Beaker,
+  color: '#06b6d4',
+  description: 'Manage Dyeing Cylinder details.',
+  fields: [
+    { name: 'name', label: 'Cylinder Name', type: 'text', required: true, placeholder: 'e.g. Cylinder A-10' },
+    { name: 'code', label: 'Cylinder Code', type: 'text', placeholder: 'e.g. CLY-A10' },
+    { name: 'description', label: 'Specifications', type: 'textarea' },
+  ],
+};
+
+export const END_USE = {
+  entity: 'end_use',
+  title: 'END_USE Master',
+  icon: Target,
+  color: '#14b8a6',
+  description: 'Manage target product categories for fabrics.',
+  fields: [
+    { name: 'name', label: 'End Use Name', type: 'text', required: true, placeholder: 'e.g. Shirting / Garments' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. SHRT' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const EXPENSES_GROUP = {
+  entity: 'expenses_group',
+  title: 'Expenses Group',
+  icon: DollarSign,
+  color: '#ef4444',
+  description: 'Manage accounting expense groups.',
+  fields: [
+    { name: 'name', label: 'Group Name', type: 'text', required: true, placeholder: 'e.g. Administrative Expenses' },
+    { name: 'code', label: 'Group Code', type: 'text', placeholder: 'e.g. ADM_EXP' },
+    { name: 'description', label: 'Group Description', type: 'textarea' },
+  ],
+};
+
+export const GREY_DAMAGE = {
+  entity: 'grey_damage',
+  title: 'Grey Damage Master',
+  icon: Shield,
+  color: '#6b7280',
+  description: 'Manage defect types specific to greige fabric.',
+  fields: [
+    { name: 'name', label: 'Damage Type', type: 'text', required: true, placeholder: 'e.g. Weft Crack' },
+    { name: 'code', label: 'Defect Code', type: 'text', placeholder: 'e.g. WC' },
+    { name: 'description', label: 'Description', type: 'textarea' },
+  ],
+};
+
+export const GROUP_COUNT = {
+  entity: 'group_count',
+  title: 'Group Count',
+  icon: Hash,
+  color: '#f97316',
+  description: 'Manage group classifications for yarn counts.',
+  fields: [
+    { name: 'name', label: 'Group Count Name', type: 'text', required: true, placeholder: 'e.g. Fine Counts Group' },
+    { name: 'code', label: 'Group Code', type: 'text', placeholder: 'e.g. FCG' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const GRY_MAS_BALETYPE = {
+  entity: 'gry_mas_baletype',
+  title: 'Gry Mas BaleType',
+  icon: Box,
+  color: '#78716c',
+  description: 'Manage bale types for greige cloth packing.',
+  fields: [
+    { name: 'name', label: 'Bale Type Name', type: 'text', required: true, placeholder: 'e.g. Standard Export Bale' },
+    { name: 'code', label: 'Type Code', type: 'text', placeholder: 'e.g. SEB' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const LR_TERMS = {
+  entity: 'lr_terms',
+  title: 'LR Terms',
+  icon: FileText,
+  color: '#475569',
+  description: 'Manage Lorry Receipt (LR) transport terms.',
+  fields: [
+    { name: 'name', label: 'Term Description', type: 'text', required: true, placeholder: 'e.g. Freight Paid by Sender' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. FPS' },
+    { name: 'description', label: 'Detailed Terms', type: 'textarea' },
+  ],
+};
+
+export const MANAGER_MASTER = {
+  entity: 'manager',
+  title: 'Manager Master',
+  icon: Users,
+  color: '#22c55e',
+  description: 'Manage departmental managers.',
+  fields: [
+    { name: 'name', label: 'Manager Name', type: 'text', required: true, placeholder: 'e.g. Ramesh Babu' },
+    { name: 'code', label: 'Manager Code', type: 'text', placeholder: 'e.g. MGR-12' },
+    { name: 'description', label: 'Department / Remarks', type: 'textarea' },
+  ],
+};
+
+export const MERCHANDISER_MASTER = {
+  entity: 'merchandiser',
+  title: 'Merchandiser Master',
+  icon: Users,
+  color: '#a855f7',
+  description: 'Manage merchandisers coordinating buyer orders.',
+  fields: [
+    { name: 'name', label: 'Merchandiser Name', type: 'text', required: true, placeholder: 'e.g. Kavitha R' },
+    { name: 'code', label: 'Merchandiser Code', type: 'text', placeholder: 'e.g. MER-08' },
+    { name: 'description', label: 'Contact Info / Notes', type: 'textarea' },
+  ],
+};
+
+export const PARTY_GROUP = {
+  entity: 'party_group',
+  title: 'Party Group',
+  icon: Tag,
+  color: '#0891b2',
+  description: 'Manage customer/vendor party groupings.',
+  fields: [
+    { name: 'name', label: 'Group Name', type: 'text', required: true, placeholder: 'e.g. Domestic Buyers' },
+    { name: 'code', label: 'Group Code', type: 'text', placeholder: 'e.g. DOM_BUY' },
+    { name: 'description', label: 'Description', type: 'textarea' },
+  ],
+};
+
+export const PARTY_TYPE = {
+  entity: 'party_type',
+  title: 'Party Type',
+  icon: Tag,
+  color: '#0ea5e9',
+  description: 'Manage party type classifications (e.g. Supplier, Agent).',
+  fields: [
+    { name: 'name', label: 'Type Name', type: 'text', required: true, placeholder: 'e.g. Raw Material Supplier' },
+    { name: 'code', label: 'Type Code', type: 'text', placeholder: 'e.g. RMS' },
+    { name: 'description', label: 'Description', type: 'textarea' },
+  ],
+};
+
+export const PAYMENT_TERM_AND_CONDITIONS = {
+  entity: 'payment_term_and_conditions',
+  title: 'Payment Term and Conditions',
+  icon: CreditCard,
+  color: '#f43f5e',
+  description: 'Manage detailed terms and conditions for payments.',
+  fields: [
+    { name: 'name', label: 'Term/Condition Name', type: 'text', required: true, placeholder: 'e.g. Advance Payment Terms' },
+    { name: 'code', label: 'Term Code', type: 'text', placeholder: 'e.g. ADV_COND' },
+    { name: 'description', label: 'Detailed Clauses', type: 'textarea', required: true },
+  ],
+};
+
+export const SAMPLE_MASTER = {
+  entity: 'sample',
+  title: 'Sample Master',
+  icon: ClipboardList,
+  color: '#e11d48',
+  description: 'Manage sample reference types.',
+  fields: [
+    { name: 'name', label: 'Sample Name', type: 'text', required: true, placeholder: 'e.g. Weaving Sample A' },
+    { name: 'code', label: 'Sample Code', type: 'text', placeholder: 'e.g. SMP-A' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const SECTION_GROUP = {
+  entity: 'section_group',
+  title: 'Section Group',
+  icon: Layers,
+  color: '#ca8a04',
+  description: 'Manage plant/department section groups.',
+  fields: [
+    { name: 'name', label: 'Section Group Name', type: 'text', required: true, placeholder: 'e.g. Spinning Section' },
+    { name: 'code', label: 'Group Code', type: 'text', placeholder: 'e.g. SPIN_GRP' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const SHRINGAGE_MASTER = {
+  entity: 'shringage',
+  title: 'Shringage (Shrinkage)',
+  icon: Ruler,
+  color: '#0f766e',
+  description: 'Manage shrinkage parameters and tolerances.',
+  fields: [
+    { name: 'name', label: 'Shrinkage Type', type: 'text', required: true, placeholder: 'e.g. Warp Shrinkage < 3%' },
+    { name: 'code', label: 'Shrinkage Code', type: 'text', placeholder: 'e.g. SHK-W3' },
+    { name: 'description', label: 'Tolerance Details', type: 'textarea' },
+  ],
+};
+
+export const SP_NO = {
+  entity: 'sp_no',
+  title: 'SP NO Master',
+  icon: Hash,
+  color: '#10b981',
+  description: 'Manage SP Numbers for order tracking.',
+  fields: [
+    { name: 'name', label: 'SP Reference Number', type: 'text', required: true, placeholder: 'e.g. SP-9982' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. SP9982' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const FABRIC_SINGLE_COSTING = {
+  entity: 'fabric_single_costing',
+  title: 'Fabric Single Costing',
+  icon: DollarSign,
+  color: '#db2777',
+  description: 'Manage single item costing models for fabrics.',
+  fields: [
+    { name: 'name', label: 'Style / Costing Name', type: 'text', required: true, placeholder: 'e.g. Single Cost Style A' },
+    { name: 'code', label: 'Costing ID', type: 'text', required: true, placeholder: 'e.g. SC-A' },
+    { name: 'extra_field_1', label: 'Rate per Metre', type: 'text', placeholder: 'e.g. 150' },
+    { name: 'description', label: 'Breakdown Notes', type: 'textarea' },
+  ],
+};
+
+
+// ═══════════════════════════════════════════════════════════
 //  ALL CONFIGS GROUPED FOR SIDEBAR NAVIGATION
 // ═══════════════════════════════════════════════════════════
 
@@ -743,6 +1048,9 @@ export const PHASE1_MASTERS = [
   LOOM_MASTER, LOOM_TYPE_MASTER, PARTY_TYPE_GROUP, PAYMENT_TERMS_MASTER,
   GODOWN_MASTER, GATE_LOCATION_MASTER, MILL_NAME_MASTER, DISTRICT_CITY_MASTER,
   ORDER_TYPE_MASTER, SALES_REGION_MASTER,
+  BUYER_MASTER, CERTIFIED_TYPE, COUNT_SYSTEM, DESIGNER_MASTER, END_USE,
+  GROUP_COUNT, LR_TERMS, MANAGER_MASTER, MERCHANDISER_MASTER, PARTY_GROUP,
+  PARTY_TYPE, PAYMENT_TERM_AND_CONDITIONS, SECTION_GROUP, SP_NO
 ];
 
 export const PHASE2_MASTERS = [
@@ -753,10 +1061,13 @@ export const PHASE2_MASTERS = [
   DEBIT_CREDIT_REASON_MASTER, EXPENSES_GROUP_HEAD, FIBRE_COUNT_MASTER,
   TDS_BILL_TYPE_MASTER, TEST_PARAMETER_MASTER, REMARKS_MASTER,
   DUTY_MASTER, WEAVING_MASTER,
+  AC_INCHARGE_MASTER, CLOTH_DYEING_ORDER_PROCESS_TYPE, DYEING_CLY,
+  EXPENSES_GROUP, GREY_DAMAGE, GRY_MAS_BALETYPE, SAMPLE_MASTER, SHRINGAGE_MASTER
 ];
 
 export const COMPLEX_MASTERS = [
-  BUYER_KYC_FORM, BUYER_SUB_MASTER, COMPANY_BANK_MASTER, LC_BANK_MASTER, FABRIC_COSTING_ENGINE
+  BUYER_KYC_FORM, BUYER_SUB_MASTER, COMPANY_BANK_MASTER, LC_BANK_MASTER,
+  FABRIC_COSTING_ENGINE, FABRIC_SINGLE_COSTING
 ];
 
 export const AMENDMENT_MASTERS = [
