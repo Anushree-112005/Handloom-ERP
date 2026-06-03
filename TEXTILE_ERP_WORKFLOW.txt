@@ -1,0 +1,274 @@
+================================================================================
+                    DINESH EXPORTS - TEXTILE EXPORT ERP
+                   COMPLETE SEQUENCE & WORKFLOW BLUEPRINT
+================================================================================
+
+This blueprint defines the absolute step-by-step sequential operational flow
+for the Dinesh Exports ERP system. It lists the exact modules, menus, and pages 
+in the precise order they must be populated, configured, and processed to achieve 
+full end-to-end data integrity from baseline configuration to commercial billing.
+
+--------------------------------------------------------------------------------
+                  SUMMARY OF THE 5 MAJOR SEGMENTS OF THE ERP
+--------------------------------------------------------------------------------
+1. THE FOUNDATION SEGMENT (Configuration of Masters & Sub-Masters)
+   - Establish baseline drop-downs, parameters, tax brackets, and rules.
+2. THE COMMERCIAL INITIATION (Design specs & Buyer commitments)
+   - Log fabrics technical parameters, create designs, and book buyer orders.
+3. THE RAW INGREDIENT CYCLE (Yarn purchasing, gate inwards, and yarn storage)
+   - Purchase raw cotton or dyed yarns, check gate weight, and verify warehouse stock.
+4. THE PROCESSING & JOB WORK CYCLE (Preparatory mills, warping, weaving, & mending)
+   - Send yarn for dyeing, twist yarns, warp sizing, weave into Greige fabric,
+     piece checking, and mending.
+5. THE FULFILLMENT & FINANCIALS (Logistics, dispatch, invoice, and ledger receipt)
+   - Formulate despatch plans, pack rolls, generate lorry indents, clear gate entry, 
+     generate sales tax invoice, and book payment vouchers.
+
+================================================================================
+                 THE SEQUENTIAL BLUEPRINT (STEP 1 TO STEP 40)
+================================================================================
+
+--------------------------------------------------------------------------------
+[STAGE 1] - BASELINE SYSTEM CONFIGURATIONS (SUB-MASTERS)
+--------------------------------------------------------------------------------
+* FIRST: Core Drops setup
+  - Purpose: Establish currency notations, physical sizes, and core types.
+  - STEP 1: Currency Master
+    * Page: `/sub-master/currency_master`
+    * Action: Populate currency symbols (e.g., INR - ₹, USD - $, EUR - €)
+  - STEP 2: Unit Master
+    * Page: `/sub-master/unit_master`
+    * Action: Log standard measurements (e.g. MTR, ROLL, KG, BAG, PCS)
+  - STEP 3: Yarn Type Master
+    * Page: `/sub-master/yarn_type_master`
+    * Action: Record fibers (e.g. Cotton, Polyester, Linen, Viscose, Lycra)
+  - STEP 4: Yarn Count Master
+    * Page: `/sub-master/yarn_count_master`
+    * Action: Log counts (e.g. 20s, 30s, 40s, 2/40s, 60s Compact Yarn)
+  - STEP 5: Color Master
+    * Page: `/sub-master/color_master`
+    * Action: Record standard shades and Pantone color identifiers.
+
+* SECOND: Plant Operations setup
+  - Purpose: Define physical logistics points, storage rooms, and equipment.
+  - STEP 6: Gate Location Master
+    * Page: `/sub-master/gate_location_master`
+    * Action: Register security entries (e.g. Main Gate, Inward Terminal 1)
+  - STEP 7: Godown Master
+    * Page: `/sub-master/godown_master`
+    * Action: Configure inventory storage bays (e.g. Grey Warehouse, Yarn Store)
+  - STEP 8: Mill Name Master
+    * Page: `/sub-master/mill_name_master`
+    * Action: Add partner spinning mills (e.g. Vardhman Spinning, Premier Mills)
+  - STEP 9: Loom Master & Loom Type Master
+    * Page: `/sub-master/loom_master` and `/sub-master/loom_type_master`
+    * Action: Register mechanical loom configurations (e.g. Airjet, Rapier, Sulzer)
+  - STEP 10: Process Type Master & Process Sequences Master
+    * Page: `/sub-master/process_type_master` & `/sub-master/process_sequences_master`
+    * Action: Map operational routing states (e.g. Weaving $\rightarrow$ Dyeing $\rightarrow$ Sanforizing)
+
+* THIRD: Financial & Administrative baselines
+  - Purpose: Set billing tax rules, locations, and groups.
+  - STEP 11: HSN Code Master
+    * Page: `/sub-master/hsn_code_master`
+    * Action: Enter official HSN codes and corresponding GST percentage tax rates.
+  - STEP 12: Payment Terms Master
+    * Page: `/sub-master/payment_terms_master`
+    * Action: Define commercial terms (e.g. 30 Days Credit, 100% Advance)
+  - STEP 13: District & City Master & Sales Region Master
+    * Page: `/sub-master/district_city_master` & `/sub-master/sales_region_master`
+    * Action: Formulate shipping zones and regions for logistical coverage.
+
+* FOURTH: Register Core Actors
+  - Purpose: Log external companies and internal operators.
+  - STEP 14: Party Master
+    * Page: `/party-master` (PartyMaster.jsx)
+    * Action: Log full profiles for Buyers, Spinning Mill Suppliers, and Jobwork Weavers.
+  - STEP 15: Employee Master
+    * Page: `/employee-master` (EmployeeMaster.jsx)
+    * Action: Log staff directories, designating supervisors, security heads, and QC checkers.
+
+--------------------------------------------------------------------------------
+[STAGE 2] - COMMERCIAL COMMITTAL & FABRIC DESIGNS
+--------------------------------------------------------------------------------
+Goal: Document fabric technical specifications and book official buyer POs.
+
+* STEP 16: Technical Design Entry
+  - Menu: Masters -> Design Entry
+  - Page: `/design-entry` (DesignEntry.jsx)
+  - Action: Record detailed specifications for fabric (GSM, Cuttable Width,
+    Reed/Pick counts, weave structure type) and attach reference image.
+  - Why: This creates the master recipe for weaving looms.
+
+* STEP 17: Log Buyer Orders (IBPO)
+  - Menu: Transactions -> Buyer Order
+  - Page: `/buyer-order` (BuyerOrder.jsx)
+  - Action: Formally book the commercial order. Specify Order Date, Party Name (from Step 14),
+    Agent, delivery address, transport terms, and map fabric designs (from Step 16)
+    with total ordered meters, price rates, and ex-factory target dates.
+  - Why: Generates the unique `IBPO-XXXXX` identifier which is referenced by all down-stream steps.
+
+* STEP 18: Design Create Work Voucher
+  - Menu: Work Order -> Transactions -> Design & Development
+  - Page: `/work-order/transactions` -> Design Create Tab (WorkOrderDesk.jsx)
+  - Action: Generate a design create ledger transaction mapping the fabric construction 
+    parameters to initiate experimental sample looms.
+
+--------------------------------------------------------------------------------
+[STAGE 3] - RAW INGREDIENT PROCUREMENTS (YARN & GREIGE ACCESS)
+--------------------------------------------------------------------------------
+Goal: Buy and stock the required yarns or grey fabric to fulfill the orders.
+
+* STEP 19: Yarn Purchase Orders (YPO)
+  - Menu: Transactions -> Yarn Purchase Order
+  - Page: `/yarn-po` (YarnPurchaseOrder.jsx)
+  - Action: Select spinning mill name, payment terms, and list count specifications 
+    (e.g., 40s combed cotton, quantity in bags, rate per kg, total value).
+  - Why: Formally issues the purchasing contract to spinning mills.
+
+* STEP 20: Inward Yarn at Mill Gate
+  - Menu: Transactions -> Yarn Inward
+  - Page: `/yarn-inward` (YarnInward.jsx)
+  - Action: Log incoming trucks at Gate Terminal. Verify weight, package count, 
+    spinning mill invoice reference number, and allocate storage bin in godown.
+  - Why: Updates raw yarn physical stock inventory.
+
+* STEP 21: Grey Yarn Delivery (To Job Workers)
+  - Menu: Transactions -> Grey Yarn Delivery
+  - Page: `/grey-yarn-delivery` (GreyYarnDelivery.jsx)
+  - Action: Issue yarn rolls out of Godowns to Preparatory Sizing or Weaving mills.
+  - Why: Logs material shift from raw inventory to Work-in-Progress (WIP) stock.
+
+--------------------------------------------------------------------------------
+[STAGE 4] - JOB WORK & MANUFACTURING (THE PROCESS PIPELINE)
+--------------------------------------------------------------------------------
+Goal: Coordinate dyed material, preparatory beam sizing, and weaving looms.
+
+* STEP 22: Dyed Yarn Receipt (If coloring is contracted)
+  - Menu: Transactions -> Dyed Yarn Received
+  - Page: `/dyed-yarn-received` (DyedYarnReceived.jsx)
+  - Action: Record colored yarn batches returning from external Dyehouse vendors.
+
+* STEP 23: Issue Warping & Sizing Beam Orders
+  - Menu: Work Order -> Transactions -> Yarn & Fabric Prep
+  - Page: `/work-order/transactions` -> Warping/Sizing Order Tab
+  - Action: Log beams setup parameters (Total Ends, Warp Length in meters, Beam counts) 
+    essential for structural durability on weaving machines.
+
+* STEP 24: Warp Beam Receipt (Beams returning to factory)
+  - Menu: Transactions -> Warp Beam Receipt
+  - Page: `/warp-beam-receipt` (WarpBeamReceipt.jsx)
+  - Action: Receipt warp beam arrays returning from sizing mills to be forwarded to looms.
+
+* STEP 25: Issue Weaving Jobwork Orders
+  - Menu: Work Order -> Transactions -> Order Management
+  - Page: `/work-order/transactions` -> Vendor Order Tab
+  - Action: Contract jobwork weaving parties to weave yarns into Greige cloth.
+
+* STEP 26: Cloth Inward Entry (Fabric Arrives)
+  - Menu: Transactions -> Cloth Inward
+  - Page: `/cloth-inward` (ClothInward.jsx)
+  - Action: Receive freshly woven grey fabric rolls arriving at godowns. Log weaver code, 
+    roll numbers, piece meter lengths, and lot weights.
+
+--------------------------------------------------------------------------------
+[STAGE 5] - QUALITY CONTROL & STOCK CONVERSIONS
+--------------------------------------------------------------------------------
+Goal: Thorough inspection, mending, and warehouse packing.
+
+* STEP 27: On-Table Defect Checking
+  - Menu: Transactions -> On-Table Checking
+  - Page: `/cloth-checking` (OnTableChecking.jsx)
+  - Action: Complete piece-by-piece roll checks. Log warp lines, weft cracks,
+    or dirt defects. Calculate the automated point-based fabric Grade (Grade A, B, or C).
+
+* STEP 28: Finished Fabric Inward
+  - Menu: Transactions -> Finished Fabric Inward
+  - Page: `/finished-fabrics` (FinishedFabricInward.jsx)
+  - Action: Record rolls arriving from commercial Dyeing/Processing/Sanforizing mills, 
+    mapping chemical parameters and finished color codes.
+
+--------------------------------------------------------------------------------
+[STAGE 6] - DESPATCH PLANNING & PACKING FULFILLMENT
+--------------------------------------------------------------------------------
+Goal: Shipments scheduling, roll manifest wrapping, and transport coordination.
+
+* STEP 29: Despatch Planning anchor
+  - Menu: Transactions -> Despatch Planning
+  - Page: `/despatch-planning` (DespatchPlanning.jsx)
+  - Action: Pull all unfulfilled Buyer Orders (IBPO). Group rolls, select shipping 
+    routes, set targets, and assign packaging priorities.
+
+* STEP 30: Packing Slip generation
+  - Menu: Transactions -> Packing Slip
+  - Page: `/packing-slip` (PackingSlip.jsx)
+  - Action: Wrap rolls into bales/cartons. Specify bale number, weight, roll lists 
+    contained within, and print the package shipping label manifest.
+
+* STEP 31: Goods Release Advice (GRA)
+  - Menu: Transactions -> Goods Release
+  - Page: `/goods-releases` (GoodsRelease.jsx)
+  - Action: Issue technical clearance authorizing warehouse loaders to fetch bales 
+    for loading onto transporter trucks.
+
+* STEP 32: Dispatch Indents
+  - Menu: Transactions -> Dispatch & Expense
+  - Page: `/dispatch-expense` -> Dispatch Indent View (DispatchExpenseSubModule.jsx)
+  - Action: Log Lorry details, transporter agent names, LR numbers, vehicle plates, 
+    and target delivery place.
+
+* STEP 33: Log Freight & Loading Expenses
+  - Menu: Transactions -> Dispatch & Expense
+  - Page: `/dispatch-expense` -> Expense Entry View
+  - Action: Record transport charges, fuel, loading expenses, or customs freight.
+
+* STEP 34: Statutory E-Way Bills
+  - Menu: Transactions -> E-Way Bill Entry
+  - Page: `/eway-bill` (EwayBill.jsx)
+  - Action: Populate tax details, calculate SGST/CGST or IGST, log transporter distance, 
+    and simulate digital tax portal token clearance.
+
+* STEP 35: Gate Outward clearing
+  - Menu: Transactions -> Gate Pass (or Security Outward)
+  - Page: `/gate-pass` (GatePass.jsx)
+  - Action: Generate gate pass sheet. Verify driver name, check loader cargo manifest, 
+    and record the timestamp exiting factory premises.
+
+--------------------------------------------------------------------------------
+[STAGE 7] - SALES TAX INVOICING & PAYMENT RECEIPTS
+--------------------------------------------------------------------------------
+Goal: Convert physical dispatches into financial ledgers and finalize accounts.
+
+* STEP 36: Commercial Sales Invoice
+  - Menu: Transactions -> Sales Invoice
+  - Page: `/sales-invoice` (SalesInvoice.jsx)
+  - Action: Pull completed packing slips. Auto-apply regional GST brackets based on HSN code. 
+    Submit to generate commercial legal Invoice.
+  - Why: Creates the accounts receivable debt on the buyer's company profile ledger.
+
+* STEP 37: Financial Voucher Entries
+  - Menu: Transactions -> Voucher Entry
+  - Page: `/voucher-entry` (VoucherEntry.jsx)
+  - Action: Record payment receipts from buyer bank transfers to balance the sales invoice.
+
+--------------------------------------------------------------------------------
+[STAGE 8] - AUDITS, COMPLIANCES & SETTINGS
+--------------------------------------------------------------------------------
+* STEP 38: Check System Log Reports
+  - Menu: Transactions -> Log Reports
+  - Page: `/log-reports` (LogReports.jsx)
+  - Action: Review user action logs to keep audit trails secure.
+
+* STEP 39: General Company Settings
+  - Menu: System Utilities -> Company Settings
+  - Page: `/company-settings` (CompanySettings.jsx)
+  - Action: Configure base export registration, bank configurations, and logo.
+
+* STEP 40: Overview & Dashboard analytics
+  - Menu: Dashboard -> Overview
+  - Page: `/overview` (Overview.jsx)
+  - Action: Check real-time progress charts, pending dispatches, and sales reports.
+
+================================================================================
+                      END OF OPERATIONAL WORKFLOW BLUEPRINT
+================================================================================
