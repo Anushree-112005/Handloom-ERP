@@ -1,3 +1,18 @@
 Validation Error: [{'type': 'date_from_datetime_parsing', 'loc': ('body', 'shipment_date'), 'msg': 'Input should be a valid date or datetime, input is too short', 'input': '', 'ctx': {'error': 'input is too short'}}]
 Body: b'{"order_id_ref":"e","buyer_ref":"e","shipment_date":"","delivery_place":"e","delivery_terms":"FOB","qty":"e","fabric_type":"Cotton","shade":"e","lot_no":"ee","packing_type":"Bale","transporter_name":"e","transport_mode":"Road","remarks":"e"}'
 
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Service provider', 'is_active': True}}]
+Body: b'{"name":"Service provider","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body',), 'msg': 'Field required', 'input': None}]
+Body: b''
+
+Validation Error: [{'type': 'missing', 'loc': ('body',), 'msg': 'Field required', 'input': None}]
+Body: b''
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'ISO', 'is_active': True}}]
+Body: b'{"name":"ISO","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'ISO', 'is_active': True}}]
+Body: b'{"name":"ISO","is_active":true}'
+

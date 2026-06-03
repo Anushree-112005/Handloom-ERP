@@ -3,7 +3,7 @@ import { Users, Plus, Save, Edit2, Search, Filter, Eye, Trash2, X, Download, Cop
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { employeeAPI } from '../../services/api';
+import { employeeAPI, subMasterAPI } from '../../services/api';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -31,20 +31,93 @@ export default function EmployeeMaster() {
 
   const initialForm = {
     employee_code: '', name: '', dob: '', gender: '', blood_group: '', mobile: '', address: '', family_details: '',
-    department: '', designation: '', category: 'Permanent', unit: '', production_line: '', shift: '', skill_level: '',
+    department: '', designation: '', category: '', unit: '', production_line: '', shift: '', skill_level: '',
     aadhaar_no: '', pan_no: '', pf_account: '', esi_no: '', uan: '', biometric_id: '', medical_fitness: '',
-    wage_type: 'Monthly', basic_salary: 0, hra: 0, da: 0, allowances: 0, pf_esi_percent: 0,
+    wage_type: '', basic_salary: 0, hra: 0, da: 0, allowances: 0, pf_esi_percent: 0,
     qualification: '', iti_trade: '', machine_knowledge: '', training_records: '',
-    bank_name: '', ifsc_code: '', account_number: '', payment_mode: 'NEFT',
+    bank_name: '', ifsc_code: '', account_number: '', payment_mode: '',
     emergency_contact: '', pf_nominee: '', gratuity_nominee: '',
-    status: 'Active', password: '', biometric_link: false, canteen: false, transport: false, accommodation: false
+    status: '', password: '', biometric_link: false, canteen: false, transport: false, accommodation: false
   };
 
   const [formData, setFormData] = useState(initialForm);
 
+  const [bloodGroups, setBloodGroups] = useState(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']);
+  const [isCustomBloodGroup, setIsCustomBloodGroup] = useState(false);
+  const [customBloodGroupVal, setCustomBloodGroupVal] = useState('');
+
+  const [departments, setDepartments] = useState([]);
+  const [isCustomDepartment, setIsCustomDepartment] = useState(false);
+  const [customDepartmentVal, setCustomDepartmentVal] = useState('');
+
+  const [categories, setCategories] = useState([]);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryVal, setCustomCategoryVal] = useState('');
+
+  const [shifts, setShifts] = useState([]);
+  const [isCustomShift, setIsCustomShift] = useState(false);
+  const [customShiftVal, setCustomShiftVal] = useState('');
+
+  const [skillLevels, setSkillLevels] = useState([]);
+  const [isCustomSkillLevel, setIsCustomSkillLevel] = useState(false);
+  const [customSkillLevelVal, setCustomSkillLevelVal] = useState('');
+
+  const [wageTypes, setWageTypes] = useState([]);
+  const [isCustomWageType, setIsCustomWageType] = useState(false);
+  const [customWageTypeVal, setCustomWageTypeVal] = useState('');
+
+  const [statuses, setStatuses] = useState([]);
+  const [isCustomStatus, setIsCustomStatus] = useState(false);
+  const [customStatusVal, setCustomStatusVal] = useState('');
+
+  const [paymentModes, setPaymentModes] = useState([]);
+  const [isCustomPaymentMode, setIsCustomPaymentMode] = useState(false);
+  const [customPaymentModeVal, setCustomPaymentModeVal] = useState('');
+
   useEffect(() => { 
     fetchEmployees();
+    fetchMasters();
   }, []);
+
+  const fetchMasters = async () => {
+    try {
+      const [bgRes, depRes, catRes, shiftRes, skillRes, wageRes, statRes, payRes] = await Promise.all([
+        subMasterAPI.list('blood_group_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('department_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('employee_category_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('shift_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('skill_level_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('wage_type_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('employee_status_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('payment_mode_master').catch(() => ({ data: [] }))
+      ]);
+
+      if (bgRes.data && bgRes.data.length > 0) {
+        setBloodGroups(prev => [...new Set([...prev, ...bgRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (depRes.data && depRes.data.length > 0) {
+        setDepartments(prev => [...new Set([...prev, ...depRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (catRes.data && catRes.data.length > 0) {
+        setCategories(prev => [...new Set([...prev, ...catRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (shiftRes.data && shiftRes.data.length > 0) {
+        setShifts(prev => [...new Set([...prev, ...shiftRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (skillRes.data && skillRes.data.length > 0) {
+        setSkillLevels(prev => [...new Set([...prev, ...skillRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (wageRes.data && wageRes.data.length > 0) {
+        setWageTypes(prev => [...new Set([...prev, ...wageRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (statRes.data && statRes.data.length > 0) {
+        setStatuses(prev => [...new Set([...prev, ...statRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+      if (payRes.data && payRes.data.length > 0) {
+        setPaymentModes(prev => [...new Set([...prev, ...payRes.data.filter(d => d.is_active).map(d => d.name)])]);
+      }
+    } catch (err) { console.error("Error fetching masters", err); }
+  };
 
   const fetchEmployees = async () => {
     try {
@@ -91,10 +164,181 @@ export default function EmployeeMaster() {
 
   const handleChange = (e) => {
     let { name, value, type, checked } = e.target;
+    
+    if (name === 'blood_group' && value === 'custom_add_new') {
+      setIsCustomBloodGroup(true);
+      setCustomBloodGroupVal('');
+      return;
+    }
+
+    if (name === 'department' && value === 'custom_add_new') {
+      setIsCustomDepartment(true);
+      setCustomDepartmentVal('');
+      return;
+    }
+
+    if (name === 'category' && value === 'custom_add_new') {
+      setIsCustomCategory(true);
+      setCustomCategoryVal('');
+      return;
+    }
+
+    if (name === 'shift' && value === 'custom_add_new') {
+      setIsCustomShift(true);
+      setCustomShiftVal('');
+      return;
+    }
+
+    if (name === 'skill_level' && value === 'custom_add_new') {
+      setIsCustomSkillLevel(true);
+      setCustomSkillLevelVal('');
+      return;
+    }
+
+    if (name === 'wage_type' && value === 'custom_add_new') {
+      setIsCustomWageType(true);
+      setCustomWageTypeVal('');
+      return;
+    }
+
+    if (name === 'status' && value === 'custom_add_new') {
+      setIsCustomStatus(true);
+      setCustomStatusVal('');
+      return;
+    }
+
+    if (name === 'payment_mode' && value === 'custom_add_new') {
+      setIsCustomPaymentMode(true);
+      setCustomPaymentModeVal('');
+      return;
+    }
+
     if (['basic_salary', 'hra', 'da', 'allowances', 'pf_esi_percent'].includes(name)) {
       value = value === '' ? 0 : Number(value);
     }
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSaveCustomBloodGroup = async () => {
+    if (!customBloodGroupVal.trim()) return;
+    try {
+      await subMasterAPI.create('blood_group_master', { 
+        entity: 'blood_group_master', 
+        name: customBloodGroupVal.trim(), 
+        is_active: true 
+      });
+      setBloodGroups(prev => [...new Set([...prev, customBloodGroupVal.trim()])]);
+      setFormData(prev => ({ ...prev, blood_group: customBloodGroupVal.trim() }));
+      setIsCustomBloodGroup(false);
+      setCustomBloodGroupVal('');
+    } catch (err) {
+      console.error("Failed to add custom blood group", err);
+    }
+  };
+
+  const handleSaveCustomDepartment = async () => {
+    if (!customDepartmentVal.trim()) return;
+    try {
+      await subMasterAPI.create('department_master', { 
+        entity: 'department_master', 
+        name: customDepartmentVal.trim(), 
+        is_active: true 
+      });
+      setDepartments(prev => [...new Set([...prev, customDepartmentVal.trim()])]);
+      setFormData(prev => ({ ...prev, department: customDepartmentVal.trim() }));
+      setIsCustomDepartment(false);
+      setCustomDepartmentVal('');
+    } catch (err) { console.error("Failed to add custom department", err); }
+  };
+
+  const handleSaveCustomCategory = async () => {
+    if (!customCategoryVal.trim()) return;
+    try {
+      await subMasterAPI.create('employee_category_master', { 
+        entity: 'employee_category_master', 
+        name: customCategoryVal.trim(), 
+        is_active: true 
+      });
+      setCategories(prev => [...new Set([...prev, customCategoryVal.trim()])]);
+      setFormData(prev => ({ ...prev, category: customCategoryVal.trim() }));
+      setIsCustomCategory(false);
+      setCustomCategoryVal('');
+    } catch (err) { console.error("Failed to add custom category", err); }
+  };
+
+  const handleSaveCustomShift = async () => {
+    if (!customShiftVal.trim()) return;
+    try {
+      await subMasterAPI.create('shift_master', { 
+        entity: 'shift_master', 
+        name: customShiftVal.trim(), 
+        is_active: true 
+      });
+      setShifts(prev => [...new Set([...prev, customShiftVal.trim()])]);
+      setFormData(prev => ({ ...prev, shift: customShiftVal.trim() }));
+      setIsCustomShift(false);
+      setCustomShiftVal('');
+    } catch (err) { console.error("Failed to add custom shift", err); }
+  };
+
+  const handleSaveCustomSkillLevel = async () => {
+    if (!customSkillLevelVal.trim()) return;
+    try {
+      await subMasterAPI.create('skill_level_master', { 
+        entity: 'skill_level_master', 
+        name: customSkillLevelVal.trim(), 
+        is_active: true 
+      });
+      setSkillLevels(prev => [...new Set([...prev, customSkillLevelVal.trim()])]);
+      setFormData(prev => ({ ...prev, skill_level: customSkillLevelVal.trim() }));
+      setIsCustomSkillLevel(false);
+      setCustomSkillLevelVal('');
+    } catch (err) { console.error("Failed to add custom skill level", err); }
+  };
+
+  const handleSaveCustomWageType = async () => {
+    if (!customWageTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('wage_type_master', { 
+        entity: 'wage_type_master', 
+        name: customWageTypeVal.trim(), 
+        is_active: true 
+      });
+      setWageTypes(prev => [...new Set([...prev, customWageTypeVal.trim()])]);
+      setFormData(prev => ({ ...prev, wage_type: customWageTypeVal.trim() }));
+      setIsCustomWageType(false);
+      setCustomWageTypeVal('');
+    } catch (err) { console.error("Failed to add custom wage type", err); }
+  };
+
+  const handleSaveCustomStatus = async () => {
+    if (!customStatusVal.trim()) return;
+    try {
+      await subMasterAPI.create('employee_status_master', { 
+        entity: 'employee_status_master', 
+        name: customStatusVal.trim(), 
+        is_active: true 
+      });
+      setStatuses(prev => [...new Set([...prev, customStatusVal.trim()])]);
+      setFormData(prev => ({ ...prev, status: customStatusVal.trim() }));
+      setIsCustomStatus(false);
+      setCustomStatusVal('');
+    } catch (err) { console.error("Failed to add custom status", err); }
+  };
+
+  const handleSaveCustomPaymentMode = async () => {
+    if (!customPaymentModeVal.trim()) return;
+    try {
+      await subMasterAPI.create('payment_mode_master', { 
+        entity: 'payment_mode_master', 
+        name: customPaymentModeVal.trim(), 
+        is_active: true 
+      });
+      setPaymentModes(prev => [...new Set([...prev, customPaymentModeVal.trim()])]);
+      setFormData(prev => ({ ...prev, payment_mode: customPaymentModeVal.trim() }));
+      setIsCustomPaymentMode(false);
+      setCustomPaymentModeVal('');
+    } catch (err) { console.error("Failed to add custom payment mode", err); }
   };
 
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
@@ -259,11 +503,35 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Blood Group</label>
-                      <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                        <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
-                      </select>
+                      {isCustomBloodGroup ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Blood Group..."
+                            value={customBloodGroupVal}
+                            onChange={(e) => setCustomBloodGroupVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomBloodGroup();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomBloodGroup} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomBloodGroup(false); setFormData(prev => ({ ...prev, blood_group: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Mobile Number</label>
@@ -284,22 +552,73 @@ export default function EmployeeMaster() {
                     Employment
                   </h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                    <div className="form-group">
-                      <label>Department</label>
-                      <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        <option>Production</option><option>Quality</option><option>Maintenance</option><option>HR</option><option>Accounts</option>
-                      </select>
-                    </div>
+                      <div className="form-group">
+                        <label>Department</label>
+                        {isCustomDepartment ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type Department..."
+                              value={customDepartmentVal}
+                              onChange={(e) => setCustomDepartmentVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomDepartment();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomDepartment} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomDepartment(false); setFormData(prev => ({ ...prev, department: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
+                            <option value="">-- Select --</option>
+                            {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
+                      </div>
                     <div className="form-group">
                       <label>Designation</label>
                       <input className="form-control" name="designation" value={formData.designation} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>Category</label>
-                      <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
-                        <option>Permanent</option><option>Contract</option><option>Casual</option><option>Trainee</option>
-                      </select>
+                      {isCustomCategory ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Category..."
+                            value={customCategoryVal}
+                            onChange={(e) => setCustomCategoryVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomCategory();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomCategory} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomCategory(false); setFormData(prev => ({ ...prev, category: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Unit</label>
@@ -311,17 +630,67 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Shift</label>
-                      <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        <option>General Shift</option><option>Shift 1 (Morning)</option><option>Shift 2 (Evening)</option><option>Shift 3 (Night)</option>
-                      </select>
+                      {isCustomShift ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Shift..."
+                            value={customShiftVal}
+                            onChange={(e) => setCustomShiftVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomShift();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomShift} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomShift(false); setFormData(prev => ({ ...prev, shift: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {shifts.map(s => <option key={s} value={s}>{s}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Skill Level</label>
-                      <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
-                        <option value="">-- Select --</option>
-                        <option>Skilled</option><option>Semi-Skilled</option><option>Unskilled</option>
-                      </select>
+                      {isCustomSkillLevel ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Skill Level..."
+                            value={customSkillLevelVal}
+                            onChange={(e) => setCustomSkillLevelVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomSkillLevel();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomSkillLevel} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomSkillLevel(false); setFormData(prev => ({ ...prev, skill_level: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
+                          <option value="">-- Select --</option>
+                          {skillLevels.map(sl => <option key={sl} value={sl}>{sl}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                   </div>
 
@@ -367,9 +736,35 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group">
                       <label>Wage Type</label>
-                      <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
-                        <option>Monthly</option><option>Daily</option><option>Piece Rate</option>
-                      </select>
+                      {isCustomWageType ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Wage Type..."
+                            value={customWageTypeVal}
+                            onChange={(e) => setCustomWageTypeVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomWageType();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomWageType} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomWageType(false); setFormData(prev => ({ ...prev, wage_type: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {wageTypes.map(wt => <option key={wt} value={wt}>{wt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Basic Salary</label>
@@ -435,9 +830,35 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Payment Mode</label>
-                      <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
-                        <option>NEFT</option><option>Cash</option><option>Cheque</option>
-                      </select>
+                      {isCustomPaymentMode ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Payment Mode..."
+                            value={customPaymentModeVal}
+                            onChange={(e) => setCustomPaymentModeVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomPaymentMode();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPaymentMode} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPaymentMode(false); setFormData(prev => ({ ...prev, payment_mode: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {paymentModes.map(pm => <option key={pm} value={pm}>{pm}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                   </div>
 
@@ -464,9 +885,35 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
                     <div className="form-group">
                       <label>Employment Status</label>
-                      <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
-                        <option>Active</option><option>Resigned</option><option>Terminated</option><option>Suspended</option>
-                      </select>
+                      {isCustomStatus ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Status..."
+                            value={customStatusVal}
+                            onChange={(e) => setCustomStatusVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomStatus();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomStatus} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomStatus(false); setFormData(prev => ({ ...prev, status: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {statuses.map(st => <option key={st} value={st}>{st}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>ERP Login Password {editingId && '(Optional: Leave blank to keep current)'}</label>
@@ -501,10 +948,35 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group">
                       <label>Department</label>
-                      <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        <option>Production</option><option>Quality</option><option>Maintenance</option><option>HR</option><option>Accounts</option>
-                      </select>
+                      {isCustomDepartment ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Department..."
+                            value={customDepartmentVal}
+                            onChange={(e) => setCustomDepartmentVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomDepartment();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomDepartment} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomDepartment(false); setFormData(prev => ({ ...prev, department: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="department" value={formData.department} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Designation</label>
@@ -512,9 +984,35 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Category</label>
-                      <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
-                        <option>Permanent</option><option>Contract</option><option>Casual</option><option>Trainee</option>
-                      </select>
+                      {isCustomCategory ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Category..."
+                            value={customCategoryVal}
+                            onChange={(e) => setCustomCategoryVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomCategory();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomCategory} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomCategory(false); setFormData(prev => ({ ...prev, category: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="category" value={formData.category} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Unit</label>
@@ -526,17 +1024,67 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Shift</label>
-                      <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        <option>General Shift</option><option>Shift 1 (Morning)</option><option>Shift 2 (Evening)</option><option>Shift 3 (Night)</option>
-                      </select>
+                      {isCustomShift ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Shift..."
+                            value={customShiftVal}
+                            onChange={(e) => setCustomShiftVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomShift();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomShift} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomShift(false); setFormData(prev => ({ ...prev, shift: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="shift" value={formData.shift} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {shifts.map(s => <option key={s} value={s}>{s}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Skill Level</label>
-                      <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
-                        <option value="">-- Select --</option>
-                        <option>Skilled</option><option>Semi-Skilled</option><option>Unskilled</option>
-                      </select>
+                      {isCustomSkillLevel ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Skill Level..."
+                            value={customSkillLevelVal}
+                            onChange={(e) => setCustomSkillLevelVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomSkillLevel();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomSkillLevel} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomSkillLevel(false); setFormData(prev => ({ ...prev, skill_level: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="skill_level" value={formData.skill_level} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'identity', 'aadhaar_no')}>
+                          <option value="">-- Select --</option>
+                          {skillLevels.map(sl => <option key={sl} value={sl}>{sl}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -584,9 +1132,35 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group">
                       <label>Wage Type</label>
-                      <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
-                        <option>Monthly</option><option>Daily</option><option>Piece Rate</option>
-                      </select>
+                      {isCustomWageType ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Wage Type..."
+                            value={customWageTypeVal}
+                            onChange={(e) => setCustomWageTypeVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomWageType();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomWageType} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomWageType(false); setFormData(prev => ({ ...prev, wage_type: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="wage_type" value={formData.wage_type} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {wageTypes.map(wt => <option key={wt} value={wt}>{wt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Basic Salary</label>
@@ -654,9 +1228,35 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Payment Mode</label>
-                      <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
-                        <option>NEFT</option><option>Cash</option><option>Cheque</option>
-                      </select>
+                      {isCustomPaymentMode ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Payment Mode..."
+                            value={customPaymentModeVal}
+                            onChange={(e) => setCustomPaymentModeVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomPaymentMode();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPaymentMode} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPaymentMode(false); setFormData(prev => ({ ...prev, payment_mode: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {paymentModes.map(pm => <option key={pm} value={pm}>{pm}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                   </div>
 
@@ -684,9 +1284,35 @@ export default function EmployeeMaster() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
                     <div className="form-group">
                       <label>Employment Status</label>
-                      <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
-                        <option>Active</option><option>Resigned</option><option>Terminated</option><option>Suspended</option>
-                      </select>
+                      {isCustomStatus ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type Status..."
+                            value={customStatusVal}
+                            onChange={(e) => setCustomStatusVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveCustomStatus();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomStatus} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomStatus(false); setFormData(prev => ({ ...prev, status: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
+                          <option value="">-- Select --</option>
+                          {statuses.map(st => <option key={st} value={st}>{st}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>ERP Login Password {editingId && '(Optional: Leave blank to keep current)'}</label>
@@ -875,7 +1501,7 @@ export default function EmployeeMaster() {
               <thead>
                 <tr>
                   <th>Emp Code</th><th>Employee Name</th><th>Dept & Role</th>
-                  <th>Category</th><th>Status</th><th>Actions</th>
+                  <th>Category</th><th>Shift</th><th>Status</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -902,6 +1528,9 @@ export default function EmployeeMaster() {
                       </td>
                       <td>
                         <span className="badge" style={{ background: 'var(--bg-secondary)' }}>{e.category}</span>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{e.shift || '-'}</span>
                       </td>
                       <td>
                         <span className={`badge ${e.status === 'Active' ? 'badge-active' : e.status === 'Resigned' ? 'badge-warning' : 'badge-inactive'}`}>
@@ -964,6 +1593,7 @@ export default function EmployeeMaster() {
                 <DetailRow label="Department" value={selectedViewEmp.department} />
                 <DetailRow label="Designation" value={selectedViewEmp.designation} />
                 <DetailRow label="Category" value={selectedViewEmp.category} />
+                <DetailRow label="Shift" value={selectedViewEmp.shift} />
                 <DetailRow label="Mobile" value={selectedViewEmp.mobile} />
                 
                 <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Statutory & ID</h4>

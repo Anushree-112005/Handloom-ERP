@@ -21,6 +21,7 @@ class PartyMasterBase(BaseModel):
     state_code: Optional[str] = None
     pin_code: Optional[str] = None
     city: Optional[str] = None
+    district: Optional[str] = None
     state: Optional[str] = None
     phone: Optional[str] = None
     mobile: Optional[str] = None
