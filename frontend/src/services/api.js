@@ -47,6 +47,7 @@ export const partyAPI = {
   get: (id) => api.get(`/parties/${id}`),
   create: (data) => api.post('/parties/', data),
   update: (id, data) => api.put(`/parties/${id}`, data),
+  delete: (id) => api.delete(`/parties/${id}`),
   summary: () => api.get('/parties/stats/summary'),
 };
 

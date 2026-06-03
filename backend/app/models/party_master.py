@@ -14,6 +14,7 @@ class PartyMaster(Base):
     
     address = Column(Text)
     city = Column(String(100))
+    district = Column(String(100))
     state = Column(String(100))
     state_code = Column(String(10))
     pin_code = Column(String(20))

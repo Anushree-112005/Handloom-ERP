@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, Briefcase, CheckCircle, Download, FileText } from 'lucide-react';
-import { partyAPI, dropdownAPI } from '../../services/api';
+import { partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -20,6 +20,55 @@ export default function PartyMaster() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  
+  // Custom Inline Fields
+  const [isCustomPartyGroup, setIsCustomPartyGroup] = useState(false);
+  const [customPartyGroupVal, setCustomPartyGroupVal] = useState('');
+  
+  const [isCustomPartyType, setIsCustomPartyType] = useState(false);
+  const [customPartyTypeVal, setCustomPartyTypeVal] = useState('');
+  
+  const [isCustomCustomerGrade, setIsCustomCustomerGrade] = useState(false);
+  const [customCustomerGradeVal, setCustomCustomerGradeVal] = useState('');
+  
+  const [isCustomSalesRegion, setIsCustomSalesRegion] = useState(false);
+  const [customSalesRegionVal, setCustomSalesRegionVal] = useState('');
+  
+  const [isCustomState, setIsCustomState] = useState(false);
+  const [customStateVal, setCustomStateVal] = useState('');
+  
+  const [isCustomDistrict, setIsCustomDistrict] = useState(false);
+  const [customDistrictVal, setCustomDistrictVal] = useState('');
+  
+  const [isCustomCountry, setIsCustomCountry] = useState(false);
+  const [customCountryVal, setCustomCountryVal] = useState('');
+  
+  const [isCustomGstType, setIsCustomGstType] = useState(false);
+  const [customGstTypeVal, setCustomGstTypeVal] = useState('');
+  
+  const [isCustomTds, setIsCustomTds] = useState(false);
+  const [customTdsVal, setCustomTdsVal] = useState('');
+  
+  const [isCustomTcs, setIsCustomTcs] = useState(false);
+  const [customTcsVal, setCustomTcsVal] = useState('');
+  
+  const [isCustomAddressSno, setIsCustomAddressSno] = useState(false);
+  const [customAddressSnoVal, setCustomAddressSnoVal] = useState('');
+
+  const [isCustomCurrency, setIsCustomCurrency] = useState(false);
+  const [customCurrencyVal, setCustomCurrencyVal] = useState('');
+
+  const [isCustomPaymentTerms, setIsCustomPaymentTerms] = useState(false);
+  const [customPaymentTermsVal, setCustomPaymentTermsVal] = useState('');
+
+  const [isCustomAgent, setIsCustomAgent] = useState(false);
+  const [customAgentVal, setCustomAgentVal] = useState('');
+
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+
+  const [isCustomDeliverParty, setIsCustomDeliverParty] = useState(false);
+  const [customDeliverPartyVal, setCustomDeliverPartyVal] = useState('');
 
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
@@ -39,12 +88,12 @@ export default function PartyMaster() {
 
   const initialForm = {
     party_type: '', customer_grade: '', status: 'Active',
-    company_name: '', party_group: '', address: '', state_code: '',
-    pincode: '', city: '', phone: '', sales_region: '', country: '',
+    company_name: '', party_group: '', address: '', state: '',
+    pin_code: '', city: '', district: '', phone: '', sales_region: '', country: '',
     currency: '', contact_person: '', email: '', tally_no: '',
     address_sno: '1', tcs_applicable: 'No', tin_no: '', cst_no: '',
-    gstin: '', gst_type: '', pan_no: '', tds: '', tds_percent: 0,
-    pc_id: '', merchandiser: '', manager: '', bill_credit_days: 30,
+    gst_no: '', gst_type: '', pan_no: '', tds: '', tds_percent: 0,
+    pc_id: '', merchandiser: '', manager: '', credit_days: 30,
     credit_limit: 0, account_incharge: '', deliver_party_name: '',
     payment_terms: '', transport_name: '', delivery_address: '', agent_name: ''
   };
@@ -74,7 +123,11 @@ export default function PartyMaster() {
 
   const handleOpenForm = (party = null, readOnly = false) => {
     if (party) {
-      setFormData(party);
+      // Replace null values with empty strings to prevent React uncontrolled input warnings
+      const sanitizedParty = Object.fromEntries(
+        Object.entries(party).map(([k, v]) => [k, v === null ? '' : v])
+      );
+      setFormData(sanitizedParty);
       setEditingId(party.id);
     } else {
       setFormData(initialForm);
@@ -115,12 +168,449 @@ export default function PartyMaster() {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     let { name, value } = e.target;
-    if (['bill_credit_days', 'credit_limit', 'tds_percent'].includes(name)) {
+    if (['credit_days', 'credit_limit', 'tds_percent'].includes(name)) {
       value = value === '' ? 0 : Number(value);
     }
+
+    if (name === 'party_group' && value === 'custom_add_new') {
+      setIsCustomPartyGroup(true);
+      setCustomPartyGroupVal('');
+      return;
+    }
+    
+    if (name === 'party_type' && value === 'custom_add_new') {
+      setIsCustomPartyType(true);
+      setCustomPartyTypeVal('');
+      return;
+    }
+    
+    if (name === 'customer_grade' && value === 'custom_add_new') {
+      setIsCustomCustomerGrade(true);
+      setCustomCustomerGradeVal('');
+      return;
+    }
+    
+    if (name === 'sales_region' && value === 'custom_add_new') {
+      setIsCustomSalesRegion(true);
+      setCustomSalesRegionVal('');
+      return;
+    }
+    
+    if (name === 'state' && value === 'custom_add_new') {
+      setIsCustomState(true);
+      setCustomStateVal('');
+      return;
+    }
+    
+    if (name === 'district' && value === 'custom_add_new') {
+      setIsCustomDistrict(true);
+      setCustomDistrictVal('');
+      return;
+    }
+    
+    if (name === 'country' && value === 'custom_add_new') {
+      setIsCustomCountry(true);
+      setCustomCountryVal('');
+      return;
+    }
+    
+    if (name === 'gst_type' && value === 'custom_add_new') {
+      setIsCustomGstType(true);
+      setCustomGstTypeVal('');
+      return;
+    }
+    
+    if (name === 'tds' && value === 'custom_add_new') {
+      setIsCustomTds(true);
+      setCustomTdsVal('');
+      return;
+    }
+    
+    if (name === 'tcs_applicable' && value === 'custom_add_new') {
+      setIsCustomTcs(true);
+      setCustomTcsVal('');
+      return;
+    }
+    
+    if (name === 'address_sno' && value === 'custom_add_new') {
+      setIsCustomAddressSno(true);
+      setCustomAddressSnoVal('');
+      return;
+    }
+
+    if (name === 'currency' && value === 'custom_add_new') {
+      setIsCustomCurrency(true);
+      setCustomCurrencyVal('');
+      return;
+    }
+
+    if (name === 'payment_terms' && value === 'custom_add_new') {
+      setIsCustomPaymentTerms(true);
+      setCustomPaymentTermsVal('');
+      return;
+    }
+
+    if (name === 'agent_name' && value === 'custom_add_new') {
+      setIsCustomAgent(true);
+      setCustomAgentVal('');
+      return;
+    }
+
+    if (name === 'transport_name' && value === 'custom_add_new') {
+      setIsCustomTransport(true);
+      setCustomTransportVal('');
+      return;
+    }
+
+    if (name === 'deliver_party_name' && value === 'custom_add_new') {
+      setIsCustomDeliverParty(true);
+      setCustomDeliverPartyVal('');
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveCustomPartyGroup = async () => {
+    if (!customPartyGroupVal.trim()) return;
+    try {
+      await subMasterAPI.create('party_type_group', { 
+        entity: 'party_type_group', 
+        name: customPartyGroupVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          party_group: [...(prev.masters.party_group || []), customPartyGroupVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, party_group: customPartyGroupVal.trim() }));
+      setIsCustomPartyGroup(false);
+      setCustomPartyGroupVal('');
+    } catch (err) {
+      console.error("Failed to add custom party group", err);
+      alert("Failed to add new Party Group. Please try again.");
+    }
+  };
+
+  const handleSaveCustomPartyType = async () => {
+    if (!customPartyTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('party_type', { 
+        entity: 'party_type', 
+        name: customPartyTypeVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          party_type: [...(prev.masters.party_type || []), customPartyTypeVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, party_type: customPartyTypeVal.trim() }));
+      setIsCustomPartyType(false);
+      setCustomPartyTypeVal('');
+    } catch (err) {
+      console.error("Failed to add custom party type", err);
+      alert("Failed to add new Party Type. Please try again.");
+    }
+  };
+
+  const handleSaveCustomCustomerGrade = async () => {
+    if (!customCustomerGradeVal.trim()) return;
+    try {
+      await subMasterAPI.create('customer_grade', { 
+        entity: 'customer_grade', 
+        name: customCustomerGradeVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          customer_grade: [...(prev.masters.customer_grade || []), customCustomerGradeVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, customer_grade: customCustomerGradeVal.trim() }));
+      setIsCustomCustomerGrade(false);
+      setCustomCustomerGradeVal('');
+    } catch (err) {
+      console.error("Failed to add custom customer grade", err);
+      alert("Failed to add new Customer Grade. Please try again.");
+    }
+  };
+
+  const handleSaveCustomSalesRegion = async () => {
+    if (!customSalesRegionVal.trim()) return;
+    try {
+      await subMasterAPI.create('sales_region_master', { 
+        entity: 'sales_region_master', 
+        name: customSalesRegionVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          sales_region: [...(prev.masters.sales_region || []), customSalesRegionVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, sales_region: customSalesRegionVal.trim() }));
+      setIsCustomSalesRegion(false);
+      setCustomSalesRegionVal('');
+    } catch (err) {
+      console.error("Failed to add custom sales region", err);
+      alert("Failed to add new Sales Region. Please try again.");
+    }
+  };
+
+  const handleSaveCustomState = async () => {
+    if (!customStateVal.trim()) return;
+    try {
+      await subMasterAPI.create('state_master', { 
+        entity: 'state_master', 
+        name: customStateVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          state: [...(prev.masters.state || []), customStateVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, state: customStateVal.trim() }));
+      setIsCustomState(false);
+      setCustomStateVal('');
+    } catch (err) {
+      console.error("Failed to add custom state", err);
+      alert("Failed to add new State. Please try again.");
+    }
+  };
+
+  const handleSaveCustomDistrict = async () => {
+    if (!customDistrictVal.trim()) return;
+    try {
+      await subMasterAPI.create('district_city_master', { 
+        entity: 'district_city_master', 
+        name: customDistrictVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          district: [...(prev.masters.district || []), customDistrictVal.trim()],
+          city: [...(prev.masters.city || []), customDistrictVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, district: customDistrictVal.trim(), city: customDistrictVal.trim() }));
+      setIsCustomDistrict(false);
+      setCustomDistrictVal('');
+    } catch (err) {
+      console.error("Failed to add custom district", err);
+      alert("Failed to add new District. Please try again.");
+    }
+  };
+
+  const handleSaveCustomCountry = async () => {
+    if (!customCountryVal.trim()) return;
+    try {
+      await subMasterAPI.create('country_master', { 
+        entity: 'country_master', 
+        name: customCountryVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          country: [...(prev.masters.country || []), customCountryVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, country: customCountryVal.trim() }));
+      setIsCustomCountry(false);
+      setCustomCountryVal('');
+    } catch (err) {
+      console.error("Failed to add custom country", err);
+      alert("Failed to add new Country. Please try again.");
+    }
+  };
+
+  const handleSaveCustomGstType = async () => {
+    if (!customGstTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('gst_type_master', { 
+        entity: 'gst_type_master', 
+        name: customGstTypeVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          gst_type: [...(prev.masters.gst_type || []), customGstTypeVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, gst_type: customGstTypeVal.trim() }));
+      setIsCustomGstType(false);
+      setCustomGstTypeVal('');
+    } catch (err) {
+      console.error("Failed to add custom GST type", err);
+    }
+  };
+
+  const handleSaveCustomTds = async () => {
+    if (!customTdsVal.trim()) return;
+    try {
+      await subMasterAPI.create('tds_master', { 
+        entity: 'tds_master', 
+        name: customTdsVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          tds: [...(prev.masters.tds || []), customTdsVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, tds: customTdsVal.trim() }));
+      setIsCustomTds(false);
+      setCustomTdsVal('');
+    } catch (err) {
+      console.error("Failed to add custom TDS", err);
+    }
+  };
+
+  const handleSaveCustomTcs = async () => {
+    if (!customTcsVal.trim()) return;
+    try {
+      await subMasterAPI.create('tcs_master', { 
+        entity: 'tcs_master', 
+        name: customTcsVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          tcs_applicable: [...(prev.masters.tcs_applicable || []), customTcsVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, tcs_applicable: customTcsVal.trim() }));
+      setIsCustomTcs(false);
+      setCustomTcsVal('');
+    } catch (err) {
+      console.error("Failed to add custom TCS", err);
+    }
+  };
+
+  const handleSaveCustomAddressSno = async () => {
+    if (!customAddressSnoVal.trim()) return;
+    try {
+      await subMasterAPI.create('address_sno_master', { 
+        entity: 'address_sno_master', 
+        name: customAddressSnoVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          address_sno: [...(prev.masters.address_sno || []), customAddressSnoVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, address_sno: customAddressSnoVal.trim() }));
+      setIsCustomAddressSno(false);
+      setCustomAddressSnoVal('');
+    } catch (err) {
+      console.error("Failed to add custom Address S.No", err);
+    }
+  };
+
+  const handleSaveCustomCurrency = async () => {
+    if (!customCurrencyVal.trim()) return;
+    try {
+      await subMasterAPI.create('currency_master', { 
+        entity: 'currency_master', 
+        name: customCurrencyVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          currency: [...(prev.masters.currency || []), customCurrencyVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, currency: customCurrencyVal.trim() }));
+      setIsCustomCurrency(false);
+      setCustomCurrencyVal('');
+    } catch (err) {
+      console.error("Failed to add custom Currency", err);
+    }
+  };
+
+  const handleSaveCustomPaymentTerms = async () => {
+    if (!customPaymentTermsVal.trim()) return;
+    try {
+      await subMasterAPI.create('payment_terms_master', { 
+        entity: 'payment_terms_master', 
+        name: customPaymentTermsVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          payment_terms: [...(prev.masters.payment_terms || []), customPaymentTermsVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, payment_terms: customPaymentTermsVal.trim() }));
+      setIsCustomPaymentTerms(false);
+      setCustomPaymentTermsVal('');
+    } catch (err) {
+      console.error("Failed to add custom Payment Terms", err);
+    }
+  };
+
+  const handleSaveCustomAgent = async () => {
+    if (!customAgentVal.trim()) return;
+    try {
+      const { data } = await partyAPI.create({ company_name: customAgentVal.trim(), party_type: 'Agent' });
+      setOptions(prev => ({ ...prev, agents: [...prev.agents, { id: data.id, name: data.company_name }] }));
+      setFormData(prev => ({ ...prev, agent_name: data.company_name }));
+      setIsCustomAgent(false);
+      setCustomAgentVal('');
+    } catch (err) { console.error("Failed to add custom Agent", err); }
+  };
+
+  const handleSaveCustomTransport = async () => {
+    if (!customTransportVal.trim()) return;
+    try {
+      const { data } = await partyAPI.create({ company_name: customTransportVal.trim(), party_type: 'Logistics' });
+      setOptions(prev => ({ ...prev, transporters: [...prev.transporters, { id: data.id, name: data.company_name }] }));
+      setFormData(prev => ({ ...prev, transport_name: data.company_name }));
+      setIsCustomTransport(false);
+      setCustomTransportVal('');
+    } catch (err) { console.error("Failed to add custom Transport", err); }
+  };
+
+  const handleSaveCustomDeliverParty = async () => {
+    if (!customDeliverPartyVal.trim()) return;
+    try {
+      const { data } = await partyAPI.create({ company_name: customDeliverPartyVal.trim(), party_type: 'Delivery Party' });
+      setOptions(prev => ({ ...prev, all_parties: [...prev.all_parties, { id: data.id, name: data.company_name }] }));
+      setFormData(prev => ({ ...prev, deliver_party_name: data.company_name }));
+      setIsCustomDeliverParty(false);
+      setCustomDeliverPartyVal('');
+    } catch (err) { console.error("Failed to add custom Delivery Party", err); }
   };
 
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
@@ -176,7 +666,7 @@ export default function PartyMaster() {
         p.company_name || '-',
         p.party_type || '-',
         p.city || '-',
-        p.gstin || '-',
+        p.gst_no || '-',
         p.phone || '-'
       ];
       tableRows.push(rowData);
@@ -202,16 +692,17 @@ export default function PartyMaster() {
       "Email": p.email,
       "Address": p.address,
       "City": p.city,
-      "State Code": p.state_code,
-      "Pincode": p.pincode,
+      "District": p.district,
+      "State": p.state,
+      "Pincode": p.pin_code,
       "Country": p.country,
-      "GSTIN": p.gstin,
+      "GSTIN": p.gst_no,
       "GST Type": p.gst_type,
       "PAN No": p.pan_no,
       "Tally No": p.tally_no,
       "TDS": p.tds,
       "TDS Percent": p.tds_percent,
-      "Bill Credit Days": p.bill_credit_days,
+      "Bill Credit Days": p.credit_days,
       "Credit Limit": p.credit_limit,
       "Merchandiser": p.merchandiser,
       "Manager": p.manager,
@@ -299,33 +790,35 @@ export default function PartyMaster() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>Party Type *</label>
-                        <select className="form-control" name="party_type" value={formData.party_type} onChange={handleChange} required>
-                          <option value="">-- Select Party Type --</option>
-                          <option>Sales Party</option>
-                          <option>Logistics</option>
-                          <option>Processor</option>
-                          <option>Yarn Dyeing</option>
-                          <option>Yarn Coverter</option>
-                          <option>Exports party</option>
-                          <option>Own Shed</option>
-                          <option>Washing/Finishing</option>
-                          <option>Purchase Party</option>
-                          <option>Agent</option>
-                          <option>Weaving vendor</option>
-                          <option>Bit Loom Weaver</option>
-                          <option>Doubling</option>
-                          <option>Weaving Unit</option>
-                          <option>Testing Lab</option>
-                          <option>Spares Supplier</option>
-                          <option>Delivery Party</option>
-                          <option>Postage/Courier</option>
-                          <option>Warping/Sizing</option>
-                          <option>General</option>
-                          <option>Chemical Supplier</option>
-                          <option>Printing</option>
-                          <option>Fabric Dyeing</option>
-                          <option>JobWorker</option>
-                        </select>
+                        {isCustomPartyType ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new type..."
+                              value={customPartyTypeVal}
+                              onChange={(e) => setCustomPartyTypeVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomPartyType();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPartyType} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPartyType(false); setFormData(prev => ({ ...prev, party_type: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="party_type" value={formData.party_type} onChange={handleChange} required>
+                            <option value="">-- Select Party Type --</option>
+                            {renderOptions('party_type')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Business Name *</label>
@@ -333,17 +826,67 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Party Group</label>
-                        <select className="form-control" name="party_group" value={formData.party_group} onChange={handleChange}>
-                          <option value="">-- Select Party Group --</option>
-                          {renderOptions('party_group')}
-                        </select>
+                        {isCustomPartyGroup ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new group..."
+                              value={customPartyGroupVal}
+                              onChange={(e) => setCustomPartyGroupVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomPartyGroup();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPartyGroup} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPartyGroup(false); setFormData(prev => ({ ...prev, party_group: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="party_group" value={formData.party_group} onChange={handleChange}>
+                            <option value="">-- Select Group --</option>
+                            {renderOptions('party_group')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Customer Grade</label>
-                        <select className="form-control" name="customer_grade" value={formData.customer_grade} onChange={handleChange}>
-                          <option value="">-- Select Customer Grade --</option>
-                          {renderOptions('customer_grade')}
-                        </select>
+                        {isCustomCustomerGrade ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new grade..."
+                              value={customCustomerGradeVal}
+                              onChange={(e) => setCustomCustomerGradeVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomCustomerGrade();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomCustomerGrade} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomCustomerGrade(false); setFormData(prev => ({ ...prev, customer_grade: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="customer_grade" value={formData.customer_grade} onChange={handleChange}>
+                            <option value="">-- Select Customer Grade --</option>
+                            {renderOptions('customer_grade')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Status</label>
@@ -375,36 +918,146 @@ export default function PartyMaster() {
                         <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
                       </div>
                       <div className="form-group">
-                        <label>State / Code</label>
-                        <select className="form-control" name="state_code" value={formData.state_code} onChange={handleChange}>
-                          <option value="">-- Select State --</option>
-                          {renderOptions('state_code')}
-                        </select>
+                        <label>State</label>
+                        {isCustomState ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new state..."
+                              value={customStateVal}
+                              onChange={(e) => setCustomStateVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomState();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomState} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomState(false); setFormData(prev => ({ ...prev, state: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="state" value={formData.state} onChange={handleChange}>
+                            <option value="">-- Select State --</option>
+                            {renderOptions('state')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>City</label>
-                        <select className="form-control" name="city" value={formData.city} onChange={handleChange}>
-                          <option value="">-- Select City --</option>
-                          {renderOptions('city')}
-                        </select>
+                        <input 
+                          className="form-control" 
+                          name="city" 
+                          value={formData.city} 
+                          onChange={handleChange} 
+                          placeholder="Enter City" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>District</label>
+                        {isCustomDistrict ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new district..."
+                              value={customDistrictVal}
+                              onChange={(e) => setCustomDistrictVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomDistrict();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomDistrict} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomDistrict(false); setFormData(prev => ({ ...prev, district: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="district" value={formData.district} onChange={handleChange}>
+                            <option value="">-- Select District --</option>
+                            {renderOptions('district')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Pincode</label>
-                        <input className="form-control" name="pincode" value={formData.pincode} onChange={handleChange} />
+                        <input className="form-control" name="pin_code" value={formData.pin_code} onChange={handleChange} />
                       </div>
                       <div className="form-group">
                         <label>Sales Region</label>
-                        <select className="form-control" name="sales_region" value={formData.sales_region} onChange={handleChange}>
-                          <option value="">-- Select Zone --</option>
-                          {renderOptions('sales_region')}
-                        </select>
+                        {isCustomSalesRegion ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new region..."
+                              value={customSalesRegionVal}
+                              onChange={(e) => setCustomSalesRegionVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomSalesRegion();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomSalesRegion} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomSalesRegion(false); setFormData(prev => ({ ...prev, sales_region: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="sales_region" value={formData.sales_region} onChange={handleChange}>
+                            <option value="">-- Select Sales Region --</option>
+                            {renderOptions('sales_region')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Country</label>
-                        <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gstin')}>
-                          <option value="">-- Select Country --</option>
-                          {renderOptions('country')}
-                        </select>
+                        {isCustomCountry ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new country..."
+                              value={customCountryVal}
+                              onChange={(e) => setCustomCountryVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomCountry();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomCountry} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomCountry(false); setFormData(prev => ({ ...prev, country: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gst_no')}>
+                            <option value="">-- Select Country --</option>
+                            {renderOptions('country')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                     </div>
 
@@ -415,14 +1068,39 @@ export default function PartyMaster() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
                         <label>GSTIN</label>
-                        <input className="form-control" name="gstin" value={formData.gstin} onChange={handleChange} />
+                        <input className="form-control" name="gst_no" value={formData.gst_no} onChange={handleChange} />
                       </div>
                       <div className="form-group">
                         <label>GST Type</label>
-                        <select className="form-control" name="gst_type" value={formData.gst_type} onChange={handleChange}>
-                          <option value="">-- Select GST Type --</option>
-                          {renderOptions('gst_type')}
-                        </select>
+                        {isCustomGstType ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new GST type..."
+                              value={customGstTypeVal}
+                              onChange={(e) => setCustomGstTypeVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomGstType();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomGstType} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomGstType(false); setFormData(prev => ({ ...prev, gst_type: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="gst_type" value={formData.gst_type} onChange={handleChange}>
+                            <option value="">-- Select GST Type --</option>
+                            {renderOptions('gst_type')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>PAN No</label>
@@ -434,10 +1112,35 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>TDS</label>
-                        <select className="form-control" name="tds" value={formData.tds} onChange={handleChange}>
-                          <option value="">-- Select TDS --</option>
-                          {renderOptions('tds')}
-                        </select>
+                        {isCustomTds ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new TDS..."
+                              value={customTdsVal}
+                              onChange={(e) => setCustomTdsVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomTds();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomTds} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomTds(false); setFormData(prev => ({ ...prev, tds: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="tds" value={formData.tds} onChange={handleChange}>
+                            <option value="">-- Select TDS --</option>
+                            {renderOptions('tds')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>TDS %</label>
@@ -445,15 +1148,67 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>TCS Applicable</label>
-                        <select className="form-control" name="tcs_applicable" value={formData.tcs_applicable} onChange={handleChange}>
-                          <option>No</option><option>Yes</option>
-                        </select>
+                        {isCustomTcs ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new TCS..."
+                              value={customTcsVal}
+                              onChange={(e) => setCustomTcsVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomTcs();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomTcs} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomTcs(false); setFormData(prev => ({ ...prev, tcs_applicable: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="tcs_applicable" value={formData.tcs_applicable} onChange={handleChange}>
+                            <option value="">-- Select --</option>
+                            {renderOptions('tcs_applicable')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Address SNo</label>
-                        <select className="form-control" name="address_sno" value={formData.address_sno} onChange={handleChange}>
-                          <option>1</option><option>2</option><option>3</option>
-                        </select>
+                        {isCustomAddressSno ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type Address S.No..."
+                              value={customAddressSnoVal}
+                              onChange={(e) => setCustomAddressSnoVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomAddressSno();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomAddressSno} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomAddressSno(false); setFormData(prev => ({ ...prev, address_sno: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="address_sno" value={formData.address_sno} onChange={handleChange}>
+                            <option value="">-- Select S.No --</option>
+                            {renderOptions('address_sno')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>TIN No</label>
@@ -476,14 +1231,39 @@ export default function PartyMaster() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>Currency</label>
-                        <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
-                          <option value="">-- Select Currency --</option>
-                          {renderOptions('currency')}
-                        </select>
+                        {isCustomCurrency ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new Currency..."
+                              value={customCurrencyVal}
+                              onChange={(e) => setCustomCurrencyVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomCurrency();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomCurrency} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomCurrency(false); setFormData(prev => ({ ...prev, currency: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
+                            <option value="">-- Select Currency --</option>
+                            {renderOptions('currency')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Bill Credit Days</label>
-                        <input type="number" className="form-control" name="bill_credit_days" value={formData.bill_credit_days} onChange={handleChange} />
+                        <input type="number" className="form-control" name="credit_days" value={formData.credit_days} onChange={handleChange} />
                       </div>
                       <div className="form-group">
                         <label>Credit Limit Rs.</label>
@@ -493,50 +1273,150 @@ export default function PartyMaster() {
                         <label>Merchandiser</label>
                         <select className="form-control" name="merchandiser" value={formData.merchandiser} onChange={handleChange}>
                           <option value="">-- Select --</option>
-                          {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('merchandis')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                         </select>
                       </div>
                       <div className="form-group">
                         <label>Manager</label>
                         <select className="form-control" name="manager" value={formData.manager} onChange={handleChange}>
                           <option value="">-- Select --</option>
-                          {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('manag')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                         </select>
                       </div>
                       <div className="form-group">
                         <label>A/c Incharge</label>
                         <select className="form-control" name="account_incharge" value={formData.account_incharge} onChange={handleChange}>
                           <option value="">-- Select --</option>
-                          {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('account')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                         </select>
                       </div>
                       <div className="form-group">
                         <label>Agent Name</label>
-                        <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
-                        </select>
+                        {isCustomAgent ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new Agent..."
+                              value={customAgentVal}
+                              onChange={(e) => setCustomAgentVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomAgent();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomAgent} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomAgent(false); setFormData(prev => ({ ...prev, agent_name: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
+                            <option value="">-- Select --</option>
+                            {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Payment Terms</label>
-                        <select className="form-control" name="payment_terms" value={formData.payment_terms} onChange={handleChange}>
-                          <option value="">-- Select Payment Terms --</option>
-                          {renderOptions('payment_terms')}
-                        </select>
+                        {isCustomPaymentTerms ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new terms..."
+                              value={customPaymentTermsVal}
+                              onChange={(e) => setCustomPaymentTermsVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomPaymentTerms();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPaymentTerms} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPaymentTerms(false); setFormData(prev => ({ ...prev, payment_terms: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="payment_terms" value={formData.payment_terms} onChange={handleChange}>
+                            <option value="">-- Select Terms --</option>
+                            {renderOptions('payment_terms')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Transport Name</label>
-                        <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
-                        </select>
+                        {isCustomTransport ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new Transport..."
+                              value={customTransportVal}
+                              onChange={(e) => setCustomTransportVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomTransport();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomTransport} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomTransport(false); setFormData(prev => ({ ...prev, transport_name: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
+                            <option value="">-- Select --</option>
+                            {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Deliver Party Name</label>
-                        <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
-                          <option value="">-- Same as Business Name --</option>
-                          {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                        </select>
+                        {isCustomDeliverParty ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type Delivery Party..."
+                              value={customDeliverPartyVal}
+                              onChange={(e) => setCustomDeliverPartyVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomDeliverParty();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomDeliverParty} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomDeliverParty(false); setFormData(prev => ({ ...prev, deliver_party_name: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
+                            <option value="">-- Same as Business Name --</option>
+                            {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>Delivery Address</label>
@@ -554,22 +1434,32 @@ export default function PartyMaster() {
                   <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <label>State / Code</label>
-                  <select className="form-control" name="state_code" value={formData.state_code} onChange={handleChange}>
+                  <label>State</label>
+                  <select className="form-control" name="state" value={formData.state} onChange={handleChange}>
                     <option value="">-- Select State --</option>
-                    {renderOptions('state_code')}
+                    {renderOptions('state')}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>City</label>
-                  <select className="form-control" name="city" value={formData.city} onChange={handleChange}>
-                    <option value="">-- Select City --</option>
-                    {renderOptions('city')}
+                  <input 
+                    className="form-control" 
+                    name="city" 
+                    value={formData.city} 
+                    onChange={handleChange} 
+                    placeholder="Enter City" 
+                  />
+                </div>
+                <div className="form-group">
+                  <label>District</label>
+                  <select className="form-control" name="district" value={formData.district} onChange={handleChange}>
+                    <option value="">-- Select District --</option>
+                    {renderOptions('district')}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Pincode</label>
-                  <input className="form-control" name="pincode" value={formData.pincode} onChange={handleChange} />
+                  <input className="form-control" name="pin_code" value={formData.pin_code} onChange={handleChange} />
                 </div>
                 <div className="form-group">
                   <label>Sales Region</label>
@@ -580,7 +1470,7 @@ export default function PartyMaster() {
                 </div>
                 <div className="form-group">
                   <label>Country</label>
-                  <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gstin')}>
+                  <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gst_no')}>
                     <option value="">-- Select Country --</option>
                     {renderOptions('country')}
                   </select>
@@ -593,7 +1483,7 @@ export default function PartyMaster() {
                   <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>GSTIN</label>
-                  <input className="form-control" name="gstin" value={formData.gstin} onChange={handleChange} />
+                  <input className="form-control" name="gst_no" value={formData.gst_no} onChange={handleChange} />
                 </div>
                 <div className="form-group">
                   <label>GST Type</label>
@@ -653,14 +1543,39 @@ export default function PartyMaster() {
                   <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Currency</label>
-                  <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
-                    <option value="">-- Select Currency --</option>
-                    {renderOptions('currency')}
-                  </select>
+                  {isCustomCurrency ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input 
+                        autoFocus
+                        className="form-control" 
+                        placeholder="Type new Currency..."
+                        value={customCurrencyVal}
+                        onChange={(e) => setCustomCurrencyVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveCustomCurrency();
+                          }
+                        }}
+                      />
+                      <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomCurrency} title="Save">
+                        <CheckCircle size={16} />
+                      </button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomCurrency(false); setFormData(prev => ({ ...prev, currency: '' })); }} title="Cancel">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
+                      <option value="">-- Select Currency --</option>
+                      {renderOptions('currency')}
+                      <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                    </select>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Bill Credit Days</label>
-                  <input type="number" className="form-control" name="bill_credit_days" value={formData.bill_credit_days} onChange={handleChange} />
+                  <input type="number" className="form-control" name="credit_days" value={formData.credit_days} onChange={handleChange} />
                 </div>
                 <div className="form-group">
                   <label>Credit Limit Rs.</label>
@@ -670,50 +1585,150 @@ export default function PartyMaster() {
                   <label>Merchandiser</label>
                   <select className="form-control" name="merchandiser" value={formData.merchandiser} onChange={handleChange}>
                     <option value="">-- Select --</option>
-                    {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                    {options.employees.filter(emp => emp.department?.toLowerCase().includes('merchandis')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Manager</label>
                   <select className="form-control" name="manager" value={formData.manager} onChange={handleChange}>
                     <option value="">-- Select --</option>
-                    {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                    {options.employees.filter(emp => emp.department?.toLowerCase().includes('manag')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>A/c Incharge</label>
                   <select className="form-control" name="account_incharge" value={formData.account_incharge} onChange={handleChange}>
                     <option value="">-- Select --</option>
-                    {options.employees.map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
+                    {options.employees.filter(emp => emp.department?.toLowerCase().includes('account')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Agent Name</label>
-                  <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
-                    <option value="">-- Select --</option>
-                    {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
-                  </select>
+                  {isCustomAgent ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input 
+                        autoFocus
+                        className="form-control" 
+                        placeholder="Type new Agent..."
+                        value={customAgentVal}
+                        onChange={(e) => setCustomAgentVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveCustomAgent();
+                          }
+                        }}
+                      />
+                      <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomAgent} title="Save">
+                        <CheckCircle size={16} />
+                      </button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomAgent(false); setFormData(prev => ({ ...prev, agent_name: '' })); }} title="Cancel">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
+                      <option value="">-- Select --</option>
+                      {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
+                      <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                    </select>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Payment Terms</label>
-                  <select className="form-control" name="payment_terms" value={formData.payment_terms} onChange={handleChange}>
-                    <option value="">-- Select Payment Terms --</option>
-                    {renderOptions('payment_terms')}
-                  </select>
+                  {isCustomPaymentTerms ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input 
+                        autoFocus
+                        className="form-control" 
+                        placeholder="Type new terms..."
+                        value={customPaymentTermsVal}
+                        onChange={(e) => setCustomPaymentTermsVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveCustomPaymentTerms();
+                          }
+                        }}
+                      />
+                      <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPaymentTerms} title="Save">
+                        <CheckCircle size={16} />
+                      </button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPaymentTerms(false); setFormData(prev => ({ ...prev, payment_terms: '' })); }} title="Cancel">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <select className="form-control" name="payment_terms" value={formData.payment_terms} onChange={handleChange}>
+                      <option value="">-- Select Terms --</option>
+                      {renderOptions('payment_terms')}
+                      <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                    </select>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Transport Name</label>
-                  <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
-                    <option value="">-- Select --</option>
-                    {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
-                  </select>
+                  {isCustomTransport ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input 
+                        autoFocus
+                        className="form-control" 
+                        placeholder="Type new Transport..."
+                        value={customTransportVal}
+                        onChange={(e) => setCustomTransportVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveCustomTransport();
+                          }
+                        }}
+                      />
+                      <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomTransport} title="Save">
+                        <CheckCircle size={16} />
+                      </button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomTransport(false); setFormData(prev => ({ ...prev, transport_name: '' })); }} title="Cancel">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
+                      <option value="">-- Select --</option>
+                      {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
+                      <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                    </select>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Deliver Party Name</label>
-                  <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
-                    <option value="">-- Same as Business Name --</option>
-                    {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                  </select>
+                  {isCustomDeliverParty ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input 
+                        autoFocus
+                        className="form-control" 
+                        placeholder="Type Delivery Party..."
+                        value={customDeliverPartyVal}
+                        onChange={(e) => setCustomDeliverPartyVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveCustomDeliverParty();
+                          }
+                        }}
+                      />
+                      <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomDeliverParty} title="Save">
+                        <CheckCircle size={16} />
+                      </button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomDeliverParty(false); setFormData(prev => ({ ...prev, deliver_party_name: '' })); }} title="Cancel">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
+                      <option value="">-- Same as Business Name --</option>
+                      {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                      <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                    </select>
+                  )}
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Delivery Address</label>
@@ -939,7 +1954,7 @@ export default function PartyMaster() {
                       </td>
                       <td>{p.city}</td>
                       <td>
-                        <span style={{ fontSize: 12 }}>{p.gstin || 'N/A'}</span><br />
+                        <span style={{ fontSize: 12 }}>{p.gst_no || 'N/A'}</span><br />
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.pan_no}</span>
                       </td>
                       <td onClick={e => e.stopPropagation()}>
@@ -1005,19 +2020,20 @@ export default function PartyMaster() {
 
                 <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</h4>
                 <DetailRow label="City" value={selectedViewParty.city} />
-                <DetailRow label="State" value={selectedViewParty.state_code} />
+                <DetailRow label="District" value={selectedViewParty.district} />
+                <DetailRow label="State" value={selectedViewParty.state} />
                 <DetailRow label="Region" value={selectedViewParty.sales_region} />
                 <DetailRow label="Country" value={selectedViewParty.country} />
 
                 <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tax & Legal</h4>
-                <DetailRow label="GSTIN" value={selectedViewParty.gstin} />
+                <DetailRow label="GSTIN" value={selectedViewParty.gst_no} />
                 <DetailRow label="GST Type" value={selectedViewParty.gst_type} />
                 <DetailRow label="PAN No" value={selectedViewParty.pan_no} />
                 <DetailRow label="TDS Type" value={selectedViewParty.tds} />
 
                 <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Financials & Team</h4>
                 <DetailRow label="Payment Terms" value={selectedViewParty.payment_terms} />
-                <DetailRow label="Credit Days" value={selectedViewParty.bill_credit_days} />
+                <DetailRow label="Credit Days" value={selectedViewParty.credit_days} />
                 <DetailRow label="Merchandiser" value={selectedViewParty.merchandiser} />
                 <DetailRow label="Manager" value={selectedViewParty.manager} />
               </div>
