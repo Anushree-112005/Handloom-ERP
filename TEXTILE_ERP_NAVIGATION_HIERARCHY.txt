@@ -1,0 +1,350 @@
+================================================================================
+                    DINESH EXPORTS TEXTILE ERP SYSTEM
+                       NAVIGATION HIERARCHY REFERENCE
+================================================================================
+
+This document maps out the complete hierarchical structure of the Dinesh Exports 
+Textile ERP system. It reflects the application's actual routing configuration, 
+sidebar categories, module tabs, and sub-page/card layouts as implemented in the 
+frontend codebase.
+
+--------------------------------------------------------------------------------
+1. MODULE: Dashboard
+--------------------------------------------------------------------------------
+- Menu: Dashboard (Route: '/')
+- Menu: Overview (Route: '/overview')
+
+--------------------------------------------------------------------------------
+2. MODULE: Masters
+--------------------------------------------------------------------------------
+- Menu: Party Master (Route: '/party-master')
+- Menu: Employee Master (Route: '/employee')
+
+--------------------------------------------------------------------------------
+3. MODULE: Sub Masters
+--------------------------------------------------------------------------------
+- Menu: Core System Basics
+  * Sub-page / Card: Currency Master
+  * Sub-page / Card: Unit Master
+  * Sub-page / Card: Yarn Type Master
+  * Sub-page / Card: Yarn Count Master
+  * Sub-page / Card: Color Master
+  * Sub-page / Card: Design Type Master
+  * Sub-page / Card: Process Type Master
+  * Sub-page / Card: HSN Code Master
+  * Sub-page / Card: Loom Master
+  * Sub-page / Card: Loom Type Master
+  * Sub-page / Card: Party Type / Group
+  * Sub-page / Card: Payment Terms
+  * Sub-page / Card: Godown Master
+  * Sub-page / Card: Gate Location
+  * Sub-page / Card: Mill Name Master
+  * Sub-page / Card: District & City
+  * Sub-page / Card: Order Type Master
+  * Sub-page / Card: Sales Region
+
+- Menu: Operations & Processing
+  * Sub-page / Card: Checker Name
+  * Sub-page / Card: Grey Checker Name
+  * Sub-page / Card: Checking Table/Machine
+  * Sub-page / Card: Category Master
+  * Sub-page / Card: Fabric Master
+  * Sub-page / Card: Chemical Group
+  * Sub-page / Card: Sizing Chemical
+  * Sub-page / Card: Damage Master
+  * Sub-page / Card: Design Color
+  * Sub-page / Card: Finishing Type
+  * Sub-page / Card: Printing Technique
+  * Sub-page / Card: Process Sequences
+  * Sub-page / Card: Debit/Credit Reason
+  * Sub-page / Card: Expenses Group/Head
+  * Sub-page / Card: Fibre Count
+  * Sub-page / Card: TDS Bill Type
+  * Sub-page / Card: Test Parameter
+  * Sub-page / Card: Remarks Master
+  * Sub-page / Card: Duty Master
+  * Sub-page / Card: Weaving Master
+
+- Menu: Complex Masters
+  * Sub-page / Card: Buyer KYC Form
+  * Sub-page / Card: Buyer Sub Master
+  * Sub-page / Card: Company Bank Master
+  * Sub-page / Card: LC Bank Master
+  * Sub-page / Card: Fabric Costing Engine
+
+- Menu: Amendment Masters
+  * Sub-page / Card: Cloth LOT No. AMD
+  * Sub-page / Card: Invoice AMD
+  * Sub-page / Card: Despatch Request AMD
+  * Sub-page / Card: Point AMD
+  * Sub-page / Card: Vendor Order AMD
+
+- Menu: System Config & Utilities
+  * Sub-page / Card: Approval Settings
+  * Sub-page / Card: Direct Invoice Limits
+  * Sub-page / Card: Sub Menu Master
+  * Sub-page / Card: Control Service
+  * Sub-page / Card: Log Report
+  * Sub-page / Card: Old Year Menu
+
+--------------------------------------------------------------------------------
+4. MODULE: Order Management
+--------------------------------------------------------------------------------
+- Menu: Buyer Order (Route: '/buyer-order')
+  * Page / Sub-page: Buyer Order Form (Tabs: Main Details, Payment Details, Party PO Details, Transport & Delivery, Process Follow, Instructions)
+  * Page / Sub-page: Order Processing (Cards: Buyer Order Schedule, Buyer Order Sequences, Buyer Order AMD, Buyer Order Completion)
+  * Page / Sub-page: Dispatch & Expense (Cards: Dispatch Indent, Expense Entry)
+  * Page / Sub-page: IPO Invoice (Cards: Proforma Invoice, Export Proforma Invoice, Open Invoice)
+
+- Menu: Work Order Transaction (Route: '/work-order/transaction/*')
+  * Page / Category: Design & Development
+    - Sub-page / Card: Design Create
+    - Sub-page / Card: Development/Bulk Order
+    - Sub-page / Card: Development/Bulk Followup
+  * Page / Category: Order Management
+    - Sub-page / Card: Vendor Order
+    - Sub-page / Card: Cloth Purchase Order
+  * Page / Category: Processing
+    - Sub-page / Card: Dyeing Order
+    - Sub-page / Card: Cloth Dyeing/Processing Order
+  * Page / Category: Yarn & Fabric Prep
+    - Sub-page / Card: Doubling/Twisting Order
+    - Sub-page / Card: Warping/Sizing Order
+    - Sub-page / Card: Internal Fabric Request
+  * Page / Category: Amendments & Codes
+    - Sub-page / Card: Short AMD
+    - Sub-page / Card: HSN Code AMD
+
+- Menu: Work Order Completion (Route: '/work-order/completion/*')
+  * Page / Category: Vendor & Purchase Completion
+    - Sub-page / Card: Vendor Order Completion
+    - Sub-page / Card: Cloth Purchase Order Completion
+  * Page / Category: Processing & Fabric Completion
+    - Sub-page / Card: Dyeing Order Completion
+    - Sub-page / Card: Warping/Sizing Order Completion
+    - Sub-page / Card: Cloth Dyeing/Processing Order Completion
+
+- Menu: Work Order Approval (Route: '/work-order/approval/*')
+  * Page / Category: External Order Approvals
+    - Sub-page / Card: Buyer Order Approval
+    - Sub-page / Card: PI Approval
+    - Sub-page / Card: Vendor Work Order Approval
+  * Page / Category: Material & Yarn Approvals
+    - Sub-page / Card: Internal Fabric Request Approval
+    - Sub-page / Card: Yarn Requirement Approval
+    - Sub-page / Card: Yarn Work Orders Approval
+
+--------------------------------------------------------------------------------
+5. MODULE: Design Management
+--------------------------------------------------------------------------------
+- Menu: Design Entry (Route: '/design-entry')
+
+--------------------------------------------------------------------------------
+6. MODULE: Purchase Management
+--------------------------------------------------------------------------------
+- Menu: Yarn Purchase Order (Route: '/yarn/purchase-order')
+
+--------------------------------------------------------------------------------
+7. MODULE: Yarn Management
+--------------------------------------------------------------------------------
+- Menu: Yarn Inward (Route: '/yarn/inward')
+- Menu: Grey Yarn Delivery (Route: '/yarn/grey-delivery')
+- Menu: Dyed Yarn Received (Route: '/dyed-yarn/received')
+- Menu: Dyed Yarn Delivery (Route: '/dyed-yarn/delivery')
+
+--------------------------------------------------------------------------------
+8. MODULE: Warping & Weaving
+--------------------------------------------------------------------------------
+- Menu: Warp Beam Received Entry (Route: '/warp/beam-receipt')
+- Menu: Warp Beam Delivery Entry (Route: '/warp/delivery')
+- Menu: Warping/Sizing Transaction (Route: '/warp/transaction/*')
+  * Page / Category: Beam & Transaction Entries
+    - Sub-page / Card: Warp Beam Received Entry
+    - Sub-page / Card: Warp Beam Delivery Entry
+    - Sub-page / Card: Empty Beam Entry
+  * Page / Category: Reports, Bills & Amendments
+    - Sub-page / Card: Warping Set Report Entry
+    - Sub-page / Card: Sizing Set Report Entry
+    - Sub-page / Card: Warping/Sizing Bills Entry
+    - Sub-page / Card: SET Detail Amendment Entry
+
+--------------------------------------------------------------------------------
+9. MODULE: Greige Transaction
+--------------------------------------------------------------------------------
+- Menu: Greige Transactions (Route: '/greige/transaction/*')
+  * Page / Category: Greige Operations
+    - Sub-page / Card: Vendor Inward
+    - Sub-page / Card: ON Table Checking
+    - Sub-page / Card: Cloth Mending Entry
+    - Sub-page / Card: Cloth Packing (Greige)
+    - Sub-page / Card: Cloth Delivery (Greige)
+    - Sub-page / Card: Bale Delivery (Greige)
+  * Page / Category: Greige Administration
+    - Sub-page / Card: Greige Bale AMD
+    - Sub-page / Card: Greige LOT AMD
+    - Sub-page / Card: Greige Goods Release Advice
+    - Sub-page / Card: Gry Sales Invoice
+    - Sub-page / Card: Cloth Delivery Eway Bill (Greige) (Link to /eway-bill)
+    - Sub-page / Card: Einvoice / Eway Bill (Greige)
+
+--------------------------------------------------------------------------------
+10. MODULE: Processing / Production
+--------------------------------------------------------------------------------
+- Menu: Fabric Production Desk (Route: '/fabric/transaction/*')
+  * Page / Category: Fabric Checking
+    - Sub-page / Card: Design Upload
+    - Sub-page / Card: Cloth Checking Entry
+    - Sub-page / Card: ON Table Checking Entry (Link to /cloth/checking)
+    - Sub-page / Card: Cloth LOT Completion
+  * Page / Category: Fabric Inward
+    - Sub-page / Card: Cloth Inward (Link to /cloth/inward)
+    - Sub-page / Card: Cloth Purchase Bills Entry
+  * Page / Category: Fabric Delivery
+    - Sub-page / Card: Cloth Delivery PC-Wise Entry
+    - Sub-page / Card: Mill to Mill Delivery Entry
+    - Sub-page / Card: Cloth Delivery Eway Bill (Link to /eway-bill)
+    - Sub-page / Card: Cloth Bale Delivery Entry
+  * Page / Category: Lot & Bale
+    - Sub-page / Card: Lot Approval Entry
+    - Sub-page / Card: Bale Amendment Entry
+    - Sub-page / Card: Cloth Bale Packing
+    - Sub-page / Card: Packinglist Checking
+  * Page / Category: Gate & Dispatch
+    - Sub-page / Card: New Goods Release Advice (Link to /goods-release)
+    - Sub-page / Card: Cloth Gate Pass Entry
+    - Sub-page / Card: Sales Invoice (Link to /sales-invoice)
+    - Sub-page / Card: Einvoice / Eway Bill
+  * Page / Category: Vendor Bills
+    - Sub-page / Card: Vendor Bills Entry
+    - Sub-page / Card: Printing/Washing Bills Entry
+    - Sub-page / Card: DL Development Bills Entry
+  * Page / Category: Surplus Stock
+    - Sub-page / Card: Surplus Stock Opening
+    - Sub-page / Card: Surplus Stock Report
+    - Sub-page / Card: Surplus Stock Excel Download
+    - Sub-page / Card: Surplus Stock Report New
+    - Sub-page / Card: Surplus Stock Inward
+    - Sub-page / Card: Surplus Stock Delivery
+    - Sub-page / Card: Customer Enquiry Hanger
+
+--------------------------------------------------------------------------------
+11. MODULE: Quality Control
+--------------------------------------------------------------------------------
+- Menu: On-Table Checking (Route: '/cloth/checking')
+
+--------------------------------------------------------------------------------
+12. MODULE: Inventory & Warehouse
+--------------------------------------------------------------------------------
+- Menu: Packing Slip (Route: '/packing')
+
+--------------------------------------------------------------------------------
+13. MODULE: Maintenance & Spares
+--------------------------------------------------------------------------------
+- Menu: Maintenance & Spares Desk (Route: '/spares/desk/*')
+  * Page / Category: Master Setup
+    - Sub-page / Card: Section Creation
+    - Sub-page / Card: Spares Creation
+    - Sub-page / Card: Opening Stock Entry
+  * Page / Category: Requests & Approvals
+    - Sub-page / Card: Spares Request Indent Entry
+    - Sub-page / Card: Request Indent Approval
+  * Page / Category: Purchase & Work Orders
+    - Sub-page / Card: Purchase Order Entry - Spares
+    - Sub-page / Card: Purchase Order Approval
+    - Sub-page / Card: Work Order Entry
+    - Sub-page / Card: Purchase Entry
+  * Page / Category: Consumption & Jobwork
+    - Sub-page / Card: Consumption Entry
+    - Sub-page / Card: JobWork / HandLoan Issue Entry
+    - Sub-page / Card: JobWork / HandLoan Received Entry
+- Menu: Spares Report (Route: '/spares/report')
+
+--------------------------------------------------------------------------------
+14. MODULE: Gate & Security
+--------------------------------------------------------------------------------
+- Menu: Gate Inward (Route: '/gate/inward')
+- Menu: Gate Outward (Route: '/gate/outward')
+- Menu: Gate Pass Creation (Route: '/gate/pass')
+- Menu: Gate Reports (Route: '/gate/reports')
+
+--------------------------------------------------------------------------------
+15. MODULE: Sales & Dispatch
+--------------------------------------------------------------------------------
+- Menu: Goods Release (GRA) (Route: '/goods-release')
+- Menu: Sales Invoice (Route: '/sales-invoice')
+- Menu: Despatch Planning (Route: '/despatch')
+
+--------------------------------------------------------------------------------
+16. MODULE: Export & Logistics
+--------------------------------------------------------------------------------
+- Menu: E-Way Bill (Route: '/eway-bill')
+
+--------------------------------------------------------------------------------
+17. MODULE: Accounts & Finance
+--------------------------------------------------------------------------------
+- Menu: Account Transaction (Route: '/finance/desk/*')
+  * Page / Category: Bills & Approvals
+    - Sub-page / Card: Creditors Bills Received
+    - Sub-page / Card: General/Other Bills
+    - Sub-page / Card: Creditors Bills Approval
+    - Sub-page / Card: Creditors Debit Note
+  * Page / Category: Sales Invoices
+    - Sub-page / Card: Export Invoice
+    - Sub-page / Card: Direct Sales Invoice
+    - Sub-page / Card: Direct Sales EInvoice
+    - Sub-page / Card: Tally Sales Export
+    - Sub-page / Card: Cancel Sales Invoice
+  * Page / Category: Sales Amendments
+    - Sub-page / Card: Sales Amendment
+    - Sub-page / Card: Gry Sales Amendment
+  * Page / Category: LC Management
+    - Sub-page / Card: LC Detail
+    - Sub-page / Card: LC Hundi Entry
+    - Sub-page / Card: Bulk Invoice Print
+    - Sub-page / Card: LC Completion
+
+- Menu: Voucher Entry (Route: '/accounts/voucher-entry')
+  * Page / Tab: Creditor's Bill Passing
+  * Page / Tab: Creditor's Payment Advise
+  * Page / Tab: Buyer Debit Note Received
+  * Page / Tab: Debit Note Approval
+  * Page / Tab: Receipt Entry
+
+--------------------------------------------------------------------------------
+18. MODULE: Reports & MIS
+--------------------------------------------------------------------------------
+- Menu: Reports Dashboard (Route: '/reports-dashboard')
+  * Page / Category: Production Reports
+    - Report: Loom Production
+    - Report: Warping Status
+    - Report: Dyeing Status
+    - Report: Production Efficiency
+  * Page / Category: Yarn Reports
+    - Report: Yarn Stock
+    - Report: Yarn Consumption
+    - Report: Yarn Purchase Order
+    - Report: Yarn Delivery Challan
+  * Page / Category: Fabric Reports
+    - Report: Cloth Inward
+    - Report: Cloth Delivery
+    - Report: Finished Fabric
+    - Report: Grey Fabric Stock
+  * Page / Category: Inventory Reports
+    - Report: Store Stock Summary
+    - Report: Material Consumption
+    - Report: Inventory Aging
+    - Report: Warehouse Location
+- Menu: Log Report (Route: '/log-report')
+
+--------------------------------------------------------------------------------
+19. MODULE: Administration & Security
+--------------------------------------------------------------------------------
+- Menu: User Management (Route: '/user-management')
+
+--------------------------------------------------------------------------------
+20. MODULE: System
+--------------------------------------------------------------------------------
+- Menu: Company (Route: '/company-settings')
+- Menu: About (Route: '/about')
+
+================================================================================
