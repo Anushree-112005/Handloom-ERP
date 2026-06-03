@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, FileText, CreditCard, Truck, Settings, MessageSquare, ClipboardList, Edit2, Filter, CheckCircle, ShoppingCart, Briefcase, Users, Star, Download, ChevronDown } from 'lucide-react';
-import { buyerOrderAPI, partyAPI, employeeAPI } from '../../services/api';
+import { buyerOrderAPI, partyAPI, employeeAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -23,6 +23,35 @@ export default function BuyerOrder() {
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  
+  const [options, setOptions] = useState({ masters: {} });
+  
+  // Custom Inline Add States
+  const [isCustomOrderType, setIsCustomOrderType] = useState(false);
+  const [customOrderTypeVal, setCustomOrderTypeVal] = useState('');
+  
+  const [isCustomCertifiedType, setIsCustomCertifiedType] = useState(false);
+  const [customCertifiedTypeVal, setCustomCertifiedTypeVal] = useState('');
+  
+  const [isCustomCommissionType, setIsCustomCommissionType] = useState(false);
+  const [customCommissionTypeVal, setCustomCommissionTypeVal] = useState('');
+  
+  const [isCustomRegularSpecial, setIsCustomRegularSpecial] = useState(false);
+  const [customRegularSpecialVal, setCustomRegularSpecialVal] = useState('');
+
+  const [isCustomPaymentTerms, setIsCustomPaymentTerms] = useState(false);
+  const [customPaymentTermsVal, setCustomPaymentTermsVal] = useState('');
+
+  const [isCustomStatus, setIsCustomStatus] = useState(false);
+  const [customStatusVal, setCustomStatusVal] = useState('');
+
+  const [isCustomTransportMode, setIsCustomTransportMode] = useState(false);
+  const [customTransportModeVal, setCustomTransportModeVal] = useState('');
+
+  const [isCustomProcessSequence, setIsCustomProcessSequence] = useState(false);
+  const [customProcessSequenceVal, setCustomProcessSequenceVal] = useState('');
+
+  const [customAddItem, setCustomAddItem] = useState({ field: null, index: null, val: '' });
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,14 +99,16 @@ export default function BuyerOrder() {
 
   const loadData = async () => {
     try {
-      const [ordersRes, partiesRes, empRes] = await Promise.all([
+      const [ordersRes, partiesRes, empRes, dropdownsRes] = await Promise.all([
         buyerOrderAPI.list(),
         partyAPI.list(),
-        employeeAPI.list()
+        employeeAPI.list(),
+        dropdownAPI.getAll()
       ]);
       setOrders(ordersRes.data);
       setParties(partiesRes.data);
       setEmployees(empRes.data);
+      setOptions(dropdownsRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -184,44 +215,267 @@ export default function BuyerOrder() {
   const handlePartyChange = (e) => {
     const partyId = e.target.value;
     const party = parties.find(p => p.id.toString() === partyId);
+    
+    let fullAddress = '';
+    if (party) {
+      fullAddress = [party.address, party.city, party.district, party.state, party.country]
+        .filter(Boolean)
+        .join(', ');
+      if (party.pin_code) {
+        fullAddress += ` - ${party.pin_code}`;
+      }
+    }
+
     setForm({
       ...form,
       party_id: partyId,
       party_name: party?.company_name || '',
-      billing_address: party?.address || '',
+      buyer_name: party?.company_name || '',
+      billing_address: fullAddress || '',
       state: party?.state || '',
+      agent_name: party?.agent_name || '',
+      order_taken_by: party?.merchandiser || '',
       gst_no: party?.gst_no || '',
       pan_no: party?.pan_no || '',
     });
   };
 
-  const handleChange = (e) => {
-    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-      if (e.key === 'Tab' && !e.shiftKey) {
-        e.preventDefault();
-        setActiveTab(nextTab);
-        setTimeout(() => {
-          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-          if (nextInput) {
-            nextInput.focus();
-          } else {
-            // Fallback to first focusable element
-            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-            if (fallback) fallback.focus();
-          }
-        }, 100);
-      }
-    };
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
 
+  const handleChange = (e) => {
     let { name, value, type } = e.target;
+    
+    if (name === 'order_type' && value === 'custom_add_new') {
+      setIsCustomOrderType(true);
+      return;
+    }
+    
+    if (name === 'certified_type' && value === 'custom_add_new') {
+      setIsCustomCertifiedType(true);
+      return;
+    }
+    
+    if (name === 'commission_type' && value === 'custom_add_new') {
+      setIsCustomCommissionType(true);
+      return;
+    }
+    
+    if (name === 'regular_special' && value === 'custom_add_new') {
+      setIsCustomRegularSpecial(true);
+      return;
+    }
+    
+    if (name === 'payment_terms' && value === 'custom_add_new') {
+      setIsCustomPaymentTerms(true);
+      return;
+    }
+    
+    if (name === 'status' && value === 'custom_add_new') {
+      setIsCustomStatus(true);
+      return;
+    }
+    
+    if (name === 'transport_mode' && value === 'custom_add_new') {
+      setIsCustomTransportMode(true);
+      return;
+    }
+    
+    if (name === 'process_sequence' && value === 'custom_add_new') {
+      setIsCustomProcessSequence(true);
+      return;
+    }
+    
     if (type === 'number') value = parseFloat(value) || 0;
     setForm({ ...form, [name]: value });
+  };
+
+  const handleSaveCustomOrderType = async () => {
+    if (!customOrderTypeVal.trim()) {
+      setIsCustomOrderType(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('order_type_master', { entity: 'order_type_master', name: customOrderTypeVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, order_type: customOrderTypeVal.trim() });
+      setIsCustomOrderType(false);
+      setCustomOrderTypeVal('');
+    } catch (err) {
+      alert("Error saving custom order type");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomCertifiedType = async () => {
+    if (!customCertifiedTypeVal.trim()) {
+      setIsCustomCertifiedType(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('certified_type_master', { entity: 'certified_type_master', name: customCertifiedTypeVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, certified_type: customCertifiedTypeVal.trim() });
+      setIsCustomCertifiedType(false);
+      setCustomCertifiedTypeVal('');
+    } catch (err) {
+      alert("Error saving custom certified type");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomCommissionType = async () => {
+    if (!customCommissionTypeVal.trim()) {
+      setIsCustomCommissionType(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('commission_type_master', { entity: 'commission_type_master', name: customCommissionTypeVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, commission_type: customCommissionTypeVal.trim() });
+      setIsCustomCommissionType(false);
+      setCustomCommissionTypeVal('');
+    } catch (err) {
+      alert("Error saving custom commission type");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomRegularSpecial = async () => {
+    if (!customRegularSpecialVal.trim()) {
+      setIsCustomRegularSpecial(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('regular_special_master', { entity: 'regular_special_master', name: customRegularSpecialVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, regular_special: customRegularSpecialVal.trim() });
+      setIsCustomRegularSpecial(false);
+      setCustomRegularSpecialVal('');
+    } catch (err) {
+      alert("Error saving custom regular/special");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomPaymentTerms = async () => {
+    if (!customPaymentTermsVal.trim()) {
+      setIsCustomPaymentTerms(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('payment_terms_master', { entity: 'payment_terms_master', name: customPaymentTermsVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, payment_terms: customPaymentTermsVal.trim() });
+      setIsCustomPaymentTerms(false);
+      setCustomPaymentTermsVal('');
+    } catch (err) {
+      alert("Error saving custom payment terms");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomStatus = async () => {
+    if (!customStatusVal.trim()) {
+      setIsCustomStatus(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('status_master', { entity: 'status_master', name: customStatusVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, status: customStatusVal.trim() });
+      setIsCustomStatus(false);
+      setCustomStatusVal('');
+    } catch (err) {
+      alert("Error saving custom status");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomTransportMode = async () => {
+    if (!customTransportModeVal.trim()) {
+      setIsCustomTransportMode(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('transport_mode_master', { entity: 'transport_mode_master', name: customTransportModeVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, transport_mode: customTransportModeVal.trim() });
+      setIsCustomTransportMode(false);
+      setCustomTransportModeVal('');
+    } catch (err) {
+      alert("Error saving custom transport mode");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomProcessSequence = async () => {
+    if (!customProcessSequenceVal.trim()) {
+      setIsCustomProcessSequence(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('process_sequence_master', { entity: 'process_sequence_master', name: customProcessSequenceVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, process_sequence: customProcessSequenceVal.trim() });
+      setIsCustomProcessSequence(false);
+      setCustomProcessSequenceVal('');
+    } catch (err) {
+      alert("Error saving custom process sequence");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomItem = async (entity) => {
+    if (!customAddItem.val.trim()) {
+      setCustomAddItem({ field: null, index: null, val: '' });
+      return;
+    }
+    try {
+      await subMasterAPI.create(entity, { entity: entity, name: customAddItem.val.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      
+      const newItems = [...form.items];
+      newItems[customAddItem.index][customAddItem.field] = customAddItem.val.trim();
+      setForm({ ...form, items: newItems });
+      
+      setCustomAddItem({ field: null, index: null, val: '' });
+    } catch (err) {
+      alert("Error saving custom option");
+      console.error(err);
+    }
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
   const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
 
   const updateItem = (index, field, value) => {
+    if (value === 'custom_add_new') {
+      setCustomAddItem({ field, index, val: '' });
+      return;
+    }
     const newItems = [...form.items];
     let val = value;
     if (['order_mtrs', 'rate', 'tolerance_pct', 'sample_mtr', 'pick_on_table', 'finish_reed', 'finish_pick', 'finish_width', 'cuttable_width', 'packing_charge', 'gsm', 'price', 'gst_pct', 'gst_rate'].includes(field)) {
@@ -236,6 +490,24 @@ export default function BuyerOrder() {
     }
     setForm({ ...form, items: newItems });
   };
+
+  const renderItemDropdown = (label, field, entity, index, item) => (
+    <div className="form-group"><label>{label}</label>
+      {customAddItem.field === field && customAddItem.index === index ? (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input autoFocus type="text" className="form-control" placeholder={`New ${label}...`} value={customAddItem.val} onChange={(e) => setCustomAddItem({ ...customAddItem, val: e.target.value })} />
+          <button type="button" className="btn btn-primary" onClick={() => handleSaveCustomItem(entity)} style={{ padding: '6px' }}>Save</button>
+          <button type="button" className="btn btn-secondary" onClick={() => setCustomAddItem({ field: null, index: null, val: '' })} style={{ padding: '6px' }}>X</button>
+        </div>
+      ) : (
+        <select className="form-control" value={item[field]} onChange={e => updateItem(index, field, e.target.value)}>
+          <option value="">-- Select --</option>
+          {options?.masters?.[entity]?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom...</option>
+        </select>
+      )}
+    </div>
+  );
 
   const tabs = [
     { id: 'main', label: 'Main Details', icon: FileText },
@@ -387,10 +659,12 @@ export default function BuyerOrder() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}><Filter size={16} /><span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span></div>
               <select className="form-control" style={{ width: 150, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-                <option>All Types</option><option>Regular</option><option>Export</option><option>Special</option>
+                <option>All Types</option>
+                {options?.masters?.['order_type_master']?.map(opt => <option key={opt}>{opt}</option>)}
               </select>
               <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                <option>All Status</option><option>Active</option><option>Inactive</option><option>Settled</option>
+                <option>All Status</option>
+                {options?.masters?.['status_master']?.map(opt => <option key={opt}>{opt}</option>)}
               </select>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span><input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} /></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span><input type="date" className="form-control" style={{ width: 140, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} /></div>
@@ -555,17 +829,53 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Order Type</label>
-                      <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
-                        <option value="">-- Select Order Type --</option>
-                        <option>Regular</option><option>Export</option><option>Special</option>
-                      </select>
+                      {isCustomOrderType ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Order Type..." 
+                            value={customOrderTypeVal}
+                            onChange={(e) => setCustomOrderTypeVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomOrderType} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomOrderType(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
+                          <option value="">-- Select Order Type --</option>
+                          {options?.masters?.['order_type_master']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Order Type...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Certified Type</label>
-                      <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
-                        <option value="">-- Select Certified Type --</option>
-                        <option value="">None</option><option>ISO</option><option>Organic</option><option>Fair Trade</option>
-                      </select>
+                      {isCustomCertifiedType ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Certified Type..." 
+                            value={customCertifiedTypeVal}
+                            onChange={(e) => setCustomCertifiedTypeVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomCertifiedType} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomCertifiedType(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
+                          <option value="">-- Select Certified Type --</option>
+                          {options?.masters?.['certified_type_master']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Certified Type...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>GST No</label>
@@ -577,10 +887,28 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Commission Type</label>
-                      <select className="form-control" name="commission_type" value={form.commission_type} onChange={handleChange}>
-                        <option value="">-- Select Commission Type --</option>
-                        <option>Percentage</option><option>Fixed</option>
-                      </select>
+                      {isCustomCommissionType ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Commission Type..." 
+                            value={customCommissionTypeVal}
+                            onChange={(e) => setCustomCommissionTypeVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomCommissionType} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomCommissionType(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="commission_type" value={form.commission_type} onChange={handleChange}>
+                          <option value="">-- Select Commission Type --</option>
+                          {options?.masters?.['commission_type_master']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Commission Type...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Commission Value</label>
@@ -599,10 +927,28 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Regular / Special</label>
-                      <select className="form-control" name="regular_special" value={form.regular_special} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'payment', 'outstanding')}>
-                        <option value="">-- Select --</option>
-                        <option>Regular</option><option>Special</option>
-                      </select>
+                      {isCustomRegularSpecial ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new value..." 
+                            value={customRegularSpecialVal}
+                            onChange={(e) => setCustomRegularSpecialVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomRegularSpecial} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomRegularSpecial(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="regular_special" value={form.regular_special} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'payment', 'outstanding')}>
+                          <option value="">-- Select --</option>
+                          {options?.masters?.['regular_special_master']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                   </div>
 
@@ -613,20 +959,56 @@ export default function BuyerOrder() {
                     <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
                     <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>Status</label>
-                      <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                        <option value="">-- Select Status --</option>
-                        <option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Settled">Settled</option>
-                      </select>
+                      {isCustomStatus ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Status..." 
+                            value={customStatusVal}
+                            onChange={(e) => setCustomStatusVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomStatus} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomStatus(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                          <option value="">-- Select Status --</option>
+                          {options?.masters?.['status_master']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
                     <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
                     <div className="form-group"><label>Payment Terms</label>
-                      <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
-                        <option value="">-- Select Payment Terms --</option>
-                        <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
-                      </select>
+                      {isCustomPaymentTerms ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Payment Terms..." 
+                            value={customPaymentTermsVal}
+                            onChange={(e) => setCustomPaymentTermsVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPaymentTerms} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPaymentTerms(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
+                          <option value="">-- Select Payment Terms --</option>
+                          {options?.masters?.['payment_terms']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
@@ -646,22 +1028,14 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
                         <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
                         <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
-                        <div className="form-group"><label>Fabric Type</label>
-                          <select className="form-control" value={item.fabric_type} onChange={e => updateItem(index, 'fabric_type', e.target.value)}>
-                            <option>Cotton</option><option>Polyester</option><option>Blended</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Color</label><input className="form-control" value={item.color} onChange={e => updateItem(index, 'color', e.target.value)} /></div>
+                        {renderItemDropdown('Fabric Type', 'fabric_type', 'fabric_type_master', index, item)}
+                        {renderItemDropdown('Color', 'color', 'color_master', index, item)}
 
                         <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
-                        <div className="form-group"><label>UOM</label>
-                          <select className="form-control" value={item.uom} onChange={e => updateItem(index, 'uom', e.target.value)}>
-                            <option>MTR</option><option>YARD</option><option>PCS</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('UOM', 'uom', 'uom_master', index, item)}
                         <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
                         <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
-                        <div className="form-group"><label>HSN Code</label><input className="form-control" value={item.hsn_code} onChange={e => updateItem(index, 'hsn_code', e.target.value)} /></div>
+                        {renderItemDropdown('HSN Code', 'hsn_code', 'hsn_code_master', index, item)}
 
                         <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
                         <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
@@ -670,34 +1044,14 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
 
                         <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
-                        <div className="form-group"><label>Weaving Type</label>
-                          <select className="form-control" value={item.weaving_type} onChange={e => updateItem(index, 'weaving_type', e.target.value)}>
-                            <option>Plain</option><option>Twill</option><option>Satin</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
                         <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
                         <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-                        <div className="form-group"><label>Pattern</label>
-                          <select className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)}>
-                            <option>Solid</option><option>Stripe</option><option>Check</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('Pattern', 'pattern', 'pattern_master', index, item)}
 
-                        <div className="form-group"><label>Packing Type</label>
-                          <select className="form-control" value={item.packing_type} onChange={e => updateItem(index, 'packing_type', e.target.value)}>
-                            <option>Roll</option><option>Bale</option><option>Box</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>End Use</label>
-                          <select className="form-control" value={item.end_use} onChange={e => updateItem(index, 'end_use', e.target.value)}>
-                            <option>Apparel</option><option>Home Textile</option><option>Industrial</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Season</label>
-                          <select className="form-control" value={item.season} onChange={e => updateItem(index, 'season', e.target.value)}>
-                            <option>All Season</option><option>Summer</option><option>Winter</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('Packing Type', 'packing_type', 'packing_type_master', index, item)}
+                        {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
+                        {renderItemDropdown('Season', 'season', 'season_master', index, item)}
                         <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
                         <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
                       </div>
@@ -708,10 +1062,19 @@ export default function BuyerOrder() {
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Transport & Delivery</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group"><label>Transport Mode</label>
-                      <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
-                        <option value="">-- Select Transport Mode --</option>
-                        <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
-                      </select>
+                      {isCustomTransportMode ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New Mode..." value={customTransportModeVal} onChange={(e) => setCustomTransportModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportMode} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportMode(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
+                          <option value="">-- Select Transport Mode --</option>
+                          {options?.masters?.['transport_mode_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
                     <div className="form-group"><label>Party Terms</label>
@@ -736,12 +1099,19 @@ export default function BuyerOrder() {
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Process Follow</h4>
                   <div className="form-group">
                     <label>Process Follow Sequence</label>
-                    <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
-                      <option value="">-- Select Process Sequence --</option>
-                      <option>Weaving {"->"} Processing {"->"} Dispatch</option>
-                      <option>Yarn Dyeing {"->"} Weaving {"->"} Finishing</option>
-                      <option>Direct Dispatch (Trading)</option>
-                    </select>
+                    {isCustomProcessSequence ? (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input autoFocus type="text" className="form-control" placeholder="New Process Sequence..." value={customProcessSequenceVal} onChange={(e) => setCustomProcessSequenceVal(e.target.value)} />
+                        <button type="button" className="btn btn-primary" onClick={handleSaveCustomProcessSequence} style={{ padding: '6px' }}>Save</button>
+                        <button type="button" className="btn btn-secondary" onClick={() => setIsCustomProcessSequence(false)} style={{ padding: '6px' }}>X</button>
+                      </div>
+                    ) : (
+                      <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
+                        <option value="">-- Select Process Sequence --</option>
+                        {options?.masters?.['process_sequence_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                      </select>
+                    )}
                   </div>
 
                   {/* Section 6: Instructions */}
@@ -766,20 +1136,56 @@ export default function BuyerOrder() {
                     <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
                     <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>Status</label>
-                      <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                        <option value="">-- Select Status --</option>
-                        <option>Active</option><option>Inactive</option><option>Settled</option>
-                      </select>
+                      {isCustomStatus ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Status..." 
+                            value={customStatusVal}
+                            onChange={(e) => setCustomStatusVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomStatus} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomStatus(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                          <option value="">-- Select Status --</option>
+                          {options?.masters?.['status_master']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
                     <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
                     <div className="form-group"><label>Payment Terms</label>
-                      <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
-                        <option value="">-- Select Payment Terms --</option>
-                        <option>Net 30</option><option>Net 60</option><option>Advance</option><option>COD</option>
-                      </select>
+                      {isCustomPaymentTerms ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            autoFocus
+                            type="text" 
+                            className="form-control" 
+                            placeholder="Enter new Payment Terms..." 
+                            value={customPaymentTermsVal}
+                            onChange={(e) => setCustomPaymentTermsVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPaymentTerms} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPaymentTerms(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
+                          <option value="">-- Select Payment Terms --</option>
+                          {options?.masters?.['payment_terms']?.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
@@ -887,34 +1293,14 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
 
                         <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
-                        <div className="form-group"><label>Weaving Type</label>
-                          <select className="form-control" value={item.weaving_type} onChange={e => updateItem(index, 'weaving_type', e.target.value)}>
-                            <option>Plain</option><option>Twill</option><option>Satin</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
                         <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
                         <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-                        <div className="form-group"><label>Pattern</label>
-                          <select className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)}>
-                            <option>Solid</option><option>Stripe</option><option>Check</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('Pattern', 'pattern', 'pattern_master', index, item)}
 
-                        <div className="form-group"><label>Packing Type</label>
-                          <select className="form-control" value={item.packing_type} onChange={e => updateItem(index, 'packing_type', e.target.value)}>
-                            <option>Roll</option><option>Bale</option><option>Box</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>End Use</label>
-                          <select className="form-control" value={item.end_use} onChange={e => updateItem(index, 'end_use', e.target.value)}>
-                            <option>Apparel</option><option>Home Textile</option><option>Industrial</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Season</label>
-                          <select className="form-control" value={item.season} onChange={e => updateItem(index, 'season', e.target.value)}>
-                            <option>All Season</option><option>Summer</option><option>Winter</option>
-                          </select>
-                        </div>
+                        {renderItemDropdown('Packing Type', 'packing_type', 'packing_type_master', index, item)}
+                        {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
+                        {renderItemDropdown('Season', 'season', 'season_master', index, item)}
                         <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
                         <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
                       </div>
