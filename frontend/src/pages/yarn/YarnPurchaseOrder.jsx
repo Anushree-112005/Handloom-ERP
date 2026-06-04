@@ -334,11 +334,43 @@ export default function YarnPurchaseOrder() {
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+    
     if (name === 'supplier_name' && value === 'custom_add_new') {
       setIsCustomMainSupplier(true);
       setCustomMainSupplierVal('');
       return;
     }
+    if (name === 'org_name' && value === 'custom') {
+      setIsCustomOrg(true);
+      setCustomOrgVal('');
+      return;
+    }
+    if (name === 'against_ref' && value === 'custom') {
+      setIsCustomAgainstRef(true);
+      setCustomAgainstRefVal('');
+      return;
+    }
+    if (name === 'freight_type' && value === 'custom') {
+      setIsCustomFreightType(true);
+      setCustomFreightTypeVal('');
+      return;
+    }
+    if (name === 'transport' && value === 'custom') {
+      setIsCustomTransport(true);
+      setCustomTransportVal('');
+      return;
+    }
+    if (name === 'packing_type' && value === 'custom') {
+      setIsCustomPackingType(true);
+      setCustomPackingTypeVal('');
+      return;
+    }
+    if (name === 'colour' && value === 'custom') {
+      setIsCustomColour(true);
+      setCustomColourVal('');
+      return;
+    }
+
     setForm({ ...form, [name]: value });
   };
 
