@@ -2868,7 +2868,6 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
 
               {/* DESIGN CREATE FORM */}
               {activePage === 'design_create' && (
-<<<<<<< HEAD
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                     <div className="form-group">
@@ -2938,91 +2937,6 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                     <div className="form-group">
                       <label>Target Rate (₹) *</label>
                       <input type="number" className="form-control" name="targetRate" value={fields.targetRate || ''} onChange={handleInputChange} required />
-=======
-                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
-                  {/* CARD 1: Basic Details */}
-                  <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                      Basic Details
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                      <div className="form-group">
-                        <label>Design Order No</label>
-                        <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
-                      </div>
-                      <div className="form-group">
-                        <label>Design Date *</label>
-                        <input type="date" className="form-control" name="designDate" value={fields.designDate || ''} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
-                        <label>Buyer Name *</label>
-                        <select className="form-control" name="buyerName" value={fields.buyerName || ''} onChange={handleInputChange} required>
-                          <option value="">Select Buyer</option>
-                          {BUYERS.map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Season *</label>
-                        <select className="form-control" name="season" value={fields.season || ''} onChange={handleInputChange} required>
-                          <option value="">Select Season</option>
-                          {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Collection Name</label>
-                        <input type="text" className="form-control" name="collectionName" value={fields.collectionName || ''} onChange={handleInputChange} />
-                      </div>
-                      <div className="form-group">
-                        <label>Design Name *</label>
-                        <input type="text" className="form-control" name="designName" value={fields.designName || ''} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
-                        <label>Development Type *</label>
-                        <select className="form-control" name="developmentType" value={fields.developmentType || 'Sample'} onChange={handleInputChange} required>
-                          <option value="Sample">Sample</option>
-                          <option value="Development">Development</option>
-                          <option value="Bulk">Bulk</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CARD 2: Fabric Details */}
-                  <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                      Fabric Details
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                      <div className="form-group">
-                        <label>Fabric Type *</label>
-                        <input type="text" className="form-control" name="fabricType" value={fields.fabricType || ''} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
-                        <label>Construction *</label>
-                        <input type="text" className="form-control" name="construction" value={fields.construction || ''} onChange={handleInputChange} placeholder="e.g. 40x40/120x80" required />
-                      </div>
-                      <div className="form-group">
-                        <label>Composition *</label>
-                        <input type="text" className="form-control" name="composition" value={fields.composition || ''} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
-                        <label>Width (Inch) *</label>
-                        <input type="number" className="form-control" name="width" value={fields.width || ''} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
-                        <label>GSM *</label>
-                        <input type="number" className="form-control" name="gsm" value={fields.gsm || ''} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
-                        <label>Finish Type</label>
-                        <input type="text" className="form-control" name="finishType" value={fields.finishType || ''} onChange={handleInputChange} />
-                      </div>
-                      <div className="form-group">
-                        <label>Weave Type</label>
-                        <input type="text" className="form-control" name="weaveType" value={fields.weaveType || ''} onChange={handleInputChange} />
-                      </div>
->>>>>>> 7bba15c0e33f8f8ebfa3493ac4df64f9becaf8b1
                     </div>
                   </div>
 
