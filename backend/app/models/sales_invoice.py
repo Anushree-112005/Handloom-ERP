@@ -44,6 +44,20 @@ class SalesInvoice(Base):
     ad_code = Column(String(50))
     iec_number = Column(String(50))
     firc_reference = Column(String(100))
+    country = Column(String(100))
+    port_of_loading = Column(String(100))
+    port_of_discharge = Column(String(100))
+    incoterms = Column(String(50))
+    
+    # Newly Added Layout Fields
+    buyer_po_no = Column(String(50))
+    dispatch_date = Column(String(50))
+    transporter_name = Column(String(150))
+    lr_no = Column(String(100))
+    vehicle_no = Column(String(50))
+    payment_terms = Column(String(255))
+    delivery_terms = Column(String(255))
+    insurance_charges = Column(Numeric(10, 2), default=0)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
