@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   ArrowRightLeft, Search, Plus, Trash2, Edit, Check, X, Download, 
   Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
@@ -6,12 +6,17 @@ import {
   HelpCircle, Sparkles, Database 
 } from 'lucide-react';
 
-export default function AccountsTransaction() {
+export default function AccountsTransaction({ defaultSection = 'Creditors', defaultPage = null }) {
   // Main Category Tab: 'Creditors' | 'Sales' | 'LC'
-  const [activeSection, setActiveSection] = useState('Creditors');
+  const [activeSection, setActiveSection] = useState(defaultSection);
 
   // Currently open page: null means dashboard/list, else the specific page key
-  const [activePage, setActivePage] = useState(null);
+  const [activePage, setActivePage] = useState(defaultPage);
+
+  useEffect(() => {
+    setActiveSection(defaultSection);
+    setActivePage(defaultPage);
+  }, [defaultSection, defaultPage]);
 
   // Search Filter state for dashboard
   const [searchTerm, setSearchTerm] = useState('');

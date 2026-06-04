@@ -80,6 +80,7 @@ export default function PartyMaster() {
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
 
   // Dynamic Options
   const [options, setOptions] = useState({
