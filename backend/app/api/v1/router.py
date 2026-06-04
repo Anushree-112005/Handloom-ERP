@@ -37,6 +37,3 @@ api_router.include_router(sub_masters.router)
 
 from app.api.v1.endpoints import work_order_transactions
 api_router.include_router(work_order_transactions.router)
-
-from app.api.v1.endpoints import textile_designs
-api_router.include_router(textile_designs.router)

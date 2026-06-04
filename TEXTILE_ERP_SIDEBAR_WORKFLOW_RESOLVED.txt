@@ -16,7 +16,7 @@ textile export operations lifecycle:
 
 Stage 1 → Setup & Masters (Company Settings, User, Party & Employee Masters)
 Stage 2 → Order Management & Planning (Buyer Orders & Work Orders)
-Stage 3 → Design & Development (Fabric Designs, Specs, and AI Analysis)
+Stage 3 → Design & Development (Fabric Designs & Specifications)
 Stage 4 → Material Procurement (Yarn Purchase Orders & Yarn Inward)
 Stage 5 → Warping, Weaving & Greige (Beam Entries, Sizing & Greige Receipts)
 Stage 6 → Processing & Production (Dyeing, Fabric checking & Lot/Bale Packing)
@@ -105,7 +105,6 @@ The following duplicate links have been resolved to streamline the user interfac
 
 [STAGE 3: DESIGN & SPECIFICATIONS]
 *   Design Entry                    (Route: '/design-entry')
-*   Design AI Spec Engine           (Route: '/design-ai')
 
 [STAGE 4: YARN & MATERIAL PROCUREMENT]
 *   Yarn Purchase Order             (Route: '/yarn/purchase-order')
