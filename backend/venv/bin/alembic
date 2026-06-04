@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/bin/python" "$0" "$@"
-' '''
+#!/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
