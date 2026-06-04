@@ -6,11 +6,7 @@ import {
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
   ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
-<<<<<<< HEAD
   CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash
-=======
-  CreditCard, DollarSign, Target, Percent, BookOpen, Sparkles
->>>>>>> 7bba15c0e33f8f8ebfa3493ac4df64f9becaf8b1
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
