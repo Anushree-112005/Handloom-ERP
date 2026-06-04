@@ -108,6 +108,9 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     custom_freight_types = [r.name for r in sm_rows if r.entity == "freight_type_master"]
     custom_mill_names = [r.name for r in sm_rows if r.entity == "mill_name_master"]
     custom_yarn_counts = [r.name for r in sm_rows if r.entity == "yarn_count_master"]
+    custom_cone_types = [r.name for r in sm_rows if r.entity == "cone_type_master"]
+    custom_received_types = [r.name for r in sm_rows if r.entity == "received_type_master"]
+    custom_yarn_types = [r.name for r in sm_rows if r.entity == "yarn_type_master"]
 
     if district_cities:
         masters["city"] = district_cities
@@ -153,6 +156,9 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     masters["freight_type_master"] = list(dict.fromkeys(custom_freight_types))
     masters["mill_name_master"] = list(dict.fromkeys(custom_mill_names))
     masters["yarn_count_master"] = list(dict.fromkeys(custom_yarn_counts))
+    masters["cone_type_master"] = list(dict.fromkeys(custom_cone_types))
+    masters["received_type_master"] = list(dict.fromkeys(custom_received_types))
+    masters["yarn_type_master"] = list(dict.fromkeys(custom_yarn_types))
         
     INDIAN_STATES = [
         "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", 
