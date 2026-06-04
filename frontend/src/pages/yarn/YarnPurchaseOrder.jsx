@@ -23,6 +23,40 @@ export default function YarnPurchaseOrder() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  // Custom Inline Fields for Supplier
+  const [isCustomMainSupplier, setIsCustomMainSupplier] = useState(false);
+  const [customMainSupplierVal, setCustomMainSupplierVal] = useState('');
+  const [customCountSupplierIdx, setCustomCountSupplierIdx] = useState(null);
+  const [customCountSupplierVal, setCustomCountSupplierVal] = useState('');
+
+  const handleSaveCustomMainSupplier = async () => {
+    if (!customMainSupplierVal.trim()) return;
+    try {
+      const { data } = await partyAPI.create({ company_name: customMainSupplierVal.trim(), party_type: 'Purchase Party' });
+      setParties(prev => [...prev, data]);
+      setForm(prev => ({ ...prev, supplier_name: data.company_name }));
+      setIsCustomMainSupplier(false);
+      setCustomMainSupplierVal('');
+    } catch (err) {
+      console.error("Failed to add custom Supplier", err);
+      alert("Failed to add new Supplier. Please try again.");
+    }
+  };
+
+  const handleSaveCustomCountSupplier = async (idx) => {
+    if (!customCountSupplierVal.trim()) return;
+    try {
+      const { data } = await partyAPI.create({ company_name: customCountSupplierVal.trim(), party_type: 'Purchase Party' });
+      setParties(prev => [...prev, data]);
+      updateCountDetail(idx, 'supplier_name', data.company_name);
+      setCustomCountSupplierIdx(null);
+      setCustomCountSupplierVal('');
+    } catch (err) {
+      console.error("Failed to add custom Supplier", err);
+      alert("Failed to add new Supplier. Please try again.");
+    }
+  };
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
@@ -81,6 +115,10 @@ export default function YarnPurchaseOrder() {
       }
       
       setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
+      setIsCustomMainSupplier(false);
+      setCustomMainSupplierVal('');
+      setCustomCountSupplierIdx(null);
+      setCustomCountSupplierVal('');
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving order');
       console.error(err);
@@ -99,6 +137,10 @@ export default function YarnPurchaseOrder() {
       setActiveTab('main');
       setShowForm(true);
       setSelectedViewOrder(null);
+      setIsCustomMainSupplier(false);
+      setCustomMainSupplierVal('');
+      setCustomCountSupplierIdx(null);
+      setCustomCountSupplierVal('');
     } catch (err) {
       alert("Error loading order details.");
     }
@@ -146,6 +188,11 @@ export default function YarnPurchaseOrder() {
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+    if (name === 'supplier_name' && value === 'custom_add_new') {
+      setIsCustomMainSupplier(true);
+      setCustomMainSupplierVal('');
+      return;
+    }
     setForm({ ...form, [name]: value });
   };
 
@@ -269,7 +316,16 @@ export default function YarnPurchaseOrder() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+              <button className="btn btn-primary" onClick={() => { 
+                setEditingId(null); 
+                setForm(initialForm); 
+                setIsReadOnly(false); 
+                setShowForm(true); 
+                setIsCustomMainSupplier(false);
+                setCustomMainSupplierVal('');
+                setCustomCountSupplierIdx(null);
+                setCustomCountSupplierVal('');
+              }}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -387,7 +443,13 @@ export default function YarnPurchaseOrder() {
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View PO Details' : editingId ? 'Edit PO' : 'New Purchase Order'}</h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
+              <button className="btn btn-secondary" onClick={() => {
+                setShowForm(false);
+                setIsCustomMainSupplier(false);
+                setCustomMainSupplierVal('');
+                setCustomCountSupplierIdx(null);
+                setCustomCountSupplierVal('');
+              }}><X size={16} /> Close</button>
               {!isReadOnly && (
                 <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update PO' : 'Save PO'}</button>
               )}
@@ -434,10 +496,35 @@ export default function YarnPurchaseOrder() {
                     </div>
                     <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier Name</label>
-                      <select className="form-control" name="supplier_name" value={form.supplier_name} onChange={handleChange}>
-                        <option value="">Select Supplier...</option>
-                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                      </select>
+                      {isCustomMainSupplier ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <input 
+                            autoFocus
+                            className="form-control" 
+                            placeholder="Type new supplier..."
+                            value={customMainSupplierVal}
+                            onChange={(e) => setCustomMainSupplierVal(e.target.value)}
+                            onKeyDown={async (e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                await handleSaveCustomMainSupplier();
+                              }
+                            }}
+                          />
+                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomMainSupplier} title="Save">
+                            <CheckCircle size={16} />
+                          </button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomMainSupplier(false); setForm(prev => ({ ...prev, supplier_name: '' })); }} title="Cancel">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="supplier_name" value={form.supplier_name} onChange={handleChange}>
+                          <option value="">Select Supplier...</option>
+                          {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
                     <div className="form-group"><label>Status</label>
@@ -457,7 +544,48 @@ export default function YarnPurchaseOrder() {
                       <button type="button" onClick={() => removeCountDetail(idx)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer' }}><X size={14}/></button>
                       <h5 style={{ marginTop: 0, marginBottom: 12, color: 'var(--primary)', fontSize: 14, fontWeight: 600 }}>Yarn #{idx + 1}</h5>
                       <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                        <div className="form-group"><label>Supplier Name</label><input className="form-control" value={item.supplier_name} onChange={e => updateCountDetail(idx, 'supplier_name', e.target.value)} /></div>
+                        <div className="form-group"><label>Supplier Name</label>
+                          {customCountSupplierIdx === idx ? (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <input 
+                                autoFocus
+                                className="form-control" 
+                                placeholder="Type new supplier..."
+                                value={customCountSupplierVal}
+                                onChange={(e) => setCustomCountSupplierVal(e.target.value)}
+                                onKeyDown={async (e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    await handleSaveCustomCountSupplier(idx);
+                                  }
+                                }}
+                              />
+                              <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustomCountSupplier(idx)} title="Save">
+                                <CheckCircle size={16} />
+                              </button>
+                              <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setCustomCountSupplierIdx(null); updateCountDetail(idx, 'supplier_name', ''); }} title="Cancel">
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <select 
+                              className="form-control" 
+                              value={item.supplier_name} 
+                              onChange={(e) => {
+                                if (e.target.value === 'custom_add_new') {
+                                  setCustomCountSupplierIdx(idx);
+                                  setCustomCountSupplierVal('');
+                                } else {
+                                  updateCountDetail(idx, 'supplier_name', e.target.value);
+                                }
+                              }}
+                            >
+                              <option value="">Select Supplier...</option>
+                              {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                              <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                            </select>
+                          )}
+                        </div>
                         <div className="form-group"><label>Fibre Group</label><input className="form-control" value={item.fibre_group} onChange={e => updateCountDetail(idx, 'fibre_group', e.target.value)} /></div>
                         <div className="form-group"><label>Yarn Count</label><input className="form-control" value={item.yarn_count} onChange={e => updateCountDetail(idx, 'yarn_count', e.target.value)} /></div>
                         <div className="form-group"><label>Yarn CSP</label><input type="number" className="form-control" value={item.yarn_csp} onChange={e => updateCountDetail(idx, 'yarn_csp', e.target.value)} /></div>
@@ -557,7 +685,48 @@ export default function YarnPurchaseOrder() {
                       <button type="button" onClick={() => removeCountDetail(idx)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer' }}><X size={14}/></button>
                       <h4 style={{ marginTop: 0, marginBottom: 12 }}>Yarn #{idx + 1}</h4>
                       <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                        <div className="form-group"><label>Supplier Name</label><input className="form-control" value={item.supplier_name} onChange={e => updateCountDetail(idx, 'supplier_name', e.target.value)} /></div>
+                        <div className="form-group"><label>Supplier Name</label>
+                          {customCountSupplierIdx === idx ? (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <input 
+                                autoFocus
+                                className="form-control" 
+                                placeholder="Type new supplier..."
+                                value={customCountSupplierVal}
+                                onChange={(e) => setCustomCountSupplierVal(e.target.value)}
+                                onKeyDown={async (e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    await handleSaveCustomCountSupplier(idx);
+                                  }
+                                }}
+                              />
+                              <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustomCountSupplier(idx)} title="Save">
+                                <CheckCircle size={16} />
+                              </button>
+                              <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setCustomCountSupplierIdx(null); updateCountDetail(idx, 'supplier_name', ''); }} title="Cancel">
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <select 
+                              className="form-control" 
+                              value={item.supplier_name} 
+                              onChange={(e) => {
+                                if (e.target.value === 'custom_add_new') {
+                                  setCustomCountSupplierIdx(idx);
+                                  setCustomCountSupplierVal('');
+                                } else {
+                                  updateCountDetail(idx, 'supplier_name', e.target.value);
+                                }
+                              }}
+                            >
+                              <option value="">Select Supplier...</option>
+                              {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                              <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                            </select>
+                          )}
+                        </div>
                         <div className="form-group"><label>Fibre Group</label><input className="form-control" value={item.fibre_group} onChange={e => updateCountDetail(idx, 'fibre_group', e.target.value)} /></div>
                         <div className="form-group"><label>Yarn Count</label><input className="form-control" value={item.yarn_count} onChange={e => updateCountDetail(idx, 'yarn_count', e.target.value)} /></div>
                         <div className="form-group"><label>Yarn CSP</label><input type="number" className="form-control" value={item.yarn_csp} onChange={e => updateCountDetail(idx, 'yarn_csp', e.target.value)} /></div>

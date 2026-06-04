@@ -264,6 +264,7 @@ export const companySettingAPI = {
 // ---- Work Order Transactions ----
 export const workOrderTransactionAPI = {
   list: (params) => api.get('/work-order-transactions/', { params }),
+  getAll: () => api.get('/work-order-transactions/'),
   get: (id) => api.get(`/work-order-transactions/${id}`),
   create: (data) => api.post('/work-order-transactions/', data),
   update: (id, data) => api.put(`/work-order-transactions/${id}`, data),
@@ -278,6 +279,32 @@ export const subMasterAPI = {
   update: (entity, id, data) => api.put(`/sub-masters/${entity}/${id}`, data),
   delete: (entity, id) => api.delete(`/sub-masters/${entity}/${id}`),
   listEntities: () => api.get('/sub-masters/'),
+};
+
+// ---- Textile Design AI ----
+export const textileDesignAPI = {
+  list: (params) => api.get('/textile-designs/', { params }),
+  get: (id) => api.get(`/textile-designs/${id}`),
+  create: (data) => api.post('/textile-designs/', data),
+  update: (id, data) => api.put(`/textile-designs/${id}`, data),
+  delete: (id) => api.delete(`/textile-designs/${id}`),
+  uploadImage: (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/textile-designs/${id}/upload-image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  analyzeImageOnly: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/textile-designs/analyze-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  analyze: (id) => api.post(`/textile-designs/${id}/analyze`),
+  calculateRequirement: (id) => api.post(`/textile-designs/${id}/calculate-requirement`),
+  updateStatus: (id, status) => api.patch(`/textile-designs/${id}/status`, null, { params: { status } }),
 };
 
 export default api;
