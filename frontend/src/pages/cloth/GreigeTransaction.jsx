@@ -47,6 +47,7 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
   const [greigeInvoices, setGreigeInvoices] = useState([]);
 
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [fields, setFields] = useState({});
 
   const loadData = async () => {
     try {
@@ -130,21 +131,21 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
     let initFields = { date: dateToday, status: 'Active' };
 
     if (activePage === 'vendor_inward') {
-      initFields = { ...initFields, vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Vendor', gateInwardRef: '', dcNo: '', dcDate: dateToday, designNo: 'DES-4091', fabricType: 'Grey Satin', totalPieces: '', totalMeters: '', totalWeight: '', totalValue: '', status: 'Completed' };
+      initFields = { ...initFields, vendorInwardNo: '', vendorName: 'Standard Weaving Co.', vendorType: 'Power Loom Vendor', gateInwardRef: '', dcNo: '', dcDate: dateToday, designNo: 'DES-4091', fabricType: 'Grey Satin', totalPieces: '', totalMeters: '', totalWeight: '', totalValue: '', status: 'Completed' };
     } else if (activePage === 'ot_checking') {
-      initFields = { ...initFields, vendorInwardRef: 'GRY-IN-001', vendorName: 'Standard Weaving Co.', designNo: 'DES-4091', lotNo: '', totalPieces: '', warpDefects: 0, weftDefects: 0, pointsPer100m: 0, grade: 'A — Exportable', mendingRequired: false, checkedBy: 'Murugan Swamy', status: 'Approved' };
+      initFields = { ...initFields, otCheckingNo: '', vendorInwardRef: 'GRY-IN-001', vendorName: 'Standard Weaving Co.', designNo: 'DES-4091', lotNo: '', totalPieces: '', warpDefects: 0, weftDefects: 0, pointsPer100m: 0, grade: 'A — Exportable', mendingRequired: false, checkedBy: 'Murugan Swamy', status: 'Approved' };
     } else if (activePage === 'cloth_mending') {
-      initFields = { ...initFields, otCheckingRef: 'GRY-CHK-001', designNo: 'DES-4091', lotNo: '', vendorName: 'Standard Weaving Co.', pieceNo: 1, mendingType: 'Weaving Repair', menderName: 'Senthil Kumar (General Manager)', totalPiecesMended: '', mendingCharges: '', supervisedBy: 'Mani Bharathi (Store Head)' };
+      initFields = { ...initFields, voucherRefNo: '', otCheckingRef: 'GRY-CHK-001', designNo: 'DES-4091', lotNo: '', vendorName: 'Standard Weaving Co.', pieceNo: 1, mendingType: 'Weaving Repair', menderName: 'Senthil Kumar (General Manager)', totalPiecesMended: '', mendingCharges: '', supervisedBy: 'Mani Bharathi (Store Head)' };
     } else if (activePage === 'cloth_delivery') {
-      initFields = { ...initFields, deliveryType: 'Sale Delivery', partyName: 'Raymond Ltd', graRef: '', designNo: 'DES-4091', lotNo: '', totalPieces: '', totalMeters: '', totalWeight: '', totalAmount: '', dcNo: '', vehicleNo: '', driverName: '', status: 'Dispatched' };
+      initFields = { ...initFields, voucherRefNo: '', deliveryType: 'Sale Delivery', partyName: 'Raymond Ltd', graRef: '', designNo: 'DES-4091', lotNo: '', totalPieces: '', totalMeters: '', totalWeight: '', totalAmount: '', dcNo: '', vehicleNo: '', driverName: '', status: 'Dispatched' };
     } else if (activePage === 'cloth_packing') {
-      initFields = { ...initFields, designNo: 'DES-4091', lotNo: '', packingType: 'Standard Bale', buyerName: 'Raymond Ltd', totalBales: '', totalPieces: '', totalMeters: '', totalNetWeight: '', packedBy: 'Murugan Swamy', status: 'Approved' };
+      initFields = { ...initFields, voucherRefNo: '', designNo: 'DES-4091', lotNo: '', packingType: 'Standard Bale', buyerName: 'Raymond Ltd', totalBales: '', totalPieces: '', totalMeters: '', totalNetWeight: '', packedBy: 'Murugan Swamy', status: 'Approved' };
     } else if (activePage === 'goods_release') {
-      initFields = { ...initFields, buyerName: 'Raymond Ltd', designNo: 'DES-4091', lotNo: '', releaseType: 'Sale', totalMeters: '', totalWeight: '', totalAmount: '', deliveryAddress: '', expectedDispatch: dateToday, status: 'Approved' };
+      initFields = { ...initFields, voucherRefNo: '', buyerName: 'Raymond Ltd', designNo: 'DES-4091', lotNo: '', releaseType: 'Sale', totalMeters: '', totalWeight: '', totalAmount: '', deliveryAddress: '', expectedDispatch: dateToday, status: 'Approved' };
     } else if (activePage === 'gry_invoice') {
-      initFields = { ...initFields, invoiceType: 'Tax Invoice', buyerName: 'Raymond Ltd', graRef: '', subtotal: '', totalGst: '', grandTotal: '', paymentTerms: '30 Days', status: 'Approved' };
+      initFields = { ...initFields, voucherRefNo: '', invoiceType: 'Tax Invoice', buyerName: 'Raymond Ltd', graRef: '', subtotal: '', totalGst: '', grandTotal: '', paymentTerms: '30 Days', status: 'Approved' };
     } else {
-      initFields = { ...initFields, remarks: '' };
+      initFields = { ...initFields, voucherRefNo: '', remarks: '' };
     }
 
     setFields(initFields);
@@ -157,7 +158,12 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
   const handleEdit = (row) => {
     setSelectedRecord(row);
     setCurrentFormId(row.id);
-    setFields({ ...row });
+    setFields({
+      ...row,
+      vendorInwardNo: row.vendorInwardNo || row.id,
+      otCheckingNo: row.otCheckingNo || row.id,
+      voucherRefNo: row.voucherRefNo || row.id
+    });
     setActiveFormTab('General Info');
     setIsFormOpen(true);
   };
@@ -165,11 +171,14 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
   const handleSave = async (e) => {
     e.preventDefault();
 
+    const manualTxnNo = fields.vendorInwardNo || fields.otCheckingNo || fields.voucherRefNo;
+
     const payload = {
       module_type: activePage,
       date: fields.date || new Date().toISOString().substring(0, 10),
       buyer_name: fields.buyerName || fields.partyName || fields.vendorName || "Internal",
       status: fields.status || 'Active',
+      transaction_no: manualTxnNo || undefined,
       details: fields
     };
 
@@ -184,7 +193,11 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
       alert("Greige production record processed and saved!");
     } catch (err) {
       console.error("Failed to save", err);
-      alert("Failed to save record.");
+      if (err.response && err.response.data && err.response.data.detail) {
+        alert("Failed to save record: " + err.response.data.detail);
+      } else {
+        alert("Failed to save record.");
+      }
     }
   };
 
@@ -405,8 +418,8 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                     <div className="form-group">
-                      <label>Vendor Inward No</label>
-                      <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
+                      <label>Vendor Inward No *</label>
+                      <input type="text" className="form-control" name="vendorInwardNo" value={fields.vendorInwardNo || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                       <label>Vendor Name *</label>
@@ -472,8 +485,8 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                     <div className="form-group">
-                      <label>OT Checking No</label>
-                      <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
+                      <label>OT Checking No *</label>
+                      <input type="text" className="form-control" name="otCheckingNo" value={fields.otCheckingNo || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                       <label>Vendor Inward Ref *</label>
@@ -515,8 +528,8 @@ export default function GreigeTransaction({ defaultSection = 'Greige Operations'
                   <h4 style={{ color: '#2563eb', fontSize: '14px', fontWeight: 800, margin: 0 }}>Voucher Details & Audit Configs</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                     <div className="form-group">
-                      <label>Voucher Ref No</label>
-                      <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
+                      <label>Voucher Ref No *</label>
+                      <input type="text" className="form-control" name="voucherRefNo" value={fields.voucherRefNo || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                       <label>Record Category</label>

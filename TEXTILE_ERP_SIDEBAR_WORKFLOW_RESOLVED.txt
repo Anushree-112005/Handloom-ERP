@@ -1,0 +1,154 @@
+================================================================================
+                    DINESH EXPORTS TEXTILE ERP SYSTEM
+              SIDEBAR NAVIGATION & WORKFLOW RESOLUTION GUIDE
+================================================================================
+
+This document maps out the unified, workflow-oriented navigation structure for 
+Dinesh Exports Textile ERP. It outlines the exact modules, menus, and sub-pages 
+as they should appear in the sidebar, resolves all duplicate/confusing links, 
+and explains what pages have been consolidated, removed, or redirected.
+
+--------------------------------------------------------------------------------
+1. THE 8-STAGE WORKFLOW SEQUENCE (ORDER OF ENTRIES)
+--------------------------------------------------------------------------------
+To prevent confusion, the system is organized sequentially according to the real 
+textile export operations lifecycle:
+
+Stage 1 → Setup & Masters (Company Settings, User, Party & Employee Masters)
+Stage 2 → Order Management & Planning (Buyer Orders & Work Orders)
+Stage 3 → Design & Development (Fabric Designs & Specifications)
+Stage 4 → Material Procurement (Yarn Purchase Orders & Yarn Inward)
+Stage 5 → Warping, Weaving & Greige (Beam Entries, Sizing & Greige Receipts)
+Stage 6 → Processing & Production (Dyeing, Fabric checking & Lot/Bale Packing)
+Stage 7 → Quality Control & Audit (Final finished cloth inspection grids)
+Stage 8 → Sales, Gate & Accounts (GRA, Sales Invoices, Eway Bills, LC Details)
+
+--------------------------------------------------------------------------------
+2. DUPLICATE & CONFUSING LINKS RESOLUTION
+--------------------------------------------------------------------------------
+
+The following duplicate links have been resolved to streamline the user interface:
+
+*   [DUPLICATE] Warp Beam Received & Warp Beam Delivery Entry:
+    - Status: REMOVED from the main sidebar.
+    - Solution: Merged into the central "Warping/Sizing Transaction" desk under the
+      "Beam & Transaction Entries" tab. Accessing it via the desk prevents screen bloat.
+
+*   [DUPLICATE] Sales Invoice vs. Direct Sales Invoice:
+    - Status: SEPARATED BY ROLE.
+    - Solution:
+      1. Primary Entry: "Sales Invoice" (`/sales-invoice`) inside the Sales & Dispatch sidebar menu.
+      2. Shortcut Link: A card inside "Fabric Production Desk > Gate & Dispatch" redirects here.
+      3. Financial Accounting: "Direct Sales Invoice" & "Export Invoice" are managed in the
+         "Accounts & Finance > Account Transaction > Sales Invoices" desk for tax/tally sync.
+
+*   [DUPLICATE] On-Table Checking (Finished) vs. ON Table Checking (Greige):
+    - Status: RETAINED BUT DIFFERENTIATED.
+    - Solution:
+      1. Finished Fabric QC: "On-Table Checking" (`/cloth/checking`) belongs to Quality Control module.
+      2. Greige/Grey Cloth QC: "ON Table Checking" belongs to the "Greige Transactions > Greige Operations" tab.
+      They process different fabrics (greige raw fabric vs. finished dyed fabric).
+
+*   [DUPLICATE] Goods Release (GRA) vs. New Goods Release Advice:
+    - Status: MERGED.
+    - Solution: Standalone sidebar item "Goods Release (GRA)" (`/goods-release`) is the primary view.
+      The card link in the Fabric Production desk is a redirect to `/goods-release`.
+
+*   [DUPLICATE] E-Way Bill vs. Cloth Delivery Eway Bill:
+    - Status: CONSOLIDATED.
+    - Solution: The standalone menu "E-Way Bill" (`/eway-bill`) in Export & Logistics is the primary page.
+      Greige/Fabric modules contain direct links to this page.
+
+*   [DUPLICATE] Log Report:
+    - Status: CONSOLIDATED.
+    - Solution: Removed from the "Sub Masters > System Config & Utilities" list.
+      Retained only in the "Reports & MIS" section as a main menu item.
+
+--------------------------------------------------------------------------------
+3. CORRECT SIDEBAR NAVIGATION STRUCTURE
+--------------------------------------------------------------------------------
+
+[DASHBOARD & MIS]
+*   Dashboard                       (Route: '/')
+*   Overview / Analytics            (Route: '/overview')
+*   Reports Dashboard               (Route: '/reports-dashboard')
+*   Log Report                      (Route: '/log-report')
+
+[STAGE 1: SYSTEM & MASTERS SETUP]
+*   Party Master                    (Route: '/party-master') - Customers, Vendors, Mills
+*   Employee Master                 (Route: '/employee') - Weavers, Operators, supervisors
+*   Sub Masters Menu (Dropdown):
+    *   Core System Basics          - Units, Yarn Count/Type, Color, Loom Masters
+    *   Operations & Processing     - Fabric Masters, Process Sequences, Damage Lists
+    *   Complex Masters             - KYC Form, Company Bank Master, Costing Engine
+    *   Amendment Masters           - Cloth LOT AMD, Invoice AMD, Despatch Request AMD
+    *   System Config & Utilities   - Approval Settings, Direct Invoice Limits
+
+[STAGE 2: ORDER MANAGEMENT & PLANNING]
+*   Buyer Order (Dropdown):
+    *   Buyer Order Form            (Route: '/buyer-order')
+    *   Order Processing            (Route: '/buyer-order/processing')
+    *   Dispatch & Expense          (Route: '/buyer-order/dispatch-expense')
+    *   IPO Invoice                 (Route: '/ipo-invoice')
+*   Work Order Transaction (Dropdown) (Route: '/work-order/transaction/*'):
+    *   Design & Development        - Create, follow up
+    *   Order Management            - Vendor Work Orders, Purchase Orders
+    *   Processing Orders           - Dyeing & Cloth Processing orders
+    *   Yarn & Fabric Prep          - Doubling/Twisting & Sizing orders
+    *   Amendments & Codes          - Short AMD, HSN AMD
+*   Work Order Completion (Dropdown) (Route: '/work-order/completion/*'):
+    *   Vendor & Purchase Completion
+    *   Processing & Fabric Completion
+*   Work Order Approval (Dropdown) (Route: '/work-order/approval/*'):
+    *   External Order Approvals
+    *   Material & Yarn Approvals
+
+[STAGE 3: DESIGN & SPECIFICATIONS]
+*   Design Entry                    (Route: '/design-entry')
+
+[STAGE 4: YARN & MATERIAL PROCUREMENT]
+*   Yarn Purchase Order             (Route: '/yarn/purchase-order')
+*   Yarn Inward                     (Route: '/yarn/inward')
+*   Grey Yarn Delivery              (Route: '/yarn/grey-delivery')
+*   Dyed Yarn Received              (Route: '/dyed-yarn/received')
+*   Dyed Yarn Delivery              (Route: '/dyed-yarn/delivery')
+
+[STAGE 5: WARPING, WEAVING & GREIGE]
+*   Warping/Sizing Transaction Desk (Route: '/warp/transaction/*'):
+    *   Beam & Transaction Entries  - Warp Beam Received, Delivery, Empty Beams
+    *   Reports, Bills & Amendments - Warping/Sizing Reports, Bills, SET Amendments
+*   Greige Transaction Desk (Dropdown) (Route: '/greige/transaction/*'):
+    *   Greige Operations           - Vendor Inwards, Greige Checking, Mending, Packing
+    *   Greige Administration       - Greige Bale AMD, Goods Release, Gry Invoice
+
+[STAGE 6: FABRIC PROCESSING & PRODUCTION]
+*   Fabric Production Desk (Dropdown) (Route: '/fabric/transaction/*'):
+    *   Fabric Checking             - Design Upload, Cloth Checking, Lot Completion
+    *   Fabric Inward               - Cloth Inward, Purchase Bills
+    *   Fabric Delivery             - Delivery PC-Wise, Mill-to-Mill, Bale Delivery
+    *   Lot & Bale                  - Lot Approval, Bale AMD, Bale Packing
+    *   Gate & Dispatch             - Gate Pass, Sales Invoice, Eway/EInvoice
+    *   Vendor Bills                - Printing/Washing & Development Bills
+    *   Surplus Stock               - Stock Opening, Surplus Delivery & Inwards
+
+[STAGE 7: QUALITY CONTROL & AUDIT]
+*   On-Table Checking (Finished)    (Route: '/cloth/checking')
+
+[STAGE 8: BILLING, LOGISTICS & FINANCE]
+*   Goods Release (GRA)             (Route: '/goods-release')
+*   Sales Invoice                   (Route: '/sales-invoice')
+*   Despatch Planning               (Route: '/despatch')
+*   E-Way Bill                      (Route: '/eway-bill')
+*   Gate & Security (Dropdown):
+    *   Gate Inward                 (Route: '/gate/inward')
+    *   Gate Outward                (Route: '/gate/outward')
+    *   Gate Pass Creation          (Route: '/gate/pass')
+    *   Gate Reports                (Route: '/gate/reports')
+*   Accounts & Finance (Dropdown) (Route: '/finance/desk/*'):
+    *   Bills & Approvals           - Creditors bills, debit notes
+    *   Sales Invoices              - Export, Direct Sales
+    *   Sales Amendments            - Grey/Finished invoice amendments
+    *   LC Management               - Letter of Credit details, LC Completion
+*   Voucher Entry                   (Route: '/accounts/voucher-entry')
+
+================================================================================
