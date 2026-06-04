@@ -44,6 +44,7 @@ class PartyMaster(Base):
     manager = Column(String(100))
     account_incharge = Column(String(100))
     agent_name = Column(String(150))
+    buyer_name = Column(String(150))
     
     bank_name = Column(String(150))
     bank_account = Column(String(50))

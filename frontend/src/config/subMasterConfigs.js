@@ -10,7 +10,7 @@ import {
   FileText, Shield, Box, Tag, Settings, Scissors, CheckSquare,
   DollarSign, Thermometer, Beaker, ClipboardList, Package,
   Wrench, BookOpen, Target, Percent, Globe, CreditCard,
-  Users, ShoppingCart
+  Users, ShoppingCart, Receipt
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════
@@ -31,7 +31,7 @@ export const CURRENCY_MASTER = {
 };
 
 export const UNIT_MASTER = {
-  entity: 'unit_master',
+  entity: 'uom_master',
   title: 'Unit Master',
   icon: Ruler,
   color: '#6366f1',
@@ -300,7 +300,7 @@ export const CATEGORY_MASTER = {
 };
 
 export const FABRIC_MASTER = {
-  entity: 'fabric_master',
+  entity: 'fabric_type_master',
   title: 'Fabric Master',
   icon: Scissors,
   color: '#e11d48',
@@ -389,7 +389,7 @@ export const PRINTING_TECHNIQUE_MASTER = {
 };
 
 export const PROCESS_SEQUENCES_MASTER = {
-  entity: 'process_sequences_master',
+  entity: 'process_sequence_master',
   title: 'Process Sequences Master',
   icon: ClipboardList,
   color: '#0284c7',
@@ -491,8 +491,20 @@ export const DUTY_MASTER = {
   ],
 };
 
+export const PATTERN_MASTER = {
+  entity: 'pattern_master',
+  title: 'Pattern Master',
+  icon: Layers,
+  color: '#db2777',
+  description: 'Manage fabric patterns like Solid, Stripe, Check, Print, etc.',
+  fields: [
+    { name: 'name', label: 'Pattern Name', type: 'text', required: true, placeholder: 'e.g. Stripe' },
+    { name: 'code', label: 'Pattern Code', type: 'text', placeholder: 'e.g. STR' },
+  ],
+};
+
 export const WEAVING_MASTER = {
-  entity: 'weaving_master',
+  entity: 'weaving_type_master',
   title: 'Weaving Master',
   icon: Layers,
   color: '#0f766e',
@@ -829,7 +841,7 @@ export const DYEING_CLY = {
 };
 
 export const END_USE = {
-  entity: 'end_use',
+  entity: 'end_use_master',
   title: 'END_USE Master',
   icon: Target,
   color: '#14b8a6',
@@ -880,6 +892,18 @@ export const GROUP_COUNT = {
   ],
 };
 
+export const PACKING_TYPE_MASTER = {
+  entity: 'packing_type_master',
+  title: 'Packing Type Master',
+  icon: Box,
+  color: '#ea580c',
+  description: 'Manage packing types for fabric and yarn.',
+  fields: [
+    { name: 'name', label: 'Packing Type', type: 'text', required: true, placeholder: 'e.g. Roll Packing' },
+    { name: 'code', label: 'Type Code', type: 'text', placeholder: 'e.g. ROLL' },
+  ],
+};
+
 export const GRY_MAS_BALETYPE = {
   entity: 'gry_mas_baletype',
   title: 'Gry Mas BaleType',
@@ -890,6 +914,31 @@ export const GRY_MAS_BALETYPE = {
     { name: 'name', label: 'Bale Type Name', type: 'text', required: true, placeholder: 'e.g. Standard Export Bale' },
     { name: 'code', label: 'Type Code', type: 'text', placeholder: 'e.g. SEB' },
     { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const LR_TYPE = {
+  entity: 'lr_type_master',
+  title: 'LR Type Master',
+  icon: Truck,
+  color: '#0284c7',
+  description: 'Manage Lorry Receipt (LR) types.',
+  fields: [
+    { name: 'name', label: 'LR Type Name', type: 'text', required: true, placeholder: 'e.g. Paid, To Pay' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. PD' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const PARTY_TERMS_MASTER = {
+  entity: 'party_terms_master',
+  title: 'Party Terms Master',
+  icon: FileText,
+  color: '#8b5cf6',
+  description: 'Manage party terms like FOB, CIF, Ex-Works.',
+  fields: [
+    { name: 'name', label: 'Term Name', type: 'text', required: true, placeholder: 'e.g. FOB' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. FOB' },
   ],
 };
 
@@ -1037,6 +1086,57 @@ export const FABRIC_SINGLE_COSTING = {
   ],
 };
 
+export const TRANSPORT_MODE_MASTER = {
+  entity: 'transport_mode_master',
+  title: 'Transport Mode Master',
+  icon: Truck,
+  color: '#8b5cf6',
+  description: 'Manage modes of transport (e.g. By Road, Courier, Air).',
+  fields: [
+    { name: 'name', label: 'Mode Name', type: 'text', required: true, placeholder: 'e.g. Courier' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. CRR' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const TRANSPORT_NAME_MASTER = {
+  entity: 'transport_name_master',
+  title: 'Transport Name Master',
+  icon: Truck,
+  color: '#6366f1',
+  description: 'Manage specific transporter companies.',
+  fields: [
+    { name: 'name', label: 'Transporter Name', type: 'text', required: true, placeholder: 'e.g. Blue Dart' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. BDT' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const EXPENSE_TYPE_MASTER = {
+  entity: 'expense_type_master',
+  title: 'Expense Type Master',
+  icon: Receipt,
+  color: '#f59e0b',
+  description: 'Manage different types of expenses (Freight, Insurance, etc.).',
+  fields: [
+    { name: 'name', label: 'Expense Type', type: 'text', required: true, placeholder: 'e.g. Freight' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. FRT' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
+
+export const PAYMENT_MODE_MASTER = {
+  entity: 'payment_mode_master',
+  title: 'Payment Mode Master',
+  icon: CreditCard,
+  color: '#10b981',
+  description: 'Manage allowed payment modes (Bank Transfer, Cheque, Cash, etc.).',
+  fields: [
+    { name: 'name', label: 'Payment Mode', type: 'text', required: true, placeholder: 'e.g. Bank Transfer' },
+    { name: 'code', label: 'Short Code', type: 'text', placeholder: 'e.g. BT' },
+    { name: 'description', label: 'Notes', type: 'textarea' },
+  ],
+};
 
 // ═══════════════════════════════════════════════════════════
 //  ALL CONFIGS GROUPED FOR SIDEBAR NAVIGATION
@@ -1049,8 +1149,9 @@ export const PHASE1_MASTERS = [
   GODOWN_MASTER, GATE_LOCATION_MASTER, MILL_NAME_MASTER, DISTRICT_CITY_MASTER,
   ORDER_TYPE_MASTER, SALES_REGION_MASTER,
   BUYER_MASTER, CERTIFIED_TYPE, COUNT_SYSTEM, DESIGNER_MASTER, END_USE,
-  GROUP_COUNT, LR_TERMS, MANAGER_MASTER, MERCHANDISER_MASTER, PARTY_GROUP,
-  PARTY_TYPE, PAYMENT_TERM_AND_CONDITIONS, SECTION_GROUP, SP_NO
+  GROUP_COUNT, LR_TERMS, PARTY_TERMS_MASTER, LR_TYPE, MANAGER_MASTER, MERCHANDISER_MASTER, PARTY_GROUP,
+  PARTY_TYPE, PAYMENT_TERM_AND_CONDITIONS, SECTION_GROUP, SP_NO,
+  TRANSPORT_MODE_MASTER, TRANSPORT_NAME_MASTER
 ];
 
 export const PHASE2_MASTERS = [
@@ -1060,9 +1161,9 @@ export const PHASE2_MASTERS = [
   PRINTING_TECHNIQUE_MASTER, PROCESS_SEQUENCES_MASTER,
   DEBIT_CREDIT_REASON_MASTER, EXPENSES_GROUP_HEAD, FIBRE_COUNT_MASTER,
   TDS_BILL_TYPE_MASTER, TEST_PARAMETER_MASTER, REMARKS_MASTER,
-  DUTY_MASTER, WEAVING_MASTER,
+  DUTY_MASTER, WEAVING_MASTER, PATTERN_MASTER,
   AC_INCHARGE_MASTER, CLOTH_DYEING_ORDER_PROCESS_TYPE, DYEING_CLY,
-  EXPENSES_GROUP, GREY_DAMAGE, GRY_MAS_BALETYPE, SAMPLE_MASTER, SHRINGAGE_MASTER
+  EXPENSES_GROUP, GREY_DAMAGE, GRY_MAS_BALETYPE, PACKING_TYPE_MASTER, SAMPLE_MASTER, SHRINGAGE_MASTER, EXPENSE_TYPE_MASTER, PAYMENT_MODE_MASTER
 ];
 
 export const COMPLEX_MASTERS = [
@@ -1078,7 +1179,19 @@ export const SYSTEM_CONFIG_MASTERS = [
   APPROVAL_SETTINGS, DIRECT_INVOICE_LIMITS, SUB_MENU_MASTER, CONTROL_SERVICE, LOG_REPORT_UTIL, OLD_YEAR_MENU
 ];
 
+export const ORGANIZATION_NAME_MASTER = {
+  entity: 'organization_name_master',
+  title: 'Organization Name Master',
+  icon: Box,
+  color: '#2563eb',
+  description: 'Manage organization names for purchase orders.',
+  fields: [
+    { name: 'name', label: 'Organization Name', type: 'text', required: true, placeholder: 'e.g. Dinesh Textile Main' },
+  ],
+};
+
 export const ALL_SUB_MASTERS = [
+  ORGANIZATION_NAME_MASTER,
   ...PHASE1_MASTERS,
   ...PHASE2_MASTERS,
   ...COMPLEX_MASTERS,

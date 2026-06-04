@@ -51,6 +51,7 @@ class PartyMasterBase(BaseModel):
     transport_name: Optional[str] = None
     delivery_address: Optional[str] = None
     agent_name: Optional[str] = None
+    buyer_name: Optional[str] = None
     bank_name: Optional[str] = None
     bank_account: Optional[str] = None
     ifsc_code: Optional[str] = None

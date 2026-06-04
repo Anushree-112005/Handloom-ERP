@@ -1,17 +1,16 @@
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
-from app.models.party_master import PartyMaster
+from app.models.sub_master import SubMaster
 from app.core.config import settings
 
 engine = create_async_engine(settings.DATABASE_URL)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-async def test():
+async def seed():
     async with AsyncSessionLocal() as db:
-        res = await db.execute(select(PartyMaster))
-        parties = res.scalars().all()
-        print(f"Parties count: {len(parties)}")
+        for val in ['Satin Cotton', 'Poplin', 'Twill', 'Grey Satin']:
+            db.add(SubMaster(entity='fabric_type_master', name=val, is_active=True))
+        await db.commit()
         
-asyncio.run(test())
+asyncio.run(seed())

@@ -20,6 +20,7 @@ export default function PartyMaster() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
   
   // Custom Inline Fields
   const [isCustomPartyGroup, setIsCustomPartyGroup] = useState(false);
@@ -95,7 +96,7 @@ export default function PartyMaster() {
     gst_no: '', gst_type: '', pan_no: '', tds: '', tds_percent: 0,
     pc_id: '', merchandiser: '', manager: '', credit_days: 30,
     credit_limit: 0, account_incharge: '', deliver_party_name: '',
-    payment_terms: '', transport_name: '', delivery_address: '', agent_name: ''
+    payment_terms: '', transport_name: '', delivery_address: '', agent_name: '', buyer_name: ''
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -147,6 +148,18 @@ export default function PartyMaster() {
     e.preventDefault();
     if (isReadOnly) return;
     try {
+      if (formData.buyer_name) {
+        const trimmedBuyer = formData.buyer_name.trim();
+        const existingBuyers = options.masters?.buyer || [];
+        if (trimmedBuyer && !existingBuyers.includes(trimmedBuyer)) {
+          try {
+            await subMasterAPI.create('buyer', { entity: 'buyer', name: trimmedBuyer, is_active: true });
+          } catch (smErr) {
+            console.error("Error auto-adding buyer to submaster", smErr);
+          }
+        }
+      }
+
       if (editingId) {
         await partyAPI.update(editingId, formData);
       } else {
@@ -247,6 +260,12 @@ export default function PartyMaster() {
     if (name === 'agent_name' && value === 'custom_add_new') {
       setIsCustomAgent(true);
       setCustomAgentVal('');
+      return;
+    }
+
+    if (name === 'buyer_name' && value === 'custom_add_new') {
+      setIsCustomBuyerName(true);
+      setCustomBuyerNameVal('');
       return;
     }
 
@@ -583,15 +602,29 @@ export default function PartyMaster() {
     } catch (err) { console.error("Failed to add custom Agent", err); }
   };
 
+
+
   const handleSaveCustomTransport = async () => {
     if (!customTransportVal.trim()) return;
     try {
-      const { data } = await partyAPI.create({ company_name: customTransportVal.trim(), party_type: 'Logistics' });
-      setOptions(prev => ({ ...prev, transporters: [...prev.transporters, { id: data.id, name: data.company_name }] }));
-      setFormData(prev => ({ ...prev, transport_name: data.company_name }));
+      await subMasterAPI.create('transport_name_master', { 
+        entity: 'transport_name_master', 
+        name: customTransportVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          transport_name_master: [...(prev.masters.transport_name_master || []), customTransportVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, transport_name: customTransportVal.trim() }));
       setIsCustomTransport(false);
       setCustomTransportVal('');
-    } catch (err) { console.error("Failed to add custom Transport", err); }
+    } catch (err) {
+      console.error("Failed to add custom Transport Name", err);
+    }
   };
 
   const handleSaveCustomDeliverParty = async () => {
@@ -847,6 +880,10 @@ export default function PartyMaster() {
                             <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                           </select>
                         )}
+                      </div>
+                      <div className="form-group">
+                        <label>Buyer Name</label>
+                        <input className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleChange} placeholder="Enter Buyer Name" />
                       </div>
                       <div className="form-group">
                         <label>Customer Grade</label>
@@ -1309,11 +1346,15 @@ export default function PartyMaster() {
                         ) : (
                           <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
                             <option value="">-- Select --</option>
+                            {formData.agent_name && !options.agents.some(ag => ag.name === formData.agent_name) && (
+                              <option value={formData.agent_name}>{formData.agent_name}</option>
+                            )}
                             {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
                             <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                           </select>
                         )}
                       </div>
+
                       <div className="form-group">
                         <label>Payment Terms</label>
                         {isCustomPaymentTerms ? (
@@ -1373,7 +1414,10 @@ export default function PartyMaster() {
                         ) : (
                           <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
                             <option value="">-- Select --</option>
-                            {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
+                            {formData.transport_name && !(options.masters['transport_name_master'] || []).includes(formData.transport_name) && (
+                              <option value={formData.transport_name}>{formData.transport_name}</option>
+                            )}
+                            {renderOptions('transport_name_master')}
                             <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                           </select>
                         )}
@@ -1405,6 +1449,9 @@ export default function PartyMaster() {
                         ) : (
                           <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
                             <option value="">-- Same as Business Name --</option>
+                            {formData.deliver_party_name && !options.all_parties.some(p => p.name === formData.deliver_party_name) && (
+                              <option value={formData.deliver_party_name}>{formData.deliver_party_name}</option>
+                            )}
                             {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                             <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                           </select>
@@ -1621,11 +1668,15 @@ export default function PartyMaster() {
                   ) : (
                     <select className="form-control" name="agent_name" value={formData.agent_name} onChange={handleChange}>
                       <option value="">-- Select --</option>
+                      {formData.agent_name && !options.agents.some(ag => ag.name === formData.agent_name) && (
+                        <option value={formData.agent_name}>{formData.agent_name}</option>
+                      )}
                       {options.agents.map(ag => <option key={ag.id} value={ag.name}>{ag.name}</option>)}
                       <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                     </select>
                   )}
                 </div>
+
                 <div className="form-group">
                   <label>Payment Terms</label>
                   {isCustomPaymentTerms ? (
@@ -1685,7 +1736,10 @@ export default function PartyMaster() {
                   ) : (
                     <select className="form-control" name="transport_name" value={formData.transport_name} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {options.transporters.map(tr => <option key={tr.id} value={tr.name}>{tr.name}</option>)}
+                      {formData.transport_name && !(options.masters['transport_name_master'] || []).includes(formData.transport_name) && (
+                        <option value={formData.transport_name}>{formData.transport_name}</option>
+                      )}
+                      {renderOptions('transport_name_master')}
                       <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                     </select>
                   )}
@@ -1717,6 +1771,9 @@ export default function PartyMaster() {
                   ) : (
                     <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
                       <option value="">-- Same as Business Name --</option>
+                      {formData.deliver_party_name && !options.all_parties.some(p => p.name === formData.deliver_party_name) && (
+                        <option value={formData.deliver_party_name}>{formData.deliver_party_name}</option>
+                      )}
                       {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                       <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                     </select>
@@ -1868,30 +1925,7 @@ export default function PartyMaster() {
 
           <select className="form-control" style={{ width: 150, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
             <option>All Types</option>
-            <option>Sales Party</option>
-            <option>Logistics</option>
-            <option>Processor</option>
-            <option>Yarn Dyeing</option>
-            <option>Yarn Coverter</option>
-            <option>Exports party</option>
-            <option>Own Shed</option>
-            <option>Washing/Finishing</option>
-            <option>Purchase Party</option>
-            <option>Agent</option>
-            <option>Weaving vendor</option>
-            <option>Bit Loom Weaver</option>
-            <option>Doubling</option>
-            <option>Weaving Unit</option>
-            <option>Testing Lab</option>
-            <option>Spares Supplier</option>
-            <option>Delivery Party</option>
-            <option>Postage/Courier</option>
-            <option>Warping/Sizing</option>
-            <option>General</option>
-            <option>Chemical Supplier</option>
-            <option>Printing</option>
-            <option>Fabric Dyeing</option>
-            <option>JobWorker</option>
+            {options?.masters?.party_type?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1915,14 +1949,15 @@ export default function PartyMaster() {
               <thead>
                 <tr>
                   <th>Code</th><th>Business Name</th><th>Type & Group</th>
+                  <th>Buyer & Agent</th>
                   <th>Contact & Phone</th><th>City</th><th>GST / PAN</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredParties.length === 0 ? (
-                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
                 ) : (
                   filteredParties.map(p => (
                     <tr
@@ -1939,6 +1974,10 @@ export default function PartyMaster() {
                       <td>
                         <span className="badge badge-active" style={{ marginBottom: 4 }}>{p.party_type}</span><br />
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.party_group}</span>
+                      </td>
+                      <td>
+                        {p.buyer_name ? <span style={{ fontWeight: 600, color: 'var(--primary)' }}>B: {p.buyer_name}</span> : <span style={{ color: 'var(--text-muted)' }}>B: N/A</span>}<br/>
+                        {p.agent_name ? <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>A: {p.agent_name}</span> : <span style={{ color: 'var(--text-muted)' }}>A: N/A</span>}
                       </td>
                       <td>
                         {p.contact_person || 'N/A'}<br />
@@ -2028,6 +2067,8 @@ export default function PartyMaster() {
                 <DetailRow label="Credit Days" value={selectedViewParty.credit_days} />
                 <DetailRow label="Merchandiser" value={selectedViewParty.merchandiser} />
                 <DetailRow label="Manager" value={selectedViewParty.manager} />
+                <DetailRow label="Buyer Name" value={selectedViewParty.buyer_name} />
+                <DetailRow label="Agent Name" value={selectedViewParty.agent_name} />
               </div>
             </div>
           </div>

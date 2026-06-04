@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown } from 'lucide-react';
-import { yarnPurchaseOrderAPI, partyAPI } from '../../services/api';
+import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -15,6 +15,7 @@ const DetailRow = ({ label, value }) => (
 export default function YarnPurchaseOrder() {
   const [orders, setOrders] = useState([]);
   const [parties, setParties] = useState([]);
+  const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
@@ -22,6 +23,8 @@ export default function YarnPurchaseOrder() {
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isCustomOrg, setIsCustomOrg] = useState(false);
+  const [customOrgVal, setCustomOrgVal] = useState('');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,11 +57,12 @@ export default function YarnPurchaseOrder() {
 
   const loadData = async () => {
     try {
-      const [ordRes, partRes] = await Promise.all([
-        yarnPurchaseOrderAPI.list(), partyAPI.list()
+      const [ordRes, partRes, dropRes] = await Promise.all([
+        yarnPurchaseOrderAPI.list(), partyAPI.list(), dropdownAPI.getAll()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
+      setOptions(dropRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -67,6 +71,20 @@ export default function YarnPurchaseOrder() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  const handleSaveCustomOrg = async () => {
+    if (!customOrgVal.trim()) return;
+    try {
+      await subMasterAPI.create('organization_name_master', { entity: 'organization_name_master', name: customOrgVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, org_name: customOrgVal.trim() });
+      setIsCustomOrg(false);
+      setCustomOrgVal('');
+    } catch (err) {
+      alert('Error saving custom organization name');
+    }
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -421,9 +439,22 @@ export default function YarnPurchaseOrder() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group"><label>Order Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Org. Name</label>
-                      <select className="form-control" name="org_name" value={form.org_name} onChange={handleChange}>
-                        <option value="">Select Org...</option><option>Dinesh Textile Main</option><option>Unit 2</option>
-                      </select>
+                      {isCustomOrg ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Org Name..." value={customOrgVal} onChange={e => setCustomOrgVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomOrg}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomOrg(false); setCustomOrgVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="org_name" value={form.org_name || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomOrg(true);
+                          else handleChange(e);
+                        }}>
+                          <option value="">Select Org...</option>
+                          {options.masters?.organization_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Org...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>

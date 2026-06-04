@@ -7,7 +7,7 @@ import {
   MapPin, HelpCircle, Sparkles, Database, Shield, Scissors, ShoppingCart,
   Percent, DollarSign, Activity, Palette, Box
 } from 'lucide-react';
-import { workOrderTransactionAPI } from '../../services/api';
+import { workOrderTransactionAPI, partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 
 export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   const navigate = useNavigate();
@@ -42,7 +42,49 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   // Static lists for selections
   const BUYERS = ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
   const EMPLOYEES = ['Senthil Kumar (General Manager)', 'Mani Bharathi (Store Head)', 'Dinesh Balasamy (MD)', 'Murugan Swamy (Maintenance In-charge)'];
-  const SEASONS = ['Summer 2026', 'Autumn/Winter 2026', 'Spring 2027', 'Mid-Season Core'];
+
+  // =========================================================================
+  // DYNAMIC DROPDOWNS & MASTERS
+  // =========================================================================
+  const [parties, setParties] = useState([]);
+  const [options, setOptions] = useState({});
+  const [isCustomSeason, setIsCustomSeason] = useState(false);
+  const [customSeasonVal, setCustomSeasonVal] = useState('');
+  const [isCustomFabricType, setIsCustomFabricType] = useState(false);
+  const [customFabricTypeVal, setCustomFabricTypeVal] = useState('');
+
+  const handleSaveCustomSeason = async () => {
+    if (!customSeasonVal.trim()) { setIsCustomSeason(false); return; }
+    try {
+      await subMasterAPI.create('season_master', { entity: 'season_master', name: customSeasonVal.trim(), is_active: true });
+      const dRes = await dropdownAPI.getAll();
+      setOptions(dRes.data);
+      setFields({ ...fields, season: customSeasonVal.trim() });
+      setIsCustomSeason(false);
+      setCustomSeasonVal('');
+    } catch (e) { console.error(e); alert("Failed to save custom season"); }
+  };
+
+  const handleSaveCustomFabricType = async () => {
+    if (!customFabricTypeVal.trim()) { setIsCustomFabricType(false); return; }
+    try {
+      await subMasterAPI.create('fabric_type_master', { entity: 'fabric_type_master', name: customFabricTypeVal.trim(), is_active: true });
+      const dRes = await dropdownAPI.getAll();
+      setOptions(dRes.data);
+      setFields({ ...fields, fabricType: customFabricTypeVal.trim() });
+      setIsCustomFabricType(false);
+      setCustomFabricTypeVal('');
+    } catch (e) { console.error(e); alert("Failed to save custom fabric type"); }
+  };
+
+  const loadMasters = async () => {
+    try {
+      const pRes = await partyAPI.list();
+      setParties(pRes.data);
+      const dRes = await dropdownAPI.getAll();
+      setOptions(dRes.data);
+    } catch (e) { console.error(e); }
+  };
 
   // =========================================================================
   // STATE STORE FOR ALL WORKSPACES
@@ -138,6 +180,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
 
   useEffect(() => {
     loadData();
+    loadMasters();
   }, []);
 
   // =========================================================================
@@ -636,14 +679,28 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                     <div className="form-group">
                       <label>Buyer Name *</label>
                       <select className="form-control" name="buyerName" value={fields.buyerName || ''} onChange={handleInputChange}>
-                        {BUYERS.map(b => <option key={b} value={b}>{b}</option>)}
+                        <option value="">Select Buyer</option>
+                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                       </select>
                     </div>
-                    <div className="form-group">
+                    <div className="form-group" style={{ position: 'relative' }}>
                       <label>Season *</label>
-                      <select className="form-control" name="season" value={fields.season || ''} onChange={handleInputChange}>
-                        {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                      {!isCustomSeason ? (
+                        <select className="form-control" name="season" value={fields.season || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomSeason(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">Select Season</option>
+                          {options.masters?.season_master?.map(s => <option key={s} value={s}>{s}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Season...</option>
+                        </select>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input type="text" className="form-control" placeholder="New season name..." value={customSeasonVal} onChange={e => setCustomSeasonVal(e.target.value)} autoFocus />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomSeason} style={{ padding: '6px 12px' }}><Check size={14} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => { setIsCustomSeason(false); setCustomSeasonVal(''); }} style={{ padding: '6px 12px' }}><X size={14} /></button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Design Name *</label>
@@ -652,9 +709,24 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                    <div className="form-group">
+                    <div className="form-group" style={{ position: 'relative' }}>
                       <label>Fabric Type *</label>
-                      <input type="text" className="form-control" name="fabricType" value={fields.fabricType || ''} onChange={handleInputChange} required />
+                      {!isCustomFabricType ? (
+                        <select className="form-control" name="fabricType" value={fields.fabricType || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomFabricType(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">Select Fabric Type</option>
+                          {options.masters?.fabric_type_master?.map(s => <option key={s} value={s}>{s}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Fabric Type...</option>
+                        </select>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input type="text" className="form-control" placeholder="New fabric type..." value={customFabricTypeVal} onChange={e => setCustomFabricTypeVal(e.target.value)} autoFocus />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomFabricType} style={{ padding: '6px 12px' }}><Check size={14} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => { setIsCustomFabricType(false); setCustomFabricTypeVal(''); }} style={{ padding: '6px 12px' }}><X size={14} /></button>
+                        </div>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Composition *</label>
