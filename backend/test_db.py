@@ -1,7 +1,17 @@
-import sqlite3
-conn = sqlite3.connect('erp.db')
-cursor = conn.cursor()
-cursor.execute("SELECT entity, name FROM sub_master WHERE entity LIKE '%order%';")
-rows = cursor.fetchall()
-for r in rows:
-    print(r)
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select
+from app.models.party_master import PartyMaster
+from app.core.config import settings
+
+engine = create_async_engine(settings.DATABASE_URL)
+AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+async def test():
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(select(PartyMaster))
+        parties = res.scalars().all()
+        print(f"Parties count: {len(parties)}")
+        
+asyncio.run(test())

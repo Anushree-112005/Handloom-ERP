@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown } from 'lucide-react';
-import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI } from '../../services/api';
+import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI, subMasterAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -24,6 +24,122 @@ export default function YarnInward() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  const [options, setOptions] = useState({});
+  const [colorMasters, setColorMasters] = useState([]);
+  const [isCustomRecvdType, setIsCustomRecvdType] = useState(false);
+  const [customRecvdTypeVal, setCustomRecvdTypeVal] = useState('');
+  const [isCustomConeType, setIsCustomConeType] = useState(false);
+  const [customConeTypeVal, setCustomConeTypeVal] = useState('');
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+  const [isCustomPacking, setIsCustomPacking] = useState(false);
+  const [customPackingVal, setCustomPackingVal] = useState('');
+
+  const [customYarnCountIdx, setCustomYarnCountIdx] = useState(null);
+  const [customYarnCountVal, setCustomYarnCountVal] = useState('');
+  const [customMillNameIdx, setCustomMillNameIdx] = useState(null);
+  const [customMillNameVal, setCustomMillNameVal] = useState('');
+  const [customColourIdx, setCustomColourIdx] = useState(null);
+  const [customColourVal, setCustomColourVal] = useState('');
+
+  const handleSaveCustomRecvdType = async () => {
+    if (!customRecvdTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('received_type_master', { entity: 'received_type_master', name: customRecvdTypeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, received_type: customRecvdTypeVal.trim() });
+      setIsCustomRecvdType(false);
+      setCustomRecvdTypeVal('');
+    } catch (err) {
+      alert('Error saving custom received type');
+    }
+  };
+
+  const handleSaveCustomConeType = async () => {
+    if (!customConeTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('cone_type_master', { entity: 'cone_type_master', name: customConeTypeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, cone_type: customConeTypeVal.trim() });
+      setIsCustomConeType(false);
+      setCustomConeTypeVal('');
+    } catch (err) {
+      alert('Error saving custom cone type');
+    }
+  };
+
+  const handleSaveCustomTransport = async () => {
+    if (!customTransportVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_name_master', { entity: 'transport_name_master', name: customTransportVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, transport: customTransportVal.trim() });
+      setIsCustomTransport(false);
+      setCustomTransportVal('');
+    } catch (err) {
+      alert('Error saving custom transport');
+    }
+  };
+
+  const handleSaveCustomPacking = async () => {
+    if (!customPackingVal.trim()) return;
+    try {
+      await subMasterAPI.create('packing_type_master', { entity: 'packing_type_master', name: customPackingVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, packing: customPackingVal.trim() });
+      setIsCustomPacking(false);
+      setCustomPackingVal('');
+    } catch (err) {
+      alert('Error saving custom packing type');
+    }
+  };
+
+  const handleSaveCustomYarnCount = async () => {
+    if (!customYarnCountVal.trim() || customYarnCountIdx === null) return;
+    try {
+      await subMasterAPI.create('yarn_count_master', { entity: 'yarn_count_master', name: customYarnCountVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateItem(customYarnCountIdx, 'yarn_count', customYarnCountVal.trim());
+      setCustomYarnCountIdx(null);
+      setCustomYarnCountVal('');
+    } catch (err) {
+      alert('Error saving custom yarn count');
+    }
+  };
+
+  const handleSaveCustomMillName = async () => {
+    if (!customMillNameVal.trim() || customMillNameIdx === null) return;
+    try {
+      await subMasterAPI.create('mill_name_master', { entity: 'mill_name_master', name: customMillNameVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateItem(customMillNameIdx, 'mill_name', customMillNameVal.trim());
+      setCustomMillNameIdx(null);
+      setCustomMillNameVal('');
+    } catch (err) {
+      alert('Error saving custom mill name');
+    }
+  };
+
+  const handleSaveCustomColour = async () => {
+    if (!customColourVal.trim() || customColourIdx === null) return;
+    try {
+      await subMasterAPI.create('color_master', { entity: 'color_master', name: customColourVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateItem(customColourIdx, 'colour', customColourVal.trim());
+      setCustomColourIdx(null);
+      setCustomColourVal('');
+    } catch (err) {
+      alert('Error saving custom colour');
+    }
+  };
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
@@ -35,7 +151,7 @@ export default function YarnInward() {
     entry_date: new Date().toISOString().split('T')[0],
     inward_date: new Date().toISOString().split('T')[0],
     status: 'Received', received_type: 'Direct', received_from: '', po_no_dt: '',
-    agent_name: '', stock_godown: '', godown_id: 0, cone_type: 'Full Cone',
+    agent_name: '', stock_godown: '', godown_id: 0, cone_type: '',
     
     order_kgs: 0, received_kgs: 0, balance_kgs: 0, pc_id: '', tolerance_pct: 0,
     bill_no: '', bill_amount: 0, gross_kgs: 0, net_kgs: 0, chipnam: '', due_days: 0,
@@ -43,7 +159,7 @@ export default function YarnInward() {
     transport: '', veh_no: '', total_bags: 0, eway_bill: '', org_grn_no: '',
     gate_no: '', wbridge_no: '', w_weight: 0,
     
-    other_remarks: '', packing: 'Bags', freight: 0, gross_amount: 0, tax_type: 'GST',
+    other_remarks: '', packing: '', freight: 0, gross_amount: 0, tax_type: 'GST',
     cgst_pct: 0, sgst_pct: 0, igst_pct: 0, tax_value: 0, tcs_value: 0, tds_pct: 0,
     total_tax: 0, round_off: 0, net_amount: 0, remarks: '',
     
@@ -57,12 +173,14 @@ export default function YarnInward() {
 
   const loadData = async () => {
     try {
-      const [inwRes, partRes, poRes] = await Promise.all([
-        yarnInwardAPI.list(), partyAPI.list(), yarnPurchaseOrderAPI.list()
+      const [inwRes, partRes, poRes, dropRes, colorRes] = await Promise.all([
+        yarnInwardAPI.list(), partyAPI.list(), yarnPurchaseOrderAPI.list(), dropdownAPI.getAll(), subMasterAPI.list('color_master')
       ]);
       setInwards(inwRes.data);
       setParties(partRes.data);
       setPos(poRes.data);
+      setOptions(dropRes.data);
+      setColorMasters(colorRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -139,6 +257,37 @@ export default function YarnInward() {
     }
   };
 
+  const calculateFinancials = (updatedForm) => {
+    let gross = parseFloat(updatedForm.gross_amount) || 0;
+    let freight = parseFloat(updatedForm.freight) || 0;
+    let baseAmount = gross + freight;
+    let cgst = 0, sgst = 0, igst = 0;
+    if (updatedForm.tax_type === 'GST') {
+      cgst = baseAmount * (parseFloat(updatedForm.cgst_pct) || 0) / 100;
+      sgst = baseAmount * (parseFloat(updatedForm.sgst_pct) || 0) / 100;
+      updatedForm.igst_pct = 0;
+    } else if (updatedForm.tax_type === 'IGST') {
+      igst = baseAmount * (parseFloat(updatedForm.igst_pct) || 0) / 100;
+      updatedForm.cgst_pct = 0;
+      updatedForm.sgst_pct = 0;
+    } else {
+      updatedForm.cgst_pct = 0;
+      updatedForm.sgst_pct = 0;
+      updatedForm.igst_pct = 0;
+    }
+    let tax_value = cgst + sgst + igst;
+    let tcs = parseFloat(updatedForm.tcs_value) || 0;
+    let totalTax = tax_value + tcs;
+    let roundOff = parseFloat(updatedForm.round_off) || 0;
+    let net = baseAmount + totalTax + roundOff;
+    return {
+      ...updatedForm,
+      tax_value: parseFloat(tax_value.toFixed(2)),
+      total_tax: parseFloat(totalTax.toFixed(2)),
+      net_amount: parseFloat(net.toFixed(2))
+    };
+  };
+
   const handleChange = (e) => {
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
@@ -159,16 +308,68 @@ export default function YarnInward() {
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
-    setForm({ ...form, [name]: value });
+    
+    if (name === 'received_type' && value === 'custom') {
+      setIsCustomRecvdType(true);
+      setCustomRecvdTypeVal('');
+      return;
+    }
+    if (name === 'cone_type' && value === 'custom') {
+      setIsCustomConeType(true);
+      setCustomConeTypeVal('');
+      return;
+    }
+    if (name === 'transport' && value === 'custom') {
+      setIsCustomTransport(true);
+      setCustomTransportVal('');
+      return;
+    }
+    if (name === 'packing' && value === 'custom') {
+      setIsCustomPacking(true);
+      setCustomPackingVal('');
+      return;
+    }
+
+    const newForm = { ...form, [name]: value };
+    const financialFields = ['gross_amount', 'freight', 'cgst_pct', 'sgst_pct', 'igst_pct', 'tax_type', 'tcs_value', 'tds_pct', 'round_off'];
+    if (financialFields.includes(name)) {
+      setForm(calculateFinancials(newForm));
+    } else {
+      setForm(newForm);
+    }
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
   const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   const updateItem = (index, field, value) => {
+    if (field === 'yarn_count' && value === 'custom') {
+      setCustomYarnCountIdx(index);
+      setCustomYarnCountVal('');
+      return;
+    }
+    if (field === 'mill_name' && value === 'custom') {
+      setCustomMillNameIdx(index);
+      setCustomMillNameVal('');
+      return;
+    }
+    if (field === 'colour' && value === 'custom') {
+      setCustomColourIdx(index);
+      setCustomColourVal('');
+      return;
+    }
     const newItems = [...form.items];
     let val = value;
     if (['bags', 'kgs', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
     newItems[index][field] = val;
+    
+    if (field === 'colour' && val) {
+      const selectedColor = colorMasters.find(c => c.name === val);
+      if (selectedColor && selectedColor.code) {
+        newItems[index]['color_code'] = selectedColor.code;
+      } else {
+        newItems[index]['color_code'] = '';
+      }
+    }
     
     let newGross = parseFloat(form.gross_amount) || 0;
     if (field === 'kgs' || field === 'rate') {
@@ -179,7 +380,12 @@ export default function YarnInward() {
       newGross = newItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     }
     
-    setForm({ ...form, items: newItems, gross_amount: newGross });
+    const updatedForm = { ...form, items: newItems, gross_amount: newGross };
+    if (field === 'kgs' || field === 'rate' || field === 'amount') {
+      setForm(calculateFinancials(updatedForm));
+    } else {
+      setForm(updatedForm);
+    }
   };
 
   const filteredInwards = inwards.filter(i => {
@@ -310,7 +516,10 @@ export default function YarnInward() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <select className="form-control" style={{ width: 130, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-                <option>All Types</option><option>Direct</option><option>Against PO</option>
+                <option>All Types</option>
+                <option>Direct</option>
+                <option>Against PO</option>
+                {options?.masters?.received_type_master?.filter(o => o !== 'Direct' && o !== 'Against PO').map(o => <option key={o}>{o}</option>)}
               </select>
               <select className="form-control" style={{ width: 130, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                 <option>All Status</option><option>Received</option><option>Processed</option><option>Cancelled</option>
@@ -445,9 +654,21 @@ export default function YarnInward() {
                     </div>
                     
                     <div className="form-group"><label>Recvd Type</label>
-                      <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>
-                        <option>Direct</option><option>Against PO</option>
-                      </select>
+                      {isCustomRecvdType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Recvd Type" value={customRecvdTypeVal} onChange={e => setCustomRecvdTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomRecvdType} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomRecvdType(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="received_type" value={form.received_type || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          <option value="Direct">Direct</option>
+                          <option value="Against PO">Against PO</option>
+                          {options.masters?.received_type_master?.filter(o => o !== 'Direct' && o !== 'Against PO').map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>PO No / Dt</label>
                       <select className="form-control" name="po_no_dt" value={form.po_no_dt} onChange={handleChange} disabled={form.received_type === 'Direct'}>
@@ -460,9 +681,19 @@ export default function YarnInward() {
                     
                     <div className="form-group"><label>Godown ID</label><input type="number" className="form-control" name="godown_id" value={form.godown_id} onChange={handleChange} /></div>
                     <div className="form-group"><label>Cone Type</label>
-                      <select className="form-control" name="cone_type" value={form.cone_type} onChange={handleChange}>
-                        <option>Full Cone</option><option>Half Cone</option>
-                      </select>
+                      {isCustomConeType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Cone Type" value={customConeTypeVal} onChange={e => setCustomConeTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomConeType} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomConeType(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="cone_type" value={form.cone_type || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.cone_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" name="order_kgs" value={form.order_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Received Kgs</label><input type="number" className="form-control" name="received_kgs" value={form.received_kgs} onChange={handleChange} /></div>
@@ -478,7 +709,21 @@ export default function YarnInward() {
                     <div className="form-group"><label>Chipnam</label><input className="form-control" name="chipnam" value={form.chipnam} onChange={handleChange} /></div>
                     
                     <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Transport</label>
+                      {isCustomTransport ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Transport" value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransport} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransport(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport" value={form.transport || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Veh No</label><input className="form-control" name="veh_no" value={form.veh_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Bags</label><input type="number" className="form-control" name="total_bags" value={form.total_bags} onChange={handleChange} /></div>
                     
@@ -507,9 +752,51 @@ export default function YarnInward() {
                         {form.items.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120 }} value={item.mill_name} onChange={e => updateItem(idx, 'mill_name', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.colour} onChange={e => updateItem(idx, 'colour', e.target.value)} /></td>
+                            <td>
+                              {customYarnCountIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Count" value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnCount} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customMillNameIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Mill" value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomMillName} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomMillNameIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 120 }} value={item.mill_name || ''} onChange={e => updateItem(idx, 'mill_name', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 100 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
+                                </select>
+                              )}
+                            </td>
                             <td><input className="form-control" style={{ width: 80 }} value={item.color_code} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 80 }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 80 }} value={item.our_id} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
@@ -528,9 +815,19 @@ export default function YarnInward() {
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group"><label>Packing</label>
-                      <select className="form-control" name="packing" value={form.packing} onChange={handleChange}>
-                        <option>Bags</option><option>Boxes</option><option>Pallets</option>
-                      </select>
+                      {isCustomPacking ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
                     <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
@@ -575,9 +872,51 @@ export default function YarnInward() {
                         {form.items.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120 }} value={item.mill_name} onChange={e => updateItem(idx, 'mill_name', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.colour} onChange={e => updateItem(idx, 'colour', e.target.value)} /></td>
+                            <td>
+                              {customYarnCountIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Count" value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnCount} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customMillNameIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Mill" value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomMillName} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomMillNameIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 120 }} value={item.mill_name || ''} onChange={e => updateItem(idx, 'mill_name', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 100 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
+                                </select>
+                              )}
+                            </td>
                             <td><input className="form-control" style={{ width: 80 }} value={item.color_code} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 80 }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 80 }} value={item.our_id} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
@@ -597,9 +936,19 @@ export default function YarnInward() {
               {activeTab === 'tax' && (
                 <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                   <div className="form-group"><label>Packing</label>
-                    <select className="form-control" name="packing" value={form.packing} onChange={handleChange}>
-                      <option>Bags</option><option>Boxes</option><option>Pallets</option>
-                    </select>
+                    {isCustomPacking ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
+                        <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                        <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                      </div>
+                    ) : (
+                      <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
+                        <option value="">Select...</option>
+                        {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                      </select>
+                    )}
                   </div>
                   <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
                   <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
