@@ -16,6 +16,7 @@ class WorkOrderTransactionBase(BaseModel):
     buyer_name: Optional[str] = None
     status: Optional[str] = "Active"
     details: Optional[Dict[str, Any]] = {}
+    transaction_no: Optional[str] = None
 
 class WorkOrderTransactionCreate(WorkOrderTransactionBase):
     pass
@@ -91,13 +92,23 @@ async def create_transaction(data: WorkOrderTransactionCreate, db: AsyncSession 
         'eway_bill': 'GRY-EWB-',
         'einvoice_eway': 'GRY-EIN-'
     }
-    prefix = prefix_map.get(data.module_type, 'WOT-')
+    if data.transaction_no:
+        txn_no = data.transaction_no
+    else:
+        prefix = prefix_map.get(data.module_type, 'WOT-')
+        max_id_q = await db.execute(select(func.max(WorkOrderTransaction.id)))
+        max_id = max_id_q.scalar() or 0
+        txn_no = f"{prefix}{(max_id + 1):03d}"
     
-    max_id_q = await db.execute(select(func.max(WorkOrderTransaction.id)))
-    max_id = max_id_q.scalar() or 0
-    txn_no = f"{prefix}{(max_id + 1):03d}"
+    # Check if unique transaction number exists
+    existing_txn_q = await db.execute(select(WorkOrderTransaction).where(WorkOrderTransaction.transaction_no == txn_no))
+    if existing_txn_q.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail=f"Transaction number '{txn_no}' already exists.")
     
-    txn = WorkOrderTransaction(**data.model_dump(), transaction_no=txn_no)
+    model_data = data.model_dump()
+    model_data.pop('transaction_no', None)
+    
+    txn = WorkOrderTransaction(**model_data, transaction_no=txn_no)
     db.add(txn)
     await db.commit()
     await db.refresh(txn)
