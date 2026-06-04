@@ -41,12 +41,29 @@ export default function BuyerOrder() {
 
   const [isCustomPaymentTerms, setIsCustomPaymentTerms] = useState(false);
   const [customPaymentTermsVal, setCustomPaymentTermsVal] = useState('');
+  const [isCustomPartyTerms, setIsCustomPartyTerms] = useState(false);
+  const [customPartyTermsVal, setCustomPartyTermsVal] = useState('');
 
   const [isCustomStatus, setIsCustomStatus] = useState(false);
   const [customStatusVal, setCustomStatusVal] = useState('');
 
   const [isCustomTransportMode, setIsCustomTransportMode] = useState(false);
   const [customTransportModeVal, setCustomTransportModeVal] = useState('');
+
+  const [isCustomTransportName, setIsCustomTransportName] = useState(false);
+  const [customTransportNameVal, setCustomTransportNameVal] = useState('');
+
+  const [isCustomLRType, setIsCustomLRType] = useState(false);
+  const [customLRTypeVal, setCustomLRTypeVal] = useState('');
+
+  const [isCustomLRTerms, setIsCustomLRTerms] = useState(false);
+  const [customLRTermsVal, setCustomLRTermsVal] = useState('');
+
+  const [isCustomBuyer, setIsCustomBuyer] = useState(false);
+  const [customBuyerVal, setCustomBuyerVal] = useState('');
+
+  const [isCustomAgent, setIsCustomAgent] = useState(false);
+  const [customAgentVal, setCustomAgentVal] = useState('');
 
   const [isCustomProcessSequence, setIsCustomProcessSequence] = useState(false);
   const [customProcessSequenceVal, setCustomProcessSequenceVal] = useState('');
@@ -230,7 +247,7 @@ export default function BuyerOrder() {
       ...form,
       party_id: partyId,
       party_name: party?.company_name || '',
-      buyer_name: party?.company_name || '',
+      buyer_name: party?.buyer_name || party?.company_name || '',
       billing_address: fullAddress || '',
       state: party?.state || '',
       agent_name: party?.agent_name || '',
@@ -284,6 +301,11 @@ export default function BuyerOrder() {
       return;
     }
     
+    if (name === 'party_terms' && value === 'custom_add_new') {
+      setIsCustomPartyTerms(true);
+      return;
+    }
+    
     if (name === 'status' && value === 'custom_add_new') {
       setIsCustomStatus(true);
       return;
@@ -291,6 +313,31 @@ export default function BuyerOrder() {
     
     if (name === 'transport_mode' && value === 'custom_add_new') {
       setIsCustomTransportMode(true);
+      return;
+    }
+    
+    if (name === 'transport_name' && value === 'custom_add_new') {
+      setIsCustomTransportName(true);
+      return;
+    }
+    
+    if (name === 'lr_type' && value === 'custom_add_new') {
+      setIsCustomLRType(true);
+      return;
+    }
+    
+    if (name === 'lr_terms' && value === 'custom_add_new') {
+      setIsCustomLRTerms(true);
+      return;
+    }
+    
+    if (name === 'buyer_name' && value === 'custom_add_new') {
+      setIsCustomBuyer(true);
+      return;
+    }
+    
+    if (name === 'agent_name' && value === 'custom_add_new') {
+      setIsCustomAgent(true);
       return;
     }
     
@@ -327,7 +374,7 @@ export default function BuyerOrder() {
       return;
     }
     try {
-      await subMasterAPI.create('certified_type_master', { entity: 'certified_type_master', name: customCertifiedTypeVal.trim(), is_active: true });
+      await subMasterAPI.create('certified_type', { entity: 'certified_type', name: customCertifiedTypeVal.trim(), is_active: true });
       const dropdownsRes = await dropdownAPI.getAll();
       setOptions(dropdownsRes.data);
       setForm({ ...form, certified_type: customCertifiedTypeVal.trim() });
@@ -393,6 +440,25 @@ export default function BuyerOrder() {
     }
   };
 
+  const handleSaveCustomPartyTerms = async () => {
+    if (!customPartyTermsVal.trim()) {
+      setIsCustomPartyTerms(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('party_terms_master', { entity: 'party_terms_master', name: customPartyTermsVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, party_terms: customPartyTermsVal.trim() });
+      setIsCustomPartyTerms(false);
+      setCustomPartyTermsVal('');
+    } catch (err) {
+      alert("Error saving custom party terms");
+      console.error(err);
+    }
+  };
+
+
   const handleSaveCustomStatus = async () => {
     if (!customStatusVal.trim()) {
       setIsCustomStatus(false);
@@ -425,6 +491,96 @@ export default function BuyerOrder() {
       setCustomTransportModeVal('');
     } catch (err) {
       alert("Error saving custom transport mode");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomTransportName = async () => {
+    if (!customTransportNameVal.trim()) {
+      setIsCustomTransportName(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('transport_name_master', { entity: 'transport_name_master', name: customTransportNameVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, transport_name: customTransportNameVal.trim() });
+      setIsCustomTransportName(false);
+      setCustomTransportNameVal('');
+    } catch (err) {
+      alert("Error saving custom transport name");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomLRType = async () => {
+    if (!customLRTypeVal.trim()) {
+      setIsCustomLRType(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('lr_type_master', { entity: 'lr_type_master', name: customLRTypeVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, lr_type: customLRTypeVal.trim() });
+      setIsCustomLRType(false);
+      setCustomLRTypeVal('');
+    } catch (err) {
+      alert("Error saving custom LR type");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomLRTerms = async () => {
+    if (!customLRTermsVal.trim()) {
+      setIsCustomLRTerms(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('lr_terms', { entity: 'lr_terms', name: customLRTermsVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, lr_terms: customLRTermsVal.trim() });
+      setIsCustomLRTerms(false);
+      setCustomLRTermsVal('');
+    } catch (err) {
+      alert("Error saving custom LR terms");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomBuyer = async () => {
+    if (!customBuyerVal.trim()) {
+      setIsCustomBuyer(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create('buyer', { entity: 'buyer', name: customBuyerVal.trim(), is_active: true });
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+      setForm({ ...form, buyer_name: customBuyerVal.trim() });
+      setIsCustomBuyer(false);
+      setCustomBuyerVal('');
+    } catch (err) {
+      alert("Error saving custom buyer");
+      console.error(err);
+    }
+  };
+
+  const handleSaveCustomAgent = async () => {
+    if (!customAgentVal.trim()) {
+      setIsCustomAgent(false);
+      return;
+    }
+    try {
+      await partyAPI.create({ company_name: customAgentVal.trim(), party_type: 'Agent' });
+      const partiesRes = await partyAPI.list();
+      setParties(partiesRes.data);
+      setForm({ ...form, agent_name: customAgentVal.trim() });
+      setIsCustomAgent(false);
+      setCustomAgentVal('');
+    } catch (err) {
+      alert("Error saving custom agent");
       console.error(err);
     }
   };
@@ -813,7 +969,22 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Buyer Name</label>
-                      <input className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} />
+                      {isCustomBuyer ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New Buyer Name..." value={customBuyerVal} onChange={(e) => setCustomBuyerVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomBuyer} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomBuyer(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
+                          <option value="">-- Select Buyer Name --</option>
+                          {form.buyer_name && !(options?.masters?.['buyer'] || []).includes(form.buyer_name) && (
+                            <option value={form.buyer_name}>{form.buyer_name}</option>
+                          )}
+                          {options?.masters?.['buyer']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Address</label>
@@ -825,7 +996,22 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Agent Name</label>
-                      <input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} />
+                      {isCustomAgent ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New Agent Name..." value={customAgentVal} onChange={(e) => setCustomAgentVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomAgent} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomAgent(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange}>
+                          <option value="">-- Select Agent Name --</option>
+                          {form.agent_name && !parties.some(p => p.party_type === 'Agent' && p.company_name === form.agent_name) && (
+                            <option value={form.agent_name}>{form.agent_name}</option>
+                          )}
+                          {parties.filter(p => p.party_type === 'Agent').map(ag => <option key={ag.id} value={ag.company_name}>{ag.company_name}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Order Type</label>
@@ -870,7 +1056,7 @@ export default function BuyerOrder() {
                       ) : (
                         <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
                           <option value="">-- Select Certified Type --</option>
-                          {options?.masters?.['certified_type_master']?.map(opt => (
+                          {options?.masters?.['certified_type']?.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Certified Type...</option>
@@ -1076,15 +1262,82 @@ export default function BuyerOrder() {
                         </select>
                       )}
                     </div>
-                    <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Party Terms</label>
-                      <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
-                        <option value="">-- Select Party Terms --</option>
-                        <option>FOB</option><option>CIF</option><option>Ex-Works</option>
-                      </select>
+                    <div className="form-group"><label>Transport Name</label>
+                      {isCustomTransportName ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New Transport Name..." value={customTransportNameVal} onChange={(e) => setCustomTransportNameVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportName} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportName(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
+                          <option value="">-- Select Transport Name --</option>
+                          {form.transport_name && !(options?.masters?.['transport_name_master'] || []).includes(form.transport_name) && (
+                            <option value={form.transport_name}>{form.transport_name}</option>
+                          )}
+                          {options?.masters?.['transport_name_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
-                    <div className="form-group"><label>LR Type</label><input className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange} /></div>
-                    <div className="form-group"><label>LR Terms</label><input className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Party Terms</label>
+                      {isCustomPartyTerms ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            autoFocus
+                            type="text"
+                            className="form-control"
+                            placeholder="New Party Terms..."
+                            value={customPartyTermsVal}
+                            onChange={(e) => setCustomPartyTermsVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPartyTerms} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPartyTerms(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
+                          <option value="">-- Select Party Terms --</option>
+                          {form.party_terms && !(options?.masters?.['party_terms_master'] || []).includes(form.party_terms) && !['FOB', 'CIF', 'Ex-Works'].includes(form.party_terms) && (
+                            <option value={form.party_terms}>{form.party_terms}</option>
+                          )}
+                          <option value="FOB">FOB</option>
+                          <option value="CIF">CIF</option>
+                          <option value="Ex-Works">Ex-Works</option>
+                          {options?.masters?.['party_terms_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
+                    </div>
+                    <div className="form-group"><label>LR Type</label>
+                      {isCustomLRType ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New LR Type..." value={customLRTypeVal} onChange={(e) => setCustomLRTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRType} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRType(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange}>
+                          <option value="">-- Select LR Type --</option>
+                          {options?.masters?.['lr_type_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
+                    </div>
+                    <div className="form-group"><label>LR Terms</label>
+                      {isCustomLRTerms ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New LR Terms..." value={customLRTermsVal} onChange={(e) => setCustomLRTermsVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRTerms} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRTerms(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange}>
+                          <option value="">-- Select LR Terms --</option>
+                          {options?.masters?.['lr_terms']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
@@ -1199,20 +1452,96 @@ export default function BuyerOrder() {
                 <div className="animate-fade">
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group"><label>Transport Mode</label>
-                      <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
-                        <option value="">-- Select Transport Mode --</option>
-                        <option>Road</option><option>Rail</option><option>Air</option><option>Sea</option>
-                      </select>
+                      {isCustomTransportMode ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New Mode..." value={customTransportModeVal} onChange={(e) => setCustomTransportModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportMode} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportMode(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
+                          <option value="">-- Select Transport Mode --</option>
+                          {options?.masters?.['transport_mode_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
-                    <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Transport Name</label>
+                      {isCustomTransportName ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New Transport Name..." value={customTransportNameVal} onChange={(e) => setCustomTransportNameVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportName} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportName(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
+                          <option value="">-- Select Transport Name --</option>
+                          {form.transport_name && !(options?.masters?.['transport_name_master'] || []).includes(form.transport_name) && (
+                            <option value={form.transport_name}>{form.transport_name}</option>
+                          )}
+                          {options?.masters?.['transport_name_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Party Terms</label>
-                      <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
-                        <option value="">-- Select Party Terms --</option>
-                        <option>FOB</option><option>CIF</option><option>Ex-Works</option>
-                      </select>
+                      {isCustomPartyTerms ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            autoFocus
+                            type="text"
+                            className="form-control"
+                            placeholder="New Party Terms..."
+                            value={customPartyTermsVal}
+                            onChange={(e) => setCustomPartyTermsVal(e.target.value)}
+                          />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPartyTerms} style={{ padding: '6px 12px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPartyTerms(false)} style={{ padding: '6px 12px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
+                          <option value="">-- Select Party Terms --</option>
+                          {form.party_terms && !(options?.masters?.['party_terms_master'] || []).includes(form.party_terms) && !['FOB', 'CIF', 'Ex-Works'].includes(form.party_terms) && (
+                            <option value={form.party_terms}>{form.party_terms}</option>
+                          )}
+                          <option value="FOB">FOB</option>
+                          <option value="CIF">CIF</option>
+                          <option value="Ex-Works">Ex-Works</option>
+                          {options?.masters?.['party_terms_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
                     </div>
-                    <div className="form-group"><label>LR Type</label><input className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange} /></div>
-                    <div className="form-group"><label>LR Terms</label><input className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange} /></div>
+                    <div className="form-group"><label>LR Type</label>
+                      {isCustomLRType ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New LR Type..." value={customLRTypeVal} onChange={(e) => setCustomLRTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRType} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRType(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange}>
+                          <option value="">-- Select LR Type --</option>
+                          {options?.masters?.['lr_type_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
+                    </div>
+                    <div className="form-group"><label>LR Terms</label>
+                      {isCustomLRTerms ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input autoFocus type="text" className="form-control" placeholder="New LR Terms..." value={customLRTermsVal} onChange={(e) => setCustomLRTermsVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRTerms} style={{ padding: '6px' }}>Save</button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRTerms(false)} style={{ padding: '6px' }}>X</button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange}>
+                          <option value="">-- Select LR Terms --</option>
+                          {options?.masters?.['lr_terms']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>

@@ -61,31 +61,37 @@ export const buyerOrderAPI = {
   // Schedules
   listSchedules: () => api.get('/buyer-orders/schedules/'),
   createSchedule: (data) => api.post('/buyer-orders/schedules/', data),
+  updateSchedule: (id, data) => api.put(`/buyer-orders/schedules/${id}`, data),
   deleteSchedule: (id) => api.delete(`/buyer-orders/schedules/${id}`),
 
   // Sequences
   listSequences: () => api.get('/buyer-orders/sequences/'),
   createSequence: (data) => api.post('/buyer-orders/sequences/', data),
+  updateSequence: (id, data) => api.put(`/buyer-orders/sequences/${id}`, data),
   deleteSequence: (id) => api.delete(`/buyer-orders/sequences/${id}`),
 
   // Amendments
   listAmendments: () => api.get('/buyer-orders/amendments/'),
   createAmendment: (data) => api.post('/buyer-orders/amendments/', data),
+  updateAmendment: (id, data) => api.put(`/buyer-orders/amendments/${id}`, data),
   deleteAmendment: (id) => api.delete(`/buyer-orders/amendments/${id}`),
 
   // Completions
   listCompletions: () => api.get('/buyer-orders/completions/'),
   createCompletion: (data) => api.post('/buyer-orders/completions/', data),
+  updateCompletion: (id, data) => api.put(`/buyer-orders/completions/${id}`, data),
   deleteCompletion: (id) => api.delete(`/buyer-orders/completions/${id}`),
 
   // Dispatches
   listDispatches: () => api.get('/buyer-orders/dispatches/'),
   createDispatch: (data) => api.post('/buyer-orders/dispatches/', data),
+  updateDispatch: (id, data) => api.put(`/buyer-orders/dispatches/${id}`, data),
   deleteDispatch: (id) => api.delete(`/buyer-orders/dispatches/${id}`),
 
   // Expenses
   listExpenses: () => api.get('/buyer-orders/expenses/'),
   createExpense: (data) => api.post('/buyer-orders/expenses/', data),
+  updateExpense: (id, data) => api.put(`/buyer-orders/expenses/${id}`, data),
   deleteExpense: (id) => api.delete(`/buyer-orders/expenses/${id}`)
 };
 
