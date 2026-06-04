@@ -98,6 +98,7 @@ export default function App() {
         <Route path="work-order/approval/material-yarn" element={<WorkOrderDesk defaultSection="Material & Yarn Approvals" />} />
 
         <Route path="design-entry" element={<DesignEntry />} />
+        <Route path="design-ai" element={<Navigate to="/design-entry" replace />} />
 
         <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
 
@@ -187,6 +188,11 @@ export default function App() {
         <Route path="spares/desk/consumption-jobwork" element={<SparesTransaction defaultSection="Consumption & Jobwork" />} />
         <Route path="accounts/voucher-entry" element={<VoucherEntry />} />
         <Route path="accounts/transaction" element={<AccountsTransaction />} />
+        <Route path="finance/desk/bills" element={<AccountsTransaction defaultSection="Creditors" />} />
+        <Route path="finance/desk/invoices" element={<AccountsTransaction defaultSection="Sales" />} />
+        <Route path="finance/desk/amendments" element={<AccountsTransaction defaultSection="Sales" defaultPage="sam" />} />
+        <Route path="finance/desk/lc" element={<AccountsTransaction defaultSection="LC" />} />
+
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>

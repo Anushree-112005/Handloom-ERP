@@ -264,6 +264,7 @@ export const companySettingAPI = {
 // ---- Work Order Transactions ----
 export const workOrderTransactionAPI = {
   list: (params) => api.get('/work-order-transactions/', { params }),
+  getAll: () => api.get('/work-order-transactions/'),
   get: (id) => api.get(`/work-order-transactions/${id}`),
   create: (data) => api.post('/work-order-transactions/', data),
   update: (id, data) => api.put(`/work-order-transactions/${id}`, data),
@@ -279,5 +280,7 @@ export const subMasterAPI = {
   delete: (entity, id) => api.delete(`/sub-masters/${entity}/${id}`),
   listEntities: () => api.get('/sub-masters/'),
 };
+
+
 
 export default api;

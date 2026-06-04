@@ -127,19 +127,122 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
     let initFields = { date: dateToday, status: 'Active' };
 
     if (activePage === 'warping_report') {
-      initFields = { ...initFields, setNo: '', shift: 'Morning (6AM-2PM)', machineNo: '', operatorName: 'Murugan Swamy', designNo: 'DES-4091', totalEnds: '', width: '', warpLength: '', noOfBeams: '', actualProduction: '', efficiency: '' };
+      initFields = { ...initFields, setReportNo: '', setNo: '', shift: 'Morning (6AM-2PM)', machineNo: '', operatorName: 'Murugan Swamy', designNo: 'DES-4091', totalEnds: '', width: '', warpLength: '', noOfBeams: '', actualProduction: '', efficiency: '' };
     } else if (activePage === 'sizing_report') {
-      initFields = { ...initFields, setNo: '', warpingSetRef: '', shift: 'Afternoon (2PM-10PM)', machineNo: '', operatorName: 'Senthil Kumar (General Manager)', designNo: 'DES-4091', beamLength: '', warpBeamsUsed: '', sizedBeamsOut: '', actualProduction: '', efficiency: '' };
+      initFields = { ...initFields, sizingReportNo: '', setNo: '', warpingSetRef: '', shift: 'Afternoon (2PM-10PM)', machineNo: '', operatorName: 'Senthil Kumar (General Manager)', designNo: 'DES-4091', beamLength: '', warpBeamsUsed: '', sizedBeamsOut: '', actualProduction: '', efficiency: '' };
     } else if (activePage === 'beam_received') {
-      initFields = { ...initFields, receiptType: 'New Beam from Vendor', fromParty: 'Standard Weaving Co.', gateInwardRef: '', dcNo: '', dcDate: dateToday, totalBeams: '', totalWeight: '', receivedBy: 'Mani Bharathi (Store Head)', status: 'Approved' };
+      initFields = {
+        ...initFields,
+        voucherNo: '',
+        voucherDate: dateToday,
+        shift: 'Morning (6AM-2PM)',
+        entryTime: new Date().toTimeString().substring(0, 5),
+        financialYear: '2026-2027',
+        sizingUnit: '',
+        warpingUnit: '',
+        jobWorkerName: '',
+        supplierName: '',
+        vehicleNo: '',
+        driverName: '',
+        challanNo: '',
+        beamNo: '',
+        beamType: 'Sized Beam',
+        beamWidth: '',
+        beamLength: '',
+        beamWeight: '',
+        grossWeight: '',
+        netWeight: '',
+        beamStatus: 'Good',
+        yarnCount: '',
+        yarnType: '',
+        millName: '',
+        lotNo: '',
+        shade: '',
+        endsCount: '',
+        warpMeter: '',
+        designNo: '',
+        buyerOrderNo: '',
+        workOrderNo: '',
+        fabricType: '',
+        loomType: '',
+        beamCondition: 'Standard',
+        tensionChecked: false,
+        moistureChecked: false,
+        damageStatus: 'No Damage',
+        qcStatus: 'Passed',
+        qcApprovedBy: '',
+        remarks: '',
+        attachmentUpload: '',
+        receivedBy: '',
+        approvedBy: ''
+      };
     } else if (activePage === 'beam_delivery') {
-      initFields = { ...initFields, deliveryType: 'To Weaving Section (Internal)', toParty: 'Weaving Unit A', setNo: '', designNo: 'DES-4091', totalBeams: '', expectedReturn: dateToday, deliveredBy: 'Murugan Swamy', status: 'Dispatched' };
+      initFields = {
+        ...initFields,
+        deliveryVoucherNo: '',
+        deliveryDate: dateToday,
+        shift: 'Morning (6AM-2PM)',
+        department: 'Weaving',
+        loomNo: '',
+        weaverName: '',
+        operatorName: '',
+        productionUnit: '',
+        section: '',
+        beamNo: '',
+        beamType: 'Sized Beam',
+        beamWidth: '',
+        beamLength: '',
+        availableMeter: '',
+        remainingMeter: '',
+        fabricName: '',
+        designNo: '',
+        gsm: '',
+        pick: '',
+        reed: '',
+        ends: '',
+        issuedQuantity: '',
+        issuedMeter: '',
+        targetProduction: '',
+        expectedCompletionDate: dateToday,
+        issuedBy: '',
+        receivedBy: '',
+        supervisorApproval: '',
+        remarks: '',
+        priority: 'Normal',
+        machineCondition: 'Good'
+      };
     } else if (activePage === 'empty_beam') {
-      initFields = { ...initFields, transactionType: 'Empty Beam Received (from weaving)', fromSection: 'Weaving Unit B', totalBeams: '', totalWeight: '', receivedBy: 'Mani Bharathi (Store Head)' };
+      initFields = {
+        ...initFields,
+        emptyBeamVoucherNo: '',
+        returnDate: dateToday,
+        shift: 'Morning (6AM-2PM)',
+        loomNo: '',
+        operatorName: '',
+        productionUnit: '',
+        returnLocation: 'Store',
+        beamNo: '',
+        beamType: 'Empty Beam',
+        beamCondition: 'Good',
+        damageStatus: 'No Damage',
+        reusableStatus: 'Ready',
+        usedMeter: '',
+        balanceMeter: '',
+        fabricProduced: '',
+        wasteMeter: '',
+        repairRequired: false,
+        maintenanceNotes: '',
+        nextUsageStatus: 'Ready',
+        checkedBy: '',
+        storeIncharge: '',
+        qcApproval: '',
+        remarks: '',
+        imageUpload: ''
+      };
     } else if (activePage === 'ws_bills') {
-      initFields = { ...initFields, vendorName: 'Standard Weaving Co.', vendorType: 'Warping + Sizing Combined', vendorBillNo: '', vendorBillDate: dateToday, processType: 'Warping + Sizing', setNo: '', taxableAmount: '', netPayable: '', dueDays: '30 Days', status: 'Approved' };
+      initFields = { ...initFields, voucherRefNo: '', vendorName: 'Standard Weaving Co.', vendorType: 'Warping + Sizing Combined', vendorBillNo: '', vendorBillDate: dateToday, processType: 'Warping + Sizing', setNo: '', taxableAmount: '', netPayable: '', dueDays: '30 Days', status: 'Approved' };
     } else if (activePage === 'set_amend') {
-      initFields = { ...initFields, amendmentType: 'Beam Length Correction', originalReportType: 'Warping Set Report', originalReportRef: '', setNo: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved' };
+      initFields = { ...initFields, voucherRefNo: '', amendmentType: 'Beam Length Correction', originalReportType: 'Warping Set Report', originalReportRef: '', setNo: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved' };
     }
 
     setFields(initFields);
@@ -152,7 +255,15 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
   const handleEdit = (row) => {
     setSelectedRecord(row);
     setCurrentFormId(row.id);
-    setFields({ ...row });
+    setFields({
+      ...row,
+      voucherNo: row.voucherNo || row.id,
+      deliveryVoucherNo: row.deliveryVoucherNo || row.id,
+      emptyBeamVoucherNo: row.emptyBeamVoucherNo || row.id,
+      setReportNo: row.setReportNo || row.id,
+      sizingReportNo: row.sizingReportNo || row.id,
+      voucherRefNo: row.voucherRefNo || row.id
+    });
     setActiveFormTab('General Info');
     setIsFormOpen(true);
   };
@@ -160,11 +271,14 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
   const handleSave = async (e) => {
     e.preventDefault();
 
+    const manualTxnNo = fields.voucherNo || fields.deliveryVoucherNo || fields.emptyBeamVoucherNo || fields.setReportNo || fields.sizingReportNo || fields.voucherRefNo;
+
     const payload = {
       module_type: activePage,
-      date: fields.date || new Date().toISOString().substring(0, 10),
-      buyer_name: fields.vendorName || fields.toParty || fields.fromParty || "Internal",
+      date: fields.date || fields.voucherDate || fields.deliveryDate || fields.returnDate || new Date().toISOString().substring(0, 10),
+      buyer_name: fields.supplierName || fields.weaverName || fields.operatorName || fields.vendorName || fields.toParty || fields.fromParty || "Internal",
       status: fields.status || 'Active',
+      transaction_no: manualTxnNo || undefined,
       details: fields
     };
 
@@ -179,7 +293,11 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
       alert("Warping/Sizing production record processed and saved!");
     } catch (err) {
       console.error("Failed to save", err);
-      alert("Failed to save record.");
+      if (err.response && err.response.data && err.response.data.detail) {
+        alert("Failed to save record: " + err.response.data.detail);
+      } else {
+        alert("Failed to save record.");
+      }
     }
   };
 
@@ -366,8 +484,158 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                 </div>
               )}
 
+              {/* BEAM RECEIVED TABLE */}
+              {activePage === 'beam_received' && (
+                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>VOUCHER NO</th>
+                        <th>DATE</th>
+                        <th>FINANCIAL YEAR</th>
+                        <th>SUPPLIER / JOB WORKER</th>
+                        <th>BEAM NO / TYPE</th>
+                        <th style={{ textAlign: 'right' }}>BEAM LENGTH</th>
+                        <th style={{ textAlign: 'right' }}>NET WEIGHT</th>
+                        <th>QC STATUS</th>
+                        <th>STATUS</th>
+                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {beamReceipts.map(row => (
+                        <tr key={row.id}>
+                          <td style={{ fontWeight: 700 }}>{row.id}</td>
+                          <td>{row.voucherDate || row.date}</td>
+                          <td>{row.financialYear}</td>
+                          <td style={{ fontWeight: 650 }}>{row.supplierName || row.jobWorkerName}</td>
+                          <td>{row.beamNo} ({row.beamType})</td>
+                          <td style={{ textAlign: 'right' }}>{row.beamLength} Mtr</td>
+                          <td style={{ textAlign: 'right' }}>{row.netWeight} Kg</td>
+                          <td>
+                            <span className={`badge ${row.qcStatus === 'Passed' ? 'badge-active' : 'badge-inactive'}`}>
+                              {row.qcStatus || 'Pending'}
+                            </span>
+                          </td>
+                          <td><span className="badge badge-active">{row.status}</span></td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {beamReceipts.length === 0 && (
+                        <tr>
+                          <td colSpan="10" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>No warp beam receipts found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* BEAM DELIVERY TABLE */}
+              {activePage === 'beam_delivery' && (
+                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>DELIVERY VOUCHER</th>
+                        <th>DATE</th>
+                        <th>LOOM NO</th>
+                        <th>WEAVER / OPERATOR</th>
+                        <th>BEAM NO / TYPE</th>
+                        <th style={{ textAlign: 'right' }}>ISSUED METER</th>
+                        <th>EXPECTED COMPLETION</th>
+                        <th>STATUS</th>
+                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {beamDeliveries.map(row => (
+                        <tr key={row.id}>
+                          <td style={{ fontWeight: 700 }}>{row.id}</td>
+                          <td>{row.deliveryDate || row.date}</td>
+                          <td>{row.loomNo}</td>
+                          <td style={{ fontWeight: 650 }}>{row.weaverName || row.operatorName}</td>
+                          <td>{row.beamNo} ({row.beamType})</td>
+                          <td style={{ textAlign: 'right' }}>{row.issuedMeter} Mtr</td>
+                          <td>{row.expectedCompletionDate}</td>
+                          <td><span className="badge badge-active">{row.status}</span></td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {beamDeliveries.length === 0 && (
+                        <tr>
+                          <td colSpan="9" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>No warp beam deliveries found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* EMPTY BEAM TABLE */}
+              {activePage === 'empty_beam' && (
+                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>EMPTY BEAM VOUCHER</th>
+                        <th>RETURN DATE</th>
+                        <th>LOOM NO</th>
+                        <th>OPERATOR</th>
+                        <th>BEAM NO / TYPE</th>
+                        <th>REUSABLE STATUS</th>
+                        <th style={{ textAlign: 'right' }}>USED METER</th>
+                        <th style={{ textAlign: 'right' }}>WASTE METER</th>
+                        <th>STATUS</th>
+                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emptyBeams.map(row => (
+                        <tr key={row.id}>
+                          <td style={{ fontWeight: 700 }}>{row.id}</td>
+                          <td>{row.returnDate || row.date}</td>
+                          <td>{row.loomNo}</td>
+                          <td style={{ fontWeight: 650 }}>{row.operatorName}</td>
+                          <td>{row.beamNo} ({row.beamType})</td>
+                          <td>
+                            <span className={`badge ${row.reusableStatus === 'Ready' ? 'badge-active' : 'badge-inactive'}`}>
+                              {row.reusableStatus}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>{row.usedMeter} Mtr</td>
+                          <td style={{ textAlign: 'right' }}>{row.wasteMeter} Mtr</td>
+                          <td><span className="badge badge-active">{row.status}</span></td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {emptyBeams.length === 0 && (
+                        <tr>
+                          <td colSpan="10" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>No empty beam entries found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               {/* FALLBACK INFO PANEL */}
-              {!['warping_report', 'sizing_report'].includes(activePage) && (
+              {!['warping_report', 'sizing_report', 'beam_received', 'beam_delivery', 'empty_beam'].includes(activePage) && (
                 <div className="card" style={{ padding: '40px', textAlign: 'center', background: 'white' }}>
                   <Sparkles size={36} style={{ color: '#059669', marginBottom: '12px' }} />
                   <h4 style={{ fontWeight: 800, margin: 0 }}>Sizing & Beam Operations Active</h4>
@@ -404,8 +672,8 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                     <div className="form-group">
-                      <label>Set Report No</label>
-                      <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
+                      <label>Set Report No *</label>
+                      <input type="text" className="form-control" name="setReportNo" value={fields.setReportNo || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                       <label>Set No *</label>
@@ -451,8 +719,8 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                     <div className="form-group">
-                      <label>Sizing Report No</label>
-                      <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
+                      <label>Sizing Report No *</label>
+                      <input type="text" className="form-control" name="sizingReportNo" value={fields.sizingReportNo || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                       <label>Set No *</label>
@@ -491,14 +759,670 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                 </div>
               )}
 
+              {/* WARP BEAM RECEIVED ENTRY FORM */}
+              {activePage === 'beam_received' && (
+                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📋 Header Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Voucher No *</label>
+                        <input type="text" className="form-control" name="voucherNo" value={fields.voucherNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Voucher Date *</label>
+                        <input type="date" className="form-control" name="voucherDate" value={fields.voucherDate || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Shift *</label>
+                        <select className="form-control" name="shift" value={fields.shift || ''} onChange={handleInputChange}>
+                          {SHIFTS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Entry Time *</label>
+                        <input type="time" className="form-control" name="entryTime" value={fields.entryTime || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Financial Year *</label>
+                        <input type="text" className="form-control" name="financialYear" value={fields.financialYear || ''} onChange={handleInputChange} required />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🏢 Party Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Sizing Unit</label>
+                        <input type="text" className="form-control" name="sizingUnit" value={fields.sizingUnit || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Warping Unit</label>
+                        <input type="text" className="form-control" name="warpingUnit" value={fields.warpingUnit || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Job Worker Name</label>
+                        <input type="text" className="form-control" name="jobWorkerName" value={fields.jobWorkerName || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Supplier Name</label>
+                        <input type="text" className="form-control" name="supplierName" value={fields.supplierName || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🚚 Transport & Challan
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Vehicle No</label>
+                        <input type="text" className="form-control" name="vehicleNo" value={fields.vehicleNo || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Driver Name</label>
+                        <input type="text" className="form-control" name="driverName" value={fields.driverName || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Challan No</label>
+                        <input type="text" className="form-control" name="challanNo" value={fields.challanNo || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      ⚙️ Beam Specifications
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Beam No *</label>
+                        <input type="text" className="form-control" name="beamNo" value={fields.beamNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Type *</label>
+                        <select className="form-control" name="beamType" value={fields.beamType || ''} onChange={handleInputChange}>
+                          <option value="Sized Beam">Sized Beam</option>
+                          <option value="Weavers Beam">Weavers Beam</option>
+                          <option value="Warpers Beam">Warpers Beam</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Width (mm)</label>
+                        <input type="number" className="form-control" name="beamWidth" value={fields.beamWidth || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Length (Mtr) *</label>
+                        <input type="number" className="form-control" name="beamLength" value={fields.beamLength || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Weight (Kg)</label>
+                        <input type="number" className="form-control" name="beamWeight" value={fields.beamWeight || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Gross Weight (Kg)</label>
+                        <input type="number" className="form-control" name="grossWeight" value={fields.grossWeight || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Net Weight (Kg)</label>
+                        <input type="number" className="form-control" name="netWeight" value={fields.netWeight || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Status</label>
+                        <select className="form-control" name="beamStatus" value={fields.beamStatus || ''} onChange={handleInputChange}>
+                          <option value="Good">Good</option>
+                          <option value="Average">Average</option>
+                          <option value="Requires Mending">Requires Mending</option>
+                          <option value="Damaged">Damaged</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🧵 Yarn Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Yarn Count</label>
+                        <input type="text" className="form-control" name="yarnCount" value={fields.yarnCount || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Yarn Type</label>
+                        <input type="text" className="form-control" name="yarnType" value={fields.yarnType || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Mill Name</label>
+                        <input type="text" className="form-control" name="millName" value={fields.millName || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Lot No</label>
+                        <input type="text" className="form-control" name="lotNo" value={fields.lotNo || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Shade</label>
+                        <input type="text" className="form-control" name="shade" value={fields.shade || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Ends Count</label>
+                        <input type="number" className="form-control" name="endsCount" value={fields.endsCount || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Warp Meter</label>
+                        <input type="number" className="form-control" name="warpMeter" value={fields.warpMeter || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🏭 Production Info
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Design No</label>
+                        <input type="text" className="form-control" name="designNo" value={fields.designNo || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Buyer Order No</label>
+                        <input type="text" className="form-control" name="buyerOrderNo" value={fields.buyerOrderNo || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Work Order No</label>
+                        <input type="text" className="form-control" name="workOrderNo" value={fields.workOrderNo || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Fabric Type</label>
+                        <input type="text" className="form-control" name="fabricType" value={fields.fabricType || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Loom Type</label>
+                        <input type="text" className="form-control" name="loomType" value={fields.loomType || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🔬 Quality Assurance (QC)
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Beam Condition</label>
+                        <input type="text" className="form-control" name="beamCondition" value={fields.beamCondition || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '30px' }}>
+                        <input type="checkbox" name="tensionChecked" checked={fields.tensionChecked || false} onChange={handleInputChange} />
+                        <label style={{ margin: 0 }}>Tension Checked</label>
+                      </div>
+                      <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '30px' }}>
+                        <input type="checkbox" name="moistureChecked" checked={fields.moistureChecked || false} onChange={handleInputChange} />
+                        <label style={{ margin: 0 }}>Moisture Checked</label>
+                      </div>
+                      <div className="form-group">
+                        <label>Damage Status</label>
+                        <select className="form-control" name="damageStatus" value={fields.damageStatus || ''} onChange={handleInputChange}>
+                          <option value="No Damage">No Damage</option>
+                          <option value="Minor Damage">Minor Damage</option>
+                          <option value="Major Damage">Major Damage</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>QC Status</label>
+                        <select className="form-control" name="qcStatus" value={fields.qcStatus || ''} onChange={handleInputChange}>
+                          <option value="Passed">Passed</option>
+                          <option value="Failed">Failed</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>QC Approved By</label>
+                        <select className="form-control" name="qcApprovedBy" value={fields.qcApprovedBy || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📝 Additional Information
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                        <label>Remarks</label>
+                        <textarea className="form-control" rows="3" name="remarks" value={fields.remarks || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Attachment Upload (File Link)</label>
+                        <input type="text" className="form-control" name="attachmentUpload" placeholder="e.g. docs/challan.pdf" value={fields.attachmentUpload || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Received By</label>
+                        <select className="form-control" name="receivedBy" value={fields.receivedBy || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Approved By</label>
+                        <select className="form-control" name="approvedBy" value={fields.approvedBy || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* WARP BEAM DELIVERY ENTRY FORM */}
+              {activePage === 'beam_delivery' && (
+                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📋 Header Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Delivery Voucher No *</label>
+                        <input type="text" className="form-control" name="deliveryVoucherNo" value={fields.deliveryVoucherNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Delivery Date *</label>
+                        <input type="date" className="form-control" name="deliveryDate" value={fields.deliveryDate || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Shift *</label>
+                        <select className="form-control" name="shift" value={fields.shift || ''} onChange={handleInputChange}>
+                          {SHIFTS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Department *</label>
+                        <input type="text" className="form-control" name="department" value={fields.department || ''} onChange={handleInputChange} required />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📍 Delivery Destination Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Loom No *</label>
+                        <input type="text" className="form-control" name="loomNo" value={fields.loomNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Weaver Name</label>
+                        <input type="text" className="form-control" name="weaverName" value={fields.weaverName || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Operator Name</label>
+                        <select className="form-control" name="operatorName" value={fields.operatorName || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Operator --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Production Unit</label>
+                        <input type="text" className="form-control" name="productionUnit" value={fields.productionUnit || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Section</label>
+                        <input type="text" className="form-control" name="section" value={fields.section || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      ⚙️ Beam Information
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 2fr) repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Beam No *</label>
+                        <input type="text" className="form-control" name="beamNo" value={fields.beamNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Type *</label>
+                        <select className="form-control" name="beamType" value={fields.beamType || ''} onChange={handleInputChange}>
+                          <option value="Sized Beam">Sized Beam</option>
+                          <option value="Weavers Beam">Weavers Beam</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Width (mm)</label>
+                        <input type="number" className="form-control" name="beamWidth" value={fields.beamWidth || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Length (Mtr) *</label>
+                        <input type="number" className="form-control" name="beamLength" value={fields.beamLength || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Available Meter</label>
+                        <input type="number" className="form-control" name="availableMeter" value={fields.availableMeter || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Remaining Meter</label>
+                        <input type="number" className="form-control" name="remainingMeter" value={fields.remainingMeter || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🧵 Fabric Construction Specifications
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Fabric Name</label>
+                        <input type="text" className="form-control" name="fabricName" value={fields.fabricName || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Design No</label>
+                        <input type="text" className="form-control" name="designNo" value={fields.designNo || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>GSM</label>
+                        <input type="number" className="form-control" name="gsm" value={fields.gsm || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Pick</label>
+                        <input type="number" className="form-control" name="pick" value={fields.pick || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Reed</label>
+                        <input type="number" className="form-control" name="reed" value={fields.reed || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Ends</label>
+                        <input type="number" className="form-control" name="ends" value={fields.ends || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📦 Issue Parameters
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Issued Quantity (Beams)</label>
+                        <input type="number" className="form-control" name="issuedQuantity" value={fields.issuedQuantity || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Issued Meter *</label>
+                        <input type="number" className="form-control" name="issuedMeter" value={fields.issuedMeter || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Target Production</label>
+                        <input type="text" className="form-control" name="targetProduction" value={fields.targetProduction || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Expected Completion</label>
+                        <input type="date" className="form-control" name="expectedCompletionDate" value={fields.expectedCompletionDate || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      ✅ Approvals & Status
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Issued By</label>
+                        <select className="form-control" name="issuedBy" value={fields.issuedBy || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Received By</label>
+                        <select className="form-control" name="receivedBy" value={fields.receivedBy || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Supervisor Approval</label>
+                        <input type="text" className="form-control" name="supervisorApproval" value={fields.supervisorApproval || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Status</label>
+                        <select className="form-control" name="status" value={fields.status || ''} onChange={handleInputChange}>
+                          <option value="Active">Active</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📝 Additional Info
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                        <label>Remarks</label>
+                        <textarea className="form-control" rows="3" name="remarks" value={fields.remarks || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Priority</label>
+                        <select className="form-control" name="priority" value={fields.priority || ''} onChange={handleInputChange}>
+                          <option value="Normal">Normal</option>
+                          <option value="Urgent">Urgent</option>
+                          <option value="Low">Low</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Machine Condition</label>
+                        <input type="text" className="form-control" name="machineCondition" value={fields.machineCondition || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* EMPTY BEAM ENTRY FORM */}
+              {activePage === 'empty_beam' && (
+                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📋 Header Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Empty Beam Voucher No *</label>
+                        <input type="text" className="form-control" name="emptyBeamVoucherNo" value={fields.emptyBeamVoucherNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Return Date *</label>
+                        <input type="date" className="form-control" name="returnDate" value={fields.returnDate || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Shift *</label>
+                        <select className="form-control" name="shift" value={fields.shift || ''} onChange={handleInputChange}>
+                          {SHIFTS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📍 Return Source Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Loom No *</label>
+                        <input type="text" className="form-control" name="loomNo" value={fields.loomNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Operator Name</label>
+                        <select className="form-control" name="operatorName" value={fields.operatorName || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Operator --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Production Unit</label>
+                        <input type="text" className="form-control" name="productionUnit" value={fields.productionUnit || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Return Location</label>
+                        <input type="text" className="form-control" name="returnLocation" value={fields.returnLocation || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      ⚙️ Beam Information
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Beam No *</label>
+                        <input type="text" className="form-control" name="beamNo" value={fields.beamNo || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Type *</label>
+                        <input type="text" className="form-control" name="beamType" value={fields.beamType || ''} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Beam Condition</label>
+                        <input type="text" className="form-control" name="beamCondition" value={fields.beamCondition || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Damage Status</label>
+                        <select className="form-control" name="damageStatus" value={fields.damageStatus || ''} onChange={handleInputChange}>
+                          <option value="No Damage">No Damage</option>
+                          <option value="Minor Damage">Minor Damage</option>
+                          <option value="Major Damage">Major Damage</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Reusable Status</label>
+                        <select className="form-control" name="reusableStatus" value={fields.reusableStatus || ''} onChange={handleInputChange}>
+                          <option value="Ready">Ready</option>
+                          <option value="Requires Repair">Requires Repair</option>
+                          <option value="Scrap">Scrap</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📊 Usage Summary
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Used Meter</label>
+                        <input type="number" className="form-control" name="usedMeter" value={fields.usedMeter || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Balance Meter</label>
+                        <input type="number" className="form-control" name="balanceMeter" value={fields.balanceMeter || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Fabric Produced (Mtr)</label>
+                        <input type="number" className="form-control" name="fabricProduced" value={fields.fabricProduced || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Waste Meter</label>
+                        <input type="number" className="form-control" name="wasteMeter" value={fields.wasteMeter || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      🛠️ Maintenance & Repair Details
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '30px' }}>
+                        <input type="checkbox" name="repairRequired" checked={fields.repairRequired || false} onChange={handleInputChange} />
+                        <label style={{ margin: 0 }}>Repair Required</label>
+                      </div>
+                      <div className="form-group">
+                        <label>Maintenance Notes</label>
+                        <input type="text" className="form-control" name="maintenanceNotes" value={fields.maintenanceNotes || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Next Usage Status</label>
+                        <select className="form-control" name="nextUsageStatus" value={fields.nextUsageStatus || ''} onChange={handleInputChange}>
+                          <option value="Ready">Ready</option>
+                          <option value="In Repair">In Repair</option>
+                          <option value="Scrapped">Scrapped</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      ✅ Verification & Approvals
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                      <div className="form-group">
+                        <label>Checked By</label>
+                        <select className="form-control" name="checkedBy" value={fields.checkedBy || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Store Incharge</label>
+                        <select className="form-control" name="storeIncharge" value={fields.storeIncharge || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Employee --</option>
+                          {EMPLOYEES.map(emp => <option key={emp} value={emp}>{emp}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>QC Approval</label>
+                        <input type="text" className="form-control" name="qcApproval" value={fields.qcApproval || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#059669', marginBottom: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                      📝 Additional Info
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Remarks</label>
+                        <textarea className="form-control" rows="3" name="remarks" value={fields.remarks || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Image Upload Link</label>
+                        <input type="text" className="form-control" name="imageUpload" placeholder="e.g. images/beam_44.png" value={fields.imageUpload || ''} onChange={handleInputChange} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* FALLBACK SIMPLE CONFIGS FORM FOR REMAINING MODULES */}
-              {!['warping_report', 'sizing_report'].includes(activePage) && (
+              {!['warping_report', 'sizing_report', 'beam_received', 'beam_delivery', 'empty_beam'].includes(activePage) && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <h4 style={{ color: '#059669', fontSize: '14px', fontWeight: 800, margin: 0 }}>Voucher Details & Audit Configs</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                     <div className="form-group">
-                      <label>Voucher Ref No</label>
-                      <input type="text" className="form-control" value={currentFormId} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 700 }} />
+                      <label>Voucher Ref No *</label>
+                      <input type="text" className="form-control" name="voucherRefNo" value={fields.voucherRefNo || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                       <label>Record Category</label>
