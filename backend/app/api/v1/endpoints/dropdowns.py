@@ -104,6 +104,10 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     custom_buyers = [r.name for r in sm_rows if r.entity == "buyer"]
     custom_party_terms = [r.name for r in sm_rows if r.entity == "party_terms_master"]
     custom_org_names = [r.name for r in sm_rows if r.entity == "organization_name_master"]
+    custom_against_refs = [r.name for r in sm_rows if r.entity == "against_reference_master"]
+    custom_freight_types = [r.name for r in sm_rows if r.entity == "freight_type_master"]
+    custom_mill_names = [r.name for r in sm_rows if r.entity == "mill_name_master"]
+    custom_yarn_counts = [r.name for r in sm_rows if r.entity == "yarn_count_master"]
 
     if district_cities:
         masters["city"] = district_cities
@@ -145,6 +149,10 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     masters["buyer"] = list(dict.fromkeys(custom_buyers))
     masters["party_terms_master"] = list(dict.fromkeys(custom_party_terms))
     masters["organization_name_master"] = list(dict.fromkeys(custom_org_names))
+    masters["against_reference_master"] = list(dict.fromkeys(custom_against_refs))
+    masters["freight_type_master"] = list(dict.fromkeys(custom_freight_types))
+    masters["mill_name_master"] = list(dict.fromkeys(custom_mill_names))
+    masters["yarn_count_master"] = list(dict.fromkeys(custom_yarn_counts))
         
     INDIAN_STATES = [
         "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", 

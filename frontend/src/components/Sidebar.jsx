@@ -69,7 +69,9 @@ const modules = [
     icon: Wrench,
     children: [
       { path: '/sub-master/ac_incharge', label: 'A/C Incharge', icon: Users },
+      { path: '/sub-master/against_reference_master', label: 'Against Reference Master', icon: ClipboardList },
       { path: '/sub-master/category_master', label: 'Category Master', icon: Layers },
+      { path: '/sub-master/freight_type_master', label: 'Freight Type Master', icon: Truck },
       { path: '/sub-master/checker_name_master', label: 'Checker Name', icon: CheckSquare },
       { path: '/sub-master/checking_table_machine', label: 'Checking Table/Machine', icon: Settings },
       { path: '/sub-master/chemical_group_master', label: 'Chemical Group', icon: Layers },

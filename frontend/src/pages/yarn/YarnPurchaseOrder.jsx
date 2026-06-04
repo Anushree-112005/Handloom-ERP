@@ -25,6 +25,22 @@ export default function YarnPurchaseOrder() {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isCustomOrg, setIsCustomOrg] = useState(false);
   const [customOrgVal, setCustomOrgVal] = useState('');
+  const [isCustomAgainstRef, setIsCustomAgainstRef] = useState(false);
+  const [customAgainstRefVal, setCustomAgainstRefVal] = useState('');
+  const [isCustomPackingType, setIsCustomPackingType] = useState(false);
+  const [customPackingTypeVal, setCustomPackingTypeVal] = useState('');
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+  const [isCustomColour, setIsCustomColour] = useState(false);
+  const [customColourVal, setCustomColourVal] = useState('');
+  const [isCustomFreightType, setIsCustomFreightType] = useState(false);
+  const [customFreightTypeVal, setCustomFreightTypeVal] = useState('');
+  const [customMillNameIdx, setCustomMillNameIdx] = useState(null);
+  const [customMillNameVal, setCustomMillNameVal] = useState('');
+  const [customFabricNameIdx, setCustomFabricNameIdx] = useState(null);
+  const [customFabricNameVal, setCustomFabricNameVal] = useState('');
+  const [customYarnCountIdx, setCustomYarnCountIdx] = useState(null);
+  const [customYarnCountVal, setCustomYarnCountVal] = useState('');
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,6 +99,118 @@ export default function YarnPurchaseOrder() {
       setCustomOrgVal('');
     } catch (err) {
       alert('Error saving custom organization name');
+    }
+  };
+
+  const handleSaveCustomAgainstRef = async () => {
+    if (!customAgainstRefVal.trim()) return;
+    try {
+      await subMasterAPI.create('against_reference_master', { entity: 'against_reference_master', name: customAgainstRefVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, against_ref: customAgainstRefVal.trim() });
+      setIsCustomAgainstRef(false);
+      setCustomAgainstRefVal('');
+    } catch (err) {
+      alert('Error saving custom against reference');
+    }
+  };
+
+  const handleSaveCustomPackingType = async () => {
+    if (!customPackingTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('packing_type_master', { entity: 'packing_type_master', name: customPackingTypeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, packing_type: customPackingTypeVal.trim() });
+      setIsCustomPackingType(false);
+      setCustomPackingTypeVal('');
+    } catch (err) {
+      alert('Error saving custom packing type');
+    }
+  };
+
+  const handleSaveCustomTransport = async () => {
+    if (!customTransportVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_name_master', { entity: 'transport_name_master', name: customTransportVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, transport: customTransportVal.trim() });
+      setIsCustomTransport(false);
+      setCustomTransportVal('');
+    } catch (err) {
+      alert('Error saving custom transport');
+    }
+  };
+
+  const handleSaveCustomColour = async () => {
+    if (!customColourVal.trim()) return;
+    try {
+      await subMasterAPI.create('color_master', { entity: 'color_master', name: customColourVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, colour: customColourVal.trim() });
+      setIsCustomColour(false);
+      setCustomColourVal('');
+    } catch (err) {
+      alert('Error saving custom colour');
+    }
+  };
+
+  const handleSaveCustomFreightType = async () => {
+    if (!customFreightTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('freight_type_master', { entity: 'freight_type_master', name: customFreightTypeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, freight_type: customFreightTypeVal.trim() });
+      setIsCustomFreightType(false);
+      setCustomFreightTypeVal('');
+    } catch (err) {
+      alert('Error saving custom freight type');
+    }
+  };
+
+  const handleSaveCustomMillName = async () => {
+    if (!customMillNameVal.trim() || customMillNameIdx === null) return;
+    try {
+      await subMasterAPI.create('mill_name_master', { entity: 'mill_name_master', name: customMillNameVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateCountDetail(customMillNameIdx, 'mill_name', customMillNameVal.trim());
+      setCustomMillNameIdx(null);
+      setCustomMillNameVal('');
+    } catch (err) {
+      alert('Error saving custom mill name');
+    }
+  };
+
+  const handleSaveCustomFabricName = async () => {
+    if (!customFabricNameVal.trim() || customFabricNameIdx === null) return;
+    try {
+      await subMasterAPI.create('fabric_type_master', { entity: 'fabric_type_master', name: customFabricNameVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateIndentDetail(customFabricNameIdx, 'fabric_name', customFabricNameVal.trim());
+      setCustomFabricNameIdx(null);
+      setCustomFabricNameVal('');
+    } catch (err) {
+      alert('Error saving custom fabric name');
+    }
+  };
+
+  const handleSaveCustomYarnCount = async () => {
+    if (!customYarnCountVal.trim() || customYarnCountIdx === null) return;
+    try {
+      await subMasterAPI.create('yarn_count_master', { entity: 'yarn_count_master', name: customYarnCountVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateIndentDetail(customYarnCountIdx, 'yarn_count', customYarnCountVal.trim());
+      setCustomYarnCountIdx(null);
+      setCustomYarnCountVal('');
+    } catch (err) {
+      alert('Error saving custom yarn count');
     }
   };
 
@@ -430,7 +558,7 @@ export default function YarnPurchaseOrder() {
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
               
               {activeTab === 'main' && (
                 <div className="animate-fade">
@@ -459,9 +587,22 @@ export default function YarnPurchaseOrder() {
                     <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>
                     <div className="form-group"><label>Against Reference</label>
-                      <select className="form-control" name="against_ref" value={form.against_ref} onChange={handleChange}>
-                        <option value="">Select...</option><option>Direct</option><option>Buyer Order</option>
-                      </select>
+                      {isCustomAgainstRef ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Against Ref..." value={customAgainstRefVal} onChange={e => setCustomAgainstRefVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomAgainstRef}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomAgainstRef(false); setCustomAgainstRefVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="against_ref" value={form.against_ref || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomAgainstRef(true);
+                          else handleChange(e);
+                        }}>
+                          <option value="">Select...</option>
+                          {options.masters?.against_reference_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Against Ref...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier Name</label>
@@ -494,7 +635,24 @@ export default function YarnPurchaseOrder() {
                         <div className="form-group"><label>Yarn CSP</label><input type="number" className="form-control" value={item.yarn_csp} onChange={e => updateCountDetail(idx, 'yarn_csp', e.target.value)} /></div>
                         <div className="form-group"><label>Min Cone Wgt</label><input type="number" className="form-control" value={item.min_cone_wgt} onChange={e => updateCountDetail(idx, 'min_cone_wgt', e.target.value)} /></div>
                         <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" value={item.order_kgs} onChange={e => updateCountDetail(idx, 'order_kgs', e.target.value)} /></div>
-                        <div className="form-group"><label>Mill Name</label><input className="form-control" value={item.mill_name} onChange={e => updateCountDetail(idx, 'mill_name', e.target.value)} /></div>
+                        <div className="form-group"><label>Mill Name</label>
+                          {customMillNameIdx === idx ? (
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <input type="text" className="form-control" autoFocus placeholder="Enter Mill Name..." value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
+                              <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomMillName}><CheckCircle size={16} /></button>
+                              <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setCustomMillNameIdx(null); setCustomMillNameVal(''); }}><X size={16} /></button>
+                            </div>
+                          ) : (
+                            <select className="form-control" value={item.mill_name || ''} onChange={e => {
+                              if (e.target.value === 'custom') setCustomMillNameIdx(idx);
+                              else updateCountDetail(idx, 'mill_name', e.target.value);
+                            }}>
+                              <option value="">Select Mill...</option>
+                              {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                              <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Mill...</option>
+                            </select>
+                          )}
+                        </div>
                         <div className="form-group"><label>Print Name</label><input className="form-control" value={item.print_name} onChange={e => updateCountDetail(idx, 'print_name', e.target.value)} /></div>
                         <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateCountDetail(idx, 'tolerance_pct', e.target.value)} /></div>
                       </div>
@@ -506,8 +664,8 @@ export default function YarnPurchaseOrder() {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
                     <button type="button" className="btn btn-secondary" onClick={addIndentDetail}><Plus size={16} /> Add Indent Row</button>
                   </div>
-                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-                    <table className="data-table">
+                  <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
+                    <table className="data-table" style={{ minWidth: '1800px' }}>
                       <thead>
                         <tr>
                           <th>SNo</th><th>Req Ind No</th><th>Design No</th><th>IBPO No</th><th>Party Name</th><th>Fabric Name</th><th>Yarn Count</th>
@@ -521,9 +679,48 @@ export default function YarnPurchaseOrder() {
                             <td><input className="form-control" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.design_no} onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.ibpo_no} onChange={e => updateIndentDetail(idx, 'ibpo_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120 }} value={item.party_name} onChange={e => updateIndentDetail(idx, 'party_name', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120 }} value={item.fabric_name} onChange={e => updateIndentDetail(idx, 'fabric_name', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.yarn_count} onChange={e => updateIndentDetail(idx, 'yarn_count', e.target.value)} /></td>
+                            <td>
+                              <select className="form-control" style={{ width: 140 }} value={item.party_name || ''} onChange={e => updateIndentDetail(idx, 'party_name', e.target.value)}>
+                                <option value="">Select Party...</option>
+                                {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                              </select>
+                            </td>
+                            <td>
+                              {customFabricNameIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customFabricNameVal} onChange={e => setCustomFabricNameVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomFabricName}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomFabricNameIdx(null); setCustomFabricNameVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 130 }} value={item.fabric_name || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomFabricNameIdx(idx);
+                                  else updateIndentDetail(idx, 'fabric_name', e.target.value);
+                                }}>
+                                  <option value="">Select Fabric...</option>
+                                  {options.masters?.fabric_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customYarnCountIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 80 }} autoFocus value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomYarnCount}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomYarnCountIdx(null); setCustomYarnCountVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 120 }} value={item.yarn_count || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
+                                  else updateIndentDetail(idx, 'yarn_count', e.target.value);
+                                }}>
+                                  <option value="">Select Count...</option>
+                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.order_mtrs} onChange={e => updateIndentDetail(idx, 'order_mtrs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.warp_qty} onChange={e => updateIndentDetail(idx, 'warp_qty', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.weft_qty} onChange={e => updateIndentDetail(idx, 'weft_qty', e.target.value)} /></td>
@@ -541,15 +738,45 @@ export default function YarnPurchaseOrder() {
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group"><label>Freight Type</label>
-                      <select className="form-control" name="freight_type" value={form.freight_type} onChange={handleChange}>
-                        <option>To Pay</option><option>Paid</option>
-                      </select>
+                      {isCustomFreightType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Freight Type..." value={customFreightTypeVal} onChange={e => setCustomFreightTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightType}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightType(false); setCustomFreightTypeVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="freight_type" value={form.freight_type || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomFreightType(true);
+                          else handleChange(e);
+                        }}>
+                          <option value="">Select...</option>
+                          {options.masters?.freight_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight Type...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Freight Chg</label><input type="number" className="form-control" name="freight_chg" value={form.freight_chg} onChange={handleChange} /></div>
                     <div className="form-group"><label>Insurance Chg</label><input type="number" className="form-control" name="insurance_chg" value={form.insurance_chg} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
                     
-                    <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Transport</label>
+                      {isCustomTransport ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport" value={form.transport || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomTransport(true);
+                          else handleChange(e);
+                        }}>
+                          <option value="">Select...</option>
+                          {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>TAX Type</label>
                       <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
                         <option>GST</option><option>IGST</option><option>Exempt</option>
@@ -559,16 +786,46 @@ export default function YarnPurchaseOrder() {
                     <div className="form-group"><label>Dispatch Date</label><input type="date" className="form-control" name="dispatch_date" value={form.dispatch_date} onChange={handleChange} /></div>
                     
                     <div className="form-group"><label>Packing Type</label>
-                      <select className="form-control" name="packing_type" value={form.packing_type} onChange={handleChange}>
-                        <option>Bags</option><option>Boxes</option><option>Pallets</option>
-                      </select>
+                      {isCustomPackingType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Packing Type..." value={customPackingTypeVal} onChange={e => setCustomPackingTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomPackingType}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomPackingType(false); setCustomPackingTypeVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="packing_type" value={form.packing_type || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomPackingType(true);
+                          else handleChange(e);
+                        }}>
+                          <option value="">Select...</option>
+                          {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Packing...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
                     <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
                     <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
                     
                     <div className="form-group"><label>Labeling</label><input className="form-control" name="labeling" value={form.labeling} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Colour</label><input className="form-control" name="colour" value={form.colour} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Colour</label>
+                      {isCustomColour ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Colour..." value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomColour}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomColour(false); setCustomColourVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="colour" value={form.colour || ''} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomColour(true);
+                          else handleChange(e);
+                        }}>
+                          <option value="">Select...</option>
+                          {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Colour...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
                     
@@ -594,7 +851,24 @@ export default function YarnPurchaseOrder() {
                         <div className="form-group"><label>Yarn CSP</label><input type="number" className="form-control" value={item.yarn_csp} onChange={e => updateCountDetail(idx, 'yarn_csp', e.target.value)} /></div>
                         <div className="form-group"><label>Min Cone Wgt</label><input type="number" className="form-control" value={item.min_cone_wgt} onChange={e => updateCountDetail(idx, 'min_cone_wgt', e.target.value)} /></div>
                         <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" value={item.order_kgs} onChange={e => updateCountDetail(idx, 'order_kgs', e.target.value)} /></div>
-                        <div className="form-group"><label>Mill Name</label><input className="form-control" value={item.mill_name} onChange={e => updateCountDetail(idx, 'mill_name', e.target.value)} /></div>
+                        <div className="form-group"><label>Mill Name</label>
+                          {customMillNameIdx === idx ? (
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <input type="text" className="form-control" autoFocus placeholder="Enter Mill Name..." value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
+                              <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomMillName}><CheckCircle size={16} /></button>
+                              <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setCustomMillNameIdx(null); setCustomMillNameVal(''); }}><X size={16} /></button>
+                            </div>
+                          ) : (
+                            <select className="form-control" value={item.mill_name || ''} onChange={e => {
+                              if (e.target.value === 'custom') setCustomMillNameIdx(idx);
+                              else updateCountDetail(idx, 'mill_name', e.target.value);
+                            }}>
+                              <option value="">Select Mill...</option>
+                              {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                              <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Mill...</option>
+                            </select>
+                          )}
+                        </div>
                         <div className="form-group"><label>Print Name</label><input className="form-control" value={item.print_name} onChange={e => updateCountDetail(idx, 'print_name', e.target.value)} /></div>
                         <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateCountDetail(idx, 'tolerance_pct', e.target.value)} /></div>
                       </div>
@@ -624,9 +898,48 @@ export default function YarnPurchaseOrder() {
                             <td><input className="form-control" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.design_no} onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.ibpo_no} onChange={e => updateIndentDetail(idx, 'ibpo_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120 }} value={item.party_name} onChange={e => updateIndentDetail(idx, 'party_name', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120 }} value={item.fabric_name} onChange={e => updateIndentDetail(idx, 'fabric_name', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.yarn_count} onChange={e => updateIndentDetail(idx, 'yarn_count', e.target.value)} /></td>
+                            <td>
+                              <select className="form-control" style={{ width: 140 }} value={item.party_name || ''} onChange={e => updateIndentDetail(idx, 'party_name', e.target.value)}>
+                                <option value="">Select Party...</option>
+                                {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                              </select>
+                            </td>
+                            <td>
+                              {customFabricNameIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customFabricNameVal} onChange={e => setCustomFabricNameVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomFabricName}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomFabricNameIdx(null); setCustomFabricNameVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 130 }} value={item.fabric_name || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomFabricNameIdx(idx);
+                                  else updateIndentDetail(idx, 'fabric_name', e.target.value);
+                                }}>
+                                  <option value="">Select Fabric...</option>
+                                  {options.masters?.fabric_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customYarnCountIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 80 }} autoFocus value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomYarnCount}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomYarnCountIdx(null); setCustomYarnCountVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 120 }} value={item.yarn_count || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
+                                  else updateIndentDetail(idx, 'yarn_count', e.target.value);
+                                }}>
+                                  <option value="">Select Count...</option>
+                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.order_mtrs} onChange={e => updateIndentDetail(idx, 'order_mtrs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.warp_qty} onChange={e => updateIndentDetail(idx, 'warp_qty', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.weft_qty} onChange={e => updateIndentDetail(idx, 'weft_qty', e.target.value)} /></td>
@@ -645,15 +958,45 @@ export default function YarnPurchaseOrder() {
               {activeTab === 'tax' && (
                 <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                   <div className="form-group"><label>Freight Type</label>
-                    <select className="form-control" name="freight_type" value={form.freight_type} onChange={handleChange}>
-                      <option>To Pay</option><option>Paid</option>
-                    </select>
+                    {isCustomFreightType ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input type="text" className="form-control" autoFocus placeholder="Enter Freight Type..." value={customFreightTypeVal} onChange={e => setCustomFreightTypeVal(e.target.value)} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightType}><CheckCircle size={16} /></button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightType(false); setCustomFreightTypeVal(''); }}><X size={16} /></button>
+                      </div>
+                    ) : (
+                      <select className="form-control" name="freight_type" value={form.freight_type || ''} onChange={e => {
+                        if (e.target.value === 'custom') setIsCustomFreightType(true);
+                        else handleChange(e);
+                      }}>
+                        <option value="">Select...</option>
+                        {options.masters?.freight_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight Type...</option>
+                      </select>
+                    )}
                   </div>
                   <div className="form-group"><label>Freight Chg</label><input type="number" className="form-control" name="freight_chg" value={form.freight_chg} onChange={handleChange} /></div>
                   <div className="form-group"><label>Insurance Chg</label><input type="number" className="form-control" name="insurance_chg" value={form.insurance_chg} onChange={handleChange} /></div>
                   <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
                   
-                  <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Transport</label>
+                    {isCustomTransport ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
+                      </div>
+                    ) : (
+                      <select className="form-control" name="transport" value={form.transport || ''} onChange={e => {
+                        if (e.target.value === 'custom') setIsCustomTransport(true);
+                        else handleChange(e);
+                      }}>
+                        <option value="">Select...</option>
+                        {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
+                      </select>
+                    )}
+                  </div>
                   <div className="form-group"><label>TAX Type</label>
                     <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
                       <option>GST</option><option>IGST</option><option>Exempt</option>
@@ -663,16 +1006,46 @@ export default function YarnPurchaseOrder() {
                   <div className="form-group"><label>Dispatch Date</label><input type="date" className="form-control" name="dispatch_date" value={form.dispatch_date} onChange={handleChange} /></div>
                   
                   <div className="form-group"><label>Packing Type</label>
-                    <select className="form-control" name="packing_type" value={form.packing_type} onChange={handleChange}>
-                      <option>Bags</option><option>Boxes</option><option>Pallets</option>
-                    </select>
+                    {isCustomPackingType ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input type="text" className="form-control" autoFocus placeholder="Enter Packing Type..." value={customPackingTypeVal} onChange={e => setCustomPackingTypeVal(e.target.value)} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomPackingType}><CheckCircle size={16} /></button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomPackingType(false); setCustomPackingTypeVal(''); }}><X size={16} /></button>
+                      </div>
+                    ) : (
+                      <select className="form-control" name="packing_type" value={form.packing_type || ''} onChange={e => {
+                        if (e.target.value === 'custom') setIsCustomPackingType(true);
+                        else handleChange(e);
+                      }}>
+                        <option value="">Select...</option>
+                        {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Packing...</option>
+                      </select>
+                    )}
                   </div>
                   <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
                   <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
                   <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
                   
                   <div className="form-group"><label>Labeling</label><input className="form-control" name="labeling" value={form.labeling} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Colour</label><input className="form-control" name="colour" value={form.colour} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Colour</label>
+                    {isCustomColour ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input type="text" className="form-control" autoFocus placeholder="Enter Colour..." value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomColour}><CheckCircle size={16} /></button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomColour(false); setCustomColourVal(''); }}><X size={16} /></button>
+                      </div>
+                    ) : (
+                      <select className="form-control" name="colour" value={form.colour || ''} onChange={e => {
+                        if (e.target.value === 'custom') setIsCustomColour(true);
+                        else handleChange(e);
+                      }}>
+                        <option value="">Select...</option>
+                        {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Colour...</option>
+                      </select>
+                    )}
+                  </div>
                   <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
                   <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
                   

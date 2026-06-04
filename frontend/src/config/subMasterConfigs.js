@@ -1190,8 +1190,32 @@ export const ORGANIZATION_NAME_MASTER = {
   ],
 };
 
+export const AGAINST_REFERENCE_MASTER = {
+  entity: 'against_reference_master',
+  title: 'Against Reference Master',
+  icon: ClipboardList,
+  color: '#8b5cf6',
+  description: 'Manage against references for purchase orders.',
+  fields: [
+    { name: 'name', label: 'Reference Name', type: 'text', required: true, placeholder: 'e.g. Buyer Order' },
+  ],
+};
+
+export const FREIGHT_TYPE_MASTER = {
+  entity: 'freight_type_master',
+  title: 'Freight Type Master',
+  icon: Truck,
+  color: '#10b981',
+  description: 'Manage freight types for purchase orders.',
+  fields: [
+    { name: 'name', label: 'Freight Type Name', type: 'text', required: true, placeholder: 'e.g. To Pay' },
+  ],
+};
+
 export const ALL_SUB_MASTERS = [
   ORGANIZATION_NAME_MASTER,
+  AGAINST_REFERENCE_MASTER,
+  FREIGHT_TYPE_MASTER,
   ...PHASE1_MASTERS,
   ...PHASE2_MASTERS,
   ...COMPLEX_MASTERS,
