@@ -16,11 +16,16 @@ Body: b'{"name":"ISO","is_active":true}'
 Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'ISO', 'is_active': True}}]
 Body: b'{"name":"ISO","is_active":true}'
 
+<<<<<<< HEAD
+Validation Error: [{'type': 'missing', 'loc': ('body', 'file'), 'msg': 'Field required', 'input': None}]
+Body: b''
+=======
 Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'sch_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'SCH-001'}]
 Body: b'{"id":"SCH-001","dbId":3,"orderId":"IBPO-00007","ref":"PO-2026-1001","date":"2026-06-09","place":"Tiruppur","transport":"Blue Dart Express","qty":"5000","fabric":"Poplin 40x40","status":"Scheduled","deliveryTerms":"Net 7 Days","shade":"Royal Blue","lotNo":"LOT-001","packing":"Roll Packing","mode":"Road","remarks":"Priority export order. Maintain quality and delivery commitments as per buyer requirements.","order_id_ref":"IBPO-00007","buyer_ref":"PO-2026-1001","delivery_place":"Tiruppur","delivery_terms":"Net 7 Days","fabric_type":"Poplin 40x40","packing_type":"Roll Packing","transporter_name":"Blue Dart Express","transport_mode":"Road","lot_no":"lot 001","shipment_date":"2026-06-05"}'
 
 Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'sch_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'SCH-001'}]
 Body: b'{"id":"SCH-001","dbId":3,"orderId":"IBPO-00007","ref":"PO-2026-1001","date":"2026-06-09","place":"Tiruppur","transport":"Blue Dart Express","qty":"5000","fabric":"Poplin 40x40","status":"Scheduled","deliveryTerms":"Net 7 Days","shade":"Royal Blue","lotNo":"LOT-001","packing":"Roll Packing","mode":"Road","remarks":"Priority export order. Maintain quality and delivery commitments as per buyer requirements.","order_id_ref":"IBPO-00007","buyer_ref":"PO-2026-1001","delivery_place":"Tiruppur","delivery_terms":"Net 7 Days","fabric_type":"Poplin 40x40","packing_type":"Roll Packing","transporter_name":"Blue Dart Express","transport_mode":"Road","lot_no":"lot 001","shipment_date":"2026-06-05"}'
+>>>>>>> 8280afb53e106a84faf9ea5c1d491042ffe162d8
 
 Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'plan_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': ':1'}]
 Body: b'{}'

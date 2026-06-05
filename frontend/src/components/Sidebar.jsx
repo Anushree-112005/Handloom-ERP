@@ -6,7 +6,7 @@ import {
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
   ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
-  CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash
+  CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -181,6 +181,7 @@ const modules = [
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
+  { path: '/design-ai', label: 'Design AI', icon: Sparkles },
 
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },
