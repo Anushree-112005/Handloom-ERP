@@ -1,0 +1,215 @@
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.NotNullViolationError: null value in column "invoice_date" of relation "sales_invoices" violates not-null constraint
+DETAIL:  Failing row contains (29, INV-TEST-002, null, null, null, null, null, null, null, null, null, null, null, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, {}, Draft, 2026-06-05 13:22:04.706194+05:30, Proforma Invoice, INR, 1.0000, 0.00, 0.00, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.00).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "invoice_date" of relation "sales_invoices" violates not-null constraint
+DETAIL:  Failing row contains (29, INV-TEST-002, null, null, null, null, null, null, null, null, null, null, null, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, {}, Draft, 2026-06-05 13:22:04.706194+05:30, Proforma Invoice, INR, 1.0000, 0.00, 0.00, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.00).
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/api/v1/endpoints/sales_invoices.py", line 171, in create_invoice
+    await db.flush()  # Populates db_invoice.id
+    ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 800, in flush
+    await greenlet_spawn(self.sync_session.flush, objects=objects)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.NotNullViolationError'>: null value in column "invoice_date" of relation "sales_invoices" violates not-null constraint
+DETAIL:  Failing row contains (29, INV-TEST-002, null, null, null, null, null, null, null, null, null, null, null, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, {}, Draft, 2026-06-05 13:22:04.706194+05:30, Proforma Invoice, INR, 1.0000, 0.00, 0.00, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.00).
+[SQL: INSERT INTO sales_invoices (invoice_no, invoice_date, invoice_type, party_name, party_id, ibpo, design_no, billing_address, delivery_address, state, state_code, gst_no, hsn_code, total_qty, gross_weight, gross_amount, discount_pct, discount_amount, taxable_amount, sgst, cgst, igst, other_charges, round_off, net_amount, remarks, status, currency, exchange_rate, rodtep_amount, drawback_amount, ad_code, iec_number, firc_reference, country, port_of_loading, port_of_discharge, incoterms, buyer_po_no, dispatch_date, transporter_name, lr_no, vehicle_no, payment_terms, delivery_terms, insurance_charges) VALUES ($1::VARCHAR, $2::DATE, $3::VARCHAR, $4::VARCHAR, $5::INTEGER, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::VARCHAR, $13::VARCHAR, $14::NUMERIC(10, 2), $15::NUMERIC(10, 2), $16::NUMERIC(14, 2), $17::NUMERIC(5, 2), $18::NUMERIC(12, 2), $19::NUMERIC(14, 2), $20::NUMERIC(10, 2), $21::NUMERIC(10, 2), $22::NUMERIC(10, 2), $23::NUMERIC(10, 2), $24::NUMERIC(6, 2), $25::NUMERIC(14, 2), $26::VARCHAR, $27::VARCHAR, $28::VARCHAR, $29::NUMERIC(10, 4), $30::NUMERIC(12, 2), $31::NUMERIC(12, 2), $32::VARCHAR, $33::VARCHAR, $34::VARCHAR, $35::VARCHAR, $36::VARCHAR, $37::VARCHAR, $38::VARCHAR, $39::VARCHAR, $40::VARCHAR, $41::VARCHAR, $42::VARCHAR, $43::VARCHAR, $44::VARCHAR, $45::VARCHAR, $46::NUMERIC(10, 2)) RETURNING sales_invoices.id, sales_invoices.created_at]
+[parameters: ('INV-TEST-002', None, 'Proforma Invoice', None, None, None, None, None, None, None, None, None, None, Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), Decimal('0'), '{}', 'Draft', 'INR', Decimal('1.0'), Decimal('0.0'), Decimal('0.0'), None, None, None, None, None, None, None, None, None, None, None, None, None, None, Decimal('0.0'))]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.StringDataRightTruncationError: value too long for type character varying(10)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.Error: <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/api/v1/endpoints/sales_invoices.py", line 171, in create_invoice
+    await db.flush()  # Populates db_invoice.id
+    ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 800, in flush
+    await greenlet_spawn(self.sync_session.flush, objects=objects)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+[SQL: INSERT INTO sales_invoices (invoice_no, invoice_date, invoice_type, party_name, party_id, ibpo, design_no, billing_address, delivery_address, state, state_code, gst_no, hsn_code, total_qty, gross_weight, gross_amount, discount_pct, discount_amount, taxable_amount, sgst, cgst, igst, other_charges, round_off, net_amount, remarks, status, currency, exchange_rate, rodtep_amount, drawback_amount, ad_code, iec_number, firc_reference, country, port_of_loading, port_of_discharge, incoterms, buyer_po_no, dispatch_date, transporter_name, lr_no, vehicle_no, payment_terms, delivery_terms, insurance_charges) VALUES ($1::VARCHAR, $2::DATE, $3::VARCHAR, $4::VARCHAR, $5::INTEGER, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::VARCHAR, $13::VARCHAR, $14::NUMERIC(10, 2), $15::NUMERIC(10, 2), $16::NUMERIC(14, 2), $17::NUMERIC(5, 2), $18::NUMERIC(12, 2), $19::NUMERIC(14, 2), $20::NUMERIC(10, 2), $21::NUMERIC(10, 2), $22::NUMERIC(10, 2), $23::NUMERIC(10, 2), $24::NUMERIC(6, 2), $25::NUMERIC(14, 2), $26::VARCHAR, $27::VARCHAR, $28::VARCHAR, $29::NUMERIC(10, 4), $30::NUMERIC(12, 2), $31::NUMERIC(12, 2), $32::VARCHAR, $33::VARCHAR, $34::VARCHAR, $35::VARCHAR, $36::VARCHAR, $37::VARCHAR, $38::VARCHAR, $39::VARCHAR, $40::VARCHAR, $41::VARCHAR, $42::VARCHAR, $43::VARCHAR, $44::VARCHAR, $45::VARCHAR, $46::NUMERIC(10, 2)) RETURNING sales_invoices.id, sales_invoices.created_at]
+[parameters: ('4', datetime.date(2026, 6, 5), 'Proforma Invoice', 'Suntex Garments Pvt Ltd', None, None, None, '45, SIPCOT Industrial Park, Tiruppur', 'No. 25, SIPCOT Industrial Estate, Tiruppur Main Road, Tiruppur, Tamil Nadu - 641604', 'South Zone', 'Tamil Nadu / 3A', '33ABCDE1234F1Z5', '52081100', Decimal('312'), Decimal('0'), Decimal('72141264'), Decimal('0'), Decimal('0'), Decimal('72141264'), Decimal('0'), Decimal('0'), Decimal('3607063.2'), Decimal('13525'), Decimal('-0.2'), Decimal('75761852'), '{"invoice_type_id":"Export Invoice","type":"3","gra_no":"09","date":"2026-06-05","dis_no":"3","dis_date":"2026-06-05","delivery":"ABC Textiles Pvt Lt ... (404 characters truncated) ... :"Insurance","other_char_value_2":"34","other_char_3":"Packaging","other_char_value_3":"123","other_char_4":"Insurance","other_char_value_4":"13234"}', 'Draft', 'INR', Decimal('1.0'), Decimal('0.0'), Decimal('0.0'), None, None, None, None, None, None, None, None, None, None, None, None, None, None, Decimal('0.0'))]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+

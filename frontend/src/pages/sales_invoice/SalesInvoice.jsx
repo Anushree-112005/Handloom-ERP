@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Receipt, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
-import { salesInvoiceAPI, dropdownAPI, partyAPI } from '../../services/api';
+import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -39,6 +39,24 @@ export default function SalesInvoice() {
     masters: {}
   });
 
+  const [isCustomPaymentMode, setIsCustomPaymentMode] = useState(false);
+  const [customPaymentMode, setCustomPaymentMode] = useState('');
+  
+  const [isCustomTransportMode, setIsCustomTransportMode] = useState(false);
+  const [customTransportMode, setCustomTransportMode] = useState('');
+  
+  const [isCustomFreightMode, setIsCustomFreightMode] = useState(false);
+  const [customFreightMode, setCustomFreightMode] = useState('');
+  
+  const [isCustomLrTerms, setIsCustomLrTerms] = useState(false);
+  const [customLrTerms, setCustomLrTerms] = useState('');
+
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransport, setCustomTransport] = useState('');
+
+  const [isCustomInvoiceType, setIsCustomInvoiceType] = useState(false);
+  const [customInvoiceType, setCustomInvoiceType] = useState('');
+
   // Main Form State
   const initialForm = {
     invoice_type_id: '',
@@ -70,6 +88,7 @@ export default function SalesInvoice() {
     lr_no: '',
     lr_date: new Date().toISOString().split('T')[0],
     lr_team: '',
+    gst_no: '',
     
     other_char_1: '',
     other_char_value_1: '',
@@ -102,10 +121,22 @@ export default function SalesInvoice() {
     { design_no: '', hsn_code: '', description: '', total_bale: '', uom: 'MTR', qty: '', rate: '', amount: 0 }
   ]);
 
+  const [graList, setGraList] = useState([]);
+
   useEffect(() => {
     fetchInvoices();
     fetchOptions();
+    fetchGraList();
   }, []);
+
+  const fetchGraList = async () => {
+    try {
+      const { data } = await goodsReleaseAPI.list();
+      setGraList(data);
+    } catch (err) {
+      console.error("Error fetching GRA list:", err);
+    }
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -128,6 +159,23 @@ export default function SalesInvoice() {
     }
   };
 
+  const handleSaveCustomOption = async (entity, nameVal, stateSetter, isCustomSetter, formField) => {
+    if (!nameVal?.trim()) return;
+    try {
+      await subMasterAPI.create(entity, { entity, name: nameVal.trim(), is_active: true });
+      const { data } = await dropdownAPI.getAll();
+      setOptions(data);
+      if (formField) {
+        setFormData(prev => ({ ...prev, [formField]: nameVal.trim() }));
+      }
+      if (stateSetter) stateSetter('');
+      if (isCustomSetter) isCustomSetter(false);
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom option');
+    }
+  };
+
   const handlePartyChange = async (partyName) => {
     if (!partyName) {
       setFormData(prev => ({
@@ -142,14 +190,23 @@ export default function SalesInvoice() {
 
     try {
       const { data: partyList } = await partyAPI.list();
-      const party = partyList.find(p => p.business_name === partyName);
+      const party = partyList.find(p => p.company_name === partyName || p.business_name === partyName || p.name === partyName);
       if (party) {
+        const finalGst = party.gst_no || prev.gst_no || '';
+        const stateName = party.state || party.sales_region || '';
+        const stateCode = party.state_code || (finalGst ? finalGst.substring(0, 2) : '');
+
         setFormData(prev => ({
           ...prev,
           pay_name: partyName,
           invoice_address: party.address || '',
-          state_code: party.state_code || '',
-          state: party.sales_region || ''
+          state_code: stateCode,
+          state: stateName,
+          gst_no: finalGst,
+          agent_name: party.agent_name || prev.agent_name,
+          payment: party.payment_terms || prev.payment,
+          due_days: party.credit_days || prev.due_days,
+          transport: party.transport_name || prev.transport
         }));
       } else {
         setFormData(prev => ({ ...prev, pay_name: partyName }));
@@ -173,13 +230,21 @@ export default function SalesInvoice() {
 
     try {
       const { data: partyList } = await partyAPI.list();
-      const party = partyList.find(p => p.business_name === deliveryPartyName);
+      const party = partyList.find(p => p.company_name === deliveryPartyName || p.business_name === deliveryPartyName || p.name === deliveryPartyName);
       if (party) {
+        const finalGst = party.gst_no || prev.gst_no || '';
+        const stateName = party.state || party.sales_region || '';
+        const stateCode = party.state_code || (finalGst ? finalGst.substring(0, 2) : '');
+
         setFormData(prev => ({
           ...prev,
           delivery: deliveryPartyName,
           delivery_address: party.delivery_address || party.address || '',
-          dly_state_code: party.state_code || ''
+          dly_state_code: stateCode,
+          gst_no: finalGst,
+          agent_name: party.agent_name || prev.agent_name,
+          transport: party.transport_name || prev.transport,
+          payment: party.payment_terms || prev.payment
         }));
       } else {
         setFormData(prev => ({ ...prev, delivery: deliveryPartyName }));
@@ -267,6 +332,7 @@ export default function SalesInvoice() {
         delivery_address: inv.delivery_address || '',
         state: inv.state || '',
         state_code: inv.state_code || '',
+        gst_no: inv.gst_no || '',
         dly_state_code: remarksParsed.dly_state_code || '',
         po_no: remarksParsed.po_no || '',
         po_date: remarksParsed.po_date || '',
@@ -344,8 +410,6 @@ export default function SalesInvoice() {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -363,6 +427,8 @@ export default function SalesInvoice() {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => {
       const updated = { ...prev, [name]: value };
       
@@ -447,12 +513,12 @@ export default function SalesInvoice() {
 
     const payload = {
       invoice_no: formData.invoice_no,
-      invoice_date: formData.invoice_date,
+      invoice_date: formData.invoice_date || new Date().toISOString().split('T')[0],
       party_name: formData.pay_name || null,
       billing_address: formData.invoice_address || null,
       delivery_address: formData.delivery_address || null,
       state: formData.state || null,
-      state_code: formData.state_code || null,
+      state_code: formData.state_code ? formData.state_code.substring(0, 10) : null,
       gst_no: formData.gst_no || null,
       hsn_code: items[0]?.hsn_code || null,
       total_qty: Number(formData.total_qty) || 0,
@@ -614,12 +680,25 @@ export default function SalesInvoice() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                       <div className="form-group">
                         <label>Invoice Type (ID) *</label>
-                        <select className="form-control" name="invoice_type_id" value={formData.invoice_type_id} onChange={handleInputChange} required>
-                          <option value="">-- Select Type --</option>
-                          <option value="GST Domestic">GST Domestic</option>
-                          <option value="Export Invoice">Export Invoice</option>
-                          <option value="SEZ Billing">SEZ Billing</option>
-                        </select>
+                        {isCustomInvoiceType ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input autoFocus className="form-control" value={customInvoiceType} onChange={e => setCustomInvoiceType(e.target.value)} placeholder="New Invoice Type" />
+                            <button type="button" className="btn btn-success" onClick={() => handleSaveCustomOption('invoice_type_master', customInvoiceType, setCustomInvoiceType, setIsCustomInvoiceType, 'invoice_type_id')} style={{ padding: '8px', minWidth: '40px', background: '#10b981', color: '#fff' }}><Plus size={16} /></button>
+                            <button type="button" className="btn btn-secondary" onClick={() => setIsCustomInvoiceType(false)} style={{ padding: '8px', minWidth: '40px' }}><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="invoice_type_id" value={formData.invoice_type_id} onChange={e => {
+                            if (e.target.value === 'ADD_CUSTOM') setIsCustomInvoiceType(true);
+                            else handleInputChange(e);
+                          }} required>
+                            <option value="">-- Select Type --</option>
+                            {(options.masters?.invoice_type_master || []).map(t => <option key={t} value={t}>{t}</option>)}
+                            <option value="GST Domestic">GST Domestic</option>
+                            <option value="Export Invoice">Export Invoice</option>
+                            <option value="SEZ Billing">SEZ Billing</option>
+                            <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Type</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Type</label>
@@ -637,8 +716,9 @@ export default function SalesInvoice() {
                         <label>GRA No</label>
                         <select className="form-control" name="gra_no" value={formData.gra_no} onChange={handleInputChange}>
                           <option value="">-- Select GRA --</option>
-                          <option value="GRA-881">GRA-881</option>
-                          <option value="GRA-882">GRA-882</option>
+                          {graList.map(gra => (
+                            <option key={gra.id} value={gra.gra_no || gra.id}>{gra.gra_no || gra.id}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="form-group">
@@ -742,12 +822,25 @@ export default function SalesInvoice() {
                       </div>
                       <div className="form-group">
                         <label>Payment Mode</label>
-                        <select className="form-control" name="payment" value={formData.payment} onChange={handleInputChange}>
-                          <option value="">-- Select --</option>
-                          <option value="Credit">Credit</option>
-                          <option value="Advance">Advance</option>
-                          <option value="COD">COD</option>
-                        </select>
+                        {isCustomPaymentMode ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input autoFocus className="form-control" value={customPaymentMode} onChange={e => setCustomPaymentMode(e.target.value)} placeholder="New Payment Mode" />
+                            <button type="button" className="btn btn-success" onClick={() => handleSaveCustomOption('payment_mode_master', customPaymentMode, setCustomPaymentMode, setIsCustomPaymentMode, 'payment')} style={{ padding: '8px', minWidth: '40px', background: '#10b981', color: '#fff' }}><Plus size={16} /></button>
+                            <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPaymentMode(false)} style={{ padding: '8px', minWidth: '40px' }}><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="payment" value={formData.payment} onChange={e => {
+                            if (e.target.value === 'ADD_CUSTOM') setIsCustomPaymentMode(true);
+                            else handleInputChange(e);
+                          }}>
+                            <option value="">-- Select --</option>
+                            {(options.masters?.payment_mode_master || []).map(p => <option key={p} value={p}>{p}</option>)}
+                            <option value="Credit">Credit</option>
+                            <option value="Advance">Advance</option>
+                            <option value="COD">COD</option>
+                            <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>PMT Ref No</label>
@@ -760,12 +853,23 @@ export default function SalesInvoice() {
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
                         <label>Transport Name</label>
-                        <select className="form-control" name="transport" value={formData.transport} onChange={handleInputChange}>
-                          <option value="">-- Select --</option>
-                          {options.transporters.map(t => (
-                            <option key={t.id} value={t.name}>{t.name}</option>
-                          ))}
-                        </select>
+                        {isCustomTransport ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input autoFocus className="form-control" value={customTransport} onChange={e => setCustomTransport(e.target.value)} placeholder="New Transport Name" />
+                            <button type="button" className="btn btn-success" onClick={() => handleSaveCustomOption('transport_name_master', customTransport, setCustomTransport, setIsCustomTransport, 'transport')} style={{ padding: '8px', minWidth: '40px', background: '#10b981', color: '#fff' }}><Plus size={16} /></button>
+                            <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransport(false)} style={{ padding: '8px', minWidth: '40px' }}><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="transport" value={formData.transport} onChange={e => {
+                            if (e.target.value === 'ADD_CUSTOM') setIsCustomTransport(true);
+                            else handleInputChange(e);
+                          }}>
+                            <option value="">-- Select --</option>
+                            {options.transporters.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+                            {(options.masters?.transport_name_master || []).map(t => <option key={`custom-${t}`} value={t}>{t}</option>)}
+                            <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Transport</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Truck No</label>
@@ -773,17 +877,43 @@ export default function SalesInvoice() {
                       </div>
                       <div className="form-group">
                         <label>Transport Mode</label>
-                        <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={handleInputChange}>
-                          <option value="">-- Select --</option>
-                          <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option><option value="Ship">Ship</option>
-                        </select>
+                        {isCustomTransportMode ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input autoFocus className="form-control" value={customTransportMode} onChange={e => setCustomTransportMode(e.target.value)} placeholder="New Transport Mode" />
+                            <button type="button" className="btn btn-success" onClick={() => handleSaveCustomOption('transport_mode_master', customTransportMode, setCustomTransportMode, setIsCustomTransportMode, 'transport_mode')} style={{ padding: '8px', minWidth: '40px', background: '#10b981', color: '#fff' }}><Plus size={16} /></button>
+                            <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportMode(false)} style={{ padding: '8px', minWidth: '40px' }}><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={e => {
+                            if (e.target.value === 'ADD_CUSTOM') setIsCustomTransportMode(true);
+                            else handleInputChange(e);
+                          }}>
+                            <option value="">-- Select --</option>
+                            {(options.masters?.transport_mode_master || []).map(t => <option key={t} value={t}>{t}</option>)}
+                            <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option><option value="Ship">Ship</option>
+                            <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Freight Mode</label>
-                        <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={handleInputChange}>
-                          <option value="">-- Select --</option>
-                          <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
-                        </select>
+                        {isCustomFreightMode ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input autoFocus className="form-control" value={customFreightMode} onChange={e => setCustomFreightMode(e.target.value)} placeholder="New Freight Mode" />
+                            <button type="button" className="btn btn-success" onClick={() => handleSaveCustomOption('freight_mode_master', customFreightMode, setCustomFreightMode, setIsCustomFreightMode, 'freight_mode')} style={{ padding: '8px', minWidth: '40px', background: '#10b981', color: '#fff' }}><Plus size={16} /></button>
+                            <button type="button" className="btn btn-secondary" onClick={() => setIsCustomFreightMode(false)} style={{ padding: '8px', minWidth: '40px' }}><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={e => {
+                            if (e.target.value === 'ADD_CUSTOM') setIsCustomFreightMode(true);
+                            else handleInputChange(e);
+                          }}>
+                            <option value="">-- Select --</option>
+                            {(options.masters?.freight_mode_master || []).map(f => <option key={f} value={f}>{f}</option>)}
+                            <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
+                            <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Mode</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>LR No</label>
@@ -794,12 +924,25 @@ export default function SalesInvoice() {
                         <input type="date" className="form-control" name="lr_date" value={formData.lr_date} onChange={handleInputChange} />
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                        <label>LR Team</label>
-                        <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')}>
-                          <option value="">-- Select --</option>
-                          <option value="Primary Logistics">Primary Logistics</option>
-                          <option value="Secondary Delivery">Secondary Delivery</option>
-                        </select>
+                        <label>LR Terms</label>
+                        {isCustomLrTerms ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input autoFocus className="form-control" value={customLrTerms} onChange={e => setCustomLrTerms(e.target.value)} placeholder="New LR Terms" onKeyDown={(e) => { if (e.key === 'Tab') { e.preventDefault(); handleSaveCustomOption('lr_terms', customLrTerms, setCustomLrTerms, setIsCustomLrTerms, 'lr_team'); } }} />
+                            <button type="button" className="btn btn-success" onClick={() => handleSaveCustomOption('lr_terms', customLrTerms, setCustomLrTerms, setIsCustomLrTerms, 'lr_team')} style={{ padding: '8px', minWidth: '40px', background: '#10b981', color: '#fff' }}><Plus size={16} /></button>
+                            <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLrTerms(false)} style={{ padding: '8px', minWidth: '40px' }}><X size={16} /></button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="lr_team" value={formData.lr_team} onChange={e => {
+                            if (e.target.value === 'ADD_CUSTOM') setIsCustomLrTerms(true);
+                            else handleInputChange(e);
+                          }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')}>
+                            <option value="">-- Select --</option>
+                            {(options.masters?.lr_terms || []).map(l => <option key={l} value={l}>{l}</option>)}
+                            <option value="Primary Logistics">Primary Logistics</option>
+                            <option value="Secondary Delivery">Secondary Delivery</option>
+                            <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom Terms</option>
+                          </select>
+                        )}
                       </div>
                     </div>
 
@@ -835,12 +978,26 @@ export default function SalesInvoice() {
                                 />
                               </td>
                               <td>
-                                <input 
-                                  type="text" 
+                                <select 
                                   className="form-control" 
                                   value={item.hsn_code} 
-                                  onChange={e => handleItemChange(index, 'hsn_code', e.target.value)}
-                                />
+                                  onChange={e => {
+                                    if (e.target.value === 'ADD_CUSTOM') {
+                                      const newVal = prompt("Enter new HSN Code:");
+                                      if (newVal) {
+                                        handleSaveCustomOption('hsn_code_master', newVal).then(() => {
+                                          handleItemChange(index, 'hsn_code', newVal);
+                                        });
+                                      }
+                                    } else {
+                                      handleItemChange(index, 'hsn_code', e.target.value);
+                                    }
+                                  }}
+                                >
+                                  <option value="">-- Select --</option>
+                                  {(options.masters?.hsn_code_master || []).map(h => <option key={h} value={h}>{h}</option>)}
+                                  <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom HSN</option>
+                                </select>
                               </td>
                               <td>
                                 <input 
@@ -862,12 +1019,25 @@ export default function SalesInvoice() {
                                 <select 
                                   className="form-control" 
                                   value={item.uom} 
-                                  onChange={e => handleItemChange(index, 'uom', e.target.value)}
+                                  onChange={e => {
+                                    if (e.target.value === 'ADD_CUSTOM') {
+                                      const newVal = prompt("Enter new UOM:");
+                                      if (newVal) {
+                                        handleSaveCustomOption('unit_master', newVal).then(() => {
+                                          handleItemChange(index, 'uom', newVal);
+                                        });
+                                      }
+                                    } else {
+                                      handleItemChange(index, 'uom', e.target.value);
+                                    }
+                                  }}
                                 >
+                                  <option value="">-- Select --</option>
                                   <option value="MTR">MTR</option>
                                   <option value="YDS">YDS</option>
-                                  <option value="KGS">KGS</option>
-                                  <option value="PCS">PCS</option>
+                                  <option value="KG">KG</option>
+                                  {(options.masters?.unit_master || []).map(u => <option key={u} value={u}>{u}</option>)}
+                                  <option value="ADD_CUSTOM" style={{ color: '#4f46e5', fontWeight: 'bold' }}>+ Add Custom UOM</option>
                                 </select>
                               </td>
                               <td>
