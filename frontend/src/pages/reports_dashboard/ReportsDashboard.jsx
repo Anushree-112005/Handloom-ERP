@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   FileText, Calendar, Users, ShoppingCart, Package, Truck, 
   Factory, CheckSquare, Scissors, Box, ClipboardList, Receipt, 
@@ -14,6 +14,10 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { 
+  buyerOrderAPI, salesInvoiceAPI, goodsReleaseAPI, packingSlipAPI, 
+  yarnPurchaseOrderAPI, clothInwardAPI, clothDeliveryAPI, finishedFabricAPI 
+} from '../../services/api';
 
 // ==========================================
 // 1. MOCK DATASETS FOR THE 25 REPORTS
@@ -31,15 +35,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'amount', label: 'Amount (₹)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { orderId: 'BO-2026-001', date: '2026-05-10', customer: 'Reliance Retail', fabricType: 'Cotton Twill', qty: 15000, amount: 2250000, status: 'Completed' },
-      { orderId: 'BO-2026-002', date: '2026-05-12', customer: 'Birla Fashion', fabricType: 'Polyester Blend', qty: 8500, amount: 1105000, status: 'Pending' },
-      { orderId: 'BO-2026-003', date: '2026-05-15', customer: 'Dinesh Fabrics', fabricType: 'Viscose Satin', qty: 12000, amount: 2040000, status: 'Completed' },
-      { orderId: 'BO-2026-004', date: '2026-05-18', customer: 'Vikas Garments', fabricType: 'Cotton Canvas', qty: 6200, amount: 930000, status: 'Cancelled' },
-      { orderId: 'BO-2026-005', date: '2026-05-22', customer: 'Standard Weaving', fabricType: 'Cotton Voile', qty: 22000, amount: 2860000, status: 'Pending' },
-      { orderId: 'BO-2026-006', date: '2026-05-25', customer: 'Raymond Ltd', fabricType: 'Cotton Twill', qty: 18000, amount: 2700000, status: 'Completed' },
-      { orderId: 'BO-2026-007', date: '2026-05-28', customer: 'Arvind Mills', fabricType: 'Polyester Blend', qty: 9500, amount: 1235000, status: 'Pending' }
-    ]
+    rows: []
   },
   'invoice': {
     title: 'Invoice Report',
@@ -53,12 +49,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'total', label: 'Total Amt (₹)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { invoiceNo: 'INV-2601', date: '2026-05-12', customer: 'Reliance Retail', gstin: '27AAACR1234F1Z5', taxable: 2250000, gst: 405000, total: 2655000, status: 'Completed' },
-      { invoiceNo: 'INV-2602', date: '2026-05-16', customer: 'Dinesh Fabrics', gstin: '33AABBD4321A1Z9', taxable: 2040000, gst: 367200, total: 2407200, status: 'Completed' },
-      { invoiceNo: 'INV-2603', date: '2026-05-20', customer: 'Raymond Ltd', gstin: '27AAAAR5566C1Z2', taxable: 2700000, gst: 486000, total: 3186000, status: 'Completed' },
-      { invoiceNo: 'INV-2604', date: '2026-05-28', customer: 'Birla Fashion', gstin: '24AAACB9876G1ZA', taxable: 1105000, gst: 198900, total: 1303900, status: 'Pending' }
-    ]
+    rows: []
   },
   'dispatch': {
     title: 'Dispatch Report',
@@ -71,12 +62,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'pcs', label: 'Total Rolls' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { dispatchNo: 'DSP-26001', date: '2026-05-13', customer: 'Reliance Retail', invoiceNo: 'INV-2601', vehicleNo: 'MH-12-PQ-9876', pcs: 120, status: 'Completed' },
-      { dispatchNo: 'DSP-26002', date: '2026-05-17', customer: 'Dinesh Fabrics', invoiceNo: 'INV-2602', vehicleNo: 'TN-38-DF-4321', pcs: 98, status: 'Completed' },
-      { dispatchNo: 'DSP-26003', date: '2026-05-21', customer: 'Raymond Ltd', invoiceNo: 'INV-2603', vehicleNo: 'MH-04-GP-5511', pcs: 154, status: 'Completed' },
-      { dispatchNo: 'DSP-26004', date: '2026-05-29', customer: 'Birla Fashion', invoiceNo: 'INV-2604', vehicleNo: 'GJ-01-XY-8822', pcs: 75, status: 'Pending' }
-    ]
+    rows: []
   },
   'packing_list': {
     title: 'Packing List Report',
@@ -89,11 +75,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'grossWeight', label: 'Gross Weight (Kg)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { packingNo: 'PK-2601', date: '2026-05-11', customer: 'Reliance Retail', rolls: 120, netWeight: 3450, grossWeight: 3520, status: 'Completed' },
-      { packingNo: 'PK-2602', date: '2026-05-14', customer: 'Dinesh Fabrics', rolls: 98, netWeight: 2890, grossWeight: 2950, status: 'Completed' },
-      { packingNo: 'PK-2603', date: '2026-05-19', customer: 'Raymond Ltd', rolls: 154, netWeight: 4120, grossWeight: 4200, status: 'Completed' }
-    ]
+    rows: []
   },
   'pending_orders': {
     title: 'Pending Orders Report',
@@ -106,11 +88,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'balance', label: 'Balance Qty (m)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { orderId: 'BO-2026-002', date: '2026-05-12', customer: 'Birla Fashion', ordered: 8500, dispatched: 0, balance: 8500, status: 'Pending' },
-      { orderId: 'BO-2026-005', date: '2026-05-22', customer: 'Standard Weaving', ordered: 22000, dispatched: 10000, balance: 12000, status: 'Pending' },
-      { orderId: 'BO-2026-007', date: '2026-05-28', customer: 'Arvind Mills', ordered: 9500, dispatched: 0, balance: 9500, status: 'Pending' }
-    ]
+    rows: []
   },
 
   // --- B. Production Reports ---
@@ -125,14 +103,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'actual', label: 'Actual (Mtrs)' },
       { key: 'efficiency', label: 'Efficiency %' }
     ],
-    rows: [
-      { loomNo: 'Loom-01', date: '2026-05-31', supervisor: 'Ramesh K.', quality: '40s Cotton Sateen', target: 200, actual: 185, efficiency: 92.5 },
-      { loomNo: 'Loom-02', date: '2026-05-31', supervisor: 'Ramesh K.', quality: '60s Cotton Sateen', target: 180, actual: 172, efficiency: 95.5 },
-      { loomNo: 'Loom-03', date: '2026-05-31', supervisor: 'Suresh M.', quality: '50s Viscose Linen', target: 190, actual: 181, efficiency: 95.2 },
-      { loomNo: 'Loom-04', date: '2026-05-31', supervisor: 'Suresh M.', quality: 'PC Blend 2/40', target: 220, actual: 215, efficiency: 97.7 },
-      { loomNo: 'Loom-05', date: '2026-05-31', supervisor: 'Vikas P.', quality: '40s Cotton Sateen', target: 200, actual: 160, efficiency: 80.0 },
-      { loomNo: 'Loom-06', date: '2026-05-31', supervisor: 'Vikas P.', quality: 'Cotton Twill 2/20', target: 210, actual: 208, efficiency: 99.0 }
-    ]
+    rows: []
   },
   'warping_status': {
     title: 'Warping Status Report',
@@ -145,12 +116,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'speed', label: 'Speed (m/min)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { setNo: 'SET-991', beamNo: 'BM-2051', date: '2026-05-28', yarnLot: 'YLT-COT-40S', ends: 4800, speed: 650, status: 'Completed' },
-      { setNo: 'SET-991', beamNo: 'BM-2052', date: '2026-05-29', yarnLot: 'YLT-COT-40S', ends: 4800, speed: 640, status: 'Completed' },
-      { setNo: 'SET-992', beamNo: 'BM-2053', date: '2026-05-30', yarnLot: 'YLT-VIS-50S', ends: 5200, speed: 580, status: 'Completed' },
-      { setNo: 'SET-993', beamNo: 'BM-2054', date: '2026-05-31', yarnLot: 'YLT-POLY-30S', ends: 4200, speed: 700, status: 'Pending' }
-    ]
+    rows: []
   },
   'dyeing_status': {
     title: 'Dyeing Status Report',
@@ -163,11 +129,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'process', label: 'Process Type' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { batchNo: 'DY-BT-701', date: '2026-05-25', shade: 'Classic Navy Blue', fabricType: 'Cotton Voile', weight: 450, process: 'Reactive Dyeing', status: 'Completed' },
-      { batchNo: 'DY-BT-702', date: '2026-05-27', shade: 'Olive Green 104', fabricType: 'Cotton Twill', weight: 600, process: 'Vat Dyeing', status: 'Completed' },
-      { batchNo: 'DY-BT-703', date: '2026-05-29', shade: 'Crimson Red', fabricType: 'Viscose Satin', weight: 380, process: 'Disperse Dyeing', status: 'Pending' }
-    ]
+    rows: []
   },
   'prod_efficiency': {
     title: 'Production Efficiency Report',
@@ -180,12 +142,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'actual', label: 'Actual (Mtrs)' },
       { key: 'efficiency', label: 'Avg Efficiency %' }
     ],
-    rows: [
-      { date: '2026-05-25', shift: 'Shift A', dept: 'Weaving Section I', looms: 36, target: 7200, actual: 6840, efficiency: 95.0 },
-      { date: '2026-05-26', shift: 'Shift B', dept: 'Weaving Section I', looms: 36, target: 7200, actual: 6912, efficiency: 96.0 },
-      { date: '2026-05-27', shift: 'Shift C', dept: 'Weaving Section I', looms: 34, target: 6800, actual: 6392, efficiency: 94.0 },
-      { date: '2026-05-28', shift: 'Shift A', dept: 'Weaving Section II', looms: 20, target: 4400, actual: 3960, efficiency: 90.0 }
-    ]
+    rows: []
   },
 
   // --- C. Yarn Reports ---
@@ -200,12 +157,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'balance', label: 'Stock Balance (Kg)' },
       { key: 'val', label: 'Value (₹)' }
     ],
-    rows: [
-      { yarnType: 'Cotton Combed', count: '40s Ne', brand: 'Vardhman Spinning', inward: 45000, consumed: 38200, balance: 6800, val: 2040000 },
-      { yarnType: 'Viscose Vortex', count: '50s Ne', brand: 'Birla Acrylic', inward: 24000, consumed: 18500, balance: 5500, val: 1925000 },
-      { yarnType: 'Polyester Filament', count: '150 Denier', brand: 'Reliance Ind.', inward: 30000, consumed: 28000, balance: 2000, val: 400000 },
-      { yarnType: 'Cotton Carded', count: '20s Ne', brand: 'KPR Mills', inward: 18000, consumed: 12000, balance: 6000, val: 1560000 }
-    ]
+    rows: []
   },
   'yarn_consumption': {
     title: 'Yarn Consumption Report',
@@ -217,12 +169,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'consumed', label: 'Yarn Consumed (Kg)' },
       { key: 'waste', label: 'Waste Generated (Kg)' }
     ],
-    rows: [
-      { date: '2026-05-30', loomNo: 'Loom-01', warpLot: 'YLT-COT-40S', weftLot: 'YLT-COT-40S', consumed: 45.8, waste: 0.9 },
-      { date: '2026-05-30', loomNo: 'Loom-02', warpLot: 'YLT-COT-40S', weftLot: 'YLT-COT-40S', consumed: 42.4, waste: 0.8 },
-      { date: '2026-05-30', loomNo: 'Loom-03', warpLot: 'YLT-VIS-50S', weftLot: 'YLT-VIS-50S', consumed: 38.6, waste: 0.7 },
-      { date: '2026-05-30', loomNo: 'Loom-04', warpLot: 'YLT-POLY-30S', weftLot: 'YLT-POLY-30S', consumed: 52.1, waste: 1.1 }
-    ]
+    rows: []
   },
   'yarn_purchase': {
     title: 'Yarn Purchase Report',
@@ -236,11 +183,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'total', label: 'Total Value (₹)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { poNo: 'YPO-2026-101', date: '2026-05-01', supplier: 'Vardhman Spinning', yarnType: '40s Combed Cotton', qty: 10000, rate: 300, total: 3000000, status: 'Completed' },
-      { poNo: 'YPO-2026-102', date: '2026-05-15', supplier: 'KPR Mills', yarnType: '20s Carded Cotton', qty: 12000, rate: 260, total: 3120000, status: 'Completed' },
-      { poNo: 'YPO-2026-103', date: '2026-05-26', supplier: 'Birla Acrylic', yarnType: '50s Viscose Vortex', qty: 8000, rate: 350, total: 2800000, status: 'Pending' }
-    ]
+    rows: []
   },
   'yarn_delivery': {
     title: 'Yarn Delivery Challan',
@@ -253,10 +196,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'netQty', label: 'Net Weight (Kg)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { challanNo: 'YDC-9801', date: '2026-05-03', supplier: 'Vardhman Spinning', yarnType: '40s Combed Cotton', vehicleNo: 'PB-10-XX-7811', netQty: 10000, status: 'Completed' },
-      { challanNo: 'YDC-9802', date: '2026-05-18', supplier: 'KPR Mills', yarnType: '20s Carded Cotton', vehicleNo: 'TN-33-AA-9900', netQty: 12000, status: 'Completed' }
-    ]
+    rows: []
   },
 
   // --- D. Fabric Reports ---
@@ -271,11 +211,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'mtrs', label: 'Total Meters' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { inwardNo: 'CI-1109', date: '2026-05-30', loomNo: 'Loom-01', quality: '40s Cotton Sateen', rolls: 4, mtrs: 485, status: 'Completed' },
-      { inwardNo: 'CI-1110', date: '2026-05-30', loomNo: 'Loom-02', quality: '60s Cotton Sateen', rolls: 3, mtrs: 350, status: 'Completed' },
-      { inwardNo: 'CI-1111', date: '2026-05-30', loomNo: 'Loom-03', quality: '50s Viscose Linen', rolls: 4, mtrs: 520, status: 'Completed' }
-    ]
+    rows: []
   },
   'cloth_delivery': {
     title: 'Cloth Delivery (Grey Challan)',
@@ -288,10 +224,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'mtrs', label: 'Total Mtrs' },
       { key: 'gatePass', label: 'Gate Pass No' }
     ],
-    rows: [
-      { challanNo: 'CDC-5501', date: '2026-05-24', buyer: 'Krishna Dyeing House', quality: '40s Cotton Sateen', rolls: 45, mtrs: 5400, gatePass: 'GP-2281' },
-      { challanNo: 'CDC-5502', date: '2026-05-28', buyer: 'Apex Processing Ind.', quality: '50s Viscose Linen', rolls: 32, mtrs: 3840, gatePass: 'GP-2295' }
-    ]
+    rows: []
   },
   'finished_fabric': {
     title: 'Finished Fabric Inward',
@@ -305,10 +238,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'gradeB', label: 'Grade B %' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { batchNo: 'FFB-901', date: '2026-05-26', quality: 'Cotton Voile 40x40', shade: 'Classic Navy Blue', mtrs: 432, gradeA: 96.5, gradeB: 3.5, status: 'Completed' },
-      { batchNo: 'FFB-902', date: '2026-05-28', quality: 'Cotton Twill 2/20', shade: 'Olive Green 104', mtrs: 585, gradeA: 95.0, gradeB: 5.0, status: 'Completed' }
-    ]
+    rows: []
   },
   'grey_fabric': {
     title: 'Grey Fabric Roll Stock',
@@ -321,12 +251,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'wt', label: 'Weight (Kg)' },
       { key: 'grade', label: 'Grade' }
     ],
-    rows: [
-      { rollNo: 'RL-10801', date: '2026-05-29', quality: '40s Cotton Sateen', width: 63, mtrs: 125, wt: 18.5, grade: 'A' },
-      { rollNo: 'RL-10802', date: '2026-05-29', quality: '40s Cotton Sateen', width: 63, mtrs: 120, wt: 17.8, grade: 'A' },
-      { rollNo: 'RL-10803', date: '2026-05-29', quality: '50s Viscose Linen', width: 58, mtrs: 130, wt: 20.2, grade: 'A' },
-      { rollNo: 'RL-10804', date: '2026-05-29', quality: 'Cotton Twill 2/20', width: 60, mtrs: 110, wt: 22.0, grade: 'B' }
-    ]
+    rows: []
   },
 
   // --- E. Accounts Reports ---
@@ -341,12 +266,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'overdue', label: 'Overdue (Days)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { customer: 'Reliance Retail', billed: 5600000, paid: 4800000, balance: 800000, lastPayment: '2026-05-20', overdue: 12, status: 'Pending' },
-      { customer: 'Birla Fashion', billed: 3200000, paid: 2000000, balance: 1200000, lastPayment: '2026-05-15', overdue: 25, status: 'Pending' },
-      { customer: 'Dinesh Fabrics', billed: 4200000, paid: 4200000, balance: 0, lastPayment: '2026-05-28', overdue: 0, status: 'Completed' },
-      { customer: 'Raymond Ltd', billed: 7800000, paid: 6000000, balance: 1800000, lastPayment: '2026-05-22', overdue: 9, status: 'Pending' }
-    ]
+    rows: []
   },
   'creditors': {
     title: 'Creditors Outstanding Report',
@@ -359,11 +279,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'overdue', label: 'Overdue (Days)' },
       { key: 'status', label: 'Status' }
     ],
-    rows: [
-      { supplier: 'Vardhman Spinning', purchases: 6400000, paid: 5400000, balance: 1000000, nextDue: '2026-06-10', overdue: 0, status: 'Pending' },
-      { supplier: 'KPR Mills', purchases: 3800000, paid: 3800000, balance: 0, nextDue: '-', overdue: 0, status: 'Completed' },
-      { supplier: 'Birla Acrylic', purchases: 2800000, paid: 1800000, balance: 1000000, nextDue: '2026-05-28', overdue: 4, status: 'Pending' }
-    ]
+    rows: []
   },
   'gst_summary': {
     title: 'GST Return Summary (3B/1)',
@@ -375,11 +291,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'paid', label: 'Tax Paid (Challan) (₹)' },
       { key: 'filedDate', label: 'Date of Filing' }
     ],
-    rows: [
-      { month: 'April 2026', outwardGst: 1620000, inwardGst: 1080000, payable: 540000, paid: 540000, filedDate: '2026-05-18' },
-      { month: 'March 2026', outwardGst: 1890000, inwardGst: 1250000, payable: 640000, paid: 640000, filedDate: '2026-04-19' },
-      { month: 'February 2026', outwardGst: 1450000, inwardGst: 980000, payable: 470000, paid: 470000, filedDate: '2026-03-20' }
-    ]
+    rows: []
   },
   'profit_loss': {
     title: 'Profit & Loss Statement (MIS)',
@@ -391,11 +303,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'grossProfit', label: 'Gross Profit (₹)' },
       { key: 'netProfit', label: 'Net Profit (₹)' }
     ],
-    rows: [
-      { quarter: 'Q1 FY 2025-26', revenue: 45000000, directExp: 31000000, indirectExp: 4500000, grossProfit: 14000000, netProfit: 9500000 },
-      { quarter: 'Q4 FY 2024-25', revenue: 48000000, directExp: 33000000, indirectExp: 4800000, grossProfit: 15000000, netProfit: 10200000 },
-      { quarter: 'Q3 FY 2024-25', revenue: 41000000, directExp: 28500000, indirectExp: 4200000, grossProfit: 12500000, netProfit: 8300000 }
-    ]
+    rows: []
   },
 
   // --- F. Inventory Reports ---
@@ -410,13 +318,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'reorder', label: 'Reorder Level' },
       { key: 'val', label: 'Stock Value (₹)' }
     ],
-    rows: [
-      { itemCode: 'YRN-COT-40S', itemName: '40s Ne Combed Cotton Yarn', category: 'Yarn Stock', uom: 'Kgs', currentQty: 6800, reorder: 5000, val: 2040000 },
-      { itemCode: 'YRN-VIS-50S', itemName: '50s Ne Vortex Viscose Yarn', category: 'Yarn Stock', uom: 'Kgs', currentQty: 5500, reorder: 4000, val: 1925000 },
-      { itemCode: 'DY-NVY-22', itemName: 'Navy Blue Reactive Dye RD-22', category: 'Dyes & Chem', uom: 'Kgs', currentQty: 240, reorder: 150, val: 96000 },
-      { itemCode: 'DY-OLV-14', itemName: 'Olive Green Vat Dye OLV-14', category: 'Dyes & Chem', uom: 'Kgs', currentQty: 180, reorder: 100, val: 108000 },
-      { itemCode: 'PKG-CAR-L', itemName: 'Heavy Duty Export Cartons L', category: 'Packaging', uom: 'Pcs', currentQty: 1500, reorder: 1000, val: 75000 }
-    ]
+    rows: []
   },
   'material_consumption': {
     title: 'Material Consumption Log',
@@ -429,11 +331,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'qty', label: 'Qty Consumed' },
       { key: 'uom', label: 'UOM' }
     ],
-    rows: [
-      { date: '2026-05-30', slipNo: 'REQ-12001', dept: 'Dyeing House', user: 'Vikas Sharma', itemName: 'Navy Blue Reactive Dye RD-22', qty: 35, uom: 'Kgs' },
-      { date: '2026-05-30', slipNo: 'REQ-12002', dept: 'Weaving Room', user: 'Ramesh K.', itemName: '40s Ne Combed Cotton Yarn', qty: 250, uom: 'Kgs' },
-      { date: '2026-05-30', slipNo: 'REQ-12003', dept: 'Packing Unit', user: 'Anthony D.', itemName: 'Heavy Duty Export Cartons L', qty: 85, uom: 'Pcs' }
-    ]
+    rows: []
   },
   'inv_aging': {
     title: 'Inventory Aging Report',
@@ -446,12 +344,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'age91_180', label: '91-180 Days' },
       { key: 'age180plus', label: '> 180 Days' }
     ],
-    rows: [
-      { itemCode: 'YRN-COT-40S', itemName: '40s Ne Combed Cotton Yarn', category: 'Yarn Stock', age0_30: 1800, age31_90: 3200, age91_180: 1800, age180plus: 0 },
-      { itemCode: 'YRN-VIS-50S', itemName: '50s Ne Vortex Viscose Yarn', category: 'Yarn Stock', age0_30: 2500, age31_90: 2000, age91_180: 1000, age180plus: 0 },
-      { itemCode: 'DY-NVY-22', itemName: 'Navy Blue Reactive Dye RD-22', category: 'Dyes & Chem', age0_30: 90, age31_90: 150, age91_180: 0, age180plus: 0 },
-      { itemCode: 'PKG-CAR-L', itemName: 'Heavy Duty Export Cartons L', category: 'Packaging', age0_30: 500, age31_90: 400, age91_180: 200, age180plus: 400 }
-    ]
+    rows: []
   },
   'warehouse_stock': {
     title: 'Warehouse Bin Stock Location',
@@ -464,12 +357,7 @@ const MOCK_REPORTS_DATA = {
       { key: 'reserved', label: 'Reserved' },
       { key: 'total', label: 'Total Stock' }
     ],
-    rows: [
-      { warehouse: 'Main Yarn Godown', itemName: '40s Ne Combed Cotton Yarn', rackNo: 'RK-A1', binNo: 'BIN-102', available: 5800, reserved: 1000, total: 6800 },
-      { warehouse: 'Main Yarn Godown', itemName: '50s Ne Vortex Viscose Yarn', rackNo: 'RK-A3', binNo: 'BIN-108', available: 4500, reserved: 1000, total: 5500 },
-      { warehouse: 'Chemical Store Rm 1', itemName: 'Navy Blue Reactive Dye RD-22', rackNo: 'RK-D5', binNo: 'BIN-401', available: 240, reserved: 0, total: 240 },
-      { warehouse: 'Packaging Depot', itemName: 'Heavy Duty Export Cartons L', rackNo: 'RK-P2', binNo: 'BOX-22', available: 1200, reserved: 300, total: 1500 }
-    ]
+    rows: []
   }
 };
 
@@ -532,6 +420,8 @@ const REPORT_CATEGORIES = [
 ];
 
 export default function ReportsDashboard() {
+  const [reportsData, setReportsData] = useState(MOCK_REPORTS_DATA);
+
   // Page states
   const [activeCategory, setActiveCategory] = useState('production');
   const [activeReportId, setActiveReportId] = useState('loom_production');
@@ -580,7 +470,138 @@ export default function ReportsDashboard() {
 
   // Dynamic Report Selection
   const reportObj = useMemo(() => {
-    return MOCK_REPORTS_DATA[activeReportId] || MOCK_REPORTS_DATA['loom_production'];
+    return reportsData[activeReportId] || reportsData['loom_production'];
+  }, [activeReportId, reportsData]);
+
+  useEffect(() => {
+    const fetchRealData = async () => {
+      try {
+        let newRows = [];
+        let fetched = false;
+
+        if (activeReportId === 'buyer_order') {
+          const res = await buyerOrderAPI.list();
+          newRows = (res.data || []).map(b => ({
+            orderId: b.order_no,
+            date: b.order_date ? new Date(b.order_date).toLocaleDateString() : '-',
+            customer: b.party_name,
+            fabricType: b.quality || '-',
+            qty: b.total_qty || 0,
+            amount: b.grand_total || 0,
+            status: b.status || 'Active'
+          }));
+          fetched = true;
+        } 
+        else if (activeReportId === 'invoice') {
+          const res = await salesInvoiceAPI.list();
+          newRows = (res.data || []).map(inv => ({
+            invoiceNo: inv.invoice_no,
+            date: inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : '-',
+            customer: inv.party_name,
+            gstin: inv.party_gstin || '-',
+            taxable: inv.total_taxable_amount || 0,
+            gst: (inv.sgst_amount || 0) + (inv.cgst_amount || 0) + (inv.igst_amount || 0),
+            total: inv.grand_total || 0,
+            status: inv.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dispatch') {
+          const res = await goodsReleaseAPI.list();
+          newRows = (res.data || []).map(g => ({
+            dispatchNo: g.release_no,
+            date: g.release_date ? new Date(g.release_date).toLocaleDateString() : '-',
+            customer: g.party_name,
+            invoiceNo: g.invoice_no || '-',
+            vehicleNo: g.vehicle_no || '-',
+            pcs: g.total_qty || 0,
+            status: g.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'packing_list') {
+          const res = await packingSlipAPI.list();
+          newRows = (res.data || []).map(p => ({
+            packingNo: p.slip_no,
+            date: p.date ? new Date(p.date).toLocaleDateString() : '-',
+            customer: p.party_name,
+            rolls: p.total_rolls || 0,
+            netWeight: p.total_net_weight || 0,
+            grossWeight: p.total_gross_weight || 0,
+            status: p.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_purchase') {
+          const res = await yarnPurchaseOrderAPI.list();
+          newRows = (res.data || []).map(ypo => ({
+            poNo: ypo.po_no,
+            date: ypo.po_date ? new Date(ypo.po_date).toLocaleDateString() : '-',
+            supplier: ypo.party_name,
+            yarnType: ypo.quality || '-',
+            qty: ypo.total_qty || 0,
+            rate: ypo.rate || 0,
+            total: (ypo.total_qty || 0) * (ypo.rate || 0),
+            status: ypo.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'cloth_inward') {
+          const res = await clothInwardAPI.list();
+          newRows = (res.data || []).map(c => ({
+            inwardNo: c.inward_no,
+            date: c.inward_date ? new Date(c.inward_date).toLocaleDateString() : '-',
+            loomNo: c.loom_no || '-',
+            quality: c.quality || '-',
+            rolls: c.total_rolls || 0,
+            mtrs: c.total_qty || 0,
+            status: c.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'cloth_delivery') {
+          const res = await clothDeliveryAPI.list();
+          newRows = (res.data || []).map(cd => ({
+            challanNo: cd.challan_no,
+            date: cd.challan_date ? new Date(cd.challan_date).toLocaleDateString() : '-',
+            buyer: cd.party_name,
+            quality: cd.quality || '-',
+            rolls: cd.total_rolls || 0,
+            mtrs: cd.total_qty || 0,
+            gatePass: cd.gate_pass_no || '-'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'finished_fabric') {
+          const res = await finishedFabricAPI.list();
+          newRows = (res.data || []).map(f => ({
+            batchNo: f.inward_no || f.batch_no || '-',
+            date: f.inward_date ? new Date(f.inward_date).toLocaleDateString() : '-',
+            quality: f.quality || '-',
+            shade: f.shade || '-',
+            mtrs: f.total_qty || 0,
+            gradeA: 100,
+            gradeB: 0,
+            status: f.status || 'Active'
+          }));
+          fetched = true;
+        }
+
+        if (fetched) {
+          setReportsData(prev => ({
+            ...prev,
+            [activeReportId]: {
+              ...prev[activeReportId],
+              rows: newRows
+            }
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching real data for report", activeReportId, err);
+      }
+    };
+    
+    fetchRealData();
   }, [activeReportId]);
 
   // Filter application logic

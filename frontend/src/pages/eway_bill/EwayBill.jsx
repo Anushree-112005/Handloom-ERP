@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Trash2, Search, Download, ShieldCheck, MapPin, Calculator, RefreshCw, Send, X } from 'lucide-react';
-import { ewayBillAPI, partyAPI, salesInvoiceAPI, companySettingAPI } from '../../services/api';
+import { FileText, Plus, Trash2, Search, Download, ShieldCheck, MapPin, Calculator, RefreshCw, Send, X, CheckCircle, Eye, Edit2 } from 'lucide-react';
+import { ewayBillAPI, partyAPI, salesInvoiceAPI, companySettingAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -12,6 +12,9 @@ export default function EwayBill() {
   const [selectedBill, setSelectedBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isNew, setIsNew] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const isReadOnly = !(isNew || isEditMode);
 
   // Form States
   const [supplyType, setSupplyType] = useState('Outward');
@@ -24,6 +27,25 @@ export default function EwayBill() {
   const [tokenNo, setTokenNo] = useState('');
   const [result, setResult] = useState('');
   const [errorText, setErrorText] = useState('');
+
+  // Dropdown options
+  const [options, setOptions] = useState({ masters: {} });
+  
+  // Custom States
+  const [isCustomSupplyType, setIsCustomSupplyType] = useState(false);
+  const [customSupplyTypeVal, setCustomSupplyTypeVal] = useState('');
+
+  const [isCustomSubType, setIsCustomSubType] = useState(false);
+  const [customSubTypeVal, setCustomSubTypeVal] = useState('');
+
+  const [isCustomDocType, setIsCustomDocType] = useState(false);
+  const [customDocTypeVal, setCustomDocTypeVal] = useState('');
+
+  const [isCustomInvoiceType, setIsCustomInvoiceType] = useState(false);
+  const [customInvoiceTypeVal, setCustomInvoiceTypeVal] = useState('');
+
+  const [customUnitRowIndex, setCustomUnitRowIndex] = useState(null);
+  const [customUnitVal, setCustomUnitVal] = useState('');
 
   // Billing From (Pre-filled dynamically from Company Setting if available)
   const [billFromName, setBillFromName] = useState('');
@@ -73,15 +95,17 @@ export default function EwayBill() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [resBills, resParties, resInvoices, resCompany] = await Promise.all([
+      const [resBills, resParties, resInvoices, resCompany, resOptions] = await Promise.all([
         ewayBillAPI.list(),
         partyAPI.list ? partyAPI.list() : { data: [] },
         salesInvoiceAPI.list ? salesInvoiceAPI.list() : { data: [] },
-        companySettingAPI.get()
+        companySettingAPI.get(),
+        dropdownAPI.getAll()
       ]);
       setBills(resBills.data || []);
       setParties(resParties.data || []);
       setInvoices(resInvoices.data || []);
+      setOptions(resOptions.data || { masters: {} });
 
       // Dynamically load company settings into Billing/Dispatch From sections
       if (resCompany.data && resCompany.data.company_name) {
@@ -105,12 +129,90 @@ export default function EwayBill() {
     }
   };
 
+  const handleSaveCustomSupplyType = async () => {
+    if (!customSupplyTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('supply_type_master', { entity: 'supply_type_master', name: customSupplyTypeVal.trim(), is_active: true });
+      const { data } = await dropdownAPI.getAll();
+      setOptions(data);
+      setSupplyType(customSupplyTypeVal.trim());
+      setIsCustomSupplyType(false);
+      setCustomSupplyTypeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Supply Type');
+    }
+  };
+  
+  const handleSaveCustomSubType = async () => {
+    if (!customSubTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('sub_type_master', { entity: 'sub_type_master', name: customSubTypeVal.trim(), is_active: true });
+      const { data } = await dropdownAPI.getAll();
+      setOptions(data);
+      setSubType(customSubTypeVal.trim());
+      setIsCustomSubType(false);
+      setCustomSubTypeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Sub Type');
+    }
+  };
+
+  const handleSaveCustomDocType = async () => {
+    if (!customDocTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('document_type_master', { entity: 'document_type_master', name: customDocTypeVal.trim(), is_active: true });
+      const { data } = await dropdownAPI.getAll();
+      setOptions(data);
+      setDocType(customDocTypeVal.trim());
+      setIsCustomDocType(false);
+      setCustomDocTypeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Document Type');
+    }
+  };
+
+  const handleSaveCustomInvoiceType = async () => {
+    if (!customInvoiceTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('invoice_type_master', { entity: 'invoice_type_master', name: customInvoiceTypeVal.trim(), is_active: true });
+      const { data } = await dropdownAPI.getAll();
+      setOptions(data);
+      setInvoiceType(customInvoiceTypeVal.trim());
+      setIsCustomInvoiceType(false);
+      setCustomInvoiceTypeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Invoice Type');
+    }
+  };
+
+  const handleSaveCustomUnit = async () => {
+    if (!customUnitVal.trim()) return;
+    try {
+      await subMasterAPI.create('unit_master', { entity: 'unit_master', name: customUnitVal.trim(), is_active: true });
+      const { data } = await dropdownAPI.getAll();
+      setOptions(data);
+      
+      if (customUnitRowIndex !== null) {
+         handleItemChange(customUnitRowIndex, 'unit', customUnitVal.trim());
+      }
+      setCustomUnitRowIndex(null);
+      setCustomUnitVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Unit');
+    }
+  };
+
   const handleSelectInvoice = (invNo) => {
     setDcNoDate(invNo);
     const invoice = invoices.find(inv => inv.invoice_no === invNo);
     if (invoice) {
       // Find matching party in party master
-      const matchingParty = parties.find(p => p.party_name === invoice.party_name);
+      const matchingParty = parties.find(p => (p.company_name || p.business_name || p.name) === invoice.party_name);
       if (matchingParty) {
         handleBillToChange(matchingParty.id);
         handleDispatchToChange(matchingParty.id);
@@ -137,7 +239,7 @@ export default function EwayBill() {
     setBillToPartyId(partyId);
     const party = parties.find(p => p.id === Number(partyId));
     if (party) {
-      setBillToName(party.party_name);
+      setBillToName(party.company_name || party.business_name || party.name || '');
       setBillToAddress(party.billing_address || party.address || '');
       setBillToGstin(party.gstin || '');
       setBillToPin(party.pin_code || '638001');
@@ -150,7 +252,7 @@ export default function EwayBill() {
     setDispatchToPartyId(partyId);
     const party = parties.find(p => p.id === Number(partyId));
     if (party) {
-      setDispatchToName(party.party_name);
+      setDispatchToName(party.company_name || party.business_name || party.name || '');
       setDispatchToAddress(party.delivery_address || party.address || '');
       setDispatchToPin(party.pin_code || '638001');
       setDispatchToPlace(party.city || party.district || 'Erode');
@@ -375,6 +477,7 @@ export default function EwayBill() {
                 onClick={() => {
                   setSelectedBill(null);
                   setIsNew(true);
+                  setIsEditMode(false);
                   // Reset some fields
                   setBillToPartyId('');
                   setBillToName('');
@@ -391,6 +494,11 @@ export default function EwayBill() {
                   setTokenExDate('');
                   setResult('');
                   setItems([{ product_name: 'Cotton Finished Fabric', hsn_code: '5208', unit: 'Mtr', qty: 1000, taxable_value: 120000, tax_rate: 5 }]);
+                  setIsCustomSupplyType(false);
+                  setIsCustomSubType(false);
+                  setIsCustomDocType(false);
+                  setIsCustomInvoiceType(false);
+                  setCustomUnitRowIndex(null);
                 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 8 }}
               >
@@ -426,7 +534,7 @@ export default function EwayBill() {
                     bills.map(b => (
                       <tr 
                         key={b.id} 
-                        onClick={() => { setSelectedBill(b); setIsNew(false); }}
+                        onClick={() => { setSelectedBill(b); setIsNew(false); setIsEditMode(false); }}
                         style={{ cursor: 'pointer', background: selectedBill?.id === b.id ? 'rgba(34,197,94,0.05)' : 'transparent' }}
                       >
                         <td style={{ fontWeight: 700, color: '#16a34a' }}>{b.eway_bill_no || '-'}</td>
@@ -439,14 +547,33 @@ export default function EwayBill() {
                             {b.status}
                           </span>
                         </td>
-                        <td>
-                          <button 
-                            className="btn btn-secondary" 
-                            onClick={(e) => { e.stopPropagation(); handleDelete(b.id); }}
-                            style={{ padding: 4, color: '#ef4444' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                        <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => { setSelectedBill(b); setIsNew(false); setIsEditMode(false); }}
+                              title="Full View"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => { setSelectedBill(b); setIsNew(false); setIsEditMode(true); }}
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button 
+                              className="btn btn-secondary" 
+                              onClick={() => handleDelete(b.id)}
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -461,7 +588,7 @@ export default function EwayBill() {
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
-              {isNew ? "New E-Way Bill Generation Form" : `Details for E-Way Bill: ${selectedBill?.eway_bill_no || '-'}`}
+              {isNew ? "New E-Way Bill Generation Form" : isEditMode ? `Edit E-Way Bill: ${selectedBill?.eway_bill_no || '-'}` : `View E-Way Bill: ${selectedBill?.eway_bill_no || '-'}`}
             </h2>
             <div style={{ display: 'flex', gap: 12 }}>
               <button 
@@ -472,14 +599,14 @@ export default function EwayBill() {
               >
                 <X size={16} /> Close
               </button>
-              {isNew && (
+              {(isNew || isEditMode) && (
                 <button 
                   type="submit" 
                   form="ewayForm" 
                   className="btn btn-primary" 
                   style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#16a34a' }}
                 >
-                  <Send size={16} /> Save & Generate E-Way Bill
+                  <Send size={16} /> {isEditMode ? 'Update E-Way Bill' : 'Save & Generate E-Way Bill'}
                 </button>
               )}
             </div>
@@ -491,31 +618,70 @@ export default function EwayBill() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
                 <div className="form-group">
                   <label>Supply Type</label>
-                  <select className="form-control" value={supplyType} onChange={e => setSupplyType(e.target.value)} disabled={!isNew}>
-                    <option value="Outward">Outward</option>
-                    <option value="Inward">Inward</option>
-                  </select>
+                  {isCustomSupplyType ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-control" autoFocus placeholder="Enter Supply Type..." value={customSupplyTypeVal} onChange={e => setCustomSupplyTypeVal(e.target.value)} />
+                      <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomSupplyType}><CheckCircle size={16} /></button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomSupplyType(false); setCustomSupplyTypeVal(''); }}><X size={16} /></button>
+                    </div>
+                  ) : (
+                    <select className="form-control" value={supplyType} onChange={e => {
+                      if (e.target.value === 'custom') setIsCustomSupplyType(true);
+                      else setSupplyType(e.target.value);
+                    }} disabled={isReadOnly}>
+                      <option value="Outward">Outward</option>
+                      <option value="Inward">Inward</option>
+                      {options.masters?.supply_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Supply Type...</option>
+                    </select>
+                  )}
                 </div>
 
                 <div className="form-group">
                   <label>Sub Type</label>
-                  <select className="form-control" value={subType} onChange={e => setSubType(e.target.value)} disabled={!isNew}>
-                    <option value="B2B">B2B</option>
-                    <option value="B2C">B2C</option>
-                    <option value="Job Work">Job Work</option>
-                    <option value="Export">Export</option>
-                    <option value="Line Sales">Line Sales</option>
-                  </select>
+                  {isCustomSubType ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-control" autoFocus placeholder="Enter Sub Type..." value={customSubTypeVal} onChange={e => setCustomSubTypeVal(e.target.value)} />
+                      <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomSubType}><CheckCircle size={16} /></button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomSubType(false); setCustomSubTypeVal(''); }}><X size={16} /></button>
+                    </div>
+                  ) : (
+                    <select className="form-control" value={subType} onChange={e => {
+                      if (e.target.value === 'custom') setIsCustomSubType(true);
+                      else setSubType(e.target.value);
+                    }} disabled={isReadOnly}>
+                      <option value="B2B">B2B</option>
+                      <option value="B2C">B2C</option>
+                      <option value="Job Work">Job Work</option>
+                      <option value="Export">Export</option>
+                      <option value="Line Sales">Line Sales</option>
+                      {options.masters?.sub_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Sub Type...</option>
+                    </select>
+                  )}
                 </div>
 
                 <div className="form-group">
                   <label>Document Type</label>
-                  <select className="form-control" value={docType} onChange={e => setDocType(e.target.value)} disabled={!isNew}>
-                    <option value="Tax Invoice">Tax Invoice</option>
-                    <option value="Bill of Supply">Bill of Supply</option>
-                    <option value="Delivery Challan">Delivery Challan</option>
-                    <option value="Others">Others</option>
-                  </select>
+                  {isCustomDocType ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-control" autoFocus placeholder="Enter Document Type..." value={customDocTypeVal} onChange={e => setCustomDocTypeVal(e.target.value)} />
+                      <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomDocType}><CheckCircle size={16} /></button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomDocType(false); setCustomDocTypeVal(''); }}><X size={16} /></button>
+                    </div>
+                  ) : (
+                    <select className="form-control" value={docType} onChange={e => {
+                      if (e.target.value === 'custom') setIsCustomDocType(true);
+                      else setDocType(e.target.value);
+                    }} disabled={isReadOnly}>
+                      <option value="Tax Invoice">Tax Invoice</option>
+                      <option value="Bill of Supply">Bill of Supply</option>
+                      <option value="Delivery Challan">Delivery Challan</option>
+                      <option value="Others">Others</option>
+                      {options.masters?.document_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Document Type...</option>
+                    </select>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -527,20 +693,33 @@ export default function EwayBill() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
                 <div className="form-group">
                   <label>Invoice Type</label>
-                  <select className="form-control" value={invoiceType} onChange={e => setInvoiceType(e.target.value)} disabled={!isNew}>
-                    <option value="Regular">Regular</option>
-                    <option value="Bill of Entry">Bill of Entry</option>
-                  </select>
+                  {isCustomInvoiceType ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input type="text" className="form-control" autoFocus placeholder="Enter Invoice Type..." value={customInvoiceTypeVal} onChange={e => setCustomInvoiceTypeVal(e.target.value)} />
+                      <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomInvoiceType}><CheckCircle size={16} /></button>
+                      <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomInvoiceType(false); setCustomInvoiceTypeVal(''); }}><X size={16} /></button>
+                    </div>
+                  ) : (
+                    <select className="form-control" value={invoiceType} onChange={e => {
+                      if (e.target.value === 'custom') setIsCustomInvoiceType(true);
+                      else setInvoiceType(e.target.value);
+                    }} disabled={isReadOnly}>
+                      <option value="Regular">Regular</option>
+                      <option value="Bill of Entry">Bill of Entry</option>
+                      {options.masters?.invoice_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Invoice Type...</option>
+                    </select>
+                  )}
                 </div>
 
                 <div className="form-group">
                   <label>Org Name</label>
-                  <input className="form-control" type="text" value={orgName} onChange={e => setOrgName(e.target.value)} disabled={!isNew} />
+                  <input className="form-control" type="text" value={orgName} onChange={e => setOrgName(e.target.value)} disabled={isReadOnly} />
                 </div>
 
                 <div className="form-group">
                   <label>DC No. / Date</label>
-                  <select className="form-control" value={dcNoDate} onChange={e => handleSelectInvoice(e.target.value)} disabled={!isNew}>
+                  <select className="form-control" value={dcNoDate} onChange={e => handleSelectInvoice(e.target.value)} disabled={isReadOnly}>
                     <option value="">- Select Active Invoice -</option>
                     {invoices.map((inv, idx) => (
                       <option key={idx} value={inv.invoice_no}>
@@ -556,7 +735,7 @@ export default function EwayBill() {
                     className="btn" 
                     style={{ width: '100%', background: '#b91c1c', color: '#ffffff', fontWeight: 600 }}
                     onClick={handleGetToken}
-                    disabled={!isNew}
+                    disabled={isReadOnly}
                   >
                     Get Token No
                   </button>
@@ -673,11 +852,11 @@ export default function EwayBill() {
                       className="form-control" 
                       value={billToPartyId} 
                       onChange={e => handleBillToChange(e.target.value)}
-                      disabled={!isNew}
+                      disabled={isReadOnly}
                     >
                       <option value="">- Select Billing Party -</option>
                       {parties.map(p => (
-                        <option key={p.id} value={p.id}>{p.party_name}</option>
+                        <option key={p.id} value={p.id}>{p.company_name || p.business_name || p.name}</option>
                       ))}
                     </select>
                   </div>
@@ -689,7 +868,7 @@ export default function EwayBill() {
                       rows="2" 
                       value={billToAddress} 
                       onChange={e => setBillToAddress(e.target.value)}
-                      disabled={!isNew}
+                      disabled={isReadOnly}
                     />
                   </div>
 
@@ -701,7 +880,7 @@ export default function EwayBill() {
                         type="text" 
                         value={billToGstin} 
                         onChange={e => setBillToGstin(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                     <div className="form-group">
@@ -711,7 +890,7 @@ export default function EwayBill() {
                         type="text" 
                         value={billToPin} 
                         onChange={e => setBillToPin(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                   </div>
@@ -724,7 +903,7 @@ export default function EwayBill() {
                         type="text" 
                         value={billToState} 
                         onChange={e => setBillToState(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                     <div className="form-group">
@@ -734,7 +913,7 @@ export default function EwayBill() {
                         type="text" 
                         value={billToStateCode} 
                         onChange={e => setBillToStateCode(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                   </div>
@@ -750,11 +929,11 @@ export default function EwayBill() {
                       className="form-control" 
                       value={dispatchToPartyId} 
                       onChange={e => handleDispatchToChange(e.target.value)}
-                      disabled={!isNew}
+                      disabled={isReadOnly}
                     >
                       <option value="">- Select Delivery Party -</option>
                       {parties.map(p => (
-                        <option key={p.id} value={p.id}>{p.party_name}</option>
+                        <option key={p.id} value={p.id}>{p.company_name || p.business_name || p.name}</option>
                       ))}
                     </select>
                   </div>
@@ -766,7 +945,7 @@ export default function EwayBill() {
                       rows="2" 
                       value={dispatchToAddress} 
                       onChange={e => setDispatchToAddress(e.target.value)}
-                      disabled={!isNew}
+                      disabled={isReadOnly}
                     />
                   </div>
 
@@ -778,7 +957,7 @@ export default function EwayBill() {
                         type="text" 
                         value={dispatchToPlace} 
                         onChange={e => setDispatchToPlace(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                     <div className="form-group">
@@ -788,7 +967,7 @@ export default function EwayBill() {
                         type="text" 
                         value={dispatchToPin} 
                         onChange={e => setDispatchToPin(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                   </div>
@@ -801,7 +980,7 @@ export default function EwayBill() {
                         type="text" 
                         value={dispatchToState} 
                         onChange={e => setDispatchToState(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                     
@@ -813,14 +992,14 @@ export default function EwayBill() {
                           type="number" 
                           value={distance} 
                           onChange={e => setDistance(Number(e.target.value))}
-                          disabled={!isNew}
+                          disabled={isReadOnly}
                         />
                         <button 
                           type="button" 
                           className="btn btn-secondary" 
                           style={{ padding: 4, display: 'flex', alignItems: 'center' }}
                           onClick={handleCalculateDistance}
-                          disabled={!isNew}
+                          disabled={isReadOnly}
                         >
                           <MapPin size={14} />
                         </button>
@@ -834,7 +1013,7 @@ export default function EwayBill() {
                         type="text" 
                         value={dispatchToStateCode} 
                         onChange={e => setDispatchToStateCode(e.target.value)}
-                        disabled={!isNew}
+                        disabled={isReadOnly}
                       />
                     </div>
                   </div>
@@ -875,7 +1054,7 @@ export default function EwayBill() {
                               style={{ margin: 0 }}
                               value={item.product_name} 
                               onChange={e => handleItemChange(idx, 'product_name', e.target.value)}
-                              disabled={!isNew}
+                              disabled={isReadOnly}
                             />
                           </td>
                           <td>
@@ -884,22 +1063,35 @@ export default function EwayBill() {
                               style={{ margin: 0 }}
                               value={item.hsn_code} 
                               onChange={e => handleItemChange(idx, 'hsn_code', e.target.value)}
-                              disabled={!isNew}
+                              disabled={isReadOnly}
                             />
                           </td>
                           <td>
-                            <select 
-                              className="form-control" 
-                              style={{ margin: 0 }}
-                              value={item.unit} 
-                              onChange={e => handleItemChange(idx, 'unit', e.target.value)}
-                              disabled={!isNew}
-                            >
-                              <option value="Mtr">Mtr</option>
-                              <option value="Kg">Kg</option>
-                              <option value="Pcs">Pcs</option>
-                              <option value="Rolls">Rolls</option>
-                            </select>
+                            {customUnitRowIndex === idx ? (
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <input type="text" className="form-control" autoFocus placeholder="New Unit..." value={customUnitVal} onChange={e => setCustomUnitVal(e.target.value)} style={{ margin: 0, width: '100%', minWidth: 60 }} />
+                                <button type="button" className="btn btn-primary" style={{ padding: '4px' }} onClick={handleSaveCustomUnit}><CheckCircle size={14} /></button>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '4px' }} onClick={() => { setCustomUnitRowIndex(null); setCustomUnitVal(''); }}><X size={14} /></button>
+                              </div>
+                            ) : (
+                              <select 
+                                className="form-control" 
+                                style={{ margin: 0 }}
+                                value={item.unit} 
+                                onChange={e => {
+                                  if (e.target.value === 'custom') setCustomUnitRowIndex(idx);
+                                  else handleItemChange(idx, 'unit', e.target.value);
+                                }}
+                                disabled={isReadOnly}
+                              >
+                                <option value="Mtr">Mtr</option>
+                                <option value="Kg">Kg</option>
+                                <option value="Pcs">Pcs</option>
+                                <option value="Rolls">Rolls</option>
+                                {options.masters?.unit_master?.map(u => <option key={u} value={u}>{u}</option>)}
+                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Unit...</option>
+                              </select>
+                            )}
                           </td>
                           <td>
                             <input 
@@ -908,7 +1100,7 @@ export default function EwayBill() {
                               style={{ margin: 0 }}
                               value={item.qty} 
                               onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))}
-                              disabled={!isNew}
+                              disabled={isReadOnly}
                             />
                           </td>
                           <td>
@@ -918,7 +1110,7 @@ export default function EwayBill() {
                               style={{ margin: 0 }}
                               value={item.taxable_value} 
                               onChange={e => handleItemChange(idx, 'taxable_value', Number(e.target.value))}
-                              disabled={!isNew}
+                              disabled={isReadOnly}
                             />
                           </td>
                           <td>
@@ -927,7 +1119,7 @@ export default function EwayBill() {
                               style={{ margin: 0 }}
                               value={item.tax_rate} 
                               onChange={e => handleItemChange(idx, 'tax_rate', Number(e.target.value))}
-                              disabled={!isNew}
+                              disabled={isReadOnly}
                             >
                               <option value="5">5%</option>
                               <option value="12">12%</option>
@@ -958,7 +1150,7 @@ export default function EwayBill() {
                     rows="4" 
                     value={remarks} 
                     onChange={e => setRemarks(e.target.value)}
-                    disabled={!isNew}
+                    disabled={isReadOnly}
                   />
                 </div>
 

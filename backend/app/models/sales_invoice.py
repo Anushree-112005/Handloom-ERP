@@ -37,7 +37,7 @@ class SalesInvoice(Base):
     status = Column(String(30), default="Draft")
 
     # Export specific fields
-    currency = Column(String(10), default="INR")
+    currency = Column(String(50), default="INR")
     exchange_rate = Column(Numeric(10, 4), default=1.0)
     rodtep_amount = Column(Numeric(12, 2), default=0)
     drawback_amount = Column(Numeric(12, 2), default=0)

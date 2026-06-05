@@ -20,7 +20,7 @@ class PartyMaster(Base):
     pin_code = Column(String(20))
     country = Column(String(100), default="India")
     sales_region = Column(String(100))
-    currency = Column(String(20), default="INR")
+    currency = Column(String(50), default="INR")
     
     phone = Column(String(50))
     mobile = Column(String(20))

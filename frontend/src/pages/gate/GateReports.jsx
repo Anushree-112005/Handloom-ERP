@@ -17,7 +17,55 @@ export default function GateReports() {
   ];
 
   // Combined master report dataset
-  const [masterLogs, setMasterLogs] = useState([]);
+  const [masterLogs, setMasterLogs] = useState(() => {
+    const inwardData = JSON.parse(localStorage.getItem('gate_inward_data') || '[]');
+    const outwardData = JSON.parse(localStorage.getItem('gate_outward_data') || '[]');
+    const passData = JSON.parse(localStorage.getItem('gate_pass_data') || '[]');
+
+    const formattedInwards = inwardData.map(i => ({
+      id: i.id,
+      type: 'Inward',
+      dateTime: i.dateTime,
+      partyName: i.partyName,
+      vehicleNo: i.vehicleNo,
+      item: i.materialType,
+      qty: i.qty,
+      unit: i.unit,
+      purpose: i.purpose,
+      guard: i.guardName,
+      status: i.status
+    }));
+
+    const formattedOutwards = outwardData.map(o => ({
+      id: o.id,
+      type: 'Outward',
+      dateTime: o.dateTime,
+      partyName: o.partyName,
+      vehicleNo: o.vehicleNo,
+      item: o.materialType,
+      qty: o.qty,
+      unit: o.unit,
+      purpose: o.purpose,
+      guard: o.guardName,
+      status: o.status
+    }));
+
+    const formattedPasses = passData.map(p => ({
+      id: p.id,
+      type: 'Gate Pass',
+      dateTime: p.passDate,
+      partyName: p.partyName,
+      vehicleNo: p.vehicleNo,
+      item: p.items?.[0]?.name || 'N/A',
+      qty: p.items?.[0]?.qty || 0,
+      unit: p.items?.[0]?.unit || 'Nos',
+      purpose: p.purpose,
+      guard: 'Security',
+      status: p.status
+    }));
+
+    return [...formattedInwards, ...formattedOutwards, ...formattedPasses];
+  });
 
   // Tab State
   const [activeTab, setActiveTab] = useState('Inward'); // 'Inward' | 'Outward' | 'Pass' | 'PendingPass' | 'Vehicle' | 'Summary'
@@ -55,12 +103,13 @@ export default function GateReports() {
       // 3. Common Search Filters
       if (selectedParty !== 'All' && row.partyName !== selectedParty) return false;
       if (selectedStatus !== 'All' && row.status !== selectedStatus) return false;
-      if (vehicleQuery && !row.vehicleNo.toLowerCase().includes(vehicleQuery.toLowerCase())) return false;
-
+      if (vehicleQuery && !String(row.vehicleNo || '').toLowerCase().includes(vehicleQuery.toLowerCase())) return false;
+      
       // 4. Custom criteria for specific registers
       if (activeTab === 'Inward' && selectedMaterialType !== 'All') {
-        const itemLower = row.item.toLowerCase();
-        const query = selectedMaterialType.toLowerCase().split(' ')[0];
+        if (!row.item) return false;
+        const itemLower = String(row.item).toLowerCase();
+        const query = String(selectedMaterialType).toLowerCase().split(' ')[0];
         if (!itemLower.includes(query)) return false;
       }
 

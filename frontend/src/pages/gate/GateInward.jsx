@@ -1,14 +1,116 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
-  ArrowDownLeft, Search, Plus, Printer, Check, 
+  ArrowDownLeft, Search, Plus, Printer, Check, CheckCircle,
   Clock, Truck, Trash2, Eye, Calendar, ShieldAlert, X, Edit, Download
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 
 export default function GateInward() {
-  // Mock Inwards Database
-  const [inwards, setInwards] = useState([]);
+  // Local Storage Database
+  const [inwards, setInwards] = useState(() => {
+    const saved = localStorage.getItem('gate_inward_data');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [parties, setParties] = useState([]);
+  const [options, setOptions] = useState({});
+  const [isCustomPurpose, setIsCustomPurpose] = useState(false);
+  const [customPurposeVal, setCustomPurposeVal] = useState('');
+  const [isCustomUnit, setIsCustomUnit] = useState(false);
+  const [customUnitVal, setCustomUnitVal] = useState('');
+  const [isCustomMaterial, setIsCustomMaterial] = useState(false);
+  const [customMaterialVal, setCustomMaterialVal] = useState('');
+  const [isCustomStatus, setIsCustomStatus] = useState(false);
+  const [customStatusVal, setCustomStatusVal] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [partRes, dropRes] = await Promise.all([
+          partyAPI.list(),
+          dropdownAPI.getAll()
+        ]);
+        setParties(partRes.data || []);
+        setOptions(dropRes.data || {});
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSaveCustomPurpose = async () => {
+    if (!customPurposeVal.trim()) return;
+    try {
+      await subMasterAPI.create('purpose_of_visit_master', { 
+        entity: 'purpose_of_visit_master', 
+        name: customPurposeVal.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setPurpose(customPurposeVal.trim());
+      setIsCustomPurpose(false);
+      setCustomPurposeVal('');
+    } catch (err) {
+      alert('Error saving custom purpose of visit');
+    }
+  };
+
+  const handleSaveCustomUnit = async () => {
+    if (!customUnitVal.trim()) return;
+    try {
+      await subMasterAPI.create('unit_master', { 
+        entity: 'unit_master', 
+        name: customUnitVal.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setUnit(customUnitVal.trim());
+      setIsCustomUnit(false);
+      setCustomUnitVal('');
+    } catch (err) {
+      alert('Error saving custom unit');
+    }
+  };
+
+  const handleSaveCustomMaterial = async () => {
+    if (!customMaterialVal.trim()) return;
+    try {
+      await subMasterAPI.create('material_type_master', { 
+        entity: 'material_type_master', 
+        name: customMaterialVal.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setMaterialType(customMaterialVal.trim());
+      setIsCustomMaterial(false);
+      setCustomMaterialVal('');
+    } catch (err) {
+      alert('Error saving custom material type');
+    }
+  };
+
+  const handleSaveCustomStatus = async () => {
+    if (!customStatusVal.trim()) return;
+    try {
+      await subMasterAPI.create('inward_status_master', { 
+        entity: 'inward_status_master', 
+        name: customStatusVal.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setStatus(customStatusVal.trim());
+      setIsCustomStatus(false);
+      setCustomStatusVal('');
+    } catch (err) {
+      alert('Error saving custom status');
+    }
+  };
 
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -27,19 +129,19 @@ export default function GateInward() {
   const [vehicleNo, setVehicleNo] = useState('');
   const [driverName, setDriverName] = useState('');
   const [driverMobile, setDriverMobile] = useState('');
-  const [partyName, setPartyName] = useState('Vardhman Spinning');
-  const [materialType, setMaterialType] = useState('Yarn');
-  const [purpose, setPurpose] = useState('Material Delivery');
+  const [partyName, setPartyName] = useState('');
+  const [materialType, setMaterialType] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [dcNo, setDcNo] = useState('');
   const [dcDate, setDcDate] = useState('');
   const [itemDesc, setItemDesc] = useState('');
   const [qty, setQty] = useState('');
-  const [unit, setUnit] = useState('Kg');
+  const [unit, setUnit] = useState('');
   const [weight, setWeight] = useState('');
   const [packages, setPackages] = useState('');
   const [guardName, setGuardName] = useState('S. Rajendran');
   const [remarks, setRemarks] = useState('');
-  const [status, setStatus] = useState('Open');
+  const [status, setStatus] = useState('');
 
   // KPI Calculations
   const totalInwards = inwards.length;
@@ -50,9 +152,14 @@ export default function GateInward() {
   // Filtered List
   const filteredList = useMemo(() => {
     return inwards.filter(item => {
-      const matchSearch = item.vehicleNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.partyName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const vNo = String(item.vehicleNo || '');
+      const pName = String(item.partyName || '');
+      const idStr = String(item.id || '');
+      const sTerm = String(searchTerm || '');
+      
+      const matchSearch = vNo.toLowerCase().includes(sTerm.toLowerCase()) || 
+                          pName.toLowerCase().includes(sTerm.toLowerCase()) || 
+                          idStr.toLowerCase().includes(sTerm.toLowerCase());
       const matchMaterial = filterMaterial === 'All' || item.materialType === filterMaterial;
       const matchFrom = filterFromDate ? item.dateTime >= filterFromDate : true;
       const matchTo = filterToDate ? item.dateTime <= filterToDate : true;
@@ -68,19 +175,19 @@ export default function GateInward() {
     setVehicleNo('');
     setDriverName('');
     setDriverMobile('');
-    setPartyName('Vardhman Spinning');
-    setMaterialType('Yarn');
-    setPurpose('Material Delivery');
+    setPartyName('');
+    setMaterialType('');
+    setPurpose('');
     setDcNo('');
     setDcDate('');
     setItemDesc('');
     setQty('');
-    setUnit('Kg');
+    setUnit('');
     setWeight('');
     setPackages('');
     setGuardName('S. Rajendran');
     setRemarks('');
-    setStatus('Open');
+    setStatus('');
 
     setActiveFormTab('Reference Info');
     setIsFormOpen(true);
@@ -121,7 +228,7 @@ export default function GateInward() {
     const isExisting = inwards.some(i => i.id === currentFormId);
 
     if (isExisting) {
-      setInwards(inwards.map(i => {
+      const updated = inwards.map(i => {
         if (i.id === currentFormId) {
           return {
             ...i,
@@ -140,11 +247,13 @@ export default function GateInward() {
             packages: Number(packages),
             guardName,
             remarks,
-            status
+            status: status || 'Open'
           };
         }
         return i;
-      }));
+      });
+      setInwards(updated);
+      localStorage.setItem('gate_inward_data', JSON.stringify(updated));
     } else {
       const newEntry = {
         id: currentFormId,
@@ -165,9 +274,11 @@ export default function GateInward() {
         guardName,
         inwardTime: timeStr,
         remarks,
-        status
+        status: status || 'Open'
       };
-      setInwards([newEntry, ...inwards]);
+      const updated = [newEntry, ...inwards];
+      setInwards(updated);
+      localStorage.setItem('gate_inward_data', JSON.stringify(updated));
     }
     setIsFormOpen(false);
     alert("Gate Inward saved successfully!");
@@ -175,7 +286,9 @@ export default function GateInward() {
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this gate inward record?")) {
-      setInwards(inwards.filter(i => i.id !== id));
+      const updated = inwards.filter(i => i.id !== id);
+      setInwards(updated);
+      localStorage.setItem('gate_inward_data', JSON.stringify(updated));
     }
   };
 
@@ -361,14 +474,18 @@ export default function GateInward() {
           </div>
 
           {/* Form Section Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px', position: 'sticky', top: '0', background: 'white', zIndex: 10, paddingTop: '10px' }}>
             {['Reference Info', 'Material & Weight Details', 'Security Signatures'].map(tab => {
               const isSelected = activeFormTab === tab;
               return (
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => setActiveFormTab(tab)}
+                  onClick={() => {
+                    setActiveFormTab(tab);
+                    const elId = tab === 'Reference Info' ? 'ref-info' : tab === 'Material & Weight Details' ? 'mat-info' : 'sec-info';
+                    document.getElementById(elId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
                   style={{
                     padding: '8px 16px',
                     fontSize: '13px',
@@ -388,11 +505,10 @@ export default function GateInward() {
           </div>
 
           {/* Form Content Scrolling Area */}
-          <div style={{ minHeight: '400px' }}>
+          <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
             
-            {activeFormTab === 'Reference Info' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Gate Inward Reference Information</h4>
+            <div id="ref-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Gate Inward Reference Information</h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
                   
@@ -442,46 +558,109 @@ export default function GateInward() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                   <div className="form-group">
                     <label>Purpose of Visit *</label>
-                    <select className="form-control" value={purpose} onChange={e => setPurpose(e.target.value)}>
-                      <option value="Material Delivery">Material Delivery</option>
-                      <option value="Returnable Spares">Returnable Spares</option>
-                      <option value="Visitor Log">Visitor Log</option>
-                      <option value="Contractor entry">Contractor entry</option>
-                      <option value="Others">Others</option>
-                    </select>
+                    {isCustomPurpose ? (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          autoFocus
+                          className="form-control" 
+                          placeholder="Type new purpose..."
+                          value={customPurposeVal}
+                          onChange={(e) => setCustomPurposeVal(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              await handleSaveCustomPurpose();
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPurpose} title="Save">
+                          <CheckCircle size={16} />
+                        </button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPurpose(false); setPurpose(''); }} title="Cancel">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <select className="form-control" value={purpose} onChange={e => {
+                        if (e.target.value === 'custom_add_new') {
+                          setIsCustomPurpose(true);
+                          setCustomPurposeVal('');
+                        } else {
+                          setPurpose(e.target.value);
+                        }
+                      }}>
+                        <option value="">Select Purpose...</option>
+                        {Array.from(new Set([
+                          "Material Delivery", "Returnable Spares", "Visitor Log", "Contractor entry", "Others",
+                          ...(options.masters?.purpose_of_visit_master || [])
+                        ])).map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Purpose...</option>
+                      </select>
+                    )}
                   </div>
 
                   <div className="form-group">
                     <label>Party / Vendor Name *</label>
                     <select className="form-control" value={partyName} onChange={e => setPartyName(e.target.value)}>
-                      <option value="Vardhman Spinning">Vardhman Spinning Mills</option>
-                      <option value="Chemical Traders">Chemical Traders</option>
-                      <option value="Raymond Ltd">Raymond Ltd</option>
-                      <option value="Reliance Retail">Reliance Retail</option>
+                      <option value="">Select Party...</option>
+                      {parties.map(p => (
+                        <option key={p.id} value={p.company_name}>{p.company_name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
+            </div>
 
-              </div>
-            )}
-
-            {activeFormTab === 'Material & Weight Details' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Material & Weight Metrics Info</h4>
+            <div id="mat-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Material & Weight Metrics Info</h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
                   
                   <div className="form-group">
                     <label>Material Type *</label>
-                    <select className="form-control" value={materialType} onChange={e => setMaterialType(e.target.value)}>
-                      <option value="Yarn">Yarn</option>
-                      <option value="Fabric / Cloth">Fabric / Cloth</option>
-                      <option value="Dyes & Chemicals">Dyes & Chemicals</option>
-                      <option value="Spare Parts">Spare Parts</option>
-                      <option value="Machinery">Machinery</option>
-                      <option value="Stationery">Stationery</option>
-                      <option value="Others">Others</option>
-                    </select>
+                    {isCustomMaterial ? (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          autoFocus
+                          className="form-control" 
+                          placeholder="Type new material..."
+                          value={customMaterialVal}
+                          onChange={(e) => setCustomMaterialVal(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              await handleSaveCustomMaterial();
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomMaterial} title="Save">
+                          <CheckCircle size={16} />
+                        </button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomMaterial(false); setMaterialType(''); }} title="Cancel">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <select className="form-control" value={materialType} onChange={e => {
+                        if (e.target.value === 'custom_add_new') {
+                          setIsCustomMaterial(true);
+                          setCustomMaterialVal('');
+                        } else {
+                          setMaterialType(e.target.value);
+                        }
+                      }}>
+                        <option value="">Select Material Type...</option>
+                        {Array.from(new Set([
+                          "Yarn", "Fabric / Cloth", "Dyes & Chemicals", "Spare Parts", "Machinery", "Stationery", "Others",
+                          ...(options.masters?.material_type_master || [])
+                        ])).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Material...</option>
+                      </select>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -524,11 +703,47 @@ export default function GateInward() {
                   
                   <div className="form-group">
                     <label>Unit *</label>
-                    <select className="form-control" value={unit} onChange={e => setUnit(e.target.value)}>
-                      <option value="Kg">Kg</option>
-                      <option value="Meter">Meter</option>
-                      <option value="Nos">Nos</option>
-                    </select>
+                    {isCustomUnit ? (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          autoFocus
+                          className="form-control" 
+                          placeholder="Type new unit..."
+                          value={customUnitVal}
+                          onChange={(e) => setCustomUnitVal(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              await handleSaveCustomUnit();
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomUnit} title="Save">
+                          <CheckCircle size={16} />
+                        </button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomUnit(false); setUnit(''); }} title="Cancel">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <select className="form-control" value={unit} onChange={e => {
+                        if (e.target.value === 'custom_add_new') {
+                          setIsCustomUnit(true);
+                          setCustomUnitVal('');
+                        } else {
+                          setUnit(e.target.value);
+                        }
+                      }}>
+                        <option value="">Select Unit...</option>
+                        {Array.from(new Set([
+                          "Kg", "Meter", "Nos",
+                          ...(options.masters?.unit_master || [])
+                        ])).map(u => (
+                          <option key={u} value={u}>{u}</option>
+                        ))}
+                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Unit...</option>
+                      </select>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -568,12 +783,10 @@ export default function GateInward() {
                   />
                 </div>
 
-              </div>
-            )}
+            </div>
 
-            {activeFormTab === 'Security Signatures' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Security Guard Sign-Off & Verification</h4>
+            <div id="sec-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Security Guard Sign-Off & Verification</h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
                   
@@ -590,10 +803,47 @@ export default function GateInward() {
 
                   <div className="form-group">
                     <label>Inward Verification Status</label>
-                    <select className="form-control" value={status} onChange={e => setStatus(e.target.value)}>
-                      <option value="Open">Open (Inside Premises)</option>
-                      <option value="Closed">Closed (Left Premises)</option>
-                    </select>
+                    {isCustomStatus ? (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          autoFocus
+                          className="form-control" 
+                          placeholder="Type new status..."
+                          value={customStatusVal}
+                          onChange={(e) => setCustomStatusVal(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              await handleSaveCustomStatus();
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomStatus} title="Save">
+                          <CheckCircle size={16} />
+                        </button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomStatus(false); setStatus(''); }} title="Cancel">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <select className="form-control" value={status} onChange={e => {
+                        if (e.target.value === 'custom_add_new') {
+                          setIsCustomStatus(true);
+                          setCustomStatusVal('');
+                        } else {
+                          setStatus(e.target.value);
+                        }
+                      }}>
+                        <option value="">Select Status...</option>
+                        {Array.from(new Set([
+                          "Open", "Closed",
+                          ...(options.masters?.inward_status_master || [])
+                        ])).map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Status...</option>
+                      </select>
+                    )}
                   </div>
 
                 </div>
@@ -610,8 +860,7 @@ export default function GateInward() {
                   />
                 </div>
 
-              </div>
-            )}
+            </div>
 
           </div>
 

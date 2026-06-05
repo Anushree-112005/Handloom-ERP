@@ -21,7 +21,7 @@ class PackingSlip(Base):
     gross_weight = Column(Numeric(10, 2), default=0)
     net_weight = Column(Numeric(10, 2), default=0)
     remarks = Column(Text)
-    status = Column(String(30), default="Packed")
+    status = Column(String(100), default="Packed")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     items = relationship("PackingSlipItem", back_populates="slip", cascade="all, delete-orphan")
