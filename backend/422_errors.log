@@ -16,3 +16,6 @@ Body: b'{"name":"ISO","is_active":true}'
 Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'ISO', 'is_active': True}}]
 Body: b'{"name":"ISO","is_active":true}'
 
+Validation Error: [{'type': 'missing', 'loc': ('body', 'file'), 'msg': 'Field required', 'input': None}]
+Body: b''
+

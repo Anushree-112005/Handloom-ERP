@@ -97,6 +97,29 @@ export const designEntryAPI = {
   delete: (id) => api.delete(`/design-entries/${id}`),
 };
 
+// ---- AI Textile Design ----
+export const textileDesignAPI = {
+  list: (params) => api.get('/textile-designs/', { params }),
+  get: (id) => api.get(`/textile-designs/${id}`),
+  create: (data) => api.post('/textile-designs/', data),
+  update: (id, data) => api.put(`/textile-designs/${id}`, data),
+  delete: (id) => api.delete(`/textile-designs/${id}`),
+  uploadImage: (id, file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post(`/textile-designs/${id}/upload-image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  analyze: (id) => api.post(`/textile-designs/${id}/analyze`),
+  analyzeImageOnly: (file, numColors = 'auto') => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('num_colors', String(numColors));
+    return api.post('/design-ai/analyze', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  calculateRequirement: (id) => api.post(`/textile-designs/${id}/calculate-requirement`),
+  updateStatus: (id, status) => api.patch(`/textile-designs/${id}/status`, null, { params: { status } }),
+};
+
 export const yarnPurchaseOrderAPI = {
   list: (params) => api.get('/yarn-purchase-orders/', { params }),
   get: (id) => api.get(`/yarn-purchase-orders/${id}`),

@@ -170,6 +170,7 @@ const modules = [
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
+  { path: '/design-ai', label: 'Design AI', icon: Sparkles },
 
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },
