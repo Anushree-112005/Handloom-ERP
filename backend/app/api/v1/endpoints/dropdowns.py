@@ -25,6 +25,7 @@ DEFAULT_MASTERS = {
     "currency": ["INR", "USD", "EUR"],
     "gst_type": ["With GST", "Without GST"],
     "tds": ["None", "194C", "194Q"],
+    "uom_master": ["Meters", "Yards", "Kgs", "Rolls", "Pieces"],
 
 }
 
@@ -111,6 +112,22 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     custom_cone_types = [r.name for r in sm_rows if r.entity == "cone_type_master"]
     custom_received_types = [r.name for r in sm_rows if r.entity == "received_type_master"]
     custom_yarn_types = [r.name for r in sm_rows if r.entity == "yarn_type_master"]
+    custom_design_nos = [r.name for r in sm_rows if r.entity == "design_no_master"]
+
+    custom_inv_modes = [r.name for r in sm_rows if r.entity == "inv_mode_master"]
+    custom_approval_statuses = [r.name for r in sm_rows if r.entity == "approval_status_master"]
+    custom_dis_nos = [r.name for r in sm_rows if r.entity == "dis_no_master"]
+    custom_delivery_ats = [r.name for r in sm_rows if r.entity == "delivery_at_master"]
+    custom_agents = [r.name for r in sm_rows if r.entity == "agent_master"]
+    custom_freight_modes = [r.name for r in sm_rows if r.entity == "freight_mode_master"]
+    custom_bale_types = [r.name for r in sm_rows if r.entity == "bale_type_master"]
+    custom_payment_modes = [r.name for r in sm_rows if r.entity == "payment_mode_master"]
+    custom_invoice_types = [r.name for r in sm_rows if r.entity == "invoice_type_master"]
+    custom_units = [r.name for r in sm_rows if r.entity == "unit_master"]
+    custom_pins = [r.name for r in sm_rows if r.entity == "pin_master"]
+    custom_bale_lists = [r.name for r in sm_rows if r.entity == "bale_list_master"]
+    custom_stock_types = [r.name for r in sm_rows if r.entity == "stock_type_master"]
+    custom_godowns = [r.name for r in sm_rows if r.entity == "godown_master"]
 
     if district_cities:
         masters["city"] = district_cities
@@ -136,7 +153,7 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     masters["regular_special_master"] = list(dict.fromkeys(custom_regular_special))
     masters["status_master"] = list(dict.fromkeys(custom_statuses))
     masters["fabric_type_master"] = list(dict.fromkeys(custom_fabric_types))
-    masters["uom_master"] = list(dict.fromkeys(custom_uom))
+    masters["uom_master"] = list(dict.fromkeys(masters.get("uom_master", []) + custom_uom))
     masters["weaving_type_master"] = list(dict.fromkeys(custom_weaving_types))
     masters["pattern_master"] = list(dict.fromkeys(custom_patterns))
     masters["packing_type_master"] = list(dict.fromkeys(custom_packing_types))
@@ -159,6 +176,21 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     masters["cone_type_master"] = list(dict.fromkeys(custom_cone_types))
     masters["received_type_master"] = list(dict.fromkeys(custom_received_types))
     masters["yarn_type_master"] = list(dict.fromkeys(custom_yarn_types))
+    masters["design_no_master"] = list(dict.fromkeys(custom_design_nos))
+
+    masters["inv_mode_master"] = list(dict.fromkeys(custom_inv_modes))
+    masters["approval_status_master"] = list(dict.fromkeys(custom_approval_statuses))
+    masters["dis_no_master"] = list(dict.fromkeys(custom_dis_nos))
+    masters["delivery_at_master"] = list(dict.fromkeys(custom_delivery_ats))
+    masters["agent_master"] = list(dict.fromkeys(custom_agents))
+    masters["freight_mode_master"] = list(dict.fromkeys(custom_freight_modes))
+    masters["bale_type_master"] = list(dict.fromkeys(custom_bale_types))
+    masters["payment_mode_master"] = list(dict.fromkeys(custom_payment_modes))
+    masters["invoice_type_master"] = list(dict.fromkeys(custom_invoice_types))
+    masters["pin_master"] = list(dict.fromkeys(custom_pins))
+    masters["bale_list_master"] = list(dict.fromkeys(custom_bale_lists))
+    masters["stock_type_master"] = list(dict.fromkeys(custom_stock_types))
+    masters["godown_master"] = list(dict.fromkeys(custom_godowns))
         
     INDIAN_STATES = [
         "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", 

@@ -1,27 +1,107 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
-  FileText, Search, Plus, Trash2, Printer, Check, 
+  FileText, Search, Plus, Trash2, Printer, Check, CheckCircle,
   Clock, Truck, Edit, AlertCircle, UserCheck, X, Download
 } from 'lucide-react';
+import { dropdownAPI, subMasterAPI, partyAPI, employeeAPI } from '../../services/api';
 
 export default function GatePass() {
-  // Mock Party Master Directory for Address Auto-fill
-  const PARTY_DIRECTORY = {
-    'Raymond Ltd': { address: 'Plot 4, Textile SEZ, Erode, Tamil Nadu', contact: 'Mr. Arvind Raymond', mobile: '9443322110' },
-    'Reliance Retail': { address: '32/A, Industrial Ring Road, Coimbatore, Tamil Nadu', contact: 'Ms. Priyadarshini R.', mobile: '9500112233' },
-    'Vardhman Spinning': { address: 'Spinning Mill Compound, Salem Bypass, Karur, Tamil Nadu', contact: 'Mr. Saravanan K.', mobile: '9842776655' },
-    'Chemical Traders': { address: '12, SIPCOT Chemical Estate, Thoothukudi, Tamil Nadu', contact: 'Mr. Ganesan Moorthy', mobile: '9944883311' }
+  // Local Storage Database
+  const [passes, setPasses] = useState(() => {
+    const saved = localStorage.getItem('gate_pass_data');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [parties, setParties] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [options, setOptions] = useState({});
+  const [isCustomPassType, setIsCustomPassType] = useState(false);
+  const [customPassTypeVal, setCustomPassTypeVal] = useState('');
+  const [isCustomStatus, setIsCustomStatus] = useState(false);
+  const [customStatusVal, setCustomStatusVal] = useState('');
+
+  // Grid Custom Options
+  const [editingCustomUnitIndex, setEditingCustomUnitIndex] = useState(null);
+  const [customUnitVal, setCustomUnitVal] = useState('');
+  const [editingCustomReturnableIndex, setEditingCustomReturnableIndex] = useState(null);
+  const [customReturnableVal, setCustomReturnableVal] = useState('');
+
+  const handleSaveCustomGridOption = async (entity, value, rowIndex, field) => {
+    if (!value.trim()) return;
+    try {
+      await subMasterAPI.create(entity, { 
+        entity, 
+        name: value.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      handleItemGridChange(rowIndex, field, value.trim());
+      
+      if (entity === 'uom_master') {
+        setEditingCustomUnitIndex(null);
+        setCustomUnitVal('');
+      } else if (entity === 'gate_returnable_master') {
+        setEditingCustomReturnableIndex(null);
+        setCustomReturnableVal('');
+      }
+    } catch (err) {
+      alert(`Error saving custom ${field}`);
+    }
   };
 
-  // Mock Employee Master for authorization
-  const EMPLOYEES = [
-    { code: 'EMP-010', name: 'Senthil Kumar (General Manager)' },
-    { code: 'EMP-045', name: 'Mani Bharathi (Store Head)' },
-    { code: 'EMP-088', name: 'Dinesh Balasamy (Managing Director)' }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [partRes, dropRes, empRes] = await Promise.all([
+          partyAPI.list(),
+          dropdownAPI.getAll(),
+          employeeAPI.list()
+        ]);
+        setParties(partRes.data || []);
+        setOptions(dropRes.data || {});
+        setEmployees(empRes.data || []);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
-  // Mock Gate Passes Database
-  const [passes, setPasses] = useState([]);
+  const handleSaveCustomStatus = async () => {
+    if (!customStatusVal.trim()) return;
+    try {
+      await subMasterAPI.create('outward_status_master', { 
+        entity: 'outward_status_master', 
+        name: customStatusVal.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setStatus(customStatusVal.trim());
+      setIsCustomStatus(false);
+      setCustomStatusVal('');
+    } catch (err) {
+      alert('Error saving custom status');
+    }
+  };
+
+  const handleSaveCustomPassType = async () => {
+    if (!customPassTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('gate_pass_type_master', { 
+        entity: 'gate_pass_type_master', 
+        name: customPassTypeVal.trim(), 
+        is_active: true 
+      });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setPassType(customPassTypeVal.trim());
+      setIsCustomPassType(false);
+      setCustomPassTypeVal('');
+    } catch (err) {
+      alert('Error saving custom gate pass type');
+    }
+  };
 
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -37,13 +117,13 @@ export default function GatePass() {
   const [activeFormTab, setActiveFormTab] = useState('Reference Info');
 
   // Form input fields state
-  const [passType, setPassType] = useState('Returnable');
-  const [partyName, setPartyName] = useState('Raymond Ltd');
-  const [partyAddress, setPartyAddress] = useState(PARTY_DIRECTORY['Raymond Ltd'].address);
-  const [contactPerson, setContactPerson] = useState(PARTY_DIRECTORY['Raymond Ltd'].contact);
-  const [mobileNo, setMobileNo] = useState(PARTY_DIRECTORY['Raymond Ltd'].mobile);
+  const [passType, setPassType] = useState('');
+  const [partyName, setPartyName] = useState('');
+  const [partyAddress, setPartyAddress] = useState('');
+  const [contactPerson, setContactPerson] = useState('');
+  const [mobileNo, setMobileNo] = useState('');
   const [vehicleNo, setVehicleNo] = useState('');
-  const [authorizedBy, setAuthorizedBy] = useState(EMPLOYEES[0].name);
+  const [authorizedBy, setAuthorizedBy] = useState('');
   const [validTill, setValidTill] = useState('');
   const [purpose, setPurpose] = useState('');
   const [remarks, setRemarks] = useState('');
@@ -63,9 +143,13 @@ export default function GatePass() {
   // Filtered list
   const filteredList = useMemo(() => {
     return passes.filter(p => {
-      const matchSearch = p.partyName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.vehicleNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const pName = String(p.partyName || '');
+      const vNo = String(p.vehicleNo || '');
+      const idStr = String(p.id || '');
+      const sTerm = String(searchTerm || '');
+      const matchSearch = pName.toLowerCase().includes(sTerm.toLowerCase()) || 
+                          vNo.toLowerCase().includes(sTerm.toLowerCase()) || 
+                          idStr.toLowerCase().includes(sTerm.toLowerCase());
       const matchType = filterType === 'All' || p.passType === filterType;
       const matchFrom = filterFromDate ? p.passDate >= filterFromDate : true;
       const matchTo = filterToDate ? p.passDate <= filterToDate : true;
@@ -76,10 +160,15 @@ export default function GatePass() {
   const handlePartyChange = (e) => {
     const pName = e.target.value;
     setPartyName(pName);
-    if (PARTY_DIRECTORY[pName]) {
-      setPartyAddress(PARTY_DIRECTORY[pName].address);
-      setContactPerson(PARTY_DIRECTORY[pName].contact);
-      setMobileNo(PARTY_DIRECTORY[pName].mobile);
+    const selectedParty = parties.find(p => p.company_name === pName);
+    if (selectedParty) {
+      setPartyAddress(selectedParty.address || selectedParty.billing_address || selectedParty.city || '');
+      setContactPerson(selectedParty.contact_person || '');
+      setMobileNo(selectedParty.mobile || selectedParty.phone || selectedParty.contact_number || '');
+    } else {
+      setPartyAddress('');
+      setContactPerson('');
+      setMobileNo('');
     }
   };
 
@@ -106,14 +195,14 @@ export default function GatePass() {
     setCurrentFormId(nextId);
 
     // Reset Form Fields
-    setPassType('Returnable');
-    setPartyName('Raymond Ltd');
-    setPartyAddress(PARTY_DIRECTORY['Raymond Ltd'].address);
-    setContactPerson(PARTY_DIRECTORY['Raymond Ltd'].contact);
-    setMobileNo(PARTY_DIRECTORY['Raymond Ltd'].mobile);
+    setPassType('');
+    setPartyName('');
+    setPartyAddress('');
+    setContactPerson('');
+    setMobileNo('');
     setVehicleNo('');
     setItems([{ name: '', qty: 1, unit: 'Nos', returnable: 'Yes', expectedReturn: '' }]);
-    setAuthorizedBy(EMPLOYEES[0].name);
+    setAuthorizedBy('');
     setValidTill('');
     setPurpose('');
     setRemarks('');
@@ -153,7 +242,7 @@ export default function GatePass() {
     const isExisting = passes.some(p => p.id === currentFormId);
 
     if (isExisting) {
-      setPasses(passes.map(p => {
+      const updated = passes.map(p => {
         if (p.id === currentFormId) {
           return {
             ...p,
@@ -172,7 +261,9 @@ export default function GatePass() {
           };
         }
         return p;
-      }));
+      });
+      setPasses(updated);
+      localStorage.setItem('gate_pass_data', JSON.stringify(updated));
     } else {
       const newPass = {
         id: currentFormId,
@@ -191,7 +282,9 @@ export default function GatePass() {
         status,
         printedBy: 'Security Desk Admin'
       };
-      setPasses([newPass, ...passes]);
+      const updated = [newPass, ...passes];
+      setPasses(updated);
+      localStorage.setItem('gate_pass_data', JSON.stringify(updated));
     }
     setIsFormOpen(false);
     alert("Gate Pass created successfully!");
@@ -199,7 +292,9 @@ export default function GatePass() {
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this Gate Pass?")) {
-      setPasses(passes.filter(p => p.id !== id));
+      const updated = passes.filter(p => p.id !== id);
+      setPasses(updated);
+      localStorage.setItem('gate_pass_data', JSON.stringify(updated));
     }
   };
 
@@ -384,14 +479,20 @@ export default function GatePass() {
           </div>
 
           {/* Form Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px', position: 'sticky', top: '0', background: 'white', zIndex: 10, paddingTop: '10px' }}>
             {['Reference Info', 'Contact Details', 'Material Grid Details', 'Security Status'].map(tab => {
               const isSelected = activeFormTab === tab;
               return (
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => setActiveFormTab(tab)}
+                  onClick={() => {
+                    setActiveFormTab(tab);
+                    const elId = tab === 'Reference Info' ? 'ref-info' : 
+                                 tab === 'Contact Details' ? 'contact-info' : 
+                                 tab === 'Material Grid Details' ? 'material-info' : 'security-info';
+                    document.getElementById(elId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
                   style={{
                     padding: '8px 16px',
                     fontSize: '13px',
@@ -411,11 +512,10 @@ export default function GatePass() {
           </div>
 
           {/* Form Content Scrolling Area */}
-          <div style={{ minHeight: '400px' }}>
+          <div style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
             
-            {activeFormTab === 'Reference Info' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Gate Pass Reference Information</h4>
+            <div id="ref-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Gate Pass Reference Information</h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
                   
@@ -426,13 +526,47 @@ export default function GatePass() {
 
                   <div className="form-group">
                     <label>Gate Pass Type *</label>
-                    <select className="form-control" value={passType} onChange={e => setPassType(e.target.value)}>
-                      <option value="Returnable">Returnable (Materials must return)</option>
-                      <option value="Non-Returnable">Non-Returnable (Perm-out)</option>
-                      <option value="Visitor Pass">Visitor Pass</option>
-                      <option value="Vehicle Pass">Vehicle Pass</option>
-                      <option value="Sample Pass">Sample Pass</option>
-                    </select>
+                    {isCustomPassType ? (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          autoFocus
+                          className="form-control" 
+                          placeholder="Type new pass type..."
+                          value={customPassTypeVal}
+                          onChange={(e) => setCustomPassTypeVal(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              await handleSaveCustomPassType();
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomPassType} title="Save">
+                          <CheckCircle size={16} />
+                        </button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomPassType(false); setPassType(''); }} title="Cancel">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <select className="form-control" value={passType} onChange={e => {
+                        if (e.target.value === 'custom_add_new') {
+                          setIsCustomPassType(true);
+                          setCustomPassTypeVal('');
+                        } else {
+                          setPassType(e.target.value);
+                        }
+                      }}>
+                        <option value="">Select Pass Type...</option>
+                        {Array.from(new Set([
+                          "Returnable", "Non-Returnable", "Visitor Pass", "Vehicle Pass", "Sample Pass",
+                          ...(options.masters?.gate_pass_type_master || [])
+                        ])).map(pt => (
+                          <option key={pt} value={pt}>{pt}</option>
+                        ))}
+                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Pass Type...</option>
+                      </select>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -454,20 +588,19 @@ export default function GatePass() {
                   />
                 </div>
 
-              </div>
-            )}
+            </div>
 
-            {activeFormTab === 'Contact Details' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Recipient Party Contact & Address Details</h4>
+            <div id="contact-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Recipient Party Contact & Address Details</h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
                   
                   <div className="form-group">
                     <label>Recipient Party Name *</label>
                     <select className="form-control" value={partyName} onChange={handlePartyChange}>
-                      {Object.keys(PARTY_DIRECTORY).map(name => (
-                        <option key={name} value={name}>{name}</option>
+                      <option value="">Select Party...</option>
+                      {parties.map(p => (
+                        <option key={p.id} value={p.company_name}>{p.company_name}</option>
                       ))}
                     </select>
                   </div>
@@ -479,7 +612,7 @@ export default function GatePass() {
 
                   <div className="form-group">
                     <label>Mobile Number *</label>
-                    <input type="number" className="form-control" value={mobileNo} onChange={e => setMobileNo(e.target.value)} required />
+                    <input type="text" className="form-control" value={mobileNo} onChange={e => setMobileNo(e.target.value)} required />
                   </div>
 
                 </div>
@@ -489,13 +622,11 @@ export default function GatePass() {
                   <input type="text" className="form-control" value={partyAddress} onChange={e => setPartyAddress(e.target.value)} required />
                 </div>
 
-              </div>
-            )}
+            </div>
 
-            {activeFormTab === 'Material Grid Details' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Item details Log Matrix Grid</h4>
+            <div id="material-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Item details Log Matrix Grid</h4>
                   <button type="button" className="btn btn-secondary" onClick={handleAddItemRow} style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', gap: '4px', alignItems: 'center' }}>
                     <Plus size={12} /> Add Row
                   </button>
@@ -538,27 +669,100 @@ export default function GatePass() {
                           />
                         </td>
                         <td>
-                          <select 
-                            className="form-control" 
-                            style={{ margin: 0, padding: '4px 8px', fontSize: '12px' }}
-                            value={item.unit}
-                            onChange={e => handleItemGridChange(index, 'unit', e.target.value)}
-                          >
-                            <option value="Nos">Nos</option>
-                            <option value="Kg">Kg</option>
-                            <option value="Meter">Meter</option>
-                          </select>
+                          {editingCustomUnitIndex === index ? (
+                            <div style={{ display: 'flex', gap: '2px' }}>
+                              <input 
+                                autoFocus
+                                className="form-control" 
+                                style={{ margin: 0, padding: '4px 8px', fontSize: '12px', minWidth: '60px' }}
+                                placeholder="New unit"
+                                value={customUnitVal}
+                                onChange={(e) => setCustomUnitVal(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSaveCustomGridOption('uom_master', customUnitVal, index, 'unit');
+                                  }
+                                }}
+                              />
+                              <button type="button" className="btn btn-primary" style={{ padding: '0 4px' }} onClick={() => handleSaveCustomGridOption('uom_master', customUnitVal, index, 'unit')}>
+                                <Check size={12} />
+                              </button>
+                              <button type="button" className="btn btn-secondary" style={{ padding: '0 4px' }} onClick={() => { setEditingCustomUnitIndex(null); handleItemGridChange(index, 'unit', 'Nos'); }}>
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <select 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: '12px' }}
+                              value={item.unit}
+                              onChange={e => {
+                                if (e.target.value === 'custom_add_new') {
+                                  setEditingCustomUnitIndex(index);
+                                  setCustomUnitVal('');
+                                } else {
+                                  handleItemGridChange(index, 'unit', e.target.value);
+                                }
+                              }}
+                            >
+                              {Array.from(new Set([
+                                "Nos", "Kg", "Meter",
+                                ...(options.masters?.uom_master || [])
+                              ])).map(u => (
+                                <option key={u} value={u}>{u}</option>
+                              ))}
+                              <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Custom Unit...</option>
+                            </select>
+                          )}
                         </td>
                         <td>
-                          <select 
-                            className="form-control" 
-                            style={{ margin: 0, padding: '4px 8px', fontSize: '12px' }}
-                            value={item.returnable}
-                            onChange={e => handleItemGridChange(index, 'returnable', e.target.value)}
-                          >
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
-                          </select>
+                          {editingCustomReturnableIndex === index ? (
+                            <div style={{ display: 'flex', gap: '2px' }}>
+                              <input 
+                                autoFocus
+                                className="form-control" 
+                                style={{ margin: 0, padding: '4px 8px', fontSize: '12px', minWidth: '70px' }}
+                                placeholder="New option"
+                                value={customReturnableVal}
+                                onChange={(e) => setCustomReturnableVal(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSaveCustomGridOption('gate_returnable_master', customReturnableVal, index, 'returnable');
+                                  }
+                                }}
+                              />
+                              <button type="button" className="btn btn-primary" style={{ padding: '0 4px' }} onClick={() => handleSaveCustomGridOption('gate_returnable_master', customReturnableVal, index, 'returnable')}>
+                                <Check size={12} />
+                              </button>
+                              <button type="button" className="btn btn-secondary" style={{ padding: '0 4px' }} onClick={() => { setEditingCustomReturnableIndex(null); handleItemGridChange(index, 'returnable', 'Yes'); }}>
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ) : (
+                            <select 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: '12px' }}
+                              value={item.returnable}
+                              onChange={e => {
+                                if (e.target.value === 'custom_add_new') {
+                                  setEditingCustomReturnableIndex(index);
+                                  setCustomReturnableVal('');
+                                } else {
+                                  handleItemGridChange(index, 'returnable', e.target.value);
+                                }
+                              }}
+                            >
+                              {Array.from(new Set([
+                                "Yes", "No",
+                                ...(options.masters?.gate_returnable_master || [])
+                              ])).map(r => (
+                                <option key={r} value={r}>{r}</option>
+                              ))}
+                              <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Custom Option...</option>
+                            </select>
+                          )}
                         </td>
                         <td>
                           <input 
@@ -586,31 +790,68 @@ export default function GatePass() {
                   </tbody>
                 </table>
 
-              </div>
-            )}
+            </div>
 
-            {activeFormTab === 'Security Status' && (
-              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Approvals, Security Check & Status</h4>
+            <div id="security-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Approvals, Security Check & Status</h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
                   
                   <div className="form-group">
                     <label>Authorized By Dropdown (Employee Master) *</label>
                     <select className="form-control" value={authorizedBy} onChange={e => setAuthorizedBy(e.target.value)}>
-                      {EMPLOYEES.map(emp => (
-                        <option key={emp.code} value={emp.name}>{emp.name}</option>
+                      <option value="">Select Employee...</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={`${emp.name} (${emp.designation || 'Staff'})`}>
+                          {emp.name} ({emp.designation || 'Staff'})
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div className="form-group">
                     <label>Gate Pass Status</label>
-                    <select className="form-control" value={status} onChange={e => setStatus(e.target.value)}>
-                      <option value="Open">Open</option>
-                      <option value="Used">Used</option>
-                      <option value="Expired">Expired</option>
-                    </select>
+                    {isCustomStatus ? (
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <input 
+                          autoFocus
+                          className="form-control" 
+                          placeholder="Type new status..."
+                          value={customStatusVal}
+                          onChange={(e) => setCustomStatusVal(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              await handleSaveCustomStatus();
+                            }
+                          }}
+                        />
+                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomStatus} title="Save">
+                          <CheckCircle size={16} />
+                        </button>
+                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomStatus(false); setStatus('Open'); }} title="Cancel">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <select className="form-control" value={status} onChange={e => {
+                        if (e.target.value === 'custom_add_new') {
+                          setIsCustomStatus(true);
+                          setCustomStatusVal('');
+                        } else {
+                          setStatus(e.target.value);
+                        }
+                      }}>
+                        <option value="">Select Status...</option>
+                        {Array.from(new Set([
+                          "Open", "Used", "Expired",
+                          ...(options.masters?.outward_status_master || [])
+                        ])).map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Status...</option>
+                      </select>
+                    )}
                   </div>
 
                 </div>
@@ -633,8 +874,7 @@ export default function GatePass() {
                   <input type="text" className="form-control" placeholder="Verification Remarks..." value={remarks} onChange={e => setRemarks(e.target.value)} />
                 </div>
 
-              </div>
-            )}
+            </div>
 
           </div>
 

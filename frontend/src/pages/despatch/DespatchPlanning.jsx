@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, 
-  Download, FileText, Calendar, ShieldCheck, DollarSign, Layers, PlusCircle
+  Download, FileText, Calendar, ShieldCheck, DollarSign, Layers, PlusCircle, CheckCircle
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { despatchAPI, buyerOrderAPI } from '../../services/api';
+import { despatchAPI, buyerOrderAPI, subMasterAPI, dropdownAPI, partyAPI } from '../../services/api';
 
 // Dynamic Date Formatter Utility
 const getFormattedDate = (d = new Date()) => {
@@ -106,6 +106,32 @@ export default function DespatchPlanning() {
   const designsList = ['D-9012', 'D-5678', 'D-1122', 'D-4455', 'D-8899'];
   const merchandList = ['ABDUL', 'SUDHAKAR', 'MANOJ', 'RAMESH'];
 
+  // Master & Submaster states
+  const [dropdowns, setDropdowns] = useState({ units: [] });
+  const [certTypes, setCertTypes] = useState([]);
+  const [fabricTypes, setFabricTypes] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [partiesList, setPartiesList] = useState([]);
+
+  // Custom-Add states
+  const [isCustomUnit, setIsCustomUnit] = useState(false);
+  const [customUnitVal, setCustomUnitVal] = useState('');
+  
+  const [isCustomCert, setIsCustomCert] = useState(false);
+  const [customCertVal, setCustomCertVal] = useState('');
+
+  const [isCustomFabric, setIsCustomFabric] = useState(false);
+  const [customFabricVal, setCustomFabricVal] = useState('');
+
+  const [isCustomCurrency, setIsCustomCurrency] = useState(false);
+  const [customCurrencyVal, setCustomCurrencyVal] = useState('');
+
+  const [isCustomDeliveryParty, setIsCustomDeliveryParty] = useState(false);
+  const [customDeliveryPartyVal, setCustomDeliveryPartyVal] = useState('');
+
+  const [isCustomDesign, setIsCustomDesign] = useState(false);
+  const [customDesignVal, setCustomDesignVal] = useState('');
+
   const initialForm = {
     // Green header fields
     ibpo: '',
@@ -184,7 +210,42 @@ export default function DespatchPlanning() {
   useEffect(() => {
     loadRecords();
     loadBuyerOrders();
+    loadDropdowns();
   }, []);
+
+  const loadDropdowns = async () => {
+    try {
+      const dropRes = await dropdownAPI.getAll();
+      if (dropRes.data) {
+        setDropdowns(dropRes.data);
+        if (dropRes.data.masters) {
+          setCertTypes(dropRes.data.masters.certified_type || []);
+          setFabricTypes(dropRes.data.masters.fabric_type_master || []);
+          setCurrencies(dropRes.data.masters.currency || []);
+        }
+      }
+
+      const partyRes = await partyAPI.list();
+      if (partyRes.data) setPartiesList(partyRes.data);
+    } catch (e) {
+      console.error("Error loading masters:", e);
+    }
+  };
+
+  const handleSaveCustom = async (entity, valState, toggleState, fieldName) => {
+    if (!valState.trim()) {
+      toggleState(false);
+      return;
+    }
+    try {
+      await subMasterAPI.create(entity, { entity: entity, name: valState.trim(), is_active: true });
+      setFormData(prev => ({ ...prev, [fieldName]: valState.trim() }));
+      toggleState(false);
+      loadDropdowns();
+    } catch (err) {
+      console.error(`Error saving custom ${entity}:`, err);
+    }
+  };
 
   const loadBuyerOrders = async () => {
     try {
@@ -247,7 +308,7 @@ export default function DespatchPlanning() {
     const payload = {
       ibpo: formData.ibpo || null,
       po_date: formatForAPI(formData.po_date),
-      ref_no: formData.ref_no || null,
+      ref_no: formData.ref_no?.trim() || null,
       planning_date: formatForAPI(formData.planning_date || formData.date),
       billing_party: formData.billing_party || null,
       delivery_party: formData.delivery_party || null,
@@ -777,10 +838,42 @@ export default function DespatchPlanning() {
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Design No</label>
-                        <select className="form-control" name="design_no" value={formData.design_no} onChange={handleChange}>
-                          <option value="">Select Design No</option>
-                          {designsList.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
+                        {isCustomDesign ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customDesignVal} 
+                              onChange={e => setCustomDesignVal(e.target.value)} 
+                              placeholder="Add design no..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('design_no_master', customDesignVal, setIsCustomDesign, 'design_no')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomDesign(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="design_no" 
+                            value={formData.design_no} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setCustomDesignVal('');
+                                setIsCustomDesign(true);
+                              } else {
+                                handleChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">Select Design No</option>
+                            {dropdowns.masters?.design_no_master?.map(d => <option key={d} value={d}>{d}</option>)}
+                            <option value="__ADD_NEW__">+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Order</label>
@@ -796,7 +889,42 @@ export default function DespatchPlanning() {
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Certificate Type</label>
-                        <input className="form-control" name="certificate_type" value={formData.certificate_type} onChange={handleChange} />
+                        {isCustomCert ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customCertVal} 
+                              onChange={e => setCustomCertVal(e.target.value)} 
+                              placeholder="Enter custom type..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('certified_type', customCertVal, setIsCustomCert, 'certificate_type')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomCert(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="certificate_type" 
+                            value={formData.certificate_type} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setCustomCertVal('');
+                                setIsCustomCert(true);
+                              } else {
+                                handleChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">Select Certificate</option>
+                            {certTypes.map(c => <option key={c} value={c}>{c}</option>)}
+                            <option value="__ADD_NEW__">+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Total Planning</label>
@@ -820,11 +948,45 @@ export default function DespatchPlanning() {
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Currency</label>
-                        <select className="form-control" name="currency" value={formData.currency} onChange={handleChange}>
-                          <option value="INR">INR - Indian Rupee</option>
-                          <option value="USD">USD - US Dollar</option>
-                          <option value="EUR">EUR - Euro</option>
-                        </select>
+                        {isCustomCurrency ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customCurrencyVal} 
+                              onChange={e => setCustomCurrencyVal(e.target.value)} 
+                              placeholder="Add currency..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('currency_master', customCurrencyVal, setIsCustomCurrency, 'currency')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomCurrency(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="currency" 
+                            value={formData.currency} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setCustomCurrencyVal('');
+                                setIsCustomCurrency(true);
+                              } else {
+                                handleChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">Select Currency</option>
+                            <option value="INR">INR - Indian Rupee</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            {currencies.filter(c => !["INR", "USD", "EUR"].includes(c)).map(c => <option key={c} value={c}>{c}</option>)}
+                            <option value="__ADD_NEW__">+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Last Desp Date</label>
@@ -836,10 +998,50 @@ export default function DespatchPlanning() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Delivery Party</label>
-                        <select className="form-control" name="delivery_party" value={formData.delivery_party} onChange={handleChange}>
-                          <option value="">Select Delivery Party</option>
-                          {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
+                        {isCustomDeliveryParty ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customDeliveryPartyVal} 
+                              onChange={e => setCustomDeliveryPartyVal(e.target.value)} 
+                              placeholder="Add party name..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={async () => {
+                              if (!customDeliveryPartyVal.trim()) return setIsCustomDeliveryParty(false);
+                              try {
+                                await partyAPI.create({ party_type: "Sundry Debtors", company_name: customDeliveryPartyVal });
+                                setFormData(prev => ({ ...prev, delivery_party: customDeliveryPartyVal }));
+                                setIsCustomDeliveryParty(false);
+                                loadDropdowns();
+                              } catch(e) { console.error(e); }
+                            }}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomDeliveryParty(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="delivery_party" 
+                            value={formData.delivery_party} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setCustomDeliveryPartyVal('');
+                                setIsCustomDeliveryParty(true);
+                              } else {
+                                handleChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">Select Delivery Party</option>
+                            {partiesList.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                            <option value="__ADD_NEW__">+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Delivery Address</label>
@@ -863,12 +1065,50 @@ export default function DespatchPlanning() {
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>UOM</label>
-                        <select className="form-control" name="uom" value={formData.uom} onChange={handleChange}>
-                          <option value="Meters">Meters</option>
-                          <option value="Yards">Yards</option>
-                          <option value="Kgs">Kgs</option>
-                          <option value="Rolls">Rolls</option>
-                        </select>
+                        {isCustomUnit ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customUnitVal} 
+                              onChange={e => setCustomUnitVal(e.target.value)} 
+                              placeholder="Add unit..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={async () => {
+                              if (!customUnitVal.trim()) return setIsCustomUnit(false);
+                              try {
+                                await subMasterAPI.create('uom_master', { entity: 'uom_master', name: customUnitVal.trim(), is_active: true });
+                                setFormData(prev => ({ ...prev, uom: customUnitVal.trim() }));
+                                setIsCustomUnit(false);
+                                loadDropdowns();
+                              } catch(e) { console.error(e); }
+                            }}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomUnit(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="uom" 
+                            value={formData.uom} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setCustomUnitVal('');
+                                setIsCustomUnit(true);
+                              } else {
+                                handleChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">Select Unit</option>
+                            {dropdowns.masters?.uom_master?.map(u => <option key={u} value={u}>{u}</option>)}
+                            <option value="__ADD_NEW__">+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Comp Date</label>
@@ -876,7 +1116,42 @@ export default function DespatchPlanning() {
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Fabric Type</label>
-                        <input className="form-control" name="fabric_type" value={formData.fabric_type} onChange={handleChange} />
+                        {isCustomFabric ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customFabricVal} 
+                              onChange={e => setCustomFabricVal(e.target.value)} 
+                              placeholder="Add fabric..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('fabric_type_master', customFabricVal, setIsCustomFabric, 'fabric_type')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomFabric(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="fabric_type" 
+                            value={formData.fabric_type} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setCustomFabricVal('');
+                                setIsCustomFabric(true);
+                              } else {
+                                handleChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">Select Fabric Type</option>
+                            {fabricTypes.map(f => <option key={f} value={f}>{f}</option>)}
+                            <option value="__ADD_NEW__">+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group" style={{ margin: 0 }}>
                         <label>Tot Desp Mtrs</label>
