@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Settings, History, CheckSquare, Plus, Save, 
-  Search, Lock, CheckCircle, FileText, Truck, Eye, Trash2, X
+  Search, Lock, CheckCircle, FileText, Truck, Eye, Trash2, X, Edit
 } from 'lucide-react';
-import { buyerOrderAPI } from '../../services/api';
+import { buyerOrderAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 
 export default function OrderSubModule() {
+  const [customAddItem, setCustomAddItem] = useState({ form: null, field: null, val: '' });
+  const [options, setOptions] = useState({});
   const [activeCard, setActiveCard] = useState('Buyer Order Schedule');
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -15,14 +17,14 @@ export default function OrderSubModule() {
   
   const [schedules, setSchedules] = useState([]);
   const [schForm, setSchForm] = useState({
-    order_id_ref: '', buyer_ref: '', shipment_date: '', delivery_place: '', delivery_terms: 'Door Delivery',
-    qty: '', fabric_type: 'Cotton', shade: '', lot_no: '', packing_type: 'Bale', transporter_name: '', transport_mode: 'Road', remarks: ''
+    id: null, order_id_ref: '', buyer_ref: '', shipment_date: '', delivery_place: '', delivery_terms: '',
+    qty: '', fabric_type: '', shade: '', lot_no: '', packing_type: '', transporter_name: '', transport_mode: '', remarks: ''
   });
 
   const [sequences, setSequences] = useState([]);
   const [seqForm, setSeqForm] = useState({
-    order_id_ref: '', prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
-    order_type: 'Domestic', category: 'Fabric', buyer_ref: '', created_by: 'Administrator'
+    id: null, order_id_ref: '', prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
+    order_type: '', category: '', buyer_ref: '', created_by: 'Administrator'
   });
 
   const [showAddAmd, setShowAddAmd] = useState(false);
@@ -30,7 +32,7 @@ export default function OrderSubModule() {
   
   const [amendments, setAmendments] = useState([]);
   const [amdForm, setAmdForm] = useState({
-    order_id_ref: '', amd_date: '', field_changed: 'Quantity', old_value: '', new_value: '',
+    id: null, order_id_ref: '', amd_date: '', field_changed: 'Quantity', old_value: '', new_value: '',
     remarks: '', approved_by: '', effective_date: '', buyer_ref: '', fabric_details: '', shade: ''
   });
 
@@ -39,9 +41,9 @@ export default function OrderSubModule() {
   
   const [completions, setCompletions] = useState([]);
   const [cmpForm, setCmpForm] = useState({
-    order_id_ref: '', completion_date: '', status: 'Closed',
+    id: null, order_id_ref: '', completion_date: '', status: 'Closed',
     final_dispatch_qty: '', balance_qty: '0',
-    fabric_type: 'Cotton', shade: '', lot_no: '', packing_type: 'Bale',
+    fabric_type: '', shade: '', lot_no: '', packing_type: '',
     delivery_place: '', transporter_name: '', buyer_ref: '', remarks: ''
   });
 
@@ -55,12 +57,81 @@ export default function OrderSubModule() {
   ];
 
   useEffect(() => {
+    fetchDropdowns();
     fetchSchedules();
     fetchSequences();
     fetchAmendments();
     fetchCompletions();
     fetchBuyerOrders();
   }, []);
+
+  const fetchDropdowns = async () => {
+    try {
+      const res = await dropdownAPI.getAll();
+      setOptions(res.data);
+    } catch(e) { console.error(e); }
+  };
+
+  const handleSaveCustomItem = async (entity) => {
+    if (!customAddItem.val.trim()) {
+      setCustomAddItem({ form: null, field: null, val: '' });
+      return;
+    }
+    try {
+      await subMasterAPI.create(entity, { entity: entity, name: customAddItem.val.trim(), is_active: true });
+      fetchDropdowns();
+      
+      if (customAddItem.form === 'schForm') {
+        setSchForm({ ...schForm, [customAddItem.field]: customAddItem.val.trim() });
+      } else if (customAddItem.form === 'cmpForm') {
+        setCmpForm({ ...cmpForm, [customAddItem.field]: customAddItem.val.trim() });
+      } else if (customAddItem.form === 'seqForm') {
+        setSeqForm({ ...seqForm, [customAddItem.field]: customAddItem.val.trim() });
+      } else if (customAddItem.form === 'amdForm') {
+        setAmdForm({ ...amdForm, [customAddItem.field]: customAddItem.val.trim() });
+      }
+      
+      setCustomAddItem({ form: null, field: null, val: '' });
+    } catch (err) {
+      alert("Error saving custom option");
+      console.error(err);
+    }
+  };
+
+  const renderDropdown = (formName, formState, setFormState, field, entity, label, optionsList) => {
+    if (customAddItem.form === formName && customAddItem.field === field) {
+      return (
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input autoFocus type="text" className="form-control" placeholder={`New ${label}...`} value={customAddItem.val} onChange={(e) => setCustomAddItem({ ...customAddItem, val: e.target.value })} />
+            <button type="button" className="btn btn-primary" onClick={() => handleSaveCustomItem(entity)} style={{ padding: '6px' }}>Save</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setCustomAddItem({ form: null, field: null, val: '' })} style={{ padding: '6px' }}>X</button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>
+        <select className="form-control" value={formState[field]} onChange={e => {
+          if (e.target.value === 'custom_add_new') {
+            setCustomAddItem({ form: formName, field, val: '' });
+          } else {
+            setFormState({ ...formState, [field]: e.target.value });
+          }
+        }}>
+          <option value="">Select {label}...</option>
+          {formState[field] && (!optionsList || !optionsList.includes(formState[field])) && <option value={formState[field]}>{formState[field]}</option>}
+          {optionsList?.map((opt, i) => (
+            <option key={i} value={opt}>{opt}</option>
+          ))}
+          <option value="custom_add_new" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom...</option>
+        </select>
+      </div>
+    );
+  };
 
   const fetchBuyerOrders = async () => {
     try {
@@ -95,33 +166,144 @@ export default function OrderSubModule() {
   const fetchSchedules = async () => {
     try {
       const res = await buyerOrderAPI.listSchedules();
-      setSchedules(res.data.map(s => ({
-        id: s.schedule_id, dbId: s.id, orderId: s.order_id_ref, ref: s.buyer_ref, date: s.shipment_date,
-        place: s.delivery_place, transport: s.transporter_name, qty: s.qty, fabric: s.fabric_type, status: s.status,
-        deliveryTerms: s.delivery_terms, shade: s.shade, lotNo: s.lot_no, packing: s.packing_type, mode: s.transport_mode, remarks: s.remarks
-      })));
+      setSchedules(res.data);
     } catch (e) {
       console.error(e);
     }
   };
 
+  const handleSchOrderSelect = (e) => {
+    const selectedIbpo = e.target.value;
+    const selectedOrder = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    
+    if (selectedOrder) {
+      const firstItem = selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items[0] : {};
+      setSchForm({
+        ...schForm,
+        order_id_ref: selectedIbpo,
+        buyer_ref: firstItem.party_po_no || selectedOrder.buyer_name || '',
+        delivery_place: selectedOrder.delivery_place || '',
+        delivery_terms: selectedOrder.payment_terms || 'Door Delivery',
+        qty: firstItem.order_mtrs ? String(firstItem.order_mtrs) : '',
+        fabric_type: firstItem.fabric_type || 'Cotton',
+        shade: firstItem.color || '',
+        packing_type: firstItem.packing_type || 'Bale',
+        transporter_name: selectedOrder.transport_name || '',
+        transport_mode: selectedOrder.transport_mode || 'Road',
+        remarks: selectedOrder.remarks || ''
+      });
+    } else {
+      setSchForm({ ...schForm, order_id_ref: selectedIbpo });
+    }
+  };
+
+  const handleSeqOrderSelect = (e) => {
+    const selectedIbpo = e.target.value;
+    const selectedOrder = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    
+    if (selectedOrder) {
+      const firstItem = selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items[0] : {};
+      setSeqForm({
+        ...seqForm,
+        order_id_ref: selectedIbpo,
+        buyer_name: selectedOrder.buyer_name || '',
+        party_name: selectedOrder.party_name || '',
+        order_type: selectedOrder.order_type || 'Domestic',
+        buyer_ref: firstItem.party_po_no || ''
+      });
+    } else {
+      setSeqForm({ ...seqForm, order_id_ref: selectedIbpo });
+    }
+  };
+
+  const handleAmdOrderSelect = (e) => {
+    const selectedIbpo = e.target.value;
+    const selectedOrder = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    
+    if (selectedOrder) {
+      const firstItem = selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items[0] : {};
+      setAmdForm({
+        ...amdForm,
+        order_id_ref: selectedIbpo,
+        buyer_ref: firstItem.party_po_no || selectedOrder.buyer_name || '',
+        fabric_details: firstItem.fabric_type || '',
+        shade: firstItem.color || '',
+        old_value: firstItem.order_mtrs ? String(firstItem.order_mtrs) : ''
+      });
+    } else {
+      setAmdForm({ ...amdForm, order_id_ref: selectedIbpo });
+    }
+  };
+
+  const handleCmpOrderSelect = (e) => {
+    const selectedIbpo = e.target.value;
+    const selectedOrder = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    
+    if (selectedOrder) {
+      const firstItem = selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items[0] : {};
+      setCmpForm({
+        ...cmpForm,
+        order_id_ref: selectedIbpo,
+        buyer_ref: firstItem.party_po_no || selectedOrder.buyer_name || '',
+        fabric_type: firstItem.fabric_type || 'Cotton',
+        shade: firstItem.color || '',
+        packing_type: firstItem.packing_type || 'Bale',
+        delivery_place: selectedOrder.delivery_place || '',
+        transporter_name: selectedOrder.transport_name || ''
+      });
+    } else {
+      setCmpForm({ ...cmpForm, order_id_ref: selectedIbpo });
+    }
+  };
+
+  const sanitizeForm = (record) => {
+    const sanitized = {};
+    for (const key in record) {
+      sanitized[key] = record[key] === null ? '' : record[key];
+    }
+    return sanitized;
+  };
+
+  const handleSchEdit = (record) => {
+    setSchForm(sanitizeForm(record));
+    setShowAddSchedule(true);
+  };
+
+  const handleSeqEdit = (record) => {
+    setSeqForm(sanitizeForm(record));
+    setShowAddSequence(true);
+  };
+
+  const handleAmdEdit = (record) => {
+    setAmdForm(sanitizeForm(record));
+    setShowAddAmd(true);
+  };
+
+  const handleCmpEdit = (record) => {
+    setCmpForm(sanitizeForm(record));
+    setShowAddCmp(true);
+  };
+
   const handleSchSave = async () => {
     try {
       const payload = { ...schForm };
-      if (!payload.shipment_date) {
-        payload.shipment_date = null;
+      if (!payload.shipment_date) payload.shipment_date = null;
+      
+      if (payload.id) {
+        await buyerOrderAPI.updateSchedule(payload.id, payload);
+      } else {
+        await buyerOrderAPI.createSchedule(payload);
       }
       
-      await buyerOrderAPI.createSchedule(payload);
       setShowAddSchedule(false);
       setSchForm({
-        order_id_ref: '', buyer_ref: '', shipment_date: '', delivery_place: '', delivery_terms: 'Door Delivery',
-        qty: '', fabric_type: 'Cotton', shade: '', lot_no: '', packing_type: 'Bale', transporter_name: '', transport_mode: 'Road', remarks: ''
+        id: null, order_id_ref: '', buyer_ref: '', shipment_date: '', delivery_place: '', delivery_terms: '',
+        qty: '', fabric_type: '', shade: '', lot_no: '', packing_type: '', transporter_name: '', transport_mode: '', remarks: ''
       });
       fetchSchedules();
     } catch(e) {
       console.error(e);
-      alert("Error saving shipment entry. Check console for details.");
+      alert("Error saving shipment entry.");
     }
   };
 
@@ -133,7 +315,6 @@ export default function OrderSubModule() {
       setSelectedSchedule(null);
     } catch(e) {
       console.error(e);
-      alert("Error deleting shipment.");
     }
   };
 
@@ -143,12 +324,17 @@ export default function OrderSubModule() {
       const generated = `${seqForm.prefix}-${yearStr}-${String(seqForm.running_no).padStart(3, '0')}`;
       const payload = { ...seqForm, generated_order_no: generated };
       
-      await buyerOrderAPI.createSequence(payload);
+      if (payload.id) {
+        await buyerOrderAPI.updateSequence(payload.id, payload);
+      } else {
+        await buyerOrderAPI.createSequence(payload);
+      }
+      
       fetchSequences();
       setShowAddSequence(false);
       setSeqForm({
-        order_id_ref: '', prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
-        order_type: 'Domestic', category: 'Fabric', buyer_ref: '', created_by: 'Administrator'
+        id: null, order_id_ref: '', prefix: 'IBPO', fin_year: '2026-27', running_no: 1, buyer_name: '', party_name: '',
+        order_type: '', category: '', buyer_ref: '', created_by: 'Administrator'
       });
       alert("Sequence Configuration Saved Successfully!");
     } catch(e) {
@@ -173,11 +359,16 @@ export default function OrderSubModule() {
       if (!payload.amd_date) payload.amd_date = null;
       if (!payload.effective_date) payload.effective_date = null;
       
-      await buyerOrderAPI.createAmendment(payload);
+      if (payload.id) {
+        await buyerOrderAPI.updateAmendment(payload.id, payload);
+      } else {
+        await buyerOrderAPI.createAmendment(payload);
+      }
+      
       fetchAmendments();
       setShowAddAmd(false);
       setAmdForm({
-        order_id_ref: '', amd_date: '', field_changed: 'Quantity', old_value: '', new_value: '',
+        id: null, order_id_ref: '', amd_date: '', field_changed: 'Quantity', old_value: '', new_value: '',
         remarks: '', approved_by: '', effective_date: '', buyer_ref: '', fabric_details: '', shade: ''
       });
       alert("Amendment Saved Successfully!");
@@ -200,7 +391,12 @@ export default function OrderSubModule() {
       const payload = { ...cmpForm };
       if (!payload.completion_date) payload.completion_date = null;
       
-      await buyerOrderAPI.createCompletion(payload);
+      if (payload.id) {
+        await buyerOrderAPI.updateCompletion(payload.id, payload);
+      } else {
+        await buyerOrderAPI.createCompletion(payload);
+      }
+      
       fetchCompletions();
       setShowAddCmp(false);
       setCmpForm({
@@ -311,15 +507,16 @@ export default function OrderSubModule() {
                             background: selectedSchedule?.id === s.id ? 'rgba(59, 130, 246, 0.05)' : 'transparent' 
                           }}
                         >
-                          <td style={{ fontWeight: 600 }}>{s.id}</td>
-                          <td style={{ color: 'var(--primary)' }}>{s.orderId}</td>
-                          <td>{s.date}</td>
-                          <td>{s.place}</td>
+                          <td style={{ fontWeight: 600 }}>{s.schedule_id}</td>
+                          <td style={{ color: 'var(--primary)' }}>{s.order_id_ref}</td>
+                          <td>{s.shipment_date}</td>
+                          <td>{s.delivery_place}</td>
                           <td>{s.qty}</td>
                           <td><span className="badge badge-active">{s.status}</span></td>
                           <td style={{ textAlign: 'right' }}>
+                            <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); handleSchEdit(s); }}><Edit size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); setSelectedSchedule(s); }}><Eye size={14} /></button>
-                            <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleSchDelete(s.dbId); }}><Trash2 size={14} /></button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleSchDelete(s.id); }}><Trash2 size={14} /></button>
                           </td>
                         </tr>
                       ))}
@@ -331,7 +528,7 @@ export default function OrderSubModule() {
                 {selectedSchedule && (
                   <div className="card animate-slide" style={{ width: 350, padding: 0, position: 'sticky', top: 100, border: '1px solid var(--primary-light)', boxShadow: 'var(--shadow-lg)' }}>
                     <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--primary)', color: 'white', borderTopLeftRadius: 'var(--radius-lg)', borderTopRightRadius: 'var(--radius-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{selectedSchedule.id}</h3>
+                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{selectedSchedule.schedule_id}</h3>
                       <button style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }} onClick={() => setSelectedSchedule(null)}>
                         <X size={18} />
                       </button>
@@ -340,11 +537,11 @@ export default function OrderSubModule() {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
                           <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Order ID</p>
-                          <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{selectedSchedule.orderId}</p>
+                          <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{selectedSchedule.order_id_ref}</p>
                         </div>
                         <div>
                           <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Buyer Ref</p>
-                          <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 500 }}>{selectedSchedule.ref}</p>
+                          <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 500 }}>{selectedSchedule.buyer_ref}</p>
                         </div>
                       </div>
 
@@ -352,19 +549,19 @@ export default function OrderSubModule() {
 
                       <div>
                         <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Delivery & Transport</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Place:</strong> {selectedSchedule.place}</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Terms:</strong> {selectedSchedule.deliveryTerms}</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Mode:</strong> {selectedSchedule.mode} via {selectedSchedule.transport}</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Place:</strong> {selectedSchedule.delivery_place}</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Terms:</strong> {selectedSchedule.delivery_terms}</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Mode:</strong> {selectedSchedule.transport_mode} via {selectedSchedule.transporter_name}</p>
                       </div>
 
                       <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }}></div>
 
                       <div>
                         <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Textile Details</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Fabric:</strong> {selectedSchedule.fabric} ({selectedSchedule.qty})</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Fabric:</strong> {selectedSchedule.fabric_type} ({selectedSchedule.qty})</p>
                         <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Shade:</strong> <span style={{ display: 'inline-block', width: 10, height: 10, background: '#1D3557', borderRadius: '50%', marginRight: 4 }}></span>{selectedSchedule.shade}</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Lot No:</strong> {selectedSchedule.lotNo}</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Packing:</strong> {selectedSchedule.packing}</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Lot No:</strong> {selectedSchedule.lot_no}</p>
+                        <p style={{ margin: '4px 0 0', fontSize: 13 }}><strong>Packing:</strong> {selectedSchedule.packing_type}</p>
                       </div>
 
                       <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }}></div>
@@ -392,7 +589,7 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <select className="form-control" value={schForm.order_id_ref} onChange={e => setSchForm({...schForm, order_id_ref: e.target.value})}>
+                      <select className="form-control" value={schForm.order_id_ref} onChange={handleSchOrderSelect}>
                         <option value="">Select Buyer Order...</option>
                         {buyerOrders.map(bo => (
                           <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
@@ -413,30 +610,14 @@ export default function OrderSubModule() {
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Delivery Place</label>
                       <input type="text" className="form-control" placeholder="Tirupur, Erode, etc." value={schForm.delivery_place} onChange={e => setSchForm({...schForm, delivery_place: e.target.value})} />
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Delivery Terms</label>
-                      <select className="form-control" value={schForm.delivery_terms} onChange={e => setSchForm({...schForm, delivery_terms: e.target.value})}>
-                        <option>Door Delivery</option>
-                        <option>FOB</option>
-                        <option>CIF</option>
-                      </select>
-                    </div>
+                    {renderDropdown('schForm', schForm, setSchForm, 'delivery_terms', 'lr_terms', 'Delivery Terms', options?.masters?.['lr_terms'])}
 
                     {/* Row 3 */}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Quantity (Mtrs/Pcs)</label>
                       <input type="text" className="form-control" placeholder="e.g. 5000" value={schForm.qty} onChange={e => setSchForm({...schForm, qty: e.target.value})} />
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Fabric Type</label>
-                      <select className="form-control" value={schForm.fabric_type} onChange={e => setSchForm({...schForm, fabric_type: e.target.value})}>
-                        <option>Cotton</option>
-                        <option>Polyester</option>
-                        <option>Blended</option>
-                        <option>Denim</option>
-                        <option>Linen</option>
-                      </select>
-                    </div>
+                    {renderDropdown('schForm', schForm, setSchForm, 'fabric_type', 'fabric_type_master', 'Fabric Type', options?.masters?.['fabric_type_master'])}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Shade / Colour</label>
                       <input type="text" className="form-control" placeholder="Pantone code or Mill ref" value={schForm.shade} onChange={e => setSchForm({...schForm, shade: e.target.value})} />
@@ -447,15 +628,7 @@ export default function OrderSubModule() {
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Lot No</label>
                       <input type="text" className="form-control" placeholder="Yarn/Fabric lot" value={schForm.lot_no} onChange={e => setSchForm({...schForm, lot_no: e.target.value})} />
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Packing Type</label>
-                      <select className="form-control" value={schForm.packing_type} onChange={e => setSchForm({...schForm, packing_type: e.target.value})}>
-                        <option>Bale</option>
-                        <option>Roll</option>
-                        <option>Carton</option>
-                        <option>Pallet</option>
-                      </select>
-                    </div>
+                    {renderDropdown('schForm', schForm, setSchForm, 'packing_type', 'packing_type_master', 'Packing Type', options?.masters?.['packing_type_master'])}
                     <div style={{ visibility: 'hidden' }}></div> {/* Spacer */}
 
                     {/* Row 5 - Logistics */}
@@ -464,15 +637,7 @@ export default function OrderSubModule() {
                         <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Transporter Name</label>
                         <input type="text" className="form-control" placeholder="e.g. VRL Logistics" value={schForm.transporter_name} onChange={e => setSchForm({...schForm, transporter_name: e.target.value})} />
                       </div>
-                      <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Transport Mode</label>
-                        <select className="form-control" value={schForm.transport_mode} onChange={e => setSchForm({...schForm, transport_mode: e.target.value})}>
-                          <option>Road</option>
-                          <option>Rail</option>
-                          <option>Air</option>
-                          <option>Sea</option>
-                        </select>
-                      </div>
+                      {renderDropdown('schForm', schForm, setSchForm, 'transport_mode', 'transport_mode_master', 'Transport Mode', options?.masters?.['transport_mode_master'])}
                     </div>
 
                     {/* Row 6 */}
@@ -535,6 +700,7 @@ export default function OrderSubModule() {
                           <td>{seq.order_type} / {seq.category}</td>
                           <td style={{ textAlign: 'right' }}>
                             <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); setSelectedSequence(seq); }}><Eye size={14} /></button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); handleSeqEdit(seq); }}><Edit size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleSeqDelete(seq.id); }}><Trash2 size={14} /></button>
                           </td>
                         </tr>
@@ -598,7 +764,7 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <select className="form-control" value={seqForm.order_id_ref} onChange={e => setSeqForm({...seqForm, order_id_ref: e.target.value})}>
+                      <select className="form-control" value={seqForm.order_id_ref} onChange={handleSeqOrderSelect}>
                         <option value="">Select Buyer Order...</option>
                         {buyerOrders.map(bo => (
                           <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
@@ -623,38 +789,19 @@ export default function OrderSubModule() {
                     </div>
 
                     {/* Row 2 */}
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Buyer Name</label>
-                      <select className="form-control" value={seqForm.buyer_name} onChange={e => setSeqForm({...seqForm, buyer_name: e.target.value})}>
-                        <option value="">Select Buyer Master...</option>
-                        <option>H&M</option>
-                        <option>Walmart</option>
-                        <option>C&A</option>
-                      </select>
-                    </div>
+                    {renderDropdown('seqForm', seqForm, setSeqForm, 'buyer_name', 'buyer', 'Buyer Name', options?.masters?.['buyer'])}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Party Name</label>
                       <select className="form-control" value={seqForm.party_name} onChange={e => setSeqForm({...seqForm, party_name: e.target.value})}>
                         <option value="">Select Party Master...</option>
-                        <option>Tirupur Knits</option>
-                        <option>Erode Fabrics</option>
+                        {seqForm.party_name && (!options?.all_parties || !options.all_parties.some(p => p.name === seqForm.party_name)) && <option value={seqForm.party_name}>{seqForm.party_name}</option>}
+                        {options?.all_parties?.map(p => (
+                          <option key={p.id} value={p.name}>{p.name}</option>
+                        ))}
                       </select>
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order Type</label>
-                      <select className="form-control" value={seqForm.order_type} onChange={e => setSeqForm({...seqForm, order_type: e.target.value})}>
-                        <option>Domestic</option>
-                        <option>Export</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order Category</label>
-                      <select className="form-control" value={seqForm.category} onChange={e => setSeqForm({...seqForm, category: e.target.value})}>
-                        <option>Fabric</option>
-                        <option>Garment</option>
-                        <option>Yarn</option>
-                      </select>
-                    </div>
+                    {renderDropdown('seqForm', seqForm, setSeqForm, 'order_type', 'order_type_master', 'Order Type', options?.masters?.['order_type_master'])}
+                    {renderDropdown('seqForm', seqForm, setSeqForm, 'category', 'category', 'Order Category', options?.masters?.['category'])}
 
                     {/* Row 3 */}
                     <div>
@@ -734,6 +881,7 @@ export default function OrderSubModule() {
                           <td style={{ fontWeight: 600, color: '#10b981' }}>{a.new_value}</td>
                           <td style={{ textAlign: 'right' }}>
                             <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); setSelectedAmd(a); }}><Eye size={14} /></button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); handleAmdEdit(a); }}><Edit size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleAmdDelete(a.id); }}><Trash2 size={14} /></button>
                           </td>
                         </tr>
@@ -806,7 +954,7 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <select className="form-control" value={amdForm.order_id_ref} onChange={e => setAmdForm({...amdForm, order_id_ref: e.target.value})}>
+                      <select className="form-control" value={amdForm.order_id_ref} onChange={handleAmdOrderSelect}>
                         <option value="">Select Buyer Order...</option>
                         {buyerOrders.map(bo => (
                           <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
@@ -823,16 +971,7 @@ export default function OrderSubModule() {
                     </div>
 
                     {/* Row 2 */}
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Field Changed</label>
-                      <select className="form-control" value={amdForm.field_changed} onChange={e => setAmdForm({...amdForm, field_changed: e.target.value})}>
-                        <option>Delivery Date</option>
-                        <option>Quantity</option>
-                        <option>Rate</option>
-                        <option>Fabric Type</option>
-                        <option>Shade/Colour</option>
-                      </select>
-                    </div>
+                    {renderDropdown('amdForm', amdForm, setAmdForm, 'field_changed', 'field_changed', 'Field Changed', [...new Set(['Delivery Date', 'Quantity', 'Rate', 'Fabric Type', 'Shade/Colour', ...(options?.masters?.['field_changed'] || [])])])}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Old Value</label>
                       <input type="text" className="form-control" placeholder="e.g. 4000 Mtrs" value={amdForm.old_value} onChange={e => setAmdForm({...amdForm, old_value: e.target.value})} />
@@ -923,6 +1062,7 @@ export default function OrderSubModule() {
                           <td>{c.balance_qty}</td>
                           <td style={{ textAlign: 'right' }}>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                              <button className="btn btn-secondary" style={{ padding: '6px 10px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); handleCmpEdit(c); }} title="Edit"><Edit size={14} /></button>
                               <button className="btn btn-secondary" style={{ padding: '6px 10px', color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); handleCmpDelete(c.id); }} title="Delete"><Trash2 size={14} /></button>
                               <button className="btn btn-secondary" style={{ padding: '6px 10px', color: '#3b82f6' }} title="Trigger Final Invoice"><FileText size={14} /></button>
                             </div>
@@ -1003,7 +1143,7 @@ export default function OrderSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <select className="form-control" value={cmpForm.order_id_ref} onChange={e => setCmpForm({...cmpForm, order_id_ref: e.target.value})}>
+                      <select className="form-control" value={cmpForm.order_id_ref} onChange={handleCmpOrderSelect}>
                         <option value="">Select Buyer Order...</option>
                         {buyerOrders.map(bo => (
                           <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
@@ -1032,16 +1172,7 @@ export default function OrderSubModule() {
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Balance Qty</label>
                       <input type="text" className="form-control" placeholder="e.g. 0" value={cmpForm.balance_qty} onChange={e => setCmpForm({...cmpForm, balance_qty: e.target.value})} />
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Fabric Type</label>
-                      <select className="form-control" value={cmpForm.fabric_type} onChange={e => setCmpForm({...cmpForm, fabric_type: e.target.value})}>
-                        <option>Cotton</option>
-                        <option>Polyester</option>
-                        <option>Blended</option>
-                        <option>Denim</option>
-                        <option>Linen</option>
-                      </select>
-                    </div>
+                    {renderDropdown('cmpForm', cmpForm, setCmpForm, 'fabric_type', 'fabric_type_master', 'Fabric Type', options?.masters?.['fabric_type_master'])}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Shade / Colour</label>
                       <input type="text" className="form-control" placeholder="Pantone Code" value={cmpForm.shade} onChange={e => setCmpForm({...cmpForm, shade: e.target.value})} />
@@ -1052,15 +1183,7 @@ export default function OrderSubModule() {
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Lot No</label>
                       <input type="text" className="form-control" placeholder="Yarn/Fabric lot" value={cmpForm.lot_no} onChange={e => setCmpForm({...cmpForm, lot_no: e.target.value})} />
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Packing Type</label>
-                      <select className="form-control" value={cmpForm.packing_type} onChange={e => setCmpForm({...cmpForm, packing_type: e.target.value})}>
-                        <option>Bale</option>
-                        <option>Roll</option>
-                        <option>Carton</option>
-                        <option>Pallet</option>
-                      </select>
-                    </div>
+                    {renderDropdown('cmpForm', cmpForm, setCmpForm, 'packing_type', 'packing_type_master', 'Packing Type', options?.masters?.['packing_type_master'])}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Delivery Place</label>
                       <input type="text" className="form-control" placeholder="e.g. Tirupur" value={cmpForm.delivery_place} onChange={e => setCmpForm({...cmpForm, delivery_place: e.target.value})} />

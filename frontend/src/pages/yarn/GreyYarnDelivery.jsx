@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, FileText, Package, Truck as TruckIcon, Download, ChevronDown } from 'lucide-react';
-import { greyYarnDeliveryAPI, partyAPI } from '../../services/api';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, FileText, Package, Truck as TruckIcon, Download, ChevronDown, CheckCircle } from 'lucide-react';
+import { greyYarnDeliveryAPI, partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -30,10 +30,21 @@ export default function GreyYarnDelivery() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  const [options, setOptions] = useState({});
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+  const [isCustomCertificateType, setIsCustomCertificateType] = useState(false);
+  const [customCertificateTypeVal, setCustomCertificateTypeVal] = useState('');
+  const [isCustomDeliveryMode, setIsCustomDeliveryMode] = useState(false);
+  const [customDeliveryModeVal, setCustomDeliveryModeVal] = useState('');
+  
+  const [customColourIdx, setCustomColourIdx] = useState(null);
+  const [customColourVal, setCustomColourVal] = useState('');
+
   const initialForm = {
     dc_date: new Date().toISOString().split('T')[0],
     ref_date: new Date().toISOString().split('T')[0],
-    stock_godown: '', delivery_type: 'Direct', party_name: '', delivery_mode: 'By Road',
+    stock_godown: '', delivery_type: 'Direct', party_name: '', delivery_mode: '',
     delivery_address: '', design_no: '', order_no: '', transport: '',
     vehicle_no: '', delivery_name: '', delivery_time: '', certificate_type: '',
     design_count: '', order_kgs: 0, total_dely_kgs: 0, total_rtn_kgs: 0, balance_kgs: 0,
@@ -49,11 +60,12 @@ export default function GreyYarnDelivery() {
 
   const loadData = async () => {
     try {
-      const [delRes, partRes] = await Promise.all([
-        greyYarnDeliveryAPI.list(), partyAPI.list()
+      const [delRes, partRes, dropRes] = await Promise.all([
+        greyYarnDeliveryAPI.list(), partyAPI.list(), dropdownAPI.getAll()
       ]);
       setDeliveries(delRes.data);
       setParties(partRes.data);
+      setOptions(dropRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -81,6 +93,56 @@ export default function GreyYarnDelivery() {
       alert(err.response?.data?.detail || 'Error saving delivery');
       console.error(err);
     }
+  };
+
+  const handleSaveCustomTransport = async () => {
+    if (!customTransportVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_name_master', { entity: 'transport_name_master', name: customTransportVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, transport: customTransportVal.trim() });
+      setIsCustomTransport(false);
+      setCustomTransportVal('');
+    } catch (err) { alert('Error saving custom transport'); }
+  };
+
+  const handleSaveCustomDeliveryMode = async () => {
+    if (!customDeliveryModeVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_mode_master', { entity: 'transport_mode_master', name: customDeliveryModeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, delivery_mode: customDeliveryModeVal.trim() });
+      setIsCustomDeliveryMode(false);
+      setCustomDeliveryModeVal('');
+    } catch (err) { alert('Error saving custom delivery mode'); }
+  };
+
+  const handleSaveCustomCertificateType = async () => {
+    if (!customCertificateTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('certified_type', { entity: 'certified_type', name: customCertificateTypeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, certificate_type: customCertificateTypeVal.trim() });
+      setIsCustomCertificateType(false);
+      setCustomCertificateTypeVal('');
+    } catch (err) { alert('Error saving custom certificate type'); }
+  };
+
+  const handleSaveCustomColour = async () => {
+    if (!customColourVal.trim() || customColourIdx === null) return;
+    try {
+      await subMasterAPI.create('color_master', { entity: 'color_master', name: customColourVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      const newItems = [...form.items];
+      newItems[customColourIdx].color = customColourVal.trim();
+      setForm({ ...form, items: newItems });
+      setCustomColourIdx(null);
+      setCustomColourVal('');
+    } catch (err) { alert('Error saving custom color'); }
   };
 
   const handleOpenForm = async (entry, readOnly = false) => {
@@ -150,12 +212,28 @@ export default function GreyYarnDelivery() {
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+    
+    if (name === 'transport' && value === 'custom') {
+      setIsCustomTransport(true); setCustomTransportVal(''); return;
+    }
+    if (name === 'delivery_mode' && value === 'custom') {
+      setIsCustomDeliveryMode(true); setCustomDeliveryModeVal(''); return;
+    }
+    if (name === 'certificate_type' && value === 'custom') {
+      setIsCustomCertificateType(true); setCustomCertificateTypeVal(''); return;
+    }
+
     setForm({ ...form, [name]: value });
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
   const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   const updateItem = (index, field, value) => {
+    if (field === 'color' && value === 'custom') {
+      setCustomColourIdx(index);
+      setCustomColourVal('');
+      return;
+    }
     const newItems = [...form.items];
     let val = value;
     if (['stock', 'bags', 'cones', 'total_kgs', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
@@ -433,21 +511,57 @@ export default function GreyYarnDelivery() {
                       </select>
                     </div>
                     <div className="form-group"><label>Delivery Mode</label>
-                      <select className="form-control" name="delivery_mode" value={form.delivery_mode} onChange={handleChange}>
-                        <option>By Road</option><option>By Rail</option><option>Courier</option>
-                      </select>
+                      {isCustomDeliveryMode ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Mode" value={customDeliveryModeVal} onChange={e => setCustomDeliveryModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomDeliveryMode} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomDeliveryMode(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="delivery_mode" value={form.delivery_mode || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.transport_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
                     
                     <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} /></div>
                     
-                    <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Transport</label>
+                      {isCustomTransport ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Transport" value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransport} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransport(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport" value={form.transport || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Name</label><input className="form-control" name="delivery_name" value={form.delivery_name} onChange={handleChange} /></div>
                     
-                    <div className="form-group"><label>Delivery Time</label><input type="time" className="form-control" name="delivery_time" value={form.delivery_time} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Certificate Type</label><input className="form-control" name="certificate_type" value={form.certificate_type} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Certificate Type</label>
+                      {isCustomCertificateType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Certificate Type" value={customCertificateTypeVal} onChange={e => setCustomCertificateTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomCertificateType} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomCertificateType(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="certificate_type" value={form.certificate_type || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.certified_type?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
+                    </div>
                     <div className="form-group"><label>Design Count</label><input className="form-control" name="design_count" value={form.design_count} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order Kgs / Total Kgs</label><input type="number" className="form-control" name="order_kgs" value={form.order_kgs} onChange={handleChange} /></div>
                     
@@ -481,7 +595,21 @@ export default function GreyYarnDelivery() {
                             </td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.count} onChange={e => updateItem(idx, 'count', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
+                            <td>
+                              {customColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Color" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 100 }} value={item.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
@@ -522,7 +650,21 @@ export default function GreyYarnDelivery() {
                             </td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.count} onChange={e => updateItem(idx, 'count', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
+                            <td>
+                              {customColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Color" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 100 }} value={item.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70 }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>

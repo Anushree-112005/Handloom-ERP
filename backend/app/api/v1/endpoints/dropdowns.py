@@ -65,7 +65,7 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
 
     # 4. Override with SubMasters (Core System Basic)
     from app.models.sub_master import SubMaster
-    sm_req = await db.execute(select(SubMaster.entity, SubMaster.name, SubMaster.extra_field_1).where(SubMaster.is_active == True))
+    sm_req = await db.execute(select(SubMaster.entity, SubMaster.name, SubMaster.code, SubMaster.extra_field_1).where(SubMaster.is_active == True))
     sm_rows = sm_req.all()
     
     district_cities = [r.name for r in sm_rows if r.entity == "district_city_master"]
@@ -83,7 +83,7 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     custom_address_sno = [r.name for r in sm_rows if r.entity == "address_sno_master"]
     custom_payment_terms = [r.name for r in sm_rows if r.entity == "payment_terms_master"]
     custom_order_types = [r.name for r in sm_rows if r.entity == "order_type_master"]
-    custom_certified_types = [r.name for r in sm_rows if r.entity == "certified_type_master"]
+    custom_certified_types = [r.name for r in sm_rows if r.entity == "certified_type"]
     custom_commission_types = [r.name for r in sm_rows if r.entity == "commission_type_master"]
     custom_regular_special = [r.name for r in sm_rows if r.entity == "regular_special_master"]
     custom_statuses = [r.name for r in sm_rows if r.entity == "status_master"]
@@ -95,9 +95,22 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     custom_end_uses = [r.name for r in sm_rows if r.entity == "end_use_master"]
     custom_seasons = [r.name for r in sm_rows if r.entity == "season_master"]
     custom_transport_modes = [r.name for r in sm_rows if r.entity == "transport_mode_master"]
+    custom_transport_names = [r.name for r in sm_rows if r.entity == "transport_name_master"]
     custom_process_sequences = [r.name for r in sm_rows if r.entity == "process_sequence_master"]
     custom_colors = [r.name for r in sm_rows if r.entity == "color_master"]
-    custom_hsn_codes = [r.name for r in sm_rows if r.entity == "hsn_code_master"]
+    custom_hsn_codes = [r.code if r.code else r.name for r in sm_rows if r.entity == "hsn_code_master"]
+    custom_lr_types = [r.name for r in sm_rows if r.entity == "lr_type_master"]
+    custom_lr_terms = [r.name for r in sm_rows if r.entity == "lr_terms"]
+    custom_buyers = [r.name for r in sm_rows if r.entity == "buyer"]
+    custom_party_terms = [r.name for r in sm_rows if r.entity == "party_terms_master"]
+    custom_org_names = [r.name for r in sm_rows if r.entity == "organization_name_master"]
+    custom_against_refs = [r.name for r in sm_rows if r.entity == "against_reference_master"]
+    custom_freight_types = [r.name for r in sm_rows if r.entity == "freight_type_master"]
+    custom_mill_names = [r.name for r in sm_rows if r.entity == "mill_name_master"]
+    custom_yarn_counts = [r.name for r in sm_rows if r.entity == "yarn_count_master"]
+    custom_cone_types = [r.name for r in sm_rows if r.entity == "cone_type_master"]
+    custom_received_types = [r.name for r in sm_rows if r.entity == "received_type_master"]
+    custom_yarn_types = [r.name for r in sm_rows if r.entity == "yarn_type_master"]
 
     if district_cities:
         masters["city"] = district_cities
@@ -106,15 +119,7 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     # Force Party Group to be strictly fetched from SubMaster only
     masters["party_group"] = party_groups
     
-    DEFAULT_PARTY_TYPES = [
-        "Sales Party", "Logistics", "Processor", "Yarn Dyeing", "Yarn Coverter",
-        "Exports party", "Own Shed", "Washing/Finishing", "Purchase Party",
-        "Agent", "Weaving vendor", "Bit Loom Weaver", "Doubling", "Weaving Unit",
-        "Testing Lab", "Spares Supplier", "Delivery Party", "JobWorker"
-    ]
-    
-    combined_types = DEFAULT_PARTY_TYPES + custom_party_types
-    masters["party_type"] = list(dict.fromkeys(combined_types))
+    masters["party_type"] = list(dict.fromkeys(custom_party_types))
     
     if custom_customer_grades:
         combined_grades = masters.get("customer_grade", []) + custom_customer_grades
@@ -126,7 +131,7 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     masters["address_sno"] = list(dict.fromkeys(masters.get("address_sno", []) + custom_address_sno))
     masters["payment_terms"] = custom_payment_terms
     masters["order_type_master"] = list(dict.fromkeys(custom_order_types))
-    masters["certified_type_master"] = list(dict.fromkeys(custom_certified_types))
+    masters["certified_type"] = list(dict.fromkeys(custom_certified_types))
     masters["commission_type_master"] = list(dict.fromkeys(custom_commission_types))
     masters["regular_special_master"] = list(dict.fromkeys(custom_regular_special))
     masters["status_master"] = list(dict.fromkeys(custom_statuses))
@@ -138,9 +143,22 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     masters["end_use_master"] = list(dict.fromkeys(custom_end_uses))
     masters["season_master"] = list(dict.fromkeys(custom_seasons))
     masters["transport_mode_master"] = list(dict.fromkeys(custom_transport_modes))
+    masters["transport_name_master"] = list(dict.fromkeys(custom_transport_names))
     masters["process_sequence_master"] = list(dict.fromkeys(custom_process_sequences))
     masters["color_master"] = list(dict.fromkeys(custom_colors))
     masters["hsn_code_master"] = list(dict.fromkeys(custom_hsn_codes))
+    masters["lr_type_master"] = list(dict.fromkeys(custom_lr_types))
+    masters["lr_terms"] = list(dict.fromkeys(custom_lr_terms))
+    masters["buyer"] = list(dict.fromkeys(custom_buyers))
+    masters["party_terms_master"] = list(dict.fromkeys(custom_party_terms))
+    masters["organization_name_master"] = list(dict.fromkeys(custom_org_names))
+    masters["against_reference_master"] = list(dict.fromkeys(custom_against_refs))
+    masters["freight_type_master"] = list(dict.fromkeys(custom_freight_types))
+    masters["mill_name_master"] = list(dict.fromkeys(custom_mill_names))
+    masters["yarn_count_master"] = list(dict.fromkeys(custom_yarn_counts))
+    masters["cone_type_master"] = list(dict.fromkeys(custom_cone_types))
+    masters["received_type_master"] = list(dict.fromkeys(custom_received_types))
+    masters["yarn_type_master"] = list(dict.fromkeys(custom_yarn_types))
         
     INDIAN_STATES = [
         "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", 

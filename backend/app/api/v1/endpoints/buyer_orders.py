@@ -179,6 +179,21 @@ async def create_schedule(data: ScheduleCreate, db: AsyncSession = Depends(get_d
     await db.refresh(schedule)
     return schedule
 
+@router.put("/schedules/{sch_id}", response_model=ScheduleOut)
+async def update_schedule(sch_id: int, data: ScheduleCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BuyerOrderSchedule).where(BuyerOrderSchedule.id == sch_id))
+    schedule = result.scalar_one_or_none()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    
+    sch_dict = data.model_dump()
+    for key, value in sch_dict.items():
+        setattr(schedule, key, value)
+        
+    await db.commit()
+    await db.refresh(schedule)
+    return schedule
+
 @router.delete("/schedules/{sch_id}", status_code=204)
 async def delete_schedule(sch_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(BuyerOrderSchedule).where(BuyerOrderSchedule.id == sch_id))
@@ -225,6 +240,21 @@ async def create_sequence(data: SequenceCreate, db: AsyncSession = Depends(get_d
     seq_dict = data.model_dump()
     sequence = BuyerOrderSequence(**seq_dict, sequence_id=seq_id)
     db.add(sequence)
+    await db.commit()
+    await db.refresh(sequence)
+    return sequence
+
+@router.put("/sequences/{seq_id}", response_model=SequenceOut)
+async def update_sequence(seq_id: int, data: SequenceCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BuyerOrderSequence).where(BuyerOrderSequence.id == seq_id))
+    sequence = result.scalar_one_or_none()
+    if not sequence:
+        raise HTTPException(status_code=404, detail="Sequence not found")
+    
+    seq_dict = data.model_dump()
+    for key, value in seq_dict.items():
+        setattr(sequence, key, value)
+        
     await db.commit()
     await db.refresh(sequence)
     return sequence
@@ -279,6 +309,21 @@ async def create_amendment(data: AmendmentCreate, db: AsyncSession = Depends(get
     await db.refresh(amendment)
     return amendment
 
+@router.put("/amendments/{amd_id}", response_model=AmendmentOut)
+async def update_amendment(amd_id: int, data: AmendmentCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BuyerOrderAmendment).where(BuyerOrderAmendment.id == amd_id))
+    amendment = result.scalar_one_or_none()
+    if not amendment:
+        raise HTTPException(status_code=404, detail="Amendment not found")
+    
+    amd_dict = data.model_dump()
+    for key, value in amd_dict.items():
+        setattr(amendment, key, value)
+        
+    await db.commit()
+    await db.refresh(amendment)
+    return amendment
+
 @router.delete("/amendments/{amd_id}", status_code=204)
 async def delete_amendment(amd_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(BuyerOrderAmendment).where(BuyerOrderAmendment.id == amd_id))
@@ -327,6 +372,21 @@ async def create_completion(data: CompletionCreate, db: AsyncSession = Depends(g
     cmp_dict = data.model_dump()
     completion = BuyerOrderCompletion(**cmp_dict, cmp_id=cmp_id)
     db.add(completion)
+    await db.commit()
+    await db.refresh(completion)
+    return completion
+
+@router.put("/completions/{cmp_id}", response_model=CompletionOut)
+async def update_completion(cmp_id: int, data: CompletionCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BuyerOrderCompletion).where(BuyerOrderCompletion.id == cmp_id))
+    completion = result.scalar_one_or_none()
+    if not completion:
+        raise HTTPException(status_code=404, detail="Completion not found")
+    
+    cmp_dict = data.model_dump()
+    for key, value in cmp_dict.items():
+        setattr(completion, key, value)
+        
     await db.commit()
     await db.refresh(completion)
     return completion
@@ -398,6 +458,20 @@ async def create_dispatch(data: DispatchCreate, db: AsyncSession = Depends(get_d
     await db.refresh(dispatch)
     return dispatch
 
+@router.put("/dispatches/{dispatch_id}", response_model=DispatchOut)
+async def update_dispatch(dispatch_id: int, data: DispatchCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BuyerOrderDispatch).where(BuyerOrderDispatch.id == dispatch_id))
+    dispatch = result.scalar_one_or_none()
+    if not dispatch:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    
+    for key, value in data.model_dump().items():
+        setattr(dispatch, key, value)
+        
+    await db.commit()
+    await db.refresh(dispatch)
+    return dispatch
+
 @router.delete("/dispatches/{dispatch_id}", status_code=204)
 async def delete_dispatch(dispatch_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(BuyerOrderDispatch).where(BuyerOrderDispatch.id == dispatch_id))
@@ -422,6 +496,20 @@ async def create_expense(data: ExpenseCreate, db: AsyncSession = Depends(get_db)
     
     expense = BuyerOrderExpense(**data.model_dump(), expense_id=expense_id)
     db.add(expense)
+    await db.commit()
+    await db.refresh(expense)
+    return expense
+
+@router.put("/expenses/{expense_id}", response_model=ExpenseOut)
+async def update_expense(expense_id: int, data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(BuyerOrderExpense).where(BuyerOrderExpense.id == expense_id))
+    expense = result.scalar_one_or_none()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    
+    for key, value in data.model_dump().items():
+        setattr(expense, key, value)
+        
     await db.commit()
     await db.refresh(expense)
     return expense

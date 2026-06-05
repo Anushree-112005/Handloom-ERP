@@ -69,6 +69,10 @@ class SalesInvoiceBase(BaseModel):
     invoice_date: Optional[date] = None
     invoice_type: Optional[str] = "Proforma Invoice"
     party_name: Optional[str] = None
+    party_id: Optional[int] = None
+    ibpo: Optional[str] = None
+    design_no: Optional[str] = None
+    status: Optional[str] = "Draft"
     billing_address: Optional[str] = None
     delivery_address: Optional[str] = None
     state: Optional[str] = None
@@ -97,6 +101,19 @@ class SalesInvoiceBase(BaseModel):
     ad_code: Optional[str] = None
     iec_number: Optional[str] = None
     firc_reference: Optional[str] = None
+    country: Optional[str] = None
+    port_of_loading: Optional[str] = None
+    port_of_discharge: Optional[str] = None
+    incoterms: Optional[str] = None
+
+    buyer_po_no: Optional[str] = None
+    dispatch_date: Optional[str] = None
+    transporter_name: Optional[str] = None
+    lr_no: Optional[str] = None
+    vehicle_no: Optional[str] = None
+    payment_terms: Optional[str] = None
+    delivery_terms: Optional[str] = None
+    insurance_charges: Optional[Decimal] = Decimal("0.0")
 
     @field_validator('invoice_date', mode='before')
     @classmethod
