@@ -1,17 +1,30 @@
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
-from app.models.party_master import PartyMaster
 from app.core.config import settings
-
-engine = create_async_engine(settings.DATABASE_URL)
-AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+from app.models.sales_invoice import SalesInvoice, SalesInvoiceItem
+from app.schemas.sales_invoice import SalesInvoiceCreate
 
 async def test():
-    async with AsyncSessionLocal() as db:
-        res = await db.execute(select(PartyMaster))
-        parties = res.scalars().all()
-        print(f"Parties count: {len(parties)}")
+    engine = create_async_engine(settings.DATABASE_URL)
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    async with async_session() as db:
+        payload = {
+          "invoice_no": "TEST-123",
+          "invoice_date": "2026-06-05",
+          "invoice_type": "Proforma Invoice",
+          "party_name": "ABC",
+          "status": "Draft",
+          "items": []
+        }
         
+        try:
+            db_invoice = SalesInvoice(**payload)
+            db.add(db_invoice)
+            await db.flush()
+            print("Flush succeeded")
+        except Exception as e:
+            print("Error:", e)
+
 asyncio.run(test())

@@ -10,7 +10,7 @@ import {
   FileText, Shield, Box, Tag, Settings, Scissors, CheckSquare,
   DollarSign, Thermometer, Beaker, ClipboardList, Package,
   Wrench, BookOpen, Target, Percent, Globe, CreditCard,
-  Users, ShoppingCart, Receipt
+  Users, ShoppingCart, Receipt, CheckCircle
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════
@@ -840,6 +840,19 @@ export const DYEING_CLY = {
   ],
 };
 
+export const DESIGN_NO_MASTER = {
+  entity: 'design_no_master',
+  title: 'Design No Master',
+  icon: Hash,
+  color: '#3b82f6',
+  description: 'Manage design numbers used across orders and dispatch planning.',
+  fields: [
+    { name: 'name', label: 'Design No', type: 'text', required: true, placeholder: 'e.g. D-9012' },
+    { name: 'code', label: 'Design Code', type: 'text', placeholder: 'e.g. D9012' },
+    { name: 'description', label: 'Details', type: 'textarea' },
+  ],
+};
+
 export const END_USE = {
   entity: 'end_use_master',
   title: 'END_USE Master',
@@ -1148,13 +1161,59 @@ export const PHASE1_MASTERS = [
   LOOM_MASTER, LOOM_TYPE_MASTER, PARTY_TYPE_GROUP, PAYMENT_TERMS_MASTER,
   GODOWN_MASTER, GATE_LOCATION_MASTER, MILL_NAME_MASTER, DISTRICT_CITY_MASTER,
   ORDER_TYPE_MASTER, SALES_REGION_MASTER,
-  BUYER_MASTER, CERTIFIED_TYPE, COUNT_SYSTEM, DESIGNER_MASTER, END_USE,
+  BUYER_MASTER, CERTIFIED_TYPE, COUNT_SYSTEM, DESIGNER_MASTER, END_USE, DESIGN_NO_MASTER,
   GROUP_COUNT, LR_TERMS, PARTY_TERMS_MASTER, LR_TYPE, MANAGER_MASTER, MERCHANDISER_MASTER, PARTY_GROUP,
   PARTY_TYPE, PAYMENT_TERM_AND_CONDITIONS, SECTION_GROUP, SP_NO,
   TRANSPORT_MODE_MASTER, TRANSPORT_NAME_MASTER
 ];
 
+
+export const PIN_MASTER = {
+  entity: 'pin_master',
+  title: 'Pin Master',
+  icon: Hash,
+  color: '#8b5cf6',
+  description: 'Manage PIN options.',
+  fields: [
+    { name: 'name', label: 'PIN', type: 'text', required: true, placeholder: 'e.g. 100' },
+  ],
+};
+
+export const BALE_LIST_MASTER = {
+  entity: 'bale_list_master',
+  title: 'Bale List Master',
+  icon: ClipboardList,
+  color: '#3b82f6',
+  description: 'Manage Bale List categories.',
+  fields: [
+    { name: 'name', label: 'Bale List', type: 'text', required: true, placeholder: 'e.g. List A' },
+  ],
+};
+
+export const STOCK_TYPE_MASTER = {
+  entity: 'stock_type_master',
+  title: 'Stock Type Master',
+  icon: Package,
+  color: '#10b981',
+  description: 'Manage Stock Types.',
+  fields: [
+    { name: 'name', label: 'Stock Type', type: 'text', required: true, placeholder: 'e.g. Ready Stock' },
+  ],
+};
+
+export const STATUS_MASTER = {
+  entity: 'status_master',
+  title: 'Status Master',
+  icon: CheckCircle,
+  color: '#ef4444',
+  description: 'Manage Status Options.',
+  fields: [
+    { name: 'name', label: 'Status', type: 'text', required: true, placeholder: 'e.g. Packed' },
+  ],
+};
+
 export const PHASE2_MASTERS = [
+  PIN_MASTER, BALE_LIST_MASTER, STOCK_TYPE_MASTER, STATUS_MASTER,
   CHECKER_NAME_MASTER, GREY_CHECKER_NAME, CHECKING_TABLE_MACHINE,
   CATEGORY_MASTER, FABRIC_MASTER, CHEMICAL_GROUP_MASTER, SIZING_CHEMICAL_MASTER,
   DAMAGE_MASTER, DESIGN_COLOR_MASTER, FINISHING_TYPE_MASTER,

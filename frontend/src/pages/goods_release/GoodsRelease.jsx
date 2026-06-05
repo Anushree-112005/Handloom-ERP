@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ClipboardList, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
-import { goodsReleaseAPI, dropdownAPI, partyAPI } from '../../services/api';
+import { goodsReleaseAPI, dropdownAPI, partyAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -91,6 +91,40 @@ export default function GoodsRelease() {
 
   const [formData, setFormData] = useState(initialForm);
   
+  // Custom Master States
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+  
+  const [isCustomTransportMode, setIsCustomTransportMode] = useState(false);
+  const [customTransportModeVal, setCustomTransportModeVal] = useState('');
+  
+  const [isCustomLrTerms, setIsCustomLrTerms] = useState(false);
+  const [customLrTermsVal, setCustomLrTermsVal] = useState('');
+  
+  const [isCustomFreightMode, setIsCustomFreightMode] = useState(false);
+  const [customFreightModeVal, setCustomFreightModeVal] = useState('');
+  
+  const [isCustomDisNo, setIsCustomDisNo] = useState(false);
+  const [customDisNoVal, setCustomDisNoVal] = useState('');
+
+  const [isCustomDeliveryAt, setIsCustomDeliveryAt] = useState(false);
+  const [customDeliveryAtVal, setCustomDeliveryAtVal] = useState('');
+
+  const [isCustomAgent, setIsCustomAgent] = useState(false);
+  const [customAgentVal, setCustomAgentVal] = useState('');
+
+  const [isCustomInvMode, setIsCustomInvMode] = useState(false);
+  const [customInvModeVal, setCustomInvModeVal] = useState('');
+
+  const [isCustomApprovalStatus, setIsCustomApprovalStatus] = useState(false);
+  const [customApprovalStatusVal, setCustomApprovalStatusVal] = useState('');
+
+  const [isCustomBaleType, setIsCustomBaleType] = useState(false);
+  const [customBaleTypeVal, setCustomBaleTypeVal] = useState('');
+
+  const [customColorRowIndex, setCustomColorRowIndex] = useState(null);
+  const [customColorVal, setCustomColorVal] = useState('');
+  
   // Grid Table Items: Despatch Detail
   const [items, setItems] = useState([
     { design_no: '', color: '', bale_no: '', packing_slip_no: '', meters: '', rate: '', amount: 0 }
@@ -164,6 +198,164 @@ export default function GoodsRelease() {
     } catch (err) {
       console.error("Error setting party fields:", err);
       setFormData(prev => ({ ...prev, party_name: partyName }));
+    }
+  };
+
+  // Save Custom Handlers
+  const handleSaveCustomTransport = async () => {
+    if (!customTransportVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_name_master', { entity: 'transport_name_master', name: customTransportVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, transport: customTransportVal.trim() }));
+      setIsCustomTransport(false);
+      setCustomTransportVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom transport');
+    }
+  };
+
+  const handleSaveCustomTransportMode = async () => {
+    if (!customTransportModeVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_mode_master', { entity: 'transport_mode_master', name: customTransportModeVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, transport_mode: customTransportModeVal.trim() }));
+      setIsCustomTransportMode(false);
+      setCustomTransportModeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom transport mode');
+    }
+  };
+
+  const handleSaveCustomLrTerms = async () => {
+    if (!customLrTermsVal.trim()) return;
+    try {
+      await subMasterAPI.create('lr_terms', { entity: 'lr_terms', name: customLrTermsVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, lr_team: customLrTermsVal.trim() }));
+      setIsCustomLrTerms(false);
+      setCustomLrTermsVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom lr terms');
+    }
+  };
+
+  const handleSaveCustomFreightMode = async () => {
+    if (!customFreightModeVal.trim()) return;
+    try {
+      await subMasterAPI.create('freight_mode_master', { entity: 'freight_mode_master', name: customFreightModeVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, freight_mode: customFreightModeVal.trim() }));
+      setIsCustomFreightMode(false);
+      setCustomFreightModeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom freight mode');
+    }
+  };
+
+  const handleSaveCustomDisNo = async () => {
+    if (!customDisNoVal.trim()) return;
+    try {
+      await subMasterAPI.create('dis_no_master', { entity: 'dis_no_master', name: customDisNoVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, dis_no: customDisNoVal.trim() }));
+      setIsCustomDisNo(false);
+      setCustomDisNoVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom DIS No');
+    }
+  };
+
+  const handleSaveCustomDeliveryAt = async () => {
+    if (!customDeliveryAtVal.trim()) return;
+    try {
+      await subMasterAPI.create('delivery_at_master', { entity: 'delivery_at_master', name: customDeliveryAtVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, delivery_at: customDeliveryAtVal.trim() }));
+      setIsCustomDeliveryAt(false);
+      setCustomDeliveryAtVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Delivery At');
+    }
+  };
+
+  const handleSaveCustomAgent = async () => {
+    if (!customAgentVal.trim()) return;
+    try {
+      await subMasterAPI.create('agent_master', { entity: 'agent_master', name: customAgentVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, agent: customAgentVal.trim() }));
+      setIsCustomAgent(false);
+      setCustomAgentVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Agent');
+    }
+  };
+
+  const handleSaveCustomInvMode = async () => {
+    if (!customInvModeVal.trim()) return;
+    try {
+      await subMasterAPI.create('inv_mode_master', { entity: 'inv_mode_master', name: customInvModeVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, inv_mode: customInvModeVal.trim() }));
+      setIsCustomInvMode(false);
+      setCustomInvModeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Inv Mode');
+    }
+  };
+
+  const handleSaveCustomApprovalStatus = async () => {
+    if (!customApprovalStatusVal.trim()) return;
+    try {
+      await subMasterAPI.create('approval_status_master', { entity: 'approval_status_master', name: customApprovalStatusVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, approval_status: customApprovalStatusVal.trim() }));
+      setIsCustomApprovalStatus(false);
+      setCustomApprovalStatusVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Approval Status');
+    }
+  };
+
+  const handleSaveCustomBaleType = async () => {
+    if (!customBaleTypeVal.trim()) return;
+    try {
+      await subMasterAPI.create('bale_type_master', { entity: 'bale_type_master', name: customBaleTypeVal.trim(), is_active: true });
+      await fetchOptions();
+      setFormData(prev => ({ ...prev, bale_type: customBaleTypeVal.trim() }));
+      setIsCustomBaleType(false);
+      setCustomBaleTypeVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Bale Type');
+    }
+  };
+
+  const handleSaveCustomColor = async () => {
+    if (!customColorVal.trim()) return;
+    try {
+      await subMasterAPI.create('color_master', { entity: 'color_master', name: customColorVal.trim(), is_active: true });
+      await fetchOptions();
+      
+      if (customColorRowIndex !== null) {
+         handleItemChange(customColorRowIndex, 'color', customColorVal.trim());
+      }
+      setCustomColorRowIndex(null);
+      setCustomColorVal('');
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom Color');
     }
   };
 
@@ -253,6 +445,18 @@ export default function GoodsRelease() {
         approval_status: rel.approval_status || 'Pending',
         approved_by: rel.approved_by || ''
       });
+
+      setIsCustomTransport(false);
+      setIsCustomTransportMode(false);
+      setIsCustomLrTerms(false);
+      setIsCustomFreightMode(false);
+      setIsCustomDisNo(false);
+      setIsCustomDeliveryAt(false);
+      setIsCustomAgent(false);
+      setIsCustomInvMode(false);
+      setIsCustomApprovalStatus(false);
+      setIsCustomBaleType(false);
+      setCustomColorRowIndex(null);
 
       if (rel.items && rel.items.length > 0) {
         setItems(rel.items.map(item => ({
@@ -510,7 +714,7 @@ export default function GoodsRelease() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View GRA Details' : editingId ? 'Edit Goods Release Advice' : 'Add New Goods Release Advice'}</h2>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -559,19 +763,47 @@ export default function GoodsRelease() {
                     </div>
                     <div className="form-group">
                       <label>Inv Mode</label>
-                      <select className="form-control" name="inv_mode" value={formData.inv_mode} onChange={handleInputChange}>
-                        <option value="Regular">Regular</option>
-                        <option value="Sample">Sample</option>
-                        <option value="FOC">Free of Cost</option>
-                      </select>
+                      {isCustomInvMode ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Inv Mode..." value={customInvModeVal} onChange={e => setCustomInvModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomInvMode}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomInvMode(false); setCustomInvModeVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="inv_mode" value={formData.inv_mode} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomInvMode(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Inv Mode --</option>
+                          <option value="Regular">Regular</option>
+                          <option value="Sample">Sample</option>
+                          <option value="FOC">Free of Cost</option>
+                          {options.masters?.inv_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Inv Mode...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Bale Type</label>
-                      <select className="form-control" name="bale_type" value={formData.bale_type} onChange={handleInputChange}>
-                        <option value="Regular">Regular</option>
-                        <option value="Box Packing">Box Packing</option>
-                        <option value="Loose Pack">Loose Pack</option>
-                      </select>
+                      {isCustomBaleType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Bale Type..." value={customBaleTypeVal} onChange={e => setCustomBaleTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomBaleType}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomBaleType(false); setCustomBaleTypeVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="bale_type" value={formData.bale_type} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomBaleType(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Bale Type --</option>
+                          <option value="Regular">Regular</option>
+                          <option value="Box Packing">Box Packing</option>
+                          <option value="Loose Pack">Loose Pack</option>
+                          {options.masters?.bale_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Bale Type...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Status</label>
@@ -587,11 +819,25 @@ export default function GoodsRelease() {
                     </div>
                     <div className="form-group">
                       <label>Approval Status</label>
-                      <select className="form-control" name="approval_status" value={formData.approval_status} onChange={handleInputChange}>
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
+                      {isCustomApprovalStatus ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Status..." value={customApprovalStatusVal} onChange={e => setCustomApprovalStatusVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomApprovalStatus}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomApprovalStatus(false); setCustomApprovalStatusVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="approval_status" value={formData.approval_status} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomApprovalStatus(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Status --</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Approved">Approved</option>
+                          <option value="Rejected">Rejected</option>
+                          {options.masters?.approval_status_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Status...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Approved By</label>
@@ -621,11 +867,22 @@ export default function GoodsRelease() {
                     </div>
                     <div className="form-group">
                       <label>DIS No</label>
-                      <select className="form-control" name="dis_no" value={formData.dis_no} onChange={handleInputChange}>
-                        <option value="">-- Select DIS --</option>
-                        <option value="DIS-901">DIS-901</option>
-                        <option value="DIS-902">DIS-902</option>
-                      </select>
+                      {isCustomDisNo ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter DIS No..." value={customDisNoVal} onChange={e => setCustomDisNoVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomDisNo}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomDisNo(false); setCustomDisNoVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="dis_no" value={formData.dis_no} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomDisNo(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select DIS --</option>
+                          {options.masters?.dis_no_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom DIS No...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Date</label>
@@ -633,12 +890,25 @@ export default function GoodsRelease() {
                     </div>
                     <div className="form-group">
                       <label>Delivery At (Destination)</label>
-                      <select className="form-control" name="delivery_at" value={formData.delivery_at} onChange={handleInputChange}>
-                        <option value="">-- Select Destination --</option>
-                        <option value="Warehouse A">Warehouse A</option>
-                        <option value="Erode Mill">Erode Mill</option>
-                        <option value="Direct to Client">Direct to Client</option>
-                      </select>
+                      {isCustomDeliveryAt ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Destination..." value={customDeliveryAtVal} onChange={e => setCustomDeliveryAtVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomDeliveryAt}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomDeliveryAt(false); setCustomDeliveryAtVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="delivery_at" value={formData.delivery_at} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomDeliveryAt(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Destination --</option>
+                          <option value="Warehouse A">Warehouse A</option>
+                          <option value="Erode Mill">Erode Mill</option>
+                          <option value="Direct to Client">Direct to Client</option>
+                          {options.masters?.delivery_at_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Destination...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Invoice At (Billing Address)</label>
@@ -646,12 +916,23 @@ export default function GoodsRelease() {
                     </div>
                     <div className="form-group">
                       <label>Agent</label>
-                      <select className="form-control" name="agent" value={formData.agent} onChange={handleInputChange}>
-                        <option value="">-- Select Agent --</option>
-                        {options.agents.map(a => (
-                          <option key={a.id} value={a.name}>{a.name}</option>
-                        ))}
-                      </select>
+                      {isCustomAgent ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Agent..." value={customAgentVal} onChange={e => setCustomAgentVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomAgent}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomAgent(false); setCustomAgentVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="agent" value={formData.agent} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomAgent(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Agent --</option>
+                          {options.agents?.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+                          {options.masters?.agent_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Agent...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Comm %</label>
@@ -716,12 +997,26 @@ export default function GoodsRelease() {
                               />
                             </td>
                             <td>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                value={item.color} 
-                                onChange={e => handleItemChange(index, 'color', e.target.value)}
-                              />
+                              {customColorRowIndex === index ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" autoFocus placeholder="New Color..." value={customColorVal} onChange={e => setCustomColorVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px' }} onClick={handleSaveCustomColor}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px' }} onClick={() => { setCustomColorRowIndex(null); setCustomColorVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select 
+                                  className="form-control" 
+                                  value={item.color} 
+                                  onChange={e => {
+                                    if (e.target.value === 'custom') setCustomColorRowIndex(index);
+                                    else handleItemChange(index, 'color', e.target.value);
+                                  }}
+                                >
+                                  <option value="">Select Color</option>
+                                  {options.masters?.color_master?.map(c => <option key={c} value={c}>{c}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Color...</option>
+                                </select>
+                              )}
                             </td>
                             <td>
                               <input 
@@ -836,26 +1131,60 @@ export default function GoodsRelease() {
 
                     <div className="form-group">
                       <label>Transport Name</label>
-                      <select className="form-control" name="transport" value={formData.transport} onChange={handleInputChange}>
-                        <option value="">-- Select Transport --</option>
-                        {options.transporters.map(t => (
-                          <option key={t.id} value={t.name}>{t.name}</option>
-                        ))}
-                      </select>
+                      {isCustomTransport ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport" value={formData.transport} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomTransport(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Transport --</option>
+                          {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Transport Mode</label>
-                      <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={handleInputChange}>
-                        <option value="">-- Select Mode --</option>
-                        <option value="Road">Road</option><option value="Rail">Rail</option><option value="Air">Air</option>
-                      </select>
+                      {isCustomTransportMode ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Mode..." value={customTransportModeVal} onChange={e => setCustomTransportModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransportMode}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransportMode(false); setCustomTransportModeVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="transport_mode" value={formData.transport_mode} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomTransportMode(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Mode --</option>
+                          {options.masters?.transport_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Mode...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Freight Mode</label>
-                      <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={handleInputChange}>
-                        <option value="">-- Select Freight --</option>
-                        <option value="To Pay">To Pay</option><option value="Paid">Paid</option>
-                      </select>
+                      {isCustomFreightMode ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter Freight..." value={customFreightModeVal} onChange={e => setCustomFreightModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightMode}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightMode(false); setCustomFreightModeVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="freight_mode" value={formData.freight_mode} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomFreightMode(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Freight --</option>
+                          {options.masters?.freight_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight...</option>
+                        </select>
+                      )}
                     </div>
 
                     <div className="form-group">
@@ -863,12 +1192,23 @@ export default function GoodsRelease() {
                       <input className="form-control" name="vehicle_no" value={formData.vehicle_no} onChange={handleInputChange} />
                     </div>
                     <div className="form-group">
-                      <label>LR Team</label>
-                      <select className="form-control" name="lr_team" value={formData.lr_team} onChange={handleInputChange}>
-                        <option value="">-- Select Team --</option>
-                        <option value="Primary Logistics">Primary Logistics</option>
-                        <option value="Secondary Delivery">Secondary Delivery</option>
-                      </select>
+                      <label>LR Terms</label>
+                      {isCustomLrTerms ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" autoFocus placeholder="Enter LR Terms..." value={customLrTermsVal} onChange={e => setCustomLrTermsVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomLrTerms}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomLrTerms(false); setCustomLrTermsVal(''); }}><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <select className="form-control" name="lr_team" value={formData.lr_team} onChange={e => {
+                          if (e.target.value === 'custom') setIsCustomLrTerms(true);
+                          else handleInputChange(e);
+                        }}>
+                          <option value="">-- Select Terms --</option>
+                          {options.masters?.lr_terms?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Terms...</option>
+                        </select>
+                      )}
                     </div>
                     <div className="form-group">
                       <label>LR No</label>
@@ -1056,7 +1396,7 @@ export default function GoodsRelease() {
 
         {/* LEFT SIDE: GRA TABLE */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
             <table className="data-table">
               <thead>
                 <tr>
