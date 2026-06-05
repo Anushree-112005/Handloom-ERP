@@ -90,7 +90,28 @@ async def create_transaction(data: WorkOrderTransactionCreate, db: AsyncSession 
         'goods_release': 'GRY-GRA-',
         'gry_invoice': 'GRY-INV-',
         'eway_bill': 'GRY-EWB-',
-        'einvoice_eway': 'GRY-EIN-'
+        'einvoice_eway': 'GRY-EIN-',
+        
+        # Surplus Stock & Hangers
+        'surplus_opening': 'SOP-',
+        'surplus_report': 'SRP-',
+        'surplus_download': 'SED-',
+        'surplus_report_new': 'SRN-',
+        'surplus_inward': 'SIW-',
+        'surplus_delivery': 'SDE-',
+        'customer_hanger': 'HNG-',
+        'spares_section': 'SEC-',
+        'spares_creation': 'SPR-',
+        'spares_opening': 'OS-',
+        'spares_request_indent': 'IND-',
+        'spares_indent_approval': 'IAP-',
+        'spares_purchase_order': 'SPO-',
+        'spares_po_approval': 'SPA-',
+        'spares_work_order': 'WO-',
+        'spares_purchase_entry': 'SPE-',
+        'spares_consumption': 'CON-',
+        'spares_jobwork_issue': 'JWI-',
+        'spares_jobwork_recv': 'JWR-'
     }
     if data.transaction_no:
         txn_no = data.transaction_no

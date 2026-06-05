@@ -43,6 +43,7 @@ import SubMasterPage from './pages/masters/SubMasterPage';
 
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
+import DesignAI from './pages/design_management/DesignAI';
 import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
 import YarnInward from './pages/yarn/YarnInward';
 import GreyYarnDelivery from './pages/yarn/GreyYarnDelivery';
@@ -98,7 +99,7 @@ export default function App() {
         <Route path="work-order/approval/material-yarn" element={<WorkOrderDesk defaultSection="Material & Yarn Approvals" />} />
 
         <Route path="design-entry" element={<DesignEntry />} />
-        <Route path="design-ai" element={<Navigate to="/design-entry" replace />} />
+        <Route path="design-ai" element={<DesignAI />} />
 
         <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
 

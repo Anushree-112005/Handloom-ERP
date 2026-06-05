@@ -152,3 +152,19 @@ The following duplicate links have been resolved to streamline the user interfac
 *   Voucher Entry                   (Route: '/accounts/voucher-entry')
 
 ================================================================================
+4. KEY CLARIFICATION: GATE & DISPATCH (FABRIC DESK) VS. GATE & SECURITY (MAIN GATE)
+================================================================================
+
+- "Gate & Dispatch" (under Fabric Production Desk):
+  * Department: Sales / Warehouse / Dispatch
+  * Purpose: Fabrication preparation, commercial documentation (invoices, fabric gate passes, e-way bills) specifically for outbound fabric orders.
+  * Role: Logistics planning and commercial validation of fabric roll loads.
+
+- "Gate & Security" (Main Sidebar Section):
+  * Department: Security Checkpoint
+  * Purpose: Security check-in/check-out for all incoming/outgoing trucks (yarn, coal, chemical supplies, spare parts) and general gate pass logs.
+  * Role: Ground security logging of vehicle numbers, entry times, and gate passes.
+
+For maximum clarity and role-based access control, keep these modules isolated from one another.
+================================================================================
+
