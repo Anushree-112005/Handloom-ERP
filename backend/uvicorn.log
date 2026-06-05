@@ -1,219 +1,499 @@
-INFO:     Started server process [88890]
+INFO:     Will watch for changes in these directories: ['/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [86219] using WatchFiles
+INFO:     Started server process [86244]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:39628 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44536 - "GET /api/v1/work-order-transactions/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44544 - "POST /api/v1/work-order-transactions/ HTTP/1.1" 201 Created
-INFO:     127.0.0.1:44940 - "GET /api/v1/work-order-transactions/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44362 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44388 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44398 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44372 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44412 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44428 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55230 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55232 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55234 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55240 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55242 - "GET /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55246 - "GET /api/v1/sub-masters/unit_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55258 - "GET /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55274 - "GET /api/v1/sub-masters/unit_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55276 - "GET /api/v1/sub-masters/yarn_type_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55288 - "GET /api/v1/sub-masters/yarn_type_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55304 - "GET /api/v1/sub-masters/yarn_type_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55314 - "GET /api/v1/sub-masters/yarn_type_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55318 - "GET /api/v1/sub-masters/yarn_count_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55324 - "GET /api/v1/sub-masters/yarn_count_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55338 - "GET /api/v1/sub-masters/yarn_count_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55352 - "GET /api/v1/sub-masters/yarn_count_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55354 - "GET /api/v1/sub-masters/color_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55356 - "GET /api/v1/sub-masters/color_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55362 - "GET /api/v1/sub-masters/color_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55378 - "GET /api/v1/sub-masters/color_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55382 - "GET /api/v1/sub-masters/design_type_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55390 - "GET /api/v1/sub-masters/design_type_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55400 - "GET /api/v1/sub-masters/design_type_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55406 - "GET /api/v1/sub-masters/design_type_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34866 - "GET /api/v1/sub-masters/color_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34876 - "GET /api/v1/sub-masters/color_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34890 - "GET /api/v1/sub-masters/color_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34898 - "GET /api/v1/sub-masters/color_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34902 - "DELETE /api/v1/sub-masters/color_master/2 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34910 - "GET /api/v1/sub-masters/color_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34912 - "GET /api/v1/sub-masters/color_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40286 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40302 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40316 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40322 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:37666 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:37670 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49138 - "GET /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49144 - "GET /api/v1/sub-masters/unit_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49158 - "GET /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49168 - "GET /api/v1/sub-masters/unit_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57590 - "POST /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57600 - "GET /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57612 - "GET /api/v1/sub-masters/unit_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47062 - "DELETE /api/v1/sub-masters/unit_master/4 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47070 - "GET /api/v1/sub-masters/unit_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:47084 - "GET /api/v1/sub-masters/unit_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40632 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40642 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40654 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40664 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40666 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40676 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40680 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40690 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40706 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40722 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40732 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40738 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50206 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50220 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50236 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50246 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50260 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50270 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50274 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50284 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35330 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35342 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35350 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35354 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35370 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35382 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35398 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35410 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39504 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39520 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39530 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39546 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39554 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39558 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39564 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39574 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39590 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39596 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39606 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39610 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39622 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39636 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39642 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:39650 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34058 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34066 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34080 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34090 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34088 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34094 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34104 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34114 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34118 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34122 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34138 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34142 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34154 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34162 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34178 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34188 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45344 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45356 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45368 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45370 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45386 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45402 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45414 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:45424 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34512 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34514 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34526 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34530 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34536 - "GET /api/v1/sub-masters/currency_master HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34538 - "GET /api/v1/sub-masters/currency_master/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34540 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34552 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34566 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34568 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54496 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54512 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54528 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54534 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54544 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54558 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45106 - "GET /api/v1/textile-designs/ HTTP/1.1" 200 OK
+ERROR:app.main:422 Validation Error: [{'type': 'missing', 'loc': ('body', 'file'), 'msg': 'Field required', 'input': None}]
+ERROR:app.main:Body: b''
+INFO:     127.0.0.1:57686 - "POST /api/v1/design-ai/analyze HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:52472 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52482 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52498 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52506 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52512 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46156 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46172 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57356 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55428 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55436 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55448 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55450 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55464 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54308 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54314 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54312 - "GET /api/v1/dropdowns/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/dropdowns.py", line 163, in get_all_dropdowns
+    import pycountry
+ModuleNotFoundError: No module named 'pycountry'
+INFO:     127.0.0.1:54324 - "GET /api/v1/dropdowns/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/dropdowns.py", line 163, in get_all_dropdowns
+    import pycountry
+ModuleNotFoundError: No module named 'pycountry'
+INFO:     127.0.0.1:46626 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46630 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46652 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46662 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46640 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46638 - "GET /api/v1/dropdowns/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/dropdowns.py", line 163, in get_all_dropdowns
+    import pycountry
+ModuleNotFoundError: No module named 'pycountry'
+INFO:     127.0.0.1:46674 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46690 - "GET /api/v1/dropdowns/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/dropdowns.py", line 163, in get_all_dropdowns
+    import pycountry
+ModuleNotFoundError: No module named 'pycountry'
+INFO:     127.0.0.1:32804 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52198 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51414 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51420 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51426 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51428 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46530 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60570 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60586 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60600 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60602 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42270 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40116 - "GET /api/v1/buyer-orders/schedules/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40124 - "GET /api/v1/buyer-orders/sequences/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40130 - "GET /api/v1/buyer-orders/amendments/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40144 - "GET /api/v1/buyer-orders/completions/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40152 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40180 - "GET /api/v1/buyer-orders/amendments/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40168 - "GET /api/v1/buyer-orders/sequences/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40192 - "GET /api/v1/buyer-orders/completions/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40202 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40200 - "GET /api/v1/buyer-orders/schedules/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40220 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40204 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40216 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40236 - "GET /api/v1/dropdowns/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/dropdowns.py", line 163, in get_all_dropdowns
+    import pycountry
+ModuleNotFoundError: No module named 'pycountry'
+INFO:     127.0.0.1:40254 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40244 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40260 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40266 - "GET /api/v1/dropdowns/ HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/dropdowns.py", line 163, in get_all_dropdowns
+    import pycountry
+ModuleNotFoundError: No module named 'pycountry'
+INFO:     127.0.0.1:50226 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50238 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50266 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50254 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50300 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50284 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50296 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50274 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35794 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52774 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52776 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52788 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52790 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39820 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56274 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56276 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
 INFO:     127.0.0.1:56288 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56290 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56298 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56304 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56316 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56322 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56332 - "DELETE /api/v1/employees/1 HTTP/1.1" 204 No Content
-INFO:     127.0.0.1:56344 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52364 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52368 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52382 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52374 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52390 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52404 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52406 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52414 - "GET /api/v1/dropdowns/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52426 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52440 - "GET /api/v1/dropdowns/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44222 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44230 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44206 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44264 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44248 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44232 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44270 - "GET /api/v1/buyer-orders/schedules/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44298 - "GET /api/v1/buyer-orders/amendments/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44286 - "GET /api/v1/buyer-orders/sequences/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44328 - "GET /api/v1/buyer-orders/schedules/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44344 - "GET /api/v1/buyer-orders/amendments/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44308 - "GET /api/v1/buyer-orders/completions/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44318 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44358 - "GET /api/v1/buyer-orders/sequences/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44376 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44364 - "GET /api/v1/buyer-orders/completions/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44386 - "GET /api/v1/dyed-yarn-deliveries HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44398 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44416 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:44412 - "GET /api/v1/dyed-yarn-deliveries HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55234 - "GET /api/v1/grey-yarn-deliveries HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55246 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55262 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55260 - "GET /api/v1/grey-yarn-deliveries HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55268 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55270 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55272 - "GET /api/v1/log-reports/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55280 - "GET /api/v1/log-reports/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55282 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55296 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40580 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40564 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40568 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40594 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40606 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40618 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40632 - "GET /api/v1/buyer-orders/schedules/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40686 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40642 - "GET /api/v1/buyer-orders/sequences/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40670 - "GET /api/v1/buyer-orders/completions/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40656 - "GET /api/v1/buyer-orders/amendments/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40690 - "GET /api/v1/buyer-orders/schedules/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40700 - "GET /api/v1/buyer-orders/sequences/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40714 - "GET /api/v1/buyer-orders/amendments/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40720 - "GET /api/v1/buyer-orders/completions/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40726 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40734 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40744 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40758 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40772 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40776 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40764 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56296 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53624 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41450 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41438 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41456 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41426 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41464 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41478 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41472 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41480 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49628 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49658 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49664 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49644 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49674 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49702 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49668 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49686 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41022 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41038 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41066 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41052 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41072 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41076 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41082 - "GET /api/v1/design-entries/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41098 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41102 - "GET /api/v1/parties/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41104 - "GET /api/v1/buyer-orders/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41120 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41130 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'test_db.py', 'seed.py', 'venv/lib64/python3.12/site-packages/pycountry/tests/test_general.py', 'app/models/sales_invoice.py', 'app/api/v1/endpoints/parties.py', 'app/models/party_master.py', 'app/api/v1/endpoints/sales_invoices.py', 'app/api/v1/endpoints/dropdowns.py', 'venv/lib64/python3.12/site-packages/pycountry/db.py', 'app/api/v1/endpoints/buyer_orders.py'. Reloading...
 INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [88890]
+INFO:     Finished server process [86244]
+INFO:     Started server process [92471]
+INFO:     Waiting for application startup.
+ERROR:    Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+  File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+  File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 28, in lifespan
+    async with engine.begin() as conn:
+  File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 1063, in begin
+    async with conn:
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 273, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3278, in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 146, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3302, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1263, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 179, in _do_get
+    with util.safe_reraise():
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 643, in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 621, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 953, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/asyncpg/connection.py", line 2329, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/asyncpg/connect_utils.py", line 991, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/asyncpg/connect_utils.py", line 833, in _connect_addr
+    return await __connect_addr(params_retry, False, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/venv/lib/python3.12/site-packages/asyncpg/connect_utils.py", line 876, in __connect_addr
+    await connected
+asyncpg.exceptions.InvalidPasswordError: password authentication failed for user "postgres"
+
+ERROR:    Application startup failed. Exiting.
