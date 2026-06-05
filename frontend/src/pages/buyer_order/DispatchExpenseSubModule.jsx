@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { buyerOrderAPI } from '../../services/api';
-import { Truck, DollarSign, Plus, Save, X, Search, Eye, Trash2, Calendar, FileText } from 'lucide-react';
+import { buyerOrderAPI, subMasterAPI } from '../../services/api';
+import { Truck, DollarSign, Plus, Save, X, Search, Eye, Trash2, Calendar, FileText, Edit } from 'lucide-react';
 
 export default function DispatchExpenseSubModule() {
   const [activeCard, setActiveCard] = useState('Dispatch Indent');
@@ -10,7 +10,7 @@ export default function DispatchExpenseSubModule() {
   const [selectedDispatch, setSelectedDispatch] = useState(null);
   const [dispatches, setDispatches] = useState([]);
   const [dispatchForm, setDispatchForm] = useState({
-    order_id_ref: '', transporter_name: '', lr_no: '', vehicle_no: '',
+    id: null, order_id_ref: '', transporter_name: '', lr_no: '', vehicle_no: '',
     delivery_place: '', packing_type: 'Bale', dispatch_date: '',
     shade: '', lot_no: '', quantity: '', remarks: ''
   });
@@ -20,11 +20,17 @@ export default function DispatchExpenseSubModule() {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [expenseForm, setExpenseForm] = useState({
-    order_id_ref: '', expense_type: 'Freight', amount: '', currency: 'INR',
+    id: null, order_id_ref: '', expense_type: 'Freight', amount: '', currency: 'INR',
     payment_mode: 'Bank Transfer', vendor_name: '', invoice_ref: '', remarks: ''
   });
 
   const [buyerOrders, setBuyerOrders] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [expenseTypes, setExpenseTypes] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [packingTypes, setPackingTypes] = useState([]);
+  const [paymentModes, setPaymentModes] = useState([]);
+  const [customAddItem, setCustomAddItem] = useState({ form: null, field: null, val: '' });
 
   const cards = [
     { title: 'Dispatch Indent', icon: Truck, color: '#3b82f6', desc: 'Manage logistics instructions and dispatch slips' },
@@ -35,13 +41,95 @@ export default function DispatchExpenseSubModule() {
     fetchDispatches();
     fetchExpenses();
     fetchBuyerOrders();
+    fetchSchedules();
+    fetchSubMasters();
   }, []);
+
+  const fetchSubMasters = async () => {
+    try {
+      const expRes = await subMasterAPI.list('expense_type_master');
+      setExpenseTypes(expRes.data);
+      
+      const curRes = await subMasterAPI.list('currency_master');
+      setCurrencies(curRes.data);
+      
+      const packRes = await subMasterAPI.list('packing_type_master');
+      setPackingTypes(packRes.data);
+      
+      const payRes = await subMasterAPI.list('payment_mode_master');
+      setPaymentModes(payRes.data);
+    } catch(e) { console.error(e); }
+  };
+
+  const handleSaveCustomItem = async (entity) => {
+    if (!customAddItem.val.trim()) {
+      setCustomAddItem({ form: null, field: null, val: '' });
+      return;
+    }
+    try {
+      await subMasterAPI.create(entity, { entity: entity, name: customAddItem.val.trim(), is_active: true });
+      fetchSubMasters();
+      
+      if (customAddItem.form === 'expenseForm') {
+        setExpenseForm({ ...expenseForm, [customAddItem.field]: customAddItem.val.trim() });
+      } else if (customAddItem.form === 'dispatchForm') {
+        setDispatchForm({ ...dispatchForm, [customAddItem.field]: customAddItem.val.trim() });
+      }
+      
+      setCustomAddItem({ form: null, field: null, val: '' });
+    } catch (err) {
+      alert("Error saving custom option");
+      console.error(err);
+    }
+  };
+
+  const renderDropdown = (formName, formState, setFormState, field, entity, label, optionsList, style = {}) => {
+    if (customAddItem.form === formName && customAddItem.field === field) {
+      return (
+        <div style={style.container}>
+          {label && <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input autoFocus type="text" className="form-control" placeholder={`New ${label || 'Option'}...`} value={customAddItem.val} onChange={(e) => setCustomAddItem({ ...customAddItem, val: e.target.value })} />
+            <button type="button" className="btn btn-primary" onClick={() => handleSaveCustomItem(entity)} style={{ padding: '6px' }}>Save</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setCustomAddItem({ form: null, field: null, val: '' })} style={{ padding: '6px' }}>X</button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={style.container}>
+        {label && <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>}
+        <select className="form-control" style={style.select} value={formState[field]} onChange={e => {
+          if (e.target.value === 'custom_add_new') {
+            setCustomAddItem({ form: formName, field, val: '' });
+          } else {
+            setFormState({ ...formState, [field]: e.target.value });
+          }
+        }}>
+          <option value="">{label ? `Select ${label}...` : 'Select...'}</option>
+          {formState[field] && (!optionsList || !optionsList.includes(formState[field])) && <option value={formState[field]}>{formState[field]}</option>}
+          {optionsList?.map((opt, i) => (
+            <option key={i} value={opt}>{opt}</option>
+          ))}
+          <option value="custom_add_new" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom...</option>
+        </select>
+      </div>
+    );
+  };
 
   const fetchBuyerOrders = async () => {
     try {
       const res = await buyerOrderAPI.list();
       setBuyerOrders(res.data);
     } catch(e) { console.error(e); }
+  };
+
+  const fetchSchedules = async () => {
+    try {
+      const res = await buyerOrderAPI.listSchedules();
+      setSchedules(res.data);
+    } catch (e) { console.error(e); }
   };
 
   const fetchDispatches = async () => {
@@ -58,16 +146,83 @@ export default function DispatchExpenseSubModule() {
     } catch(e) { console.error(e); }
   };
 
+  const handleDispOrderSelect = (e) => {
+    const selectedIbpo = e.target.value;
+    const selectedOrder = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    const schedule = schedules.find(s => s.order_id_ref === selectedIbpo);
+    const prevDispatch = dispatches.find(d => d.order_id_ref === selectedIbpo);
+    
+    if (selectedOrder) {
+      const firstItem = selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items[0] : {};
+      
+      const autofillPacking = schedule?.packing_type || prevDispatch?.packing_type || firstItem.packing_type || 'Bale';
+      const autofillLot = schedule?.lot_no || prevDispatch?.lot_no || firstItem.lot_no || '';
+      const autofillLr = prevDispatch?.lr_no || selectedOrder.lr_no || selectedOrder.lr_type || '';
+      
+      setDispatchForm({
+        ...dispatchForm,
+        order_id_ref: selectedIbpo,
+        delivery_place: selectedOrder.delivery_place || '',
+        transporter_name: selectedOrder.transport_name || '',
+        packing_type: autofillPacking,
+        shade: firstItem.color || '',
+        quantity: firstItem.order_mtrs ? String(firstItem.order_mtrs) : '',
+        lr_no: autofillLr,
+        lot_no: autofillLot
+      });
+    } else {
+      setDispatchForm({ ...dispatchForm, order_id_ref: selectedIbpo });
+    }
+  };
+
+  const handleExpOrderSelect = (e) => {
+    const selectedIbpo = e.target.value;
+    const selectedOrder = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    
+    if (selectedOrder) {
+      setExpenseForm({
+        ...expenseForm,
+        order_id_ref: selectedIbpo,
+        vendor_name: selectedOrder.transport_name || ''
+      });
+    } else {
+      setExpenseForm({ ...expenseForm, order_id_ref: selectedIbpo });
+    }
+  };
+
+  const sanitizeForm = (record) => {
+    const sanitized = {};
+    for (const key in record) {
+      sanitized[key] = record[key] === null ? '' : record[key];
+    }
+    return sanitized;
+  };
+
+  const handleDispatchEdit = (record) => {
+    setDispatchForm(sanitizeForm(record));
+    setShowAddDispatch(true);
+  };
+
+  const handleExpenseEdit = (record) => {
+    setExpenseForm(sanitizeForm(record));
+    setShowAddExpense(true);
+  };
+
   const handleDispatchSave = async () => {
     try {
       const payload = { ...dispatchForm };
       if (!payload.dispatch_date) payload.dispatch_date = null;
 
-      await buyerOrderAPI.createDispatch(payload);
+      if (payload.id) {
+        await buyerOrderAPI.updateDispatch(payload.id, payload);
+      } else {
+        await buyerOrderAPI.createDispatch(payload);
+      }
+      
       fetchDispatches();
       setShowAddDispatch(false);
       setDispatchForm({
-        order_id_ref: '', transporter_name: '', lr_no: '', vehicle_no: '',
+        id: null, order_id_ref: '', transporter_name: '', lr_no: '', vehicle_no: '',
         delivery_place: '', packing_type: 'Bale', dispatch_date: '',
         shade: '', lot_no: '', quantity: '', remarks: ''
       });
@@ -91,11 +246,16 @@ export default function DispatchExpenseSubModule() {
       const payload = { ...expenseForm };
       payload.amount = parseFloat(payload.amount) || 0;
 
-      await buyerOrderAPI.createExpense(payload);
+      if (payload.id) {
+        await buyerOrderAPI.updateExpense(payload.id, payload);
+      } else {
+        await buyerOrderAPI.createExpense(payload);
+      }
+      
       fetchExpenses();
       setShowAddExpense(false);
       setExpenseForm({
-        order_id_ref: '', expense_type: 'Freight', amount: '', currency: 'INR',
+        id: null, order_id_ref: '', expense_type: 'Freight', amount: '', currency: 'INR',
         payment_mode: 'Bank Transfer', vendor_name: '', invoice_ref: '', remarks: ''
       });
       alert("Expense Entry Saved Successfully!");
@@ -203,6 +363,7 @@ export default function DispatchExpenseSubModule() {
                           <td>{d.quantity}</td>
                           <td style={{ textAlign: 'right' }}>
                             <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); setSelectedDispatch(d); }}><Eye size={14} /></button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(e) => { e.stopPropagation(); handleDispatchEdit(d); }}><Edit size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(e) => { e.stopPropagation(); handleDispatchDelete(d.id); }}><Trash2 size={14} /></button>
                           </td>
                         </tr>
@@ -275,7 +436,7 @@ export default function DispatchExpenseSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <select className="form-control" value={dispatchForm.order_id_ref} onChange={e => setDispatchForm({...dispatchForm, order_id_ref: e.target.value})}>
+                      <select className="form-control" value={dispatchForm.order_id_ref} onChange={handleDispOrderSelect}>
                         <option value="">Select Buyer Order...</option>
                         {buyerOrders.map(bo => (
                           <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
@@ -310,15 +471,7 @@ export default function DispatchExpenseSubModule() {
                     </div>
 
                     {/* Row 3 */}
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Packing Type</label>
-                      <select className="form-control" value={dispatchForm.packing_type} onChange={e => setDispatchForm({...dispatchForm, packing_type: e.target.value})}>
-                        <option>Bale</option>
-                        <option>Roll</option>
-                        <option>Carton</option>
-                        <option>Pallet</option>
-                      </select>
-                    </div>
+                    {renderDropdown('dispatchForm', dispatchForm, setDispatchForm, 'packing_type', 'packing_type_master', 'Packing Type', packingTypes.map(p => p.name))}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Shade / Colour</label>
                       <input type="text" className="form-control" placeholder="Pantone Code" value={dispatchForm.shade} onChange={e => setDispatchForm({...dispatchForm, shade: e.target.value})} />
@@ -388,6 +541,7 @@ export default function DispatchExpenseSubModule() {
                           <td>{e.invoice_ref}</td>
                           <td style={{ textAlign: 'right' }}>
                             <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(evt) => { evt.stopPropagation(); setSelectedExpense(e); }}><Eye size={14} /></button>
+                            <button className="btn btn-secondary" style={{ padding: '6px', marginRight: 8 }} onClick={(evt) => { evt.stopPropagation(); handleExpenseEdit(e); }}><Edit size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '6px', color: 'var(--danger)' }} onClick={(evt) => { evt.stopPropagation(); handleExpenseDelete(e.id); }}><Trash2 size={14} /></button>
                           </td>
                         </tr>
@@ -456,44 +610,24 @@ export default function DispatchExpenseSubModule() {
                     </div>
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Order ID (IBPO No)</label>
-                      <select className="form-control" value={expenseForm.order_id_ref} onChange={e => setExpenseForm({...expenseForm, order_id_ref: e.target.value})}>
+                      <select className="form-control" value={expenseForm.order_id_ref} onChange={handleExpOrderSelect}>
                         <option value="">Select Buyer Order...</option>
                         {buyerOrders.map(bo => (
                           <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} - {bo.party_name}</option>
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Expense Type</label>
-                      <select className="form-control" value={expenseForm.expense_type} onChange={e => setExpenseForm({...expenseForm, expense_type: e.target.value})}>
-                        <option>Freight</option>
-                        <option>Insurance</option>
-                        <option>Packing</option>
-                        <option>Commission</option>
-                        <option>Miscellaneous</option>
-                      </select>
-                    </div>
+                    {renderDropdown('expenseForm', expenseForm, setExpenseForm, 'expense_type', 'expense_type_master', 'Expense Type', expenseTypes.map(t => t.name))}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Amount</label>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <select className="form-control" style={{ width: 80 }} value={expenseForm.currency} onChange={e => setExpenseForm({...expenseForm, currency: e.target.value})}>
-                          <option>INR</option>
-                          <option>USD</option>
-                          <option>EUR</option>
-                        </select>
+                        {renderDropdown('expenseForm', expenseForm, setExpenseForm, 'currency', 'currency_master', null, currencies.map(c => c.code || c.name), { container: { flexShrink: 0 }, select: { width: 90 } })}
                         <input type="number" className="form-control" placeholder="0.00" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} />
                       </div>
                     </div>
 
                     {/* Row 2 */}
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Payment Mode</label>
-                      <select className="form-control" value={expenseForm.payment_mode} onChange={e => setExpenseForm({...expenseForm, payment_mode: e.target.value})}>
-                        <option>Bank Transfer</option>
-                        <option>Cash</option>
-                        <option>Credit Note</option>
-                      </select>
-                    </div>
+                    {renderDropdown('expenseForm', expenseForm, setExpenseForm, 'payment_mode', 'payment_mode_master', 'Payment Mode', paymentModes.map(p => p.name))}
                     <div>
                       <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Vendor / Party Name</label>
                       <input type="text" className="form-control" placeholder="e.g. Transporter/Agent" value={expenseForm.vendor_name} onChange={e => setExpenseForm({...expenseForm, vendor_name: e.target.value})} />

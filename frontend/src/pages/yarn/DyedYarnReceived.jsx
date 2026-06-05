@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Package, Download, ChevronDown, FileText } from 'lucide-react';
-import { dyedYarnReceiptAPI, partyAPI } from '../../services/api';
+import { dyedYarnReceiptAPI, partyAPI, greyYarnDeliveryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -15,6 +15,7 @@ const DetailRow = ({ label, value }) => (
 export default function DyedYarnReceived() {
   const [receipts, setReceipts] = useState([]);
   const [parties, setParties] = useState([]);
+  const [greyDeliveries, setGreyDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -47,11 +48,12 @@ export default function DyedYarnReceived() {
 
   const loadData = async () => {
     try {
-      const [recRes, partRes] = await Promise.all([
-        dyedYarnReceiptAPI.list(), partyAPI.list()
+      const [recRes, partRes, greyRes] = await Promise.all([
+        dyedYarnReceiptAPI.list(), partyAPI.list(), greyYarnDeliveryAPI.list()
       ]);
       setReceipts(recRes.data);
       setParties(partRes.data);
+      setGreyDeliveries(greyRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -137,6 +139,39 @@ export default function DyedYarnReceived() {
     setForm({ ...form, [name]: value });
   };
 
+  const handleFetchFromGreyDelivery = (val) => {
+    if (!val) {
+      setForm(prev => ({ ...prev, our_dc_no: val }));
+      return;
+    }
+    const delivery = greyDeliveries.find(d => d.dc_no === val);
+    if (delivery) {
+      setForm(prev => {
+        const newForm = { ...prev };
+        newForm.our_dc_no = val;
+        newForm.party_name = delivery.party_name || prev.party_name;
+        newForm.design_no = delivery.design_no || prev.design_no;
+        newForm.order_no = delivery.order_no || prev.order_no;
+        
+        if (delivery.items && delivery.items.length > 0) {
+          newForm.items = delivery.items.map(item => ({
+            ...initialForm.items[0],
+            cone_type: item.cone_type || 'Full Cone',
+            delivery_count: item.count || 0,
+            our_lot_no: item.our_lot_no || '',
+            color: item.color || '',
+            taken_kgs: item.total_kgs || 0,
+            bags: item.bags || 0,
+            cones: item.cones || 0,
+          }));
+        }
+        return newForm;
+      });
+    } else {
+      setForm(prev => ({ ...prev, our_dc_no: val }));
+    }
+  };
+
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
   const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   const updateItem = (index, field, value) => {
@@ -146,6 +181,15 @@ export default function DyedYarnReceived() {
       val = parseFloat(value) || 0;
     }
     newItems[index][field] = val;
+
+    // Auto-calculate shortages
+    if (field === 'taken_kgs' || field === 'rcvd_kgs') {
+      const taken = parseFloat(newItems[index].taken_kgs) || 0;
+      const rcvd = parseFloat(newItems[index].rcvd_kgs) || 0;
+      newItems[index].short_kgs = taken - rcvd;
+      newItems[index].short_pct = taken > 0 ? parseFloat(((taken - rcvd) / taken * 100).toFixed(2)) : 0;
+    }
+
     setForm({ ...form, items: newItems });
   };
 
@@ -408,7 +452,12 @@ export default function DyedYarnReceived() {
                     <div className="form-group"><label>Design Count</label><input className="form-control" name="design_count" value={form.design_count} onChange={handleChange} /></div>
                     
                     <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Our DC No.</label><input className="form-control" name="our_dc_no" value={form.our_dc_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Our DC No.</label>
+                      <select className="form-control" name="our_dc_no" value={form.our_dc_no} onChange={(e) => handleFetchFromGreyDelivery(e.target.value)}>
+                        <option value="">Select DC...</option>
+                        {greyDeliveries.map(d => <option key={d.id} value={d.dc_no}>{d.dc_no} - {d.party_name}</option>)}
+                      </select>
+                    </div>
                     <div className="form-group"><label>Party DC No.</label><input className="form-control" name="party_dc_no" value={form.party_dc_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'item_no')} /></div>
                   </div>
