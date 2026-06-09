@@ -8,7 +8,7 @@ pipeline {
         VM_SSH_CRED_ID    = "dinesh-tex-ssh"             // Jenkins credential ID for VM SSH key
         GITHUB_CRED_ID    = "github-cred"            // Jenkins credential ID for GitHub
         DOCKERHUB_CRED_ID = "dockerhub-creds"             // Jenkins credential ID for Docker Hub
-        ENV_CRED_ID       = "dinesh-tex-env-secret"       // Jenkins credential ID for Secret File (.env)
+        ENV_CRED_ID       = "dinesh-tex-env"       // Jenkins credential ID for Secret File (.env)
 
         // ── Docker Image Names ──────────────────────────────────────────────
         // [REQUIRED] Always present
