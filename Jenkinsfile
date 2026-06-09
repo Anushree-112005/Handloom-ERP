@@ -123,6 +123,7 @@ pipeline {
 
                         # Syncing only the deploy configurations
                         rsync -avz --delete \
+                            --exclude="docker-compose.override.yml" \
                             -e "ssh -o StrictHostKeyChecking=no -i $SSH_KEY" \
                             deploy/ ${VM_USER}@${VM_HOST}:${VM_APP_DIR}/
                         
