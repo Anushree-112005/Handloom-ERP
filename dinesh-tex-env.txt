@@ -23,4 +23,4 @@ ALGORITHM=HS256
 
 PROJECT_NAME="Dinesh Textile ERP"
 API_V1_STR="/api/v1"
-FRONTEND_URL="https://dineshtex.cubegtp.com"
+FRONTEND_URL="https://dinesh-tex.cubegtp.com"
