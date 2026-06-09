@@ -1,6 +1,6 @@
 # Use a slim Python image for a smaller footprint while maintaining compatibility
 # with ML libraries like scipy and scikit-learn.
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 # Set environment variables to optimize Python for Docker
 ENV PYTHONDONTWRITEBYTECODE=1 \
