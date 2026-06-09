@@ -42,6 +42,22 @@ def closest_color_name(rgb):
     closest = "unknown"
     # Ensure rgb elements are standard Python floats/ints
     rgb_clean = tuple(float(x) for x in rgb)
+    
+    r, g, b = rgb_clean
+    max_val = max(r, g, b)
+    min_val = min(r, g, b)
+    diff = max_val - min_val
+    if max_val > 0:
+        saturation = diff / max_val
+    else:
+        saturation = 0.0
+
+    if saturation < 0.18: # low saturation
+        if max_val > 145:     return "white"
+        elif max_val > 105:   return "grey"
+        elif max_val > 35:    return "grey"
+        else:                 return "black"
+
     for name, ref in COLOR_MAP.items():
         dist = sum((a - b) ** 2 for a, b in zip(rgb_clean, ref))
         if dist < min_dist:
@@ -88,7 +104,18 @@ def detect_colors(img_array, n_clusters=5):
             "hex": "#{:02x}{:02x}{:02x}".format(*rgb),
             "ratio": ratio
         })
-    return colors
+
+    # Merge duplicate color names
+    merged_colors = {}
+    for c in colors:
+        name = c["color"]
+        if name in merged_colors:
+            merged_colors[name]["ratio"] = round(merged_colors[name]["ratio"] + c["ratio"], 1)
+        else:
+            merged_colors[name] = c
+
+    sorted_merged = sorted(merged_colors.values(), key=lambda x: -x["ratio"])
+    return sorted_merged
 
 
 # ─── MODULE 2: Stripe Detection ───
