@@ -50,11 +50,11 @@ services:
   # -----------------------------------------------------------------------------
   frontend:
     image: ${FRONTEND_IMAGE:-dinesh-tex-frontend:latest}
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
     container_name: frontend
     restart: unless-stopped
-    # If building locally:
-    # build:
-    #   context: ../frontend
     networks:
       - app_network
 
@@ -63,6 +63,9 @@ services:
   # -----------------------------------------------------------------------------
   backend:
     image: ${BACKEND_IMAGE:-dinesh-tex-backend:latest}
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
     container_name: backend
     restart: unless-stopped
     environment:
