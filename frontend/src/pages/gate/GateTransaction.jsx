@@ -5,8 +5,11 @@ import {
 } from 'lucide-react';
 
 export default function GateTransaction() {
-  // Mock gate transactions database
-  const [transactions, setTransactions] = useState([]);
+  // Local Storage Database
+  const [transactions, setTransactions] = useState(() => {
+    const saved = localStorage.getItem('gate_transaction_data');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Form State
   const [selectedId, setSelectedId] = useState(null);
@@ -35,9 +38,14 @@ export default function GateTransaction() {
   // Filtered transactions list
   const filteredList = useMemo(() => {
     return transactions.filter(t => {
-      const matchSearch = t.vehicleNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          t.party.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          t.passNo.toLowerCase().includes(searchTerm.toLowerCase());
+      const vNo = String(t.vehicleNo || '');
+      const pName = String(t.party || '');
+      const passNoStr = String(t.passNo || '');
+      const sTerm = String(searchTerm || '');
+      
+      const matchSearch = vNo.toLowerCase().includes(sTerm.toLowerCase()) || 
+                          pName.toLowerCase().includes(sTerm.toLowerCase()) || 
+                          passNoStr.toLowerCase().includes(sTerm.toLowerCase());
       const matchType = filterType === 'All' || t.type === filterType;
       return matchSearch && matchType;
     });
@@ -82,7 +90,7 @@ export default function GateTransaction() {
 
     if (isExisting) {
       // Update
-      setTransactions(transactions.map(t => {
+      const updated = transactions.map(t => {
         if (t.id === selectedId) {
           return {
             ...t,
@@ -101,7 +109,9 @@ export default function GateTransaction() {
           };
         }
         return t;
-      }));
+      });
+      setTransactions(updated);
+      localStorage.setItem('gate_transaction_data', JSON.stringify(updated));
     } else {
       // Insert
       const newEntry = {
@@ -121,7 +131,9 @@ export default function GateTransaction() {
         status,
         remarks
       };
-      setTransactions([newEntry, ...transactions]);
+      const updated = [newEntry, ...transactions];
+      setTransactions(updated);
+      localStorage.setItem('gate_transaction_data', JSON.stringify(updated));
     }
     setIsEditing(false);
     alert("Gate transaction saved successfully!");
@@ -131,6 +143,7 @@ export default function GateTransaction() {
     if (confirm("Are you sure you want to delete this gate record?")) {
       const remaining = transactions.filter(t => t.id !== id);
       setTransactions(remaining);
+      localStorage.setItem('gate_transaction_data', JSON.stringify(remaining));
       if (remaining.length > 0) {
         setSelectedId(remaining[0].id);
       }
@@ -139,12 +152,14 @@ export default function GateTransaction() {
 
   const handleCheckOut = (id) => {
     const timeNow = new Date().toISOString().replace('T', ' ').substring(0, 16);
-    setTransactions(transactions.map(t => {
+    const updated = transactions.map(t => {
       if (t.id === id) {
         return { ...t, status: 'Completed', outTime: timeNow };
       }
       return t;
-    }));
+    });
+    setTransactions(updated);
+    localStorage.setItem('gate_transaction_data', JSON.stringify(updated));
     alert("Vehicle logged out and Gate Pass closed!");
   };
 

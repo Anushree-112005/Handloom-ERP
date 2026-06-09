@@ -632,7 +632,7 @@ export default function OnTableChecking() {
         </>
       ) : (
         /* CREATE / EDIT FORM VIEW */
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
             {[{ id: 'general', label: 'General Info & Barcode' }, { id: 'items', label: 'Inspection Grid' }].map(tab => (
               <button 
@@ -680,6 +680,16 @@ export default function OnTableChecking() {
                         <option>Table 4</option>
                       </select>
                     </div>
+                    <div style={{ gridColumn: 'span 1' }}></div>
+                    <div className="form-group">
+                      <label>Design Number</label>
+                      <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
+                    </div>
+                    <div className="form-group">
+                      <label>Lot Number</label>
+                      <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}></div>
                     <div className="form-group">
                       <label>Buyer / Party *</label>
                       <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
@@ -690,16 +700,8 @@ export default function OnTableChecking() {
                       </select>
                     </div>
                     <div className="form-group">
-                      <label>Design Number</label>
-                      <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
-                    </div>
-                    <div className="form-group">
                       <label>Buyer Order No</label>
                       <input className="form-control" name="order_no" value={formData.order_no} onChange={handleHeaderChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>Lot Number</label>
-                      <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
                     </div>
                     <div className="form-group">
                       <label>QC Status</label>
@@ -745,7 +747,7 @@ export default function OnTableChecking() {
                   )}
                 </div>
 
-                <div id="items-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                <div id="items-section" className="animate-fade" style={{ marginBottom: 32, width: '100%' }}>
                   {/* SECTION 2: GRID ITEMS TABLE */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
                     <h4 style={{ color: '#eab308', margin: 0, fontSize: 16, fontWeight: 700 }}>
@@ -758,8 +760,8 @@ export default function OnTableChecking() {
                     )}
                   </div>
 
-                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24 }}>
-                    <table className="data-table" style={{ margin: 0, minWidth: 1400 }}>
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24, width: '100%' }}>
+                    <table className="data-table" style={{ margin: 0, minWidth: 1800, tableLayout: 'fixed' }}>
                       <thead>
                         <tr>
                           <th style={{ width: 50 }}>S.No</th>
@@ -781,7 +783,7 @@ export default function OnTableChecking() {
                       <tbody>
                         {formData.items.length === 0 ? (
                           <tr>
-                            <td colSpan={isReadOnly ? 13 : 14} style={{ textAlign: 'center', padding: '30px var(--text-muted)', color: 'var(--text-muted)' }}>
+                            <td colSpan={isReadOnly ? 13 : 14} style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-muted)' }}>
                               No pieces checked yet. Use the barcode scanner simulation box above or click "Add Raw Row" to start adding inspection pieces.
                             </td>
                           </tr>

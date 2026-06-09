@@ -165,15 +165,21 @@ async def create_invoice(invoice_data: SalesInvoiceCreate, db: AsyncSession = De
     dump = invoice_data.model_dump()
     items_data = dump.pop("items", [])
     
-    db_invoice = SalesInvoice(**dump)
-    db.add(db_invoice)
-    await db.flush()  # Populates db_invoice.id
+    try:
+        db_invoice = SalesInvoice(**dump)
+        db.add(db_invoice)
+        await db.flush()  # Populates db_invoice.id
 
-    for item in items_data:
-        db_item = SalesInvoiceItem(invoice_id=db_invoice.id, **item)
-        db.add(db_item)
+        for item in items_data:
+            db_item = SalesInvoiceItem(invoice_id=db_invoice.id, **item)
+            db.add(db_item)
 
-    await db.commit()
+        await db.commit()
+    except Exception as e:
+        import traceback
+        with open("error_log.txt", "a") as f:
+            f.write(traceback.format_exc() + "\n")
+        raise e
     
     # Reload with items
     result = await db.execute(
@@ -213,20 +219,26 @@ async def update_invoice(
     dump = invoice_data.model_dump(exclude_unset=True)
     items_data = dump.pop("items", None)
 
-    for key, value in dump.items():
-        setattr(db_invoice, key, value)
+    try:
+        for key, value in dump.items():
+            setattr(db_invoice, key, value)
 
-    if items_data is not None:
-        # Delete old items
-        for item in db_invoice.items:
-            await db.delete(item)
-        
-        # Add new items
-        for item in items_data:
-            db_item = SalesInvoiceItem(invoice_id=db_invoice.id, **item)
-            db.add(db_item)
+        if items_data is not None:
+            # Delete old items
+            for item in db_invoice.items:
+                await db.delete(item)
+            
+            # Add new items
+            for item in items_data:
+                db_item = SalesInvoiceItem(invoice_id=db_invoice.id, **item)
+                db.add(db_item)
 
-    await db.commit()
+        await db.commit()
+    except Exception as e:
+        import traceback
+        with open("error_log.txt", "a") as f:
+            f.write(traceback.format_exc() + "\n")
+        raise e
     
     # Reload
     result = await db.execute(

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet, RefreshCw, CheckCircle } from 'lucide-react';
-import { packingSlipAPI, dropdownAPI, partyAPI } from '../../services/api';
+import { packingSlipAPI, dropdownAPI, partyAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -84,6 +84,52 @@ export default function PackingSlip() {
 
   // Right side list: Bale list preview (derived from items / grouped by bale)
   const [baleSummaryList, setBaleSummaryList] = useState([]);
+
+  // Custom dropdown states
+  const [isCustomPackType, setIsCustomPackType] = useState(false);
+  const [customPackTypeVal, setCustomPackTypeVal] = useState('');
+  
+  const [isCustomShed, setIsCustomShed] = useState(false);
+  const [customShedVal, setCustomShedVal] = useState('');
+  
+  const [isCustomPin, setIsCustomPin] = useState(false);
+  const [customPinVal, setCustomPinVal] = useState('');
+  
+  const [isCustomBaleList, setIsCustomBaleList] = useState(false);
+  const [customBaleListVal, setCustomBaleListVal] = useState('');
+  
+  const [isCustomStockType, setIsCustomStockType] = useState(false);
+  const [customStockTypeVal, setCustomStockTypeVal] = useState('');
+  
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+  
+  const [isCustomParty, setIsCustomParty] = useState(false);
+  const [customPartyVal, setCustomPartyVal] = useState('');
+  
+  const [isCustomStatus, setIsCustomStatus] = useState(false);
+  const [customStatusVal, setCustomStatusVal] = useState('');
+
+  const handleSaveCustom = async (entity, valState, toggleState, fieldName) => {
+    if (!valState.trim()) {
+      toggleState(false);
+      return;
+    }
+    try {
+      if (entity === 'party_master') {
+        await partyAPI.create({ party_type: "Sundry Debtors", company_name: valState.trim() });
+      } else {
+        await subMasterAPI.create(entity, { entity: entity, name: valState.trim(), is_active: true });
+      }
+      setFormData(prev => ({ ...prev, [fieldName]: valState.trim() }));
+      toggleState(false);
+      fetchOptions();
+    } catch (err) {
+      console.error("Error saving custom option:", err);
+      alert("Failed to save custom option");
+    }
+  };
+
 
   useEffect(() => {
     fetchSlips();
@@ -482,11 +528,42 @@ export default function PackingSlip() {
                     </div>
                     <div className="form-group">
                       <label>Pack Type</label>
-                      <select className="form-control" name="pack_type" value={formData.pack_type} onChange={handleInputChange}>
-                        <option value="Regular">Regular</option>
-                        <option value="Sample">Sample</option>
-                        <option value="Special">Special Packing</option>
-                      </select>
+                      { isCustomPackType ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customPackTypeVal} 
+                              onChange={e => setCustomPackTypeVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('packing_type_master', customPackTypeVal, setIsCustomPackType, 'pack_type')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomPackType(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="pack_type" 
+                            value={formData.pack_type} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomPackType(true);
+                                setCustomPackTypeVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.masters?.packing_type_master?.map(x => <option key={x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group">
                       <label>No of Roll</label>
@@ -498,28 +575,120 @@ export default function PackingSlip() {
                     </div>
                     <div className="form-group">
                       <label>Shed (Godown)</label>
-                      <select className="form-control" name="shed" value={formData.shed} onChange={handleInputChange}>
-                        <option value="">-- Select Shed --</option>
-                        <option value="Shed 1">Shed 1</option>
-                        <option value="Shed 2">Shed 2</option>
-                        <option value="Main Godown">Main Godown</option>
-                      </select>
+                      { isCustomShed ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customShedVal} 
+                              onChange={e => setCustomShedVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('godown_master', customShedVal, setIsCustomShed, 'shed')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomShed(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="shed" 
+                            value={formData.shed} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomShed(true);
+                                setCustomShedVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.masters?.godown_master?.map(x => <option key={x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group">
                       <label>Pin</label>
-                      <select className="form-control" name="pin" value={formData.pin} onChange={handleInputChange}>
-                        <option value="100">100</option>
-                        <option value="150">150</option>
-                        <option value="200">200</option>
-                      </select>
+                      { isCustomPin ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customPinVal} 
+                              onChange={e => setCustomPinVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('pin_master', customPinVal, setIsCustomPin, 'pin')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomPin(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="pin" 
+                            value={formData.pin} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomPin(true);
+                                setCustomPinVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.masters?.pin_master?.map(x => <option key={x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group">
                       <label>Bale List</label>
-                      <select className="form-control" name="bale_list" value={formData.bale_list} onChange={handleInputChange}>
-                        <option value="">-- Select List --</option>
-                        <option value="List A">List A</option>
-                        <option value="List B">List B</option>
-                      </select>
+                      { isCustomBaleList ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customBaleListVal} 
+                              onChange={e => setCustomBaleListVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('bale_list_master', customBaleListVal, setIsCustomBaleList, 'bale_list')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomBaleList(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="bale_list" 
+                            value={formData.bale_list} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomBaleList(true);
+                                setCustomBaleListVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.masters?.bale_list_master?.map(x => <option key={x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group">
                       <label>Bale No</label>
@@ -562,11 +731,42 @@ export default function PackingSlip() {
                     </div>
                     <div className="form-group">
                       <label>Stock Type</label>
-                      <select className="form-control" name="stock_type" value={formData.stock_type} onChange={handleInputChange}>
-                        <option value="">-- Select --</option>
-                        <option value="Ready Stock">Ready Stock</option>
-                        <option value="Production Stock">Production Stock</option>
-                      </select>
+                      { isCustomStockType ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customStockTypeVal} 
+                              onChange={e => setCustomStockTypeVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('stock_type_master', customStockTypeVal, setIsCustomStockType, 'stock_type')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomStockType(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="stock_type" 
+                            value={formData.stock_type} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomStockType(true);
+                                setCustomStockTypeVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.masters?.stock_type_master?.map(x => <option key={x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Command (Remarks/Instructions)</label>
@@ -574,12 +774,43 @@ export default function PackingSlip() {
                     </div>
                     <div className="form-group">
                       <label>Transport</label>
-                      <select className="form-control" name="transport" value={formData.transport} onChange={handleInputChange}>
-                        <option value="">-- Select --</option>
-                        {options.transporters.map(t => (
-                          <option key={t.id} value={t.name}>{t.name}</option>
-                        ))}
-                      </select>
+                      { isCustomTransport ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customTransportVal} 
+                              onChange={e => setCustomTransportVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('transport_name_master', customTransportVal, setIsCustomTransport, 'transport')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomTransport(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="transport" 
+                            value={formData.transport} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomTransport(true);
+                                setCustomTransportVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.transporters?.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
+       {options.masters?.transport_name_master?.map(x => <option key={'_m_'+x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group">
                       <label>Pack Dimensions (L x W x H)</label>
@@ -587,20 +818,85 @@ export default function PackingSlip() {
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}>
                       <label>Party / Customer Name</label>
-                      <select className="form-control" name="party_name" value={formData.party_name} onChange={handleInputChange}>
-                        <option value="">-- Select Party --</option>
-                        {options.all_parties.map(p => (
-                          <option key={p.id} value={p.name}>{p.name}</option>
-                        ))}
-                      </select>
+                      { isCustomParty ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customPartyVal} 
+                              onChange={e => setCustomPartyVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('party_master', customPartyVal, setIsCustomParty, 'party_name')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomParty(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="party_name" 
+                            value={formData.party_name} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomParty(true);
+                                setCustomPartyVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            {options.all_parties?.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                     <div className="form-group">
                       <label>Status</label>
-                      <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')}>
-                        <option value="Packed">Packed</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
+                      { isCustomStatus ? (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <input 
+                              autoFocus 
+                              className="form-control" 
+                              style={{ margin: 0, flex: 1 }}
+                              value={customStatusVal} 
+                              onChange={e => setCustomStatusVal(e.target.value)} 
+                              placeholder="Add custom..."
+                            />
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('status_master', customStatusVal, setIsCustomStatus, 'status')}>
+                              <CheckCircle size={16} color="var(--primary)" />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomStatus(false)}>
+                              <X size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select 
+                            className="form-control" 
+                            name="status" 
+                            onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')}
+                            value={formData.status} 
+                            onChange={(e) => {
+                              if (e.target.value === '__ADD_NEW__') {
+                                setIsCustomStatus(true);
+                                setCustomStatusVal('');
+                              } else {
+                                handleInputChange(e);
+                              }
+                            }}
+                          >
+                            <option value="">-- Select --</option>
+                            <option value="Packed">Packed</option>
+       <option value="Shipped">Shipped</option>
+       <option value="Cancelled">Cancelled</option>
+       {options.masters?.status_master?.filter(x => !['Packed','Shipped','Cancelled'].includes(x)).map(x => <option key={x} value={x}>{x}</option>)}
+                            <option value="__ADD_NEW__" style={{ fontWeight: 'bold', color: 'var(--primary)' }}>+ Add Custom</option>
+                          </select>
+                        )}
                     </div>
                   </div>
                 </div>
