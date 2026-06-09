@@ -1,0 +1,975 @@
+Global Error on http://localhost:8000/api/v1/despatch-planning/: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+[SQL: INSERT INTO despatch_planning (ibpo, po_date, ref_no, planning_date, billing_party, delivery_party, billing_address, delivery_address, state_code, design_no, pino, order_qty, amd_foc_mtr, total_qty, uom, delivery_start, party_comp_date, comp_date, lc_no, lc_date, ibpo_rate, currency, certificate_type, fabric_type, planned_mtrs, tolerance_pct, max_dispatch_qty, stock, tot_desp_mtrs, balance_mtrs, last_desp_date, hsn_code, merchant, city, point_of_contact, remarks, status) VALUES ($1::VARCHAR, $2::DATE, $3::VARCHAR, $4::DATE, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::NUMERIC(10, 2), $13::NUMERIC(10, 2), $14::NUMERIC(10, 2), $15::VARCHAR, $16::DATE, $17::DATE, $18::DATE, $19::VARCHAR, $20::DATE, $21::NUMERIC(10, 2), $22::VARCHAR, $23::VARCHAR, $24::VARCHAR, $25::NUMERIC(10, 2), $26::NUMERIC(5, 2), $27::NUMERIC(10, 2), $28::NUMERIC(10, 2), $29::NUMERIC(10, 2), $30::NUMERIC(10, 2), $31::DATE, $32::VARCHAR, $33::VARCHAR, $34::VARCHAR, $35::VARCHAR, $36::VARCHAR, $37::VARCHAR) RETURNING despatch_planning.id, despatch_planning.created_at]
+[parameters: ('IBPO-00001', datetime.date(2026, 6, 3), '16763', datetime.date(2026, 6, 5), 'ABC Textiles Pvt Ltd', 'ABC Textiles Pvt Ltd', 'No. 25, SIPCOT Industrial Estate, Tiruppur Main Road, Tiruppur, Tamil Nadu - 641604, Tiruppur, Tiruppur, Tamil Nadu, India - 641604', 'New York Distribution Center, USA', 'Tamil Nadu / 3A', '34', '98', Decimal('1000'), Decimal('89'), Decimal('900'), 'Kgs', datetime.date(2026, 6, 6), datetime.date(2026, 6, 6), datetime.date(2026, 6, 19), '76', None, Decimal('20'), 'INR', 'Global Organic Textile Standard', 'Cotton Twill 2/1', Decimal('89'), Decimal('10'), Decimal('98'), Decimal('890'), Decimal('87'), Decimal('813'), datetime.date(2026, 6, 27), None, 'ABDUL', None, 'janani', '{"order_no":"23","del_state_code":"tamilnadu","total":"567","buyer_po_no":"JFI/PO/2026/001","patten":"3","party_style":"3","print_name":"3","rate":"320","other_charge":"Freight","other_charges_value":"89"}', 'Planned')]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.StringDataRightTruncationError: value too long for type character varying(10)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.Error: <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/api/v1/endpoints/despatch_planning.py", line 136, in create_plan
+    await db.commit()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+[SQL: INSERT INTO despatch_planning (ibpo, po_date, ref_no, planning_date, billing_party, delivery_party, billing_address, delivery_address, state_code, design_no, pino, order_qty, amd_foc_mtr, total_qty, uom, delivery_start, party_comp_date, comp_date, lc_no, lc_date, ibpo_rate, currency, certificate_type, fabric_type, planned_mtrs, tolerance_pct, max_dispatch_qty, stock, tot_desp_mtrs, balance_mtrs, last_desp_date, hsn_code, merchant, city, point_of_contact, remarks, status) VALUES ($1::VARCHAR, $2::DATE, $3::VARCHAR, $4::DATE, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::NUMERIC(10, 2), $13::NUMERIC(10, 2), $14::NUMERIC(10, 2), $15::VARCHAR, $16::DATE, $17::DATE, $18::DATE, $19::VARCHAR, $20::DATE, $21::NUMERIC(10, 2), $22::VARCHAR, $23::VARCHAR, $24::VARCHAR, $25::NUMERIC(10, 2), $26::NUMERIC(5, 2), $27::NUMERIC(10, 2), $28::NUMERIC(10, 2), $29::NUMERIC(10, 2), $30::NUMERIC(10, 2), $31::DATE, $32::VARCHAR, $33::VARCHAR, $34::VARCHAR, $35::VARCHAR, $36::VARCHAR, $37::VARCHAR) RETURNING despatch_planning.id, despatch_planning.created_at]
+[parameters: ('IBPO-00001', datetime.date(2026, 6, 3), '16763', datetime.date(2026, 6, 5), 'ABC Textiles Pvt Ltd', 'ABC Textiles Pvt Ltd', 'No. 25, SIPCOT Industrial Estate, Tiruppur Main Road, Tiruppur, Tamil Nadu - 641604, Tiruppur, Tiruppur, Tamil Nadu, India - 641604', 'New York Distribution Center, USA', 'Tamil Nadu / 3A', '34', '98', Decimal('1000'), Decimal('89'), Decimal('900'), 'Kgs', datetime.date(2026, 6, 6), datetime.date(2026, 6, 6), datetime.date(2026, 6, 19), '76', None, Decimal('20'), 'INR', 'Global Organic Textile Standard', 'Cotton Twill 2/1', Decimal('89'), Decimal('10'), Decimal('98'), Decimal('890'), Decimal('87'), Decimal('813'), datetime.date(2026, 6, 27), None, 'ABDUL', None, 'janani', '{"order_no":"23","del_state_code":"tamilnadu","total":"567","buyer_po_no":"JFI/PO/2026/001","patten":"3","party_style":"3","print_name":"3","rate":"320","other_charge":"Freight","other_charges_value":"89"}', 'Planned')]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+
+
+Global Error on http://localhost:8000/api/v1/despatch-planning/: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+[SQL: INSERT INTO despatch_planning (ibpo, po_date, ref_no, planning_date, billing_party, delivery_party, billing_address, delivery_address, state_code, design_no, pino, order_qty, amd_foc_mtr, total_qty, uom, delivery_start, party_comp_date, comp_date, lc_no, lc_date, ibpo_rate, currency, certificate_type, fabric_type, planned_mtrs, tolerance_pct, max_dispatch_qty, stock, tot_desp_mtrs, balance_mtrs, last_desp_date, hsn_code, merchant, city, point_of_contact, remarks, status) VALUES ($1::VARCHAR, $2::DATE, $3::VARCHAR, $4::DATE, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::NUMERIC(10, 2), $13::NUMERIC(10, 2), $14::NUMERIC(10, 2), $15::VARCHAR, $16::DATE, $17::DATE, $18::DATE, $19::VARCHAR, $20::DATE, $21::NUMERIC(10, 2), $22::VARCHAR, $23::VARCHAR, $24::VARCHAR, $25::NUMERIC(10, 2), $26::NUMERIC(5, 2), $27::NUMERIC(10, 2), $28::NUMERIC(10, 2), $29::NUMERIC(10, 2), $30::NUMERIC(10, 2), $31::DATE, $32::VARCHAR, $33::VARCHAR, $34::VARCHAR, $35::VARCHAR, $36::VARCHAR, $37::VARCHAR) RETURNING despatch_planning.id, despatch_planning.created_at]
+[parameters: ('IBPO-00001', datetime.date(2026, 6, 3), '16763', datetime.date(2026, 6, 5), 'ABC Textiles Pvt Ltd', 'ABC Textiles Pvt Ltd', 'No. 25, SIPCOT Industrial Estate, Tiruppur Main Road, Tiruppur, Tamil Nadu - 641604, Tiruppur, Tiruppur, Tamil Nadu, India - 641604', 'New York Distribution Center, USA', 'Tamil Nadu / 3A', '34', '98', Decimal('1000'), Decimal('89'), Decimal('900'), 'Kgs', datetime.date(2026, 6, 6), datetime.date(2026, 6, 6), datetime.date(2026, 6, 19), '76', None, Decimal('20'), 'INR', 'Global Organic Textile Standard', 'Cotton Twill 2/1', Decimal('89'), Decimal('10'), Decimal('98'), Decimal('890'), Decimal('87'), Decimal('813'), datetime.date(2026, 6, 27), None, 'ABDUL', None, 'janani', '{"order_no":"23","del_state_code":"tamilnadu","total":"567","buyer_po_no":"JFI/PO/2026/001","patten":"3","party_style":"3","print_name":"3","rate":"320","other_charge":"Freight","other_charges_value":"89"}', 'Planned')]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.StringDataRightTruncationError: value too long for type character varying(10)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.Error: <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/api/v1/endpoints/despatch_planning.py", line 136, in create_plan
+    await db.commit()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.StringDataRightTruncationError'>: value too long for type character varying(10)
+[SQL: INSERT INTO despatch_planning (ibpo, po_date, ref_no, planning_date, billing_party, delivery_party, billing_address, delivery_address, state_code, design_no, pino, order_qty, amd_foc_mtr, total_qty, uom, delivery_start, party_comp_date, comp_date, lc_no, lc_date, ibpo_rate, currency, certificate_type, fabric_type, planned_mtrs, tolerance_pct, max_dispatch_qty, stock, tot_desp_mtrs, balance_mtrs, last_desp_date, hsn_code, merchant, city, point_of_contact, remarks, status) VALUES ($1::VARCHAR, $2::DATE, $3::VARCHAR, $4::DATE, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR, $9::VARCHAR, $10::VARCHAR, $11::VARCHAR, $12::NUMERIC(10, 2), $13::NUMERIC(10, 2), $14::NUMERIC(10, 2), $15::VARCHAR, $16::DATE, $17::DATE, $18::DATE, $19::VARCHAR, $20::DATE, $21::NUMERIC(10, 2), $22::VARCHAR, $23::VARCHAR, $24::VARCHAR, $25::NUMERIC(10, 2), $26::NUMERIC(5, 2), $27::NUMERIC(10, 2), $28::NUMERIC(10, 2), $29::NUMERIC(10, 2), $30::NUMERIC(10, 2), $31::DATE, $32::VARCHAR, $33::VARCHAR, $34::VARCHAR, $35::VARCHAR, $36::VARCHAR, $37::VARCHAR) RETURNING despatch_planning.id, despatch_planning.created_at]
+[parameters: ('IBPO-00001', datetime.date(2026, 6, 3), '16763', datetime.date(2026, 6, 5), 'ABC Textiles Pvt Ltd', 'ABC Textiles Pvt Ltd', 'No. 25, SIPCOT Industrial Estate, Tiruppur Main Road, Tiruppur, Tamil Nadu - 641604, Tiruppur, Tiruppur, Tamil Nadu, India - 641604', 'New York Distribution Center, USA', 'Tamil Nadu / 3A', '34', '98', Decimal('1000'), Decimal('89'), Decimal('900'), 'Kgs', datetime.date(2026, 6, 6), datetime.date(2026, 6, 6), datetime.date(2026, 6, 19), '76', None, Decimal('20'), 'INR', 'Global Organic Textile Standard', 'Cotton Twill 2/1', Decimal('89'), Decimal('10'), Decimal('98'), Decimal('890'), Decimal('87'), Decimal('813'), datetime.date(2026, 6, 27), None, 'ABDUL', None, 'janani', '{"order_no":"23","del_state_code":"tamilnadu","total":"567","buyer_po_no":"JFI/PO/2026/001","patten":"3","party_style":"3","print_name":"3","rate":"320","other_charge":"Freight","other_charges_value":"89"}', 'Planned')]
+(Background on this error at: https://sqlalche.me/e/20/dbapi)
+
+
+Global Error on http://localhost:8000/api/v1/despatch-planning/: (sqlalchemy.dialects.postgresql.asyncpg.InvalidCachedStatementError) <class 'asyncpg.exceptions.InvalidCachedStatementError'>: cached statement plan is invalid due to a database schema or configuration change (SQLAlchemy asyncpg dialect will now invalidate all prepared caches in response to this exception)
+[SQL: SELECT despatch_planning.id, despatch_planning.ibpo, despatch_planning.po_date, despatch_planning.ref_no, despatch_planning.planning_date, despatch_planning.billing_party, despatch_planning.delivery_party, despatch_planning.billing_address, despatch_planning.delivery_address, despatch_planning.state_code, despatch_planning.design_no, despatch_planning.pino, despatch_planning.order_qty, despatch_planning.amd_foc_mtr, despatch_planning.total_qty, despatch_planning.uom, despatch_planning.delivery_start, despatch_planning.party_comp_date, despatch_planning.comp_date, despatch_planning.lc_no, despatch_planning.lc_date, despatch_planning.ibpo_rate, despatch_planning.currency, despatch_planning.certificate_type, despatch_planning.fabric_type, despatch_planning.planned_mtrs, despatch_planning.tolerance_pct, despatch_planning.max_dispatch_qty, despatch_planning.stock, despatch_planning.tot_desp_mtrs, despatch_planning.balance_mtrs, despatch_planning.last_desp_date, despatch_planning.hsn_code, despatch_planning.merchant, despatch_planning.city, despatch_planning.point_of_contact, despatch_planning.remarks, despatch_planning.status, despatch_planning.created_at 
+FROM despatch_planning 
+WHERE despatch_planning.ref_no = $1::VARCHAR]
+[parameters: ('16763',)]
+(Background on this error at: https://sqlalche.me/e/20/tw8g)
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.InvalidCachedStatementError: cached statement plan is invalid due to a database schema or configuration change
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.InvalidCachedStatementError: <class 'asyncpg.exceptions.InvalidCachedStatementError'>: cached statement plan is invalid due to a database schema or configuration change (SQLAlchemy asyncpg dialect will now invalidate all prepared caches in response to this exception)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/api/v1/endpoints/despatch_planning.py", line 128, in create_plan
+    existing = await db.execute(
+               ^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 461, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 305, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.NotSupportedError: (sqlalchemy.dialects.postgresql.asyncpg.InvalidCachedStatementError) <class 'asyncpg.exceptions.InvalidCachedStatementError'>: cached statement plan is invalid due to a database schema or configuration change (SQLAlchemy asyncpg dialect will now invalidate all prepared caches in response to this exception)
+[SQL: SELECT despatch_planning.id, despatch_planning.ibpo, despatch_planning.po_date, despatch_planning.ref_no, despatch_planning.planning_date, despatch_planning.billing_party, despatch_planning.delivery_party, despatch_planning.billing_address, despatch_planning.delivery_address, despatch_planning.state_code, despatch_planning.design_no, despatch_planning.pino, despatch_planning.order_qty, despatch_planning.amd_foc_mtr, despatch_planning.total_qty, despatch_planning.uom, despatch_planning.delivery_start, despatch_planning.party_comp_date, despatch_planning.comp_date, despatch_planning.lc_no, despatch_planning.lc_date, despatch_planning.ibpo_rate, despatch_planning.currency, despatch_planning.certificate_type, despatch_planning.fabric_type, despatch_planning.planned_mtrs, despatch_planning.tolerance_pct, despatch_planning.max_dispatch_qty, despatch_planning.stock, despatch_planning.tot_desp_mtrs, despatch_planning.balance_mtrs, despatch_planning.last_desp_date, despatch_planning.hsn_code, despatch_planning.merchant, despatch_planning.city, despatch_planning.point_of_contact, despatch_planning.remarks, despatch_planning.status, despatch_planning.created_at 
+FROM despatch_planning 
+WHERE despatch_planning.ref_no = $1::VARCHAR]
+[parameters: ('16763',)]
+(Background on this error at: https://sqlalche.me/e/20/tw8g)
+
+
+Global Error on http://localhost:8000/api/v1/despatch-planning/: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    |     raise app_exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    |     content = await serialize_response(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
+    |   {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+
+
+Global Error on http://localhost:8000/api/v1/despatch-planning/: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    |     raise app_exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    |     content = await serialize_response(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
+    |   {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+
+
+Global Error on http://localhost:8000/api/v1/despatch-planning/: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    |     raise app_exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    |     content = await serialize_response(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
+    |   {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+
+
+Global Error on http://localhost:8000/api/v1/despatch-planning/: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    |     raise app_exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    |     content = await serialize_response(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 1 validation errors:
+    |   {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 1 validation errors:
+  {'type': 'finite_number', 'loc': ('response', 2, 'order_qty'), 'msg': 'Input should be a finite number', 'input': Decimal('NaN')}
+
+
+

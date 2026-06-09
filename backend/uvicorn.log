@@ -130,3 +130,18 @@ INFO:     Application startup complete.
 INFO:     127.0.0.1:41808 - "GET / HTTP/1.1" 200 OK
 INFO:     127.0.0.1:49200 - "GET /api/v1/textile-designs/ HTTP/1.1" 200 OK
 INFO:     127.0.0.1:33710 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/models/sales_invoice.py', 'app/main.py', 'app/models/party_master.py', 'app/models/packing_slip.py', 'test_db.py', 'app/models/buyer_order.py', 'app/models/despatch_planning.py', 'app/api/v1/endpoints/sales_invoices.py', 'app/api/v1/endpoints/dropdowns.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [37845]
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:     Started server process [42224]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:59966 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59974 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59980 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59982 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK

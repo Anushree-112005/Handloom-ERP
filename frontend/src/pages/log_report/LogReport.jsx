@@ -137,9 +137,9 @@ export default function LogReport() {
   };
 
   // Distinct values for filter options
-  const uniqueModules = ["Fabric Delivery", "Cloth Inward", "On-Table Checking", "Finished Fabric", "Packing Slip", "Sales Invoice", "Goods Release"];
-  const uniqueModes = ["Save", "Update", "Delete", "Approval", "Print"];
-  const uniqueUsers = ["EDP001", "DP001", "admin"];
+  const uniqueModules = Array.from(new Set(logs.map(l => l.module).filter(Boolean)));
+  const uniqueModes = Array.from(new Set(logs.map(l => l.mode).filter(Boolean)));
+  const uniqueUsers = Array.from(new Set(logs.map(l => l.user_id).filter(Boolean)));
 
   return (
     <div className="animate-fade">
