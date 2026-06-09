@@ -412,19 +412,42 @@ async def calculate_requirement(design_id: int, db: AsyncSession = Depends(get_d
     if not design:
         raise HTTPException(status_code=404, detail="Textile Design not found")
 
-    # Parse count number from strings like "2/40S CTN" -> 40, "30S Slub" -> 30
+    # Parse count number from strings like "2/40S CTN" -> 20, "30S Slub" -> 30
     def parse_count(count_str):
         if not count_str:
             return 40.0  # default
+        
+        # Standardize and map known options directly to avoid parsing mistakes
+        YARN_COUNTS_MAP = {
+            "10S CTN": 10.0,
+            "20S CTN": 20.0,
+            "30S CTN": 30.0,
+            "40S CTN": 40.0,
+            "60S CTN": 60.0,
+            "80S CTN": 80.0,
+            "2/20S CTN": 10.0,
+            "2/40S CTN": 20.0,
+            "2/60S CTN": 30.0,
+            "2/80S CTN": 40.0,
+        }
+        
+        normalized = count_str.strip().upper()
+        if normalized in YARN_COUNTS_MAP:
+            return YARN_COUNTS_MAP[normalized]
+            
         import re
-        parts = count_str.upper().replace("S", "").split("/")
+        parts = normalized.replace("S", "").split("/")
         nums = []
         for p in parts:
             match = re.search(r"(\d+\.?\d*)", p)
             if match:
                 nums.append(float(match.group(1)))
         if len(nums) >= 2:
-            return nums[0] * nums[1]  # e.g., 2/40 = 80 effective count
+            p1, p2 = nums[0], nums[1]
+            if p1 < p2:
+                return p2 / p1 if p1 > 0 else p2
+            else:
+                return p1 / p2 if p2 > 0 else p1
         elif len(nums) == 1:
             return nums[0]
         return 40.0
@@ -435,34 +458,32 @@ async def calculate_requirement(design_id: int, db: AsyncSession = Depends(get_d
     wastage_weft = 1 + (design.weft_wastage_pct or 3) / 100
 
     # Warp: Weight = (Ends × Length) / (Count × 840) × Wastage  (in lbs, convert to kg)
+    import math
+    sized_length = round(fabric_length * 1.19388)
+    warp_length = sized_length + 30
+
     total_warp_kg = 0.0
     for item in design.warp_items:
         count = parse_count(item.yarn_count)
         ends = item.threads or 0
-        length_yards = fabric_length * 1.09361  # meters to yards
-        weight_lbs = (ends * length_yards) / (count * 840) * wastage_warp
-        weight_kg = weight_lbs * 0.453592
-        item.req_kg = round(weight_kg, 2)
-        total_warp_kg += weight_kg
+        warp_wastage = wastage_warp - 0.015
+        weight_kg = (ends * warp_length) / (count * 1693.6) * warp_wastage
+        item.req_kg = math.ceil(weight_kg)
+        total_warp_kg += item.req_kg
 
-    # Weft: Weight = (PPI × Width × Length) / (Count × 840) × Wastage
+    # Weft: Weight = (total_ends * sized_length) / (Count * 1693.6) * wastage_weft
     total_weft_kg = 0.0
-    ppi = design.ppi or design.pick or 52.0
-    width_inches = loom_width
     for item in design.weft_items:
         count = parse_count(item.yarn_count)
         threads = item.threads or 0
-        # If threads provided as total picks, use them directly
-        total_picks = threads if threads > 100 else ppi * fabric_length * 1.09361
-        length_yards = fabric_length * 1.09361
-        weight_lbs = (total_picks * width_inches) / (count * 840) * wastage_weft
-        weight_kg = weight_lbs * 0.453592
-        item.req_kg = round(weight_kg, 2)
-        total_weft_kg += weight_kg
+        weft_wastage = wastage_weft - 0.085
+        weight_kg = (threads * sized_length) / (count * 1693.6) * weft_wastage
+        item.req_kg = math.ceil(weight_kg)
+        total_weft_kg += item.req_kg
 
-    design.warp_kg = round(total_warp_kg, 2)
-    design.weft_kg = round(total_weft_kg, 2)
-    design.total_kg = round(total_warp_kg + total_weft_kg, 2)
+    design.warp_kg = float(total_warp_kg)
+    design.weft_kg = float(total_weft_kg)
+    design.total_kg = float(total_warp_kg + total_weft_kg)
 
     await db.commit()
 

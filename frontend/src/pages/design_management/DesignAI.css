@@ -486,3 +486,362 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Saved Designs Drawer ─── */
+.dai-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.25s ease;
+}
+
+.dai-drawer {
+  width: 420px;
+  max-width: 90vw;
+  background: #ffffff;
+  height: 100%;
+  box-shadow: -4px 0 24px rgba(15, 23, 42, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dai-drawer-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dai-drawer-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dai-drawer-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #64748b;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.dai-drawer-close:hover {
+  color: #0f172a;
+}
+
+.dai-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.dai-drawer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dai-drawer-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 18px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.dai-drawer-item:hover {
+  border-color: #4f46e5;
+  background: rgba(79, 70, 229, 0.01);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.dai-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dai-item-no {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+.dai-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dai-item-meta {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.dai-item-del-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dai-item-del-btn:hover {
+  background: #fee2e2;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* ── Crop Modal ── */
+.dai-crop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.dai-crop-modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 900px;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.dai-crop-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dai-crop-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dai-crop-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.dai-crop-body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .dai-crop-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dai-crop-source-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.dai-crop-source-wrapper {
+  position: relative;
+  max-width: 100%;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dai-crop-source-img {
+  max-width: 100%;
+  max-height: 380px;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.dai-crop-box-rect {
+  position: absolute;
+  border: 2px solid #4f46e5;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.6);
+}
+
+.dai-crop-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dai-crop-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dai-crop-control-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  justify-content: space-between;
+}
+
+.dai-crop-slider {
+  width: 100%;
+  accent-color: #4f46e5;
+  height: 6px;
+  border-radius: 3px;
+  background: #cbd5e1;
+  cursor: pointer;
+}
+
+.dai-crop-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.dai-crop-preview-canvas {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.dai-crop-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ── Separate Design Tables Layout ─── */
+.dai-design-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* ── Calculation Box ─── */
+.dai-calc-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+}
+.dai-calc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dai-calc-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.dai-calc-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ── Specific Row Styling ─── */
+.dai-subtotal-row {
+  background: #f8fafc;
+  font-weight: 700;
+}
+.dai-subtotal-row td {
+  border-top: 2px solid #e2e8f0 !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+.dai-grandtotal-row {
+  background: #f1f5f9;
+  font-weight: 800;
+  font-size: 14px;
+}
+.dai-grandtotal-row td {
+  border-top: 3px double #cbd5e1 !important;
+  border-bottom: 3px double #cbd5e1 !important;
+  color: #0f172a !important;
+  padding: 14px 16px !important;
+}
+.text-right {
+  text-align: right !important;
+}

@@ -132,6 +132,50 @@ async def create_sub_master(
     }
 
 
+class ColorSyncItem(BaseModel):
+    color_name: str
+    hex: Optional[str] = None
+
+class ColorSyncPayload(BaseModel):
+    colors: list[ColorSyncItem]
+
+@router.post("/color_master/sync-colors")
+async def sync_colors_from_design(payload: ColorSyncPayload, db: AsyncSession = Depends(get_db)):
+    """
+    Bulk-upsert AI-detected colors into color_master.
+    Skips any color whose name already exists (case-insensitive).
+    Returns counts of inserted vs skipped.
+    """
+    inserted = 0
+    skipped = 0
+    for item in payload.colors:
+        name = item.color_name.strip()
+        if not name:
+            continue
+        # Check if this color name already exists
+        existing = await db.execute(
+            select(SubMaster).where(
+                SubMaster.entity == "color_master",
+                func.lower(SubMaster.name) == name.lower()
+            )
+        )
+        if existing.scalar_one_or_none():
+            skipped += 1
+            continue
+        # Insert new color
+        row = SubMaster(
+            entity="color_master",
+            name=name,
+            code=None,
+            extra_field_1=item.hex or None,
+            is_active=True,
+        )
+        db.add(row)
+        inserted += 1
+    await db.commit()
+    return {"inserted": inserted, "skipped": skipped}
+
+
 @router.put("/{entity}/{record_id}")
 async def update_sub_master(
     entity: str,

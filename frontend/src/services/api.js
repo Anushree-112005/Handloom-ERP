@@ -124,6 +124,7 @@ export const textileDesignAPI = {
   },
   calculateRequirement: (id) => api.post(`/textile-designs/${id}/calculate-requirement`),
   updateStatus: (id, status) => api.patch(`/textile-designs/${id}/status`, null, { params: { status } }),
+  generatePdf: (payload) => api.post('/design-ai/generate-pdf', payload, { responseType: 'blob' }),
 };
 
 export const yarnPurchaseOrderAPI = {
@@ -308,6 +309,8 @@ export const subMasterAPI = {
   update: (entity, id, data) => api.put(`/sub-masters/${entity}/${id}`, data),
   delete: (entity, id) => api.delete(`/sub-masters/${entity}/${id}`),
   listEntities: () => api.get('/sub-masters/'),
+  // Bulk-upsert AI-detected colors into color_master (skips existing names)
+  syncColors: (colors) => api.post('/sub-masters/color_master/sync-colors', { colors }),
 };
 
 
