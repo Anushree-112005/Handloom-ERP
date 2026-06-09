@@ -28,28 +28,109 @@ def extract_colors_and_pipeline(img_or_path, num_colors=5):
         hsv_px = cv2.cvtColor(bgr_px, cv2.COLOR_BGR2HSV)[0][0]
         h, s, v = int(hsv_px[0]), int(hsv_px[1]), int(hsv_px[2])
 
-        if s < 40:
-            if v > 200:   return "White"
-            elif v > 140: return "LightGrey"
-            elif v > 80:  return "Grey"
-            elif v > 30:  return "DarkGrey"
+        max_val = max(r, g, b)
+        min_val = min(r, g, b)
+        diff = max_val - min_val
+
+        # Warm neutral check (Cream / Beige / Khaki)
+        # Require BOTH a warm hue AND meaningful saturation (s>=25) AND color spread (diff>=20)
+        # This prevents near-grey pixels with a slight warm camera tint from being classified as Khaki.
+        if (10 <= h < 42) and s >= 25 and diff >= 20:
+            if v > 215:   return "Cream"
+            elif v > 160: return "Beige"
+            elif v > 80:  return "Khaki"
+            else:         return "D.Brown"
+
+        # Warm-tinted grey handler (warm hue but NOT saturated enough to be Khaki/Beige)
+        # Handles camera white-balance artifacts that tint white/grey fabric slightly warm.
+        # Stops at h<32 so olive/green pixels (h>=35 in OpenCV) are NOT caught here.
+        if (10 <= h < 32) and (s < 25 or diff < 20):
+            if v > 185:   return "H.White"
+            elif v > 110 and h >= 15: return "Beige"
+            elif v > 90:  return "Grey"
+            elif v > 35:  return "DarkGrey"
             else:         return "Black"
 
-        if h < 8 or h >= 172:     return "Red"
-        elif h < 18:              return "OrangeRed"
-        elif h < 28:              return "Orange"
-        elif h < 38:              return "Yellow"
-        elif h < 68:              return "Green"
-        elif h < 90:              return "Cyan"
+        # 1. Pure Achromatic (Grayscale) Check — tight so muted greens/olives are NOT caught here
+        if diff < 5 or s < 8:
+            if v > 185:   return "H.White"
+            elif v > 90:  return "Grey"
+            elif v > 35:  return "DarkGrey"
+            else:         return "Black"
+
+        # 2. Low-saturation / pastel colors (where Sage Green, Olive, Beige live)
+        if s < 75:
+            # Green / Yellow-Green Hue Range -> Green / Olive
+            # Extended to h>=32 to capture olive-green hues (H=40-45 in OpenCV HSV)
+            if 32 <= h < 75:
+                if s < 10:
+                    if v > 185:   return "H.White"
+                    elif v > 90:  return "Grey"
+                    else:         return "DarkGrey"
+                if v > 130:   return "Green"
+                elif v > 90:  return "Green"
+                elif v > 70:  return "Olive"
+                else:         return "Olive"
+            # Orange / Yellow Hue Range -> Cream / Beige / Khaki
+            elif 8 <= h < 32:
+                if s < 10:
+                    if v > 185:   return "H.White"
+                    elif v > 90:  return "Grey"
+                    else:         return "DarkGrey"
+                if v > 215:   return "Cream"
+                elif v > 160: return "Beige"
+                elif v > 120: return "Khaki"
+                elif v > 80:  return "Khaki"
+                else:         return "D.Brown"
+            # Blue / Cyan Hue Range -> D.Blue / H.White
+            elif 85 <= h < 130:
+                if s < 50:
+                    if v > 150:   return "H.White"
+                    elif v > 90:  return "Grey"
+                    else:         return "DarkGrey"
+                if v > 150:   return "SkyBlue"
+                elif v > 80:  return "D.Blue"
+                else:         return "D.Blue"
+
+        # 3. Standard fully-saturated color classification
+        # Re-route dark/medium reds and purples/magentas to brown tones
+        if h < 8 or h >= 172:
+            if v <= 75:   return "D.Brown"
+            elif v <= 125: return "L.Brown"
+            else:         return "Red"
+        elif h < 18:
+            if v <= 75:   return "D.Brown"
+            elif v <= 125: return "L.Brown"
+            else:         return "Brown"
+        elif h < 28:
+            return "Orange"
+        elif h < 38:
+            return "Yellow" if v > 140 else "Mustard"
+        elif h < 75:
+            return "Green" if v > 90 else "DarkGreen"
+        elif h < 90:
+            return "Cyan" if v > 120 else "Teal"
         elif h < 100:
-            return "NavyBlue" if v < 80 else ("Blue" if v < 140 else "CornflowerBlue")
+            return "D.Blue"
         elif h < 115:
-            return "DarkBlue" if v < 80 else ("MediumBlue" if v < 150 else "SkyBlue")
+            return "D.Blue"
         elif h < 130:
-            return "Indigo" if v < 100 else "BlueViolet"
-        elif h < 150:             return "Purple"
-        elif h < 165:             return "Magenta"
-        else:                     return "DeepPink"
+            # Purple / Magenta range
+            if v <= 75:   return "D.Brown"
+            elif v <= 125: return "L.Brown"
+            else:         return "D.Blue"
+        elif h < 150:
+            if v <= 75:   return "D.Brown"
+            elif v <= 125: return "L.Brown"
+            else:         return "Purple"
+        elif h < 165:
+            if v <= 75:   return "D.Brown"
+            elif v <= 125: return "L.Brown"
+            else:         return "Magenta"
+        else:
+            if v <= 75:   return "D.Brown"
+            elif v <= 125: return "L.Brown"
+            else:         return "DeepPink"
 
     img = _load_bgr(img_or_path, grayscale=False)
 
@@ -109,6 +190,33 @@ def extract_colors_and_pipeline(img_or_path, num_colors=5):
             "color_name": color_name
         })
 
+    # Merge duplicate color names
+    merged_results = {}
+    for item in results:
+        name = item["color_name"]
+        if name in merged_results:
+            merged_results[name]["percentage"] = float(round(merged_results[name]["percentage"] + item["percentage"], 2))
+        else:
+            merged_results[name] = item
+
+    results = list(merged_results.values())
+
+    # Merge multiple neutral colors into the single dominant neutral color to handle transition/shadow clusters
+    NEUTRALS = {"White", "LightGrey", "Grey", "DarkGrey"}
+    neutral_items = [item for item in results if item["color_name"] in NEUTRALS]
+    if len(neutral_items) > 1:
+        dominant_neutral = max(neutral_items, key=lambda x: x["percentage"])
+        new_results = []
+        merged_pct = 0.0
+        for item in results:
+            if item["color_name"] in NEUTRALS:
+                merged_pct += item["percentage"]
+            else:
+                new_results.append(item)
+        dominant_neutral["percentage"] = float(round(merged_pct, 2))
+        new_results.append(dominant_neutral)
+        results = new_results
+
     results.sort(key=lambda x: x["percentage"], reverse=True)
 
     def get_compressed_sequence_with_lengths(labels_line):
@@ -163,17 +271,47 @@ def extract_colors_and_pipeline(img_or_path, num_colors=5):
 
     best_seq_labels = [label for label, length in best_seq]
     repeating_labels = find_repeating_unit(best_seq_labels)
+
+    # ── Thread-count normalization ────────────────────────────────────────────
+    # Camera/lighting makes equal-proportion stripes appear unequal in pixels.
+    # Strategy: if all stripes are within ±25% of the average pixel width,
+    # treat as equal-proportion fabric → assign 8 threads per stripe.
+    # Otherwise use proportional scaling with base unit 2 (smallest textile thread count).
+    import math
+
+    raw_pixel_lengths = []
+    for i, label in enumerate(repeating_labels):
+        raw_pixel_lengths.append(best_seq[i][1] if i < len(best_seq) else 1)
+
+    thread_counts = []
+    if raw_pixel_lengths:
+        avg_px = sum(raw_pixel_lengths) / len(raw_pixel_lengths)
+        # Check if all stripes have similar pixel widths (equal-proportion fabric)
+        is_equal_proportion = all(
+            abs(px - avg_px) / avg_px <= 0.30
+            for px in raw_pixel_lengths
+        )
+
+        if is_equal_proportion:
+            # Equal stripes (e.g. 8+8 blue-white) → force 8 threads each
+            thread_counts = [8] * len(raw_pixel_lengths)
+        else:
+            # Proportional: scale using ratio relative to smallest stripe
+            # Base unit = 1 thread (finest resolution for textile thread count)
+            min_px = min(raw_pixel_lengths)
+            thread_counts = [
+                max(1, round(px / min_px))
+                for px in raw_pixel_lengths
+            ]
+
     repeating_sequence = []
     for i, label in enumerate(repeating_labels):
-        pixel_len = best_seq[i][1]
-        thread_count = max(1, int(round(pixel_len * 0.5)))
-        
-        r, g, b = int(centers_rgb[label][0]), int(centers_rgb[label][1]), int(centers_rgb[label][2])
-        color_name = local_closest_color((r, g, b))
+        r, g_c, b = int(centers_rgb[label][0]), int(centers_rgb[label][1]), int(centers_rgb[label][2])
+        color_name = local_closest_color((r, g_c, b))
         repeating_sequence.append({
             "color_name": color_name,
-            "threads": thread_count,
-            "hex": f"#{r:02x}{g:02x}{b:02x}"
+            "threads": thread_counts[i] if i < len(thread_counts) else 8,
+            "hex": f"#{r:02x}{g_c:02x}{b:02x}"
         })
 
     merged_sequence = []

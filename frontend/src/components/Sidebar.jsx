@@ -146,38 +146,38 @@ const modules = [
     icon: ShoppingCart,
     children: [
       { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
-      { path: '/buyer-order/processing', label: 'Order Processing', icon: Layers },
-      { path: '/buyer-order/dispatch-expense', label: 'Dispatch & Expense', icon: Truck },
-      { path: '/ipo-invoice', label: 'IPO Invoice', icon: Receipt }
+      // { path: '/buyer-order/processing', label: 'Order Processing', icon: Layers },
+      // { path: '/buyer-order/dispatch-expense', label: 'Dispatch & Expense', icon: Truck },
+      // { path: '/ipo-invoice', label: 'IPO Invoice', icon: Receipt }
     ]
   },
-  {
-    label: 'Work Order Transaction',
-    icon: Layers,
-    children: [
-      { path: '/work-order/transaction/design', label: 'Design & Development', icon: FileText },
-      { path: '/work-order/transaction/management', label: 'Order Management', icon: Factory },
-      { path: '/work-order/transaction/processing', label: 'Processing', icon: Palette },
-      { path: '/work-order/transaction/prep', label: 'Yarn & Fabric Prep', icon: Layers },
-      { path: '/work-order/transaction/amendments', label: 'Amendments & Codes', icon: Edit }
-    ]
-  },
-  {
-    label: 'Work Order Completion',
-    icon: CheckSquare,
-    children: [
-      { path: '/work-order/completion/vendor-purchase', label: 'Vendor & Purchase Completion', icon: ShoppingCart },
-      { path: '/work-order/completion/processing-fabric', label: 'Processing & Fabric Completion', icon: Layers }
-    ]
-  },
-  {
-    label: 'Work Order Approval',
-    icon: Settings,
-    children: [
-      { path: '/work-order/approval/external', label: 'External Order Approvals', icon: Globe },
-      { path: '/work-order/approval/material-yarn', label: 'Material & Yarn Approvals', icon: Package }
-    ]
-  },
+  // {
+  //   label: 'Work Order Transaction',
+  //   icon: Layers,
+  //   children: [
+  //     { path: '/work-order/transaction/design', label: 'Design & Development', icon: FileText },
+  //     { path: '/work-order/transaction/management', label: 'Order Management', icon: Factory },
+  //     { path: '/work-order/transaction/processing', label: 'Processing', icon: Palette },
+  //     { path: '/work-order/transaction/prep', label: 'Yarn & Fabric Prep', icon: Layers },
+  //     { path: '/work-order/transaction/amendments', label: 'Amendments & Codes', icon: Edit }
+  //   ]
+  // },
+  // {
+  //   label: 'Work Order Completion',
+  //   icon: CheckSquare,
+  //   children: [
+  //     { path: '/work-order/completion/vendor-purchase', label: 'Vendor & Purchase Completion', icon: ShoppingCart },
+  //     { path: '/work-order/completion/processing-fabric', label: 'Processing & Fabric Completion', icon: Layers }
+  //   ]
+  // },
+  // {
+  //   label: 'Work Order Approval',
+  //   icon: Settings,
+  //   children: [
+  //     { path: '/work-order/approval/external', label: 'External Order Approvals', icon: Globe },
+  //     { path: '/work-order/approval/material-yarn', label: 'Material & Yarn Approvals', icon: Package }
+  //   ]
+  // },
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
@@ -192,42 +192,42 @@ const modules = [
   { path: '/dyed-yarn/received', label: 'Dyed Yarn Received', icon: Palette },
   { path: '/dyed-yarn/delivery', label: 'Dyed Yarn Delivery', icon: Truck },
 
-  { section: 'Warping & Weaving' },
-  {
-    label: 'Warping/Sizing Transaction',
-    icon: Settings,
-    children: [
-      { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
-      { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
-    ]
-  },
+  // { section: 'Warping & Weaving' },
+  // {
+  //   label: 'Warping/Sizing Transaction',
+  //   icon: Settings,
+  //   children: [
+  //     { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
+  //     { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
+  //   ]
+  // },
 
-  { section: 'Greige Transaction' },
-  {
-    label: 'Greige Transactions',
-    icon: Layers,
-    children: [
-      { path: '/greige/transaction/operations', label: 'Greige Operations', icon: Factory },
-      { path: '/greige/transaction/administration', label: 'Greige Administration', icon: ClipboardList }
-    ]
-  },
+  // { section: 'Greige Transaction' },
+  // {
+  //   label: 'Greige Transactions',
+  //   icon: Layers,
+  //   children: [
+  //     { path: '/greige/transaction/operations', label: 'Greige Operations', icon: Factory },
+  //     { path: '/greige/transaction/administration', label: 'Greige Administration', icon: ClipboardList }
+  //   ]
+  // },
 
-  { section: 'Processing / Production' },
-  {
-    label: 'Fabric Production Desk',
-    icon: Scissors,
-    children: [
-      { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
-      { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
-      { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
-      { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
-      { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
-      { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
-      { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
-    ]
-  },
+  // { section: 'Processing / Production' },
+  // {
+  //   label: 'Fabric Production Desk',
+  //   icon: Scissors,
+  //   children: [
+  //     { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
+  //     { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
+  //     { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
+  //     { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
+  //     { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
+  //     { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
+  //     { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
+  //   ]
+  // },
 
-  { section: 'LAB & Shade Management' },
+  // { section: 'LAB & Shade Management' },
 
 
   { section: 'Quality Control' },
@@ -236,18 +236,18 @@ const modules = [
   { section: 'Inventory & Warehouse' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
 
-  { section: 'Maintenance & Spares' },
-  {
-    label: 'Maintenance & Spares Desk',
-    icon: Wrench,
-    children: [
-      { path: '/spares/desk/master-setup', label: 'Master Setup', icon: Settings },
-      { path: '/spares/desk/requests-approvals', label: 'Requests & Approvals', icon: FolderKanban },
-      { path: '/spares/desk/purchase-work-orders', label: 'Purchase & Work Orders', icon: ShoppingBag },
-      { path: '/spares/desk/consumption-jobwork', label: 'Consumption & Jobwork', icon: Factory }
-    ]
-  },
-  { path: '/spares/report', label: 'Spares Report', icon: FileText },
+  // { section: 'Maintenance & Spares' },
+  // {
+  //   label: 'Maintenance & Spares Desk',
+  //   icon: Wrench,
+  //   children: [
+  //     { path: '/spares/desk/master-setup', label: 'Master Setup', icon: Settings },
+  //     { path: '/spares/desk/requests-approvals', label: 'Requests & Approvals', icon: FolderKanban },
+  //     { path: '/spares/desk/purchase-work-orders', label: 'Purchase & Work Orders', icon: ShoppingBag },
+  //     { path: '/spares/desk/consumption-jobwork', label: 'Consumption & Jobwork', icon: Factory }
+  //   ]
+  // },
+  // { path: '/spares/report', label: 'Spares Report', icon: FileText },
 
   { section: 'Gate & Security' },
   { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
@@ -263,18 +263,18 @@ const modules = [
   { section: 'Export & Logistics' },
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
-  { section: 'Accounts & Finance' },
-  {
-    label: 'Account Transaction',
-    icon: Briefcase,
-    children: [
-      { path: '/finance/desk/bills', label: 'Bills & Approvals', icon: Receipt },
-      { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileDigit },
-      { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
-      { path: '/finance/desk/lc', label: 'LC Management', icon: Briefcase }
-    ]
-  },
-  { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: Receipt },
+  // { section: 'Accounts & Finance' },
+  // {
+  //   label: 'Account Transaction',
+  //   icon: Briefcase,
+  //   children: [
+  //     { path: '/finance/desk/bills', label: 'Bills & Approvals', icon: Receipt },
+  //     { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileDigit },
+  //     { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
+  //     { path: '/finance/desk/lc', label: 'LC Management', icon: Briefcase }
+  //   ]
+  // },
+  // { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: Receipt },
   // { path: '/accounts/transaction', label: 'Accounts Transaction', icon: ArrowRightLeft },
 
   { section: 'Reports & MIS' },
