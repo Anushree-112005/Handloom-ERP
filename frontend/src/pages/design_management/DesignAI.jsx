@@ -119,6 +119,14 @@ export default function DesignAI() {
     // Store file for analysis
     fileInputRef.current._selectedFile = file;
 
+    // Clear previous results immediately
+    setWeaveType(null);
+    setOrientation(null);
+    setDominantColors(null);
+    setRepeatingSequence(null);
+    setError(null);
+    setSuccessMsg(null);
+
     // Show preview immediately — no crop step
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -140,6 +148,10 @@ export default function DesignAI() {
       setAnalyzing(true);
       setError(null);
       setSuccessMsg(null);
+      setWeaveType(null);
+      setOrientation(null);
+      setDominantColors(null);
+      setRepeatingSequence(null);
 
       const numColors = numColorsLabel === 'Auto-Detect' ? 'auto' : numColorsLabel;
       const res = await textileDesignAPI.analyzeImageOnly(file, numColors);
@@ -186,7 +198,29 @@ export default function DesignAI() {
       ? repSeq
       : dominantColors.map(c => ({ color_name: c.color_name, threads: 1, hex: c.hex }));
     const warpDesign = compressSequence(rawWarp);
-    const warpRepeatSize = warpDesign.reduce((s, r) => s + r.threads, 0);
+    let warpRepeatSize = 0;
+    let i_rep = 0;
+    while (i_rep < warpDesign.length) {
+      const item = warpDesign[i_rep];
+      if (item.top) {
+        const block = [];
+        const topVal = item.top;
+        while (i_rep < warpDesign.length && warpDesign[i_rep].top === topVal) {
+          block.push(warpDesign[i_rep]);
+          i_rep++;
+        }
+        if (block.length > 1 && block[0].color_name === block[block.length - 1].color_name && block[0].threads === block[block.length - 1].threads) {
+          const boundaryThreads = block[0].threads;
+          const middleThreads = block.slice(1, -1).reduce((sum, it) => sum + it.threads, 0);
+          warpRepeatSize += boundaryThreads * (topVal + 1) + middleThreads * topVal;
+        } else {
+          warpRepeatSize += block.reduce((sum, it) => sum + it.threads * topVal, 0);
+        }
+      } else {
+        warpRepeatSize += item.threads;
+        i_rep++;
+      }
+    }
 
     const noD = warpRepeatSize > 0 ? Math.floor(totalWarpEnds / warpRepeatSize) : 0;
     const repeatEnds = warpRepeatSize * noD;
@@ -329,8 +363,37 @@ export default function DesignAI() {
 
     const grandTotalKg = Math.round((warpTotalKg + weftTotalKg) * 100) / 100;
 
+    // Add rowSpan and showTop to warpDesign items for rendering
+    const processedWarpDesign = [];
+    let i_wd = 0;
+    while (i_wd < warpDesign.length) {
+      const item = warpDesign[i_wd];
+      if (item.top) {
+        const topVal = item.top;
+        const block = [];
+        while (i_wd < warpDesign.length && warpDesign[i_wd].top === topVal) {
+          block.push(warpDesign[i_wd]);
+          i_wd++;
+        }
+        block.forEach((blockItem, idx) => {
+          processedWarpDesign.push({
+            ...blockItem,
+            rowSpan: idx === 0 ? block.length : 0,
+            showTop: idx === 0 ? topVal : null
+          });
+        });
+      } else {
+        processedWarpDesign.push({
+          ...item,
+          rowSpan: 1,
+          showTop: null
+        });
+        i_wd++;
+      }
+    }
+
     return {
-      warpDesign,
+      warpDesign: processedWarpDesign,
       weftDesign,
       warpRepeatSize,
       noD,
@@ -888,21 +951,7 @@ export default function DesignAI() {
                   </div>
                 </div>
 
-                {/* Repeating sequence */}
-                <p className="dai-label" style={{ marginTop: 20, marginBottom: 8 }}><strong>Detected Repeating Color Sequence:</strong></p>
-                {repeatingSequence && repeatingSequence.length > 0 ? (
-                  <div className="dai-sequence-bar">
-                    {repeatingSequence.map((item, idx) => (
-                      <span key={idx} className="dai-seq-chip" style={{ background: item.hex || '#888', color: '#fff' }}>
-                        {item.color_name} ({item.threads} th)
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="dai-alert dai-alert-warning" style={{ margin: 0 }}>
-                    No stripes detected (uniform fabric).
-                  </div>
-                )}
+
               </>
             ) : (
               <div className="dai-empty-state">
@@ -959,7 +1008,36 @@ export default function DesignAI() {
                             {item.color_name}
                           </td>
                           <td className="text-right" style={{ fontWeight: 600 }}>{item.threads}</td>
-                          <td className="text-right" style={{ color: '#aaa' }}>-</td>
+                          {item.rowSpan > 0 && (
+                            <td 
+                              rowSpan={item.rowSpan} 
+                              className="text-center" 
+                              style={{ 
+                                verticalAlign: 'middle', 
+                                borderLeft: item.rowSpan > 1 ? 'none' : undefined,
+                                position: 'relative',
+                                fontWeight: 700
+                              }}
+                            >
+                              {item.rowSpan > 1 ? (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px' }}>
+                                  <div style={{
+                                    width: '8px',
+                                    height: '52px',
+                                    border: '2px solid #334155',
+                                    borderLeft: 'none',
+                                    borderRadius: '0 4px 4px 0',
+                                    marginRight: '2px'
+                                  }} />
+                                  <span style={{ color: '#4f46e5', fontSize: '14px', fontWeight: 800 }}>{item.showTop}</span>
+                                </div>
+                              ) : item.showTop ? (
+                                <span style={{ color: '#4f46e5', fontSize: '14px', fontWeight: 800 }}>{item.showTop}</span>
+                              ) : (
+                                <span style={{ color: '#aaa' }}>-</span>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
