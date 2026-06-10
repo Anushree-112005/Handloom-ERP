@@ -145,3 +145,63 @@ INFO:     127.0.0.1:59966 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59974 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59980 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59982 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38584 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38590 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38594 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38608 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38610 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38612 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38620 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38630 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42096 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42112 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42118 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42120 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37662 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37666 - "POST /api/v1/sub-masters/color_master/sync-colors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33170 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33176 - "GET /api/v1/dashboard/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44616 - "GET /api/v1/sub-masters/department_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44622 - "GET /api/v1/sub-masters/employee_category_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44638 - "GET /api/v1/sub-masters/skill_level_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44590 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44630 - "GET /api/v1/sub-masters/shift_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44602 - "GET /api/v1/sub-masters/blood_group_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44648 - "GET /api/v1/sub-masters/wage_type_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44712 - "GET /api/v1/sub-masters/blood_group_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44664 - "GET /api/v1/sub-masters/employee_status_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44704 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44678 - "GET /api/v1/sub-masters/payment_mode_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44690 - "GET /api/v1/sub-masters/department_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44724 - "GET /api/v1/sub-masters/employee_category_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44740 - "GET /api/v1/sub-masters/shift_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44750 - "GET /api/v1/sub-masters/wage_type_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44748 - "GET /api/v1/sub-masters/skill_level_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44758 - "GET /api/v1/sub-masters/employee_status_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44766 - "GET /api/v1/sub-masters/payment_mode_master HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40354 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40370 - "POST /api/v1/sub-masters/color_master/sync-colors HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/design_ai/image_analyzer.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [42224]
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:     Started server process [46552]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:50270 - "POST /api/v1/design-ai/analyze HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/design_ai/image_analyzer.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [46552]
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:weasyprint.progress:Step 2 - Fetching and parsing CSS - CSS string
+INFO:     Started server process [46838]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52816 - "POST /api/auth/login HTTP/1.1" 404 Not Found

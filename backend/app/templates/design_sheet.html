@@ -206,7 +206,20 @@
                         {{ item.color_name }}
                     </td>
                     <td class="text-right">{{ item.threads }}</td>
-                    <td class="text-right">-</td>
+                    {% if item.rowSpan is not defined or item.rowSpan > 0 %}
+                    <td class="text-center" {% if item.rowSpan is defined and item.rowSpan > 1 %}rowspan="{{ item.rowSpan }}"{% endif %} style="vertical-align: middle; border-left: {% if item.rowSpan is defined and item.rowSpan > 1 %}none{% else %}1px solid #bbb{% endif %};">
+                        {% if item.rowSpan is defined and item.rowSpan > 1 %}
+                        <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span style="display: inline-block; width: 6px; height: 48px; border: 2px solid #333; border-left: none; border-radius: 0 3px 3px 0; margin-right: 5px;"></span>
+                            <span style="font-weight: bold; font-size: 11pt;">{{ item.showTop }}</span>
+                        </div>
+                        {% elif item.showTop is defined and item.showTop %}
+                        <span style="font-weight: bold; font-size: 11pt; color: #4f46e5;">{{ item.showTop }}</span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
                 <tr class="total-row">
