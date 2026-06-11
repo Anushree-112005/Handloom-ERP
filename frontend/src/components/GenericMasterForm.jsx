@@ -29,6 +29,7 @@ export default function GenericMasterForm({ config }) {
   const [stats, setStats] = useState({ total: 0, active: 0 });
   const firstInputRef = useRef(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: '' });
+  const [colorPopup, setColorPopup] = useState({ show: false, hex: '', name: '' });
 
   // Build initial form state from config fields
   const buildInitialForm = () => {
@@ -386,8 +387,29 @@ export default function GenericMasterForm({ config }) {
                       <td key={f.name} style={tdStyle}>
                         {f.type === 'color' ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ width: 18, height: 18, borderRadius: 4, background: getRecordValue(record, f.name) || '#ccc', display: 'inline-block', border: '1px solid var(--border)' }} />
-                            {getRecordValue(record, f.name)}
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const hex = getRecordValue(record, f.name);
+                                if (hex) setColorPopup({ show: true, hex, name: record.name });
+                              }}
+                              title="Click to preview color"
+                              style={{
+                                width: 24, height: 24, borderRadius: 6,
+                                background: getRecordValue(record, f.name) || '#ccc',
+                                display: 'inline-block',
+                                border: '2px solid var(--border)',
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                                transition: 'transform 0.15s',
+                                flexShrink: 0,
+                              }}
+                              onMouseOver={e => e.currentTarget.style.transform = 'scale(1.25)'}
+                              onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                            />
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                              {getRecordValue(record, f.name)}
+                            </span>
                           </div>
                         ) : (
                           <span style={{ fontWeight: f.name === 'name' ? 600 : 400 }}>
@@ -511,6 +533,79 @@ export default function GenericMasterForm({ config }) {
                 Yes, Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color Preview Popup */}
+      {colorPopup.show && (
+        <div
+          onClick={() => setColorPopup({ show: false, hex: '', name: '' })}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(15,23,42,0.55)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10000,
+            animation: 'fadeIn 0.18s ease-out',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-secondary)',
+              borderRadius: 20,
+              padding: 28,
+              boxShadow: '0 32px 64px -12px rgba(0,0,0,0.4)',
+              border: '1px solid var(--border)',
+              textAlign: 'center',
+              minWidth: 280,
+              animation: 'scaleIn 0.2s ease-out',
+            }}
+          >
+            {/* Large Color Block */}
+            <div style={{
+              width: 220, height: 160, borderRadius: 14,
+              background: colorPopup.hex,
+              margin: '0 auto 20px',
+              boxShadow: `0 8px 32px ${colorPopup.hex}66, 0 2px 8px rgba(0,0,0,0.2)`,
+              border: '3px solid rgba(255,255,255,0.15)',
+              transition: 'all 0.2s',
+            }} />
+            {/* Color Name */}
+            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+              {colorPopup.name}
+            </div>
+            {/* Hex Code */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'var(--bg-primary)', border: '1px solid var(--border)',
+              borderRadius: 8, padding: '6px 14px', marginBottom: 20,
+            }}>
+              <span style={{
+                width: 14, height: 14, borderRadius: 3,
+                background: colorPopup.hex, display: 'inline-block',
+                border: '1px solid var(--border)',
+              }} />
+              <span style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                {colorPopup.hex}
+              </span>
+            </div>
+            <br />
+            {/* Close Button */}
+            <button
+              onClick={() => setColorPopup({ show: false, hex: '', name: '' })}
+              style={{
+                background: 'var(--bg-primary)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '8px 24px', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)',
+                transition: 'all 0.15s',
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#ef4444'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
