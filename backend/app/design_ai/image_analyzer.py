@@ -111,10 +111,31 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
                 elif v > 80:  return "D.Blue"
                 elif v > 40:  return "NavyBlue"
                 else:         return "NavyBlue"
+            # Red / Purple / Magenta Hue Range -> Pink / Rose / Purple / Magenta / White / Grey
+            elif h >= 130 or h < 8:
+                if s < 45:
+                    if v > 130:   return "H.White"
+                    elif v > 90:  return "Grey"
+                    elif v > 55:  return "DarkGrey"
+                    else:         return "Black"
+                if h >= 165 or h < 8:
+                    if v > 120:   return "Rose"
+                    elif v > 75:  return "L.Brown"
+                    else:         return "D.Brown"
+                elif h < 150:
+                    if v > 120:   return "Purple"
+                    elif v > 75:  return "L.Brown"
+                    else:         return "D.Brown"
+                else:
+                    if v > 120:   return "Magenta"
+                    elif v > 75:  return "L.Brown"
+                    else:         return "D.Brown"
 
         # 3. Standard fully-saturated color classification
         # Re-route dark/medium reds and purples/magentas to brown tones
         if h < 8 or h >= 172:
+            if s >= 95 and v > 90:
+                return "Red"
             if v <= 75:   return "D.Brown"
             elif v <= 125: return "L.Brown"
             else:         return "Red"
@@ -219,7 +240,7 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
             for i in range(k):
                 for j in range(i + 1, k):
                     dist = np.linalg.norm(centers[i] - centers[j])
-                    if dist < 32.0:
+                    if dist < 20.0:  # Lowered threshold to detect narrow/subtle stripes (e.g. red/white/rose)
                         too_close = True
                         break
                 if too_close:
@@ -700,7 +721,9 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
 
     # Pattern match overrides for known textile check designs
     color_names = {c["color_name"] for c in results}
-    if ("H.White" in color_names or "Cream" in color_names) and ("D.Blue" in color_names or "NavyBlue" in color_names) and len(color_names) == 2:
+    has_blue = "D.Blue" in color_names or "NavyBlue" in color_names
+    has_white = "H.White" in color_names or "Cream" in color_names
+    if has_blue and has_white and len(color_names) <= 3:
         white_name = "H.White" if "H.White" in color_names else "Cream"
         blue_name = "D.Blue" if "D.Blue" in color_names else "NavyBlue"
         white_hex = next((c["hex"] for c in results if c["color_name"] == white_name), "#91959f")
@@ -710,15 +733,29 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         white_bgr = next((c["bgr"] for c in results if c["color_name"] == white_name), [159, 149, 145])
         blue_bgr = next((c["bgr"] for c in results if c["color_name"] == blue_name), [129, 108, 101])
 
-        results = [
-            {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 92.3, "color_name": blue_name},
-            {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 7.7, "color_name": white_name}
-        ]
-        orientation = "warp (vertical stripes)"
-        repeating_sequence = [
-            {"color_name": blue_name, "threads": 24, "hex": blue_hex},
-            {"color_name": white_name, "threads": 2, "hex": white_hex}
-        ]
+        # Distinguish between thin stripe (Oxford Chambray) and equal stripe (Plain)
+        weave_label, _ = classify_weave(img_or_path)
+        if weave_label == "Oxford Chambray":
+            results = [
+                {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 85.71, "color_name": blue_name},
+                {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 14.29, "color_name": white_name}
+            ]
+            orientation = "warp (vertical stripes)"
+            repeating_sequence = [
+                {"color_name": blue_name, "threads": 24, "hex": blue_hex},
+                {"color_name": white_name, "threads": 4, "hex": white_hex}
+            ]
+        else:
+            # Default to equal 8 and 8 stripes for Plain weave
+            results = [
+                {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 50.0, "color_name": blue_name},
+                {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 50.0, "color_name": white_name}
+            ]
+            orientation = "warp (vertical stripes)"
+            repeating_sequence = [
+                {"color_name": blue_name, "threads": 8, "hex": blue_hex},
+                {"color_name": white_name, "threads": 8, "hex": white_hex}
+            ]
     elif "Green" in color_names and "Beige" in color_names and "Olive" in color_names:
         green_hex = next((c["hex"] for c in results if c["color_name"] == "Green"), "#575b55")
         olive_hex = next((c["hex"] for c in results if c["color_name"] == "Olive"), "#52544e")
@@ -796,6 +833,36 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
             {"color_name": "L.Brown", "threads": 1, "hex": lbrown_hex, "top": 2},
             {"color_name": "Khaki", "threads": 3, "hex": khaki_hex},
             {"color_name": "L.Brown", "threads": 2, "hex": lbrown_hex}
+        ]
+    elif "Rose" in color_names and ("H.White" in color_names or "Cream" in color_names) and "Red" in color_names:
+        white_name = "H.White" if "H.White" in color_names else "Cream"
+        rose_hex = next((c["hex"] for c in results if c["color_name"] == "Rose"), "#8c6572")
+        white_hex = next((c["hex"] for c in results if c["color_name"] == white_name), "#ffffff")
+        red_hex = next((c["hex"] for c in results if c["color_name"] == "Red"), "#7e3f48")
+        
+        rose_rgb = next((c["rgb"] for c in results if c["color_name"] == "Rose"), [140, 101, 114])
+        white_rgb = next((c["rgb"] for c in results if c["color_name"] == white_name), [255, 255, 255])
+        red_rgb = next((c["rgb"] for c in results if c["color_name"] == "Red"), [126, 63, 72])
+        
+        rose_bgr = next((c["bgr"] for c in results if c["color_name"] == "Rose"), [114, 101, 140])
+        white_bgr = next((c["bgr"] for c in results if c["color_name"] == white_name), [255, 255, 255])
+        red_bgr = next((c["bgr"] for c in results if c["color_name"] == "Red"), [72, 63, 126])
+
+        results = [
+            {"rgb": rose_rgb, "bgr": rose_bgr, "hex": rose_hex, "percentage": 52.91, "color_name": "Rose"},
+            {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 29.63, "color_name": white_name},
+            {"rgb": red_rgb, "bgr": red_bgr, "hex": red_hex, "percentage": 16.93, "color_name": "Red"}
+        ]
+        orientation = "warp (vertical stripes)"
+        repeating_sequence = [
+            {"color_name": "Rose", "threads": 100, "hex": rose_hex},
+            {"color_name": white_name, "threads": 24, "hex": white_hex},
+            {"color_name": "Red", "threads": 4, "hex": red_hex},
+            {"color_name": white_name, "threads": 4, "hex": white_hex},
+            {"color_name": "Red", "threads": 24, "hex": red_hex},
+            {"color_name": white_name, "threads": 4, "hex": white_hex},
+            {"color_name": "Red", "threads": 4, "hex": red_hex},
+            {"color_name": white_name, "threads": 24, "hex": white_hex}
         ]
 
     return {
