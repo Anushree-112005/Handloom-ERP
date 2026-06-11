@@ -1,0 +1,116 @@
+[2026-06-09T12:07:37.106Z] + ssh -o StrictHostKeyChecking=no -i **** cubeai@192.168.1.53 
+[2026-06-09T12:07:37.106Z]                             echo **** | docker login -u 'casdevops' --password-stdin &&
+[2026-06-09T12:07:37.106Z] 
+[2026-06-09T12:07:37.106Z]                             docker pull casdevops/dinesh-tex-backend:latest &&
+[2026-06-09T12:07:37.106Z]                             docker pull casdevops/dinesh-tex-frontend:latest &&
+[2026-06-09T12:07:37.106Z] 
+[2026-06-09T12:07:37.106Z]                             cd /home/cubeai/dinesh-tex-deploy &&
+[2026-06-09T12:07:37.106Z]                             (docker compose down || docker-compose down) &&
+[2026-06-09T12:07:37.106Z]                             
+[2026-06-09T12:07:37.106Z]                             # Ensure required variables are set for compose down/up
+[2026-06-09T12:07:37.106Z]                             export BACKEND_IMAGE=casdevops/dinesh-tex-backend &&
+[2026-06-09T12:07:37.106Z]                             export FRONTEND_IMAGE=casdevops/dinesh-tex-frontend &&
+[2026-06-09T12:07:37.106Z]                             
+[2026-06-09T12:07:37.106Z]                             (docker compose up -d --force-recreate || docker-compose up -d --force-recreate) &&
+[2026-06-09T12:07:37.106Z]                             docker image prune -af --filter 'until=12h'
+[2026-06-09T12:07:37.106Z]                         
+[2026-06-09T12:07:37.106Z] @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+[2026-06-09T12:07:37.106Z] @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+[2026-06-09T12:07:37.106Z] @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+[2026-06-09T12:07:37.106Z] IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+[2026-06-09T12:07:37.106Z] Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+[2026-06-09T12:07:37.106Z] It is also possible that a host key has just been changed.
+[2026-06-09T12:07:37.106Z] The fingerprint for the ED25519 key sent by the remote host is
+[2026-06-09T12:07:37.106Z] SHA256:8UK+StMgD8EDmVbMii+GUgP7HEh9EjBqnatx35M0iYQ.
+[2026-06-09T12:07:37.106Z] Please contact your system administrator.
+[2026-06-09T12:07:37.106Z] Add correct host key in /var/lib/jenkins/.ssh/known_hosts to get rid of this message.
+[2026-06-09T12:07:37.106Z] Offending ECDSA key in /var/lib/jenkins/.ssh/known_hosts:124
+[2026-06-09T12:07:37.106Z]   remove with:
+[2026-06-09T12:07:37.106Z]   ssh-keygen -f '/var/lib/jenkins/.ssh/known_hosts' -R '192.168.1.53'
+[2026-06-09T12:07:37.106Z] Password authentication is disabled to avoid man-in-the-middle attacks.
+[2026-06-09T12:07:37.106Z] Keyboard-interactive authentication is disabled to avoid man-in-the-middle attacks.
+[2026-06-09T12:07:37.106Z] UpdateHostkeys is disabled because the host key is not trusted.
+[2026-06-09T12:07:40.337Z] Login Succeeded
+[2026-06-09T12:07:40.337Z] 
+[2026-06-09T12:07:40.337Z] WARNING! Your credentials are stored unencrypted in '/home/cubeai/.docker/config.json'.
+[2026-06-09T12:07:40.337Z] Configure a credential helper to remove this warning. See
+[2026-06-09T12:07:40.337Z] https://docs.docker.com/go/credential-store/
+[2026-06-09T12:07:40.337Z] 
+[2026-06-09T12:07:42.821Z] latest: Pulling from casdevops/dinesh-tex-backend
+[2026-06-09T12:07:44.684Z] 068fedd6b0f1: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 988ba5750b9a: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 4d8a026a6080: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 8afabb360194: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 908c0cb5ecf7: Pulling fs layer
+[2026-06-09T12:07:44.684Z] f2f718bf0bec: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 3e622df98bff: Pulling fs layer
+[2026-06-09T12:07:44.684Z] fae65ff1b6c1: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 23a2e613d3a2: Pulling fs layer
+[2026-06-09T12:07:44.684Z] 074874509a24: Pulling fs layer
+[2026-06-09T12:07:44.684Z] a68540c16dd3: Pulling fs layer
+[2026-06-09T12:07:45.595Z] 8afabb360194: Download complete
+[2026-06-09T12:07:46.506Z] 908c0cb5ecf7: Download complete
+[2026-06-09T12:07:46.506Z] 988ba5750b9a: Download complete
+[2026-06-09T12:07:46.757Z] 38eff797af59: Download complete
+[2026-06-09T12:07:46.757Z] fae65ff1b6c1: Download complete
+[2026-06-09T12:07:48.101Z] f2f718bf0bec: Download complete
+[2026-06-09T12:07:48.351Z] a68540c16dd3: Download complete
+[2026-06-09T12:07:49.695Z] 068fedd6b0f1: Download complete
+[2026-06-09T12:07:51.039Z] 068fedd6b0f1: Pull complete
+[2026-06-09T12:07:51.289Z] 988ba5750b9a: Pull complete
+[2026-06-09T12:07:56.485Z] 23a2e613d3a2: Download complete
+[2026-06-09T12:07:56.485Z] 074874509a24: Download complete
+[2026-06-09T12:07:56.485Z] 8afabb360194: Pull complete
+[2026-06-09T12:07:56.485Z] 908c0cb5ecf7: Pull complete
+[2026-06-09T12:07:56.485Z] 23a2e613d3a2: Pull complete
+[2026-06-09T12:08:18.285Z] 4d8a026a6080: Download complete
+[2026-06-09T12:08:22.408Z] 3e622df98bff: Download complete
+[2026-06-09T12:08:22.959Z] fae65ff1b6c1: Pull complete
+[2026-06-09T12:08:22.959Z] 4d8a026a6080: Pull complete
+[2026-06-09T12:08:30.985Z] 3e622df98bff: Pull complete
+[2026-06-09T12:08:30.985Z] 074874509a24: Pull complete
+[2026-06-09T12:08:30.985Z] a68540c16dd3: Pull complete
+[2026-06-09T12:08:30.985Z] f2f718bf0bec: Pull complete
+[2026-06-09T12:08:30.985Z] Digest: sha256:44ee79af8a8575aa6e39239cc70ba6aa4ddaa9f76393a16db2a1609b540cee53
+[2026-06-09T12:08:30.985Z] Status: Downloaded newer image for casdevops/dinesh-tex-backend:latest
+[2026-06-09T12:08:30.985Z] docker.io/casdevops/dinesh-tex-backend:latest
+[2026-06-09T12:08:33.469Z] latest: Pulling from casdevops/dinesh-tex-frontend
+[2026-06-09T12:08:35.331Z] b777d193c4c3: Pulling fs layer
+[2026-06-09T12:08:35.331Z] e654dbbbb9e1: Pulling fs layer
+[2026-06-09T12:08:35.331Z] 94d083cf706a: Pulling fs layer
+[2026-06-09T12:08:35.331Z] abaae85d1626: Pulling fs layer
+[2026-06-09T12:08:35.331Z] a5008f4a4b25: Pulling fs layer
+[2026-06-09T12:08:35.331Z] 43f834d60d8a: Pulling fs layer
+[2026-06-09T12:08:35.331Z] fbaed3f7fcbe: Pulling fs layer
+[2026-06-09T12:08:35.331Z] 6a0ac1617861: Pulling fs layer
+[2026-06-09T12:08:35.331Z] de1b677d8c00: Pulling fs layer
+[2026-06-09T12:08:35.331Z] 8ca990c86cb5: Pulling fs layer
+[2026-06-09T12:08:35.882Z] e654dbbbb9e1: Download complete
+[2026-06-09T12:08:36.132Z] a5008f4a4b25: Download complete
+[2026-06-09T12:08:36.132Z] 94d083cf706a: Download complete
+[2026-06-09T12:08:36.383Z] e85fc6398abd: Download complete
+[2026-06-09T12:08:36.383Z] 43f834d60d8a: Download complete
+[2026-06-09T12:08:36.383Z] de1b677d8c00: Download complete
+[2026-06-09T12:08:36.383Z] 8ca990c86cb5: Download complete
+[2026-06-09T12:08:36.634Z] 6a0ac1617861: Download complete
+[2026-06-09T12:08:36.634Z] 6a0ac1617861: Pull complete
+[2026-06-09T12:08:36.884Z] abaae85d1626: Download complete
+[2026-06-09T12:08:36.884Z] 94d083cf706a: Pull complete
+[2026-06-09T12:08:36.884Z] 43f834d60d8a: Pull complete
+[2026-06-09T12:08:36.884Z] de1b677d8c00: Pull complete
+[2026-06-09T12:08:36.884Z] abaae85d1626: Pull complete
+[2026-06-09T12:08:37.135Z] e654dbbbb9e1: Pull complete
+[2026-06-09T12:08:37.135Z] a5008f4a4b25: Pull complete
+[2026-06-09T12:08:38.047Z] b777d193c4c3: Download complete
+[2026-06-09T12:08:39.909Z] fbaed3f7fcbe: Download complete
+[2026-06-09T12:08:40.460Z] 8ca990c86cb5: Pull complete
+[2026-06-09T12:08:40.460Z] fbaed3f7fcbe: Pull complete
+[2026-06-09T12:08:40.460Z] b777d193c4c3: Pull complete
+[2026-06-09T12:08:40.460Z] Digest: sha256:27b86d271b762b54f5e82cc147776b96bd9ff6d4e8c6b800769918c403cc708b
+[2026-06-09T12:08:40.460Z] Status: Downloaded newer image for casdevops/dinesh-tex-frontend:latest
+[2026-06-09T12:08:40.460Z] docker.io/casdevops/dinesh-tex-frontend:latest
+[2026-06-09T12:08:40.711Z] docker: unknown command: docker compose
+[2026-06-09T12:08:40.711Z] 
+[2026-06-09T12:08:40.711Z] Run 'docker --help' for more information
+[2026-06-09T12:08:41.262Z] build path /home/cubeai/frontend either does not exist, is not accessible, or is not a valid URL.
+script returned exit code 1

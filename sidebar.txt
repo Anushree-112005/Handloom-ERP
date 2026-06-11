@@ -1,0 +1,147 @@
+Dashboard:
+  - Dashboard
+  - Overview
+
+Masters:
+  - Party Master
+  - Employee Master
+
+Sub Masters:
+  - Core System Basics:
+      - Buyer Master
+      - Certified Type
+      - Color Master
+      - Count System
+      - Currency Master
+      - Designer Master
+      - District & City
+      - End Use Master
+      - Gate Location
+      - Godown Master
+      - Group Count
+      - HSN Code Master
+      - Loom Master
+      - Loom Type Master
+      - LR Terms
+      - LR Type Master
+      - Organization Name Master
+      - Manager Master
+      - Merchandiser Master
+      - Mill Name Master
+      - Order Type Master
+      - Packing Type Master
+      - Party Group
+      - Party Type
+      - Party Type / Group
+      - Pattern Master
+      - Payment Terms
+      - Payment Term & Conditions
+      - Sales Region
+      - Section Group
+      - SP NO Master
+      - Unit Master
+      - Transport Mode Master
+      - Transport Name Master
+      - Yarn Count Master
+      - Yarn Type Master
+  - Operations & Processing:
+      - A/C Incharge
+      - Against Reference Master
+      - Category Master
+      - Freight Type Master
+      - Checker Name
+      - Checking Table/Machine
+      - Chemical Group
+      - Cloth Dyeing Order Process Type
+      - Damage Master
+      - Debit/Credit Reason
+      - Design Color
+      - Dyeing Cly
+      - Duty Master
+      - Expenses Group
+      - Expenses Group/Head
+      - Expense Type Master
+      - Payment Mode Master
+      - Fabric Master
+      - Fibre Count
+      - Finishing Type
+      - Grey Checker Name
+      - Grey Damage Master
+      - Gry Mas BaleType
+      - Printing Technique
+      - Process Sequences
+      - Process Type Master
+      - Remarks Master
+      - Sample Master
+      - Shringage (Shrinkage)
+      - Sizing Chemical
+      - TDS Bill Type
+      - Test Parameter
+      - Weaving Master
+  - Complex Masters:
+      - Buyer KYC Form
+      - Buyer Sub Master
+      - Company Bank Master
+      - Fabric Costing Engine
+      - Fabric Single Costing
+      - LC Bank Master
+  - Amendment Masters:
+      - Cloth LOT No. AMD
+      - Invoice AMD
+      - Despatch Request AMD
+      - Point AMD
+      - Vendor Order AMD
+  - System Config & Utilities:
+      - Approval Settings
+      - Direct Invoice Limits
+      - Sub Menu Master
+      - Control Service
+      - Log Report
+      - Old Year Menu
+
+Order Management:
+  - Buyer Order
+
+Design Management:
+  - Design Entry
+  - Design AI
+
+Purchase Management:
+  - Yarn Purchase Order
+
+Yarn Management:
+  - Yarn Inward
+  - Grey Yarn Delivery
+  - Dyed Yarn Received
+  - Dyed Yarn Delivery
+
+Quality Control:
+  - On-Table Checking
+
+Inventory & Warehouse:
+  - Packing Slip
+
+Gate & Security:
+  - Gate Inward
+  - Gate Outward
+  - Gate Pass Creation
+  - Gate Reports
+
+Sales & Dispatch:
+  - Goods Release (GRA)
+  - Sales Invoice
+  - Despatch Planning
+
+Export & Logistics:
+  - E-Way Bill
+
+Reports & MIS:
+  - Reports Dashboard
+  - Log Report
+
+Administration & Security:
+  - User Management
+
+System:
+  - Company
+  - About

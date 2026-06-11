@@ -12,6 +12,10 @@ if config.config_file_name is not None:
 import app.models  # noqa: F401
 from app.core.database import Base
 
+from app.core.config import settings
+
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
 target_metadata = Base.metadata
 
 

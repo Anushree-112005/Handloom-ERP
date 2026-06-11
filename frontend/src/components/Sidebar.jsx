@@ -227,7 +227,7 @@ const modules = [
   //   ]
   // },
 
-  { section: 'LAB & Shade Management' },
+  // { section: 'LAB & Shade Management' },
 
 
   { section: 'Quality Control' },
@@ -247,7 +247,7 @@ const modules = [
   //     { path: '/spares/desk/consumption-jobwork', label: 'Consumption & Jobwork', icon: Factory }
   //   ]
   // },
-  { path: '/spares/report', label: 'Spares Report', icon: FileText },
+  // { path: '/spares/report', label: 'Spares Report', icon: FileText },
 
   { section: 'Gate & Security' },
   { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
