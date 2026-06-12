@@ -50,6 +50,16 @@ function compressSequence(seq) {
   return compressed;
 }
 
+const isLightColor = (hex) => {
+  if (!hex) return false;
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return false;
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return (r * 0.299 + g * 0.587 + b * 0.114) > 220;
+};
+
 export default function DesignAI() {
   const fileInputRef = useRef(null);
 
@@ -282,7 +292,8 @@ export default function DesignAI() {
     const totalWeftEnds = Math.round(pick * weftWidth); // weftWidth includes selvage
 
     if (weftDesignType === 'Solid (100% Background Color)') {
-      const dom = dominantColors[0] || { color_name: 'White', hex: '#ffffff' };
+      const whiteColor = dominantColors.find(c => c.color_name === 'H.White' || c.color_name === 'Cream' || c.color_name === 'White');
+      const dom = whiteColor || dominantColors[0];
       weftDesign = [{ color_name: dom.color_name, threads: totalWeftEnds, hex: dom.hex }];
       
       const weft_wastage = wastage - 0.085;
@@ -1003,7 +1014,7 @@ export default function DesignAI() {
                         <tr key={i}>
                           <td>{i + 1}</td>
                           <td>{warpCountLabel}</td>
-                          <td style={{ color: item.hex, fontWeight: 700 }}>
+                          <td style={{ color: isLightColor(item.hex) ? '#334155' : item.hex, fontWeight: 700 }}>
                             <span className="color-swatch" style={{ background: item.hex, width: 10, height: 10, display: 'inline-block', marginRight: 6, border: '1px solid #ddd', borderRadius: 2 }} />
                             {item.color_name}
                           </td>
@@ -1091,7 +1102,7 @@ export default function DesignAI() {
                         <tr key={i}>
                           <td>{i + 1}</td>
                           <td>{weftCountLabel}</td>
-                          <td style={{ color: item.hex, fontWeight: 700 }}>
+                          <td style={{ color: isLightColor(item.hex) ? '#334155' : item.hex, fontWeight: 700 }}>
                             <span className="color-swatch" style={{ background: item.hex, width: 10, height: 10, display: 'inline-block', marginRight: 6, border: '1px solid #ddd', borderRadius: 2 }} />
                             {item.color_name}
                           </td>
