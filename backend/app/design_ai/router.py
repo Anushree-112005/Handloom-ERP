@@ -19,6 +19,13 @@ async def analyze_image(
 ):
     try:
         content = await file.read()
+        
+        # Save a copy to uploads/debug for inspection and analysis debugging
+        os.makedirs("uploads/debug", exist_ok=True)
+        debug_path = os.path.join("uploads/debug", file.filename)
+        with open(debug_path, "wb") as f_debug:
+            f_debug.write(content)
+            
         file_bytes = np.frombuffer(content, dtype=np.uint8)
         cv_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         

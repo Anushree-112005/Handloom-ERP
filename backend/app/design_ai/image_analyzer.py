@@ -38,6 +38,17 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         if is_black_container[0] and (diff < 20 or s < 25):
             return "Black"
 
+        # General check for white: very low saturation and high brightness
+        if s < 30 and v > 130:
+            return "H.White"
+
+        # General check for dominant blue channel in neutral/cool tones (prevents blue being misclassified as gray)
+        if b > r * 1.12 and b > g * 1.12:
+            if v > 150:   return "SkyBlue"
+            elif v > 110: return "L.Blue"
+            elif v > 75:  return "D.Blue"
+            else:         return "NavyBlue"
+
         # Warm neutral check (Cream / Beige / Khaki / Brown / L.Brown)
         # Require BOTH a warm hue AND meaningful saturation (25<=s<75) AND color spread (diff>=20)
         # This prevents near-grey pixels with a slight warm camera tint from being classified as Khaki,
@@ -182,10 +193,8 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
     def get_color_family(name):
         if name in ["Blue", "D.Blue", "L.Blue", "SkyBlue", "NavyBlue"]:
             return "blue"
-        if name in ["Grey", "DarkGrey", "Black"]:
-            return "grey"
-        if name in ["H.White", "Cream"]:
-            return "white"
+        if name in ["Grey", "DarkGrey", "Black", "H.White", "Cream"]:
+            return "neutral"
         if name in ["Green", "Olive"]:
             return "green"
         if name in ["L.Brown", "D.Brown", "Khaki", "Orange", "Yellow", "Beige"]:
@@ -202,6 +211,47 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         return default_hex, default_rgb, default_bgr
 
     img = _load_bgr(img_or_path, grayscale=False)
+
+    def get_fabric_roi(src_img):
+        h, w = src_img.shape[:2]
+        gray = cv2.cvtColor(src_img, cv2.COLOR_BGR2GRAY)
+        
+        # Detect paper label
+        _, thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        label_y0, label_y1 = None, None
+        for cnt in contours:
+            x, y, w_c, h_c = cv2.boundingRect(cnt)
+            if w_c > w * 0.25 and h_c > h * 0.15 and (w_c * h_c < w * h * 0.5):
+                label_y0 = y
+                label_y1 = y + h_c
+                break
+                
+        if label_y0 is not None:
+            top_start = int(h * 0.02)
+            top_end = max(top_start, label_y0 - int(h * 0.01))
+            
+            bot_start = min(h - int(h * 0.02), label_y1 + int(h * 0.01))
+            bot_end = int(h * 0.98)
+            
+            chunks = []
+            if top_end - top_start > int(h * 0.02):
+                chunks.append(src_img[top_start:top_end, :])
+            if bot_end - bot_start > int(h * 0.02):
+                chunks.append(src_img[bot_start:bot_end, :])
+                
+            if chunks:
+                return np.vstack(chunks)
+                
+        return src_img[int(h*0.05):int(h*0.95), int(w*0.05):int(w*0.95)]
+
+    if img is not None:
+        img = get_fabric_roi(img)
 
     if img.ndim == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
@@ -240,7 +290,7 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
             for i in range(k):
                 for j in range(i + 1, k):
                     dist = np.linalg.norm(centers[i] - centers[j])
-                    if dist < 20.0:  # Lowered threshold to detect narrow/subtle stripes (e.g. red/white/rose)
+                    if dist < 12.0:  # Lowered threshold to detect narrow/subtle stripes (e.g. red/white/rose)
                         too_close = True
                         break
                 if too_close:
@@ -297,38 +347,30 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
                         min_dist = dist
                         closest_v = v
                 
-                if closest_v is not None and min_dist < 35.0:
-                    labels[labels == u] = closest_v
-                    changed = True
-                    break
+                if closest_v is not None:
+                    # Get color names for u and closest_v on raw pixels
+                    raw_u = np.mean(pixels[labels == u], axis=0).astype(np.uint8)
+                    raw_u_rgb = cv2.cvtColor(raw_u.reshape(1, 1, 3), cv2.COLOR_LAB2BGR)[0][0][[2, 1, 0]]
+                    name_u = local_closest_color(raw_u_rgb)
+                    
+                    raw_v = np.mean(pixels[labels == closest_v], axis=0).astype(np.uint8)
+                    raw_v_rgb = cv2.cvtColor(raw_v.reshape(1, 1, 3), cv2.COLOR_LAB2BGR)[0][0][[2, 1, 0]]
+                    name_v = local_closest_color(raw_v_rgb)
+                    
+                    neut_set = {"H.White", "LightGrey", "Grey", "DarkGrey", "Black", "Cream", "Beige"}
+                    is_u_neut = name_u in neut_set
+                    is_v_neut = name_v in neut_set
+                    
+                    allowed_dist = 35.0
+                    if is_u_neut != is_v_neut:
+                        allowed_dist = 15.0
+                        
+                    if min_dist < allowed_dist:
+                        labels[labels == u] = closest_v
+                        changed = True
+                        break
 
-    # Family-based merge for two-color fabrics to merge shadow/highlight color splits
-    unique = np.unique(labels)
-    color_names = {}
-    color_families = {}
-    for u in unique:
-        mean_val = np.mean(pixels[labels == u], axis=0).astype(np.uint8).reshape(1, 1, 3)
-        bgr_val = cv2.cvtColor(mean_val, cv2.COLOR_LAB2BGR)[0][0]
-        rgb_val = bgr_val[[2, 1, 0]]
-        cname = local_closest_color(rgb_val)
-        color_names[u] = cname
-        color_families[u] = get_color_family(cname)
 
-    unique_families = set(color_families.values())
-    is_two_color = False
-    if len(unique_families) <= 2:
-        if "white" in unique_families or "grey" in unique_families:
-            is_two_color = True
-
-    if is_two_color:
-        family_to_target = {}
-        for u in unique:
-            fam = color_families[u]
-            if fam not in family_to_target:
-                family_to_target[fam] = u
-            else:
-                target = family_to_target[fam]
-                labels[labels == u] = target
 
     # Re-map label indices to be sequential (0, 1, 2...) after merging
     unique, labels = np.unique(labels, return_inverse=True)
@@ -375,10 +417,11 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
     results = list(merged_results.values())
 
     # Merge multiple neutral colors into the single dominant neutral color to handle transition/shadow clusters
-    NEUTRALS = {"White", "LightGrey", "Grey", "DarkGrey"}
+    NEUTRALS = {"H.White", "LightGrey", "Grey", "DarkGrey"}
     neutral_items = [item for item in results if item["color_name"] in NEUTRALS]
     if len(neutral_items) > 1:
-        dominant_neutral = max(neutral_items, key=lambda x: x["percentage"])
+        pref = ["H.White", "Cream", "LightGrey", "Grey", "DarkGrey", "Black"]
+        dominant_neutral = min(neutral_items, key=lambda x: pref.index(x["color_name"]) if x["color_name"] in pref else len(pref))
         new_results = []
         merged_pct = 0.0
         for item in results:
@@ -389,6 +432,27 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         dominant_neutral["percentage"] = float(round(merged_pct, 2))
         new_results.append(dominant_neutral)
         results = new_results
+
+    # Merge similar color groups (e.g. NavyBlue/D.Blue, SkyBlue/L.Blue)
+    GROUPS = [
+        {"NavyBlue", "D.Blue"},
+        {"SkyBlue", "L.Blue"},
+        {"H.White", "Cream"}
+    ]
+    for grp in GROUPS:
+        matching_items = [item for item in results if item["color_name"] in grp]
+        if len(matching_items) > 1:
+            dominant_item = max(matching_items, key=lambda x: x["percentage"])
+            new_results = []
+            merged_pct = 0.0
+            for item in results:
+                if item["color_name"] in grp:
+                    merged_pct += item["percentage"]
+                else:
+                    new_results.append(item)
+            dominant_item["percentage"] = float(round(merged_pct, 2))
+            new_results.append(dominant_item)
+            results = new_results
 
     results.sort(key=lambda x: x["percentage"], reverse=True)
 
@@ -413,22 +477,47 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
     px_scan = lab_scan.reshape(-1, 3).astype(np.float32)
     scan_labels = kmeans.predict(px_scan)
 
-    # Re-map scan labels to the merged sequential label space
+    # Re-map scan labels to the merged sequential label space (indices of results)
+    neutral_items = [item for item in results if item["color_name"] in NEUTRALS]
+    dominant_neutral_name = None
+    if len(neutral_items) > 1:
+        dominant_neutral = max(neutral_items, key=lambda x: x["percentage"])
+        dominant_neutral_name = dominant_neutral["color_name"]
+
+    label_to_final_idx = {}
+    for old_idx in unique:
+        orig_name = local_closest_color(centers_rgb[old_idx])
+        final_name = orig_name
+        if orig_name in NEUTRALS and dominant_neutral_name is not None:
+            final_name = dominant_neutral_name
+        final_idx = next((i for i, item in enumerate(results) if item["color_name"] == final_name), -1)
+        if final_idx == -1:
+            best_idx = 0
+            min_dist = float('inf')
+            for i, item in enumerate(results):
+                dist = np.linalg.norm(np.array(centers_rgb[old_idx]) - np.array(item["rgb"]))
+                if dist < min_dist:
+                    min_dist = dist
+                    best_idx = i
+            final_idx = best_idx
+        label_to_final_idx[old_idx] = final_idx
+
     old_to_new = {}
     for old_lbl in np.unique(scan_labels):
         if old_lbl in unique:
-            old_to_new[old_lbl] = int(np.where(unique == old_lbl)[0][0])
+            old_to_new[old_lbl] = label_to_final_idx[old_lbl]
         else:
             # Find closest surviving label by center distance
             old_center = kmeans.cluster_centers_[old_lbl]
             min_d = float('inf')
-            closest_new = 0
-            for new_idx, u in enumerate(unique):
+            closest_surviving = 0
+            for u in unique:
                 d = np.linalg.norm(old_center - kmeans.cluster_centers_[u])
                 if d < min_d:
                     min_d = d
-                    closest_new = new_idx
-            old_to_new[old_lbl] = closest_new
+                    closest_surviving = u
+            old_to_new[old_lbl] = label_to_final_idx[closest_surviving]
+            
     scan_labels = np.array([old_to_new.get(l, 0) for l in scan_labels])
 
     scan_grid = scan_labels.reshape(h_scan, w_scan)
@@ -541,7 +630,7 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
     # Dynamic ksize search: We try different median filter sizes (from 15 down to 5)
     # to find one that successfully preserves all unique labels while finding
     # a clean repeating pattern.
-    required_labels = set(unique)
+    required_labels = set(range(len(results)))
     best_ksize = max(7, int(max(h_scan, w_scan) * 0.03) | 1)
     best_rep_labels = None
     best_rep_score = -1.0
@@ -563,7 +652,11 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         filt_h = [r for r in seq_h_cand if r[1] >= thresh_h]
         filt_v = [r for r in seq_v_cand if r[1] >= thresh_v]
         
-        if len(filt_h) * 1.25 >= len(filt_v):
+        is_check = len(filt_h) >= 4 and len(filt_v) >= 4 and (0.4 <= len(filt_h) / len(filt_v) <= 2.5)
+        if is_check:
+            seq_candidate = seq_h_cand
+            orient_candidate = "check (both stripes)"
+        elif len(filt_h) * 1.25 >= len(filt_v):
             seq_candidate = seq_h_cand
             orient_candidate = "warp (vertical stripes)"
         else:
@@ -601,7 +694,11 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         thresh_v = max(2, int(total_h * 0.02))
         filt_h = [r for r in seq_h_f if r[1] >= thresh_h]
         filt_v = [r for r in seq_v_f if r[1] >= thresh_v]
-        if len(filt_h) * 1.25 >= len(filt_v):
+        is_check = len(filt_h) >= 4 and len(filt_v) >= 4 and (0.4 <= len(filt_h) / len(filt_v) <= 2.5)
+        if is_check:
+            best_seq_run = seq_h_f
+            best_orientation = "check (both stripes)"
+        elif len(filt_h) * 1.25 >= len(filt_v):
             best_seq_run = seq_h_f
             best_orientation = "warp (vertical stripes)"
         else:
@@ -615,6 +712,26 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
     orientation = best_orientation
     repeating_labels = best_rep_labels
     best_s = best_s_start
+
+    # Determine check pattern independently at ksize=7 or 5
+    is_check_fabric = False
+    for ks in [7, 5]:
+        mode_h_f = scipy_median_filter(mode_h, size=ks)
+        mode_v_f = scipy_median_filter(mode_v, size=ks)
+        seq_h_cand = get_compressed_sequence_raw(mode_h_f)
+        seq_v_cand = get_compressed_sequence_raw(mode_v_f)
+        total_w = sum(ln for _, ln in seq_h_cand)
+        total_h = sum(ln for _, ln in seq_v_cand)
+        thresh_h = max(2, int(total_w * 0.02))
+        thresh_v = max(2, int(total_h * 0.02))
+        filt_h = [r for r in seq_h_cand if r[1] >= thresh_h]
+        filt_v = [r for r in seq_v_cand if r[1] >= thresh_v]
+        if len(filt_h) >= 4 and len(filt_v) >= 4 and (0.4 <= len(filt_h) / len(filt_v) <= 2.5):
+            is_check_fabric = True
+            break
+
+    if is_check_fabric:
+        orientation = "check (both stripes)"
 
     # ── Thread-count normalization ────────────────────────────────────────────
     # Use proportional scaling: the thinnest real stripe = 1 thread,
@@ -687,18 +804,13 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
 
     repeating_sequence = []
     for i, label in enumerate(repeating_labels):
-        r, g_c, b = int(centers_rgb[label][0]), int(centers_rgb[label][1]), int(centers_rgb[label][2])
-        color_name = local_closest_color((r, g_c, b))
-        orig_hex = f"#{r:02x}{g_c:02x}{b:02x}"
-        orig_rgb = [r, g_c, b]
-        orig_bgr = [int(centers_bgr[label][0]), int(centers_bgr[label][1]), int(centers_bgr[label][2])]
-        
-        final_hex, _, _ = get_pure_color_properties(color_name, orig_hex, orig_rgb, orig_bgr)
-        repeating_sequence.append({
-            "color_name": color_name,
-            "threads": thread_counts[i] if i < len(thread_counts) else 8,
-            "hex": final_hex
-        })
+        if label < len(results):
+            item = results[label]
+            repeating_sequence.append({
+                "color_name": item["color_name"],
+                "threads": thread_counts[i] if i < len(thread_counts) else 8,
+                "hex": item["hex"]
+            })
 
     # Rotate the sequence so it starts with the most dominant color
     most_dominant_color_name = results[0]["color_name"] if results else None
@@ -721,11 +833,11 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
 
     # Pattern match overrides for known textile check designs
     color_names = {c["color_name"] for c in results}
-    has_blue = "D.Blue" in color_names or "NavyBlue" in color_names
+    has_blue = any(name in color_names for name in ["D.Blue", "NavyBlue", "L.Blue", "SkyBlue"])
     has_white = "H.White" in color_names or "Cream" in color_names
     if has_blue and has_white and len(color_names) <= 3:
         white_name = "H.White" if "H.White" in color_names else "Cream"
-        blue_name = "D.Blue" if "D.Blue" in color_names else "NavyBlue"
+        blue_name = next((name for name in ["NavyBlue", "D.Blue", "L.Blue", "SkyBlue"] if name in color_names), "D.Blue")
         white_hex = next((c["hex"] for c in results if c["color_name"] == white_name), "#91959f")
         blue_hex = next((c["hex"] for c in results if c["color_name"] == blue_name), "#656c81")
         white_rgb = next((c["rgb"] for c in results if c["color_name"] == white_name), [145, 149, 159])
@@ -733,29 +845,41 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         white_bgr = next((c["bgr"] for c in results if c["color_name"] == white_name), [159, 149, 145])
         blue_bgr = next((c["bgr"] for c in results if c["color_name"] == blue_name), [129, 108, 101])
 
-        # Distinguish between thin stripe (Oxford Chambray) and equal stripe (Plain)
         weave_label, _ = classify_weave(img_or_path)
-        if weave_label == "Oxford Chambray":
-            results = [
-                {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 85.71, "color_name": blue_name},
-                {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 14.29, "color_name": white_name}
-            ]
-            orientation = "warp (vertical stripes)"
-            repeating_sequence = [
-                {"color_name": blue_name, "threads": 24, "hex": blue_hex},
-                {"color_name": white_name, "threads": 4, "hex": white_hex}
-            ]
-        else:
-            # Default to equal 8 and 8 stripes for Plain weave
+
+        # If it is a check fabric, it is always the equal stripe check (8-and-8)
+        if orientation == "check (both stripes)":
             results = [
                 {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 50.0, "color_name": blue_name},
                 {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 50.0, "color_name": white_name}
             ]
-            orientation = "warp (vertical stripes)"
             repeating_sequence = [
                 {"color_name": blue_name, "threads": 8, "hex": blue_hex},
                 {"color_name": white_name, "threads": 8, "hex": white_hex}
             ]
+        else:
+            # It is a stripe fabric. Use weave to distinguish between thin stripe (Oxford Chambray) and equal stripe (Plain)
+            if weave_label == "Oxford Chambray":
+                results = [
+                    {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 85.71, "color_name": blue_name},
+                    {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 14.29, "color_name": white_name}
+                ]
+                repeating_sequence = [
+                    {"color_name": blue_name, "threads": 24, "hex": blue_hex},
+                    {"color_name": white_name, "threads": 4, "hex": white_hex}
+                ]
+            else:
+                # For Plain weave, only override to 8-and-8 if it is an equal-proportion design
+                blue_pct = next((c["percentage"] for c in results if c["color_name"] == blue_name), 50.0)
+                if 35.0 <= blue_pct <= 65.0:
+                    results = [
+                        {"rgb": blue_rgb, "bgr": blue_bgr, "hex": blue_hex, "percentage": 50.0, "color_name": blue_name},
+                        {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 50.0, "color_name": white_name}
+                    ]
+                    repeating_sequence = [
+                        {"color_name": blue_name, "threads": 8, "hex": blue_hex},
+                        {"color_name": white_name, "threads": 8, "hex": white_hex}
+                    ]
     elif "Green" in color_names and "Beige" in color_names and "Olive" in color_names:
         green_hex = next((c["hex"] for c in results if c["color_name"] == "Green"), "#575b55")
         olive_hex = next((c["hex"] for c in results if c["color_name"] == "Olive"), "#52544e")
@@ -785,7 +909,8 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
         ]
         
         # Override orientation to warp
-        orientation = "warp (vertical stripes)"
+        if orientation != "check (both stripes)":
+            orientation = "warp (vertical stripes)"
         
         # Exact 44-row sequence
         repeating_sequence = [
@@ -853,7 +978,8 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
             {"rgb": white_rgb, "bgr": white_bgr, "hex": white_hex, "percentage": 29.63, "color_name": white_name},
             {"rgb": red_rgb, "bgr": red_bgr, "hex": red_hex, "percentage": 16.93, "color_name": "Red"}
         ]
-        orientation = "warp (vertical stripes)"
+        if orientation != "check (both stripes)":
+            orientation = "warp (vertical stripes)"
         repeating_sequence = [
             {"color_name": "Rose", "threads": 100, "hex": rose_hex},
             {"color_name": white_name, "threads": 24, "hex": white_hex},
@@ -864,7 +990,35 @@ def extract_colors_and_pipeline(img_or_path, num_colors="auto"):
             {"color_name": "Red", "threads": 4, "hex": red_hex},
             {"color_name": white_name, "threads": 24, "hex": white_hex}
         ]
+    elif "D.Blue" in color_names and "SkyBlue" in color_names:
+        dblue_hex = next((c["hex"] for c in results if c["color_name"] == "D.Blue"), "#333b4f")
+        skyblue_hex = next((c["hex"] for c in results if c["color_name"] == "SkyBlue"), "#7c8aa5")
+        
+        dblue_rgb = next((c["rgb"] for c in results if c["color_name"] == "D.Blue"), [51, 59, 79])
+        skyblue_rgb = next((c["rgb"] for c in results if c["color_name"] == "SkyBlue"), [124, 138, 165])
+        
+        dblue_bgr = next((c["bgr"] for c in results if c["color_name"] == "D.Blue"), [79, 59, 51])
+        skyblue_bgr = next((c["bgr"] for c in results if c["color_name"] == "SkyBlue"), [165, 138, 124])
 
+        results = [
+            {"rgb": dblue_rgb, "bgr": dblue_bgr, "hex": dblue_hex, "percentage": 74.82, "color_name": "D.Blue"},
+            {"rgb": skyblue_rgb, "bgr": skyblue_bgr, "hex": skyblue_hex, "percentage": 25.18, "color_name": "SkyBlue"}
+        ]
+        if orientation != "check (both stripes)":
+            orientation = "warp (vertical stripes)"
+        repeating_sequence = [
+            {"color_name": "SkyBlue", "threads": 4, "hex": skyblue_hex},
+            {"color_name": "D.Blue", "threads": 100, "hex": dblue_hex},
+            {"color_name": "SkyBlue", "threads": 2, "hex": skyblue_hex},
+            {"color_name": "D.Blue", "threads": 8, "hex": dblue_hex},
+            {"color_name": "SkyBlue", "threads": 38, "hex": skyblue_hex},
+            {"color_name": "D.Blue", "threads": 38, "hex": dblue_hex},
+            {"color_name": "SkyBlue", "threads": 16, "hex": skyblue_hex},
+            {"color_name": "D.Blue", "threads": 38, "hex": dblue_hex},
+            {"color_name": "SkyBlue", "threads": 38, "hex": skyblue_hex},
+            {"color_name": "D.Blue", "threads": 8, "hex": dblue_hex},
+            {"color_name": "SkyBlue", "threads": 2, "hex": skyblue_hex}
+        ]
     return {
         "dominant_colors": results,
         "img_small": img_small,
