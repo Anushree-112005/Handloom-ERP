@@ -204,9 +204,12 @@ export default function DesignAI() {
     if (!dominantColors || dominantColors.length === 0) return null;
 
     const repSeq = repeatingSequence || [];
-    const rawWarp = repSeq.length > 0
-      ? repSeq
-      : dominantColors.map(c => ({ color_name: c.color_name, threads: 1, hex: c.hex }));
+    const isSolidWarp = dominantColors.length === 1 || (repSeq.length > 0 && new Set(repSeq.map(item => item.color_name)).size === 1);
+    const rawWarp = isSolidWarp
+      ? [{ color_name: dominantColors[0].color_name, threads: totalWarpEnds, hex: dominantColors[0].hex }]
+      : (repSeq.length > 0
+          ? repSeq
+          : dominantColors.map(c => ({ color_name: c.color_name, threads: 1, hex: c.hex })));
     const warpDesign = compressSequence(rawWarp);
     let warpRepeatSize = 0;
     let i_rep = 0;
