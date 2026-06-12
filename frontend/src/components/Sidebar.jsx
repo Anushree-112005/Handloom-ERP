@@ -263,7 +263,8 @@ const modules = [
   { section: 'Export & Logistics' },
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
-  // { section: 'Accounts & Finance' },
+  { section: 'Accounts & Finance' },
+  { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
   // {
   //   label: 'Account Transaction',
   //   icon: Briefcase,
