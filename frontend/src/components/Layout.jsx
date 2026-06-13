@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import UniversalChatbot from './UniversalChatbot';
 
 export default function Layout({ title }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -15,6 +16,7 @@ export default function Layout({ title }) {
           <Outlet />
         </div>
       </div>
+      <UniversalChatbot />
     </div>
   );
 }
