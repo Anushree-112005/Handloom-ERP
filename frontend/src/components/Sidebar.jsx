@@ -21,7 +21,7 @@ const modules = [
   { section: 'Masters' },
   { path: '/party-master', label: 'Party Master', icon: Users },
   { path: '/employee', label: 'Employee Master', icon: Shield },
-  
+
   { section: 'Sub Masters' },
   {
     label: 'Core System Basics',
@@ -213,20 +213,20 @@ const modules = [
   //   ]
   // },
 
-  { section: 'Processing / Production' },
-  {
-    label: 'Fabric Production Desk',
-    icon: Scissors,
-    children: [
-      { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
-      { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
-      { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
-      { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
-      { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
-      { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
-      { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
-    ]
-  },
+  // { section: 'Processing / Production' },
+  // {
+  //   label: 'Fabric Production Desk',
+  //   icon: Scissors,
+  //   children: [
+  //     { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
+  //     { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
+  //     { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
+  //     { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
+  //     { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
+  //     { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
+  //     { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
+  //   ]
+  // },
 
   // Production Planning Modules
   { section: 'Production Planning (PPC)' },
@@ -408,7 +408,7 @@ export default function Sidebar() {
   useEffect(() => {
     modules.forEach(mod => {
       if (mod.children) {
-        const isActiveChild = mod.children.some(child => 
+        const isActiveChild = mod.children.some(child =>
           location.pathname.startsWith(child.path) && !child.path.startsWith('/sub-master/')
         );
         if (isActiveChild) {
