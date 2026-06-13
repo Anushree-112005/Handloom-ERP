@@ -1,7 +1,7 @@
 /**
  * Chatbot API Service — communicates with backend /api/v1/chat/* and /api/v1/reports/*
  */
-import api from './api';
+import api, { API_BASE } from './api';
 
 export const chatbotAPI = {
   /** Send a message and get AI response with optional report attachments */
@@ -28,16 +28,16 @@ export const reportsAPI = {
 
   /** Download a completed report */
   downloadUrl: (jobId) =>
-    `/api/v1/reports/jobs/${jobId}/download`,
+    `${API_BASE}/reports/jobs/${jobId}/download`,
 };
 
 /**
  * Download a report file using the auth token.
  * Opens a blob URL in a new tab / triggers download.
  */
-export async function downloadReport(downloadUrl) {
+export const downloadReport = async (jobId, format = 'pdf') => {
   const token = localStorage.getItem('token');
-  const response = await fetch(downloadUrl, {
+  const response = await fetch(`${API_BASE}/reports/jobs/${jobId}/download`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -48,7 +48,14 @@ export async function downloadReport(downloadUrl) {
   const blob = await response.blob();
   const disposition = response.headers.get('Content-Disposition') || '';
   const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
-  const filename = filenameMatch ? filenameMatch[1] : 'report';
+  
+  let filename = 'report';
+  if (filenameMatch) {
+    filename = filenameMatch[1];
+  } else {
+    const ext = format === 'excel' ? 'xlsx' : format;
+    filename = `report_${jobId}.${ext}`;
+  }
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -58,6 +65,6 @@ export async function downloadReport(downloadUrl) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
+};
 
 export default chatbotAPI;

@@ -21,10 +21,10 @@ import { chatbotAPI, downloadReport } from '../services/chatbotAPI';
 const THREAD_KEY = 'erp_chat_thread_id';
 
 function getOrCreateThreadId() {
-  let id = sessionStorage.getItem(THREAD_KEY);
+  let id = localStorage.getItem(THREAD_KEY);
   if (!id) {
     id = `thread-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    sessionStorage.setItem(THREAD_KEY, id);
+    localStorage.setItem(THREAD_KEY, id);
   }
   return id;
 }
@@ -69,9 +69,40 @@ export default function UniversalChatbot() {
   const getContext = useCallback(() => {
     const path = location.pathname;
     const routeParts = path.split('/').filter(Boolean);
+    
+    // Attempt to extract filters dynamically from the DOM inputs
+    const filters = {};
+    try {
+      // 1. Look for Date inputs
+      const dateInputs = document.querySelectorAll('input[type="date"]');
+      if (dateInputs.length > 0) {
+        if (dateInputs[0] && dateInputs[0].value) {
+          filters.fromDate = dateInputs[0].value;
+        }
+        if (dateInputs[1] && dateInputs[1].value) {
+          filters.toDate = dateInputs[1].value;
+        }
+      }
+      
+      // 2. Look for party/supplier/buyer search inputs
+      const partyInput = document.querySelector('input[placeholder*="party" i], input[placeholder*="supplier" i], input[placeholder*="buyer" i], input[placeholder*="customer" i]');
+      if (partyInput && partyInput.value) {
+        filters.party = partyInput.value;
+      }
+      
+      // 3. Look for status select/dropdown inputs
+      const statusSelect = document.querySelector('select');
+      if (statusSelect && statusSelect.value && statusSelect.value !== 'All Statuses' && statusSelect.value !== 'All') {
+        filters.status = statusSelect.value;
+      }
+    } catch (e) {
+      console.warn("Failed to extract active filters from DOM:", e);
+    }
+
     return {
       route: path,
       module: routeParts[0] || 'dashboard',
+      filters: filters,
     };
   }, [location.pathname]);
 
@@ -123,7 +154,7 @@ export default function UniversalChatbot() {
     const jobId = attachment.job_id;
     setDownloadingIds(prev => new Set(prev).add(jobId));
     try {
-      await downloadReport(attachment.download_url);
+      await downloadReport(jobId, attachment.format);
     } catch (err) {
       console.error('Download error:', err);
       alert('Failed to download report. Please try again.');
@@ -138,15 +169,68 @@ export default function UniversalChatbot() {
 
   const renderMarkdown = (text) => {
     if (!text) return null;
-    // Simple markdown-like rendering
-    return text.split('\n').map((line, i) => {
-      // Bold
-      let rendered = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // Bullet points
-      if (rendered.startsWith('• ') || rendered.startsWith('- ')) {
-        rendered = `<span style="display:flex;gap:6px;"><span style="color:var(--primary)">•</span><span>${rendered.slice(2)}</span></span>`;
+
+    // Helper to split a line by **bold** tags and return React elements
+    const parseBoldText = (str, keyPrefix) => {
+      const parts = str.split(/\*\*(.*?)\*\*/g);
+      return parts.map((part, index) => {
+        if (index % 2 === 1) {
+          return <strong key={`${keyPrefix}-bold-${index}`}>{part}</strong>;
+        }
+        return part;
+      });
+    };
+
+    const lines = text.split(/\r?\n/);
+    return lines.map((line, i) => {
+      const trimmedLine = line.trim();
+
+      // 1. Check for headers (e.g. # Hello, ## Hello, ### Hello)
+      const headerMatch = trimmedLine.match(/^(#{1,6})\s+(.*)$/);
+      if (headerMatch) {
+        const level = headerMatch[1].length;
+        const content = headerMatch[2];
+        const Tag = `h${level}`;
+        
+        const getHeaderStyle = (lvl) => {
+          switch (lvl) {
+            case 1: return { fontSize: '17px', fontWeight: 'bold', margin: '12px 0 6px 0', color: '#1e293b', lineHeight: 1.3 };
+            case 2: return { fontSize: '15px', fontWeight: 'bold', margin: '10px 0 5px 0', color: '#1e293b', lineHeight: 1.3 };
+            case 3: return { fontSize: '13.5px', fontWeight: 'bold', margin: '8px 0 4px 0', color: '#1e293b', lineHeight: 1.3 };
+            default: return { fontSize: '13px', fontWeight: 'bold', margin: '6px 0 3px 0', color: '#1e293b', lineHeight: 1.3 };
+          }
+        };
+
+        return (
+          <Tag key={i} style={getHeaderStyle(level)}>
+            {parseBoldText(content, i)}
+          </Tag>
+        );
       }
-      return <div key={i} dangerouslySetInnerHTML={{ __html: rendered || '&nbsp;' }} />;
+
+      // 2. Check for bullet points (supports •, - [space], * [space])
+      const isBullet =
+        trimmedLine.startsWith('•') ||
+        trimmedLine.startsWith('- ') ||
+        trimmedLine.startsWith('* ');
+
+      if (isBullet) {
+        // Strip the bullet symbol and leading spaces
+        const content = trimmedLine.replace(/^[•\-*]\s*/, '');
+        return (
+          <div key={i} style={{ display: 'flex', gap: '8px', margin: '4px 0 4px 12px' }}>
+            <span style={{ color: '#4f46e5', fontWeight: 'bold' }}>•</span>
+            <span style={{ flex: 1 }}>{parseBoldText(content, i)}</span>
+          </div>
+        );
+      }
+
+      // 3. Normal line
+      return (
+        <div key={i} style={{ margin: '4px 0', minHeight: '18px' }}>
+          {parseBoldText(line, i)}
+        </div>
+      );
     });
   };
 

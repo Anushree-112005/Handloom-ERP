@@ -55,14 +55,18 @@ async def handle_chat_message(
     try:
         if action == "greeting":
             from app.core.config import settings
+            capabilities = (
+                "\n\nHere is what I can help you with:\n"
+                "• **Generate reports** — \"Download buyer order report for this month as PDF\"\n"
+                "• **Query data** — \"How many invoices are pending?\"\n"
+                "• **Browse reports** — \"List available reports\""
+            )
             if settings.GROQ_API_KEY:
-                reply = _handle_general_query(message)
+                llm_reply = _handle_general_query(message)
+                reply = f"{llm_reply}{capabilities}"
             else:
                 reply = (
-                    "Hello! 👋 I'm your Dinesh Exports ERP assistant. I can help you with:\n\n"
-                    "• **Generate reports** — \"Download buyer order report for this month as PDF\"\n"
-                    "• **Query data** — \"How many invoices are pending?\"\n"
-                    "• **Browse reports** — \"List available reports\"\n\n"
+                    f"Hello! 👋 I'm your Dinesh Exports ERP assistant.{capabilities}\n\n"
                     "What would you like to do?"
                 )
             suggestions = [
@@ -112,8 +116,15 @@ async def handle_chat_message(
                     "download_url": f"/api/v1/reports/jobs/{job.id}/download",
                     "job_id": job.id,
                 }]
+                alt_fmt = "Excel" if fmt == "pdf" else "PDF"
+                supported_formats = defn.get("formats", [])
+                if alt_fmt.lower() not in supported_formats and len(supported_formats) > 1:
+                    for f in supported_formats:
+                        if f != fmt:
+                            alt_fmt = f.upper() if f != "excel" else "Excel"
+                            break
                 suggestions = [
-                    f"Generate {defn['title']} as {'Excel' if fmt == 'pdf' else 'PDF'}",
+                    f"Generate {defn['title']} as {alt_fmt}",
                     "Download another report",
                 ]
 
@@ -158,7 +169,7 @@ async def handle_chat_message(
 
     except Exception as e:
         logger.error(f"Chatbot error: {e}", exc_info=True)
-        reply = f"Sorry, I encountered an error while processing your request: {str(e)}\n\nPlease try again or rephrase your query."
+        reply = "Sorry, I encountered an error while processing your request. Please try again or rephrase your query."
         suggestions = ["List available reports"]
 
     # Save AI response
@@ -179,11 +190,11 @@ async def handle_chat_message(
     }
 
 
-async def get_chat_history(db: AsyncSession, thread_id: str, limit: int = 50) -> list[dict]:
-    """Retrieve chat history for a thread."""
+async def get_chat_history(db: AsyncSession, thread_id: str, user_id: str, limit: int = 50) -> list[dict]:
+    """Retrieve chat history for a thread, scoped by user_id for security."""
     stmt = (
         select(ChatMessage)
-        .where(ChatMessage.thread_id == thread_id)
+        .where(ChatMessage.thread_id == thread_id, ChatMessage.user_id == user_id)
         .order_by(ChatMessage.created_at.asc())
         .limit(limit)
     )
@@ -195,11 +206,13 @@ async def get_chat_history(db: AsyncSession, thread_id: str, limit: int = 50) ->
             "id": msg.id,
             "sender": msg.sender,
             "message": msg.message,
+            "context": msg.context or {},
             "attachments": msg.attachments or [],
             "created_at": msg.created_at.isoformat() if msg.created_at else None,
         }
         for msg in messages
     ]
+
 
 
 def _describe_filters(filters: dict) -> str:

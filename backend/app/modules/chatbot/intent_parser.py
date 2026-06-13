@@ -2,7 +2,6 @@ import re
 import json
 import logging
 from datetime import datetime, timedelta
-from groq import Groq
 from app.core.config import settings
 from app.modules.reports.registry import REPORT_REGISTRY
 
@@ -17,6 +16,7 @@ def parse_intent(message: str, context: dict = None) -> dict:
     # Check if Groq API key is configured
     if settings.GROQ_API_KEY:
         try:
+            from groq import Groq
             intent = parse_intent_with_groq(message, context)
             if intent:
                 return intent
@@ -175,7 +175,7 @@ def parse_intent_deterministic(message: str, context: dict = None) -> dict:
         }
 
     # 5. Fallback: general query
-    return {"action": "general_query", "message": message}
+    return {"action": "general_query"}
 
 
 def _extract_format(msg: str) -> str:
@@ -237,8 +237,13 @@ def _extract_filters(msg: str, context: dict = None) -> dict:
     date_pattern = r"\d{4}-\d{2}-\d{2}"
     dates = re.findall(date_pattern, msg)
     if len(dates) >= 2:
-        filters["from_date"] = dates[0]
-        filters["to_date"] = dates[1]
+        d1, d2 = dates[0], dates[1]
+        if d1 <= d2:
+            filters["from_date"] = d1
+            filters["to_date"] = d2
+        else:
+            filters["from_date"] = d2
+            filters["to_date"] = d1
     elif len(dates) == 1:
         filters["from_date"] = dates[0]
         filters["to_date"] = dates[0]
@@ -249,15 +254,20 @@ def _extract_filters(msg: str, context: dict = None) -> dict:
         filters["from_date"] = ctx_filters["fromDate"]
     if ctx_filters.get("toDate") and "to_date" not in filters:
         filters["to_date"] = ctx_filters["toDate"]
+    if ctx_filters.get("party") and "party" not in filters:
+        filters["party"] = ctx_filters["party"]
+    if ctx_filters.get("status") and "status" not in filters:
+        filters["status"] = ctx_filters["status"]
 
-    # Extract status filter
-    status_terms = {
-        "active": "Active", "pending": "Pending", "draft": "Draft",
-        "completed": "Completed", "closed": "Closed", "cancelled": "Cancelled",
-    }
-    for term, val in status_terms.items():
-        if term in msg:
-            filters["status"] = val
-            break
+    # Extract status filter (only if not already set)
+    if "status" not in filters:
+        status_terms = {
+            "active": "Active", "pending": "Pending", "draft": "Draft",
+            "completed": "Completed", "closed": "Closed", "cancelled": "Cancelled",
+        }
+        for term, val in status_terms.items():
+            if term in msg:
+                filters["status"] = val
+                break
 
     return filters

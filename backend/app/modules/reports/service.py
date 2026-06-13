@@ -10,9 +10,10 @@ import csv
 import logging
 from datetime import datetime, timezone
 from typing import Optional
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select
 
 from app.modules.reports.registry import REPORT_REGISTRY, get_report_definition
 from app.models.report_job import ReportJob
@@ -58,7 +59,7 @@ DATE_COLUMN_MAP = {
     "LogReport": "created_at",
 }
 
-REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "reports")
+REPORTS_DIR = str(Path(__file__).parent.parent.parent.parent / "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 
@@ -91,6 +92,10 @@ async def query_report_data(db: AsyncSession, report_id: str, filters: dict) -> 
     # Apply status filter
     if filters.get("status") and hasattr(model_cls, "status"):
         stmt = stmt.where(model_cls.status == filters["status"])
+
+    # Apply user filter (for log reports)
+    if filters.get("user") and hasattr(model_cls, "user_name"):
+        stmt = stmt.where(model_cls.user_name.ilike(f"%{filters['user']}%"))
 
     # Apply department filter (for employees)
     if filters.get("department") and hasattr(model_cls, "department"):
@@ -132,6 +137,8 @@ async def query_report_data(db: AsyncSession, report_id: str, filters: dict) -> 
 def generate_csv_bytes(report_id: str, data: list[dict]) -> bytes:
     """Generate CSV content from report data."""
     defn = get_report_definition(report_id)
+    if not defn:
+        raise ValueError(f"Unknown report: {report_id}")
     columns = defn["columns"]
 
     output = io.StringIO()
@@ -153,6 +160,8 @@ def generate_excel_bytes(report_id: str, data: list[dict]) -> bytes:
         return generate_csv_bytes(report_id, data)
 
     defn = get_report_definition(report_id)
+    if not defn:
+        raise ValueError(f"Unknown report: {report_id}")
     columns = defn["columns"]
 
     wb = openpyxl.Workbook()
@@ -195,6 +204,8 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
     from jinja2 import Environment, BaseLoader
 
     defn = get_report_definition(report_id)
+    if not defn:
+        raise ValueError(f"Unknown report: {report_id}")
     columns = defn["columns"]
 
     html_template = """
@@ -272,6 +283,26 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
     return pdf_bytes
 
 
+async def cleanup_old_reports(db: AsyncSession):
+    """Clean up report files and database jobs older than 24 hours to prevent disk leak."""
+    try:
+        from datetime import datetime, timedelta, timezone
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+        stmt = select(ReportJob).where(ReportJob.created_at < cutoff)
+        result = await db.execute(stmt)
+        old_jobs = result.scalars().all()
+        for job in old_jobs:
+            if job.file_path and os.path.exists(job.file_path):
+                try:
+                    os.remove(job.file_path)
+                except Exception as e:
+                    logger.warning(f"Failed to delete old report file {job.file_path}: {e}")
+            await db.delete(job)
+        await db.commit()
+    except Exception as e:
+        logger.error(f"Error during report cleanup: {e}")
+
+
 async def generate_report(
     db: AsyncSession,
     report_id: str,
@@ -281,12 +312,16 @@ async def generate_report(
 ) -> ReportJob:
     """
     Full report generation pipeline:
-    1. Validate report_id against registry
-    2. Query ERP data
-    3. Generate file in requested format
-    4. Save to disk
-    5. Create and return ReportJob record
+    1. Clean up expired report files (older than 24 hours)
+    2. Validate report_id against registry
+    3. Query ERP data
+    4. Generate file in requested format (offloaded to threadpool)
+    5. Save to disk (offloaded to threadpool)
+    6. Create and return ReportJob record
     """
+    # Run cleanup first
+    await cleanup_old_reports(db)
+
     defn = get_report_definition(report_id)
     if not defn:
         raise ValueError(f"Unknown report: {report_id}")
@@ -310,30 +345,34 @@ async def generate_report(
         # Query data
         data = await query_report_data(db, report_id, filters)
 
-        # Generate file bytes
+        # Generate file bytes (offload CPU-bound format generation)
+        import asyncio
         if fmt == "csv":
-            file_bytes = generate_csv_bytes(report_id, data)
+            file_bytes = await asyncio.to_thread(generate_csv_bytes, report_id, data)
             ext = "csv"
             content_type = "text/csv"
         elif fmt == "excel":
-            file_bytes = generate_excel_bytes(report_id, data)
+            file_bytes = await asyncio.to_thread(generate_excel_bytes, report_id, data)
             ext = "xlsx"
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         elif fmt == "pdf":
-            file_bytes = generate_pdf_bytes(report_id, data)
+            file_bytes = await asyncio.to_thread(generate_pdf_bytes, report_id, data)
             ext = "pdf"
             content_type = "application/pdf"
         else:
             raise ValueError(f"Unsupported format: {fmt}")
 
-        # Save to disk
+        # Save to disk (offload blocking I/O)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_title = defn["title"].replace(" ", "_").replace("/", "-")
         filename = f"{safe_title}_{timestamp}.{ext}"
         filepath = os.path.join(REPORTS_DIR, filename)
 
-        with open(filepath, "wb") as f:
-            f.write(file_bytes)
+        def save_file_sync():
+            with open(filepath, "wb") as f:
+                f.write(file_bytes)
+
+        await asyncio.to_thread(save_file_sync)
 
         # Update job
         job.status = "completed"
@@ -351,3 +390,4 @@ async def generate_report(
         await db.commit()
         logger.error(f"Report generation failed for {report_id}: {e}")
         raise
+

@@ -16,7 +16,7 @@ router = APIRouter(prefix="/chat", tags=["Chatbot"])
 class ChatRequest(BaseModel):
     thread_id: Optional[str] = None
     message: str
-    context: Optional[dict] = {}
+    context: Optional[dict] = None
 
 
 class ChatAttachment(BaseModel):
@@ -63,6 +63,7 @@ class ChatHistoryItem(BaseModel):
     id: int
     sender: str
     message: str
+    context: Optional[dict] = None
     attachments: list = []
     created_at: Optional[str] = None
 
@@ -74,5 +75,10 @@ async def get_thread_history(
     current_user: Employee = Depends(get_current_user),
 ):
     """Retrieve chat history for a specific thread."""
-    messages = await get_chat_history(db, thread_id)
+    messages = await get_chat_history(
+        db=db,
+        thread_id=thread_id,
+        user_id=current_user.employee_code,
+    )
     return messages
+
