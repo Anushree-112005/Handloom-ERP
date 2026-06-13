@@ -1,0 +1,27 @@
+[tool.pyright]
+include = ["backend", "frontend"]
+extraPaths = ["."]
+
+[tool.pyrefly]
+search_path = ["backend"]
+project_excludes = [
+    "**/__pyrefly_virtual__/**",
+    "**/inmemory/**",
+    "C:/__pyrefly_virtual__/**",
+    "/C:/__pyrefly_virtual__/**",
+    "*__pyrefly_virtual__*",
+    "*inmemory*"
+]
+# SQLAlchemy Column[T] stubs don't expose __index__/__float__/__buffer__ protocols,
+# causing false-positive bad-argument-type and bad-assignment errors when reading
+# column values or assigning Python primitives back to ORM attributes.
+errors_to_ignore = [
+    "bad-argument-type",
+    "bad-assignment",
+    "no-matching-overload",
+    "unnecessary-type-conversion",
+    "unsupported-operation",
+    "missing-attribute"
+]
+
+
