@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic[email]
+python-jose[cryptography]
+passlib
+bcrypt==3.2.2
+python-multipart
+openpyxl
+weasyprint
+requests
+psycopg2-binary

@@ -143,31 +143,47 @@ class ColorSyncPayload(BaseModel):
 async def sync_colors_from_design(payload: ColorSyncPayload, db: AsyncSession = Depends(get_db)):
     """
     Bulk-upsert AI-detected colors into color_master.
-    Skips any color whose name already exists (case-insensitive).
+    Skips any color whose name or hex code already exists (case-insensitive).
     Returns counts of inserted vs skipped.
     """
+    from sqlalchemy import or_
     inserted = 0
     skipped = 0
     for item in payload.colors:
         name = item.color_name.strip()
         if not name:
             continue
-        # Check if this color name already exists
+        
+        # Check if name already exists, or hex matches (if hex is provided)
+        conditions = [func.lower(SubMaster.name) == name.lower()]
+        if item.hex:
+            conditions.append(func.lower(SubMaster.extra_field_1) == item.hex.strip().lower())
+            
         existing = await db.execute(
             select(SubMaster).where(
                 SubMaster.entity == "color_master",
-                func.lower(SubMaster.name) == name.lower()
+                or_(*conditions)
             )
         )
         if existing.scalar_one_or_none():
             skipped += 1
             continue
+            
+        # Enforce pure color hex values for standard names
+        hex_val = item.hex
+        if name.lower() == "black":
+            hex_val = "#000000"
+        elif name.lower() == "h.white":
+            hex_val = "#ffffff"
+        elif name.lower() == "brown":
+            hex_val = "#8b4513"
+
         # Insert new color
         row = SubMaster(
             entity="color_master",
             name=name,
             code=None,
-            extra_field_1=item.hex or None,
+            extra_field_1=hex_val or None,
             is_active=True,
         )
         db.add(row)

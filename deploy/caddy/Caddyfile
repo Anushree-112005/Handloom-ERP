@@ -1,0 +1,17 @@
+{
+    # Global options
+    auto_https off
+}
+
+# The Cloudflare Tunnel connects to Caddy on port 80.
+# Caddy then proxies all requests to the Nginx container on port 80.
+:80 {
+    # Logging
+    log {
+        output stdout
+        format console
+    }
+
+    # Pass everything to the Nginx gateway
+    reverse_proxy nginx:80
+}

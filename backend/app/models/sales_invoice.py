@@ -18,7 +18,7 @@ class SalesInvoice(Base):
     billing_address = Column(Text)
     delivery_address = Column(Text)
     state = Column(String(100))
-    state_code = Column(String(10))
+    state_code = Column(String(50))
     gst_no = Column(String(20))
     hsn_code = Column(String(20))
     total_qty = Column(Numeric(10, 2), default=0)
