@@ -25,3 +25,9 @@ Body: b'{"id":"SCH-001","dbId":3,"orderId":"IBPO-00007","ref":"PO-2026-1001","da
 Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'plan_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': ':1'}]
 Body: b'{}'
 
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'ETA-792', 'code': '6', 'extra_field_1': '2026-06-24', 'extra_field_2': 'On Track', 'description': 'Loom: LM-004 | Buffer: 22 days', 'is_active': True}}]
+Body: b'{"name":"ETA-792","code":"6","extra_field_1":"2026-06-24","extra_field_2":"On Track","description":"Loom: LM-004 | Buffer: 22 days","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'FA-478', 'code': '', 'extra_field_1': '', 'extra_field_2': 'Pending', 'description': 'Message: Loom  finishing tomorrow | Action: ', 'is_active': True}}]
+Body: b'{"name":"FA-478","code":"","extra_field_1":"","extra_field_2":"Pending","description":"Message: Loom  finishing tomorrow | Action: ","is_active":true}'
+
