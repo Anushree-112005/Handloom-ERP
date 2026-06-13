@@ -154,8 +154,9 @@ export default function OnTableChecking() {
     e.preventDefault();
     if (isReadOnly) return;
     if (!formData.items || formData.items.length === 0) {
-      alert("Please add at least one inspected piece/roll to the grid.");
-      return;
+      if (!window.confirm("You haven't added any inspected pieces to the grid. Do you still want to save this record?")) {
+        return;
+      }
     }
     try {
       if (editingId) {
@@ -655,7 +656,7 @@ export default function OnTableChecking() {
 
           <div style={{ padding: 32, background: '#fff' }}>
             <form id="checkingForm" onSubmit={handleSubmit}>
-              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
                 
                 <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
                   {/* SECTION 1: HEADER GENERAL INFO */}
