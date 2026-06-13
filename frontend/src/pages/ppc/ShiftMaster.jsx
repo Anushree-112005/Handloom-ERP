@@ -260,16 +260,16 @@ export default function ShiftMaster() {
           </div>
           
           <div className="table-responsive">
-            <table className="table">
-              <thead>
+            <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
                 <tr>
-                  <th>Shift Name</th>
-                  <th>Type</th>
-                  <th>Timings</th>
-                  <th>Break</th>
-                  <th>Total / Work Hrs</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Shift Name</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Type</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Timings</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Break</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Total / Work Hrs</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -277,24 +277,24 @@ export default function ShiftMaster() {
                   const { total, working } = calculateHours(shift.extra_field_1, shift.extra_field_2, shift.extra_field_3);
                   return (
                     <tr key={i}>
-                      <td><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{shift.name}</span></td>
-                      <td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{shift.name}</span></td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                         <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 12, background: shift.code === 'Night' ? '#312e81' : '#e0f2fe', color: shift.code === 'Night' ? '#a5b4fc' : '#0369a1', fontWeight: 600 }}>
                           {shift.code || 'Day'}
                         </span>
                       </td>
-                      <td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                         <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                           {shift.extra_field_1} - {shift.extra_field_2}
                         </div>
                       </td>
-                      <td>{shift.extra_field_3 || 0} min</td>
-                      <td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{shift.extra_field_3 || 0} min</td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                         <div style={{ fontSize: 13 }}>
                           <span>{total}h</span> / <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{working}h</span>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                         <span style={{
                           padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
                           backgroundColor: shift.is_active ? '#10b98120' : '#ef444420',
@@ -303,7 +303,7 @@ export default function ShiftMaster() {
                           {shift.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>
                         <button className="btn" onClick={() => handleEdit(shift)} style={{ padding: '4px 8px', color: '#3b82f6', marginRight: 8 }}><Edit2 size={16}/></button>
                         <button className="btn" onClick={() => handleDelete(shift.id)} style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={16}/></button>
                       </td>

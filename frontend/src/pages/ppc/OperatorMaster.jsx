@@ -263,39 +263,39 @@ export default function OperatorMaster() {
           </div>
 
           <div className="table-responsive">
-            <table className="table">
-              <thead>
+            <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
                 <tr>
-                  <th>Operator</th>
-                  <th>Role & Skill</th>
-                  <th>Assignment</th>
-                  <th>Contact & Date</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Operator</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Role & Skill</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Assignment</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Contact & Date</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {operators.map(op => (
                   <tr key={op.id}>
-                    <td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                       <div style={{ fontWeight: 600 }}>{op.operator_name}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{op.operator_id}</div>
                     </td>
-                    <td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                       <div>{op.designation}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{op.department} • {op.skill_level}</div>
                     </td>
-                    <td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                       <div>{op.assigned_loom || '-'}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{op.assigned_shift || '-'}</div>
                     </td>
-                    <td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                       <div>{op.contact_number || '-'}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                         {op.join_date ? new Date(op.join_date).toLocaleDateString() : '-'}
                       </div>
                     </td>
-                    <td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                       <span className={`status-badge ${op.status ? 'status-active' : 'status-inactive'}`} style={{ 
                         padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
                         background: op.status ? '#dcfce7' : '#fee2e2', color: op.status ? '#166534' : '#991b1b'
@@ -303,7 +303,7 @@ export default function OperatorMaster() {
                         {op.status ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                         <button className="btn btn-icon" onClick={() => handleEdit(op)}><Edit2 size={16} color="var(--primary)" /></button>
                         <button className="btn btn-icon" onClick={() => handleDelete(op.id)}><Trash2 size={16} color="var(--danger)" /></button>

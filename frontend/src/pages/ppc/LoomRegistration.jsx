@@ -234,27 +234,27 @@ export default function LoomRegistration() {
         </div>
         
         <div className="table-responsive">
-          <table className="table">
-            <thead>
+          <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
+            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
               <tr>
-                <th>Loom ID/Name</th>
-                <th>Type</th>
-                <th>Make/Model</th>
-                <th>Location</th>
-                <th>Capacity (m/d)</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Loom ID/Name</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Type</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Make/Model</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Location</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Capacity (m/d)</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
+                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {looms.map((loom, i) => (
                 <tr key={i}>
-                  <td><span style={{ fontWeight: 600, color: 'var(--primary)' }}>{loom.loom_name}</span></td>
-                  <td>{loom.loom_type || '-'}</td>
-                  <td><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{loom.manufacturer} {loom.model_number}</span></td>
-                  <td>{loom.location || '-'}</td>
-                  <td>{loom.capacity_per_day}</td>
-                  <td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontWeight: 600, color: 'var(--primary)' }}>{loom.loom_name}</span></td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.loom_type || '-'}</td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{loom.manufacturer} {loom.model_number}</span></td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.location || '-'}</td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.capacity_per_day}</td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                     <span style={{
                       padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
                       backgroundColor: loom.status === 'Running' ? '#10b98120' : loom.status === 'Maintenance' ? '#ef444420' : loom.status === 'Breakdown' ? '#f59e0b20' : '#64748b20',
@@ -263,7 +263,7 @@ export default function LoomRegistration() {
                       {loom.status}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                     <button className="btn" style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={16}/></button>
                   </td>
                 </tr>
