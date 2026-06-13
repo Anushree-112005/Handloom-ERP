@@ -747,7 +747,7 @@ export default function GoodsRelease() {
 
           <div style={{ padding: 32, background: '#fff' }}>
             <form id="goodsReleaseForm" onSubmit={handleSubmit}>
-              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
                 
                 <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
                   {/* Group 1: Goods Release Advice Headers */}

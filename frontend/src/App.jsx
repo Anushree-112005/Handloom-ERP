@@ -41,6 +41,60 @@ import SubMasterPage from './pages/masters/SubMasterPage';
 
 
 
+import CubeBookPage from './pages/cubebook/CubeBookPage';
+import HRModule from './pages/HR/HRModule';
+
+// Fleet & Vehicle Management Imports
+import FleetDashboard from './pages/Vehicle management/FleetDashboard';
+import VehicleList from './pages/Vehicle management/VehicleList';
+import DriverList from './pages/Vehicle management/DriverList';
+import HelperList from './pages/Vehicle management/HelperList';
+import TransportVendorList from './pages/Vehicle management/TransportVendorList';
+import RouteList from './pages/Vehicle management/RouteList';
+import FuelStationList from './pages/Vehicle management/FuelStationList';
+import TripPlanning from './pages/Vehicle management/TripPlanning';
+import TripExecution from './pages/Vehicle management/TripExecution';
+import TripProfitability from './pages/Vehicle management/TripProfitability';
+import FuelEntry from './pages/Vehicle management/FuelEntry';
+import FuelConsumption from './pages/Vehicle management/FuelConsumption';
+import DieselKmReport from './pages/Vehicle management/DieselKmReport';
+import MaintenanceLog from './pages/Vehicle management/MaintenanceLog';
+import ServiceSchedule from './pages/Vehicle management/ServiceSchedule';
+import BreakdownEntry from './pages/Vehicle management/BreakdownEntry';
+import FleetDocuments from './pages/Vehicle management/FleetDocuments';
+import FleetExpiryAlerts from './pages/Vehicle management/FleetExpiryAlerts';
+import VehicleUtilization from './pages/Vehicle management/VehicleUtilization';
+import DriverPerformance from './pages/Vehicle management/DriverPerformance';
+import Documents from './pages/Vehicle management/Documents';
+
+
+// Stores & Consumables Imports
+import StationaryDashboard from './pages/stationary and consumptions/Dashboard';
+import CategoryMaster from './pages/stationary and consumptions/CategoryMaster';
+import UOMMaster from './pages/stationary and consumptions/UOMMaster';
+import ItemMaster from './pages/stationary and consumptions/ItemMaster';
+import VendorMaster from './pages/stationary and consumptions/VendorMaster';
+import DepartmentMaster from './pages/stationary and consumptions/DepartmentMaster';
+import MaterialRequest from './pages/stationary and consumptions/MaterialRequest';
+import PurchaseRequisition from './pages/stationary and consumptions/PurchaseRequisition';
+import PurchaseOrder from './pages/stationary and consumptions/PurchaseOrder';
+import GRNStockInward from './pages/stationary and consumptions/GRNStockInward';
+import IssueEntry from './pages/stationary and consumptions/IssueEntry';
+import ReturnEntry from './pages/stationary and consumptions/ReturnEntry';
+import TransferEntry from './pages/stationary and consumptions/TransferEntry';
+import AdjustmentEntry from './pages/stationary and consumptions/AdjustmentEntry';
+import PhysicalVerification from './pages/stationary and consumptions/PhysicalVerification';
+import RequestApproval from './pages/stationary and consumptions/RequestApproval';
+import POApproval from './pages/stationary and consumptions/POApproval';
+import IssueApproval from './pages/stationary and consumptions/IssueApproval';
+import StockReport from './pages/stationary and consumptions/StockReport';
+import StockLedger from './pages/stationary and consumptions/StockLedger';
+import ConsumptionReport from './pages/stationary and consumptions/ConsumptionReport';
+import PurchaseReport from './pages/stationary and consumptions/PurchaseReport';
+import ReorderReport from './pages/stationary and consumptions/ReorderReport';
+import AuditReport from './pages/stationary and consumptions/AuditReport';
+
+
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
 import DesignAI from './pages/design_management/DesignAI';
@@ -193,7 +247,60 @@ export default function App() {
         <Route path="finance/desk/invoices" element={<AccountsTransaction defaultSection="Sales" />} />
         <Route path="finance/desk/amendments" element={<AccountsTransaction defaultSection="Sales" defaultPage="sam" />} />
         <Route path="finance/desk/lc" element={<AccountsTransaction defaultSection="LC" />} />
+        <Route path="cubebook/*" element={<CubeBookPage />} />
+        <Route path="hr/*" element={<HRModule />} />
+        
+        {/* Fleet & Vehicle Management Routes */}
+        <Route path="fleet/dashboard" element={<FleetDashboard />} />
+        <Route path="fleet/vehicles" element={<VehicleList />} />
+        <Route path="fleet/drivers" element={<DriverList />} />
+        <Route path="fleet/helpers" element={<HelperList />} />
+        <Route path="fleet/vendors" element={<TransportVendorList />} />
+        <Route path="fleet/routes" element={<RouteList />} />
+        <Route path="fleet/fuel-stations" element={<FuelStationList />} />
+        <Route path="fleet/trip-planning" element={<TripPlanning />} />
+        <Route path="fleet/trip-execution" element={<TripExecution />} />
+        <Route path="fleet/trip-profitability" element={<TripProfitability />} />
+        <Route path="fleet/fuel-entry" element={<FuelEntry />} />
+        <Route path="fleet/fuel-consumption" element={<FuelConsumption />} />
+        <Route path="fleet/diesel-km-report" element={<DieselKmReport />} />
+        <Route path="fleet/maintenance-log" element={<MaintenanceLog />} />
+        <Route path="fleet/service-schedule" element={<ServiceSchedule />} />
+        <Route path="fleet/breakdown-entry" element={<BreakdownEntry />} />
+        <Route path="fleet/documents" element={<FleetDocuments />} />
+        <Route path="fleet/expiry-alerts" element={<FleetExpiryAlerts />} />
+        <Route path="fleet/vehicle-utilization" element={<VehicleUtilization />} />
+        <Route path="fleet/driver-performance" element={<DriverPerformance />} />
+        <Route path="fleet/document-manager" element={<Documents />} />
 
+        {/* Support old URL path and redirect/map it */}
+        <Route path="vehicle-management/dashboard" element={<FleetDashboard />} />
+
+        {/* Stores & Consumables Routes */}
+        <Route path="stores-consumables/dashboard" element={<StationaryDashboard />} />
+        <Route path="stores-consumables/category" element={<CategoryMaster />} />
+        <Route path="stores-consumables/uom" element={<UOMMaster />} />
+        <Route path="stores-consumables/item" element={<ItemMaster />} />
+        <Route path="stores-consumables/vendor" element={<VendorMaster />} />
+        <Route path="stores-consumables/department" element={<DepartmentMaster />} />
+        <Route path="stores-consumables/request" element={<MaterialRequest />} />
+        <Route path="stores-consumables/requisition" element={<PurchaseRequisition />} />
+        <Route path="stores-consumables/po" element={<PurchaseOrder />} />
+        <Route path="stores-consumables/grn" element={<GRNStockInward />} />
+        <Route path="stores-consumables/issue" element={<IssueEntry />} />
+        <Route path="stores-consumables/return" element={<ReturnEntry />} />
+        <Route path="stores-consumables/transfer" element={<TransferEntry />} />
+        <Route path="stores-consumables/adjustment" element={<AdjustmentEntry />} />
+        <Route path="stores-consumables/physical" element={<PhysicalVerification />} />
+        <Route path="stores-consumables/approve-request" element={<RequestApproval />} />
+        <Route path="stores-consumables/approve-po" element={<POApproval />} />
+        <Route path="stores-consumables/approve-issue" element={<IssueApproval />} />
+        <Route path="stores-consumables/report-stock" element={<StockReport />} />
+        <Route path="stores-consumables/report-ledger" element={<StockLedger />} />
+        <Route path="stores-consumables/report-consumption" element={<ConsumptionReport />} />
+        <Route path="stores-consumables/report-purchase" element={<PurchaseReport />} />
+        <Route path="stores-consumables/report-reorder" element={<ReorderReport />} />
+        <Route path="stores-consumables/report-audit" element={<AuditReport />} />
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>
@@ -211,7 +318,11 @@ export default function App() {
             </div>
           </div>
         } />
+        
+        {/* Wildcard redirect for unmatched routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );
 }
+

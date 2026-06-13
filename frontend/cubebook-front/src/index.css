@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 14px;           /* base = 14px, matches screenshot compact UI */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply text-slate-800 bg-[#f8f9fc] antialiased;
+    margin: 0;
+    font-family: 'Inter', ui-sans-serif, -apple-system, BlinkMacSystemFont,
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; /* Inter alternate digits */
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  h1 { @apply text-2xl font-bold text-slate-800 tracking-tight; }
+  h2 { @apply text-xl  font-bold text-slate-800 tracking-tight; }
+  h3 { @apply text-lg  font-semibold text-slate-700; }
+  h4 { @apply text-base font-semibold text-slate-700; }
+
+  input, select, textarea, button {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* Remove default outline, handled per-component */
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+  }
+}
+
+@layer components {
+
+  /* ── Shared input style ── */
+  .cb-input {
+    @apply w-full bg-[#f8f9fc] border border-slate-200 rounded-lg px-3 py-2
+           text-[13px] font-medium text-slate-800
+           focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/15
+           placeholder:text-slate-300 transition-all;
+  }
+
+  .cb-input-mini {
+    @apply w-full bg-transparent border-none text-[13px] text-slate-800
+           focus:outline-none focus:bg-slate-50 px-2 py-1 rounded transition-colors;
+  }
+
+  /* ── Card ── */
+  .cb-card {
+    @apply bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden;
+  }
+
+  /* ── Page title ── */
+  .cb-page-title {
+    @apply text-[18px] font-bold text-slate-800 tracking-tight;
+  }
+
+  .cb-page-subtitle {
+    @apply text-[12px] font-normal text-slate-400 mt-0.5;
+  }
+
+  /* ── Table header cell ── */
+  .cb-th {
+    @apply text-[10px] font-bold text-slate-400 uppercase tracking-wider;
+  }
+
+  /* ── Table body cell ── */
+  .cb-td {
+    @apply text-[13px] text-slate-700;
+  }
+
+  /* ── Section label (small caps) ── */
+  .cb-label {
+    @apply text-[10px] font-bold text-slate-400 uppercase tracking-widest;
+  }
+
+  /* ── Badge ── */
+  .cb-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold;
+  }
+
+  /* ── Primary button ── */
+  .cb-btn-primary {
+    @apply flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700
+           text-white text-[13px] font-semibold rounded-xl
+           shadow-sm shadow-purple-600/25 transition-colors disabled:opacity-60;
+  }
+
+  /* ── Secondary button ── */
+  .cb-btn-secondary {
+    @apply flex items-center gap-2 px-4 py-2
+           border border-slate-200 bg-white text-slate-600
+           text-[13px] font-medium rounded-xl
+           hover:bg-slate-50 hover:border-slate-300 transition-colors;
+  }
+
+  /* ── Stat card ── */
+  .cb-stat-card {
+    @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-5;
+  }
+
+  .cb-stat-value {
+    @apply text-[22px] font-bold text-slate-800 tracking-tight;
+  }
+
+  .cb-stat-label {
+    @apply text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5;
+  }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Smooth transitions for route changes ── */
+#root {
+  min-height: 100vh;
+}
+
+/* ---- CUBEBOOK POPUP TO FULL-PAGE CONVERSION --------------------------- */
+
+/* 1. Hide all standard page elements when a modal popup is open */
+#root div:has(> div[class*="fixed"][class*="bg-black"]) > *:not(div[class*="fixed"][class*="bg-black"]),
+#root div:has(> div[class*="fixed"][class*="bg-slate-"]) > *:not(div[class*="fixed"][class*="bg-slate-"]) {
+  display: none !important;
+}
+
+/* 2. De-modalize the fixed overlays so they render statically and inline */
+#root div[class*="fixed"][class*="bg-black"],
+#root div[class*="fixed"][class*="bg-slate-"] {
+  position: static !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: calc(100vh - 120px) !important;
+  display: block !important;
+  z-index: auto !important;
+  animation: none !important;
+}
+
+/* 3. Make the actual form/card element expand to the full width of the page container */
+#root div[class*="fixed"][class*="bg-black"] > form,
+#root div[class*="fixed"][class*="bg-black"] > div,
+#root div[class*="fixed"][class*="bg-slate-"] > form,
+#root div[class*="fixed"][class*="bg-slate-"] > div {
+  max-width: 100% !important;
+  width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  border: 1px solid #e2e8f0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+/* Ensure inner form elements expand fully */
+#root div[class*="fixed"][class*="bg-black"] form,
+#root div[class*="fixed"][class*="bg-slate-"] form {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+
+/* ---- Native ERP CSS Class Adaptations for CubeBook ---- */
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-6;
+}
+
+.card-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.card-title {
+  @apply text-[18px] font-bold text-slate-800 tracking-tight;
+}
+
+.btn {
+  @apply flex items-center gap-2 px-4 py-2 text-[13px] font-semibold rounded-xl transition-colors disabled:opacity-60 cursor-pointer;
+}
+
+.btn-primary {
+  @apply bg-purple-600 hover:bg-purple-700 text-white shadow-sm shadow-purple-600/25;
+}
+
+.btn-secondary {
+  @apply border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300;
+}
+
+.btn-success {
+  @apply bg-emerald-600 hover:bg-emerald-700 text-white;
+}
+
+.btn-danger {
+  @apply bg-rose-600 hover:bg-rose-700 text-white;
+}
+
+.form-control {
+  @apply w-full bg-[#f8f9fc] border border-slate-200 rounded-lg px-3 py-2
+         text-[13px] font-medium text-slate-800
+         focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/15
+         placeholder:text-slate-300 transition-all;
+}
+
+.data-table {
+  @apply min-w-full divide-y divide-slate-200 text-sm;
+}
+
+

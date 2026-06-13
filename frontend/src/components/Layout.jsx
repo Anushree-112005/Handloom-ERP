@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 export default function Layout({ title }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
     <div className="app-layout">
-      <Sidebar />
-      <div className="main-content">
+      <Sidebar isCollapsed={isCollapsed} onToggleSidebar={() => setIsCollapsed(!isCollapsed)} />
+      <div className={`main-content ${isCollapsed ? 'collapsed' : ''}`}>
         <Header title={title} />
         <div className="page-content animate-fade">
           <Outlet />

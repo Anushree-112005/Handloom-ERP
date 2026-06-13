@@ -27,7 +27,7 @@ ISSUES FOUND & FIXED:
   [DUPLICATE]  Sales Invoice appears in Module 10 Gate & Dispatch card
                AND Module 15 Sales & Dispatch sidebar → CONFIRMED LINK
   [DUPLICATE]  Cloth Delivery Eway Bill appears in both Module 9 Greige
-               AND Module 10 Fabric Delivery → SAME route /eway-bill, LINK both
+               AND Module 10 Fabric Delivery →   route /eway-bill, LINK both
   [DUPLICATE]  Einvoice/Eway Bill appears in Module 9 Greige AND Module 10
                Fabric Gate & Dispatch → TWO different types, KEEP BOTH
                (Greige = grey fabric, Fabric = finished fabric)
