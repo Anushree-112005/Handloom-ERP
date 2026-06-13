@@ -213,20 +213,20 @@ const modules = [
   //   ]
   // },
 
-  { section: 'Processing / Production' },
-  {
-    label: 'Fabric Production Desk',
-    icon: Scissors,
-    children: [
-      { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
-      { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
-      { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
-      { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
-      { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
-      { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
-      { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
-    ]
-  },
+  // { section: 'Processing / Production' },
+  // {
+  //   label: 'Fabric Production Desk',
+  //   icon: Scissors,
+  //   children: [
+  //     { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
+  //     { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
+  //     { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
+  //     { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
+  //     { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
+  //     { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
+  //     { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
+  //   ]
+  // },
 
   // Production Planning Modules
   { section: 'Production Planning (PPC)' },
@@ -371,18 +371,18 @@ const modules = [
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
   { section: 'Accounts & Finance' },
-  {
-    label: 'Account Transaction',
-    icon: Briefcase,
-    children: [
-      { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: FileDigit },
-      { path: '/accounts/transaction', label: 'Accounts Details', icon: FolderKanban },
-      { path: '/finance/desk/bills', label: 'Creditors Bills', icon: Receipt },
-      { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileText },
-      { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
-      { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
-    ]
-  },
+  // {
+  //   label: 'Account Transaction',
+  //   icon: Briefcase,
+  //   children: [
+  //     { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: FileDigit },
+  //     { path: '/accounts/transaction', label: 'Accounts Details', icon: FolderKanban },
+  //     { path: '/finance/desk/bills', label: 'Creditors Bills', icon: Receipt },
+  //     { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileText },
+  //     { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
+  //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
+  //   ]
+  // },
   { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
 
   { section: 'Reports & MIS' },
