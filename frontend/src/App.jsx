@@ -190,6 +190,9 @@ export default function App() {
         <Route path="greige/transaction/operations" element={<GreigeTransaction defaultSection="Greige Operations" />} />
         <Route path="greige/transaction/administration" element={<GreigeTransaction defaultSection="Greige Administration" />} />
 
+        {/* Production Planning & Control (PPC) - Full 10 Module Structure */}
+        <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
+
         {/* LAB & Shade Management Routes */}
         <Route path="lab/lab-dip" element={
           <ModulePage
