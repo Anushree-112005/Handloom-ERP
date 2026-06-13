@@ -43,6 +43,7 @@ import SubMasterPage from './pages/masters/SubMasterPage';
 
 import CubeBookPage from './pages/cubebook/CubeBookPage';
 import HRModule from './pages/HR/HRModule';
+import PPCMultiModule from './pages/ppc/PPCMultiModule';
 
 // Fleet & Vehicle Management Imports
 import FleetDashboard from './pages/Vehicle management/FleetDashboard';

@@ -8,7 +8,7 @@ import {
   ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
   CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles, Plus,
   Award, RefreshCw, Clock3, FolderOpen, Calendar, AlertTriangle, LayoutGrid, Menu,
-  Clock, TrendingUp, TrendingDown, Grid, Bell, ArrowRight, MapIcon, Eye
+  Clock, TrendingUp, TrendingDown, Grid, Bell, ArrowRight, Map as MapIcon, Eye
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
