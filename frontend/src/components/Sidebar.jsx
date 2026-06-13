@@ -500,7 +500,6 @@ const modules = [
   //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
   //   ]
   // },
-  { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
 
   { section: 'Vehicle Management' },
   {
