@@ -235,7 +235,7 @@ export default function Dashboard() {
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Live overview of yarn, production, and dispatch metrics.</p>
         </div>
         
-        <div className="card" style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 16, flexDirection: 'row', width: 'auto', flexWrap: 'wrap', position: 'relative' }}>
+        <div className="card dashboard-filter-bar" style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 16, flexDirection: 'row', width: 'auto', flexWrap: 'wrap', position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)' }}>
             <Filter size={16} />
             <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>

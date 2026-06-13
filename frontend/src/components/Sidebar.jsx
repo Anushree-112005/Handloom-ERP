@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
   ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
-  CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles
+  CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles, Plus,
+  Award, RefreshCw, Clock3, FolderOpen, Calendar, AlertTriangle, LayoutGrid, Menu
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -17,10 +18,7 @@ const modules = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
 
-  { section: 'Masters' },
-  { path: '/party-master', label: 'Party Master', icon: Users },
-  { path: '/employee', label: 'Employee Master', icon: Shield },
-  
+
   { section: 'Sub Masters' },
   {
     label: 'Core System Basics',
@@ -263,7 +261,128 @@ const modules = [
   { section: 'Export & Logistics' },
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
-  // { section: 'Accounts & Finance' },
+  { section: 'Accounts & Finance' },
+  {
+    label: 'Finance',
+    icon: Briefcase,
+    children: [
+      { section: 'HOME' },
+      { path: '/cubebook/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+
+      { section: 'MASTERS' },
+      { path: '/cubebook/masters', label: 'Create', icon: Plus },
+      { path: '/cubebook/masters/alter', label: 'Alter', icon: Edit },
+      { path: '/cubebook/masters/chart', label: 'Chart of Accounts', icon: BookOpen },
+      { path: '/party-master', label: 'Party Master', icon: Users },
+
+
+      { section: 'TRANSACTIONS' },
+      { path: '/cubebook/vouchers', label: 'Vouchers', icon: Receipt },
+      { path: '/cubebook/day-book', label: 'Day Book', icon: ClipboardList },
+
+      { section: 'REPORTS' },
+      { path: '/cubebook/reports/trial-balance', label: 'Trial Balance', icon: FileText },
+      { path: '/cubebook/reports/profit-loss', label: 'Profit & Loss', icon: DollarSign },
+      { path: '/cubebook/reports/balance-sheet', label: 'Balance Sheet', icon: Layers },
+      { path: '/cubebook/reports/ledger', label: 'Ledger Report', icon: FileText },
+      { path: '/cubebook/reports/cash-book', label: 'Cash Book', icon: DollarSign },
+      { path: '/cubebook/reports/bank-book', label: 'Bank Book', icon: Building },
+      { path: '/cubebook/reports/outstanding', label: 'Outstanding', icon: Percent },
+      { path: '/cubebook/reports/sales-register', label: 'Sales Register', icon: Receipt },
+      { path: '/cubebook/reports/purchase-register', label: 'Purchase Register', icon: ShoppingCart },
+      { path: '/cubebook/reports/ratio-analysis', label: 'Ratio Analysis', icon: PieChart },
+
+      { section: 'GST' },
+      { path: '/cubebook/gst', label: 'GST Dashboard', icon: ClipboardList },
+      { path: '/cubebook/gst/gstr1', label: 'GSTR-1', icon: ClipboardList },
+      { path: '/cubebook/gst/gstr3b', label: 'GSTR-3B', icon: ClipboardList },
+      { path: '/cubebook/gst/itc', label: 'Input Tax Credit', icon: ClipboardList },
+
+      { section: 'INVENTORY' },
+      { path: '/cubebook/inventory/stock-summary', label: 'Stock Summary', icon: Box },
+      { path: '/cubebook/inventory/movement', label: 'Stock Movement', icon: ArrowRightLeft },
+      { path: '/cubebook/inventory/godowns', label: 'Godown Summary', icon: MapPin },
+
+      { section: 'BANKING' },
+      { path: '/cubebook/banking', label: 'Banking Overview', icon: CreditCard },
+      { path: '/cubebook/banking/cheque-register', label: 'Cheque Register', icon: FileText },
+      { path: '/cubebook/banking/activities', label: 'Bank Reconcile', icon: CheckSquare },
+
+      { section: 'PAYROLL' },
+      { path: '/cubebook/payroll/employees', label: 'Employee Master', icon: Users },
+      { path: '/cubebook/payroll/processing', label: 'Salary Processing', icon: DollarSign },
+      { path: '/cubebook/payroll/reports', label: 'Payroll Reports', icon: FileText },
+
+      { section: 'ADMINISTRATION' },
+      { path: '/cubebook/companies', label: 'Company Master', icon: Building },
+      { path: '/cubebook/company-setup', label: 'Company Settings', icon: Settings },
+      { path: '/cubebook/admin/users', label: 'User Management', icon: Users },
+      { path: '/cubebook/admin/roles', label: 'Roles & Permissions', icon: Shield },
+      { path: '/cubebook/currency', label: 'Currency Master', icon: Globe },
+
+      { section: 'AUDIT' },
+      { path: '/cubebook/audit', label: 'Audit Log', icon: Activity },
+      { path: '/cubebook/audit/vouchers', label: 'Voucher History', icon: ClipboardList },
+    ]
+  },
+  { section: 'Human Resources' },
+  {
+    label: 'HR Management',
+    icon: Users,
+    children: [
+      { section: 'DASHBOARDS' },
+      { path: '/hr', label: 'HR Dashboard', icon: LayoutDashboard },
+      // { path: '/hr/ai-dashboard', label: 'AI HR Dashboard', icon: Sparkles },
+
+      { section: 'WORKFORCE' },
+      // { path: '/hr/workforce', label: 'Workforce Hub', icon: Users },
+      { path: '/employee', label: 'Employee Master', icon: Shield },
+      { path: '/hr/org-chart', label: 'Organization Chart', icon: Layers },
+      { path: '/hr/departments', label: 'Departments', icon: Building },
+      { path: '/hr/designations', label: 'Designations', icon: Award },
+      { path: '/hr/projects', label: 'Projects', icon: FolderOpen },
+
+      // { section: 'RECRUITMENT' },
+      // { path: '/hr/recruitment-hub', label: 'Recruitment Hub', icon: Users },
+      // { path: '/hr/requisitions', label: 'Job Requisitions', icon: ClipboardList },
+      // { path: '/hr/recruitment', label: 'Recruitment', icon: Users },
+      // { path: '/hr/offers-onboarding', label: 'Offers & Onboarding', icon: ClipboardList },
+
+      { section: 'TIME & ATTENDANCE' },
+      { path: '/hr/time-attendance', label: 'Time & Attendance Hub', icon: Clock3 },
+      { path: '/hr/attendance', label: 'Attendance & Leave', icon: Calendar },
+      // { path: '/hr/timesheet', label: 'Timesheet', icon: Clock3 },
+      { path: '/hr/shifts', label: 'Shifts', icon: RefreshCw },
+      { path: '/hr/holidays', label: 'Holidays', icon: Calendar },
+
+      { section: 'COMPENSATION' },
+      // { path: '/hr/compensation', label: 'Compensation Hub', icon: DollarSign },
+      { path: '/hr/payroll', label: 'Payroll', icon: FileText },
+      { path: '/hr/loans', label: 'Loans', icon: DollarSign },
+      { path: '/hr/benefits', label: 'Benefits', icon: Award },
+
+      { section: 'GROWTH' },
+      // { path: '/hr/growth', label: 'Growth Hub', icon: Target },
+      // { path: '/hr/performance', label: 'Performance & Offboarding', icon: Target },
+      // { path: '/hr/goals', label: 'Goals', icon: Target },
+      // { path: '/hr/learning', label: 'Learning & Development', icon: BookOpen },
+      { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
+      { path: '/hr/travel', label: 'Travel Requests', icon: Globe },
+
+      { section: 'OPERATIONS' },
+      // { path: '/hr/operations', label: 'Operations Hub', icon: Settings },
+      // { path: '/hr/tasks', label: 'Task Management', icon: ClipboardList },
+      { path: '/hr/reports', label: 'HR Reports', icon: FileText },
+      { path: '/hr/settings', label: 'HR Settings', icon: Settings },
+
+      { section: 'ADMINISTRATION' },
+      { path: '/hr/administration', label: 'Administration Hub', icon: Settings },
+      { path: '/hr/documents', label: 'Documents', icon: FolderOpen },
+      { path: '/hr/assets', label: 'Assets', icon: Box },
+      { path: '/hr/announcements', label: 'Announcements', icon: FileText },
+      { path: '/hr/helpdesk', label: 'Helpdesk', icon: Info },
+    ]
+  },
   // {
   //   label: 'Account Transaction',
   //   icon: Briefcase,
@@ -277,6 +396,66 @@ const modules = [
   // { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: Receipt },
   // { path: '/accounts/transaction', label: 'Accounts Transaction', icon: ArrowRightLeft },
 
+  { section: 'Vehicle Management' },
+  {
+    label: 'Vehicle Management',
+    icon: LayoutGrid,
+    children: [
+      { path: '/fleet/dashboard', label: 'Dashboard' },
+      { path: '/fleet/vehicles', label: 'Vehicles' },
+      { path: '/fleet/drivers', label: 'Vehicle Assignment' },
+      { path: '/fleet/service-schedule', label: 'Service Schedule' },
+      { path: '/fleet/breakdown-entry', label: 'Breakdown Entry' },
+      { path: '/fleet/maintenance-log', label: 'Maintenance Log' },
+      { path: '/fleet/documents', label: 'RC / Insurance / Permit' },
+      { path: '/fleet/expiry-alerts', label: 'Expiry Alerts' },
+      { path: '/fleet/fuel-consumption', label: 'Fuel Consumption Report' },
+      { path: '/fleet/driver-performance', label: 'Driver Report' }
+    ]
+  },
+
+  { section: 'Stores & Consumables' },
+  {
+    label: 'Stores & Consumables',
+    icon: Package,
+    children: [
+      { section: 'HOME' },
+      { path: '/stores-consumables/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+
+      { section: 'MASTERS' },
+      { path: '/stores-consumables/category', label: 'Category Master', icon: Layers },
+      { path: '/stores-consumables/uom', label: 'UOM Master', icon: Layers },
+      { path: '/stores-consumables/item', label: 'Item Master', icon: Box },
+      { path: '/stores-consumables/vendor', label: 'Vendor Master', icon: Users },
+      { path: '/stores-consumables/department', label: 'Department Master', icon: Building },
+
+      { section: 'TRANSACTIONS' },
+      { path: '/stores-consumables/request', label: 'Department Request', icon: FileText },
+      { path: '/stores-consumables/requisition', label: 'Purchase Requisition', icon: ClipboardList },
+      { path: '/stores-consumables/po', label: 'Purchase Order', icon: ShoppingBag },
+      { path: '/stores-consumables/grn', label: 'Stock Inward (GRN)', icon: ArrowRightLeft },
+      { path: '/stores-consumables/issue', label: 'Issue to Dept', icon: ArrowUpRight },
+      { path: '/stores-consumables/return', label: 'Return to Store', icon: ArrowDownLeft },
+      { path: '/stores-consumables/transfer', label: 'Store Transfer', icon: ArrowRightLeft },
+      { path: '/stores-consumables/adjustment', label: 'Stock Adjustment', icon: AlertTriangle },
+      { path: '/stores-consumables/physical', label: 'Physical Verification', icon: CheckSquare },
+
+      { section: 'APPROVALS' },
+      { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
+      { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
+      { path: '/stores-consumables/approve-issue', label: 'Issue Approval', icon: Shield },
+
+      { section: 'REPORTS & ANALYTICS' },
+      { path: '/stores-consumables/report-stock', label: 'Stock Inventory', icon: PieChart },
+      { path: '/stores-consumables/report-ledger', label: 'Stock Ledger', icon: FileText },
+      { path: '/stores-consumables/report-consumption', label: 'Consumption Analysis', icon: PieChart },
+      { path: '/stores-consumables/report-purchase', label: 'Purchase Analysis', icon: Receipt },
+      { path: '/stores-consumables/report-reorder', label: 'Low Stock Alerts', icon: AlertTriangle },
+      { path: '/stores-consumables/report-audit', label: 'Audit Trail', icon: ClipboardList }
+    ]
+  },
+
+
   { section: 'Reports & MIS' },
   { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
   { path: '/log-report', label: 'Log Report', icon: Activity },
@@ -289,8 +468,9 @@ const modules = [
   { path: '/about', label: 'About', icon: Info },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isCollapsed, onToggleSidebar }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [openMenus, setOpenMenus] = useState({});
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'DINESH EXPORTS',
@@ -298,19 +478,8 @@ export default function Sidebar() {
     logo: ''
   });
 
-  // Auto-expand menu if active route is a child (excluding sub-master modules to prevent vertical menu overflow)
-  useEffect(() => {
-    modules.forEach(mod => {
-      if (mod.children) {
-        const isActiveChild = mod.children.some(child => 
-          location.pathname.startsWith(child.path) && !child.path.startsWith('/sub-master/')
-        );
-        if (isActiveChild) {
-          setOpenMenus(prev => ({ ...prev, [mod.label]: true }));
-        }
-      }
-    });
-  }, [location.pathname]);
+  // Sidebar menus will only toggle open/close when clicked.
+
 
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -340,58 +509,190 @@ export default function Sidebar() {
   }, []);
 
   return (
-    <aside className="sidebar" id="main-sidebar">
-      <div className="sidebar-brand">
-        {companyProfile.logo ? (
-          <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
-            <img src={companyProfile.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-          </div>
+    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} id="main-sidebar">
+      <div className="sidebar-brand" style={{ display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'space-between', padding: isCollapsed ? '16px' : '16px 20px' }}>
+        {!isCollapsed ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {companyProfile.logo ? (
+                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
+                  <img src={companyProfile.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                </div>
+              ) : (
+                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
+                  <img src={defaultLogo} alt="Default Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                </div>
+              )}
+              <div>
+                <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px', margin: 0, fontWeight: 700 }}>{companyProfile.company_name}</h1>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>{companyProfile.description}</span>
+              </div>
+            </div>
+            <button 
+              onClick={onToggleSidebar}
+              className="sidebar-toggle-btn"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-secondary)',
+                borderRadius: '4px',
+                marginRight: 0
+              }}
+              title="Collapse Sidebar"
+            >
+              <Menu size={18} />
+            </button>
+          </>
         ) : (
-          <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
-            <img src={defaultLogo} alt="Default Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-          </div>
+          <button 
+            onClick={onToggleSidebar}
+            className="sidebar-toggle-btn"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-secondary)',
+              borderRadius: '4px',
+              marginRight: 0
+            }}
+            title="Expand Sidebar"
+          >
+            <Menu size={20} />
+          </button>
         )}
-        <div>
-          <h1 style={{ fontSize: companyProfile.company_name.length > 15 ? '13px' : '15px' }}>{companyProfile.company_name}</h1>
-          <span>{companyProfile.description}</span>
-        </div>
       </div>
       <nav className="sidebar-nav">
         {modules.map((item, i) =>
           item.section ? (
             <div key={i} className="nav-section">{item.section}</div>
           ) : item.children ? (
-            <div key={item.label} className="nav-group">
-              <button
-                className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
-                onClick={() => toggleMenu(item.label)}
-                style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <item.icon />
-                  <span>{item.label}</span>
-                </div>
-                {openMenus[item.label] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              {openMenus[item.label] && (
-                <div className="nav-children animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
-                  {item.children.map(child => (
-                    <NavLink
-                      key={child.path}
-                      to={child.path}
-                      end={child.path === '/'}
-                      className={({ isActive }) =>
-                        `nav-item ${isActive ? 'active' : ''}`
-                      }
-                      style={{ padding: '8px 16px 8px 48px', fontSize: '13px', margin: '1px 8px' }}
-                    >
-                      <child.icon style={{ width: 14, height: 14 }} />
-                      <span>{child.label}</span>
-                    </NavLink>
-                  ))}
-                </div>
-              )}
-            </div>
+            item.label === 'Vehicle Management' ? (
+              <div key={item.label} className="nav-group">
+                <button
+                  className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
+                  onClick={() => {
+                    toggleMenu(item.label);
+                    navigate('/fleet/dashboard');
+                  }}
+                  style={{
+                    width: 'calc(100% - 16px)',
+                    margin: '4px 8px',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: '600',
+                    color: '#1E293B'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <item.icon style={{ width: 18, height: 18, color: '#7C3AED' }} />
+                    <span>{item.label}</span>
+                  </div>
+                  {openMenus[item.label] ? <ChevronDown size={16} style={{ color: '#64748b' }} /> : <ChevronRight size={16} style={{ color: '#64748b' }} />}
+                </button>
+                {openMenus[item.label] && (
+                  <div
+                    className="nav-children animate-fade"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      position: 'relative',
+                      marginLeft: '24px',
+                      borderLeft: '1.5px solid #E2E8F0',
+                      paddingLeft: '12px',
+                      marginTop: '6px',
+                      marginBottom: '10px',
+                      gap: '4px'
+                    }}
+                  >
+                    {item.children.map((child) => (
+                      <NavLink
+                        key={child.path}
+                        to={child.path}
+                        end={child.path === '/'}
+                        className={({ isActive }) =>
+                          `vehicle-sub-item ${isActive ? 'active' : ''}`
+                        }
+                      >
+                        <span>{child.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div key={item.label} className="nav-group">
+                <button
+                  className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
+                  onClick={() => {
+                    toggleMenu(item.label);
+                    if (item.label === 'CubeBook Finance') {
+                      navigate('/cubebook/dashboard');
+                    } else if (item.label === 'HR Management') {
+                      navigate('/hr');
+                    } else if (item.label === 'Vehicle Management') {
+                      navigate('/fleet/dashboard');
+                    } else if (item.label === 'Stores & Consumables') {
+                      navigate('/stores-consumables/dashboard');
+                    }
+                  }}
+                  style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </div>
+                  {openMenus[item.label] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+                {openMenus[item.label] && (
+                  <div className="nav-children animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
+                    {item.children.map((child, childIdx) =>
+                      child.section ? (
+                        <div
+                          key={`sec-${childIdx}`}
+                          style={{
+                            padding: '12px 16px 4px 36px',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            color: '#64748b',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                          }}
+                        >
+                          {child.section}
+                        </div>
+                      ) : (
+                        <NavLink
+                          key={child.path}
+                          to={child.path}
+                          end={child.path === '/'}
+                          className={({ isActive }) =>
+                            `nav-item ${isActive ? 'active' : ''}`
+                          }
+                          style={{ padding: '8px 16px 8px 48px', fontSize: '13px', margin: '1px 8px' }}
+                        >
+                          <child.icon style={{ width: 14, height: 14 }} />
+                          <span>{child.label}</span>
+                        </NavLink>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             <NavLink
               key={item.path}
