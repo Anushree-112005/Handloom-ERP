@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import UniversalChatbot from './UniversalChatbot';
 
 export default function Layout({ title }) {
   return (
@@ -12,6 +13,7 @@ export default function Layout({ title }) {
           <Outlet />
         </div>
       </div>
+      <UniversalChatbot />
     </div>
   );
 }
