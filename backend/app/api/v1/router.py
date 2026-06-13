@@ -44,4 +44,7 @@ api_router.include_router(design_ai_router)
 from app.api.v1.endpoints import textile_designs
 api_router.include_router(textile_designs.router)
 
+from app.api.v1.endpoints import ppc
+api_router.include_router(ppc.router, prefix="/ppc", tags=["Production Planning (PPC)"])
+
 

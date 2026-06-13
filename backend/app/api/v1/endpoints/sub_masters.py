@@ -165,7 +165,7 @@ async def sync_colors_from_design(payload: ColorSyncPayload, db: AsyncSession = 
                 or_(*conditions)
             )
         )
-        if existing.scalar_one_or_none():
+        if existing.scalars().first():
             skipped += 1
             continue
             
