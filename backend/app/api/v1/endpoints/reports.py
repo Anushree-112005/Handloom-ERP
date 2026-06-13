@@ -7,6 +7,7 @@ from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Optional
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.api.v1.endpoints.auth import get_current_user
 from app.models.employee import Employee
@@ -15,6 +16,7 @@ from app.modules.reports.registry import get_report_templates, get_report_defini
 from app.modules.reports.service import generate_report
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
+
 
 
 # ── Schemas ───────────────────────────────────────────────────────
@@ -95,7 +97,7 @@ async def generate_report_endpoint(
         format=job.format,
         status=job.status,
         filename=job.filename,
-        download_url=f"/api/v1/reports/jobs/{job.id}/download" if job.status == "completed" else None,
+        download_url=f"{settings.API_V1_STR}/reports/jobs/{job.id}/download" if job.status == "completed" else None,
         error=job.error,
         created_at=job.created_at.isoformat() if job.created_at else None,
     )
@@ -113,6 +115,9 @@ async def get_report_job(
     if not job:
         raise HTTPException(status_code=404, detail="Report job not found")
 
+    if job.user_id != current_user.employee_code:
+        raise HTTPException(status_code=403, detail="Not authorized to access this report job")
+
     return ReportJobOut(
         job_id=job.id,
         report_id=job.report_id,
@@ -120,7 +125,7 @@ async def get_report_job(
         format=job.format,
         status=job.status,
         filename=job.filename,
-        download_url=f"/api/v1/reports/jobs/{job.id}/download" if job.status == "completed" else None,
+        download_url=f"{settings.API_V1_STR}/reports/jobs/{job.id}/download" if job.status == "completed" else None,
         error=job.error,
         created_at=job.created_at.isoformat() if job.created_at else None,
     )
@@ -138,6 +143,8 @@ async def download_report(
 
     if not job:
         raise HTTPException(status_code=404, detail="Report job not found")
+    if job.user_id != current_user.employee_code:
+        raise HTTPException(status_code=403, detail="Not authorized to access this report")
     if job.status != "completed":
         raise HTTPException(status_code=400, detail=f"Report is not ready. Status: {job.status}")
     if not job.file_path or not os.path.exists(job.file_path):
@@ -157,3 +164,4 @@ async def download_report(
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{job.filename}"'},
     )
+
