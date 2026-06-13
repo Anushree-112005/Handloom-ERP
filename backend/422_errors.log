@@ -31,3 +31,6 @@ Body: b'{"name":"ETA-792","code":"6","extra_field_1":"2026-06-24","extra_field_2
 Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'FA-478', 'code': '', 'extra_field_1': '', 'extra_field_2': 'Pending', 'description': 'Message: Loom  finishing tomorrow | Action: ', 'is_active': True}}]
 Body: b'{"name":"FA-478","code":"","extra_field_1":"","extra_field_2":"Pending","description":"Message: Loom  finishing tomorrow | Action: ","is_active":true}'
 
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'is_active': True, 'name': 'pink', 'code': 'PNK', 'extra_field_1': '#ea10bb'}}]
+Body: b'{"is_active":true,"name":"pink","code":"PNK","extra_field_1":"#ea10bb"}'
+
