@@ -145,9 +145,9 @@ export default function GenericMasterForm({ config }) {
   const displayFields = fields.length > 0
     ? fields
     : [
-        { name: 'name', label: 'Name', type: 'text', required: true },
-        { name: 'code', label: 'Code', type: 'text' },
-      ];
+      { name: 'name', label: 'Name', type: 'text', required: true },
+      { name: 'code', label: 'Code', type: 'text' },
+    ];
 
   // Map field names to DB columns for display
   const getRecordValue = (record, fieldName) => {
@@ -505,17 +505,17 @@ export default function GenericMasterForm({ config }) {
             </p>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button 
+              <button
                 type="button"
-                className="btn btn-secondary" 
+                className="btn btn-secondary"
                 style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13 }}
                 onClick={() => setDeleteConfirm({ show: false, id: null, name: '' })}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="button"
-                className="btn btn-primary" 
+                className="btn btn-primary"
                 style={{ flex: 1, padding: '10px 16px', fontWeight: 600, fontSize: 13, background: '#ef4444', borderColor: '#ef4444', color: 'white' }}
                 onClick={async () => {
                   const { id } = deleteConfirm;
