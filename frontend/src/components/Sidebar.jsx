@@ -6,7 +6,8 @@ import {
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
   ShoppingBag, Database, Briefcase, FileDigit, FolderKanban,
-  CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles
+  CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles, AlertTriangle,
+  Calendar, Eye, TrendingUp, Bell, Clock, RefreshCw, Grid, ArrowRight, TrendingDown, Map as MapIcon
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -197,7 +198,7 @@ const modules = [
   //   label: 'Warping/Sizing Transaction',
   //   icon: Settings,
   //   children: [
-  //     { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
+  //     { path: '/wgit pull origin master --rebasearp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
   //     { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
   //   ]
   // },
@@ -212,23 +213,127 @@ const modules = [
   //   ]
   // },
 
-  // { section: 'Processing / Production' },
-  // {
-  //   label: 'Fabric Production Desk',
-  //   icon: Scissors,
-  //   children: [
-  //     { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
-  //     { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
-  //     { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
-  //     { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
-  //     { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
-  //     { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
-  //     { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
-  //   ]
-  // },
+  { section: 'Processing / Production' },
+  {
+    label: 'Fabric Production Desk',
+    icon: Scissors,
+    children: [
+      { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
+      { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
+      { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
+      { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
+      { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
+      { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
+      { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
+    ]
+  },
 
-  // { section: 'LAB & Shade Management' },
-
+  // Production Planning Modules
+  { section: 'Production Planning (PPC)' },
+  {
+    label: 'Master Setup',
+    icon: Settings,
+    children: [
+      { path: '/ppc/master/loom-master', label: 'Loom Master', icon: Factory },
+      { path: '/ppc/master/shift-master', label: 'Shift Master', icon: Clock },
+      { path: '/ppc/master/operator-master', label: 'Operator Master', icon: Users },
+      { path: '/ppc/master/downtime-reason', label: 'Downtime Reason', icon: AlertTriangle }
+    ]
+  },
+  {
+    label: 'Loom Planning',
+    icon: Layers,
+    children: [
+      { path: '/ppc/planning/availability', label: 'Availability Check', icon: Calendar },
+      { path: '/ppc/planning/capacity', label: 'Capacity Calc', icon: Activity },
+      { path: '/ppc/planning/order-breakdown', label: 'Order Breakdown', icon: PieChart },
+      { path: '/ppc/planning/load-balancing', label: 'Load Balancing', icon: Target },
+      { path: '/ppc/planning/allocation', label: 'Loom Allocation', icon: CheckSquare }
+    ]
+  },
+  {
+    label: 'Production Scheduling',
+    icon: Calendar,
+    children: [
+      { path: '/ppc/scheduling/start-end', label: 'Date Planning', icon: Calendar },
+      { path: '/ppc/scheduling/runtime', label: 'Runtime Calc', icon: Clock },
+      { path: '/ppc/scheduling/shift-planning', label: 'Shift Planning', icon: Layers },
+      { path: '/ppc/scheduling/operator-assign', label: 'Operator Assign', icon: Users },
+      { path: '/ppc/scheduling/priority', label: 'Priority Schedule', icon: AlertTriangle }
+    ]
+  },
+  {
+    label: 'Production Execution',
+    icon: Activity,
+    children: [
+      { path: '/ppc/execution/loom-start', label: 'Loom Start Entry', icon: Factory },
+      { path: '/ppc/execution/shift-entry', label: 'Shift Prod. Entry', icon: ClipboardList },
+      { path: '/ppc/execution/iot-entry', label: 'IoT / Auto Entry', icon: Activity },
+      { path: '/ppc/execution/speed-monitoring', label: 'Speed Monitoring', icon: TrendingUp },
+      { path: '/ppc/execution/status-update', label: 'Status Update', icon: RefreshCw }
+    ]
+  },
+  {
+    label: 'Daily Monitoring',
+    icon: Eye,
+    children: [
+      { path: '/ppc/monitoring/daily-report', label: 'Daily Prod. Report', icon: FileText },
+      { path: '/ppc/monitoring/target-actual', label: 'Target vs Actual', icon: Target },
+      { path: '/ppc/monitoring/efficiency', label: 'Efficiency Calc', icon: TrendingUp },
+      { path: '/ppc/monitoring/loss-analysis', label: 'Loss Analysis', icon: TrendingDown },
+      { path: '/ppc/monitoring/shift-summary', label: 'Shift Summary', icon: PieChart }
+    ]
+  },
+  {
+    label: 'Progress Tracking',
+    icon: TrendingUp,
+    children: [
+      { path: '/ppc/tracking/order-progress', label: 'Order Progress', icon: Layers },
+      { path: '/ppc/tracking/loom-contribution', label: 'Loom Contribution', icon: PieChart },
+      { path: '/ppc/tracking/live-dashboard', label: 'Live Dashboard', icon: Activity },
+      { path: '/ppc/tracking/multi-loom', label: 'Multi-loom View', icon: Grid }
+    ]
+  },
+  {
+    label: 'Problem Handling',
+    icon: AlertTriangle,
+    children: [
+      { path: '/ppc/problem/breakdown-entry', label: 'Breakdown Entry', icon: AlertTriangle },
+      { path: '/ppc/problem/downtime-calc', label: 'Downtime Calc', icon: Clock },
+      { path: '/ppc/problem/lost-meters', label: 'Lost Meters Calc', icon: TrendingDown },
+      { path: '/ppc/problem/reallocation', label: 'Reallocation Engine', icon: RefreshCw },
+      { path: '/ppc/problem/maintenance', label: 'Maintenance Log', icon: Wrench }
+    ]
+  },
+  {
+    label: 'Finish Prediction (ETA)',
+    icon: Clock,
+    children: [
+      { path: '/ppc/prediction/eta-calc', label: 'ETA Calculation', icon: Clock },
+      { path: '/ppc/prediction/dynamic-eta', label: 'Dynamic ETA Update', icon: RefreshCw }
+    ]
+  },
+  {
+    label: 'Alert & Notification',
+    icon: Bell,
+    children: [
+      { path: '/ppc/alerts/low-efficiency', label: 'Low Efficiency Alert', icon: TrendingDown },
+      { path: '/ppc/alerts/breakdown-alert', label: 'Breakdown Alert', icon: AlertTriangle },
+      { path: '/ppc/alerts/next-order', label: 'Next Order Alert', icon: ArrowRight }
+    ]
+  },
+  {
+    label: 'Reports',
+    icon: PieChart,
+    children: [
+      { path: '/ppc/reports/loom-wise', label: 'Loom-wise Prod.', icon: FileText },
+      { path: '/ppc/reports/order-wise', label: 'Order-wise Prod.', icon: Layers },
+      { path: '/ppc/reports/daily-factory', label: 'Daily Factory', icon: Activity },
+      { path: '/ppc/reports/efficiency-trend', label: 'Efficiency Trend', icon: TrendingUp },
+      { path: '/ppc/reports/downtime-history', label: 'Downtime History', icon: Clock },
+      { path: '/ppc/reports/delivery-forecast', label: 'Delivery Forecast', icon: MapIcon }
+    ]
+  },
 
   { section: 'Quality Control' },
   { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
@@ -264,19 +369,19 @@ const modules = [
   { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
   { section: 'Accounts & Finance' },
-  { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
   // {
   //   label: 'Account Transaction',
   //   icon: Briefcase,
   //   children: [
-  //     { path: '/finance/desk/bills', label: 'Bills & Approvals', icon: Receipt },
-  //     { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileDigit },
+  //     { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: FileDigit },
+  //     { path: '/accounts/transaction', label: 'Accounts Details', icon: FolderKanban },
+  //     { path: '/finance/desk/bills', label: 'Creditors Bills', icon: Receipt },
+  //     { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileText },
   //     { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
-  //     { path: '/finance/desk/lc', label: 'LC Management', icon: Briefcase }
+  //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
   //   ]
   // },
-  // { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: Receipt },
-  // { path: '/accounts/transaction', label: 'Accounts Transaction', icon: ArrowRightLeft },
+  { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
 
   { section: 'Reports & MIS' },
   { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },

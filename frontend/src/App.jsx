@@ -42,6 +42,15 @@ import SubMasterPage from './pages/masters/SubMasterPage';
 
 
 import CubeBookPage from './pages/cubebook/CubeBookPage';
+import LiveLoomDashboard from './pages/ppc/LiveLoomDashboard';
+import OrderAllocation from './pages/ppc/OrderAllocation';
+import ShiftProductionLog from './pages/ppc/ShiftProductionLog';
+import WarpWeftIssue from './pages/ppc/WarpWeftIssue';
+import DowntimeTracking from './pages/ppc/DowntimeTracking';
+import LoomUtilizationReport from './pages/ppc/LoomUtilizationReport';
+import SmartAlertsCenter from './pages/ppc/SmartAlertsCenter';
+import LoomRegistration from './pages/ppc/LoomRegistration';
+import PPCMultiModule from './pages/ppc/PPCMultiModule';
 
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
@@ -137,6 +146,9 @@ export default function App() {
         <Route path="greige/transaction" element={<Navigate to="/greige/transaction/operations" replace />} />
         <Route path="greige/transaction/operations" element={<GreigeTransaction defaultSection="Greige Operations" />} />
         <Route path="greige/transaction/administration" element={<GreigeTransaction defaultSection="Greige Administration" />} />
+
+        {/* Production Planning & Control (PPC) - Full 10 Module Structure */}
+        <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
 
         {/* LAB & Shade Management Routes */}
         <Route path="lab/lab-dip" element={

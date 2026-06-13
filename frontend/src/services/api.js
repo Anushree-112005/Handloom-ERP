@@ -313,6 +313,18 @@ export const subMasterAPI = {
   syncColors: (colors) => api.post('/sub-masters/color_master/sync-colors', { colors }),
 };
 
-
+// ---- PPC ----
+export const ppcAPI = {
+  getLooms: () => api.get('/ppc/looms'),
+  createLoom: (data) => api.post('/ppc/looms', data),
+  getAllocations: () => api.get('/ppc/allocations'),
+  createAllocation: (data) => api.post('/ppc/allocations', data),
+  logProduction: (data) => api.post('/ppc/logs', data),
+  getOperators: () => api.get('/ppc/operators'),
+  createOperator: (data) => api.post('/ppc/operators', data),
+  updateOperator: (id, data) => api.put(`/ppc/operators/${id}`, data),
+  deleteOperator: (id) => api.delete(`/ppc/operators/${id}`),
+};
 
 export default api;
+
