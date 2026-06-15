@@ -19,6 +19,9 @@ const modules = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
 
+  
+  { section: 'Masters' },
+  { path: '/party-master', label: 'Party Master', icon: Users },
 
   { section: 'Sub Masters' },
   {
@@ -378,7 +381,6 @@ const modules = [
       { path: '/cubebook/masters', label: 'Create', icon: Plus },
       { path: '/cubebook/masters/alter', label: 'Alter', icon: Edit },
       { path: '/cubebook/masters/chart', label: 'Chart of Accounts', icon: BookOpen },
-      { path: '/party-master', label: 'Party Master', icon: Users },
 
 
       { section: 'TRANSACTIONS' },
