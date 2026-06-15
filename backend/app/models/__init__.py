@@ -1,6 +1,6 @@
 # Models package - imports all models for Alembic discovery
 from app.models.employee import Employee
-from app.models.party_master import PartyMaster
+from app.models.party_master import PartyMaster, PartyAddress
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
 from app.models.yarn_purchase import YarnPurchaseOrder, YarnPurchaseCountDetail, YarnPurchaseIndentDetail
 from app.models.yarn_inward import YarnInward, YarnInwardItem
