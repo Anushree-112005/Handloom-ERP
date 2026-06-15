@@ -288,7 +288,6 @@ export default function YarnInward() {
     };
   };
 
-  const handleChange = (e) => {
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -306,6 +305,7 @@ export default function YarnInward() {
     }
   };
 
+  const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
     
@@ -330,9 +330,90 @@ export default function YarnInward() {
       return;
     }
 
-    const newForm = { ...form, [name]: value };
+    let newForm = { ...form, [name]: value };
+
+    if (name === 'received_type' && value === 'Direct') {
+      newForm.po_no_dt = '';
+    }
+
+    if (name === 'po_no_dt') {
+      if (!value) {
+        newForm = {
+          ...newForm,
+          received_from: '',
+          agent_name: '',
+          transport: '',
+          due_days: 0,
+          order_kgs: 0,
+          received_kgs: 0,
+          balance_kgs: 0,
+          tax_type: 'GST',
+          cgst_pct: 0,
+          sgst_pct: 0,
+          igst_pct: 0,
+          packing: '',
+          freight: 0,
+          remarks: '',
+          items: [{
+            yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
+            our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
+          }]
+        };
+      } else {
+        const selectedPo = pos.find(po => `${po.po_number} / ${po.po_date}` === value);
+        if (selectedPo) {
+          const mappedItems = (selectedPo.indent_details || []).map(indent => {
+            const selectedColor = colorMasters.find(c => c.name === selectedPo.colour);
+            return {
+              yarn_count: indent.yarn_count || '',
+              mill_name: '',
+              colour: selectedPo.colour || '',
+              color_code: selectedColor ? (selectedColor.code || '') : '',
+              lot_no: '',
+              our_id: '',
+              bags: 0,
+              kgs: indent.order_qty || 0,
+              rate: 0,
+              amount: 0
+            };
+          });
+
+          const finalItems = mappedItems.length > 0 ? mappedItems : [{
+            yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
+            our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
+          }];
+
+          newForm = {
+            ...newForm,
+            received_from: selectedPo.supplier_name || '',
+            agent_name: selectedPo.agent_name || '',
+            transport: selectedPo.transport || '',
+            due_days: selectedPo.due_days || 0,
+            order_kgs: selectedPo.total_order_kgs || 0,
+            received_kgs: 0,
+            balance_kgs: selectedPo.total_order_kgs || 0,
+            tax_type: selectedPo.tax_type || 'GST',
+            cgst_pct: selectedPo.cgst_pct || 0,
+            sgst_pct: selectedPo.sgst_pct || 0,
+            igst_pct: selectedPo.igst_pct || 0,
+            packing: selectedPo.packing_type || '',
+            freight: selectedPo.freight_chg || 0,
+            remarks: selectedPo.remarks || '',
+            items: finalItems
+          };
+        }
+      }
+    }
+
+    if (name === 'received_kgs') {
+      newForm.balance_kgs = (parseFloat(newForm.order_kgs) || 0) - (parseFloat(value) || 0);
+    }
+    if (name === 'order_kgs') {
+      newForm.balance_kgs = (parseFloat(value) || 0) - (parseFloat(newForm.received_kgs) || 0);
+    }
+
     const financialFields = ['gross_amount', 'freight', 'cgst_pct', 'sgst_pct', 'igst_pct', 'tax_type', 'tcs_value', 'tds_pct', 'round_off'];
-    if (financialFields.includes(name)) {
+    if (financialFields.includes(name) || name === 'po_no_dt') {
       setForm(calculateFinancials(newForm));
     } else {
       setForm(newForm);
@@ -340,7 +421,24 @@ export default function YarnInward() {
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
-  const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+  const removeItem = (index) => {
+    const newItems = form.items.filter((_, i) => i !== index);
+    const newGross = newItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    const totalKgs = newItems.reduce((sum, item) => sum + (parseFloat(item.kgs) || 0), 0);
+    const totalBags = newItems.reduce((sum, item) => sum + (parseInt(item.bags) || 0), 0);
+    
+    let updatedForm = {
+      ...form,
+      items: newItems,
+      gross_amount: newGross,
+      received_kgs: totalKgs,
+      net_kgs: totalKgs,
+      total_bags: totalBags,
+      balance_kgs: (parseFloat(form.order_kgs) || 0) - totalKgs
+    };
+    setForm(calculateFinancials(updatedForm));
+  };
+
   const updateItem = (index, field, value) => {
     if (field === 'yarn_count' && value === 'custom') {
       setCustomYarnCountIdx(index);
@@ -380,7 +478,17 @@ export default function YarnInward() {
       newGross = newItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     }
     
-    const updatedForm = { ...form, items: newItems, gross_amount: newGross };
+    let updatedForm = { ...form, items: newItems, gross_amount: newGross };
+
+    if (field === 'kgs' || field === 'bags') {
+      const totalKgs = newItems.reduce((sum, item) => sum + (parseFloat(item.kgs) || 0), 0);
+      const totalBags = newItems.reduce((sum, item) => sum + (parseInt(item.bags) || 0), 0);
+      updatedForm.received_kgs = totalKgs;
+      updatedForm.net_kgs = totalKgs;
+      updatedForm.total_bags = totalBags;
+      updatedForm.balance_kgs = (parseFloat(updatedForm.order_kgs) || 0) - totalKgs;
+    }
+    
     if (field === 'kgs' || field === 'rate' || field === 'amount') {
       setForm(calculateFinancials(updatedForm));
     } else {
@@ -732,7 +840,7 @@ export default function YarnInward() {
                     <div className="form-group"><label>Gate No</label><input className="form-control" name="gate_no" value={form.gate_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Weighbridge No</label><input className="form-control" name="wbridge_no" value={form.wbridge_no} onChange={handleChange} /></div>
                     
-                    <div className="form-group"><label>W Weight</label><input type="number" className="form-control" name="w_weight" value={form.w_weight} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'yarn', 'yarn_type')} /></div>
+                    <div className="form-group"><label>W Weight</label><input type="number" className="form-control" name="w_weight" value={form.w_weight} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'yarn', 'yarn_count')} /></div>
                   </div>
 
                   {/* Section 2: Yarn Details */}
@@ -760,7 +868,7 @@ export default function YarnInward() {
                                   <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <select className="form-control" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
+                                <select className="form-control" name="yarn_count" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
@@ -880,7 +988,7 @@ export default function YarnInward() {
                                   <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <select className="form-control" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
+                                <select className="form-control" name="yarn_count" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>

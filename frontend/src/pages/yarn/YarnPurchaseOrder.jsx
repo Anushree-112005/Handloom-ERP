@@ -92,10 +92,7 @@ export default function YarnPurchaseOrder() {
     packing_type: '', sgst_pct: 0, cgst_pct: 0, igst_pct: 0, labeling: '',
     colour: '', net_amount: 0, due_days: 0, remarks: '', status: 'Active',
     
-    count_details: [{
-      supplier_name: '', fibre_group: '', yarn_count: '', yarn_csp: 0,
-      min_cone_wgt: 0, order_kgs: 0, mill_name: '', print_name: '', tolerance_pct: 0
-    }],
+    count_details: [],
     indent_details: [{
       req_ind_no: '', design_no: '', ibpo_no: '', party_name: '', fabric_name: '',
       yarn_count: '', order_mtrs: 0, warp_qty: 0, weft_qty: 0, tot_reqd_qty: 0,
@@ -459,7 +456,6 @@ export default function YarnPurchaseOrder() {
 
   const tabs = [
     { id: 'main', label: 'Order Info', icon: FileText },
-    { id: 'yarn', label: 'Yarn Count Details', icon: Package },
     { id: 'indent', label: 'Indent / Design', icon: Layers },
     { id: 'tax', label: 'Tax & Logistics', icon: IndianRupee }
   ];
@@ -600,16 +596,7 @@ export default function YarnPurchaseOrder() {
                     <DetailRow label="IGST" value={`${selectedViewOrder.igst_pct}%`} />
                     <DetailRow label="Net Amount" value={<span style={{ color: 'var(--primary)', fontSize: 14 }}>₹{selectedViewOrder.net_amount}</span>} />
                     
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items ({selectedViewOrder.count_details?.length || 0})</h4>
-                    {selectedViewOrder.count_details?.map((c, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 8, border: '1px solid var(--border)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Count: {c.yarn_count}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                          <span>Group: {c.fibre_group}</span>
-                          <span>Kgs: {c.order_kgs}</span>
-                        </div>
-                      </div>
-                    ))}
+
                   </div>
                 </div>
               </div>
@@ -732,92 +719,11 @@ export default function YarnPurchaseOrder() {
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
                     <div className="form-group"><label>Status</label>
-                      <select className="form-control" name="status" value={form.status} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'yarn', 'yarn_count_no')}>
+                      <select className="form-control" name="status" value={form.status} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'indent', 'req_ind_no')}>
                         <option>Active</option><option>Closed</option>
                       </select>
                     </div>
                   </div>
-
-                  {/* Section 2: Yarn Count Details */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Yarn Count Details</h4>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addCountDetail}><Plus size={16} /> Add Yarn Count</button>
-                  </div>
-                  {form.count_details.map((item, idx) => (
-                    <div key={idx} style={{ border: '1px solid var(--border)', padding: 16, borderRadius: 8, marginBottom: 16, background: '#fafafa', position: 'relative' }}>
-                      <button type="button" onClick={() => removeCountDetail(idx)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer' }}><X size={14}/></button>
-                      <h5 style={{ marginTop: 0, marginBottom: 12, color: 'var(--primary)', fontSize: 14, fontWeight: 600 }}>Yarn #{idx + 1}</h5>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                        <div className="form-group"><label>Supplier Name</label>
-                          {customCountSupplierIdx === idx ? (
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <input 
-                                autoFocus
-                                className="form-control" 
-                                placeholder="Type new supplier..."
-                                value={customCountSupplierVal}
-                                onChange={(e) => setCustomCountSupplierVal(e.target.value)}
-                                onKeyDown={async (e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    await handleSaveCustomCountSupplier(idx);
-                                  }
-                                }}
-                              />
-                              <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustomCountSupplier(idx)} title="Save">
-                                <CheckCircle size={16} />
-                              </button>
-                              <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setCustomCountSupplierIdx(null); updateCountDetail(idx, 'supplier_name', ''); }} title="Cancel">
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ) : (
-                            <select 
-                              className="form-control" 
-                              value={item.supplier_name} 
-                              onChange={(e) => {
-                                if (e.target.value === 'custom_add_new') {
-                                  setCustomCountSupplierIdx(idx);
-                                  setCustomCountSupplierVal('');
-                                } else {
-                                  updateCountDetail(idx, 'supplier_name', e.target.value);
-                                }
-                              }}
-                            >
-                              <option value="">Select Supplier...</option>
-                              {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                              <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
-                            </select>
-                          )}
-                        </div>
-                        <div className="form-group"><label>Fibre Group</label><input className="form-control" value={item.fibre_group} onChange={e => updateCountDetail(idx, 'fibre_group', e.target.value)} /></div>
-                        <div className="form-group"><label>Yarn Count</label><input className="form-control" value={item.yarn_count} onChange={e => updateCountDetail(idx, 'yarn_count', e.target.value)} /></div>
-                        <div className="form-group"><label>Yarn CSP</label><input type="number" className="form-control" value={item.yarn_csp} onChange={e => updateCountDetail(idx, 'yarn_csp', e.target.value)} /></div>
-                        <div className="form-group"><label>Min Cone Wgt</label><input type="number" className="form-control" value={item.min_cone_wgt} onChange={e => updateCountDetail(idx, 'min_cone_wgt', e.target.value)} /></div>
-                        <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" value={item.order_kgs} onChange={e => updateCountDetail(idx, 'order_kgs', e.target.value)} /></div>
-                        <div className="form-group"><label>Mill Name</label>
-                          {customMillNameIdx === idx ? (
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <input type="text" className="form-control" autoFocus placeholder="Enter Mill Name..." value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
-                              <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomMillName}><CheckCircle size={16} /></button>
-                              <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setCustomMillNameIdx(null); setCustomMillNameVal(''); }}><X size={16} /></button>
-                            </div>
-                          ) : (
-                            <select className="form-control" value={item.mill_name || ''} onChange={e => {
-                              if (e.target.value === 'custom') setCustomMillNameIdx(idx);
-                              else updateCountDetail(idx, 'mill_name', e.target.value);
-                            }}>
-                              <option value="">Select Mill...</option>
-                              {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                              <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Mill...</option>
-                            </select>
-                          )}
-                        </div>
-                        <div className="form-group"><label>Print Name</label><input className="form-control" value={item.print_name} onChange={e => updateCountDetail(idx, 'print_name', e.target.value)} /></div>
-                        <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateCountDetail(idx, 'tolerance_pct', e.target.value)} /></div>
-                      </div>
-                    </div>
-                  ))}
 
                   {/* Section 3: Indent / Design */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Indent / Design</h4>
@@ -836,7 +742,7 @@ export default function YarnPurchaseOrder() {
                         {form.indent_details.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
+                            <td><input className="form-control" name="req_ind_no" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.design_no} onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.ibpo_no} onChange={e => updateIndentDetail(idx, 'ibpo_no', e.target.value)} /></td>
                             <td>
@@ -994,89 +900,7 @@ export default function YarnPurchaseOrder() {
                 </div>
               )}
 
-              {activeTab === 'yarn' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addCountDetail}><Plus size={16} /> Add Yarn Count</button>
-                  </div>
-                  
-                  {form.count_details.map((item, idx) => (
-                    <div key={idx} style={{ border: '1px solid var(--border)', padding: 16, borderRadius: 8, marginBottom: 16, background: '#fafafa', position: 'relative' }}>
-                      <button type="button" onClick={() => removeCountDetail(idx)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer' }}><X size={14}/></button>
-                      <h4 style={{ marginTop: 0, marginBottom: 12 }}>Yarn #{idx + 1}</h4>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                        <div className="form-group"><label>Supplier Name</label>
-                          {customCountSupplierIdx === idx ? (
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <input 
-                                autoFocus
-                                className="form-control" 
-                                placeholder="Type new supplier..."
-                                value={customCountSupplierVal}
-                                onChange={(e) => setCustomCountSupplierVal(e.target.value)}
-                                onKeyDown={async (e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    await handleSaveCustomCountSupplier(idx);
-                                  }
-                                }}
-                              />
-                              <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustomCountSupplier(idx)} title="Save">
-                                <CheckCircle size={16} />
-                              </button>
-                              <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setCustomCountSupplierIdx(null); updateCountDetail(idx, 'supplier_name', ''); }} title="Cancel">
-                                <X size={16} />
-                              </button>
-                            </div>
-                          ) : (
-                            <select 
-                              className="form-control" 
-                              value={item.supplier_name} 
-                              onChange={(e) => {
-                                if (e.target.value === 'custom_add_new') {
-                                  setCustomCountSupplierIdx(idx);
-                                  setCustomCountSupplierVal('');
-                                } else {
-                                  updateCountDetail(idx, 'supplier_name', e.target.value);
-                                }
-                              }}
-                            >
-                              <option value="">Select Supplier...</option>
-                              {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                              <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
-                            </select>
-                          )}
-                        </div>
-                        <div className="form-group"><label>Fibre Group</label><input className="form-control" value={item.fibre_group} onChange={e => updateCountDetail(idx, 'fibre_group', e.target.value)} /></div>
-                        <div className="form-group"><label>Yarn Count</label><input className="form-control" value={item.yarn_count} onChange={e => updateCountDetail(idx, 'yarn_count', e.target.value)} /></div>
-                        <div className="form-group"><label>Yarn CSP</label><input type="number" className="form-control" value={item.yarn_csp} onChange={e => updateCountDetail(idx, 'yarn_csp', e.target.value)} /></div>
-                        <div className="form-group"><label>Min Cone Wgt</label><input type="number" className="form-control" value={item.min_cone_wgt} onChange={e => updateCountDetail(idx, 'min_cone_wgt', e.target.value)} /></div>
-                        <div className="form-group"><label>Order Kgs</label><input type="number" className="form-control" value={item.order_kgs} onChange={e => updateCountDetail(idx, 'order_kgs', e.target.value)} /></div>
-                        <div className="form-group"><label>Mill Name</label>
-                          {customMillNameIdx === idx ? (
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <input type="text" className="form-control" autoFocus placeholder="Enter Mill Name..." value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
-                              <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomMillName}><CheckCircle size={16} /></button>
-                              <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setCustomMillNameIdx(null); setCustomMillNameVal(''); }}><X size={16} /></button>
-                            </div>
-                          ) : (
-                            <select className="form-control" value={item.mill_name || ''} onChange={e => {
-                              if (e.target.value === 'custom') setCustomMillNameIdx(idx);
-                              else updateCountDetail(idx, 'mill_name', e.target.value);
-                            }}>
-                              <option value="">Select Mill...</option>
-                              {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                              <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Mill...</option>
-                            </select>
-                          )}
-                        </div>
-                        <div className="form-group"><label>Print Name</label><input className="form-control" value={item.print_name} onChange={e => updateCountDetail(idx, 'print_name', e.target.value)} /></div>
-                        <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateCountDetail(idx, 'tolerance_pct', e.target.value)} /></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+
 
               {activeTab === 'indent' && (
                 <div className="animate-fade">
@@ -1096,7 +920,7 @@ export default function YarnPurchaseOrder() {
                         {form.indent_details.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
+                            <td><input className="form-control" name="req_ind_no" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.design_no} onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100 }} value={item.ibpo_no} onChange={e => updateIndentDetail(idx, 'ibpo_no', e.target.value)} /></td>
                             <td>
