@@ -116,6 +116,69 @@ export default function DesignEntry() {
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+
+    if (name === 'ibpo_no') {
+      if (!value) {
+        setForm(prev => ({
+          ...prev,
+          ibpo_no: '',
+          buyer_name: '',
+          design_no: '',
+          color: '',
+          gry_const: '',
+          fabric: 'Cotton',
+          weaving: 'Plain',
+          pick_ot: 0,
+          finish_width: 0,
+          order_mtr: 0,
+          ex_mtr: 0,
+          total_mtr: 0,
+          reed: 0
+        }));
+        return;
+      }
+      const selectedOrder = orders.find(o => o.ibpo_number === value);
+      if (selectedOrder) {
+        const firstItem = selectedOrder.items?.[0] || {};
+        const ordMtr = firstItem.order_mtrs || 0;
+        const exMtr = 0;
+        setForm(prev => ({
+          ...prev,
+          ibpo_no: value,
+          buyer_name: selectedOrder.party_name || selectedOrder.buyer_name || prev.buyer_name,
+          design_no: firstItem.design_no || prev.design_no,
+          color: firstItem.color || prev.color,
+          gry_const: firstItem.gry_construction || prev.gry_const,
+          fabric: firstItem.fabric_type || prev.fabric,
+          weaving: firstItem.weaving_type || prev.weaving,
+          pick_ot: firstItem.pick_on_table || prev.pick_ot,
+          finish_width: firstItem.finish_width || prev.finish_width,
+          order_mtr: ordMtr,
+          ex_mtr: exMtr,
+          total_mtr: ordMtr + exMtr,
+          reed: firstItem.finish_reed || prev.reed,
+        }));
+        return;
+      }
+    }
+
+    if (name === 'order_mtr') {
+      setForm(prev => ({
+        ...prev,
+        order_mtr: value,
+        total_mtr: value + prev.ex_mtr
+      }));
+      return;
+    }
+    if (name === 'ex_mtr') {
+      setForm(prev => ({
+        ...prev,
+        ex_mtr: value,
+        total_mtr: prev.order_mtr + value
+      }));
+      return;
+    }
+
     setForm({ ...form, [name]: value });
   };
 
