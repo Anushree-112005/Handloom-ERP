@@ -23,4 +23,9 @@ from app.models.work_order import WorkOrderTransaction
 from app.models.textile_design import TextileDesign, WarpDesignItem, WeftDesignItem
 from app.models.chat_message import ChatMessage
 from app.models.report_job import ReportJob
+from app.modules.hr.models import HRItem
+from app.modules.vehicle_management.models import FleetItem
+from app.modules.stationary.models import StationaryItem
+
+
 

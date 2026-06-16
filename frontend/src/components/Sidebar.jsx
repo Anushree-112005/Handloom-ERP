@@ -447,7 +447,7 @@ const modules = [
       { path: '/hr/org-chart', label: 'Organization Chart', icon: Layers },
       { path: '/hr/departments', label: 'Departments', icon: Building },
       { path: '/hr/designations', label: 'Designations', icon: Award },
-      { path: '/hr/projects', label: 'Projects', icon: FolderOpen },
+      // { path: '/hr/projects', label: 'Projects', icon: FolderOpen },
 
       // { section: 'RECRUITMENT' },
       // { path: '/hr/recruitment-hub', label: 'Recruitment Hub', icon: Users },
@@ -476,18 +476,18 @@ const modules = [
       { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
       { path: '/hr/travel', label: 'Travel Requests', icon: Globe },
 
-      { section: 'OPERATIONS' },
-      // { path: '/hr/operations', label: 'Operations Hub', icon: Settings },
-      // { path: '/hr/tasks', label: 'Task Management', icon: ClipboardList },
-      { path: '/hr/reports', label: 'HR Reports', icon: FileText },
-      { path: '/hr/settings', label: 'HR Settings', icon: Settings },
+      // { section: 'OPERATIONS' },
+      // // { path: '/hr/operations', label: 'Operations Hub', icon: Settings },
+      // // { path: '/hr/tasks', label: 'Task Management', icon: ClipboardList },
+      // { path: '/hr/reports', label: 'HR Reports', icon: FileText },
+      // { path: '/hr/settings', label: 'HR Settings', icon: Settings },
 
-      { section: 'ADMINISTRATION' },
-      { path: '/hr/administration', label: 'Administration Hub', icon: Settings },
-      { path: '/hr/documents', label: 'Documents', icon: FolderOpen },
-      { path: '/hr/assets', label: 'Assets', icon: Box },
-      { path: '/hr/announcements', label: 'Announcements', icon: FileText },
-      { path: '/hr/helpdesk', label: 'Helpdesk', icon: Info },
+      // { section: 'ADMINISTRATION' },
+      // { path: '/hr/administration', label: 'Administration Hub', icon: Settings },
+      // { path: '/hr/documents', label: 'Documents', icon: FolderOpen },
+      // { path: '/hr/assets', label: 'Assets', icon: Box },
+      // { path: '/hr/announcements', label: 'Announcements', icon: FileText },
+      // { path: '/hr/helpdesk', label: 'Helpdesk', icon: Info },
     ]
   },
   // {

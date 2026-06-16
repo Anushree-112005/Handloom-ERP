@@ -33,48 +33,39 @@ const mapFrontendToBackend = (form) => {
   };
 };
 
-// Generic localStorage helper functions
-const getLocalItems = (key, defaultVal = []) => {
-  const items = localStorage.getItem(`hr_${key}`);
-  if (!items) {
-    localStorage.setItem(`hr_${key}`, JSON.stringify(defaultVal));
-    return defaultVal;
-  }
-  return JSON.parse(items);
+// Generic API helper functions to query Postgres via our new dynamic HR router
+const fetchHRItems = async (category) => {
+  const res = await api.get(`/hr/${category}`);
+  return res.data || [];
 };
 
-const saveLocalItems = (key, items) => {
-  localStorage.setItem(`hr_${key}`, JSON.stringify(items));
+const createHRItem = async (category, data) => {
+  const res = await api.post(`/hr/${category}`, data);
+  return res.data;
 };
 
-const addLocalItem = (key, item) => {
-  const items = getLocalItems(key);
-  const newItem = { ...item, id: item.id || Date.now() };
-  items.push(newItem);
-  saveLocalItems(key, items);
-  return newItem;
+const updateHRItem = async (category, id, data) => {
+  const res = await api.put(`/hr/${category}/${id}`, data);
+  return res.data;
 };
 
-const updateLocalItem = (key, id, data) => {
-  const items = getLocalItems(key);
-  const idx = items.findIndex(i => i.id === id);
-  if (idx !== -1) {
-    items[idx] = { ...items[idx], ...data };
-    saveLocalItems(key, items);
-    return items[idx];
-  }
-  return null;
-};
-
-const deleteLocalItem = (key, id) => {
-  const items = getLocalItems(key);
-  const filtered = items.filter(i => i.id !== id);
-  saveLocalItems(key, filtered);
+const deleteHRItem = async (category, id) => {
+  await api.delete(`/hr/${category}/${id}`);
 };
 
 const fetchLocalItemsWithEmployee = (key) => {
-  return getLocalItems(key);
+  return fetchHRItems(key);
 };
+const addLocalItem = (key, item) => {
+  return createHRItem(key, item);
+};
+const updateLocalItem = (key, id, data) => {
+  return updateHRItem(key, id, data);
+};
+const deleteLocalItem = (key, id) => {
+  return deleteHRItem(key, id);
+};
+
 
 // Core API / Database wrappers
 export const fetchEmployees = async () => {
@@ -298,52 +289,52 @@ export const createLeave = (data) => addLocalItem('leaves', data);
 export const updateLeave = (id, data) => updateLocalItem('leaves', id, data);
 export const deleteLeave = (id) => deleteLocalItem('leaves', id);
 
-export const fetchHolidays = () => getLocalItems('holidays');
-export const createHoliday = (data) => addLocalItem('holidays', data);
-export const updateHoliday = (id, data) => updateLocalItem('holidays', id, data);
-export const deleteHoliday = (id) => deleteLocalItem('holidays', id);
+export const fetchHolidays = () => fetchHRItems('holidays');
+export const createHoliday = (data) => createHRItem('holidays', data);
+export const updateHoliday = (id, data) => updateHRItem('holidays', id, data);
+export const deleteHoliday = (id) => deleteHRItem('holidays', id);
 
-export const fetchRequisitions = () => getLocalItems('requisitions');
-export const createRequisition = (data) => addLocalItem('requisitions', data);
-export const updateRequisition = (id, data) => updateLocalItem('requisitions', id, data);
-export const deleteRequisition = (id) => deleteLocalItem('requisitions', id);
+export const fetchRequisitions = () => fetchHRItems('requisitions');
+export const createRequisition = (data) => createHRItem('requisitions', data);
+export const updateRequisition = (id, data) => updateHRItem('requisitions', id, data);
+export const deleteRequisition = (id) => deleteHRItem('requisitions', id);
 
-export const fetchCandidates = () => getLocalItems('candidates');
-export const createCandidate = (data) => addLocalItem('candidates', data);
-export const updateCandidate = (id, data) => updateLocalItem('candidates', id, data);
-export const deleteCandidate = (id) => deleteLocalItem('candidates', id);
+export const fetchCandidates = () => fetchHRItems('candidates');
+export const createCandidate = (data) => createHRItem('candidates', data);
+export const updateCandidate = (id, data) => updateHRItem('candidates', id, data);
+export const deleteCandidate = (id) => deleteHRItem('candidates', id);
 
-export const fetchAnnouncements = () => getLocalItems('announcements');
-export const createAnnouncement = (data) => addLocalItem('announcements', data);
-export const updateAnnouncement = (id, data) => updateLocalItem('announcements', id, data);
-export const deleteAnnouncement = (id) => deleteLocalItem('announcements', id);
+export const fetchAnnouncements = () => fetchHRItems('announcements');
+export const createAnnouncement = (data) => createHRItem('announcements', data);
+export const updateAnnouncement = (id, data) => updateHRItem('announcements', id, data);
+export const deleteAnnouncement = (id) => deleteHRItem('announcements', id);
 
-export const fetchTravelRequests = () => fetchLocalItemsWithEmployee('travel_requests');
-export const createTravelRequest = (data) => addLocalItem('travel_requests', data);
-export const updateTravelRequest = (id, data) => updateLocalItem('travel_requests', id, data);
-export const deleteTravelRequest = (id) => deleteLocalItem('travel_requests', id);
+export const fetchTravelRequests = () => fetchHRItems('travel_requests');
+export const createTravelRequest = (data) => createHRItem('travel_requests', data);
+export const updateTravelRequest = (id, data) => updateHRItem('travel_requests', id, data);
+export const deleteTravelRequest = (id) => deleteHRItem('travel_requests', id);
 
-export const fetchTrainingPrograms = () => getLocalItems('training_programs');
-export const createTrainingProgram = (data) => addLocalItem('training_programs', data);
-export const updateTrainingProgram = (id, data) => updateLocalItem('training_programs', id, data);
-export const deleteTrainingProgram = (id) => deleteLocalItem('training_programs', id);
+export const fetchTrainingPrograms = () => fetchHRItems('training_programs');
+export const createTrainingProgram = (data) => createHRItem('training_programs', data);
+export const updateTrainingProgram = (id, data) => updateHRItem('training_programs', id, data);
+export const deleteTrainingProgram = (id) => deleteHRItem('training_programs', id);
 
-export const fetchCertifications = () => fetchLocalItemsWithEmployee('certifications');
-export const createCertification = (data) => addLocalItem('certifications', data);
-export const updateCertification = (id, data) => updateLocalItem('certifications', id, data);
-export const deleteCertification = (id) => deleteLocalItem('certifications', id);
+export const fetchCertifications = () => fetchHRItems('certifications');
+export const createCertification = (data) => createHRItem('certifications', data);
+export const updateCertification = (id, data) => updateHRItem('certifications', id, data);
+export const deleteCertification = (id) => deleteHRItem('certifications', id);
 
-export const deleteOnboardingTask = (id) => deleteLocalItem('tasks', id);
-export const deleteOffer = (id) => deleteLocalItem('offers', id);
+export const deleteOnboardingTask = (id) => deleteHRItem('tasks', id);
+export const deleteOffer = (id) => deleteHRItem('offers', id);
 
 // hrService main export object (used in default imports)
 const hrService = {
   getSummary: async () => {
     const emps = await fetchEmployees().catch(() => []);
-    const requisitions = getLocalItems('requisitions');
-    const candidates = getLocalItems('candidates');
-    const tasks = getLocalItems('tasks');
-    const payroll = getLocalItems('payroll');
+    const requisitions = await fetchHRItems('requisitions').catch(() => []);
+    const candidates = await fetchHRItems('candidates').catch(() => []);
+    const tasks = await fetchHRItems('tasks').catch(() => []);
+    const payroll = await fetchHRItems('payroll').catch(() => []);
     return {
       employees: emps.length,
       requisitions: requisitions.length,
@@ -352,29 +343,29 @@ const hrService = {
       payroll: payroll.length,
     };
   },
-  listRequisitions: async () => getLocalItems('requisitions'),
-  listCandidates: async () => getLocalItems('candidates'),
-  listTasks: async () => getLocalItems('tasks'),
-  listOffers: async () => getLocalItems('offers'),
-  listPerformance: async () => getLocalItems('performance'),
-  listOffboarding: async () => getLocalItems('offboarding'),
-  listPayroll: async () => getLocalItems('payroll'),
+  listRequisitions: async () => fetchHRItems('requisitions'),
+  listCandidates: async () => fetchHRItems('candidates'),
+  listTasks: async () => fetchHRItems('tasks'),
+  listOffers: async () => fetchHRItems('offers'),
+  listPerformance: async () => fetchHRItems('performance'),
+  listOffboarding: async () => fetchHRItems('offboarding'),
+  listPayroll: async () => fetchHRItems('payroll'),
   
   getEmployee: async (id) => getEmployeeById(id),
   fetchEmployeeAttendance: async (id) => {
-    const list = getLocalItems('attendance');
+    const list = await fetchHRItems('attendance');
     return list.filter(item => String(item.employee_id) === String(id));
   },
   fetchEmployeeLeaves: async (id) => {
-    const list = getLocalItems('leaves');
+    const list = await fetchHRItems('leaves');
     return list.filter(item => String(item.employee_id) === String(id));
   },
   fetchEmployeeTasks: async (id) => {
-    const list = getLocalItems('tasks');
+    const list = await fetchHRItems('tasks');
     return list.filter(item => String(item.employee_id) === String(id));
   },
   fetchEmployeePayroll: async (id) => {
-    const list = getLocalItems('payroll');
+    const list = await fetchHRItems('payroll');
     return list.filter(item => String(item.employee_id) === String(id));
   },
   fetchLeaveBalances: async (id, year) => {
@@ -385,7 +376,7 @@ const hrService = {
     ];
   },
   fetchEmployeeTrainings: async (id) => {
-    const list = getLocalItems('certifications');
+    const list = await fetchHRItems('certifications');
     return list.filter(item => String(item.employee_id) === String(id));
   },
   predictAttrition: async (data) => {
@@ -402,22 +393,22 @@ const hrService = {
   },
   getEmployeesWithTasks: async () => {
     const emps = await fetchEmployees().catch(() => []);
-    const tasks = getLocalItems('tasks');
+    const tasks = await fetchHRItems('tasks');
     return emps.map(emp => ({
       ...emp,
       tasks: tasks.filter(t => String(t.employee_id) === String(emp.id))
     }));
   },
-  createTask: async (data) => addLocalItem('tasks', data),
-  updateTask: async (id, data) => updateLocalItem('tasks', id, data),
-  deleteTask: async (id) => deleteLocalItem('tasks', id),
+  createTask: async (data) => createHRItem('tasks', data),
+  updateTask: async (id, data) => updateHRItem('tasks', id, data),
+  deleteTask: async (id) => deleteHRItem('tasks', id),
   addTaskComment: async (taskId, comment) => {
-    const tasks = getLocalItems('tasks');
+    const tasks = await fetchHRItems('tasks');
     const idx = tasks.findIndex(t => t.id === taskId);
     if (idx !== -1) {
       if (!tasks[idx].comments) tasks[idx].comments = [];
       tasks[idx].comments.push({ id: Date.now(), ...comment, created_at: new Date().toISOString() });
-      saveLocalItems('tasks', tasks);
+      await updateHRItem('tasks', taskId, tasks[idx]);
       return tasks[idx];
     }
     return null;
@@ -429,10 +420,10 @@ const hrService = {
       message: 'No payroll discrepancies or errors detected for current cycle.'
     };
   },
-  updatePerformance: async (id, data) => updateLocalItem('performance', id, data),
-  createPerformance: async (data) => addLocalItem('performance', data),
-  createOffboarding: async (data) => addLocalItem('offboarding', data),
-  updateOffboarding: async (id, data) => updateLocalItem('offboarding', id, data),
+  updatePerformance: async (id, data) => updateHRItem('performance', id, data),
+  createPerformance: async (data) => createHRItem('performance', data),
+  createOffboarding: async (data) => createHRItem('offboarding', data),
+  updateOffboarding: async (id, data) => updateHRItem('offboarding', id, data),
   
   getReport: async (type, params) => {
     if (type === 'headcount') {
@@ -450,13 +441,14 @@ const hrService = {
     }
     return { data: [] };
   },
-  deleteOnboardingTask: async (id) => deleteLocalItem('tasks', id),
-  deleteOffer: async (id) => deleteLocalItem('offers', id),
+  deleteOnboardingTask: async (id) => deleteHRItem('tasks', id),
+  deleteOffer: async (id) => deleteHRItem('offers', id),
   analyzeSkillGaps: async (skills, roles) => {
     return {
       analysis: 'Overall match is high. Recommended training includes Node.js and compliance courses.'
     };
   }
 };
+
 
 export default hrService;
