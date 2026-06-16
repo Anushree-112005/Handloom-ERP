@@ -27,5 +27,12 @@ from app.modules.hr.models import HRItem
 from app.modules.vehicle_management.models import FleetItem
 from app.modules.stationary.models import StationaryItem, SwatchCard, FabricInspectionRoll, ReturnableDC
 
-
+from app.models.vehicle import Vehicle
+from app.models.driver import Driver
+from app.models.service_schedule import ServiceSchedule
+from app.models.maintenance_log import MaintenanceLog
+from app.models.breakdown_entry import BreakdownEntry
+from app.models.fuel_entry import FuelEntry
+from app.models.fleet_document import FleetDocument
+from app.models.route_trip import Route, Trip
 
