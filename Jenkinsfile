@@ -165,7 +165,8 @@ pipeline {
                             export FRONTEND_IMAGE=$FRONTEND_IMAGE &&
                             
                             (docker compose up -d --force-recreate || docker-compose up -d --force-recreate) &&
-                            docker image prune -af --filter 'until=12h'
+                            docker image prune -af --filter 'until=12h' &&
+                            docker ps
                         "
                     '''
                 }
