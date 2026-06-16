@@ -41,7 +41,14 @@ async def lifespan(app: FastAPI):
                             type_str = str(column.type.compile(dialect=connection.dialect))
                             default_val = "NULL"
                             if column.default is not None and not callable(column.default.arg):
-                                default_val = str(column.default.arg)
+                                val = column.default.arg
+                                if isinstance(val, str):
+                                    escaped_val = val.replace("'", "''")
+                                    default_val = f"'{escaped_val}'"
+                                elif isinstance(val, bool):
+                                    default_val = "TRUE" if val else "FALSE"
+                                else:
+                                    default_val = str(val)
                             elif "float" in type_str.lower() or "numeric" in type_str.lower():
                                 default_val = "0.0"
                             elif "integer" in type_str.lower():
