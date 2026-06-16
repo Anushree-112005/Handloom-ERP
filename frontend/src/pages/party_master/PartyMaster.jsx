@@ -71,6 +71,9 @@ export default function PartyMaster() {
   const [isCustomDeliverParty, setIsCustomDeliverParty] = useState(false);
   const [customDeliverPartyVal, setCustomDeliverPartyVal] = useState('');
 
+  const [isCustomBuyerName, setIsCustomBuyerName] = useState(false);
+  const [customBuyerNameVal, setCustomBuyerNameVal] = useState('');
+
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
 
@@ -645,6 +648,29 @@ export default function PartyMaster() {
     } catch (err) { console.error("Failed to add custom Delivery Party", err); }
   };
 
+  const handleSaveCustomBuyer = async () => {
+    if (!customBuyerNameVal.trim()) return;
+    try {
+      await subMasterAPI.create('buyer', { 
+        entity: 'buyer', 
+        name: customBuyerNameVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          buyer: [...(prev.masters.buyer || []), customBuyerNameVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, buyer_name: customBuyerNameVal.trim() }));
+      setIsCustomBuyerName(false);
+      setCustomBuyerNameVal('');
+    } catch (err) {
+      console.error("Failed to add custom Buyer Name", err);
+    }
+  };
+
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -1042,7 +1068,38 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Buyer Name</label>
-                        <input className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleChange} placeholder="Enter Buyer Name" />
+                        {isCustomBuyerName ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new Buyer..."
+                              value={customBuyerNameVal}
+                              onChange={(e) => setCustomBuyerNameVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomBuyer();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomBuyer} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomBuyerName(false); setFormData(prev => ({ ...prev, buyer_name: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleChange}>
+                            <option value="">-- Select Buyer --</option>
+                            {formData.buyer_name && !(options.masters['buyer'] || []).includes(formData.buyer_name) && (
+                              <option value={formData.buyer_name}>{formData.buyer_name}</option>
+                            )}
+                            {renderOptions('buyer')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Customer Grade</label>

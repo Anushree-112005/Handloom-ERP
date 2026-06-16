@@ -500,35 +500,7 @@ export default function Timesheet() {
             </div>
           </div>
 
-          {/* View Toggle and Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px' }}>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-              >
-                <LayoutList className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('calendar')}
-                className={`p-1.5 rounded ${viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-              >
-                <Calendar className="w-4 h-4" />
-              </button>
-            </div>
-            {viewMode === 'list' && (
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search timesheets..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="form-control"
-                />
-              </div>
-            )}
-          </div>
+
 
           {/* Week Navigation (Calendar View) */}
           {viewMode === 'calendar' && (

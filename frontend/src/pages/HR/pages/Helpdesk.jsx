@@ -178,86 +178,14 @@ export default function Helpdesk() {
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">HR Helpdesk</h1>
-          <span className="btn btn-primary">
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             {filteredTickets.length} Records
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${
-                showFilters || filterStatus || filterCategory
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Filter size={14} />
-              Filter
-              {(filterStatus || filterCategory) && (
-                <span className="btn btn-primary" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button
-                    onClick={() => { setFilterStatus(''); setFilterCategory(''); setShowFilters(false); }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Status</option>
-                      <option value="Open">Open</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Resolved">Resolved</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Category</label>
-                    <select
-                      value={filterCategory}
-                      onChange={(e) => setFilterCategory(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Categories</option>
-                      {ticketCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="btn btn-secondary">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1 rounded transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-              title="List View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1 rounded transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
             className="btn btn-primary"

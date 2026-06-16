@@ -234,77 +234,14 @@ const TaskManagement = () => {
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Task Management</h1>
-          <span className="btn btn-primary">
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             {filteredTasks.length} Records
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${
-                showFilters || filterStatus !== 'All' || filterPriority !== 'All'
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Filter size={14} />
-              Filter
-              {(filterStatus !== 'All' || filterPriority !== 'All') && (
-                <span className="btn btn-primary" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button
-                    onClick={() => { setFilterStatus('All'); setFilterPriority('All'); setShowFilters(false); }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control">
-                      <option value="All">All Status</option>
-                      {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Priority</label>
-                    <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
-                      className="form-control">
-                      <option value="All">All Priority</option>
-                      {priorities.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="btn btn-secondary">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1 rounded transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-              title="List View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1 rounded transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
           <button
             onClick={() => setShowEmployeeView(!showEmployeeView)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${

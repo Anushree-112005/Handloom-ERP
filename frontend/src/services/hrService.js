@@ -353,41 +353,80 @@ const hrService = {
   
   getEmployee: async (id) => getEmployeeById(id),
   fetchEmployeeAttendance: async (id) => {
-    const list = await fetchHRItems('attendance');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('attendance')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchEmployeeLeaves: async (id) => {
-    const list = await fetchHRItems('leaves');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('leaves')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchEmployeeTasks: async (id) => {
-    const list = await fetchHRItems('tasks');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('tasks')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchEmployeePayroll: async (id) => {
-    const list = await fetchHRItems('payroll');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('payroll')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchLeaveBalances: async (id, year) => {
     return [
-      { type: 'Casual Leave', total: 12, used: 3, available: 9 },
-      { type: 'Sick Leave', total: 10, used: 2, available: 8 },
-      { type: 'Earned Leave', total: 15, used: 0, available: 15 }
+      { leave_type: 'Casual Leave', accrued: 12, used: 3, current_balance: 9 },
+      { leave_type: 'Sick Leave', accrued: 10, used: 2, current_balance: 8 },
+      { leave_type: 'Earned Leave', accrued: 15, used: 0, current_balance: 15 }
     ];
   },
   fetchEmployeeTrainings: async (id) => {
-    const list = await fetchHRItems('certifications');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('certifications')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   predictAttrition: async (data) => {
     const score = Math.floor(Math.random() * 40) + 5;
     return {
-      attrition_risk: score > 30 ? 'Medium' : 'Low',
+      risk_level: score > 30 ? 'Medium' : 'Low',
       risk_score: score,
-      insights: [
+      factors: [
         'Employee has stable attendance.',
         'Last performance review score was positive.',
         'Salary is competitive within range.'
+      ],
+      recommended_actions: [
+        'Keep conducting regular 1-on-1 feedback sessions.',
+        'Provide opportunities for skill development.'
       ]
     };
   },

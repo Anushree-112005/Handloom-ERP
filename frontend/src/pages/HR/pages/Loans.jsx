@@ -181,60 +181,8 @@ export default function Loans() {
           </span>
         </div>
 
-        {/* RIGHT: Filter dropdown + view toggle + EMI Calculator + New Loan */}
+        {/* RIGHT: EMI Calculator + New Loan */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterStatus || filterType) && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />}
-            </button>
-            {showFilters && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                  <button onClick={() => { setFilterStatus(''); setFilterType(''); }} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Disbursed">Disbursed</option>
-                      <option value="Repaying">Repaying</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Loan Type</label>
-                    <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="form-control">
-                      <option value="">All Types</option>
-                      {loanTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-            <button onClick={() => setViewMode('list')}
-              style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
           <button onClick={() => setShowCalculator(true)}
             className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
             <Calculator className="w-4 h-4" /> EMI Calculator

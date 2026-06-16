@@ -167,7 +167,7 @@ export default function Holidays() {
           </span>
         </div>
 
-          {/* RIGHT: Year nav + Filter dropdown + view toggle + Add button */}
+          {/* RIGHT: Year nav + Add button */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Year Navigator */}
             <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px' }}>
@@ -177,43 +177,6 @@ export default function Holidays() {
               <span style={{ fontWeight: 700, fontSize: 14, minWidth: 48, textAlign: 'center' }}>{year}</span>
               <button onClick={() => setYear(y => y + 1)} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4 }}>
                 <ChevronRight size={16} />
-              </button>
-            </div>
-
-            {/* Filter Dropdown */}
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="btn btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <Filter size={16} /> Filter
-                {filterType && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }} />}
-              </button>
-              {showFilters && (
-                <div className="card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 200, zIndex: 10, padding: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Filters</span>
-                    <button onClick={() => setFilterType('')} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Holiday Type</label>
-                    <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="form-control">
-                      <option value="">All Types</option>
-                      {holidayTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* View Toggle */}
-            <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px' }}>
-              <button onClick={() => setViewMode('list')} style={{ padding: '6px 8px', borderRadius: 4, border: 'none', background: viewMode === 'list' ? '#fff' : 'transparent', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                <LayoutList size={16} />
-              </button>
-              <button onClick={() => setViewMode('grid')} style={{ padding: '6px 8px', borderRadius: 4, border: 'none', background: viewMode === 'grid' ? '#fff' : 'transparent', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                <LayoutGrid size={16} />
               </button>
             </div>
 

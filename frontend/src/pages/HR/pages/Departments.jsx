@@ -130,51 +130,20 @@ export default function Departments() {
               <p style={{ color: 'var(--text-muted)' }}>Manage organization structure, employees, and budgets.</p>
             </div>
 
-            {/* RIGHT: Filter dropdown + view toggle + Add button */}
+            {/* RIGHT: Search + Add button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className="relative">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                >
-                  <Filter size={16} /> Filter
-                  {searchTerm && <span className="badge badge-active" style={{ padding: '2px 6px', fontSize: 10 }}>1</span>}
-                </button>
-                {showFilters && (
-                  <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                      <button onClick={() => setSearchTerm('')} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div className="form-group">
-                        <label>Search</label>
-                        <input
-                          type="text"
-                          placeholder="Search departments..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="form-control"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-                <button onClick={() => setViewMode('list')} style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                  <LayoutList size={16} />
-                </button>
-                <button onClick={() => setViewMode('grid')} style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-
+              <input
+                type="text"
+                placeholder="Search departments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ width: 200, margin: 0 }}
+              />
               <button
-                onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+                onClick={() => { setForm(initialForm); setShowForm(true); setEditingId(null); }}
                 className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
               >
                 <Plus size={16} /> Add Department
               </button>
