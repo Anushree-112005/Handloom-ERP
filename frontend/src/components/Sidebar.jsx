@@ -500,7 +500,7 @@ const modules = [
   //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
   //   ]
   // },
-  { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
+  // { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
 
   { section: 'Vehicle Management' },
   {
@@ -634,7 +634,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>{companyProfile.description}</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={onToggleSidebar}
               className="sidebar-toggle-btn"
               style={{
@@ -655,7 +655,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
             </button>
           </>
         ) : (
-          <button 
+          <button
             onClick={onToggleSidebar}
             className="sidebar-toggle-btn"
             style={{
@@ -770,12 +770,12 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                         <div
                           key={`sec-${childIdx}`}
                           style={{
-                            padding: '12px 16px 4px 36px',
-                            fontSize: '10px',
+                            padding: '16px 16px 6px 32px',
+                            fontSize: '11px',
                             fontWeight: '700',
                             color: '#64748b',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.08em'
                           }}
                         >
                           {child.section}
@@ -788,9 +788,9 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                           className={({ isActive }) =>
                             `nav-item ${isActive ? 'active' : ''}`
                           }
-                          style={{ padding: '8px 16px 8px 48px', fontSize: '13px', margin: '1px 8px' }}
+                          style={{ padding: '10px 16px 10px 24px', fontSize: '13.5px', margin: '2px 8px' }}
                         >
-                          <child.icon style={{ width: 14, height: 14 }} />
+                          <child.icon style={{ width: 16, height: 16 }} />
                           <span>{child.label}</span>
                         </NavLink>
                       )
