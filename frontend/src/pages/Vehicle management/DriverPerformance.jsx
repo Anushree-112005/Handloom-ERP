@@ -3,7 +3,7 @@ import {
   User, Award, TrendingUp, Filter, Calendar, Truck, 
   MapPin, Clock, Navigation, CheckCircle2, AlertTriangle, 
   ChevronRight, Download, RefreshCw, BarChart3, Star, Zap,
-  DollarSign, Gauge, ShieldAlert, FileText, Eye, X
+  DollarSign, Gauge, ShieldAlert, FileText, Eye, X, FileSpreadsheet
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -76,47 +76,6 @@ const DriverPerformance = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const exportToCSV = () => {
-    const headers = [
-      'Driver Name', 'Vehicle Number', 'Total Trips', 'Total Distance (KM)', 
-      'Hours Logged', 'Avg Mileage (km/L)', 'On-Time Deliveries', 'Late Deliveries', 
-      'Breakdowns', 'Total Fuel Cost (INR)', 'Cost per KM (INR)', 'Performance Score (%)', 'Status'
-    ];
-
-    const details = data.details || [];
-    const csvRows = details.map(entry => [
-      `"${entry.driver_name}"`,
-      `"${entry.vehicle_number}"`,
-      entry.total_trips,
-      entry.total_distance,
-      entry.total_driving_time,
-      entry.avg_mileage,
-      entry.on_time_deliveries,
-      entry.late_deliveries,
-      entry.breakdowns,
-      entry.fuel_cost,
-      entry.cost_per_km,
-      entry.performance_score,
-      `"${entry.status}"`
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...csvRows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${viewType === 'driver' ? 'Driver' : 'Vehicle'}_Report_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showSuccess('CSV Exported successfully');
   };
 
   const exportToExcel = () => {
@@ -195,272 +154,293 @@ const DriverPerformance = () => {
     }
   };
 
-  const rankingData = useMemo(() => {
-    return data.details.slice(0, 5).map(d => ({
-      name: viewType === 'driver' ? d.driver_name : d.vehicle_number,
-      score: d.performance_score
-    }));
-  }, [data.details, viewType]);
-
-  const deliveryDistribution = useMemo(() => {
-    let onTime = 0, late = 0;
-    data.details.forEach(d => {
-      onTime += d.on_time_deliveries;
-      late += d.late_deliveries;
+  const clearFilters = () => {
+    setFilters({
+      driverId: '',
+      vehicleId: '',
+      startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0]
     });
-    return [
-      { name: 'On-Time', value: onTime, color: '#10b981' },
-      { name: 'Late', value: late, color: '#f43f5e' }
-    ];
-  }, [data.details]);
+  };
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
-      {/* Header */}
-      <div className="card">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="btn btn-primary">
-              <Award className="h-8 w-8 text-purple-600" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tightest uppercase">
-                {viewType === 'driver' ? 'Driver' : 'Vehicle'} <span className="text-purple-600">Report</span>
-              </h1>
-              <p className="text-slate-500 font-bold text-sm tracking-wide">
-                {viewType === 'driver' ? 'Driver related vehicle report' : 'Vehicle related report'}
-              </p>
-            </div>
+    <div className="animate-fade">
+      {/* Header Action Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ padding: 8, background: 'rgba(139, 92, 246, 0.08)', borderRadius: 10, color: 'var(--primary)' }}>
+            <Award size={24} />
           </div>
-          
-          <div className="btn btn-secondary">
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+              {viewType === 'driver' ? 'Driver' : 'Vehicle'} Performance
+            </h2>
+            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: 13 }}>
+              {viewType === 'driver' ? 'Holistic performance and metrics analysis for drivers.' : 'Asset utilisation and efficiency statistics.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Tab Toggle Segmented Control */}
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: 4, borderRadius: 8, border: '1px solid var(--border)' }}>
             <button 
               onClick={() => { setViewType('driver'); setFilters(f => ({...f, vehicleId: ''})); }}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${viewType === 'driver' ? 'bg-white shadow-xl text-purple-600 border border-purple-100' : 'text-slate-400 hover:text-slate-600'}`}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                border: 'none',
+                background: viewType === 'driver' ? 'var(--bg-primary)' : 'none',
+                color: viewType === 'driver' ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
             >
               DRIVER RELATED
             </button>
             <button 
               onClick={() => { setViewType('vehicle'); setFilters(f => ({...f, driverId: ''})); }}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${viewType === 'vehicle' ? 'bg-white shadow-xl text-purple-600 border border-purple-100' : 'text-slate-400 hover:text-slate-600'}`}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                border: 'none',
+                background: viewType === 'vehicle' ? 'var(--bg-primary)' : 'none',
+                color: viewType === 'vehicle' ? 'var(--primary)' : 'var(--text-muted)',
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
             >
               VEHICLE RELATED
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div 
-              className="relative"
-              onMouseLeave={() => setShowExportMenu(false)}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <button 
-                onClick={() => setShowExportMenu(!showExportMenu)}
-                onMouseEnter={() => setShowExportMenu(true)}
-                className="btn btn-secondary"
-              >
-                <Download size={20} /> Export Report
-              </button>
-              
-              {showExportMenu && (
-                <div className="btn btn-secondary">
-                  <button onClick={() => { exportToExcel(); setShowExportMenu(false); }} className="form-control">
-                    <BarChart3 size={16} className="text-emerald-500" /> EXCEL FORMAT
-                  </button>
-                  <button onClick={() => { exportToPDF(); setShowExportMenu(false); }} className="form-control">
-                    <FileText size={16} className="text-rose-500" /> PDF DOCUMENT
-                  </button>
-                  <button onClick={() => { exportToPDF(true); setShowExportMenu(false); }} className="form-control">
-                    <Eye size={16} className="text-blue-500" /> FULL VIEW
-                  </button>
-                </div>
-              )}
-            </div>
+              <Download size={16} /> Export
+            </button>
+            
+            {showExportMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                <button 
+                  onClick={() => { exportToPDF(); setShowExportMenu(false); }} 
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <FileText size={16} color="#ef4444" /> PDF Report
+                </button>
+                <button 
+                  onClick={() => { exportToExcel(); setShowExportMenu(false); }} 
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <FileSpreadsheet size={16} color="#10b981" /> Excel Sheet
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* KPI Cards removed as per user request */}
+      {/* Filter Row matching Sales Invoice */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+          <Filter size={16} />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+        </div>
 
-      {/* Advanced Filters */}
-      <div className="card">
-        <div className="form-row">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <User size={14} className="text-purple-500" /> {viewType === 'driver' ? 'Selective Driver' : 'Selective Vehicle'}
-            </label>
-            {viewType === 'driver' ? (
-              <select 
-                className="form-control"
-                value={filters.driverId}
-                onChange={(e) => setFilters({...filters, driverId: e.target.value})}
-              >
-                <option value="">All Drivers</option>
-                {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-            ) : (
-              <select 
-                className="form-control"
-                value={filters.vehicleId}
-                onChange={(e) => setFilters({...filters, vehicleId: e.target.value})}
-              >
-                <option value="">All Vehicles</option>
-                {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-              </select>
-            )}
-          </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+          {viewType === 'driver' ? (
+            <select 
+              className="form-control"
+              style={{ width: 180, margin: 0, height: 38 }}
+              value={filters.driverId}
+              onChange={(e) => setFilters({...filters, driverId: e.target.value})}
+            >
+              <option value="">All Drivers</option>
+              {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          ) : (
+            <select 
+              className="form-control"
+              style={{ width: 180, margin: 0, height: 38 }}
+              value={filters.vehicleId}
+              onChange={(e) => setFilters({...filters, vehicleId: e.target.value})}
+            >
+              <option value="">All Vehicles</option>
+              {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
+            </select>
+          )}
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Calendar size={14} className="text-purple-500" /> Start Date
-            </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
             <input 
               type="date" 
               className="form-control"
+              style={{ width: 140, margin: 0, height: 38 }}
               value={filters.startDate}
               onChange={(e) => setFilters({...filters, startDate: e.target.value})}
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Calendar size={14} className="text-purple-500" /> End Date
-            </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
             <input 
               type="date" 
               className="form-control"
+              style={{ width: 140, margin: 0, height: 38 }}
               value={filters.endDate}
               onChange={(e) => setFilters({...filters, endDate: e.target.value})}
             />
           </div>
 
+          {(filters.driverId || filters.vehicleId) && (
+            <button 
+              onClick={clearFilters} 
+              className="btn btn-secondary"
+              style={{ height: 38, padding: '0 16px', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <X size={16} /> Clear
+            </button>
+          )}
         </div>
       </div>
 
-
       {/* Driver Performance Matrix Table */}
-      <div className="card">
-        <div className="btn btn-secondary">
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
           <div>
-            <h3 className="font-black text-slate-900 tracking-tight text-lg">Performance Matrix Registry</h3>
-            <p className="text-slate-400 text-xs font-bold mt-1">Holistic evaluation based on mileage, reliability, and maintenance</p>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Performance Registry</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 11, margin: '4px 0 0' }}>Holistic evaluation based on mileage, reliability, and maintenance</p>
           </div>
-          <div className="btn btn-primary">
-             <Star className="text-purple-600" size={16} />
-             <span className="text-[10px] font-black text-purple-700 tracking-widest uppercase truncate max-w-[150px]">
-               Best: {data.summary.best_performer}
-             </span>
-          </div>
+          {data.summary.best_performer && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.08)', padding: '6px 12px', borderRadius: 20, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+               <Star className="text-emerald-500 animate-pulse" size={14} />
+               <span style={{ fontSize: 11, fontWeight: 700, color: '#047857' }}>
+                 Best Performer: {data.summary.best_performer}
+               </span>
+            </div>
+          )}
         </div>
-        <div className="overflow-x-auto">
+
+        <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
             <thead>
-              <tr className="btn btn-secondary">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 w-[25%]">
-                  {viewType === 'driver' ? 'Driver Profile' : 'Vehicle Identity'}
-                </th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  {viewType === 'driver' ? 'Assigned Vehicle' : 'Assigned Driver'}
-                </th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Trip Completion</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Working Period</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Efficiency</th>
-                <th className="px-8 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Performance Index</th>
+              <tr>
+                <th style={{ width: '25%' }}>{viewType === 'driver' ? 'Driver Profile' : 'Vehicle Identity'}</th>
+                <th>{viewType === 'driver' ? 'Assigned Vehicle' : 'Assigned Driver'}</th>
+                <th>Trip Completion</th>
+                <th>Working Period</th>
+                <th>Efficiency</th>
+                <th style={{ textAlign: 'right', paddingRight: 24 }}>Performance Index</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody>
               {data.details.map((entry, idx) => (
-                <tr key={idx} className="btn btn-secondary">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="btn btn-primary">
-                        {viewType === 'driver' ? <User className="h-5 w-5 text-slate-400 group-hover:text-purple-600" /> : <Truck className="h-5 w-5 text-slate-400 group-hover:text-purple-600" />}
+                <tr key={idx} style={{ transition: 'background 0.2s' }}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{
+                        padding: 8,
+                        borderRadius: 10,
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        color: 'var(--primary)'
+                      }}>
+                        {viewType === 'driver' ? <User size={18} /> : <Truck size={18} />}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-slate-900 leading-tight tracking-tight">
+                      <div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>
                           {viewType === 'driver' ? entry.driver_name : entry.vehicle_number}
-                        </span>
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mt-1 flex items-center gap-1">
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>
                           <MapPin size={10} /> {entry.status === 'High Performance' ? 'Regional Hub' : 'Local Route'}
-                        </span>
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-6">
-                    <div className="flex items-center gap-3">
-                       <div className="btn btn-primary">
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                       <div style={{ padding: 6, borderRadius: 8, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
                           {viewType === 'driver' ? <Truck size={14} /> : <User size={14} />}
                        </div>
-                       <span className="text-sm font-bold text-slate-700">
+                       <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                           {viewType === 'driver' ? entry.vehicle_number : entry.driver_name}
                        </span>
                     </div>
                   </td>
-                  <td className="px-6 py-6">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Navigation size={14} className="text-indigo-400" />
-                        <span className="font-black text-slate-900 text-sm">{entry.total_trips} <span className="text-[10px] text-slate-400">COMPLETED</span></span>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: 120 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Navigation size={14} style={{ color: 'var(--primary)' }} />
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                          {entry.total_trips} <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>TRIPS</span>
+                        </span>
                       </div>
-                      <div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="btn btn-success" 
-                            style={{width: `${(entry.on_time_deliveries / entry.total_trips) * 100}%` || '0%'}} 
-                          />
-                       </div>
+                      <div style={{ height: 6, width: '100%', bg: 'var(--bg-secondary)', borderRadius: 3, overflow: 'hidden', background: 'var(--bg-secondary)' }}>
+                        <div 
+                          style={{
+                            height: '100%',
+                            background: '#10b981',
+                            width: `${(entry.on_time_deliveries / (entry.total_trips || 1)) * 100}%`
+                          }} 
+                        />
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-6">
-                     <div className="flex flex-col">
-                        <div className="flex items-center gap-1.5 text-slate-900 font-black text-sm mb-1">
-                           <Clock size={14} className="text-slate-400" />
-                           {entry.total_driving_time} <span className="text-[10px] text-slate-400">HRS</span>
+                  <td>
+                     <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                           <Clock size={14} style={{ color: 'var(--text-muted)' }} />
+                           {entry.total_driving_time} <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>HRS</span>
                         </div>
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                           Total: {entry.total_distance.toLocaleString()} KM
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginTop: 2 }}>
+                           {entry.total_distance.toLocaleString()} KM
                         </span>
                      </div>
                   </td>
-                  <td className="px-6 py-6">
-                    <div className="flex flex-col">
-                       <div className="flex items-center gap-1.5 text-emerald-600 font-black text-sm mb-1">
-                          <Gauge size={14} /> {entry.avg_mileage} <span className="text-[10px] text-emerald-400">KM/L</span>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontWeight: 700, fontSize: 13 }}>
+                          <Gauge size={14} /> {entry.avg_mileage} <span style={{ fontSize: 10, color: '#10b981', fontWeight: 600 }}>KM/L</span>
                        </div>
-                       <div className="flex items-center gap-1 text-[10px] font-black text-rose-500 italic">
-                          <DollarSign size={10} /> ₹{entry.cost_per_km}/KM
+                       <div style={{ fontSize: 11, color: '#f43f5e', fontWeight: 600, marginTop: 2 }}>
+                          ₹{entry.cost_per_km}/KM
                        </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="relative w-12 h-12 flex items-center justify-center">
-                          <svg className="w-full h-full -rotate-90">
-                            <circle cx="24" cy="24" r="20" fill="none" stroke="#f1f5f9" strokeWidth="4" />
-                            <circle 
-                              cx="24" 
-                              cy="24" 
-                              r="20" 
-                              fill="none" 
-                              stroke={entry.status === 'High Performance' ? '#10b981' : entry.status === 'Average' ? '#6366f1' : '#f43f5e'} 
-                              strokeWidth="4" 
-                              strokeDasharray={`${(entry.performance_score / 100) * 125.6} 125.6`}
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <span className="absolute text-[10px] font-black text-slate-900">{entry.performance_score}%</span>
+                  <td style={{ textAlign: 'right', paddingRight: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{entry.performance_score}%</span>
+                          <span style={{ 
+                            padding: '3px 8px', 
+                            borderRadius: 12, 
+                            fontSize: 9, 
+                            fontWeight: 700,
+                            background: entry.status === 'High Performance' ? 'rgba(16, 185, 129, 0.08)' : entry.status === 'Average' ? 'rgba(59, 130, 246, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                            color: entry.status === 'High Performance' ? '#10b981' : entry.status === 'Average' ? '#3b82f6' : '#ef4444',
+                            border: entry.status === 'High Performance' ? '1px solid rgba(16, 185, 129, 0.2)' : entry.status === 'Average' ? '1px solid rgba(59, 130, 246, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+                          }}>
+                            {entry.status}
+                          </span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
-                           entry.status === 'High Performance' ? 'bg-emerald-50 text-emerald-600' :
-                           entry.status === 'Average' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'
-                        }`}>
-                           {entry.status}
-                        </span>
                       </div>
                       <button 
                         onClick={() => setSelectedRecord(entry)}
-                        className="btn btn-primary"
+                        className="btn btn-secondary"
+                        style={{ padding: '6px' }}
                       >
-                         <Eye size={18} />
+                         <Eye size={16} />
                       </button>
                     </div>
                   </td>
@@ -468,16 +448,16 @@ const DriverPerformance = () => {
               ))}
               {data.details.length === 0 && !loading && (
                 <tr>
-                   <td colSpan="7" className="px-8 py-32 text-center">
-                     <div className="max-w-xs mx-auto space-y-4">
-                       <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto text-slate-300 ring-4 ring-white shadow-inner">
-                         <Star size={40} />
+                   <td colSpan="6" style={{ padding: 48, textAlign: 'center' }}>
+                     <div style={{ maxWidth: 300, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                       <div style={{ background: 'var(--bg-secondary)', width: 64, height: 64, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                         <Star size={32} />
                        </div>
                        <div>
-                         <h4 className="text-slate-900 font-black tracking-tight uppercase text-sm">No Analyst Records</h4>
-                         <p className="text-slate-400 text-xs font-bold leading-relaxed px-4">There are no performance entries matching the current filter window.</p>
+                         <h4 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>No Performance Records</h4>
+                         <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: '1.5' }}>There are no performance entries matching the current filter window.</p>
                        </div>
-                       <button onClick={fetchReport} className="text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-6 py-2.5 rounded-xl">Refresh Search</button>
+                       <button onClick={fetchReport} className="btn btn-primary" style={{ padding: '8px 16px' }}>Refresh Search</button>
                      </div>
                    </td>
                 </tr>
@@ -486,133 +466,148 @@ const DriverPerformance = () => {
           </table>
         </div>
       </div>
+
       {/* View Modal */}
       {selectedRecord && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <div className="flex items-center gap-4">
-                <div className="card">
-                  {viewType === 'driver' ? <User size={24} className="text-purple-600" /> : <Truck size={24} className="text-purple-600" />}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)' }}>
+          <div className="card" style={{ width: '100%', maxWidth: 650, padding: 0, overflow: 'hidden' }}>
+            {/* Modal Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ padding: 8, background: 'rgba(139, 92, 246, 0.08)', borderRadius: 8, color: 'var(--primary)' }}>
+                  {viewType === 'driver' ? <User size={20} /> : <Truck size={20} />}
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Audit Log Details</h2>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{viewType === 'driver' ? 'Driver Centric Analysis' : 'Vehicle Performance Report'}</p>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Audit Performance Details</h3>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    {viewType === 'driver' ? 'Driver Centric Analysis' : 'Vehicle Performance Report'}
+                  </span>
                 </div>
               </div>
               <button 
                 onClick={() => setSelectedRecord(null)}
-                className="btn btn-secondary"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
               >
-                <X size={20} className="text-slate-500" />
+                <X size={20} />
               </button>
             </div>
             
-            <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+            {/* Modal Body */}
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, maxHeight: '70vh', overflowY: 'auto' }}>
               {/* Primary Identity */}
-              <div className="form-row">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Operator Name</label>
-                  <p className="text-xl font-black text-slate-900">{selectedRecord.driver_name}</p>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Operator Name</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>{selectedRecord.driver_name}</div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Fleet Unit No</label>
-                  <p className="text-xl font-black text-purple-600">{selectedRecord.vehicle_number}</p>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Fleet Unit No</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>{selectedRecord.vehicle_number}</div>
                 </div>
               </div>
 
               {/* Metrics Grid */}
-              <div className="btn btn-secondary">
-                <div className="text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-2">Efficiency</p>
-                  <p className="text-lg font-black text-slate-900">{selectedRecord.avg_mileage} <span className="text-[10px]">km/L</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, background: 'var(--bg-secondary)', padding: 16, borderRadius: 12, border: '1px solid var(--border)' }}>
+                <div style={{ textPanel: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Efficiency</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {selectedRecord.avg_mileage} <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>KM/L</span>
+                  </div>
                 </div>
-                <div className="btn btn-secondary">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-2">Distance</p>
-                  <p className="text-lg font-black text-slate-900">{selectedRecord.total_distance.toLocaleString()} <span className="text-[10px]">KM</span></p>
+                <div style={{ textPanel: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Distance</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {selectedRecord.total_distance.toLocaleString()} <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>KM</span>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight mb-2">Trips</p>
-                  <p className="text-lg font-black text-slate-900">{selectedRecord.total_trips} <span className="text-[10px]">LOGS</span></p>
+                <div style={{ textPanel: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Trips</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {selectedRecord.total_trips} <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>LOGS</span>
+                  </div>
                 </div>
               </div>
 
               {/* Financial & Reliability */}
-              <div className="form-row">
-                 <div className="btn btn-danger">
-                    <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                 <div style={{ background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.15)', padding: 16, borderRadius: 12 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                        <DollarSign size={14} /> Total Burn Rate
-                    </h4>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">₹{selectedRecord.fuel_cost.toLocaleString()}</p>
-                    <p className="text-[10px] font-black text-rose-400 mt-1 uppercase italic">₹{selectedRecord.cost_per_km} per Kilometer</p>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>₹{selectedRecord.fuel_cost.toLocaleString()}</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#f87171', marginTop: 4 }}>₹{selectedRecord.cost_per_km} per Kilometer</div>
                  </div>
-                 <div className="btn btn-success">
-                    <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <div style={{ background: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.15)', padding: 16, borderRadius: 12 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                        <CheckCircle2 size={14} /> Delivery Success
-                    </h4>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">{((selectedRecord.on_time_deliveries / selectedRecord.total_trips) * 100).toFixed(1)}%</p>
-                    <p className="text-[10px] font-black text-emerald-400 mt-1 uppercase italic">{selectedRecord.on_time_deliveries} Successes Out of {selectedRecord.total_trips}</p>
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {((selectedRecord.on_time_deliveries / (selectedRecord.total_trips || 1)) * 100).toFixed(1)}%
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#34d399', marginTop: 4 }}>
+                      {selectedRecord.on_time_deliveries} Successes Out of {selectedRecord.total_trips}
+                    </div>
                  </div>
               </div>
 
               {/* Breakdown Warning */}
               {selectedRecord.breakdowns > 0 && (
-                <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200 flex items-center gap-4 text-amber-700">
-                   <AlertTriangle className="animate-bounce" size={24} />
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: '#fffbeb', border: '1px solid #fde68a', padding: 16, borderRadius: 12, color: '#b45309' }}>
+                   <AlertTriangle size={20} />
                    <div>
-                     <p className="text-sm font-black uppercase">Technical Alert</p>
-                     <p className="text-xs font-bold leading-none mt-1">This entry includes {selectedRecord.breakdowns} critical breakdowns recorded in the interval.</p>
+                     <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Technical Alert</div>
+                     <div style={{ fontSize: 11, fontWeight: 600, marginTop: 2 }}>This entry includes {selectedRecord.breakdowns} critical breakdowns recorded in the interval.</div>
                    </div>
                 </div>
               )}
 
               {/* Trip History Table */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <Navigation size={14} className="text-purple-500" /> Recent Activity Log
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h4 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Navigation size={14} style={{ color: 'var(--primary)' }} /> Recent Activity Log
                   </h4>
-                  <span className="btn btn-primary">LAST {selectedRecord.recent_trips?.length || 0} ENTRIES</span>
+                  <span className="badge badge-active" style={{ fontSize: 10 }}>LAST {selectedRecord.recent_trips?.length || 0} ENTRIES</span>
                 </div>
                 
-                <div className="card">
-                  <div className="overflow-x-auto">
-                    <table className="data-table">
+                <div className="card" style={{ padding: 0 }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="data-table" style={{ fontSize: 12 }}>
                       <thead>
-                        <tr className="btn btn-secondary">
-                          <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px]">Date</th>
-                          <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px]">
-                            {viewType === 'driver' ? 'Vehicle No' : 'Operator'}
-                          </th>
-                          <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px]">Distance</th>
-                          <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[9px]">Fuel / Cost</th>
+                        <tr>
+                          <th>Date</th>
+                          <th>{viewType === 'driver' ? 'Vehicle No' : 'Operator'}</th>
+                          <th>Distance</th>
+                          <th>Fuel / Cost</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody>
                         {(selectedRecord.recent_trips || []).map((trip, tIdx) => (
-                          <tr key={tIdx} className="btn btn-secondary">
-                            <td className="px-6 py-4 font-bold text-slate-600">{trip.date}</td>
-                            <td className="px-6 py-4">
-                              <span className="px-2 py-1 bg-slate-100 rounded-lg font-black text-slate-700">
+                          <tr key={tIdx}>
+                            <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{trip.date}</td>
+                            <td>
+                              <span style={{ px: 8, py: 4, background: 'var(--bg-secondary)', borderRadius: 6, fontWeight: 700, color: 'var(--text-primary)', padding: '2px 8px' }}>
                                 {viewType === 'driver' ? trip.vehicle_number : trip.driver_name}
                               </span>
                             </td>
-                            <td className="px-6 py-4 font-black text-slate-900">{trip.distance} <span className="text-slate-400">KM</span></td>
-                            <td className="px-6 py-4">
+                            <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{trip.distance} <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>KM</span></td>
+                            <td>
                               {trip.fuel_liters > 0 ? (
-                                <div className="flex flex-col">
-                                  <span className="text-emerald-600 font-bold">{trip.fuel_liters}L</span>
-                                  <span className="text-[9px] text-slate-400 font-black">₹{trip.fuel_cost}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ color: '#10b981', fontWeight: 700 }}>{trip.fuel_liters}L</span>
+                                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>₹{trip.fuel_cost}</span>
                                 </div>
                               ) : (
-                                <span className="text-slate-300">--</span>
+                                <span style={{ color: 'var(--text-muted)' }}>--</span>
                               )}
                             </td>
                           </tr>
                         ))}
                         {(!selectedRecord.recent_trips || selectedRecord.recent_trips.length === 0) && (
                           <tr>
-                            <td colSpan="4" className="px-6 py-12 text-center text-slate-400 italic">No individual trip logs found for this period.</td>
+                            <td colSpan="4" style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                              No individual trip logs found for this period.
+                            </td>
                           </tr>
                         )}
                       </tbody>
@@ -622,14 +617,16 @@ const DriverPerformance = () => {
               </div>
             </div>
 
-            <div className="btn btn-secondary">
-              <div className="flex items-center gap-2">
-                 <div className={`h-3 w-3 rounded-full ${selectedRecord.status === 'High Performance' ? 'bg-emerald-600 shadow-[0_0_10px_#10b981]' : 'bg-rose-600 shadow-[0_0_10px_#f43f5e]'}`} />
-                 <span className="text-xs font-black text-slate-900 uppercase tracking-widest">{selectedRecord.status}</span>
+            {/* Modal Footer */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                 <div style={{ h: 8, w: 8, height: 8, width: 8, borderRadius: '50%', background: selectedRecord.status === 'High Performance' ? '#10b981' : '#ef4444' }} />
+                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase' }}>{selectedRecord.status}</span>
               </div>
               <button 
                 onClick={() => setSelectedRecord(null)}
                 className="btn btn-secondary"
+                style={{ padding: '8px 16px' }}
               >
                 Close Report
               </button>

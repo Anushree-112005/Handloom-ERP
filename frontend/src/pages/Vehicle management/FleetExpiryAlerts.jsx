@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { 
   AlertCircle, Calendar, Search, Filter, Truck, User, 
-  ArrowUpRight, Download, RefreshCw,
-  Bell, ShieldAlert, CheckCircle2, Clock
+  Download, RefreshCw, Bell, ShieldAlert, CheckCircle, Clock, X,
+  FileText, FileSpreadsheet
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import api from '../../services/api';
 import { showError } from '../../utils/notifications';
 
-const ExpiryAlerts = () => {
+const DetailRow = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 6, paddingTop: 4 }}>
+    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+export default function FleetExpiryAlerts() {
   const [alerts, setAlerts] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   
   const [filters, setFilters] = useState({
     documentType: '',
@@ -43,7 +55,10 @@ const ExpiryAlerts = () => {
         api.get('/fleet/drivers')
       ]);
       
-      const alertsData = alertsRes.data || [];
+      const alertsData = (alertsRes.data || []).map((item, index) => ({
+        ...item,
+        id: item.id || `alert-${index}`
+      }));
       setAlerts(alertsData);
       setVehicles(vehiclesRes.data || []);
       setDrivers(driversRes.data || []);
@@ -71,22 +86,28 @@ const ExpiryAlerts = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Expired': 
-        return <span className="btn btn-danger">
-          <div className="btn btn-danger" /> Expired
-        </span>;
+        return (
+          <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }}>
+            Expired
+          </span>
+        );
       case 'Expiring Soon': 
-        return <span className="flex items-center gap-1.5 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold border border-orange-200">
-          <div className="h-1.5 w-1.5 rounded-full bg-orange-600" /> Expiring Soon
-        </span>;
+        return (
+          <span className="badge" style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a' }}>
+            Expiring Soon
+          </span>
+        );
       default: 
-        return <span className="btn btn-success">
-          <div className="btn btn-success" /> Valid
-        </span>;
+        return (
+          <span className="badge badge-active" style={{ border: '1px solid #a7f3d0' }}>
+            Valid
+          </span>
+        );
     }
   };
 
   const filteredAlerts = alerts.filter(alert => {
-    const matchDocType = !filters.documentType || alert.document_type.toLowerCase().includes(filters.documentType.toLowerCase());
+    const matchDocType = !filters.documentType || (alert.document_type || '').toLowerCase().includes(filters.documentType.toLowerCase());
     const matchVehicle = !filters.vehicle || (alert.vehicle_number && alert.vehicle_number === filters.vehicle);
     const matchDriver = !filters.driver || (alert.driver_name && alert.driver_name === filters.driver);
     const matchStatus = !filters.status || alert.status === filters.status;
@@ -99,137 +120,240 @@ const ExpiryAlerts = () => {
     return matchDocType && matchVehicle && matchDriver && matchStatus && matchDateRange;
   });
 
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Fleet Expiry Alerts Report", 14, 15);
+    const tableColumn = ["Resource / Vehicle", "Doc Type", "Doc Number", "Expiry Date", "Days Remaining", "Status"];
+    const tableRows = [];
+
+    filteredAlerts.forEach(alert => {
+      const rowData = [
+        alert.vehicle_number || alert.driver_name || '-',
+        alert.document_type || '-',
+        alert.document_number || '-',
+        new Date(alert.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        alert.days_remaining < 0 ? `Overdue by ${Math.abs(alert.days_remaining)} days` : `${alert.days_remaining} days remaining`,
+        alert.status || '-'
+      ];
+      tableRows.push(rowData);
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+    doc.save(`Fleet_Expiry_Alerts_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredAlerts.map(alert => ({
+      "Resource / Vehicle": alert.vehicle_number || alert.driver_name || '-',
+      "Document Type": alert.document_type || '-',
+      "Document Number": alert.document_number || '-',
+      "Expiry Date": alert.expiry_date,
+      "Days Remaining": alert.days_remaining,
+      "Status": alert.status,
+      "Blocking": alert.is_blocking ? "Yes" : "No"
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Expiry Alerts");
+    XLSX.writeFile(workbook, `Fleet_Expiry_Alerts_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
-      {/* Header Section */}
-      <div className="card">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-orange-50 p-3 rounded-2xl border border-orange-100 shadow-sm">
-              <AlertCircle className="h-8 w-8 text-orange-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Expiry Alerts</h1>
-              <p className="text-slate-500 font-medium">Monitor and manage document compliance across your fleet</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={fetchData} className="btn btn-secondary">
-              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            <button className="btn btn-secondary">
-              <Download size={18} /> Export Report
-            </button>
-          </div>
+    <div className="animate-fade">
+      {/* Upper header action row matching Sales Invoice */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertCircle size={24} color="var(--primary)" /> Expiry Alerts
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>Monitor and manage document compliance across your fleet</p>
         </div>
-
-        {/* Blocking Alert Bar */}
-        {stats.blocking > 0 && (
-          <div className="btn btn-danger">
-            <ShieldAlert className="h-6 w-6 text-red-600" />
-            <div className="flex-1">
-              <p className="text-red-900 font-bold">Critical Compliance Issues Found</p>
-              <p className="text-red-700 text-sm">{stats.blocking} documents are expired. Impacted vehicles have been automatically blocked from trip planning.</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Stats Grid */}
-      <div className="form-row">
-        {[
-          { label: 'Total Scanned', value: stats.total, icon: Bell, color: 'slate' },
-          { label: 'Expired', value: stats.expired, icon: AlertCircle, color: 'red' },
-          { label: 'Expiring Soon', value: stats.expiringSoon, icon: Clock, color: 'orange' },
-          { label: 'Documents Valid', value: stats.valid, icon: CheckCircle2, color: 'emerald' }
-        ].map((stat, idx) => (
-          <div key={idx} className="card">
-            <div className="card-header">
-              <div className={`p-3 rounded-xl bg-${stat.color}-50 text-${stat.color}-600 group-hover:scale-110 transition-transform duration-300`}>
-                <stat.icon size={24} />
-              </div>
-              <ArrowUpRight className="text-slate-300 group-hover:text-slate-500 transition-colors" size={20} />
-            </div>
-            <p className="text-slate-500 text-xs font-black uppercase tracking-widest leading-none mb-2">{stat.label}</p>
-            <h3 className="text-3xl font-black text-slate-900">{stat.value}</h3>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters Section */}
-      <div className="card">
-        <div className="flex items-center gap-2 mb-6">
-          <Filter size={18} className="text-indigo-600" />
-          <h3 className="font-bold text-slate-900">Advanced Filters</h3>
-        </div>
-        <div className="form-row">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Doc Type</label>
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="RC, Insurance..." 
-                className="form-control"
-                value={filters.documentType}
-                onChange={(e) => setFilters({...filters, documentType: e.target.value})}
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            </div>
-          </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button onClick={fetchData} className="btn btn-secondary" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center' }}>
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
           
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle</label>
-            <select 
-              className="form-control"
-              value={filters.vehicle}
-              onChange={(e) => setFilters({...filters, vehicle: e.target.value})}
+          {/* Export Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <option value="">All Vehicles</option>
-              {vehicles.map(v => <option key={v.id} value={v.vehicle_number}>{v.vehicle_number}</option>)}
-            </select>
+              <Download size={16} /> Export
+            </button>
+
+            {showExportMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                <button
+                  onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <FileText size={16} color="#ef4444" /> PDF Report
+                </button>
+                <button
+                  onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <FileSpreadsheet size={16} color="#10b981" /> Excel Sheet
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Blocking Alert Banner */}
+      {stats.blocking > 0 && (
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', background: '#fee2e2', border: '1px solid #fca5a5', padding: '16px 20px', borderRadius: 'var(--radius-md)', marginBottom: 24 }}>
+          <ShieldAlert size={24} color="#dc2626" style={{ flexShrink: 0 }} />
+          <div>
+            <h4 style={{ margin: 0, color: '#991b1b', fontWeight: 700, fontSize: 14 }}>Critical Compliance Issues Found</h4>
+            <p style={{ margin: 0, color: '#b91c1c', fontSize: 13 }}>
+              {stats.blocking} documents are expired. Impacted vehicles have been automatically blocked from trip planning.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Cards matching Sales Invoice grid layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div 
+          className="card stat-card" 
+          onClick={() => setFilters(prev => ({ ...prev, status: '' }))} 
+          style={{ cursor: 'pointer', border: filters.status === '' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(79,70,229,0.1)', color: 'var(--primary)' }}>
+            <Bell size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Scanned</h3>
+            <div className="value">{stats.total}</div>
+          </div>
+        </div>
+
+        <div 
+          className="card stat-card" 
+          onClick={() => setFilters(prev => ({ ...prev, status: 'Expired' }))} 
+          style={{ cursor: 'pointer', border: filters.status === 'Expired' ? '2px solid #ef4444' : '1px solid transparent', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Expired</h3>
+            <div className="value">{stats.expired}</div>
+          </div>
+        </div>
+
+        <div 
+          className="card stat-card" 
+          onClick={() => setFilters(prev => ({ ...prev, status: 'Expiring Soon' }))} 
+          style={{ cursor: 'pointer', border: filters.status === 'Expiring Soon' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+            <Clock size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Expiring Soon</h3>
+            <div className="value">{stats.expiringSoon}</div>
+          </div>
+        </div>
+
+        <div 
+          className="card stat-card" 
+          onClick={() => setFilters(prev => ({ ...prev, status: 'Valid' }))} 
+          style={{ cursor: 'pointer', border: filters.status === 'Valid' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Documents Valid</h3>
+            <div className="value">{stats.valid}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Row matching Sales Invoice */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        {/* Left Search */}
+        <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: 300 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input 
+            type="text" 
+            placeholder="Search Doc Type..." 
+            className="form-control"
+            style={{ paddingLeft: 38, width: '100%', margin: 0, height: 38 }}
+            value={filters.documentType}
+            onChange={(e) => setFilters({...filters, documentType: e.target.value})}
+          />
+        </div>
+
+        {/* Right Filters */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Filters:</span>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Driver</label>
-            <select 
-              className="form-control"
-              value={filters.driver}
-              onChange={(e) => setFilters({...filters, driver: e.target.value})}
-            >
-              <option value="">All Drivers</option>
-              {drivers.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-            </select>
-          </div>
+          <select 
+            className="form-control"
+            style={{ width: 140, margin: 0, height: 38 }}
+            value={filters.vehicle}
+            onChange={(e) => setFilters({...filters, vehicle: e.target.value})}
+          >
+            <option value="">All Vehicles</option>
+            {vehicles.map(v => <option key={v.id} value={v.vehicle_number}>{v.vehicle_number}</option>)}
+          </select>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Status</label>
-            <select 
-              className="form-control"
-              value={filters.status}
-              onChange={(e) => setFilters({...filters, status: e.target.value})}
-            >
-              <option value="">All Statuses</option>
-              <option value="Expired">Expired 🔴</option>
-              <option value="Expiring Soon">Expiring Soon 🟠</option>
-              <option value="Valid">Valid 🟢</option>
-            </select>
-          </div>
+          <select 
+            className="form-control"
+            style={{ width: 140, margin: 0, height: 38 }}
+            value={filters.driver}
+            onChange={(e) => setFilters({...filters, driver: e.target.value})}
+          >
+            <option value="">All Drivers</option>
+            {drivers.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Start Date</label>
+          <select 
+            className="form-control"
+            style={{ width: 140, margin: 0, height: 38 }}
+            value={filters.status}
+            onChange={(e) => setFilters({...filters, status: e.target.value})}
+          >
+            <option value="">All Statuses</option>
+            <option value="Expired">Expired</option>
+            <option value="Expiring Soon">Expiring Soon</option>
+            <option value="Valid">Valid</option>
+          </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span>
             <input 
               type="date" 
               className="form-control"
+              style={{ width: 130, margin: 0, height: 38, padding: '8px' }}
               value={filters.startDate}
               onChange={(e) => setFilters({...filters, startDate: e.target.value})}
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">End Date</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span>
             <input 
               type="date" 
               className="form-control"
+              style={{ width: 130, margin: 0, height: 38, padding: '8px' }}
               value={filters.endDate}
               onChange={(e) => setFilters({...filters, endDate: e.target.value})}
             />
@@ -237,79 +361,150 @@ const ExpiryAlerts = () => {
         </div>
       </div>
 
-      {/* Main Alerts Table */}
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead className="btn btn-secondary">
-              <tr>
-                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-500">Resource / Vehicle</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-500">Document Detail</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-500">Expiration Info</th>
-                <th className="px-6 py-4 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredAlerts.length > 0 ? filteredAlerts.map((alert, idx) => (
-                <tr key={idx} className="btn btn-secondary">
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl border transition-colors ${alert.driver_name ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
-                        {alert.driver_name ? <User size={20} /> : <Truck size={20} />}
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-900 leading-none mb-1 text-sm">{alert.vehicle_number || alert.driver_name}</p>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] font-bold text-slate-400 tracking-tight uppercase">
-                            {alert.driver_name ? 'Personnel' : alert.data_source} Document
-                          </span>
-                          {alert.is_blocking && <span className="btn btn-danger" title="Vehicle Blocked" />}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <p className="font-bold text-slate-700 text-sm mb-0.5">{alert.document_type}</p>
-                    <p className="btn btn-secondary">{alert.document_number}</p>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-2 mb-1.5">
-                       <Calendar size={14} className="text-slate-400" />
-                       <span className={`text-sm font-black ${alert.status === 'Expired' ? 'text-red-500' : alert.status === 'Expiring Soon' ? 'text-orange-500' : 'text-slate-600'}`}>
-                         {new Date(alert.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                       </span>
-                    </div>
-                    <p className={`text-xs font-bold leading-none pl-5 ${alert.days_remaining < 0 ? 'text-red-400' : 'text-slate-400'}`}>
-                       {alert.days_remaining < 0 
-                         ? `Overdue by ${Math.abs(alert.days_remaining)} days`
-                         : `${alert.days_remaining} days remaining`}
-                    </p>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex justify-center">
-                      {getStatusBadge(alert.status)}
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+      {/* Split Layout */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        {/* Table */}
+        <div style={{ flex: 1, overflowX: 'auto' }}>
+          <div className="card" style={{ padding: 0 }}>
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="4" className="px-6 py-24 text-center">
-                    <div className="flex flex-col items-center justify-center max-w-xs mx-auto">
-                      <div className="btn btn-secondary">
-                        <Clock size={40} />
-                      </div>
-                      <h4 className="text-lg font-black text-slate-900 mb-1">No Alerts Found</h4>
-                      <p className="text-slate-500 text-sm">All scanned documents are currently valid and compliant. We'll alert you when anything expires.</p>
-                    </div>
-                  </td>
+                  <th>Resource / Vehicle</th>
+                  <th>Document Detail</th>
+                  <th>Expiration Info</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: 30 }}>Loading...</td>
+                  </tr>
+                ) : filteredAlerts.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: 30 }}>No alerts found</td>
+                  </tr>
+                ) : (
+                  filteredAlerts.map((alert, idx) => (
+                    <tr 
+                      key={alert.id || idx}
+                      onClick={() => setSelectedAlert(alert)}
+                      style={{ 
+                        cursor: 'pointer', 
+                        background: selectedAlert?.id === (alert.id || idx) ? 'var(--bg-secondary)' : 'transparent',
+                        transition: 'background 0.2s'
+                      }}
+                    >
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{
+                            padding: 8,
+                            borderRadius: 10,
+                            background: alert.driver_name ? 'rgba(79, 70, 229, 0.08)' : 'rgba(100, 116, 139, 0.08)',
+                            color: alert.driver_name ? 'var(--primary)' : 'var(--text-secondary)'
+                          }}>
+                            {alert.driver_name ? <User size={18} /> : <Truck size={18} />}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                              {alert.vehicle_number || alert.driver_name}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                                {alert.driver_name ? 'Personnel' : alert.data_source} Document
+                              </span>
+                              {alert.is_blocking && (
+                                <span className="badge" style={{ background: '#fee2e2', color: '#dc2626', fontSize: 9, padding: '2px 6px' }}>
+                                  Blocked
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{alert.document_type}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{alert.document_number || '-'}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
+                          <span style={{ 
+                            fontWeight: 600, 
+                            color: alert.status === 'Expired' ? '#ef4444' : alert.status === 'Expiring Soon' ? '#f59e0b' : 'inherit' 
+                          }}>
+                            {new Date(alert.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div style={{ 
+                          fontSize: 11, 
+                          fontWeight: 600, 
+                          marginTop: 4,
+                          color: alert.days_remaining < 0 ? '#ef4444' : 'var(--text-muted)'
+                        }}>
+                          {alert.days_remaining < 0 
+                            ? `Overdue by ${Math.abs(alert.days_remaining)} days`
+                            : `${alert.days_remaining} days remaining`}
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        {getStatusBadge(alert.status)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* Details Panel */}
+        {selectedAlert && (
+          <div style={{ flex: '0 0 380px' }}>
+            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertCircle size={18} /> Alert Details
+                </h3>
+                <button onClick={() => setSelectedAlert(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 4 }}>
+                {selectedAlert.vehicle_number ? (
+                  <DetailRow label="Vehicle Number" value={selectedAlert.vehicle_number} />
+                ) : (
+                  <DetailRow label="Personnel Name" value={selectedAlert.driver_name} />
+                )}
+                <DetailRow label="Document Category" value={selectedAlert.driver_name ? 'Driver / Staff' : 'Vehicle Asset'} />
+                <DetailRow label="Document Type" value={selectedAlert.document_type} />
+                <DetailRow label="Document Reference" value={selectedAlert.document_number || 'N/A'} />
+                <DetailRow label="Expiration Date" value={new Date(selectedAlert.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} />
+                <DetailRow label="Validity Period" value={
+                  <span style={{ 
+                    fontWeight: 700, 
+                    color: selectedAlert.days_remaining < 0 ? '#ef4444' : selectedAlert.days_remaining <= 30 ? '#f59e0b' : '#10b981'
+                  }}>
+                    {selectedAlert.days_remaining < 0 
+                      ? `Overdue by ${Math.abs(selectedAlert.days_remaining)} days`
+                      : `${selectedAlert.days_remaining} days remaining`}
+                  </span>
+                } />
+                <DetailRow label="Status" value={getStatusBadge(selectedAlert.status)} />
+                <DetailRow label="Compliance Block" value={
+                  selectedAlert.is_blocking ? (
+                    <span style={{ color: '#ef4444', fontWeight: 800 }}>ACTIVE (Vehicle Blocked)</span>
+                  ) : (
+                    <span style={{ color: '#10b981', fontWeight: 800 }}>None</span>
+                  )
+                } />
+                <DetailRow label="Data Registry" value={selectedAlert.driver_name ? 'Driver Registry' : 'Vehicle Fleet Registry'} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default ExpiryAlerts;
+}
