@@ -786,59 +786,32 @@ export default function HRReports() {
         </div>
         <div className="flex gap-2">
           {/* Report Selector Dropdown */}
-          <div className="relative report-dropdown">
-            <button
-              onClick={() => setShowReportDropdown(!showReportDropdown)}
-              className="btn btn-secondary"
-            >
-              <span className="truncate">{getCurrentReport()?.name || 'Select Report'}</span>
-              <ChevronDown className="w-4 h-4 flex-shrink-0" />
-            </button>
-            
-            {showReportDropdown && (
-              <div className="btn btn-secondary">
-                {reportCategories.map(category => (
-                  <div key={category.title} className="btn btn-secondary">
-                    <div className="bg-slate-50 px-4 py-2">
-                      <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                        {category.title}
-                      </h3>
-                    </div>
-                    <div className="divide-y divide-slate-50">
-                      {category.reports.map(report => {
-                        const Icon = report.icon;
-                        return (
-                          <button
-                            key={report.id}
-                            onClick={() => {
-                              setSelectedReport(report.id);
-                              setShowReportDropdown(false);
-                            }}
-                            className={`w-full p-3 text-left hover:bg-slate-50 transition-colors flex items-start gap-3 ${
-                              selectedReport === report.id ? 'bg-indigo-50' : ''
-                            }`}
-                          >
-                            <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                              selectedReport === report.id ? 'text-indigo-600' : 'text-slate-400'
-                            }`} />
-                            <div className="flex-1 min-w-0">
-                              <div className={`text-sm font-medium ${
-                                selectedReport === report.id ? 'text-indigo-600' : 'text-slate-700'
-                              }`}>
-                                {report.name}
-                              </div>
-                              <div className="text-xs text-slate-500 mt-0.5">{report.description}</div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+          <select
+            value={selectedReport}
+            onChange={(e) => {
+              setSelectedReport(e.target.value);
+            }}
+            className="form-control cursor-pointer"
+            style={{ 
+              minWidth: '240px', 
+              backgroundColor: '#fff',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontWeight: 500,
+              color: '#334155'
+            }}
+          >
+            {reportCategories.map(cat => (
+              <optgroup key={cat.title} label={cat.title}>
+                {cat.reports.map(rep => (
+                  <option key={rep.id} value={rep.id}>
+                    {rep.name}
+                  </option>
                 ))}
-              </div>
-            )}
-          </div>
-
+              </optgroup>
+            ))}
+          </select>
+ 
           {/* Filters Dropdown */}
           <div className="relative filters-dropdown">
             <button
@@ -850,12 +823,12 @@ export default function HRReports() {
             </button>
             
             {showFilters && (
-              <div className="btn btn-secondary">
-                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+              <div className="absolute right-0 mt-1 w-[300px] bg-white rounded-sm shadow-md border border-slate-300 z-50 p-4 flex flex-col gap-3">
+                <h3 className="font-semibold text-slate-800 flex items-center gap-2" style={{ margin: 0, fontSize: 14 }}>
                   <Filter className="w-4 h-4" /> Filter Options
                 </h3>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Start Date</label>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label className="block text-xs font-medium text-slate-500">Start Date</label>
                   <input
                     type="date"
                     value={dateRange.start}
@@ -863,8 +836,8 @@ export default function HRReports() {
                     className="form-control"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">End Date</label>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label className="block text-xs font-medium text-slate-500">End Date</label>
                   <input
                     type="date"
                     value={dateRange.end}
@@ -872,8 +845,8 @@ export default function HRReports() {
                     className="form-control"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Department</label>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label className="block text-xs font-medium text-slate-500">Department</label>
                   <select
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
@@ -887,19 +860,21 @@ export default function HRReports() {
                     <option value="finance">Finance</option>
                   </select>
                 </div>
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-2" style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <button
                     onClick={() => {
                       setDateRange({ start: '', end: '' });
                       setDepartment('');
                     }}
                     className="btn btn-secondary"
+                    style={{ flex: 1 }}
                   >
                     Clear Filters
                   </button>
                   <button
                     onClick={() => setShowFilters(false)}
                     className="btn btn-primary"
+                    style={{ flex: 1 }}
                   >
                     Apply
                   </button>
@@ -907,7 +882,7 @@ export default function HRReports() {
               </div>
             )}
           </div>
-
+ 
           {/* Refresh Button */}
           <button
             onClick={handleRefresh}
@@ -917,7 +892,7 @@ export default function HRReports() {
             <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> 
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
-
+ 
           {/* Export Button */}
           <button className="btn btn-primary">
             <Download className="w-4 h-4" /> Export

@@ -275,31 +275,56 @@ const Payroll = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
+    <div className="animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', minHeight: 'calc(100vh - 80px)' }}>
 
+      {!showForm && (
+        <>
       {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title + badges */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">PAYROLL</h1>
-          <span className="btn btn-success">
-            Net: ₹{totals.net.toLocaleString()}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+            <Calculator size={24} color="var(--primary)" /> Payroll Management
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Calculate employee salaries, manage allowances and deductions, and run AI error detection.</p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Net Pay Badge */}
+          <span style={{ 
+            backgroundColor: '#10b98118', 
+            color: '#047857', 
+            padding: '6px 12px', 
+            borderRadius: 6, 
+            fontSize: 13, 
+            fontWeight: 600,
+            border: '1px solid #10b98130',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}>
+            <DollarSign size={14} /> Net: ₹{totals.net.toLocaleString()}
           </span>
+
           {totals.pending > 0 && (
-            <span className="bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-amber-100">
+            <span style={{ 
+              backgroundColor: '#f59e0b18', 
+              color: '#b45309', 
+              padding: '6px 12px', 
+              borderRadius: 6, 
+              fontSize: 13, 
+              fontWeight: 600,
+              border: '1px solid #f59e0b30'
+            }}>
               {totals.pending} Pending
             </span>
           )}
-        </div>
 
-        {/* RIGHT: Filter dropdown + view toggle + Add button */}
-        <div className="flex items-center gap-2">
-          
           {/* AI Detect Errors Button */}
           <button
             onClick={handleAIDetectErrors}
             disabled={isDetecting || rows.length === 0}
-            className="btn btn-primary"
+            className="btn btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', color: 'var(--primary)', borderColor: 'var(--primary)' }}
           >
             <Sparkles className={`w-4 h-4 ${isDetecting ? 'animate-spin' : ''}`} />
             {isDetecting ? 'Analyzing...' : 'AI Detect Errors'}
@@ -309,33 +334,31 @@ const Payroll = () => {
           <div className="relative">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-                }`}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
             >
               <Filter className="w-4 h-4" /> Filter
-              {(filterStatus || filterPeriod) && <span className="btn btn-primary" />}
+              {(filterStatus || filterPeriod) && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />}
             </button>
             {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => { setFilterStatus(''); setFilterPeriod(''); }} className="text-xs text-indigo-600 hover:underline">Reset</button>
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
+                  <button onClick={() => { setFilterStatus(''); setFilterPeriod(''); }} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="form-control">
                       <option value="">All Status</option>
                       <option value="Pending HR">Pending HR</option>
                       <option value="Pending Finance">Pending Finance</option>
                       <option value="Approved">Approved</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Period</label>
-                    <select value={filterPeriod} onChange={(e) => setFilterPeriod(e.target.value)}
-                      className="form-control">
+                  <div className="form-group">
+                    <label>Period</label>
+                    <select value={filterPeriod} onChange={(e) => setFilterPeriod(e.target.value)} className="form-control">
                       <option value="">All Periods</option>
                       <option value="Monthly">Monthly</option>
                       <option value="Weekly">Weekly</option>
@@ -348,36 +371,34 @@ const Payroll = () => {
           </div>
 
           {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
+            <button onClick={() => setViewMode('list')} style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
               <LayoutList size={16} />
             </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
+            <button onClick={() => setViewMode('grid')} style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
               <LayoutGrid size={16} />
             </button>
           </div>
 
-          <button onClick={() => setShowForm(true)}
-            className="btn btn-primary">
+          {/* Add Button */}
+          <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
             <Plus className="w-4 h-4" /> Add Payroll Entry
           </button>
         </div>
       </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
         {/* Messages */}
         {success && (
-          <div className="btn btn-success">
-            <CheckCircle2 className="w-4 h-4" /> {success}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: '#ecfdf5', border: '1px solid #10b98130', color: '#047857', borderRadius: 8, marginBottom: 16 }}>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" /> <span style={{ fontSize: 14, fontWeight: 500 }}>{success}</span>
           </div>
         )}
         {error && (
-          <div className="btn btn-danger">
-            <AlertTriangle className="w-4 h-4" /> {error}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: '#fef2f2', border: '1px solid #ef444430', color: '#991b1b', borderRadius: 8, marginBottom: 16 }}>
+            <AlertTriangle className="w-4 h-4 text-red-600" /> <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
           </div>
         )}
 
@@ -388,130 +409,54 @@ const Payroll = () => {
           </div>
         )}
 
-        {/* Add Entry Modal */}
-        {showForm && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-            <div className="card">
-              <div className="btn btn-secondary">
-                <h2 className="card-title">Add Payroll Entry</h2>
-                <button onClick={resetForm} className="btn btn-secondary">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={addRow} className="p-4 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                  <select className="form-control"
-                    value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} required>
-                    <option value="">Select Employee</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.employee_id || emp.id}>
-                        {emp.name} ({emp.employee_id})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-row">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Period</label>
-                    <select className="form-control"
-                      value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value })}>
-                      <option>Monthly</option><option>Weekly</option><option>Bi-Weekly</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Basic Salary *</label>
-                    <input type="number" min="0" className="form-control"
-                      value={form.basic} onChange={(e) => setForm({ ...form, basic: e.target.value })} required />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Allowances</label>
-                    <input type="number" min="0" className="form-control"
-                      value={form.allowances} onChange={(e) => setForm({ ...form, allowances: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Deductions</label>
-                    <input type="number" min="0" className="form-control"
-                      value={form.deductions} onChange={(e) => setForm({ ...form, deductions: e.target.value })} />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">LOP Days</label>
-                    <input type="number" step="0.5" min="0" className="form-control"
-                      value={form.lop_days} onChange={(e) => setForm({ ...form, lop_days: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">OT Hours</label>
-                    <input type="number" min="0" className="form-control"
-                      value={form.ot_hours} onChange={(e) => setForm({ ...form, ot_hours: e.target.value })} />
-                  </div>
-                </div>
-
-                {/* Preview */}
-                <div className="bg-slate-50 rounded-lg p-3 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-slate-600">Gross</span><span className="font-medium">₹{computeSalary(form).gross.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-600">Deductions</span><span className="font-medium text-red-600">-₹{computeSalary(form).deductions.toLocaleString()}</span></div>
-                  <div className="btn btn-secondary"><span className="font-medium">Net Pay</span><span className="font-bold text-emerald-600">₹{computeSalary(form).net.toLocaleString()}</span></div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={resetForm}
-                    className="btn btn-secondary">Cancel</button>
-                  <button type="submit" disabled={loading}
-                    className="btn btn-primary">
-                    {loading ? 'Saving...' : 'Add Entry'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {/* Add Entry Form will be moved outside */}
 
         {/* View Payslip Modal */}
         {viewingPayslip && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-            <div className="card">
-              <div className="btn btn-secondary">
-                <h2 className="card-title">Payslip Details</h2>
-                <button onClick={() => setViewingPayslip(null)} className="btn btn-secondary"><X className="w-5 h-5" /></button>
+            <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Payslip Details</h2>
+                <button onClick={() => setViewingPayslip(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}><X className="w-5 h-5" /></button>
               </div>
-              <div className="p-4 space-y-4" ref={payslipRef}>
-                <div className="text-center pb-4 border-b">
-                  <div className="btn btn-success">
-                    <DollarSign className="w-6 h-6 text-emerald-600" />
+              <div className="p-6 space-y-6" ref={payslipRef}>
+                <div style={{ textAlign: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ display: 'inline-flex', padding: 12, background: '#10b98118', borderRadius: '50%', color: '#10b981', marginBottom: 12 }}>
+                    <DollarSign className="w-6 h-6" />
                   </div>
-                  <h3 className="card-title">{employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee}</h3>
-                  <p className="text-xs text-slate-500">Employee ID: {viewingPayslip.employee}</p>
-                  <p className="text-sm text-slate-500 mt-1">{viewingPayslip.period}</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs mt-2 ${viewingPayslip.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                      viewingPayslip.status === 'Pending Finance' ? 'bg-blue-100 text-blue-700' :
-                        'bg-amber-100 text-amber-700'
-                    }`}>{viewingPayslip.status}</span>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text-primary)' }}>
+                    {employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Employee ID: {viewingPayslip.employee}</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{viewingPayslip.period}</p>
+                  <span style={{ 
+                    display: 'inline-block',
+                    padding: '4px 12px',
+                    borderRadius: 12,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    marginTop: 12,
+                    backgroundColor: viewingPayslip.status === 'Approved' ? '#10b98118' : viewingPayslip.status === 'Pending Finance' ? '#3b82f618' : '#f59e0b18',
+                    color: viewingPayslip.status === 'Approved' ? '#047857' : viewingPayslip.status === 'Pending Finance' ? '#1d4ed8' : '#b45309'
+                  }}>{viewingPayslip.status}</span>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-slate-500">Basic</span><span className="font-medium">₹{(viewingPayslip.basic || 0).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Allowances</span><span className="font-medium">₹{(viewingPayslip.allowances || 0).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">OT ({viewingPayslip.ot_hours || 0}h × ₹200)</span><span className="font-medium">₹{((viewingPayslip.ot_hours || 0) * 200).toLocaleString()}</span></div>
-                  <div className="flex justify-between text-emerald-600 font-medium border-t pt-2"><span>Gross</span><span>₹{computeSalary(viewingPayslip).gross.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-medium text-red-600">-₹{(viewingPayslip.deductions || 0).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">LOP ({viewingPayslip.lop_days || 0}d)</span><span className="font-medium text-red-600">-₹{Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0)).toLocaleString()}</span></div>
-                  <div className="flex justify-between text-lg font-bold text-emerald-600 border-t pt-2"><span>Net Pay</span><span>₹{computeSalary(viewingPayslip).net.toLocaleString()}</span></div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-slate-500">Basic</span><span className="font-semibold text-slate-800">₹{(viewingPayslip.basic || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Allowances</span><span className="font-semibold text-slate-800">₹{(viewingPayslip.allowances || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">OT ({viewingPayslip.ot_hours || 0}h × ₹200)</span><span className="font-semibold text-slate-800">₹{((viewingPayslip.ot_hours || 0) * 200).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-emerald-600 font-semibold border-t pt-3"><span>Gross</span><span>₹{computeSalary(viewingPayslip).gross.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{(viewingPayslip.deductions || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">LOP ({viewingPayslip.lop_days || 0}d)</span><span className="font-semibold text-red-600">-₹{Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0)).toLocaleString()}</span></div>
+                  <div className="flex justify-between text-xl font-bold text-emerald-600 border-t pt-3"><span>Net Pay</span><span>₹{computeSalary(viewingPayslip).net.toLocaleString()}</span></div>
                 </div>
-                <div className="flex gap-2 pt-4 border-t">
-                  <button onClick={handlePrint} className="btn btn-secondary">
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+                  <button onClick={handlePrint} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Printer className="w-4 h-4" /> Print
                   </button>
-                  <button onClick={handleDownloadPDF} className="btn btn-danger">
+                  <button onClick={handleDownloadPDF} className="btn btn-danger" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#ef4444', borderColor: '#ef4444' }}>
                     <FileText className="w-4 h-4" /> PDF
                   </button>
-                  <button onClick={handleDownloadExcel} className="btn btn-success">
+                  <button onClick={handleDownloadExcel} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#10b981', borderColor: '#10b981' }}>
                     <FileSpreadsheet className="w-4 h-4" /> Excel
                   </button>
                 </div>
@@ -522,53 +467,59 @@ const Payroll = () => {
 
         {/* Payroll Cards - List View */}
         {viewMode === 'list' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filteredRows.length === 0 && !loading ? (
-              <div className="card">
+              <div className="card" style={{ padding: 40, textAlign: 'center' }}>
                 <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500">No payroll entries yet</p>
+                <p className="text-slate-500" style={{ margin: 0 }}>No payroll entries yet</p>
               </div>
             ) : filteredRows.map((r) => {
               const salary = computeSalary(r);
+              const empName = employees.find(e => e.employee_id === r.employee || e.id === parseInt(r.employee))?.name || r.employee;
               return (
-                <div key={r.id} className="card">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="btn btn-success">
-                        <DollarSign className="w-5 h-5 text-emerald-600" />
+                <div key={r.id} className="card" style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ width: 44, height: 44, background: '#10b98118', borderRadius: 8, color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <DollarSign className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">{r.employee}</p>
-                        <p className="text-sm text-slate-500">{r.period}</p>
-                        <p className="text-lg font-bold text-emerald-600">₹{salary.net.toLocaleString()}</p>
+                        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{empName}</p>
+                        <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}</p>
                       </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${r.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                        r.status === 'Pending Finance' ? 'bg-blue-100 text-blue-700' :
-                          'bg-amber-100 text-amber-700'
-                      }`}>{r.status}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                      <span style={{ 
+                        padding: '4px 10px',
+                        borderRadius: 12,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        backgroundColor: r.status === 'Approved' ? '#10b98118' : r.status === 'Pending Finance' ? '#3b82f618' : '#f59e0b18',
+                        color: r.status === 'Approved' ? '#047857' : r.status === 'Pending Finance' ? '#1d4ed8' : '#b45309'
+                      }}>{r.status}</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>₹{salary.net.toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap text-xs">
-                    <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded">Basic: ₹{(r.basic || 0).toLocaleString()}</span>
-                    {r.allowances > 0 && <span className="btn btn-success">+₹{r.allowances.toLocaleString()}</span>}
-                    {r.deductions > 0 && <span className="btn btn-danger">-₹{r.deductions.toLocaleString()}</span>}
-                    {r.ot_hours > 0 && <span className="btn btn-primary">OT: {r.ot_hours}h</span>}
-                    {r.lop_days > 0 && <span className="px-2 py-1 bg-amber-50 text-amber-700 rounded">LOP: {r.lop_days}d</span>}
+                  
+                  <div style={{ display: 'flex', itemsCenter: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12, color: 'var(--text-muted)' }}>
+                    <span style={{ background: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 4 }}>Basic: ₹{(r.basic || 0).toLocaleString()}</span>
+                    {r.allowances > 0 && <span style={{ background: '#10b98110', color: '#047857', padding: '4px 8px', borderRadius: 4 }}>Allowances: +₹{r.allowances.toLocaleString()}</span>}
+                    {r.deductions > 0 && <span style={{ background: '#ef444410', color: '#b91c1c', padding: '4px 8px', borderRadius: 4 }}>Deductions: -₹{r.deductions.toLocaleString()}</span>}
+                    {r.ot_hours > 0 && <span style={{ background: '#3b82f610', color: '#1d4ed8', padding: '4px 8px', borderRadius: 4 }}>OT: {r.ot_hours}h</span>}
+                    {r.lop_days > 0 && <span style={{ background: '#f59e0b10', color: '#b45309', padding: '4px 8px', borderRadius: 4 }}>LOP: {r.lop_days}d</span>}
                   </div>
-                  <div className="btn btn-secondary">
-                    <button onClick={() => setViewingPayslip(r)}
-                      className="btn btn-secondary">
-                      <Eye className="w-3 h-3" /> View
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                    <button onClick={() => setViewingPayslip(r)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: 13 }}>
+                      <Eye className="w-4 h-4" /> View Payslip
                     </button>
                     {r.status === 'Pending HR' && (
-                      <button onClick={() => approve(r.id, 'Pending Finance')}
-                        className="btn btn-primary">
+                      <button onClick={() => approve(r.id, 'Pending Finance')} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: 13 }}>
                         HR Approve
                       </button>
                     )}
                     {r.status === 'Pending Finance' && (
-                      <button onClick={() => approve(r.id, 'Approved')}
-                        className="btn btn-success">
+                      <button onClick={() => approve(r.id, 'Approved')} className="btn btn-success" style={{ padding: '8px 16px', fontSize: 13, background: '#10b981', borderColor: '#10b981' }}>
                         Finance Approve
                       </button>
                     )}
@@ -581,56 +532,63 @@ const Payroll = () => {
 
         {/* Payroll Cards - Grid View */}
         {viewMode === 'grid' && (
-          <div className="form-row">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
             {filteredRows.length === 0 && !loading ? (
-              <div className="btn btn-secondary">
+              <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
                 <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500">No payroll entries yet</p>
+                <p className="text-slate-500" style={{ margin: 0 }}>No payroll entries yet</p>
               </div>
             ) : filteredRows.map((r) => {
               const salary = computeSalary(r);
+              const empName = employees.find(e => e.employee_id === r.employee || e.id === parseInt(r.employee))?.name || r.employee;
               return (
-                <div key={r.id} className="card">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="btn btn-success">
-                      <DollarSign className="w-5 h-5 text-emerald-600" />
+                <div key={r.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', itemsCenter: 'center', gap: 12, marginBottom: 16 }}>
+                      <div style={{ width: 36, height: 36, background: '#10b98118', borderRadius: 8, color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <DollarSign className="w-5 h-5" />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{empName}</p>
+                        <p style={{ margin: '2px 0 0 0', fontSize: 11, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 text-sm truncate">{r.employee}</p>
-                      <p className="text-xs text-slate-500">{r.period}</p>
+                    
+                    <div className="space-y-2" style={{ marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Basic</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>₹{(r.basic || 0).toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Net Pay</span>
+                        <span style={{ fontWeight: 700, color: '#10b981' }}>₹{salary.net.toLocaleString()}</span>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          backgroundColor: r.status === 'Approved' ? '#10b98118' : r.status === 'Pending Finance' ? '#3b82f618' : '#f59e0b18',
+                          color: r.status === 'Approved' ? '#047857' : r.status === 'Pending Finance' ? '#1d4ed8' : '#b45309'
+                        }}>{r.status}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Basic</span>
-                      <span className="font-medium">₹{(r.basic || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Net Pay</span>
-                      <span className="font-bold text-emerald-600">₹{salary.net.toLocaleString()}</span>
-                    </div>
-                    <div className="btn btn-secondary">
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${r.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                          r.status === 'Pending Finance' ? 'bg-blue-100 text-blue-700' :
-                            'bg-amber-100 text-amber-700'
-                        }`}>{r.status}</span>
-                    </div>
-                  </div>
-                  <div className="btn btn-secondary">
-                    <button onClick={() => setViewingPayslip(r)}
-                      className="btn btn-secondary">
-                      <Eye className="w-3 h-3" /> View
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                    <button onClick={() => setViewingPayslip(r)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
+                      <Eye className="w-3.5 h-3.5" /> View
                     </button>
                     {r.status === 'Pending HR' && (
-                      <button onClick={() => approve(r.id, 'Pending Finance')}
-                        className="btn btn-primary">
-                        HR
+                      <button onClick={() => approve(r.id, 'Pending Finance')} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, justifyContent: 'center' }}>
+                        Approve
                       </button>
                     )}
                     {r.status === 'Pending Finance' && (
-                      <button onClick={() => approve(r.id, 'Approved')}
-                        className="btn btn-success">
-                        Fin
+                      <button onClick={() => approve(r.id, 'Approved')} className="btn btn-success" style={{ padding: '6px 12px', fontSize: 12, flex: 1, justifyContent: 'center', background: '#10b981', borderColor: '#10b981' }}>
+                        Approve
                       </button>
                     )}
                   </div>
@@ -641,19 +599,101 @@ const Payroll = () => {
         )}
 
       </div>{/* END DATA AREA */}
+      </>
+      )}
+
+      {/* Add Entry Form Inline */}
+      {showForm && (
+        <form className="card" style={{ padding: 0 }} onSubmit={addRow}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Add Payroll Entry</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button type="button" onClick={resetForm} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X className="w-4 h-4" /> Close
+              </button>
+              <button onClick={(e) => addRow(e)} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Plus className="w-4 h-4" /> {loading ? 'Saving...' : 'Add Entry'}
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="form-group">
+              <label>Employee *</label>
+              <select className="form-control"
+                value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} required>
+                <option value="">Select Employee</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.employee_id || emp.id}>
+                    {emp.name} ({emp.employee_id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Period</label>
+                <select className="form-control"
+                  value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value })}>
+                  <option>Monthly</option><option>Weekly</option><option>Bi-Weekly</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Basic Salary *</label>
+                <input type="number" min="0" className="form-control"
+                  value={form.basic} onChange={(e) => setForm({ ...form, basic: e.target.value })} required />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Allowances</label>
+                <input type="number" min="0" className="form-control"
+                  value={form.allowances} onChange={(e) => setForm({ ...form, allowances: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>Deductions</label>
+                <input type="number" min="0" className="form-control"
+                  value={form.deductions} onChange={(e) => setForm({ ...form, deductions: e.target.value })} />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>LOP Days</label>
+                <input type="number" step="0.5" min="0" className="form-control"
+                  value={form.lop_days} onChange={(e) => setForm({ ...form, lop_days: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label>OT Hours</label>
+                <input type="number" min="0" className="form-control"
+                  value={form.ot_hours} onChange={(e) => setForm({ ...form, ot_hours: e.target.value })} />
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="bg-slate-50 rounded-lg p-3 space-y-2 text-sm border border-slate-100">
+              <div className="flex justify-between"><span className="text-slate-500">Gross</span><span className="font-semibold text-slate-800">₹{computeSalary(form).gross.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{computeSalary(form).deductions.toLocaleString()}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--border)', paddingTop: 8 }}><span className="font-bold text-slate-700">Net Pay</span><span className="font-bold text-emerald-600 text-base">₹{computeSalary(form).net.toLocaleString()}</span></div>
+            </div>
+          </div>
+        </form>
+      )}
       
-      {/* AI AI Anomalies Modal */}
+      {/* AI Anomalies Modal */}
       {showAiModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <div className="flex items-center gap-3">
-                <div className="btn btn-primary">
-                  <Sparkles size={16} />
+          <div className="card" style={{ width: '100%', maxWidth: 600, padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ padding: 8, background: 'rgba(79, 70, 229, 0.1)', borderRadius: 8, color: 'var(--primary)' }}>
+                  <Sparkles size={18} />
                 </div>
-                <h2 className="card-title">AI Payroll Error Detection</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>AI Payroll Error Detection</h2>
               </div>
-              <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-slate-600 p-2">
+              <button onClick={() => setShowAiModal(false)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                 <X size={20} />
               </button>
             </div>
@@ -667,7 +707,7 @@ const Payroll = () => {
               ) : (
                 <div className="space-y-4">
                   {aiAnomalies.map((item, idx) => (
-                    <div key={idx} className="btn btn-danger">
+                    <div key={idx} className="card" style={{ padding: 16, borderLeft: '4px solid var(--danger)', background: 'rgba(239, 68, 68, 0.02)', display: 'flex', gap: 12 }}>
                       <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
                       <div>
                         <p className="font-semibold text-slate-800 text-sm mb-1">Employee ID: {item.employee_id}</p>
