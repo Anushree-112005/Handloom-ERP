@@ -352,7 +352,7 @@ const Payroll = () => {
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
             <Calculator size={24} color="var(--primary)" /> Payroll Management
           </h2>
-          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Calculate employee salaries, manage allowances and deductions, and run AI error detection.</p>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Calculate employee salaries, and manage allowances and deductions.</p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -385,67 +385,6 @@ const Payroll = () => {
               {totals.pending} Pending
             </span>
           )}
-
-          {/* AI Detect Errors Button */}
-          <button
-            onClick={handleAIDetectErrors}
-            disabled={isDetecting || rows.length === 0}
-            className="btn btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', color: 'var(--primary)', borderColor: 'var(--primary)' }}
-          >
-            <Sparkles className={`w-4 h-4 ${isDetecting ? 'animate-spin' : ''}`} />
-            {isDetecting ? 'Analyzing...' : 'AI Detect Errors'}
-          </button>
-
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterStatus || filterPeriod) && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />}
-            </button>
-            {showFilters && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                  <button onClick={() => { setFilterStatus(''); setFilterPeriod(''); }} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Pending HR">Pending HR</option>
-                      <option value="Pending Finance">Pending Finance</option>
-                      <option value="Approved">Approved</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Period</label>
-                    <select value={filterPeriod} onChange={(e) => setFilterPeriod(e.target.value)} className="form-control">
-                      <option value="">All Periods</option>
-                      <option value="Monthly">Monthly</option>
-                      <option value="Weekly">Weekly</option>
-                      <option value="Bi-Weekly">Bi-Weekly</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-            <button onClick={() => setViewMode('list')} style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')} style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
 
           {/* Add Button */}
           <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
@@ -748,51 +687,6 @@ const Payroll = () => {
           </div>
         </form>
       )}
-      
-      {/* AI Anomalies Modal */}
-      {showAiModal && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="card" style={{ width: '100%', maxWidth: 600, padding: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ padding: 8, background: 'rgba(79, 70, 229, 0.1)', borderRadius: 8, color: 'var(--primary)' }}>
-                  <Sparkles size={18} />
-                </div>
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>AI Payroll Error Detection</h2>
-              </div>
-              <button onClick={() => setShowAiModal(false)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              {aiAnomalies.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                  <p className="text-slate-600 font-medium">No payroll anomalies detected.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {aiAnomalies.map((item, idx) => (
-                    <div key={idx} className="card" style={{ padding: 16, borderLeft: '4px solid var(--danger)', background: 'rgba(239, 68, 68, 0.02)', display: 'flex', gap: 12 }}>
-                      <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="font-semibold text-slate-800 text-sm mb-1">Employee ID: {item.employee_id}</p>
-                        <p className="text-slate-600 text-sm mb-2">{item.anomaly}</p>
-                        <div className="flex gap-4 text-xs">
-                          <span className="font-medium text-red-700">Confidence: {item.confidence}%</span>
-                          <span className="font-medium text-slate-500">Action: {item.recommended_action}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

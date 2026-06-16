@@ -167,71 +167,22 @@ export default function Benefits() {
       {!showForm && (
         <>
           {/* HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-            <Heart size={24} color="var(--primary)" /> Benefits Management
-          </h2>
-          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
-            {filteredBenefits.length} Records
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterType || filterStatus) && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />}
-            </button>
-            {showFilters && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                  <button onClick={() => { setFilterType(''); setFilterStatus(''); }} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="form-group">
-                    <label>Benefit Type</label>
-                    <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="form-control">
-                      <option value="">All Types</option>
-                      {benefitTypes.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Active">Active</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Expired">Expired</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                <Heart size={24} color="var(--primary)" /> Benefits Management
+              </h2>
+              <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
+                {filteredBenefits.length} Records
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+                className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
+                <Plus className="w-4 h-4" /> Add Benefit
+              </button>
+            </div>
           </div>
-
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-            <button onClick={() => setViewMode('list')}
-              style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
-            <Plus className="w-4 h-4" /> Add Benefit
-          </button>
-        </div>
-      </div>
 
       {/* DATA AREA */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>

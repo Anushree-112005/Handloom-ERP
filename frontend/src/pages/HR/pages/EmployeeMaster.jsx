@@ -824,7 +824,7 @@ const EmployeeMaster = () => {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search Bar */}
       <div className="card" style={{ padding: '12px 24px', display: 'flex', gap: 24, alignItems: 'center', marginBottom: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
@@ -836,55 +836,6 @@ const EmployeeMaster = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ paddingLeft: 40, width: '100%' }}
           />
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Filter size={16} color="var(--text-muted)" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Status:</span>
-          <select
-            className="form-control"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{ width: 140 }}
-          >
-            <option value="All">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Probation">Probation</option>
-            <option value="On Leave">On Leave</option>
-            <option value="Notice Period">Notice Period</option>
-            <option value="Terminated">Terminated</option>
-            <option value="Resigned">Resigned</option>
-          </select>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Department:</span>
-          <select
-            className="form-control"
-            value={departmentFilter}
-            onChange={(e) => setDepartmentFilter(e.target.value)}
-            style={{ width: 160 }}
-          >
-            <option value="All">All Departments</option>
-            {uniqueDepartments.map((name) => <option key={name} value={name}>{name}</option>)}
-          </select>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Type:</span>
-          <select
-            className="form-control"
-            value={employmentTypeFilter}
-            onChange={(e) => setEmploymentTypeFilter(e.target.value)}
-            style={{ width: 140 }}
-          >
-            <option value="All">All Types</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contract">Contract</option>
-            <option value="Intern">Intern</option>
-            <option value="Consultant">Consultant</option>
-          </select>
         </div>
       </div>
 

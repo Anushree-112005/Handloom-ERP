@@ -56,6 +56,11 @@ class EmployeeBase(BaseModel):
     payment_mode: Optional[str] = None
 
     emergency_contact: Optional[str] = None
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relation: Optional[str] = None
+    date_of_joining: Optional[str] = None
+    employment_type: Optional[str] = None
     pf_nominee: Optional[str] = None
     gratuity_nominee: Optional[str] = None
 

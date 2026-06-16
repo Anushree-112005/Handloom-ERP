@@ -29,6 +29,8 @@ class Employee(Base):
     shift = Column(String(50))
     skill_level = Column(String(50))
     user_type = Column(String(30), default="Staff")  # Admin, Manager, Staff, Operator
+    date_of_joining = Column(String(50))
+    employment_type = Column(String(50))
 
     # Identity & Statutory
     aadhaar_no = Column(String(50))
@@ -62,6 +64,9 @@ class Employee(Base):
 
     # Emergency & Nominee
     emergency_contact = Column(String(100))
+    emergency_contact_name = Column(String(150))
+    emergency_contact_phone = Column(String(50))
+    emergency_contact_relation = Column(String(50))
     pf_nominee = Column(String(100))
     gratuity_nominee = Column(String(100))
 

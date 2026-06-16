@@ -328,98 +328,16 @@ const AttendanceLeave = () => {
             {/* LEFT: Title + stats badges */}
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">ATTENDANCE & LEAVE</h1>
 
-        {/* RIGHT: Filter dropdown + view toggle + refresh + add button */}
+        {/* RIGHT: Search + add button */}
         <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-                }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterShift || filterEmployee || filterLeaveType || filterLeaveStatus) && (
-                <span className="w-2 h-2 rounded-full bg-indigo-500 absolute top-1 right-1" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, zIndex: 10, padding: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button
-                    onClick={() => { setFilterShift(''); setFilterEmployee(''); setFilterLeaveType(''); setFilterLeaveStatus(''); }}
-                    className="text-xs text-indigo-600 hover:underline"
-                  >Reset</button>
-                </div>
-                {activeTab === 'attendance' ? (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Shift</label>
-                      <select value={filterShift} onChange={(e) => setFilterShift(e.target.value)}
-                        className="form-control">
-                        <option value="">All Shifts</option>
-                        <option value="General">General</option>
-                        <option value="Morning">Morning</option>
-                        <option value="Night">Night</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Employee</label>
-                      <input type="text" placeholder="Search employee..."
-                        value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)}
-                        className="form-control" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Leave Type</label>
-                      <select value={filterLeaveType} onChange={(e) => setFilterLeaveType(e.target.value)}
-                        className="form-control">
-                        <option value="">All Types</option>
-                        <option value="Annual">Annual</option>
-                        <option value="Sick">Sick</option>
-                        <option value="Casual">Casual</option>
-                        <option value="Maternity">Maternity</option>
-                        <option value="Paternity">Paternity</option>
-                        <option value="Compensatory">Compensatory</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                      <select value={filterLeaveStatus} onChange={(e) => setFilterLeaveStatus(e.target.value)}
-                        className="form-control">
-                        <option value="">All Status</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Employee</label>
-                      <input type="text" placeholder="Search employee..."
-                        value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)}
-                        className="form-control" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px' }}>
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          {/* Add button */}
+          <input
+            type="text"
+            placeholder="Search employee..."
+            value={filterEmployee}
+            onChange={(e) => setFilterEmployee(e.target.value)}
+            className="form-control"
+            style={{ width: 180, margin: 0, padding: '6px 12px', fontSize: 13 }}
+          />
           {activeTab === 'attendance' ? (
             <button onClick={() => setShowAttendanceForm(true)}
               className="btn btn-primary">
