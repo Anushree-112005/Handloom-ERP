@@ -141,38 +141,32 @@ export default function Announcements() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
+    <div className="animate-in fade-in" style={{ padding: '4px 0px' }}>
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', marginBottom: 24 }}>
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Announcements</h1>
-          <span className="btn btn-primary">
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             {sortedAnnouncements.length} Records
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="relative">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${
-                showFilters || filterType
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <Filter size={14} />
-              Filter
-              {filterType && (
-                <span className="btn btn-primary" />
-              )}
+              <Filter size={16} /> Filter
+              {filterType && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }} />}
             </button>
             {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
+              <div className="card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, zIndex: 10, padding: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Filters</span>
                   <button
                     onClick={() => { setFilterType(''); setShowFilters(false); }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--primary)' }}
                   >
                     Reset
                   </button>
@@ -191,17 +185,17 @@ export default function Announcements() {
               </div>
             )}
           </div>
-          <div className="btn btn-secondary">
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px' }}>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1 rounded transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+              style={{ padding: 4, background: viewMode === 'list' ? 'var(--bg-primary)' : 'none', border: 'none', cursor: 'pointer', borderRadius: 4, display: 'flex', alignItems: 'center' }}
               title="List View"
             >
               <LayoutList size={16} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1 rounded transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+              style={{ padding: 4, background: viewMode === 'grid' ? 'var(--bg-primary)' : 'none', border: 'none', cursor: 'pointer', borderRadius: 4, display: 'flex', alignItems: 'center' }}
               title="Grid View"
             >
               <LayoutGrid size={16} />
@@ -210,59 +204,52 @@ export default function Announcements() {
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
             className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <Plus size={14} /> New Announcement
+            <Plus size={16} /> New Announcement
           </button>
         </div>
       </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      <div style={{ padding: '0 24px 24px 24px' }}>
 
       {/* Stats */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Megaphone className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total</p>
-            </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Megaphone className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <Megaphone className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.active}</p>
-              <p className="text-xs text-slate-500">Active</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Megaphone className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.active}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Active</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Pin className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.pinned}</p>
-              <p className="text-xs text-slate-500">Pinned</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#3b82f618', color: '#1d4ed8', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Pin className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.pinned}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Pinned</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-danger">
-              <Megaphone className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.urgent}</p>
-              <p className="text-xs text-slate-500">Urgent</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#ef444418', color: '#b91c1c', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Megaphone className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.urgent}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Urgent</p>
           </div>
         </div>
       </div>
@@ -309,16 +296,16 @@ export default function Announcements() {
               </div>
               
               <div className="flex items-center gap-1">
-                <button onClick={() => setViewingAnnouncement(ann)} className="btn btn-secondary">
+                <button onClick={() => setViewingAnnouncement(ann)} className="btn btn-secondary" style={{ padding: 6 }}>
                   <Eye className="w-4 h-4 text-slate-500" />
                 </button>
                 <button onClick={() => togglePin(ann)} className={`p-1.5 rounded-lg ${ann.is_pinned ? 'bg-indigo-100' : 'hover:bg-slate-100'}`}>
                   <Pin className={`w-4 h-4 ${ann.is_pinned ? 'text-indigo-600 fill-indigo-600' : 'text-slate-500'}`} />
                 </button>
-                <button onClick={() => handleEdit(ann)} className="btn btn-secondary">
+                <button onClick={() => handleEdit(ann)} className="btn btn-secondary" style={{ padding: 6 }}>
                   <Edit2 className="w-4 h-4 text-slate-500" />
                 </button>
-                <button onClick={() => handleDelete(ann.id)} className="btn btn-danger">
+                <button onClick={() => handleDelete(ann.id)} className="btn btn-danger" style={{ padding: 6 }}>
                   <Trash2 className="w-4 h-4 text-red-500" />
                 </button>
               </div>
@@ -326,20 +313,20 @@ export default function Announcements() {
           </div>
         ))}
         {sortedAnnouncements.length === 0 && (
-          <div className="card">
+          <div className="card" style={{ padding: '48px 24px', textAlign: 'center' }}>
             <Megaphone className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No announcements found</p>
+            <p style={{ margin: 0, color: 'var(--text-muted)' }}>No announcements found</p>
           </div>
         )}
       </div>
       ) : (
-        <div className="form-row">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
           {sortedAnnouncements.map(ann => (
             <div 
               key={ann.id} 
-              className={`bg-white border rounded-xl p-4 hover:shadow-lg transition-shadow ${ann.is_pinned ? 'border-indigo-300 bg-indigo-50/30' : 'border-slate-200'}`}
+              className={`bg-white border rounded-xl p-4 hover:shadow-lg transition-shadow flex flex-col gap-3 ${ann.is_pinned ? 'border-indigo-300 bg-indigo-50/30' : 'border-slate-200'}`}
             >
-              <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {ann.is_pinned && (
                     <Pin className="w-4 h-4 text-indigo-600 fill-indigo-600" />
@@ -355,24 +342,24 @@ export default function Announcements() {
                   <button onClick={() => togglePin(ann)} className={`p-1 rounded-lg ${ann.is_pinned ? 'bg-indigo-100' : 'hover:bg-slate-100'}`}>
                     <Pin className={`w-3.5 h-3.5 ${ann.is_pinned ? 'text-indigo-600 fill-indigo-600' : 'text-slate-500'}`} />
                   </button>
-                  <button onClick={() => handleEdit(ann)} className="btn btn-secondary">
+                  <button onClick={() => handleEdit(ann)} className="btn btn-secondary" style={{ padding: 6 }}>
                     <Edit2 className="w-3.5 h-3.5 text-slate-500" />
                   </button>
-                  <button onClick={() => handleDelete(ann.id)} className="btn btn-danger">
+                  <button onClick={() => handleDelete(ann.id)} className="btn btn-danger" style={{ padding: 6 }}>
                     <Trash2 className="w-3.5 h-3.5 text-red-500" />
                   </button>
                 </div>
               </div>
               
-              <div className="mb-3">
+              <div>
                 <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-medium mb-2">
                   {ann.announcement_type}
                 </span>
-                <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2">{ann.title}</h3>
-                <p className="text-slate-600 text-sm line-clamp-3">{ann.content}</p>
+                <h3 className="font-semibold text-slate-800 mb-2 line-clamp-2" style={{ margin: 0 }}>{ann.title}</h3>
+                <p className="text-slate-600 text-sm line-clamp-3" style={{ margin: '8px 0 0 0' }}>{ann.content}</p>
               </div>
               
-              <div className="btn btn-secondary">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{formatDate(ann.start_date)}</span>
@@ -388,6 +375,7 @@ export default function Announcements() {
               <button 
                 onClick={() => setViewingAnnouncement(ann)} 
                 className="form-control"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 }}
               >
                 <Eye className="w-4 h-4" />
                 View Details
@@ -395,9 +383,9 @@ export default function Announcements() {
             </div>
           ))}
           {sortedAnnouncements.length === 0 && (
-            <div className="btn btn-secondary">
+            <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 24px' }}>
               <Megaphone className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No announcements found</p>
+              <p style={{ margin: 0, color: 'var(--text-muted)' }}>No announcements found</p>
             </div>
           )}
         </div>
@@ -408,14 +396,14 @@ export default function Announcements() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'New'} Announcement</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
+          <div className="card" style={{ width: '100%', maxWidth: 600, padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{editingId ? 'Edit' : 'New'} Announcement</h2>
+              <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
                 <input
@@ -438,9 +426,9 @@ export default function Announcements() {
                 />
               </div>
               
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                <div className="form-group">
+                  <label>Type</label>
                   <select
                     value={form.announcement_type}
                     onChange={(e) => setForm({ ...form, announcement_type: e.target.value })}
@@ -449,8 +437,8 @@ export default function Announcements() {
                     {announcementTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+                <div className="form-group">
+                  <label>Priority</label>
                   <select
                     value={form.priority}
                     onChange={(e) => setForm({ ...form, priority: e.target.value })}
@@ -461,8 +449,8 @@ export default function Announcements() {
                     <option value="High">High</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Target Audience</label>
+                <div className="form-group">
+                  <label>Target Audience</label>
                   <select
                     value={form.target_audience}
                     onChange={(e) => setForm({ ...form, target_audience: e.target.value })}
@@ -473,9 +461,9 @@ export default function Announcements() {
                 </div>
               </div>
               
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group">
+                  <label>Start Date</label>
                   <input
                     type="date"
                     value={form.start_date}
@@ -483,8 +471,8 @@ export default function Announcements() {
                     className="form-control"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                <div className="form-group">
+                  <label>End Date</label>
                   <input
                     type="date"
                     value={form.end_date}
@@ -505,11 +493,11 @@ export default function Announcements() {
                 <label htmlFor="isPinned" className="text-sm font-medium text-slate-700">Pin this announcement</label>
               </div>
             </div>
-            <div className="btn btn-secondary">
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 24px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
               <button onClick={() => setShowForm(false)} className="btn btn-secondary">
                 Cancel
               </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
+              <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Publish'}
               </button>
             </div>
@@ -520,20 +508,20 @@ export default function Announcements() {
       {/* View Modal */}
       {viewingAnnouncement && (
         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
+          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
               <div className="flex items-center gap-2">
                 {viewingAnnouncement.is_pinned && <Pin className="w-4 h-4 text-indigo-600 fill-indigo-600" />}
                 <span className={`px-2 py-0.5 rounded text-xs font-medium border ${priorityColors[viewingAnnouncement.priority]}`}>
                   {viewingAnnouncement.priority}
                 </span>
               </div>
-              <button onClick={() => setViewingAnnouncement(null)} className="btn btn-secondary">
+              <button onClick={() => setViewingAnnouncement(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <h2 className="text-xl font-bold text-slate-800">{viewingAnnouncement.title}</h2>
+            <div className="p-6 space-y-4">
+              <h2 className="text-xl font-bold text-slate-800" style={{ margin: 0 }}>{viewingAnnouncement.title}</h2>
               
               <div className="flex items-center gap-3 text-sm text-slate-500">
                 <span className="px-2 py-0.5 rounded bg-slate-100">{viewingAnnouncement.announcement_type}</span>
@@ -541,10 +529,10 @@ export default function Announcements() {
               </div>
               
               <div className="prose prose-sm max-w-none">
-                <p className="text-slate-600 whitespace-pre-wrap">{viewingAnnouncement.content}</p>
+                <p className="text-slate-600 whitespace-pre-wrap" style={{ margin: 0 }}>{viewingAnnouncement.content}</p>
               </div>
               
-              <div className="flex items-center gap-4 text-sm text-slate-500 pt-4 border-t">
+              <div className="flex items-center gap-4 text-sm text-slate-500 pt-4 border-t" style={{ marginTop: 16 }}>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   <span>Published: {formatDate(viewingAnnouncement.start_date)}</span>

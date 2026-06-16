@@ -320,19 +320,13 @@ const AttendanceLeave = () => {
   const handleViewLeave = (lv) => setViewingLeave(lv);
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title + stats badges */}
-        <div className="flex items-center gap-4">
+    <div className="animate-in fade-in" style={{ padding: '4px 0px' }}>
+      {(!showAttendanceForm && !showLeaveForm && !viewingAttendance && !viewingLeave) && (
+        <div style={{ padding: 24 }}>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            {/* LEFT: Title + stats badges */}
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">ATTENDANCE & LEAVE</h1>
-          <span className="btn btn-success">Records: {totals.presentDays}</span>
-          <span className="btn btn-primary">OT: {totals.otHours}h</span>
-          {totals.pendingLeaves > 0 && (
-            <span className="bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-amber-100">Pending: {totals.pendingLeaves}</span>
-          )}
-        </div>
 
         {/* RIGHT: Filter dropdown + view toggle + refresh + add button */}
         <div className="flex items-center gap-2">
@@ -345,12 +339,12 @@ const AttendanceLeave = () => {
             >
               <Filter className="w-4 h-4" /> Filter
               {(filterShift || filterEmployee || filterLeaveType || filterLeaveStatus) && (
-                <span className="btn btn-primary" />
+                <span className="w-2 h-2 rounded-full bg-indigo-500 absolute top-1 right-1" />
               )}
             </button>
             {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
+              <div className="card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, zIndex: 10, padding: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
                   <button
                     onClick={() => { setFilterShift(''); setFilterEmployee(''); setFilterLeaveType(''); setFilterLeaveStatus(''); }}
@@ -414,7 +408,7 @@ const AttendanceLeave = () => {
           </div>
 
           {/* View Toggle */}
-          <div className="btn btn-secondary">
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px' }}>
             <button onClick={() => setViewMode('list')}
               className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
               <LayoutList size={16} />
@@ -441,31 +435,53 @@ const AttendanceLeave = () => {
       </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      <div>
+
+        {/* STATS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+          {[
+            { label: 'Total Records', value: totals.presentDays, color: 'rgba(16,185,129,0.1)', text: '#10b981', icon: CalendarClock },
+            { label: 'Total OT (Hours)', value: totals.otHours, color: 'rgba(99,102,241,0.1)', text: '#6366f1', icon: Clock },
+            { label: 'LOP Days', value: totals.lopDays, color: 'rgba(239,68,68,0.1)', text: '#ef4444', icon: AlertTriangle },
+            { label: 'Pending Leaves', value: totals.pendingLeaves, color: 'rgba(245,158,11,0.1)', text: '#f59e0b', icon: Calendar },
+          ].map(({ label, value, color, text, icon: Icon }) => (
+            <div key={label} className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: color, color: text }}>
+                <Icon size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>{label}</h3>
+                <div className="value">{value}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Tab Switcher */}
-        <div className="flex bg-slate-100 rounded-lg p-1 mb-4">
-          <button onClick={() => setActiveTab('attendance')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${activeTab === 'attendance' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600'
-              }`}>
-            <Clock className="w-4 h-4" /> Attendance
-          </button>
-          <button onClick={() => setActiveTab('leave')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all ${activeTab === 'leave' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600'
-              }`}>
-            <Calendar className="w-4 h-4" /> Leave
-            {totals.pendingLeaves > 0 && <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">{totals.pendingLeaves}</span>}
-          </button>
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 shadow-sm" style={{ minWidth: '400px' }}>
+            <button onClick={() => setActiveTab('attendance')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-base font-bold transition-all ${activeTab === 'attendance' ? 'bg-white shadow-md text-indigo-700 ring-1 ring-slate-200/50 scale-[1.02]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                }`}>
+              <Clock className="w-5 h-5" /> Attendance
+            </button>
+            <button onClick={() => setActiveTab('leave')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-base font-bold transition-all ${activeTab === 'leave' ? 'bg-white shadow-md text-indigo-700 ring-1 ring-slate-200/50 scale-[1.02]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                }`}>
+              <Calendar className="w-5 h-5" /> Leave
+              {totals.pendingLeaves > 0 && <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center shadow-inner ml-1">{totals.pendingLeaves}</span>}
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
         {success && (
-          <div className="btn btn-success">
+          <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg flex items-center gap-2 text-sm font-medium border border-emerald-100 mb-4">
             <CheckCircle2 className="w-4 h-4" /> {success}
           </div>
         )}
         {error && (
-          <div className="btn btn-danger">
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2 text-sm font-medium border border-red-100 mb-4">
             <AlertTriangle className="w-4 h-4" /> {error}
           </div>
         )}
@@ -480,169 +496,76 @@ const AttendanceLeave = () => {
         {/* Attendance Tab */}
         {activeTab === 'attendance' && (
           <>
-            {/* Attendance Form Modal */}
-            {showAttendanceForm && (
-              <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-                <div className="card">
-                  <div className="btn btn-secondary">
-                    <h2 className="card-title">Log Attendance</h2>
-                    <button onClick={resetAttendanceForm} className="btn btn-secondary">
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <form onSubmit={addAttendance} className="p-4 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                      <select className="form-control"
-                        value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} required>
-                        <option value="">Select Employee</option>
-                        {employees.map(emp => (
-                          <option key={emp.id} value={emp.employee_id || emp.id}>
-                            {emp.name} ({emp.employee_id})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
-                      <input type="date" className="form-control"
-                        value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-                    </div>
-
-                    <div className="form-row">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
-                        <select className="form-control"
-                          value={form.shift} onChange={(e) => setForm({ ...form, shift: e.target.value })}>
-                          <option value="">Select Shift</option>
-                          {shifts.length > 0 ? (
-                            shifts.map(shift => (
-                              <option key={shift.id} value={shift.name}>
-                                {shift.name} ({shift.start_time} - {shift.end_time})
-                              </option>
-                            ))
-                          ) : (
-                            <option value="">No shifts available</option>
-                          )}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Source</label>
-                        <select className="form-control"
-                          value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
-                          <option>Manual</option><option>Biometric</option><option>GPS</option><option>System</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="form-row">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Check-In *</label>
-                        <input type="time" className="form-control"
-                          value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} required />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Check-Out *</label>
-                        <input type="time" className="form-control"
-                          value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} required />
-                      </div>
-                    </div>
-
-                    {form.check_in && form.check_out && (
-                      <div className="bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-4 space-y-2">
-                        <div className="form-row">
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">Total Time</p>
-                            <p className="text-sm font-bold text-slate-900">{calculateHours(form.check_in, form.check_out, form.shift) + (shifts.find(s => s.name === form.shift)?.break_duration || 1)}h</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">Work Hours</p>
-                            <p className="text-sm font-bold text-emerald-700">{calculateHours(form.check_in, form.check_out, form.shift)}h</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-600 mb-1">OT Hours</p>
-                            <p className="text-sm font-bold text-indigo-700">{calculateOT(form.check_in, form.check_out, form.shift)}h</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="form-row">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Leave Days</label>
-                        <input type="number" step="0.5" min="0" className="form-control"
-                          value={form.leave_days} onChange={(e) => setForm({ ...form, leave_days: parseFloat(e.target.value) || 0 })} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">LOP Days</label>
-                        <input type="number" step="0.5" min="0" className="form-control"
-                          value={form.lop_days} onChange={(e) => setForm({ ...form, lop_days: parseFloat(e.target.value) || 0 })} />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button type="button" onClick={resetAttendanceForm}
-                        className="btn btn-secondary">Cancel</button>
-                      <button type="submit" disabled={loading}
-                        className="btn btn-primary">
-                        {loading ? 'Saving...' : 'Save'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
             {/* Attendance Cards */}
             {viewMode === 'list' && (
-              <div className="space-y-3">
-                {filteredRows.length === 0 && !loading ? (
-                  <div className="card">
-                    <CalendarClock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No attendance records</p>
-                  </div>
-                ) : filteredRows.map((r) => (
-                  <div key={r.id} className="card">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
-                          <User className="w-5 h-5 text-slate-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900">{r.employee} - {getEmployeeName(r.employee)}</p>
-                          <p className="text-sm text-slate-500">{r.shift} Shift • {r.source}</p>
-                        </div>
-                      </div>
-                      <span className="btn btn-success">{r.hours?.toFixed(1)}h</span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-3">
-                      <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600">{r.check_in} - {r.check_out}</span>
-                      {r.ot_hours > 0 && <span className="btn btn-primary">OT {r.ot_hours}h</span>}
-                      {r.leave_days > 0 && <span className="px-2 py-1 rounded-lg bg-amber-50 text-amber-700">Leave {r.leave_days}d</span>}
-                      {r.lop_days > 0 && <span className="btn btn-danger">LOP {r.lop_days}d</span>}
-
-                      <div className="flex items-center gap-1 ml-auto">
-                        <button onClick={() => handleViewAttendance(r)} className="btn btn-secondary">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleEditAttendance(r)} className="btn btn-secondary">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDeleteAttendance(r.id)} className="btn btn-danger">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead className="bg-slate-50/80 border-b border-slate-200">
+                    <tr>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Shift & Time</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
+                      <th className="text-right px-6 py-4 text-xs uppercase font-bold text-slate-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredRows.map(r => (
+                      <tr key={r.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
+                              <User className="w-4 h-4 text-slate-600" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900">{r.employee}</p>
+                              <p className="text-xs text-slate-500">{getEmployeeName(r.employee)}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm text-slate-800">{r.shift} • {r.check_in} - {r.check_out}</p>
+                          <p className="text-xs text-slate-500">Source: {r.source}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-emerald-100">{r.hours?.toFixed(1)}h</span>
+                            {r.ot_hours > 0 && <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold border border-indigo-100">OT {r.ot_hours}h</span>}
+                            {r.leave_days > 0 && <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">Leave {r.leave_days}d</span>}
+                            {r.lop_days > 0 && <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded-lg text-xs font-medium border border-red-100">LOP {r.lop_days}d</span>}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => handleViewAttendance(r)} className="btn btn-secondary">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleEditAttendance(r)} className="btn btn-secondary">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDeleteAttendance(r.id)} className="btn btn-danger">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredRows.length === 0 && !loading && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-12 text-center">
+                          <CalendarClock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                          <p className="text-slate-500">No attendance records</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
 
             {viewMode === 'grid' && (
               <div className="form-row">
                 {filteredRows.length === 0 && !loading ? (
-                  <div className="btn btn-secondary">
+                  <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 48 }}>
                     <CalendarClock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">No attendance records</p>
                   </div>
@@ -664,21 +587,21 @@ const AttendanceLeave = () => {
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-500">Hours</span>
-                        <span className="btn btn-success">{r.hours?.toFixed(1)}h</span>
+                        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-100">{r.hours?.toFixed(1)}h</span>
                       </div>
                       {r.ot_hours > 0 && (
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-slate-500">OT</span>
-                          <span className="btn btn-primary">{r.ot_hours}h</span>
+                          <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold border border-indigo-100">{r.ot_hours}h</span>
                         </div>
                       )}
                       {(r.leave_days > 0 || r.lop_days > 0) && (
                         <div className="flex items-center gap-1 flex-wrap pt-1">
-                          {r.leave_days > 0 && <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-xs">Leave {r.leave_days}d</span>}
-                          {r.lop_days > 0 && <span className="btn btn-danger">LOP {r.lop_days}d</span>}
+                          {r.leave_days > 0 && <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-xs border border-amber-100">Leave {r.leave_days}d</span>}
+                          {r.lop_days > 0 && <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded-lg text-xs font-medium border border-red-100">LOP {r.lop_days}d</span>}
                         </div>
                       )}
-                      <div className="btn btn-secondary">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
                         <span className="text-xs text-slate-400">{r.source}</span>
                         <div className="flex items-center gap-1">
                           <button onClick={() => handleViewAttendance(r)} className="btn btn-secondary">
@@ -703,134 +626,83 @@ const AttendanceLeave = () => {
         {/* Leave Tab */}
         {activeTab === 'leave' && (
           <>
-            {/* Leave Form Modal */}
-            {showLeaveForm && (
-              <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-                <div className="card">
-                  <div className="btn btn-secondary">
-                    <h2 className="card-title">Request Leave</h2>
-                    <button onClick={resetLeaveForm} className="btn btn-secondary">
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <form onSubmit={addLeave} className="p-4 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                      <select className="form-control"
-                        value={leaveForm.employee} onChange={(e) => setLeaveForm({ ...leaveForm, employee: e.target.value })} required>
-                        <option value="">Select Employee</option>
-                        {employees.map(emp => (
-                          <option key={emp.id} value={emp.employee_id || emp.id}>
-                            {emp.name} ({emp.employee_id})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-row">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">From Date *</label>
-                        <input type="date" className="form-control"
-                          value={leaveForm.from_date} onChange={(e) => setLeaveForm({ ...leaveForm, from_date: e.target.value })} required />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">To Date *</label>
-                        <input type="date" className="form-control"
-                          value={leaveForm.to_date} onChange={(e) => setLeaveForm({ ...leaveForm, to_date: e.target.value })} required />
-                      </div>
-                    </div>
-                    <div className="form-row">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type</label>
-                        <select className="form-control"
-                          value={leaveForm.leave_type} onChange={(e) => setLeaveForm({ ...leaveForm, leave_type: e.target.value })}>
-                          <option>Annual</option><option>Sick</option><option>Casual</option><option>Maternity</option><option>Paternity</option><option>Compensatory</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Total Days</label>
-                        <div className="form-control">
-                          {leaveForm.from_date && leaveForm.to_date ? (
-                            Math.ceil((new Date(leaveForm.to_date) - new Date(leaveForm.from_date)) / (1000 * 60 * 60 * 24)) + 1
-                          ) : (
-                            '—'
-                          )} 
-                          <span className="text-xs text-slate-500 ml-2">day(s)</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Approver</label>
-                      <input className="form-control" placeholder="Manager name"
-                        value={leaveForm.approver} onChange={(e) => setLeaveForm({ ...leaveForm, approver: e.target.value })} />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button type="button" onClick={resetLeaveForm}
-                        className="btn btn-secondary">Cancel</button>
-                      <button type="submit" disabled={loading}
-                        className="btn btn-primary">
-                        {loading ? 'Submitting...' : 'Submit'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
             {/* Leave Cards */}
             {viewMode === 'list' && (
-              <div className="space-y-3">
-                {filteredLeaves.length === 0 && !loading ? (
-                  <div className="card">
-                    <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No leave requests</p>
-                  </div>
-                ) : filteredLeaves.map((l) => (
-                  <div key={l.id} className="card">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-900">{l.employee} - {getEmployeeName(l.employee)}</p>
-                        <p className="text-sm text-slate-500">{l.leave_type} • {l.days} day(s)</p>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(l.status)}`}>{l.status}</span>
-                    </div>
-                    {l.approver && <p className="text-xs text-slate-500">Approver: {l.approver}</p>}
-                    <div className="flex items-center justify-between pt-2">
-                      {l.status === 'Pending' ? (
-                        <div className="flex gap-2">
-                          <button onClick={() => approveLeave(l.id)} disabled={loading}
-                            className="btn btn-success">
-                            Approve
-                          </button>
-                          <button onClick={() => rejectLeave(l.id)} disabled={loading}
-                            className="btn btn-danger">
-                            Reject
-                          </button>
-                        </div>
-                      ) : <div></div>}
-
-                      <div className="flex items-center gap-1 ml-auto">
-                        <button onClick={() => handleViewLeave(l)} className="btn btn-secondary">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleEditLeave(l)} className="btn btn-secondary">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDeleteLeave(l.id)} className="btn btn-danger">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead className="bg-slate-50/80 border-b border-slate-200">
+                    <tr>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Leave Details</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Approver</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
+                      <th className="text-right px-6 py-4 text-xs uppercase font-bold text-slate-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredLeaves.map(l => (
+                      <tr key={l.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
+                              <User className="w-4 h-4 text-slate-600" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-900">{l.employee}</p>
+                              <p className="text-xs text-slate-500">{getEmployeeName(l.employee)}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-medium text-slate-800">{l.leave_type}</p>
+                          <p className="text-xs text-slate-500">{l.days} day(s)</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm text-slate-600">{l.approver || '—'}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(l.status)}`}>{l.status}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            {l.status === 'Pending' && (
+                              <div className="flex gap-1 mr-2 border-r pr-2">
+                                <button onClick={() => approveLeave(l.id)} disabled={loading} className="btn btn-success text-xs px-2 py-1 h-auto">Approve</button>
+                                <button onClick={() => rejectLeave(l.id)} disabled={loading} className="btn btn-danger text-xs px-2 py-1 h-auto">Reject</button>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => handleViewLeave(l)} className="btn btn-secondary">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleEditLeave(l)} className="btn btn-secondary">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDeleteLeave(l.id)} className="btn btn-danger">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredLeaves.length === 0 && !loading && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center">
+                          <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                          <p className="text-slate-500">No leave requests</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
 
             {viewMode === 'grid' && (
               <div className="form-row">
                 {filteredLeaves.length === 0 && !loading ? (
-                  <div className="btn btn-secondary">
+                  <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 48 }}>
                     <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">No leave requests</p>
                   </div>
@@ -849,11 +721,11 @@ const AttendanceLeave = () => {
                         <span className="font-medium text-slate-700">{l.days} day(s)</span>
                       </div>
                       {l.approver && (
-                        <div className="btn btn-secondary">
+                        <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none', padding: '6px 10px', fontSize: 12 }}>
                           Approver: {l.approver}
                         </div>
                       )}
-                      <div className="btn btn-secondary">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
                         {l.status === 'Pending' ? (
                           <div className="flex gap-1">
                             <button onClick={() => approveLeave(l.id)} disabled={loading}
@@ -888,121 +760,299 @@ const AttendanceLeave = () => {
         )}
 
       </div>{/* END DATA AREA */}
+      </div>
+      )}
+
+      {/* INLINE FORMS */}
+      {showAttendanceForm && (
+        <div style={{ padding: 24 }}>
+          <div className="card" style={{ padding: 0, marginBottom: 24 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Log Attendance</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button type="button" onClick={resetAttendanceForm} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <X className="w-4 h-4" /> Close
+                </button>
+                <button onClick={addAttendance} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Plus className="w-4 h-4" /> {loading ? 'Saving...' : 'Save Attendance'}
+                </button>
+              </div>
+            </div>
+            <form onSubmit={addAttendance} style={{ padding: 24 }}>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
+                <select className="form-control"
+                  value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} required>
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.employee_id || emp.id}>
+                      {emp.name} ({emp.employee_id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginTop: 16 }}>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
+                <input type="date" className="form-control"
+                  value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+              </div>
+
+              <div className="form-row" style={{ marginTop: 16 }}>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
+                  <select className="form-control"
+                    value={form.shift} onChange={(e) => setForm({ ...form, shift: e.target.value })}>
+                    <option value="">Select Shift</option>
+                    {shifts.length > 0 ? (
+                      shifts.map(shift => (
+                        <option key={shift.id} value={shift.name}>
+                          {shift.name} ({shift.start_time} - {shift.end_time})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No shifts available</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Source</label>
+                  <select className="form-control"
+                    value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
+                    <option>Manual</option><option>Biometric</option><option>GPS</option><option>System</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row" style={{ marginTop: 16 }}>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Check-In *</label>
+                  <input type="time" className="form-control"
+                    value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Check-Out *</label>
+                  <input type="time" className="form-control"
+                    value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} required />
+                </div>
+              </div>
+
+              {form.check_in && form.check_out && (
+                <div className="bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-4 space-y-2 mt-4">
+                  <div className="form-row">
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">Total Time</p>
+                      <p className="text-sm font-bold text-slate-900">{calculateHours(form.check_in, form.check_out, form.shift) + (shifts.find(s => s.name === form.shift)?.break_duration || 1)}h</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">Work Hours</p>
+                      <p className="text-sm font-bold text-emerald-700">{calculateHours(form.check_in, form.check_out, form.shift)}h</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">OT Hours</p>
+                      <p className="text-sm font-bold text-indigo-700">{calculateOT(form.check_in, form.check_out, form.shift)}h</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="form-row" style={{ marginTop: 16 }}>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Leave Days</label>
+                  <input type="number" step="0.5" min="0" className="form-control"
+                    value={form.leave_days} onChange={(e) => setForm({ ...form, leave_days: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">LOP Days</label>
+                  <input type="number" step="0.5" min="0" className="form-control"
+                    value={form.lop_days} onChange={(e) => setForm({ ...form, lop_days: parseFloat(e.target.value) || 0 })} />
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showLeaveForm && (
+        <div style={{ padding: 24 }}>
+          <div className="card" style={{ padding: 0, marginBottom: 24 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Request Leave</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button type="button" onClick={resetLeaveForm} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <X className="w-4 h-4" /> Close
+                </button>
+                <button onClick={addLeave} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Plus className="w-4 h-4" /> {loading ? 'Submitting...' : 'Submit Leave'}
+                </button>
+              </div>
+            </div>
+            <form onSubmit={addLeave} style={{ padding: 24 }}>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
+                <select className="form-control"
+                  value={leaveForm.employee} onChange={(e) => setLeaveForm({ ...leaveForm, employee: e.target.value })} required>
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.employee_id || emp.id}>
+                      {emp.name} ({emp.employee_id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row" style={{ marginTop: 16 }}>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">From Date *</label>
+                  <input type="date" className="form-control"
+                    value={leaveForm.from_date} onChange={(e) => setLeaveForm({ ...leaveForm, from_date: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">To Date *</label>
+                  <input type="date" className="form-control"
+                    value={leaveForm.to_date} onChange={(e) => setLeaveForm({ ...leaveForm, to_date: e.target.value })} required />
+                </div>
+              </div>
+              <div className="form-row" style={{ marginTop: 16 }}>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type</label>
+                  <select className="form-control"
+                    value={leaveForm.leave_type} onChange={(e) => setLeaveForm({ ...leaveForm, leave_type: e.target.value })}>
+                    <option>Annual</option><option>Sick</option><option>Casual</option><option>Maternity</option><option>Paternity</option><option>Compensatory</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Total Days</label>
+                  <div className="form-control">
+                    {leaveForm.from_date && leaveForm.to_date ? (
+                      Math.ceil((new Date(leaveForm.to_date) - new Date(leaveForm.from_date)) / (1000 * 60 * 60 * 24)) + 1
+                    ) : (
+                      '—'
+                    )} 
+                    <span className="text-xs text-slate-500 ml-2">day(s)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 16 }}>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Approver</label>
+                <input className="form-control" placeholder="Manager name"
+                  value={leaveForm.approver} onChange={(e) => setLeaveForm({ ...leaveForm, approver: e.target.value })} />
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* VIEW MODALS */}
       {viewingAttendance && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="card">
-            <div className="btn btn-primary">
+        <div style={{ padding: 24 }}>
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold">{viewingAttendance.employee} - {getEmployeeName(viewingAttendance.employee)}</h3>
-                  <p className="text-xs text-indigo-100">Attendance Details</p>
+                  <h3 className="font-bold text-slate-900">{viewingAttendance.employee} - {getEmployeeName(viewingAttendance.employee)}</h3>
+                  <p className="text-xs text-slate-500">Attendance Details</p>
                 </div>
               </div>
-              <button onClick={() => setViewingAttendance(null)} className="p-1 hover:bg-white/20 rounded-lg">
-                <X className="w-5 h-5" />
+              <button onClick={() => setViewingAttendance(null)} className="btn btn-secondary">
+                <X size={16} /> Close
               </button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 bg-white">
               <div className="form-row">
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Date</p>
                   <p className="font-medium text-slate-900">{viewingAttendance.date ? new Date(viewingAttendance.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</p>
                 </div>
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Shift</p>
                   <p className="font-medium text-slate-900">{viewingAttendance.shift}</p>
                 </div>
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Source</p>
                   <p className="font-medium text-slate-900">{viewingAttendance.source}</p>
                 </div>
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Time In</p>
                   <p className="font-medium text-slate-900">{viewingAttendance.check_in}</p>
                 </div>
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Time Out</p>
                   <p className="font-medium text-slate-900">{viewingAttendance.check_out}</p>
                 </div>
-                <div className="btn btn-success">
+                <div className="card" style={{ background: 'rgba(16,185,129,0.1)', border: 'none' }}>
                   <p className="text-xs text-emerald-600 mb-1">Total Hours</p>
                   <p className="font-bold text-emerald-800">{viewingAttendance.hours?.toFixed(2)}h</p>
                 </div>
-                <div className="btn btn-primary">
+                <div className="card" style={{ background: 'rgba(99,102,241,0.1)', border: 'none' }}>
                   <p className="text-xs text-indigo-600 mb-1">OT Hours</p>
                   <p className="font-bold text-indigo-800">{viewingAttendance.ot_hours?.toFixed(2)}h</p>
                 </div>
               </div>
 
               {(viewingAttendance.leave_days > 0 || viewingAttendance.lop_days > 0) && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-4">
                   {viewingAttendance.leave_days > 0 && <span className="px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 text-sm font-medium">Leave: {viewingAttendance.leave_days}d</span>}
-                  {viewingAttendance.lop_days > 0 && <span className="btn btn-danger">LOP: {viewingAttendance.lop_days}d</span>}
+                  {viewingAttendance.lop_days > 0 && <span className="px-3 py-1.5 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm font-medium">LOP: {viewingAttendance.lop_days}d</span>}
                 </div>
               )}
             </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => { setViewingAttendance(null); handleEditAttendance(viewingAttendance); }}
-                className="btn btn-primary">Edit</button>
-              <button onClick={() => setViewingAttendance(null)}
-                className="btn btn-secondary">Close</button>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, background: 'var(--bg-secondary)' }}>
+              <button onClick={() => { setViewingAttendance(null); handleEditAttendance(viewingAttendance); }} className="btn btn-primary">Edit</button>
             </div>
           </div>
         </div>
       )}
 
       {viewingLeave && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="card">
-            <div className="btn btn-success">
+        <div style={{ padding: 24 }}>
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold">{viewingLeave.employee} - {getEmployeeName(viewingLeave.employee)}</h3>
-                  <p className="text-xs text-emerald-100">Leave Details</p>
+                  <h3 className="font-bold text-slate-900">{viewingLeave.employee} - {getEmployeeName(viewingLeave.employee)}</h3>
+                  <p className="text-xs text-slate-500">Leave Details</p>
                 </div>
               </div>
-              <button onClick={() => setViewingLeave(null)} className="p-1 hover:bg-white/20 rounded-lg">
-                <X className="w-5 h-5" />
+              <button onClick={() => setViewingLeave(null)} className="btn btn-secondary">
+                <X size={16} /> Close
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="card-header">
+            <div className="p-5 space-y-4 bg-white">
+              <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="text-slate-500 font-medium">Status</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(viewingLeave.status)}`}>{viewingLeave.status}</span>
               </div>
 
               <div className="form-row">
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Leave Type</p>
                   <p className="font-medium text-slate-900">{viewingLeave.leave_type}</p>
                 </div>
-                <div className="btn btn-success">
+                <div className="card" style={{ background: 'rgba(16,185,129,0.1)', border: 'none' }}>
                   <p className="text-xs text-emerald-600 mb-1">Duration</p>
                   <p className="font-bold text-emerald-800">{viewingLeave.days} Day(s)</p>
                 </div>
               </div>
 
               {viewingLeave.approver && (
-                <div className="btn btn-secondary">
+                <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none' }}>
                   <p className="text-xs text-slate-500 mb-1">Approver</p>
                   <p className="font-medium text-slate-900">{viewingLeave.approver}</p>
                 </div>
               )}
             </div>
 
-            <div className="btn btn-secondary">
-              <button onClick={() => { setViewingLeave(null); handleEditLeave(viewingLeave); }}
-                className="btn btn-success">Edit</button>
-              <button onClick={() => setViewingLeave(null)}
-                className="btn btn-secondary">Close</button>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, background: 'var(--bg-secondary)' }}>
+              <button onClick={() => { setViewingLeave(null); handleEditLeave(viewingLeave); }} className="btn btn-primary">Edit</button>
             </div>
           </div>
         </div>

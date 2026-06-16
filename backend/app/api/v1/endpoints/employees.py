@@ -42,6 +42,7 @@ class EmployeeBase(BaseModel):
     hra: float = 0.0
     da: float = 0.0
     allowances: float = 0.0
+    deductions: float = 0.0
     pf_esi_percent: float = 0.0
 
     qualification: Optional[str] = None
@@ -129,6 +130,14 @@ async def update_employee(emp_id: int, emp: EmployeeUpdate, db: AsyncSession = D
         
     await db.commit()
     await db.refresh(db_emp)
+    return db_emp
+
+@router.get("/{emp_id}", response_model=EmployeeOut)
+async def get_employee(emp_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Employee).where(Employee.id == emp_id))
+    db_emp = result.scalar_one_or_none()
+    if not db_emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
     return db_emp
 
 @router.delete("/{emp_id}", status_code=204)

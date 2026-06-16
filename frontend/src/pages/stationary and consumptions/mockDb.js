@@ -68,6 +68,10 @@ const defaultLedger = [
   { id: 'LED002', date: '2026-06-11', itemId: 'ITM001', refType: 'Issue', refId: 'ISS001', inQty: 0, outQty: 3, balance: 45 }
 ];
 
+const defaultQuotations = [
+  { id: 'QTN001', date: '2026-06-05', vendor: 'Apex Supplies Ltd', validityDate: '2026-07-05', paymentTerms: '30 Days Credit', status: 'Approved', items: [{ itemId: 'ITM001', qty: 10, rate: 270, total: 2700 }], quotation_file_path: '' }
+];
+
 const keys = [
   'consumables_categories',
   'consumables_uoms',
@@ -82,7 +86,8 @@ const keys = [
   'consumables_returns',
   'consumables_transfers',
   'consumables_adjustments',
-  'consumables_verifications'
+  'consumables_verifications',
+  'consumables_quotations'
 ];
 
 const initializeDb = () => {
@@ -105,6 +110,7 @@ const initializeDb = () => {
   getOrSet('consumables_grns', defaultGRNs);
   getOrSet('consumables_issues', defaultIssues);
   getOrSet('consumables_ledger', defaultLedger);
+  getOrSet('consumables_quotations', defaultQuotations);
   getOrSet('consumables_returns', []);
   getOrSet('consumables_transfers', []);
   getOrSet('consumables_adjustments', []);

@@ -170,127 +170,130 @@ const JobRequisitions = () => {
   ];
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title & Count */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Job Requisitions</h1>
-          <span className="btn btn-primary">
-            {visibleRows.length} Records
-          </span>
-        </div>
+    <div className="animate-in fade-in" style={{ padding: '4px 0px' }}>
+      {!showForm && !viewingRequisition && (
+        <div style={{ padding: 24 }}>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            {/* LEFT: Title & Count */}
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Job Requisitions</h1>
+              <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                {visibleRows.length} Records
+              </span>
+            </div>
 
-        {/* RIGHT: Actions */}
-        <div className="flex items-center gap-3">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 border rounded-md text-xs font-bold transition-all shadow-sm
-                ${showFilters || filter !== 'All' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}
-            >
-              <Filter size={14} /> Filter
-              {filter !== 'All' && (
-                <span className="btn btn-primary" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="btn btn-secondary">
-                  <span className="text-xs font-bold text-slate-500 uppercase">Filter Requisitions</span>
-                  <button onClick={() => { setFilter('All'); setShowFilters(false); }} className="text-xs text-indigo-600 hover:underline font-bold">Reset</button>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 mb-1.5 block">Status</label>
-                    <select value={filter} onChange={(e) => setFilter(e.target.value)}
-                      className="form-control">
-                      <option value="All">All Statuses</option>
-                      {statuses.map((s) => <option key={s}>{s}</option>)}
-                    </select>
+            {/* RIGHT: Actions */}
+            <div className="flex items-center gap-2">
+              {/* Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${showFilters || filter !== 'All' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'}`}
+                >
+                  <Filter size={14} /> Filter
+                  {filter !== 'All' && (
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 absolute top-1 right-1" />
+                  )}
+                </button>
+                {showFilters && (
+                  <div className="card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, zIndex: 10, padding: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
+                      <button onClick={() => { setFilter('All'); setShowFilters(false); }} className="text-xs text-indigo-600 hover:underline">Reset</button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
+                        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="form-control">
+                          <option value="All">All Statuses</option>
+                          {statuses.map((s) => <option key={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Department</label>
+                        <select className="form-control">
+                          <option>All Departments</option>
+                          {departments.map((d) => <option key={d.id}>{d.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Priority</label>
+                        <select className="form-control">
+                          <option>All Priorities</option>
+                          {priorities.map((p) => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 mb-1.5 block">Department</label>
-                    <select className="form-control">
-                      <option>All Departments</option>
-                      {departments.map((d) => <option key={d.id}>{d.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-600 mb-1.5 block">Priority</label>
-                    <select className="form-control">
-                      <option>All Priorities</option>
-                      {priorities.map((p) => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
+              {/* View Toggle */}
+              <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '2px' }}>
+                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
+                  <LayoutList size={16} />
+                </button>
+                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
+                  <LayoutGrid size={16} />
+                </button>
+              </div>
 
-          <button onClick={() => setShowForm(true)}
-            className="btn btn-primary">
-            <Plus size={16} /> New
-          </button>
-        </div>
-      </div>
-
-      {/* BULK ACTIONS FLOATING BAR */}
-      {selectedRows.length > 0 && (
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl z-50 flex items-center gap-8">
-          <div className="flex items-center gap-3">
-            <span className="btn btn-primary">{selectedRows.length}</span>
-            <span className="text-sm font-bold text-slate-300">Selected</span>
-          </div>
-          <div className="h-6 w-px bg-slate-700"></div>
-          <button onClick={() => setSelectedRows([])} className="flex items-center gap-2 text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
-            <Trash2 size={16} /> Delete Selected
-          </button>
-          <button onClick={() => setSelectedRows([])} className="btn btn-secondary">
-            <X size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {success && (
-        <div className="btn btn-success">
-          <Check className="w-4 h-4" /> {success}
-        </div>
-      )}
-
-      {/* Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="card-title">New Requisition</h2>
-              <button onClick={resetForm} className="btn btn-secondary">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Plus size={16} /> New
               </button>
             </div>
+          </div>
 
-            {/* Form Tabs */}
-            <div className="btn btn-secondary">
-              {formTabs.map((tab) => (
-                <button key={tab.id} onClick={() => setFormTab(tab.id)}
-                  className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${formTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-white' : 'border-transparent text-slate-500'
-                    }`}>{tab.label}</button>
-              ))}
+          {/* BULK ACTIONS FLOATING BAR */}
+          {selectedRows.length > 0 && (
+            <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl z-50 flex items-center gap-8">
+              <div className="flex items-center gap-3">
+                <span className="bg-indigo-600 text-white px-2.5 py-0.5 rounded-full text-sm font-bold">{selectedRows.length}</span>
+                <span className="text-sm font-bold text-slate-300">Selected</span>
+              </div>
+              <div className="h-6 w-px bg-slate-700"></div>
+              <button onClick={() => setSelectedRows([])} className="flex items-center gap-2 text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
+                <Trash2 size={16} /> Delete Selected
+              </button>
+              <button onClick={() => setSelectedRows([])} className="p-1 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
             </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4">
+          {/* Success Message */}
+          {success && (
+            <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-sm px-4 py-3 mb-4">
+              <Check className="w-4 h-4" /> {success}
+            </div>
+          )}
+
+          {/* Inline Form */}
+          {showForm && (
+            <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <h2 className="text-lg font-bold text-slate-900">New Requisition</h2>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={resetForm} className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
+                Cancel
+              </button>
+              <button onClick={handleSubmit} className="px-4 py-2 bg-indigo-600 text-white rounded-sm text-sm font-bold hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                <Check className="w-4 h-4" /> Create Requisition
+              </button>
+            </div>
+          </div>
+
+          {/* Form Tabs */}
+          <div className="flex border-b border-slate-200 px-4 bg-slate-50/50">
+            {formTabs.map((tab) => (
+              <button key={tab.id} onClick={() => setFormTab(tab.id)}
+                className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${formTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-white' : 'border-transparent text-slate-500'
+                  }`}>{tab.label}</button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="overflow-y-auto p-6">
               {/* Basic Info Tab */}
               {formTab === 'basic' && (
                 <div className="space-y-4">
@@ -469,7 +472,7 @@ const JobRequisitions = () => {
                     <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                       <input type="checkbox" checked={form.budget_ok}
                         onChange={(e) => setForm({ ...form, budget_ok: e.target.checked })}
-                        className="btn btn-secondary" />
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 cursor-pointer" />
                       Budget Approved
                     </label>
                   </div>
@@ -481,33 +484,20 @@ const JobRequisitions = () => {
                   <AlertTriangle className="w-4 h-4" /> {error}
                 </div>
               )}
-            </form>
-
-            <div className="btn btn-secondary">
-              <button type="button" onClick={resetForm}
-                className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit}
-                className="btn btn-primary">
-                Create Requisition
-              </button>
-            </div>
+          </form>
           </div>
-        </div>
-      )}
+          )}
 
-      {/* View Requisition Modal */}
-      {viewingRequisition && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="card-title">Requisition Details</h2>
-              <button onClick={() => setViewingRequisition(null)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
+          {/* Inline View Requisition */}
+          {viewingRequisition && (
+            <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <h2 className="text-lg font-bold text-slate-900">Requisition Details</h2>
+            <button onClick={() => setViewingRequisition(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6 space-y-6">
               <div className="text-center pb-4 border-b">
                 <div className="btn btn-primary">
                   <Briefcase className="w-7 h-7 text-indigo-600" />
@@ -546,19 +536,18 @@ const JobRequisitions = () => {
               )}
             </div>
           </div>
-        </div>
-      )}
+          )}
 
-      {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+          {/* DATA AREA */}
+          <div>
 
         {/* Table/List View */}
         {viewMode === 'list' && (
           <>
             {/* Desktop Table View */}
-            <div className="btn btn-secondary">
-              <table className="form-control">
-                <thead className="btn btn-secondary">
+            <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-4 w-12 text-center">
                       <input
@@ -571,7 +560,7 @@ const JobRequisitions = () => {
                             setSelectedRows([]);
                           }
                         }}
-                        className="btn btn-secondary"
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                       />
                     </th>
                     <th className="px-6 py-4">Position</th>
@@ -587,7 +576,7 @@ const JobRequisitions = () => {
                   {visibleRows.length === 0 ? (
                     <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-400 text-sm italic">No requisitions found</td></tr>
                   ) : visibleRows.map((row) => (
-                    <tr key={row.id} className="btn btn-secondary">
+                    <tr key={row.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => setViewingRequisition(row)}>
                       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
@@ -599,7 +588,7 @@ const JobRequisitions = () => {
                               setSelectedRows(selectedRows.filter(id => id !== row.id));
                             }
                           }}
-                          className="btn btn-secondary"
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         />
                       </td>
                       <td className="px-6 py-4 cursor-pointer" onClick={() => setViewingRequisition(row)}>
@@ -818,11 +807,11 @@ const JobRequisitions = () => {
                       </div>
                     </div>
 
-                    <div className="btn btn-secondary" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => setViewingRequisition(row)} className="btn btn-secondary">
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => setViewingRequisition(row)} className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button onClick={() => deleteRequisition(row.id)} className="btn btn-danger">
+                      <button onClick={() => deleteRequisition(row.id)} className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -832,7 +821,9 @@ const JobRequisitions = () => {
             </div>
           </>
         )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

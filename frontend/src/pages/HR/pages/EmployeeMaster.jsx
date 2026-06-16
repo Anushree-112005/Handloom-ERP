@@ -35,6 +35,20 @@ const initialFormState = {
   basic_salary: '', allowances: '', deductions: '', net_salary: ''
 };
 
+const defaultDesignations = [
+  "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
+  "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
+  "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
+  "Assistant", "Operator", "Technician", "Worker", "Trainee"
+];
+
+const defaultDepartments = [
+  "Management", "Merchandising", "Design", "Purchase", "Stores", 
+  "Inventory", "Production", "Weaving", "Dyeing", "Quality", 
+  "Dispatch", "Export Documentation", "Logistics", "Accounts", 
+  "HR", "Payroll", "Maintenance", "IT", "Admin"
+];
+
 const EmployeeMaster = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
@@ -47,9 +61,19 @@ const EmployeeMaster = () => {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [formTab, setFormTab] = useState('basic');
+  const [formTab, setFormTab] = useState('all');
   const [form, setForm] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
+
+  const uniqueDepartments = Array.from(new Set([
+    ...departments.map(d => d.name),
+    ...defaultDepartments
+  ])).filter(Boolean);
+
+  const uniqueDesignations = Array.from(new Set([
+    ...designations.map(d => d.title || d.name),
+    ...defaultDesignations
+  ])).filter(Boolean);
   const [viewMode, setViewMode] = useState('list');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -109,7 +133,7 @@ const EmployeeMaster = () => {
     setForm(initialFormState);
     setEditingId(null);
     setShowForm(false);
-    setFormTab('basic');
+    setFormTab('all');
   };
 
   // Clean form data before sending - convert empty strings to null for optional fields
@@ -211,7 +235,7 @@ const EmployeeMaster = () => {
 
       setForm(formattedData);
       setEditingId(emp.id);
-      setFormTab('basic');
+      setFormTab('all');
       setShowForm(true);
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to fetch full employee details.' });
@@ -259,6 +283,7 @@ const EmployeeMaster = () => {
   });
 
   const formTabs = [
+    { id: 'all', label: 'All Details', icon: Eye },
     { id: 'basic', label: 'Basic', icon: User },
     { id: 'personal', label: 'Personal', icon: Users },
     { id: 'address', label: 'Address', icon: MapPin },
@@ -268,337 +293,411 @@ const EmployeeMaster = () => {
     { id: 'salary', label: 'Salary', icon: IndianRupee },
   ];
 
+  const renderBasicSection = () => (
+    <div className="space-y-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Basic Information
+        </h4>
+      </div>
+      <div className="form-row">
+        <div className="sm:col-span-2 relative">
+          <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={e => {
+              const value = e.target.value;
+              setForm({ ...form, name: value });
+              handleSearchPrefix(value);
+            }}
+            onFocus={() => {
+              if (form.name.length > 0) {
+                handleSearchPrefix(form.name);
+              }
+            }}
+            onBlur={() => setTimeout(() => setShowNameDropdown(false), 150)}
+            className="form-control" placeholder="John Doe" />
+          {showNameDropdown && (
+            <ul className="btn btn-secondary">
+              {nameSuggestions.map(emp => (
+                <li
+                  key={emp.id}
+                  className="btn btn-primary"
+                  onMouseDown={() => {
+                    setForm({ ...form, name: emp.name });
+                    setShowNameDropdown(false);
+                  }}
+                >
+                  {emp.name}
+                  {emp.employee_id ? <span className="ml-2 text-xs text-slate-400">({emp.employee_id})</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Work Email *</label>
+          <input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="form-control" placeholder="john@company.com" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+          <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="form-control" placeholder="+91 98765 43210" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Employee ID</label>
+          <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })}
+            className="form-control" placeholder="Auto-generated if empty" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Personal Email</label>
+          <input type="email" value={form.personal_email || ''} onChange={(e) => setForm({ ...form, personal_email: e.target.value })}
+            className="form-control" placeholder="john.personal@gmail.com" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPersonalSection = () => (
+    <div className="space-y-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Personal Details
+        </h4>
+      </div>
+      <div className="form-row">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth</label>
+          <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })}
+            className="form-control" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+          <select value={form.gender || ''} onChange={(e) => setForm({ ...form, gender: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            <option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
+          <select value={form.blood_group || ''} onChange={(e) => setForm({ ...form, blood_group: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Marital Status</label>
+          <select value={form.marital_status || ''} onChange={(e) => setForm({ ...form, marital_status: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            <option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Nationality</label>
+          <input type="text" value={form.nationality || ''} onChange={(e) => setForm({ ...form, nationality: e.target.value })}
+            className="form-control" />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Emergency Contact Details
+        </h4>
+      </div>
+      <div className="p-5 bg-slate-50/50 rounded-xl border border-slate-200/50 mt-4">
+        <div className="form-row">
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Contact Name</label>
+            <input type="text" value={form.emergency_contact_name || ''} onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })}
+              className="form-control" placeholder="Jane Doe" />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Relationship</label>
+            <select value={form.emergency_contact_relation || ''} onChange={(e) => setForm({ ...form, emergency_contact_relation: e.target.value })}
+              className="form-control">
+              <option value="">Select</option>
+              <option>Spouse</option><option>Parent</option><option>Sibling</option><option>Friend</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Phone Number</label>
+            <input type="tel" value={form.emergency_contact_phone || ''} onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
+              className="form-control" placeholder="+91 98765 43210" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAddressSection = () => (
+    <div className="space-y-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Address Details
+        </h4>
+      </div>
+      
+      <div style={{ margin: '16px 0 8px 0', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
+        <h5 style={{ color: 'var(--primary)', margin: 0, fontSize: 14, fontWeight: 600 }}>
+          Current Address
+        </h5>
+      </div>
+      <div>
+        <textarea value={form.current_address || ''} onChange={(e) => setForm({ ...form, current_address: e.target.value })}
+          className="form-control" rows="3" placeholder="Full current address" />
+      </div>
+
+      <div style={{ margin: '24px 0 8px 0', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
+        <h5 style={{ color: 'var(--primary)', margin: 0, fontSize: 14, fontWeight: 600 }}>
+          Permanent Address
+        </h5>
+      </div>
+      <div>
+        <textarea value={form.permanent_address || ''} onChange={(e) => setForm({ ...form, permanent_address: e.target.value })}
+          className="form-control" rows="3" placeholder="Full permanent address" />
+      </div>
+    </div>
+  );
+
+  const renderProfessionalSection = () => (
+    <div className="space-y-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Work / Professional Info
+        </h4>
+      </div>
+      <div className="form-row">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+          <select value={form.department || ''} onChange={(e) => setForm({ ...form, department: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            {uniqueDepartments.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Designation</label>
+          <select value={form.designation || ''} onChange={(e) => setForm({ ...form, designation: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            {uniqueDesignations.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
+          <select value={form.employment_type || 'Full-time'} onChange={(e) => setForm({ ...form, employment_type: e.target.value })}
+            className="form-control">
+            <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Intern</option><option>Consultant</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+          <select value={form.employment_status || 'Active'} onChange={(e) => setForm({ ...form, employment_status: e.target.value })}
+            className="form-control">
+            <option>Active</option><option>Probation</option><option>On Leave</option><option>Notice Period</option><option>Terminated</option><option>Resigned</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Date of Joining</label>
+          <input type="date" value={form.date_of_joining || ''} onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })}
+            className="form-control" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Reporting Manager</label>
+          <select value={form.reporting_manager_id || ''} onChange={(e) => setForm({ ...form, reporting_manager_id: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            {employees.filter(e => e.id !== editingId).map(emp => (
+              <option key={emp.id} value={emp.id}>{emp.name} - {emp.designation || emp.department}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Work Location</label>
+          <input type="text" value={form.work_location || ''} onChange={(e) => setForm({ ...form, work_location: e.target.value })}
+            className="form-control" placeholder="Head Office / Remote" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
+          <select value={form.shift_id || ''} onChange={(e) => setForm({ ...form, shift_id: e.target.value })}
+            className="form-control">
+            <option value="">Select</option>
+            {shifts.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Confirmation Date</label>
+          <input type="date" value={form.confirmation_date || ''} onChange={(e) => setForm({ ...form, confirmation_date: e.target.value })}
+            className="form-control" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderBankSection = () => (
+    <div className="space-y-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Bank Details
+        </h4>
+      </div>
+      <div className="form-row">
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
+          <input type="text" value={form.bank_name || ''} onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
+            className="form-control" placeholder="HDFC Bank" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
+          <input type="text" value={form.account_number || ''} onChange={(e) => setForm({ ...form, account_number: e.target.value })}
+            className="form-control" placeholder="XXXXXXXXXX" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">IFSC Code</label>
+          <input type="text" value={form.ifsc_code || ''} onChange={(e) => setForm({ ...form, ifsc_code: e.target.value })}
+            className="form-control" placeholder="HDFC0001234" />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Statutory Details
+        </h4>
+      </div>
+      <div className="p-5 bg-slate-50/50 rounded-xl border border-slate-200/50 mt-4">
+        <div className="form-row">
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">PAN Number</label>
+            <input type="text" value={form.pan_number || ''} onChange={(e) => setForm({ ...form, pan_number: e.target.value.toUpperCase() })}
+              className="form-control" placeholder="ABCDE1234F" maxLength={10} />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">UAN Number</label>
+            <input type="text" value={form.uan_number || ''} onChange={(e) => setForm({ ...form, uan_number: e.target.value })}
+              className="form-control" placeholder="123456789012" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDocumentsSection = () => (
+    <div className="space-y-4">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+          Document Details
+        </h4>
+      </div>
+      <div className="form-row">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Aadhaar Number</label>
+          <input type="text" value={form.aadhar_number || ''} onChange={(e) => setForm({ ...form, aadhar_number: e.target.value })}
+            className="form-control" placeholder="XXXX XXXX XXXX" maxLength={14} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Passport Number</label>
+          <input type="text" value={form.passport_number || ''} onChange={(e) => setForm({ ...form, passport_number: e.target.value })}
+            className="form-control" placeholder="A1234567" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Passport Expiry</label>
+          <input type="date" value={form.passport_expiry || ''} onChange={(e) => setForm({ ...form, passport_expiry: e.target.value })}
+            className="form-control" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Driving License</label>
+          <input type="text" value={form.driving_license || ''} onChange={(e) => setForm({ ...form, driving_license: e.target.value })}
+            className="form-control" placeholder="DL1234567890" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSalarySection = () => {
+    const calcNet = () => {
+      const b = Number(form.basic_salary) || 0;
+      const a = Number(form.allowances) || 0;
+      const d = Number(form.deductions) || 0;
+      return b + a - d;
+    };
+    return (
+      <div className="space-y-4">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+          <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+            Salary Details
+          </h4>
+        </div>
+        <div className="form-row">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Basic Salary</label>
+            <input type="number" value={form.basic_salary || ''} onChange={(e) => {
+              const val = e.target.value;
+              setForm(prev => ({ ...prev, basic_salary: val, net_salary: (Number(val) || 0) + (Number(prev.allowances) || 0) - (Number(prev.deductions) || 0) }));
+            }} className="form-control" placeholder="e.g. 50000" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Allowances</label>
+            <input type="number" value={form.allowances || ''} onChange={(e) => {
+              const val = e.target.value;
+              setForm(prev => ({ ...prev, allowances: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(val) || 0) - (Number(prev.deductions) || 0) }));
+            }} className="form-control" placeholder="e.g. 10000" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Deductions</label>
+            <input type="number" value={form.deductions || ''} onChange={(e) => {
+              const val = e.target.value;
+              setForm(prev => ({ ...prev, deductions: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(prev.allowances) || 0) - (Number(val) || 0) }));
+            }} className="form-control" placeholder="e.g. 2000" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Net Salary</label>
+            <input type="number" value={form.net_salary || calcNet() || ''} readOnly className="form-control" placeholder="0" />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderFormSection = () => {
     switch (formTab) {
+      case 'all':
+        return (
+          <div className="space-y-8 divide-y divide-slate-100">
+            <div>{renderBasicSection()}</div>
+            <div className="pt-6">{renderPersonalSection()}</div>
+            <div className="pt-6">{renderAddressSection()}</div>
+            <div className="pt-6">{renderProfessionalSection()}</div>
+            <div className="pt-6">{renderBankSection()}</div>
+            <div className="pt-6">{renderDocumentsSection()}</div>
+            <div className="pt-6">{renderSalarySection()}</div>
+          </div>
+        );
       case 'basic':
-        return (
-          <div className="space-y-4">
-            <div className="form-row">
-              <div className="sm:col-span-2 relative">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => {
-                    const value = e.target.value;
-                    setForm({ ...form, name: value });
-                    handleSearchPrefix(value);
-                  }}
-                  onFocus={() => {
-                    if (form.name.length > 0) {
-                      handleSearchPrefix(form.name);
-                    }
-                  }}
-                  onBlur={() => setTimeout(() => setShowNameDropdown(false), 150)}
-                  className="form-control" placeholder="John Doe" />
-                {showNameDropdown && (
-                  <ul className="btn btn-secondary">
-                    {nameSuggestions.map(emp => (
-                      <li
-                        key={emp.id}
-                        className="btn btn-primary"
-                        onMouseDown={() => {
-                          setForm({ ...form, name: emp.name });
-                          setShowNameDropdown(false);
-                        }}
-                      >
-                        {emp.name}
-                        {emp.employee_id ? <span className="ml-2 text-xs text-slate-400">({emp.employee_id})</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Work Email *</label>
-                <input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="form-control" placeholder="john@company.com" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="form-control" placeholder="+91 98765 43210" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Employee ID</label>
-                <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })}
-                  className="form-control" placeholder="Auto-generated if empty" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Personal Email</label>
-                <input type="email" value={form.personal_email || ''} onChange={(e) => setForm({ ...form, personal_email: e.target.value })}
-                  className="form-control" placeholder="john.personal@gmail.com" />
-              </div>
-            </div>
-          </div>
-        );
+        return renderBasicSection();
       case 'personal':
-        return (
-          <div className="space-y-4">
-            <div className="form-row">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth</label>
-                <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })}
-                  className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-                <select value={form.gender || ''} onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  <option>Male</option><option>Female</option><option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
-                <select value={form.blood_group || ''} onChange={(e) => setForm({ ...form, blood_group: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                  <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Marital Status</label>
-                <select value={form.marital_status || ''} onChange={(e) => setForm({ ...form, marital_status: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  <option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nationality</label>
-                <input type="text" value={form.nationality || ''} onChange={(e) => setForm({ ...form, nationality: e.target.value })}
-                  className="form-control" />
-              </div>
-            </div>
-            <div className="btn btn-secondary">
-              <p className="text-sm font-medium text-slate-700 mb-3">Emergency Contact</p>
-              <div className="form-row">
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">Contact Name</label>
-                  <input type="text" value={form.emergency_contact_name || ''} onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })}
-                    className="form-control" placeholder="Jane Doe" />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">Relationship</label>
-                  <select value={form.emergency_contact_relation || ''} onChange={(e) => setForm({ ...form, emergency_contact_relation: e.target.value })}
-                    className="form-control">
-                    <option value="">Select</option>
-                    <option>Spouse</option><option>Parent</option><option>Sibling</option><option>Friend</option><option>Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">Phone Number</label>
-                  <input type="tel" value={form.emergency_contact_phone || ''} onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
-                    className="form-control" placeholder="+91 98765 43210" />
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return renderPersonalSection();
       case 'address':
-        return (
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-slate-700 mb-3">Current Address</p>
-              <textarea value={form.current_address || ''} onChange={(e) => setForm({ ...form, current_address: e.target.value })}
-                className="form-control" rows="3" placeholder="Full current address" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-700 mb-3">Permanent Address</p>
-              <textarea value={form.permanent_address || ''} onChange={(e) => setForm({ ...form, permanent_address: e.target.value })}
-                className="form-control" rows="3" placeholder="Full permanent address" />
-            </div>
-          </div>
-        );
+        return renderAddressSection();
       case 'professional':
-        return (
-          <div className="space-y-4">
-            <div className="form-row">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-                <select value={form.department || ''} onChange={(e) => setForm({ ...form, department: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  {departments.length > 0 ? departments.map(d => (
-                    <option key={d.id} value={d.name}>{d.name}</option>
-                  )) : (
-                    <>
-                      <option>Engineering</option><option>Sales</option><option>HR</option>
-                      <option>Finance</option><option>Operations</option><option>Marketing</option><option>IT</option><option>Admin</option><option>Manufacturing</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Designation</label>
-                <select value={form.designation || ''} onChange={(e) => setForm({ ...form, designation: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  {designations.length > 0 ? designations.map(d => (
-                    <option key={d.id} value={d.title}>{d.title}</option>
-                  )) : (
-                    <>
-                      <option>Software Engineer</option><option>Senior Engineer</option><option>Manager</option><option>Supervisor</option><option>Incharge</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
-                <select value={form.employment_type || 'Full-time'} onChange={(e) => setForm({ ...form, employment_type: e.target.value })}
-                  className="form-control">
-                  <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Intern</option><option>Consultant</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                <select value={form.employment_status || 'Active'} onChange={(e) => setForm({ ...form, employment_status: e.target.value })}
-                  className="form-control">
-                  <option>Active</option><option>Probation</option><option>On Leave</option><option>Notice Period</option><option>Terminated</option><option>Resigned</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Date of Joining</label>
-                <input type="date" value={form.date_of_joining || ''} onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })}
-                  className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Reporting Manager</label>
-                <select value={form.reporting_manager_id || ''} onChange={(e) => setForm({ ...form, reporting_manager_id: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  {employees.filter(e => e.id !== editingId).map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} - {emp.designation || emp.department}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Work Location</label>
-                <input type="text" value={form.work_location || ''} onChange={(e) => setForm({ ...form, work_location: e.target.value })}
-                  className="form-control" placeholder="Head Office / Remote" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
-                <select value={form.shift_id || ''} onChange={(e) => setForm({ ...form, shift_id: e.target.value })}
-                  className="form-control">
-                  <option value="">Select</option>
-                  {shifts.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Confirmation Date</label>
-                <input type="date" value={form.confirmation_date || ''} onChange={(e) => setForm({ ...form, confirmation_date: e.target.value })}
-                  className="form-control" />
-              </div>
-            </div>
-          </div>
-        );
+        return renderProfessionalSection();
       case 'bank':
-        return (
-          <div className="space-y-4">
-            <div className="form-row">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
-                <input type="text" value={form.bank_name || ''} onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
-                  className="form-control" placeholder="HDFC Bank" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
-                <input type="text" value={form.account_number || ''} onChange={(e) => setForm({ ...form, account_number: e.target.value })}
-                  className="form-control" placeholder="XXXXXXXXXX" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">IFSC Code</label>
-                <input type="text" value={form.ifsc_code || ''} onChange={(e) => setForm({ ...form, ifsc_code: e.target.value })}
-                  className="form-control" placeholder="HDFC0001234" />
-              </div>
-            </div>
-            <div className="btn btn-secondary">
-              <p className="text-sm font-medium text-slate-700 mb-3">Statutory Details</p>
-              <div className="form-row">
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">PAN Number</label>
-                  <input type="text" value={form.pan_number || ''} onChange={(e) => setForm({ ...form, pan_number: e.target.value.toUpperCase() })}
-                    className="form-control" placeholder="ABCDE1234F" maxLength={10} />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-500 mb-1">UAN Number</label>
-                  <input type="text" value={form.uan_number || ''} onChange={(e) => setForm({ ...form, uan_number: e.target.value })}
-                    className="form-control" placeholder="123456789012" />
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return renderBankSection();
       case 'documents':
-        return (
-          <div className="space-y-4">
-            <div className="form-row">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Aadhaar Number</label>
-                <input type="text" value={form.aadhar_number || ''} onChange={(e) => setForm({ ...form, aadhar_number: e.target.value })}
-                  className="form-control" placeholder="XXXX XXXX XXXX" maxLength={14} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Passport Number</label>
-                <input type="text" value={form.passport_number || ''} onChange={(e) => setForm({ ...form, passport_number: e.target.value })}
-                  className="form-control" placeholder="A1234567" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Passport Expiry</label>
-                <input type="date" value={form.passport_expiry || ''} onChange={(e) => setForm({ ...form, passport_expiry: e.target.value })}
-                  className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Driving License</label>
-                <input type="text" value={form.driving_license || ''} onChange={(e) => setForm({ ...form, driving_license: e.target.value })}
-                  className="form-control" placeholder="DL1234567890" />
-              </div>
-            </div>
-          </div>
-        );
+        return renderDocumentsSection();
       case 'salary':
-        const calcNet = () => {
-          const b = Number(form.basic_salary) || 0;
-          const a = Number(form.allowances) || 0;
-          const d = Number(form.deductions) || 0;
-          return b + a - d;
-        };
-        return (
-          <div className="space-y-4">
-            <div className="form-row">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Basic Salary</label>
-                <input type="number" value={form.basic_salary || ''} onChange={(e) => {
-                  const val = e.target.value;
-                  setForm(prev => ({ ...prev, basic_salary: val, net_salary: (Number(val) || 0) + (Number(prev.allowances) || 0) - (Number(prev.deductions) || 0) }));
-                }} className="form-control" placeholder="e.g. 50000" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Allowances</label>
-                <input type="number" value={form.allowances || ''} onChange={(e) => {
-                  const val = e.target.value;
-                  setForm(prev => ({ ...prev, allowances: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(val) || 0) - (Number(prev.deductions) || 0) }));
-                }} className="form-control" placeholder="e.g. 10000" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Deductions</label>
-                <input type="number" value={form.deductions || ''} onChange={(e) => {
-                  const val = e.target.value;
-                  setForm(prev => ({ ...prev, deductions: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(prev.allowances) || 0) - (Number(val) || 0) }));
-                }} className="form-control" placeholder="e.g. 2000" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Net Salary</label>
-                <input type="number" value={form.net_salary || calcNet() || ''} readOnly className="form-control" placeholder="0" />
-              </div>
-            </div>
-          </div>
-        );
+        return renderSalarySection();
       default:
         return null;
     }
@@ -622,44 +721,45 @@ const EmployeeMaster = () => {
           </div>
         </div>
 
-        {/* Form Tabs */}
-        <div className="card" style={{ padding: '4px', display: 'flex', gap: 8, marginBottom: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-          {formTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = formTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFormTab(tab.id)}
-                className="btn"
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '10px 16px',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  background: isActive ? 'var(--primary)' : 'transparent',
-                  color: isActive ? '#fff' : 'var(--text-muted)',
-                  fontWeight: 600,
-                  transition: 'all 0.2s',
-                  cursor: 'pointer'
-                }}
-              >
-                <Icon size={16} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        <div className="card" style={{ padding: 0, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+          {/* Form Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {formTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = formTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFormTab(tab.id)}
+                  style={{
+                    padding: '16px 24px',
+                    background: isActive ? '#fff' : 'transparent',
+                    border: 'none',
+                    borderBottom: isActive ? '3px solid var(--primary)' : '3px solid transparent',
+                    fontWeight: 600,
+                    color: isActive ? 'var(--primary)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                >
+                  <Icon size={16} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Form Section */}
-        <form onSubmit={handleSubmit} className="card" style={{ padding: 24, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-          {renderFormSection()}
-        </form>
+          {/* Form Section */}
+          <div style={{ padding: 24, background: '#fff' }}>
+            <form onSubmit={handleSubmit}>
+              {renderFormSection()}
+            </form>
+          </div>
+        </div>
       </div>
     );
   }
@@ -766,7 +866,7 @@ const EmployeeMaster = () => {
             style={{ width: 160 }}
           >
             <option value="All">All Departments</option>
-            {departments.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
+            {uniqueDepartments.map((name) => <option key={name} value={name}>{name}</option>)}
           </select>
         </div>
 
@@ -824,7 +924,12 @@ const EmployeeMaster = () => {
                           {emp.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{emp.name}</div>
+                          <div 
+                            style={{ fontWeight: 600, color: 'var(--primary)', cursor: 'pointer' }}
+                            onClick={() => navigate(`/hr/employees/${emp.id}`)}
+                          >
+                            {emp.name}
+                          </div>
                           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{emp.employee_id}</div>
                         </div>
                       </div>
