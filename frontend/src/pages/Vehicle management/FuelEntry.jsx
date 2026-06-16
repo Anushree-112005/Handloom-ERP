@@ -1,253 +1,194 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, Fuel, Search, Filter, Edit2, Trash2, X, Save, TrendingUp, Zap } from 'lucide-react';
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
-import { Plus, Fuel, Calendar, DollarSign, Truck, User, ArrowLeft, Save, X, Edit2, Trash2, Eye } from 'lucide-react';
 
-const FuelEntry = () => {
-  const [fuelEntries, setFuelEntries] = useState([]);
+const DetailRow = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
+    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+export default function FuelEntry() {
+  const [view, setView] = useState('list');
+  const [entries, setEntries] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  const [stations, setStations] = useState([]);
-  const [mode, setMode] = useState('list');
-  const [editingEntry, setEditingEntry] = useState(null);
-  const [viewingEntry, setViewingEntry] = useState(null); // Added for view popup
-  
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    vehicle_id: '',
-    station_id: '',
-    fuel_type: 'DIESEL',
-    quantity_liters: '',
-    rate_per_liter: '',
-    odometer_reading: '',
-    payment_mode: 'Cash',
-    remarks: ''
-  });
-
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedViewEntry, setSelectedViewEntry] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
-  const fuelTypes = [
-    { value: 'DIESEL', label: 'Diesel' },
-    { value: 'PETROL', label: 'Petrol' },
-    { value: 'CNG', label: 'CNG' }
-  ];
+  const initialForm = {
+    vehicle_id: '',
+    entry_date: new Date().toISOString().split('T')[0],
+    odometer_reading: '',
+    fuel_quantity: '',
+    fuel_cost: '0',
+    fuel_type: 'Diesel',
+    fuel_station: '',
+    notes: ''
+  };
 
-  const paymentMethods = [
-    { value: 'Cash', label: 'Cash' },
-    { value: 'Credit Card', label: 'Credit Card' },
-    { value: 'Fuel Card', label: 'Fuel Card' },
-    { value: 'UPI', label: 'UPI' }
-  ];
+  const [formData, setFormData] = useState(initialForm);
+
+  const fuelTypes = ['Diesel', 'Petrol', 'LPG', 'CNG', 'Hybrid'];
 
   useEffect(() => {
-    fetchInitialData();
+    fetchData();
   }, []);
 
-  const fetchInitialData = async () => {
-    setLoading(true);
+  const fetchData = async () => {
     try {
-      const [entriesRes, vehiclesRes, stationsRes] = await Promise.all([
-        api.get('/fleet/fuel-entries'),
+      setLoading(true);
+      const [entriesRes, vehiclesRes] = await Promise.all([
         api.get('/fleet/vehicles'),
-        api.get('/fleet/fuel-stations')
+        api.get('/fleet/vehicles')
       ]);
-      setFuelEntries(entriesRes.data || []);
+      setEntries(entriesRes.data || []);
       setVehicles(vehiclesRes.data || []);
-      setStations(stationsRes.data || []);
     } catch (error) {
-      console.error('Failed to load data:', error);
-      showError('Failed to load fuel entries data');
+      console.error('Error fetching data:', error);
+      showError('Failed to load fuel entries');
     } finally {
       setLoading(false);
     }
   };
 
-  const getVehicleName = (id) => vehicles.find(v => v.id === id)?.vehicle_number || '';
-  const getStationName = (id) => stations.find(s => s.id === id)?.station_name || 'N/A';
-
-  const resetForm = () => {
-    setFormData({
-      date: new Date().toISOString().split('T')[0],
-      vehicle_id: '',
-      station_id: '',
-      fuel_type: 'DIESEL',
-      quantity_liters: '',
-      rate_per_liter: '',
-      odometer_reading: '',
-      payment_mode: 'Cash',
-      remarks: ''
-    });
-  };
-
-  const openAddForm = () => {
-    setEditingEntry(null);
-    resetForm();
-    setMode('form');
-  };
-
-  const openEditForm = (entry) => {
-    setEditingEntry(entry);
-    setFormData({
-      date: entry.date,
-      vehicle_id: entry.vehicle_id || '',
-      station_id: entry.station_id || '',
-      fuel_type: entry.fuel_type || 'DIESEL',
-      quantity_liters: (entry.quantity_liters || 0).toString(),
-      rate_per_liter: (entry.rate_per_liter || 0).toString(),
-      odometer_reading: (entry.odometer_reading || '').toString(),
-      payment_mode: entry.payment_mode || 'Cash',
-      remarks: entry.remarks || ''
-    });
-    setMode('form');
-  };
-
-  const handleCancel = async () => {
-    const isFormEmpty = !formData.vehicle_id && !formData.quantity_liters;
-    if (!isFormEmpty) {
-      const confirmed = await showConfirm({
-        title: 'Cancel Changes',
-        description: 'Are you sure you want to cancel? Any unsaved changes will be lost.',
-        confirmText: 'Yes, Cancel',
-        cancelText: 'No, Stay',
-        variant: 'destructive'
-      });
-      if (!confirmed) return;
+  const handleOpenForm = (entry = null) => {
+    if (entry) {
+      setEditingId(entry.id);
+      setFormData(entry);
+    } else {
+      setEditingId(null);
+      setFormData(initialForm);
     }
-    backToList();
+    setView('form');
   };
 
-  const backToList = () => {
-    setMode('list');
-    setEditingEntry(null);
-    resetForm();
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const totalAmount = parseFloat(formData.quantity_liters) * parseFloat(formData.rate_per_liter);
-
-    const payload = {
-      date: formData.date,
-      vehicle_id: parseInt(formData.vehicle_id),
-      station_id: formData.station_id ? parseInt(formData.station_id) : null,
-      fuel_type: formData.fuel_type,
-      quantity_liters: parseFloat(formData.quantity_liters) || 0,
-      rate_per_liter: parseFloat(formData.rate_per_liter) || 0,
-      total_amount: totalAmount,
-      odometer_reading: formData.odometer_reading ? parseFloat(formData.odometer_reading) : null,
-      payment_mode: formData.payment_mode,
-      remarks: formData.remarks
-    };
-
+    
     try {
-      if (editingEntry) {
-        await api.put(`/fleet/fuel-entries/${editingEntry.id}`, payload);
+      const payload = {
+        ...formData,
+        odometer_reading: Number(formData.odometer_reading) || 0,
+        fuel_quantity: Number(formData.fuel_quantity) || 0,
+        fuel_cost: Number(formData.fuel_cost) || 0
+      };
+
+      if (editingId) {
+        await api.put(`/fleet/fuel-entries/${editingId}`, payload);
         showSuccess('Fuel entry updated successfully');
       } else {
         await api.post('/fleet/fuel-entries', payload);
         showSuccess('Fuel entry created successfully');
       }
-      await fetchInitialData();
-      backToList();
+      setView('list');
+      fetchData();
     } catch (error) {
-      console.error('Failed to save fuel entry:', error);
       showError(error.response?.data?.detail || 'Failed to save fuel entry');
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
     const confirmed = await showConfirm({
       title: 'Delete Fuel Entry',
       description: 'Are you sure you want to delete this fuel entry?',
       confirmText: 'Delete',
+      cancelText: 'Cancel',
       variant: 'destructive'
-    }).catch(() => false);
-    
+    });
+
     if (!confirmed) return;
 
     try {
       await api.delete(`/fleet/fuel-entries/${id}`);
-      showSuccess('Fuel entry deleted successfully');
-      await fetchInitialData();
+      showSuccess('Entry deleted successfully');
+      if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
+      fetchData();
     } catch (error) {
-      console.error('Failed to delete fuel entry:', error);
-      showError(error.response?.data?.detail || 'Failed to delete fuel entry');
+      showError('Failed to delete entry');
     }
   };
 
-  if (mode === 'form') {
+  const filteredEntries = entries.filter(e => {
+    const matchesSearch = searchTerm === '' ||
+      e.fuel_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.fuel_station?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  const totalEntries = entries.length;
+  const totalFuelCost = entries.reduce((sum, e) => sum + (Number(e.fuel_cost || 0)), 0);
+  const totalFuelQuantity = entries.reduce((sum, e) => sum + (Number(e.fuel_quantity || 0)), 0);
+  const avgFuelCost = totalEntries > 0 ? (totalFuelCost / totalEntries).toFixed(2) : 0;
+
+  // FORM VIEW
+  if (view === 'form') {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="btn btn-secondary">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button onClick={backToList} className="btn btn-secondary">
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-semibold text-slate-900">
-                    {editingEntry ? 'Edit Fuel Entry' : 'New Fuel Entry'}
-                  </h1>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={handleCancel} className="flex items-center gap-2 border px-4 py-2 rounded-lg">
-                  <X size={16} /> Cancel
-                </button>
-                <button onClick={handleSubmit} className="btn btn-primary">
-                  <Save size={16} /> Save
-                </button>
-              </div>
+      <div className="animate-fade">
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Fuel Entry' : 'New Fuel Entry'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              <button type="submit" form="entryForm" className="btn btn-primary"><Save size={16} /> Save Entry</button>
             </div>
           </div>
-        </div>
 
-        <div className="p-6 max-w-4xl mx-auto">
-          <div className="card">
-            <form onSubmit={handleSubmit} className="form-row">
-              <div>
-                <label className="block text-sm font-medium mb-2">Date *</label>
-                <input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Vehicle *</label>
-                <select required value={formData.vehicle_id} onChange={(e) => setFormData({...formData, vehicle_id: e.target.value})} className="form-control">
-                  <option value="">Select Vehicle</option>
-                  {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Fuel Station</label>
-                <select value={formData.station_id} onChange={(e) => setFormData({...formData, station_id: e.target.value})} className="form-control">
-                  <option value="">Select Fuel Station</option>
-                  {stations.map(s => <option key={s.id} value={s.id}>{s.station_name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Fuel Type *</label>
-                <select required value={formData.fuel_type} onChange={(e) => setFormData({...formData, fuel_type: e.target.value})} className="form-control">
-                  {fuelTypes.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Quantity (Liters) *</label>
-                <input type="number" step="0.1" required value={formData.quantity_liters} onChange={(e) => setFormData({...formData, quantity_liters: e.target.value})} className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Price per Liter (₹) *</label>
-                <input type="number" step="0.01" required value={formData.rate_per_liter} onChange={(e) => setFormData({...formData, rate_per_liter: e.target.value})} className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Odometer Reading</label>
-                <input type="number" value={formData.odometer_reading} onChange={(e) => setFormData({...formData, odometer_reading: e.target.value})} className="form-control" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Payment Method *</label>
-                <select required value={formData.payment_mode} onChange={(e) => setFormData({...formData, payment_mode: e.target.value})} className="form-control">
-                  {paymentMethods.map(method => <option key={method.value} value={method.value}>{method.label}</option>)}
-                </select>
+          <div style={{ padding: 32 }}>
+            <form id="entryForm" onSubmit={handleSubmit}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fuel Entry Details</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <div className="form-group">
+                  <label>Vehicle *</label>
+                  <select className="form-control" name="vehicle_id" value={formData.vehicle_id} onChange={handleInputChange} required>
+                    <option value="">-- Select Vehicle --</option>
+                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Date *</label>
+                  <input type="date" className="form-control" name="entry_date" value={formData.entry_date} onChange={handleInputChange} required />
+                </div>
+                <div className="form-group">
+                  <label>Fuel Type *</label>
+                  <select className="form-control" name="fuel_type" value={formData.fuel_type} onChange={handleInputChange} required>
+                    {fuelTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Odometer Reading (km) *</label>
+                  <input type="number" className="form-control" name="odometer_reading" value={formData.odometer_reading} onChange={handleInputChange} required />
+                </div>
+                <div className="form-group">
+                  <label>Fuel Quantity (Liters) *</label>
+                  <input type="number" className="form-control" name="fuel_quantity" value={formData.fuel_quantity} onChange={handleInputChange} step="0.01" required />
+                </div>
+                <div className="form-group">
+                  <label>Fuel Cost (₹) *</label>
+                  <input type="number" className="form-control" name="fuel_cost" value={formData.fuel_cost} onChange={handleInputChange} step="0.01" required />
+                </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Fuel Station</label>
+                  <input type="text" className="form-control" name="fuel_station" value={formData.fuel_station} onChange={handleInputChange} placeholder="e.g., IOCL Pump, Shell Station" />
+                </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                  <label>Notes</label>
+                  <textarea className="form-control" name="notes" value={formData.notes} onChange={handleInputChange} rows="3" style={{ resize: 'vertical' }}></textarea>
+                </div>
               </div>
             </form>
           </div>
@@ -256,161 +197,159 @@ const FuelEntry = () => {
     );
   }
 
+  // LIST VIEW
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="card">
+    <div className="animate-fade">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Fuel className="h-7 w-7 text-blue-600" /> Fuel Entry
-          </h1>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Fuel size={24} color="var(--primary)" /> Fuel Entry Log
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>Track fuel consumption and expenses</p>
         </div>
-        <button onClick={openAddForm} className="btn btn-primary">
-          <Plus className="h-4 w-4" /> New Fuel Entry
+        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+          <Plus size={18} /> Add Entry
         </button>
       </div>
 
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry ID & Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicle & Station</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fuel Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {fuelEntries.map((entry) => (
-                <tr key={entry.id}>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{entry.entry_number}</div>
-                    <div className="text-sm text-gray-500">{new Date(entry.date).toLocaleDateString()}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div><Truck className="inline h-4 w-4 mr-1 text-gray-400" /> {getVehicleName(entry.vehicle_id)}</div>
-                    {entry.station_id && <div className="text-sm text-blue-600 mt-1">{getStationName(entry.station_id)}</div>}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium">{entry.fuel_type}</div>
-                    <div className="text-sm text-gray-500">{entry.quantity_liters}L @ ₹{entry.rate_per_liter}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium">₹{(entry.total_amount || 0).toFixed(2)}</div>
-                    <div className="text-sm text-gray-500">{entry.payment_mode}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button onClick={() => setViewingEntry(entry)} className="btn btn-success" title="View">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => openEditForm(entry)} className="btn btn-primary" title="Edit">
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => handleDelete(entry.id)} className="btn btn-danger" title="Delete">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <Fuel size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Entries</h3>
+            <div className="value">{totalEntries}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(191,64,191,0.1)', color: '#bf40bf' }}>
+            <Zap size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Fuel</h3>
+            <div className="value">{totalFuelQuantity.toFixed(1)} L</div>
+          </div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+            <TrendingUp size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Spent</h3>
+            <div className="value" style={{ fontSize: 14 }}>₹{totalFuelCost.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(249,115,22,0.1)', color: '#f97316' }}>
+            <Fuel size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Avg Cost/Entry</h3>
+            <div className="value" style={{ fontSize: 14 }}>₹{avgFuelCost}</div>
+          </div>
         </div>
       </div>
 
-      {/* View Modal Popup */}
-      {viewingEntry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="card">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Fuel className="h-5 w-5 text-blue-600" /> Fuel Entry Details ({viewingEntry.entry_number})
-              </h2>
-              <button 
-                onClick={() => setViewingEntry(null)}
-                className="btn btn-secondary"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto max-h-[80vh]">
-              <div className="form-row">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Date</p>
-                  <p className="font-medium text-gray-900 flex items-center gap-1">
-                    <Calendar className="h-4 w-4 text-gray-400" /> 
-                    {new Date(viewingEntry.date).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Total Amount</p>
-                  <p className="font-bold text-lg text-blue-700">₹{(viewingEntry.total_amount || 0).toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Vehicle</p>
-                  <p className="font-medium text-gray-900 flex items-center gap-1">
-                    <Truck className="h-4 w-4 text-gray-400" /> 
-                    {getVehicleName(viewingEntry.vehicle_id)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Odometer Reading</p>
-                  <p className="font-medium text-gray-900">{viewingEntry.odometer_reading ? `${viewingEntry.odometer_reading} KM` : 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Fuel Station</p>
-                  <p className="font-medium text-gray-900">{viewingEntry.station_id ? getStationName(viewingEntry.station_id) : 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Payment Method</p>
-                  <p className="font-medium text-gray-900">{viewingEntry.payment_mode || 'Cash'}</p>
-                </div>
-                
-                <div className="col-span-2 pt-4 border-t mt-2">
-                  <h3 className="font-semibold text-gray-900 mb-4">Fuel Particulars</h3>
-                  <div className="form-row">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Type</p>
-                      <p className="font-medium text-gray-900">{viewingEntry.fuel_type}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Quantity</p>
-                      <p className="font-medium text-gray-900">{viewingEntry.quantity_liters} L</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Rate</p>
-                      <p className="font-medium text-gray-900">₹{viewingEntry.rate_per_liter} / L</p>
-                    </div>
-                  </div>
-                </div>
+      {/* Filter Bar */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input type="text" className="form-control" placeholder="Search by station or fuel type..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        </div>
 
-                {viewingEntry.remarks && (
-                  <div className="col-span-2 mt-2">
-                    <p className="text-sm text-gray-500 mb-1">Remarks</p>
-                    <p className="font-medium text-gray-900 bg-gray-50 p-3 rounded-lg border">
-                      {viewingEntry.remarks}
-                    </p>
-                  </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+          <Filter size={16} />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Type:</span>
+        </div>
+        <select className="form-control" style={{ width: 120, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="All">All Types</option>
+          {fuelTypes.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+
+      {/* Split Layout */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        {/* Table */}
+        <div style={{ flex: 1, overflowX: 'auto' }}>
+          <div className="card" style={{ padding: 0 }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Fuel Type</th>
+                  <th style={{ textAlign: 'right' }}>Quantity</th>
+                  <th style={{ textAlign: 'right' }}>Odometer</th>
+                  <th style={{ textAlign: 'right' }}>Cost</th>
+                  <th>Station</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                ) : filteredEntries.length === 0 ? (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No entries found</td></tr>
+                ) : (
+                  filteredEntries.map(e => (
+                    <tr key={e.id} onClick={() => setSelectedViewEntry(e)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === e.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <td style={{ fontWeight: 600 }}>{e.entry_date}</td>
+                      <td><span style={{ background: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700, color: '#3b82f6' }}>{e.fuel_type}</span></td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{Number(e.fuel_quantity || 0).toFixed(2)} L</td>
+                      <td style={{ textAlign: 'right' }}>{Number(e.odometer_reading || 0).toLocaleString('en-IN')} km</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>₹{Number(e.fuel_cost || 0).toFixed(2)}</td>
+                      <td>{e.fuel_station || '-'}</td>
+                      <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(e)}>
+                            <Edit2 size={16} />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(e.id, e)}>
+                            <Trash2 size={16} color="#ef4444" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </div>
-            </div>
-            
-            <div className="p-6 border-t bg-gray-50 flex justify-end">
-              <button
-                onClick={() => setViewingEntry(null)}
-                className="btn btn-secondary"
-              >
-                Close
-              </button>
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {/* Details Panel */}
+        {selectedViewEntry && (
+          <div style={{ flex: '0 0 380px' }}>
+            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>
+                  <Fuel size={16} style={{ display: 'inline', marginRight: 8 }} />
+                  Entry Details
+                </h3>
+                <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto' }}>
+                <DetailRow label="Date" value={selectedViewEntry.entry_date} />
+                <DetailRow label="Fuel Type" value={selectedViewEntry.fuel_type} />
+                <DetailRow label="Station" value={selectedViewEntry.fuel_station || '-'} />
+                <DetailRow label="Odometer" value={`${Number(selectedViewEntry.odometer_reading || 0).toLocaleString('en-IN')} km`} />
+                <DetailRow label="Quantity" value={`${Number(selectedViewEntry.fuel_quantity || 0).toFixed(2)} L`} />
+                <DetailRow label="Cost" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>₹{Number(selectedViewEntry.fuel_cost || 0).toFixed(2)}</span>} />
+                <DetailRow label="Cost/Liter" value={`₹${(Number(selectedViewEntry.fuel_cost || 0) / Number(selectedViewEntry.fuel_quantity || 1)).toFixed(2)}`} />
+                <DetailRow label="Notes" value={selectedViewEntry.notes || '-'} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default FuelEntry;
+}
