@@ -23,4 +23,12 @@ from app.models.work_order import WorkOrderTransaction
 from app.models.textile_design import TextileDesign, WarpDesignItem, WeftDesignItem
 from app.models.chat_message import ChatMessage
 from app.models.report_job import ReportJob
+from app.models.vehicle import Vehicle
+from app.models.driver import Driver
+from app.models.service_schedule import ServiceSchedule
+from app.models.maintenance_log import MaintenanceLog
+from app.models.breakdown_entry import BreakdownEntry
+from app.models.fuel_entry import FuelEntry
+from app.models.fleet_document import FleetDocument
+from app.models.route_trip import Route, Trip
 
