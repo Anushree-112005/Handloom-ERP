@@ -148,45 +148,46 @@ export default function ExpenseClaims() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Expense Claims</h1>
-          <span className="btn btn-primary">
+    <div className="animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', minHeight: 'calc(100vh - 80px)' }}>
+      {!showForm && (
+        <>
+          {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+            <Receipt size={24} color="var(--primary)" /> Expense Claims
+          </h2>
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             {filteredClaims.length} Records
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="relative">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${
-                showFilters || filterStatus || filterCategory
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
             >
               <Filter size={14} />
               Filter
               {(filterStatus || filterCategory) && (
-                <span className="btn btn-primary" />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />
               )}
             </button>
             {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Filters</span>
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
                   <button
                     onClick={() => { setFilterStatus(''); setFilterCategory(''); setShowFilters(false); }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     Reset
                   </button>
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="form-group">
+                    <label>Status</label>
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
@@ -200,8 +201,8 @@ export default function ExpenseClaims() {
                       <option value="Paid">Paid</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Category</label>
+                  <div className="form-group">
+                    <label>Category</label>
                     <select
                       value={filterCategory}
                       onChange={(e) => setFilterCategory(e.target.value)}
@@ -217,17 +218,17 @@ export default function ExpenseClaims() {
               </div>
             )}
           </div>
-          <div className="btn btn-secondary">
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1 rounded transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+              style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
               title="List View"
             >
               <LayoutList size={16} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1 rounded transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+              style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
               title="Grid View"
             >
               <LayoutGrid size={16} />
@@ -236,6 +237,7 @@ export default function ExpenseClaims() {
           <button
             onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
             className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
           >
             <Plus size={14} /> New Claim
           </button>
@@ -243,173 +245,178 @@ export default function ExpenseClaims() {
       </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-      {/* Stats Cards */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Receipt className="w-5 h-5 text-indigo-600" />
+        {/* Stats Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Claims</p>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Claims</p>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.pending}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Pending</p>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.approved}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Approved</p>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{stats.totalAmount.toLocaleString()}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Amount</p>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{stats.paidAmount.toLocaleString()}</p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Paid Amount</p>
             </div>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.pending}</p>
-              <p className="text-xs text-slate-500">Pending</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.approved}</p>
-              <p className="text-xs text-slate-500">Approved</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <DollarSign className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">₹{stats.totalAmount.toLocaleString()}</p>
-              <p className="text-xs text-slate-500">Total Amount</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <DollarSign className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">₹{stats.paidAmount.toLocaleString()}</p>
-              <p className="text-xs text-slate-500">Paid Amount</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Claims List View - Table */}
       {viewMode === 'list' && (
-        <div className="card">
+        <div className="card" style={{ padding: 0 }}>
           <div className="overflow-x-auto">
-            <table className="data-table">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Claim ID</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Employee</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Category</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredClaims.map(claim => (
-                <tr key={claim.id} className="btn btn-secondary">
-                  <td className="px-4 py-3 text-sm font-medium text-indigo-600">{claim.claim_id}</td>
-                  <td className="px-4 py-3 text-sm text-slate-800">{claim.employee_name}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{claim.expense_date}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{claim.category}</td>
-                  <td className="px-4 py-3 text-sm text-slate-800 text-right font-medium">₹{claim.amount?.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${statusColors[claim.status] || 'bg-slate-100 text-slate-600'}`}>
-                      {claim.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary">
-                        <Eye className="w-4 h-4 text-slate-500" />
-                      </button>
-                      {claim.status === 'Pending' && (
-                        <>
-                          <button onClick={() => handleEdit(claim)} className="btn btn-secondary">
-                            <Edit2 className="w-4 h-4 text-slate-500" />
-                          </button>
-                          <button onClick={() => handleDelete(claim.id)} className="btn btn-danger">
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredClaims.length === 0 && (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
                 <tr>
-                  <td colSpan="7" className="px-4 py-12 text-center text-slate-500">
-                    <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    No expense claims found
-                  </td>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Claim ID</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employee</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Date</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Category</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Amount</th>
+                  <th className="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Status</th>
+                  <th className="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredClaims.map(claim => (
+                  <tr key={claim.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-semibold text-indigo-600">{claim.claim_id}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-800">{claim.employee_name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{claim.expense_date}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{claim.category}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800 text-right">₹{claim.amount?.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '4px 10px',
+                        borderRadius: 12,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        backgroundColor: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#10b98118' : claim.status === 'Manager Approved' ? '#3b82f618' : claim.status === 'Rejected' ? '#ef444418' : '#f59e0b18',
+                        color: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#047857' : claim.status === 'Manager Approved' ? '#1d4ed8' : claim.status === 'Rejected' ? '#b91c1c' : '#b45309'
+                      }}>
+                        {claim.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="View">
+                          <Eye className="w-4 h-4 text-slate-500" />
+                        </button>
+                        {claim.status === 'Pending' && (
+                          <>
+                            <button onClick={() => handleEdit(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="Edit">
+                              <Edit2 className="w-4 h-4 text-slate-500" />
+                            </button>
+                            <button onClick={() => handleDelete(claim.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }} title="Delete">
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredClaims.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
+                      <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      No expense claims found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Claims Grid View */}
       {viewMode === 'grid' && (
-        <div className="form-row">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {filteredClaims.length === 0 ? (
-            <div className="btn btn-secondary">
+            <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
               <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No expense claims found</p>
+              <p className="text-slate-500" style={{ margin: 0 }}>No expense claims found</p>
             </div>
           ) : filteredClaims.map(claim => (
-            <div key={claim.id} className="card">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-indigo-600 truncate">{claim.claim_id}</p>
-                  <p className="text-xs text-slate-700 truncate mt-0.5">{claim.employee_name}</p>
+            <div key={claim.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{claim.claim_id}</p>
+                    <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{claim.employee_name}</p>
+                  </div>
+                  <span style={{ 
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#10b98118' : claim.status === 'Manager Approved' ? '#3b82f618' : claim.status === 'Rejected' ? '#ef444418' : '#f59e0b18',
+                    color: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#047857' : claim.status === 'Manager Approved' ? '#1d4ed8' : claim.status === 'Rejected' ? '#b91c1c' : '#b45309'
+                  }}>{claim.status}</span>
                 </div>
-                <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[claim.status] || 'bg-slate-100 text-slate-600'}`}>
-                  {claim.status}
-                </span>
+                <div className="space-y-1.5" style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Category</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{claim.category}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Date</span>
+                    <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>{claim.expense_date}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Amount</span>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>₹{claim.amount?.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1.5 mb-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Category</span>
-                  <span className="font-medium text-slate-700">{claim.category}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Date</span>
-                  <span className="font-medium text-slate-600">{claim.expense_date}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500">Amount</span>
-                  <span className="text-lg font-bold text-slate-800">₹{claim.amount?.toLocaleString()}</span>
-                </div>
-              </div>
-              <div className="btn btn-secondary">
-                <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary">
-                  <Eye className="w-3 h-3" /> View
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
+                  <Eye className="w-3.5 h-3.5" /> View
                 </button>
                 {claim.status === 'Pending' && (
                   <>
-                    <button onClick={() => handleEdit(claim)} className="btn btn-secondary">
-                      <Edit2 className="w-3 h-3 text-slate-500" />
+                    <button onClick={() => handleEdit(claim)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <Edit2 className="w-3.5 h-3.5" /> Edit
                     </button>
-                    <button onClick={() => handleDelete(claim.id)} className="btn btn-danger">
-                      <Trash2 className="w-3 h-3 text-red-500" />
+                    <button onClick={() => handleDelete(claim.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
                     </button>
                   </>
                 )}
@@ -419,218 +426,216 @@ export default function ExpenseClaims() {
         </div>
       )}
       </div>{/* END DATA AREA */}
-      {/* Create/Edit Form Modal */}
+        </>
+      )}
+      {/* Create/Edit Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'New'} Expense Claim</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
+        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+          {/* Form Header */}
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Expense Claim' : 'New Expense Claim'}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X className="w-4 h-4" /> Close
               </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                <select
-                  value={form.employee_id}
-                  onChange={handleEmployeeChange}
-                  className="form-control"
-                >
-                  <option value="">Select Employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.employee_id})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Expense Date *</label>
-                  <input
-                    type="date"
-                    value={form.expense_date}
-                    onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
-                  <select
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="">Select Category</option>
-                    {expenseCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={2}
-                  className="form-control"
-                  placeholder="Brief description of expense..."
-                />
-              </div>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Amount *</label>
-                  <input
-                    type="number"
-                    value={form.amount}
-                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                    className="form-control"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Receipt #</label>
-                  <input
-                    type="text"
-                    value={form.receipt_number}
-                    onChange={(e) => setForm({ ...form, receipt_number: e.target.value })}
-                    className="form-control"
-                    placeholder="Receipt number"
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Project</label>
-                  <input
-                    type="text"
-                    value={form.project}
-                    onChange={(e) => setForm({ ...form, project: e.target.value })}
-                    className="form-control"
-                    placeholder="Project name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Cost Center</label>
-                  <input
-                    type="text"
-                    value={form.cost_center}
-                    onChange={(e) => setForm({ ...form, cost_center: e.target.value })}
-                    className="form-control"
-                    placeholder="Cost center code"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
+              <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Submit'}
               </button>
             </div>
           </div>
-        </div>
+          
+          <div className="p-6 space-y-4">
+            <div className="form-group">
+              <label>Employee *</label>
+              <select
+                value={form.employee_id}
+                onChange={handleEmployeeChange}
+                className="form-control"
+              >
+                <option value="">Select Employee</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name} ({emp.employee_id})</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Expense Date *</label>
+                <input
+                  type="date"
+                  value={form.expense_date}
+                  onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label>Category *</label>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="">Select Category</option>
+                  {expenseCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={2}
+                className="form-control"
+                placeholder="Brief description of expense..."
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Amount *</label>
+                <input
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className="form-control"
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="form-group">
+                <label>Receipt #</label>
+                <input
+                  type="text"
+                  value={form.receipt_number}
+                  onChange={(e) => setForm({ ...form, receipt_number: e.target.value })}
+                  className="form-control"
+                  placeholder="Receipt number"
+                />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Project</label>
+                <input
+                  type="text"
+                  value={form.project}
+                  onChange={(e) => setForm({ ...form, project: e.target.value })}
+                  className="form-control"
+                  placeholder="Project name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Cost Center</label>
+                <input
+                  type="text"
+                  value={form.cost_center}
+                  onChange={(e) => setForm({ ...form, cost_center: e.target.value })}
+                  className="form-control"
+                  placeholder="Cost center code"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
       )}
 
       {/* View/Approve Modal */}
       {viewingClaim && (
         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">Expense Claim Details</h2>
-              <button onClick={() => setViewingClaim(null)} className="btn btn-secondary">
+          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Expense Claim Details</h2>
+              <button onClick={() => setViewingClaim(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-indigo-600">{viewingClaim.claim_id}</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[viewingClaim.status]}`}>
-                  {viewingClaim.status}
-                </span>
+            <div className="p-6 space-y-4">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{viewingClaim.claim_id}</span>
+                <span style={{ 
+                  padding: '4px 10px',
+                  borderRadius: 12,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  backgroundColor: viewingClaim.status === 'Paid' || viewingClaim.status === 'Finance Approved' ? '#10b98118' : viewingClaim.status === 'Manager Approved' ? '#3b82f618' : viewingClaim.status === 'Rejected' ? '#ef444418' : '#f59e0b18',
+                  color: viewingClaim.status === 'Paid' || viewingClaim.status === 'Finance Approved' ? '#047857' : viewingClaim.status === 'Manager Approved' ? '#1d4ed8' : viewingClaim.status === 'Rejected' ? '#b91c1c' : '#b45309'
+                }}>{viewingClaim.status}</span>
               </div>
               
-              <div className="form-row">
-                <div>
-                  <span className="text-xs text-slate-500">Employee</span>
-                  <p className="font-medium">{viewingClaim.employee_name}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-slate-500">Expense Date</span>
-                  <p className="font-medium">{viewingClaim.expense_date}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-slate-500">Category</span>
-                  <p className="font-medium">{viewingClaim.category}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-slate-500">Amount</span>
-                  <p className="font-bold text-lg text-slate-800">₹{viewingClaim.amount?.toLocaleString()}</p>
-                </div>
+              <div className="space-y-3 text-sm">
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Employee</span><span className="font-semibold text-slate-800">{viewingClaim.employee_name}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Expense Date</span><span className="font-semibold text-slate-800">{viewingClaim.expense_date}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Category</span><span className="font-semibold text-slate-800">{viewingClaim.category}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Amount</span><span className="font-bold text-emerald-600 text-lg">₹{viewingClaim.amount?.toLocaleString()}</span></div>
               </div>
               
               {viewingClaim.description && (
-                <div className="pt-4 border-t">
+                <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)' }}>
                   <span className="text-xs text-slate-500">Description</span>
-                  <p className="text-sm text-slate-600 mt-1">{viewingClaim.description}</p>
+                  <p className="text-sm text-slate-600 mt-1" style={{ margin: 0 }}>{viewingClaim.description}</p>
                 </div>
               )}
               
               {viewingClaim.project && (
-                <div className="form-row">
+                <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <span className="text-xs text-slate-500">Project</span>
-                    <p className="font-medium">{viewingClaim.project}</p>
+                    <p className="font-semibold text-slate-800" style={{ margin: 0 }}>{viewingClaim.project}</p>
                   </div>
                   <div>
                     <span className="text-xs text-slate-500">Cost Center</span>
-                    <p className="font-medium">{viewingClaim.cost_center || '—'}</p>
+                    <p className="font-semibold text-slate-800" style={{ margin: 0 }}>{viewingClaim.cost_center || '—'}</p>
                   </div>
                 </div>
               )}
               
               {viewingClaim.approved_by && (
-                <div className="pt-4 border-t">
+                <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)' }}>
                   <span className="text-xs text-slate-500">Approved By</span>
-                  <p className="font-medium">{viewingClaim.approved_by}</p>
+                  <p className="font-semibold text-slate-800" style={{ margin: 0 }}>{viewingClaim.approved_by}</p>
                 </div>
               )}
             </div>
             
             {/* Action Buttons based on status */}
             {viewingClaim.status === 'Pending' && (
-              <div className="btn btn-secondary">
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
                 <button 
                   onClick={() => handleStatusChange(viewingClaim.id, 'Rejected')}
                   className="btn btn-danger"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <XCircle className="w-4 h-4" /> Reject
                 </button>
                 <button 
                   onClick={() => handleStatusChange(viewingClaim.id, 'Manager Approved', 'HR Admin')}
                   className="btn btn-success"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#10b981', borderColor: '#10b981' }}
                 >
                   <CheckCircle className="w-4 h-4" /> Approve
                 </button>
               </div>
             )}
             {viewingClaim.status === 'Manager Approved' && (
-              <div className="btn btn-secondary">
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
                 <button 
                   onClick={() => handleStatusChange(viewingClaim.id, 'Finance Approved', 'Finance Admin')}
                   className="btn btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <CheckCircle className="w-4 h-4" /> Finance Approve
                 </button>
               </div>
             )}
             {viewingClaim.status === 'Finance Approved' && (
-              <div className="btn btn-secondary">
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
                 <button 
                   onClick={() => handleStatusChange(viewingClaim.id, 'Paid')}
                   className="btn btn-success"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#10b981', borderColor: '#10b981' }}
                 >
                   <DollarSign className="w-4 h-4" /> Mark as Paid
                 </button>

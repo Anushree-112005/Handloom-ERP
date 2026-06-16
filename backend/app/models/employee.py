@@ -45,6 +45,7 @@ class Employee(Base):
     hra = Column(Float, default=0.0)
     da = Column(Float, default=0.0)
     allowances = Column(Float, default=0.0)
+    deductions = Column(Float, default=0.0)
     pf_esi_percent = Column(Float, default=0.0)
 
     # Education & Experience

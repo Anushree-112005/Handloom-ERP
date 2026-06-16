@@ -25,7 +25,7 @@ from app.models.chat_message import ChatMessage
 from app.models.report_job import ReportJob
 from app.modules.hr.models import HRItem
 from app.modules.vehicle_management.models import FleetItem
-from app.modules.stationary.models import StationaryItem
+from app.modules.stationary.models import StationaryItem, SwatchCard, FabricInspectionRoll, ReturnableDC
 
 
 

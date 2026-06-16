@@ -238,274 +238,292 @@ export default function HRProjects() {
     };
 
     return (
-        <div className="space-y-6 p-4 md:p-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <FolderOpen className="w-6 h-6 text-indigo-600" /> Projects
-                    </h1>
-                    <p className="text-slate-500 text-sm mt-1">Manage team projects and assignments</p>
-                </div>
-                <button
-                    onClick={() => { setForm(initialForm); setEditingId(null); setShowForm(true); }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90"
-                >
-                    <Plus className="w-4 h-4" /> New Project
-                </button>
-            </div>
+        <div className="animate-in fade-in" style={{ padding: '4px 0px' }}>
+            {!showForm && (
+                <div style={{ padding: 24 }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                        <div>
+                            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <FolderOpen size={24} color="var(--primary)" /> Projects
+                            </h2>
+                            <p style={{ color: 'var(--text-muted)' }}>Manage team projects and assignments</p>
+                        </div>
+                        <button
+                            onClick={() => { setForm(initialForm); setEditingId(null); setShowForm(true); }}
+                            className="btn btn-primary"
+                            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                        >
+                            <Plus size={16} /> New Project
+                        </button>
+                    </div>
 
-            {/* Message */}
-            {message.text && (
-                <div className={`px-4 py-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                    {message.text}
-                </div>
-            )}
+                    {/* Message */}
+                    {message.text && (
+                        <div style={{ marginBottom: 16, padding: 12, borderRadius: 6, fontSize: 14, background: message.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: message.type === 'success' ? '#10b981' : '#ef4444', border: `1px solid ${message.type === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
+                            {message.text}
+                        </div>
+                    )}
 
-            {/* Stats */}
-            <div className="form-row">
-                {[
-                    { label: 'Total Projects', value: stats.total, color: 'indigo', icon: FolderOpen },
-                    { label: 'In Progress', value: stats.active, color: 'blue', icon: TrendingUp },
-                    { label: 'Completed', value: stats.completed, color: 'emerald', icon: CheckCircle2 },
-                    { label: 'Planning', value: stats.planning, color: 'purple', icon: Clock },
-                ].map(({ label, value, color, icon: Icon }) => (
-                    <div key={label} className="card">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg ${STATS_COLOR_MAP[color].bg} flex items-center justify-center`}>
-                                <Icon className={`w-5 h-5 ${STATS_COLOR_MAP[color].text}`} />
+                    {/* Stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+                        {[
+                            { label: 'Total Projects', value: stats.total, color: 'rgba(99,102,241,0.1)', text: '#6366f1', icon: FolderOpen },
+                            { label: 'In Progress', value: stats.active, color: 'rgba(59,130,246,0.1)', text: '#3b82f6', icon: TrendingUp },
+                            { label: 'Completed', value: stats.completed, color: 'rgba(16,185,129,0.1)', text: '#10b981', icon: CheckCircle2 },
+                            { label: 'Planning', value: stats.planning, color: 'rgba(139,92,246,0.1)', text: '#8b5cf6', icon: Clock },
+                        ].map(({ label, value, color, text, icon: Icon }) => (
+                            <div key={label} className="card stat-card" style={{ padding: 20 }}>
+                                <div className="stat-icon" style={{ background: color, color: text }}>
+                                    <Icon size={24} />
+                                </div>
+                                <div className="stat-details">
+                                    <h3>{label}</h3>
+                                    <div className="value">{value}</div>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-2xl font-bold text-slate-800">{value}</p>
-                                <p className="text-xs text-slate-500">{label}</p>
-                            </div>
+                        ))}
+                    </div>
+
+                    {/* Filters */}
+                    <div className="card" style={{ padding: '12px 24px', display: 'flex', gap: 24, alignItems: 'center', marginBottom: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                        <div style={{ flex: 1, position: 'relative' }}>
+                            <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+                            <input
+                                type="text"
+                                placeholder="Search projects or manager..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="form-control"
+                                style={{ paddingLeft: 40, width: '100%' }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Status:</span>
+                            <select
+                                value={filterStatus}
+                                onChange={e => setFilterStatus(e.target.value)}
+                                className="form-control"
+                                style={{ width: 140 }}
+                            >
+                                <option value="">All Status</option>
+                                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Priority:</span>
+                            <select
+                                value={filterPriority}
+                                onChange={e => setFilterPriority(e.target.value)}
+                                className="form-control"
+                                style={{ width: 140 }}
+                            >
+                                <option value="">All Priority</option>
+                                {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
                         </div>
                     </div>
-                ))}
-            </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search projects or manager..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="form-control"
-                    />
-                </div>
-                <select
-                    value={filterStatus}
-                    onChange={e => setFilterStatus(e.target.value)}
-                    className="btn btn-secondary"
-                >
-                    <option value="">All Status</option>
-                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <select
-                    value={filterPriority}
-                    onChange={e => setFilterPriority(e.target.value)}
-                    className="btn btn-secondary"
-                >
-                    <option value="">All Priority</option>
-                    {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-            </div>
-
-            {/* Table */}
-            {loading ? (
-                <div className="flex items-center justify-center h-48">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
-                </div>
-            ) : (
-                <div className="card">
-                    <div className="overflow-x-auto">
-                        <table className="data-table">
-                            <thead className="btn btn-secondary">
-                                <tr>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Project Name</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Manager</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Start Date</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">End Date</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Priority</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Status</th>
-                                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Progress</th>
-                                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {filtered.map(proj => (
-                                    <tr key={proj.project_id} className="btn btn-secondary">
-                                        <td className="px-4 py-3">
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-800">{proj.project_name}</p>
-                                                {proj.description && (
-                                                    <p className="text-xs text-slate-400 truncate max-w-xs">{proj.description}</p>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="btn btn-primary">
-                                                    {(proj.manager_name || 'U').charAt(0).toUpperCase()}
-                                                </div>
-                                                <span className="text-sm text-slate-600">{proj.manager_name || '—'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-slate-600">{formatDate(proj.start_date)}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-600">{formatDate(proj.end_date)}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${PRIORITY_COLORS[proj.priority] || 'bg-slate-100 text-slate-600'}`}>
-                                                {proj.priority}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[proj.status] || 'bg-slate-100 text-slate-600'}`}>
-                                                {proj.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1 bg-slate-200 rounded-full h-1.5 w-20">
-                                                    <div
-                                                        className="btn btn-primary"
-                                                        style={{ width: `${Math.min(proj.progress || 0, 100)}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-xs text-slate-500">{proj.progress || 0}%</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => handleEdit(proj)}
-                                                    className="btn btn-secondary"
-                                                    title="Edit"
-                                                >
-                                                    <Edit2 className="w-4 h-4 text-slate-500" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(proj.project_id)}
-                                                    className="btn btn-danger"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="w-4 h-4 text-red-500" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {filtered.length === 0 && (
+                    {/* Table */}
+                    {loading ? (
+                        <div style={{ padding: 40, textAlign: 'center' }}>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+                        </div>
+                    ) : (
+                        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+                            <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                <thead>
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-16 text-center">
-                                            <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                            <p className="text-slate-500 font-medium">No projects found</p>
-                                            <p className="text-slate-400 text-sm mt-1">Create your first project using the button above</p>
-                                        </td>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Project Name</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Manager</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Start Date</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>End Date</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Priority</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Status</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Progress</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {filtered.map(proj => (
+                                        <tr key={proj.project_id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                            <td style={{ padding: '16px 24px' }}>
+                                                <div>
+                                                    <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{proj.project_name}</p>
+                                                    {proj.description && (
+                                                        <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{proj.description}</p>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '16px 24px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 12 }}>
+                                                        {(proj.manager_name || 'U').charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <span style={{ fontWeight: 500 }}>{proj.manager_name || '—'}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '16px 24px', fontWeight: 500 }}>{formatDate(proj.start_date)}</td>
+                                            <td style={{ padding: '16px 24px', fontWeight: 500 }}>{formatDate(proj.end_date)}</td>
+                                            <td style={{ padding: '16px 24px' }}>
+                                                <span className={`badge ${proj.priority === 'High' || proj.priority === 'Critical' ? 'badge-inactive' : 'badge-active'}`}>
+                                                    {proj.priority}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '16px 24px' }}>
+                                                <span className="badge badge-active" style={{ background: proj.status === 'Completed' ? 'rgba(16,185,129,0.1)' : 'var(--bg-secondary)', color: proj.status === 'Completed' ? '#10b981' : 'var(--text-primary)' }}>
+                                                    {proj.status}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '16px 24px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <div style={{ flex: 1, background: 'var(--border)', borderRadius: 4, height: 6, minWidth: 80 }}>
+                                                        <div
+                                                            style={{ background: 'var(--primary)', height: '100%', borderRadius: 4, width: `${Math.min(proj.progress || 0, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{proj.progress || 0}%</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                                    <button
+                                                        onClick={() => handleEdit(proj)}
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '6px 10px' }}
+                                                        title="Edit"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(proj.project_id)}
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '6px 10px' }}
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={14} color="#ef4444" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filtered.length === 0 && (
+                                        <tr>
+                                            <td colSpan={8} style={{ padding: 48, textAlign: 'center' }}>
+                                                <FolderOpen size={48} color="var(--border)" style={{ margin: '0 auto 16px' }} />
+                                                <p style={{ fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>No projects found</p>
+                                                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Create your first project using the button above</p>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Form Modal */}
+            {/* Form Inline */}
             {showForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-                    <div className="card">
-                        {/* Modal Header */}
-                        <div className="btn btn-secondary">
-                            <h2 className="text-lg font-semibold text-slate-800">
+                <div style={{ padding: 24 }}>
+                    <div className="card" style={{ padding: 0 }}>
+                        {/* Form Header */}
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+                            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                                 {editingId ? 'Edit Project' : 'New Project'}
                             </h2>
-                            <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div style={{ display: 'flex', gap: 12 }}>
+                                <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <X size={16} /> Close
+                                </button>
+                                <button onClick={handleSubmit} disabled={saving} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <Save size={16} /> {saving ? 'Saving...' : editingId ? 'Update Project' : 'Save Project'}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Modal Body */}
-                        <div className="p-4 space-y-4">
-                            {/* Project Code */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Project Code *</label>
-                                <input
-                                    type="text"
-                                    value={form.project_code}
-                                    onChange={e => setForm(prev => ({ ...prev, project_code: e.target.value }))}
-                                    className="form-control"
-                                    placeholder="e.g. WEB-123456 (auto-generated if left empty)"
-                                />
-                            </div>
+                        {/* Form Body */}
+                        <div style={{ padding: 24, background: '#fff' }}>
+                            <div className="form-row">
+                                {/* Project Code */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Project Code *</label>
+                                    <input
+                                        type="text"
+                                        value={form.project_code}
+                                        onChange={e => setForm(prev => ({ ...prev, project_code: e.target.value }))}
+                                        className="form-control"
+                                        placeholder="e.g. WEB-123456 (auto-generated if left empty)"
+                                    />
+                                </div>
 
-                            {/* Project Name */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Project Name *</label>
-                                <input
-                                    type="text"
-                                    value={form.project_name}
-                                    onChange={e => setForm(prev => ({ ...prev, project_name: e.target.value }))}
-                                    className="form-control"
-                                    placeholder="e.g. Website Redesign Q2"
-                                />
+                                {/* Project Name */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Project Name *</label>
+                                    <input
+                                        type="text"
+                                        value={form.project_name}
+                                        onChange={e => setForm(prev => ({ ...prev, project_name: e.target.value }))}
+                                        className="form-control"
+                                        placeholder="e.g. Website Redesign Q2"
+                                    />
+                                </div>
                             </div>
 
                             {/* Description */}
-                            <div>
+                            <div style={{ marginTop: 16 }}>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                                 <textarea
                                     value={form.description}
                                     onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                                    rows={2}
+                                    rows={3}
                                     className="form-control"
                                     placeholder="Brief project overview..."
                                 />
                             </div>
 
                             {/* Manager (Employee Dropdown) */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    <Users className="w-4 h-4 inline mr-1" />
-                                    Project Manager (Employee)
-                                </label>
-                                {employees.length === 0 ? (
-                                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-700">
-                                        No employees found. Please add employees first.
+                            <div className="form-row" style={{ marginTop: 16 }}>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <Users size={16} /> Project Manager (Employee)
+                                    </label>
+                                    {employees.length === 0 ? (
+                                        <div style={{ padding: 12, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b', borderRadius: 6, fontSize: 13 }}>
+                                            No employees found. Please add employees first.
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={form.manager_id}
+                                            onChange={handleEmployeeChange}
+                                            className="form-control"
+                                        >
+                                            <option value="">Select Employee</option>
+                                            {employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name || 'Unnamed'}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                                {/* Manager Name Display */}
+                                {form.manager_name && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Selected Manager</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6 }}>
+                                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>
+                                                {(form.manager_name || 'U').charAt(0).toUpperCase()}
+                                            </div>
+                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{form.manager_name}</span>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <select
-                                        value={form.manager_id}
-                                        onChange={handleEmployeeChange}
-                                        className="form-control"
-                                    >
-                                        <option value="">Select Employee</option>
-                                        {employees.map(emp => (
-                                            <option key={emp.id} value={emp.id}>{emp.name || 'Unnamed'}</option>
-                                        ))}
-                                    </select>
                                 )}
                             </div>
 
-                            {/* Manager Name Display */}
-                            {form.manager_name && (
-                                <div className="btn btn-primary">
-                                    <p className="text-xs font-medium text-indigo-600 mb-1">Selected Manager</p>
-                                    <div className="flex items-center gap-2">
-                                        <div className="btn btn-primary">
-                                            {(form.manager_name || 'U').charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm font-medium text-slate-800">{form.manager_name}</span>
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Dates */}
-                            <div className="form-row">
+                            <div className="form-row" style={{ marginTop: 16 }}>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                                        <Calendar className="w-4 h-4 inline mr-1" /> Start Date
+                                    <label className="block text-sm font-medium text-slate-700 mb-1" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <Calendar size={16} /> Start Date
                                     </label>
                                     <input
                                         type="date"
@@ -515,8 +533,8 @@ export default function HRProjects() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                                        <Calendar className="w-4 h-4 inline mr-1" /> End Date
+                                    <label className="block text-sm font-medium text-slate-700 mb-1" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <Calendar size={16} /> End Date
                                     </label>
                                     <input
                                         type="date"
@@ -528,7 +546,7 @@ export default function HRProjects() {
                             </div>
 
                             {/* Priority & Status */}
-                            <div className="form-row">
+                            <div className="form-row" style={{ marginTop: 16 }}>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
                                     <select
@@ -552,7 +570,7 @@ export default function HRProjects() {
                             </div>
 
                             {/* Budget & Progress */}
-                            <div className="form-row">
+                            <div className="form-row" style={{ marginTop: 16 }}>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Budget (₹)</label>
                                     <input
@@ -567,27 +585,30 @@ export default function HRProjects() {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">
                                         Progress ({form.progress}%)
                                     </label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={form.progress}
-                                        onChange={e => setForm(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
-                                        className="w-full mt-2 accent-indigo-600"
-                                    />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={form.progress}
+                                            onChange={e => setForm(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
+                                            style={{ flex: 1, accentColor: 'var(--primary)' }}
+                                        />
+                                        <span style={{ fontWeight: 600, fontSize: 14 }}>{form.progress}%</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Team Members */}
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    <Users className="w-4 h-4 inline mr-1" />
-                                    Project Team Members
+                            <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                                <label className="block text-sm font-medium text-slate-700 mb-2" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <Users size={16} /> Project Team Members
                                 </label>
                                 <select
                                     onChange={handleAddTeamMember}
                                     value=""
                                     className="form-control"
+                                    style={{ maxWidth: 400 }}
                                 >
                                     <option value="">+ Add Team Member</option>
                                     {employees.map(emp => (
@@ -603,26 +624,24 @@ export default function HRProjects() {
 
                                 {/* Team Members List */}
                                 {form.team_members.length > 0 && (
-                                    <div className="space-y-2">
-                                        <p className="text-xs font-medium text-slate-500">Selected Team Members ({form.team_members.length})</p>
-                                        <div className="form-row">
+                                    <div style={{ marginTop: 16 }}>
+                                        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase' }}>Selected Team Members ({form.team_members.length})</p>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                                             {form.team_members.map(memberId => {
                                                 const emp = employees.find(e => String(e.id) === String(memberId));
                                                 return emp ? (
-                                                    <div key={memberId} className="btn btn-secondary">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="btn btn-primary">
-                                                                {(emp.name || 'U').charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <span className="text-sm font-medium text-slate-700">{emp.name}</span>
+                                                    <div key={memberId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20 }}>
+                                                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>
+                                                            {(emp.name || 'U').charAt(0).toUpperCase()}
                                                         </div>
+                                                        <span style={{ fontSize: 13, fontWeight: 600 }}>{emp.name}</span>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveTeamMember(memberId)}
-                                                            className="btn btn-danger"
+                                                            style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}
                                                             title="Remove"
                                                         >
-                                                            <X className="w-4 h-4" />
+                                                            <X size={14} />
                                                         </button>
                                                     </div>
                                                 ) : null;
@@ -631,24 +650,6 @@ export default function HRProjects() {
                                     </div>
                                 )}
                             </div>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="btn btn-secondary">
-                            <button
-                                onClick={() => setShowForm(false)}
-                                className="btn btn-secondary"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={saving}
-                                className="btn btn-primary"
-                            >
-                                <Save className="w-4 h-4" />
-                                {saving ? 'Saving...' : editingId ? 'Update Project' : 'Save Project'}
-                            </button>
                         </div>
                     </div>
                 </div>

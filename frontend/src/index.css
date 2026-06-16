@@ -150,7 +150,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   gap: 12px;
   padding: 10px 20px;
   margin: 2px 8px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
@@ -170,7 +170,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   background: rgba(79, 70, 229, 0.08);
   color: var(--primary);
   font-weight: 600;
-  border-left: 3px solid var(--primary);
+  border-radius: 8px;
 }
 
 .nav-item svg {
@@ -1292,7 +1292,8 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   position: relative !important;
   background: transparent !important;
   border-bottom: none !important;
-  padding: 8px 0 24px 0 !important;
+  padding: 8px 0 !important;
+  margin-bottom: 16px !important;
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
@@ -1354,7 +1355,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 /* Absolute position the footer to the top right next to the Close button */
 .hr-module-container div[class*="fixed"][class*="inset-0"] > div > div:nth-child(3) {
   position: absolute !important;
-  top: 8px !important;
+  top: 14px !important;
   right: 120px !important;
   bottom: auto !important;
   background: transparent !important;
@@ -1367,8 +1368,8 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   height: auto !important;
 }
 
-/* Hide the Cancel button in footer */
-.hr-module-container div[class*="fixed"][class*="inset-0"] > div > div:nth-child(3) button:first-child {
+/* Hide the Cancel button in footer, but keep action buttons like Reject */
+.hr-module-container div[class*="fixed"][class*="inset-0"] > div > div:nth-child(3) button:first-child:not(.btn-danger):not(.btn-success) {
   display: none !important;
 }
 

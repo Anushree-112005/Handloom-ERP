@@ -443,10 +443,11 @@ const modules = [
 
       { section: 'WORKFORCE' },
       // { path: '/hr/workforce', label: 'Workforce Hub', icon: Users },
-      { path: '/employee', label: 'Employee Master', icon: Shield },
+        // { path: '/hr/departments', label: 'Departments', icon: Building },
+      // { path: '/hr/designations', label: 'Designations', icon: Award },
+      { path: '/hr/employees', label: 'Employee Master', icon: Shield },
       { path: '/hr/org-chart', label: 'Organization Chart', icon: Layers },
-      { path: '/hr/departments', label: 'Departments', icon: Building },
-      { path: '/hr/designations', label: 'Designations', icon: Award },
+    
       // { path: '/hr/projects', label: 'Projects', icon: FolderOpen },
 
       // { section: 'RECRUITMENT' },
@@ -539,13 +540,19 @@ const modules = [
       { section: 'TRANSACTIONS' },
       { path: '/stores-consumables/request', label: 'Department Request', icon: FileText },
       { path: '/stores-consumables/requisition', label: 'Purchase Requisition', icon: ClipboardList },
+      { path: '/stores-consumables/quotation', label: 'Vendor Quotation', icon: FileText },
       { path: '/stores-consumables/po', label: 'Purchase Order', icon: ShoppingBag },
+
       { path: '/stores-consumables/grn', label: 'Stock Inward (GRN)', icon: ArrowRightLeft },
       { path: '/stores-consumables/issue', label: 'Issue to Dept', icon: ArrowUpRight },
       { path: '/stores-consumables/return', label: 'Return to Store', icon: ArrowDownLeft },
       { path: '/stores-consumables/transfer', label: 'Store Transfer', icon: ArrowRightLeft },
       { path: '/stores-consumables/adjustment', label: 'Stock Adjustment', icon: AlertTriangle },
       { path: '/stores-consumables/physical', label: 'Physical Verification', icon: CheckSquare },
+      { path: '/stores-consumables/swatch-cards', label: 'Swatch Cards', icon: Palette },
+      { path: '/stores-consumables/fabric-inspection', label: 'Fabric Inspection Book', icon: CheckSquare },
+      { path: '/stores-consumables/returnable-dc', label: 'Returnable DC', icon: FileText },
+
 
       { section: 'APPROVALS' },
       { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
@@ -635,7 +642,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>{companyProfile.description}</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={onToggleSidebar}
               className="sidebar-toggle-btn"
               style={{
@@ -656,7 +663,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
             </button>
           </>
         ) : (
-          <button 
+          <button
             onClick={onToggleSidebar}
             className="sidebar-toggle-btn"
             style={{
@@ -771,12 +778,12 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                         <div
                           key={`sec-${childIdx}`}
                           style={{
-                            padding: '12px 16px 4px 36px',
-                            fontSize: '10px',
+                            padding: '16px 16px 6px 32px',
+                            fontSize: '11px',
                             fontWeight: '700',
                             color: '#64748b',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.08em'
                           }}
                         >
                           {child.section}
@@ -789,9 +796,9 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                           className={({ isActive }) =>
                             `nav-item ${isActive ? 'active' : ''}`
                           }
-                          style={{ padding: '8px 16px 8px 48px', fontSize: '13px', margin: '1px 8px' }}
+                          style={{ padding: '10px 16px 10px 24px', fontSize: '13.5px', margin: '2px 8px' }}
                         >
-                          <child.icon style={{ width: 14, height: 14 }} />
+                          <child.icon style={{ width: 16, height: 16 }} />
                           <span>{child.label}</span>
                         </NavLink>
                       )

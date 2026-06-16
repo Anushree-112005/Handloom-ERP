@@ -28,6 +28,41 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
+        def sync_database_schema(connection):
+            from sqlalchemy import inspect, text
+            try:
+                inspector = inspect(connection)
+                for table_name, table in Base.metadata.tables.items():
+                    if not inspector.has_table(table_name):
+                        continue
+                    db_columns = {col["name"].lower() for col in inspector.get_columns(table_name)}
+                    for col_name, column in table.columns.items():
+                        if col_name.lower() not in db_columns:
+                            type_str = str(column.type.compile(dialect=connection.dialect))
+                            default_val = "NULL"
+                            if column.default is not None and not callable(column.default.arg):
+                                default_val = str(column.default.arg)
+                            elif "float" in type_str.lower() or "numeric" in type_str.lower():
+                                default_val = "0.0"
+                            elif "integer" in type_str.lower():
+                                default_val = "0"
+                            elif "boolean" in type_str.lower():
+                                default_val = "FALSE"
+                            
+                            alter_query = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {type_str}"
+                            if default_val != "NULL":
+                                alter_query += f" DEFAULT {default_val}"
+                            
+                            try:
+                                connection.execute(text(alter_query))
+                                logger.info(f"Successfully added column {col_name} to table {table_name}.")
+                            except Exception as ex:
+                                logger.error(f"Failed to add column {col_name} to table {table_name}: {ex}")
+            except Exception as e:
+                logger.error(f"Error during schema synchronization: {e}")
+
+        await conn.run_sync(sync_database_schema)
+        
         if RESET_DATABASE:
             logger.info("RESET_DATABASE is True. Deleting all data from tables (keeping structure)...")
             # Delete data in reverse dependency order to prevent foreign key errors
