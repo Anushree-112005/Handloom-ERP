@@ -460,7 +460,8 @@ const modules = [
       { path: '/hr/travel', label: 'Travel Requests', icon: Globe },
       { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
 
-
+      { section: 'REPORTS' },
+      { path: '/hr/reports', label: 'Reports', icon: FileText }
     ]
   },
   // {
