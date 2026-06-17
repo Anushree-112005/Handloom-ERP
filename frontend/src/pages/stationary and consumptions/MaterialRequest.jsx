@@ -111,12 +111,19 @@ export default function MaterialRequest() {
           </div>
         </div>
       ) : (
-        <div className="card animate-fade">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 16, marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700 }}>Raise Material Request</h2>
-            <button onClick={() => setView('list')} style={{ padding: 4, borderRadius: "var(--radius-sm)", cursor: "pointer", background: "none", border: "none" }}><X size={20} /></button>
+        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Raise Material Request</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
+                <X size={16} /> Close
+              </button>
+              <button className="btn btn-primary" type="submit">
+                <Save size={16} /> Submit Request
+              </button>
+            </div>
           </div>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 24 }}>
             <div className="form-row" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
               <div>
                 <label >Department *</label>
@@ -195,15 +202,8 @@ export default function MaterialRequest() {
                 ))}
               </div>
             </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 20 }}>
-              <button type="button" onClick={() => setView('list')} className="px-4 py-2 border rounded-lg">Cancel</button>
-              <button type="submit" className="btn btn-primary">
-                <Save size={16} /> Submit Request
-              </button>
-            </div>
-          </form>
-        </div>
+          </div>
+        </form>
       )}
     </div>
   );

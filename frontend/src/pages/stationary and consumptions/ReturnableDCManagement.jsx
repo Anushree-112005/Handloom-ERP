@@ -307,13 +307,19 @@ export default function ReturnableDCManagement() {
         </div>
       ) : (
         /* Form View */
-        <div className="card animate-fade" style={{ maxWidth: '850px', margin: '0 auto', padding: '24px', borderRadius: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 16, marginBottom: 24 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Returnable DC' : 'Create Returnable DC'}</h2>
-            <button onClick={() => setView('list')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: '50%', display: 'flex', alignItems: 'center', justify: 'center' }}><X size={20} /></button>
+        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Returnable DC' : 'Create Returnable DC'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
+                <X size={16} /> Close
+              </button>
+              <button className="btn btn-primary" type="submit">
+                <Save size={16} /> Save Returnable DC
+              </button>
+            </div>
           </div>
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 20 }}>
             <div className="form-row">
               <div>
                 <label>DC Stream *</label>
@@ -500,15 +506,8 @@ export default function ReturnableDCManagement() {
                 style={{ borderRadius: '8px', resize: 'vertical' }}
               />
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 12 }}>
-              <button type="button" onClick={() => setView('list')} className="px-4 py-2 border rounded-lg" style={{ cursor: 'pointer' }}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: '8px', fontWeight: 600 }}>
-                <Save size={16} /> Save Returnable DC
-              </button>
-            </div>
-          </form>
-        </div>
+          </div>
+        </form>
       )}
     </div>
   );
