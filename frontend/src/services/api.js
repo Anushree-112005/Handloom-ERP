@@ -101,6 +101,11 @@ export const designEntryAPI = {
   create: (data) => api.post('/design-entries/', data),
   update: (id, data) => api.put(`/design-entries/${id}`, data),
   delete: (id) => api.delete(`/design-entries/${id}`),
+  uploadImage: (id, file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post(`/design-entries/${id}/upload-image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
 };
 
 // ---- AI Textile Design ----

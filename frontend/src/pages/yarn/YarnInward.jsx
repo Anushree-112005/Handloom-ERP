@@ -359,20 +359,27 @@ export default function YarnInward() {
             our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
           }]
         };
-      } else {
-        const selectedPo = pos.find(po => `${po.po_number} / ${po.po_date}` === value);
+        const selectedPo = pos.find(po => {
+          const poDateStr = po.po_date ? po.po_date.substring(0, 10) : '';
+          const matchStr = `${po.po_number} / ${poDateStr}`;
+          return matchStr === value || po.po_number === value || po.po_number === value.split(' / ')[0];
+        });
         if (selectedPo) {
-          const mappedItems = (selectedPo.indent_details || []).map(indent => {
+          const sourceDetails = (selectedPo.count_details && selectedPo.count_details.length > 0)
+            ? selectedPo.count_details
+            : (selectedPo.indent_details || []);
+
+          const mappedItems = sourceDetails.map(item => {
             const selectedColor = colorMasters.find(c => c.name === selectedPo.colour);
             return {
-              yarn_count: indent.yarn_count || '',
-              mill_name: '',
+              yarn_count: item.yarn_count || '',
+              mill_name: item.mill_name || '',
               colour: selectedPo.colour || '',
               color_code: selectedColor ? (selectedColor.code || '') : '',
               lot_no: '',
               our_id: '',
               bags: 0,
-              kgs: indent.order_qty || 0,
+              kgs: item.order_kgs || item.order_qty || 0,
               rate: 0,
               amount: 0
             };
@@ -383,15 +390,19 @@ export default function YarnInward() {
             our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
           }];
 
+          const totalKgs = finalItems.reduce((sum, item) => sum + (parseFloat(item.kgs) || 0), 0);
+
           newForm = {
             ...newForm,
             received_from: selectedPo.supplier_name || '',
             agent_name: selectedPo.agent_name || '',
             transport: selectedPo.transport || '',
             due_days: selectedPo.due_days || 0,
-            order_kgs: selectedPo.total_order_kgs || 0,
-            received_kgs: 0,
-            balance_kgs: selectedPo.total_order_kgs || 0,
+            order_kgs: selectedPo.total_order_kgs || totalKgs || 0,
+            received_kgs: totalKgs,
+            balance_kgs: (selectedPo.total_order_kgs || totalKgs || 0) - totalKgs,
+            gross_kgs: totalKgs,
+            net_kgs: totalKgs,
             tax_type: selectedPo.tax_type || 'GST',
             cgst_pct: selectedPo.cgst_pct || 0,
             sgst_pct: selectedPo.sgst_pct || 0,
@@ -758,6 +769,9 @@ export default function YarnInward() {
                       <select className="form-control" name="received_from" value={form.received_from} onChange={handleChange}>
                         <option value="">Select Supplier...</option>
                         {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                        {form.received_from && !parties.some(p => p.company_name === form.received_from) && (
+                          <option value={form.received_from}>{form.received_from}</option>
+                        )}
                       </select>
                     </div>
                     
@@ -782,6 +796,9 @@ export default function YarnInward() {
                       <select className="form-control" name="po_no_dt" value={form.po_no_dt} onChange={handleChange} disabled={form.received_type === 'Direct'}>
                         <option value="">Select PO...</option>
                         {pos.map(po => <option key={po.id} value={`${po.po_number} / ${po.po_date}`}>{po.po_number} / {po.po_date}</option>)}
+                        {form.po_no_dt && !pos.some(po => `${po.po_number} / ${po.po_date}` === form.po_no_dt) && (
+                          <option value={form.po_no_dt}>{form.po_no_dt}</option>
+                        )}
                       </select>
                     </div>
                     <div className="form-group"><label>Agent Name</label><input className="form-control" name="agent_name" value={form.agent_name} onChange={handleChange} /></div>
@@ -828,6 +845,9 @@ export default function YarnInward() {
                         <select className="form-control" name="transport" value={form.transport || ''} onChange={handleChange}>
                           <option value="">Select...</option>
                           {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          {form.transport && !options.masters?.transport_name_master?.includes(form.transport) && (
+                            <option value={form.transport}>{form.transport}</option>
+                          )}
                           <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
                         </select>
                       )}
@@ -871,6 +891,9 @@ export default function YarnInward() {
                                 <select className="form-control" name="yarn_count" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {item.yarn_count && !options.masters?.yarn_count_master?.includes(item.yarn_count) && (
+                                    <option value={item.yarn_count}>{item.yarn_count}</option>
+                                  )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
                               )}
@@ -886,6 +909,9 @@ export default function YarnInward() {
                                 <select className="form-control" style={{ width: 120 }} value={item.mill_name || ''} onChange={e => updateItem(idx, 'mill_name', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {item.mill_name && !options.masters?.mill_name_master?.includes(item.mill_name) && (
+                                    <option value={item.mill_name}>{item.mill_name}</option>
+                                  )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
                               )}
@@ -901,6 +927,9 @@ export default function YarnInward() {
                                 <select className="form-control" style={{ width: 100 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {item.colour && !options.masters?.color_master?.includes(item.colour) && (
+                                    <option value={item.colour}>{item.colour}</option>
+                                  )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
                               )}
@@ -933,6 +962,9 @@ export default function YarnInward() {
                         <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
                           <option value="">Select...</option>
                           {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
+                            <option value={form.packing}>{form.packing}</option>
+                          )}
                           <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
                         </select>
                       )}
@@ -991,6 +1023,9 @@ export default function YarnInward() {
                                 <select className="form-control" name="yarn_count" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {item.yarn_count && !options.masters?.yarn_count_master?.includes(item.yarn_count) && (
+                                    <option value={item.yarn_count}>{item.yarn_count}</option>
+                                  )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
                               )}
@@ -1006,6 +1041,9 @@ export default function YarnInward() {
                                 <select className="form-control" style={{ width: 120 }} value={item.mill_name || ''} onChange={e => updateItem(idx, 'mill_name', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {item.mill_name && !options.masters?.mill_name_master?.includes(item.mill_name) && (
+                                    <option value={item.mill_name}>{item.mill_name}</option>
+                                  )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
                               )}
@@ -1021,6 +1059,9 @@ export default function YarnInward() {
                                 <select className="form-control" style={{ width: 100 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
                                   <option value="">Select...</option>
                                   {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {item.colour && !options.masters?.color_master?.includes(item.colour) && (
+                                    <option value={item.colour}>{item.colour}</option>
+                                  )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
                               )}
@@ -1054,6 +1095,9 @@ export default function YarnInward() {
                       <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
                         <option value="">Select...</option>
                         {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                        {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
+                          <option value={form.packing}>{form.packing}</option>
+                        )}
                         <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
                       </select>
                     )}

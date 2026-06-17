@@ -102,6 +102,79 @@ async def lifespan(app: FastAPI):
             session.add(admin)
             await session.commit()
 
+        # Seed default departments and designations
+        from app.models.sub_master import SubMaster
+        
+        # Seed departments
+        dept_result = await session.execute(select(SubMaster).where(SubMaster.entity == "department"))
+        if not dept_result.scalars().first():
+            logger.info("Seeding default departments...")
+            default_departments = [
+                "Management", "Merchandising", "Design", "Purchase", "Stores", 
+                "Inventory", "Production", "Weaving", "Dyeing", "Quality", 
+                "Dispatch", "Export Documentation", "Logistics", "Accounts", 
+                "HR", "Payroll", "Maintenance", "IT", "Admin"
+            ]
+            for dept_name in default_departments:
+                code = "".join([w[0] for w in dept_name.split() if w]).upper()[:6]
+                if len(code) < 2:
+                    code = dept_name[:3].upper()
+                session.add(SubMaster(
+                    entity="department",
+                    name=dept_name,
+                    code=code,
+                    is_active=True
+                ))
+            await session.commit()
+
+        # Seed designations
+        desg_result = await session.execute(select(SubMaster).where(SubMaster.entity == "designation"))
+        if not desg_result.scalars().first():
+            logger.info("Seeding default designations...")
+            default_designations = [
+                "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
+                "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
+                "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
+                "Assistant", "Operator", "Technician", "Worker", "Trainee"
+            ]
+            for desg_title in default_designations:
+                code = "".join([w[0] for w in desg_title.split() if w]).upper()[:6]
+                if len(code) < 2:
+                    code = desg_title[:3].upper()
+                session.add(SubMaster(
+                    entity="designation",
+                    name=desg_title,
+                    code=code,
+                    is_active=True
+                ))
+            await session.commit()
+
+        # Seed default yarn counts
+        yc_result = await session.execute(select(SubMaster).where(SubMaster.entity == "yarn_count_master"))
+        if not yc_result.scalars().first():
+            logger.info("Seeding default yarn counts...")
+            default_counts = [
+                {"name": "10S CTN", "code": "10S CTN", "ply": "1 Ply"},
+                {"name": "20S CTN", "code": "20S CTN", "ply": "1 Ply"},
+                {"name": "30S CTN", "code": "30S CTN", "ply": "1 Ply"},
+                {"name": "40S CTN", "code": "40S CTN", "ply": "1 Ply"},
+                {"name": "60S CTN", "code": "60S CTN", "ply": "1 Ply"},
+                {"name": "80S CTN", "code": "80S CTN", "ply": "1 Ply"},
+                {"name": "2/20S CTN", "code": "2/20S CTN", "ply": "2 Ply"},
+                {"name": "2/40S CTN", "code": "2/40S CTN", "ply": "2 Ply"},
+                {"name": "2/60S CTN", "code": "2/60S CTN", "ply": "2 Ply"},
+                {"name": "2/80S CTN", "code": "2/80S CTN", "ply": "2 Ply"},
+            ]
+            for item in default_counts:
+                session.add(SubMaster(
+                    entity="yarn_count_master",
+                    name=item["name"],
+                    code=item["code"],
+                    extra_field_1=item["ply"],
+                    is_active=True
+                ))
+            await session.commit()
+
     yield
     await engine.dispose()
 

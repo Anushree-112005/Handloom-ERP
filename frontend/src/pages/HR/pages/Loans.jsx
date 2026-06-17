@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Plus, Search, Calendar, CheckCircle, XCircle, Clock, X, Save, Eye, Edit2, Trash2, DollarSign, Calculator, Filter, LayoutList, LayoutGrid } from 'lucide-react';
-import { fetchLoans, createLoan, updateLoan, deleteLoan, fetchEmployees } from '../../../services/hrService';
+import { Wallet, Plus, Search, Calendar, CheckCircle, XCircle, Clock, X, Save, Eye, Edit2, Trash2, DollarSign, Filter, LayoutList, LayoutGrid } from 'lucide-react';
+import { fetchLoans, createLoan, updateLoan, deleteLoan, fetchEmployees, fetchPayroll } from '../../../services/hrService';
 
 const loanTypes = ['Personal Loan', 'Salary Advance', 'Emergency Loan', 'Education Loan', 'Housing Loan', 'Vehicle Loan'];
 
@@ -16,13 +16,13 @@ const statusColors = {
 export default function Loans() {
   const [loans, setLoans] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [viewingLoan, setViewingLoan] = useState(null);
-  const [showCalculator, setShowCalculator] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [showFilters, setShowFilters] = useState(false);
   const [filterType, setFilterType] = useState('');
@@ -32,11 +32,10 @@ export default function Loans() {
     employee_name: '',
     loan_type: '',
     amount: '',
-    interest_rate: '0',
-    tenure_months: '12',
     purpose: '',
     guarantor_name: '',
-    guarantor_contact: ''
+    guarantor_contact: '',
+    applied_date: new Date().toISOString().split('T')[0]
   };
   const [form, setForm] = useState(initialForm);
 
@@ -47,12 +46,14 @@ export default function Loans() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [loanData, empData] = await Promise.all([
+      const [loanData, empData, payrollData] = await Promise.all([
         fetchLoans(),
-        fetchEmployees()
+        fetchEmployees(),
+        fetchPayroll().catch(() => [])
       ]);
       setLoans(loanData);
       setEmployees(empData);
+      setPayrolls(payrollData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -60,8 +61,22 @@ export default function Loans() {
     }
   };
 
+  const getLoanPaidAmount = (loan) => {
+    if (!loan) return 0;
+    const selectedEmp = employees.find(
+      emp => String(emp.id) === String(loan.employee_id) || String(emp.employee_id) === String(loan.employee_id) || (emp.name && loan.employee_name && emp.name.toLowerCase() === loan.employee_name.toLowerCase())
+    );
+    if (!selectedEmp) return 0;
+    return payrolls
+      .filter(p => 
+        String(p.employee) === String(selectedEmp.id) || 
+        String(p.employee) === String(selectedEmp.employee_id)
+      )
+      .reduce((sum, p) => sum + (Number(p.loan_amount) || 0), 0);
+  };
+
   const handleSubmit = async () => {
-    if (!form.employee_id || !form.loan_type || !form.amount || !form.tenure_months) {
+    if (!form.employee_id || !form.loan_type || !form.amount) {
       alert('Please fill required fields');
       return;
     }
@@ -70,10 +85,7 @@ export default function Loans() {
       const payload = {
         ...form,
         employee_id: parseInt(form.employee_id),
-        amount: parseFloat(form.amount),
-        interest_rate: parseFloat(form.interest_rate) || 0,
-        tenure_months: parseInt(form.tenure_months),
-        emi_amount: calculateEMI(parseFloat(form.amount), parseFloat(form.interest_rate), parseInt(form.tenure_months))
+        amount: parseFloat(form.amount)
       };
 
       if (editingId) {
@@ -97,11 +109,10 @@ export default function Loans() {
       employee_name: loan.employee_name,
       loan_type: loan.loan_type,
       amount: loan.amount,
-      interest_rate: loan.interest_rate || 0,
-      tenure_months: loan.tenure_months,
       purpose: loan.purpose || '',
       guarantor_name: loan.guarantor_name || '',
-      guarantor_contact: loan.guarantor_contact || ''
+      guarantor_contact: loan.guarantor_contact || '',
+      applied_date: loan.applied_date || new Date().toISOString().split('T')[0]
     });
     setEditingId(loan.id);
     setShowForm(true);
@@ -137,13 +148,6 @@ export default function Loans() {
     });
   };
 
-  const calculateEMI = (principal, rate, months) => {
-    if (rate === 0) return principal / months;
-    const r = rate / 12 / 100;
-    const emi = principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
-    return Math.round(emi);
-  };
-
   const filteredLoans = loans.filter(loan => {
     const matchesStatus = !filterStatus || loan.status === filterStatus;
     const matchesType = !filterType || loan.loan_type === filterType;
@@ -162,10 +166,6 @@ export default function Loans() {
     return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const calculatedEMI = form.amount && form.tenure_months 
-    ? calculateEMI(parseFloat(form.amount), parseFloat(form.interest_rate) || 0, parseInt(form.tenure_months))
-    : 0;
-
   return (
     <div className="animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', minHeight: 'calc(100vh - 80px)' }}>
       {!showForm && (
@@ -181,13 +181,8 @@ export default function Loans() {
           </span>
         </div>
 
-        {/* RIGHT: EMI Calculator + New Loan */}
+        {/* RIGHT: New Loan */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => setShowCalculator(true)}
-            className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
-            <Calculator className="w-4 h-4" /> EMI Calculator
-          </button>
-
           <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
             className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
             <Plus className="w-4 h-4" /> New Loan
@@ -245,12 +240,11 @@ export default function Loans() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Loan ID</th>
                   <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Employee</th>
                   <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Type</th>
-                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Amount</th>
-                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">EMI</th>
-                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Tenure</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Full Amount</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Paid Amount</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Balance Amount</th>
                   <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Status</th>
                   <th className="text-right px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Actions</th>
                 </tr>
@@ -258,9 +252,6 @@ export default function Loans() {
               <tbody className="divide-y divide-slate-100">
                 {filteredLoans.map(loan => (
                   <tr key={loan.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-semibold text-indigo-600">{loan.loan_id}</span>
-                    </td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-slate-800">{loan.employee_name}</span>
                     </td>
@@ -271,10 +262,10 @@ export default function Loans() {
                       <span className="text-sm font-bold text-slate-800">₹{loan.amount?.toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-600">₹{loan.emi_amount?.toLocaleString()}/mo</span>
+                      <span className="text-sm font-medium text-emerald-600">₹{getLoanPaidAmount(loan).toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-600">{loan.tenure_months} months</span>
+                      <span className="text-sm font-bold text-amber-600">₹{Math.max(0, loan.amount - getLoanPaidAmount(loan)).toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span style={{ 
@@ -292,23 +283,19 @@ export default function Loans() {
                         <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                           <Eye className="w-3.5 h-3.5 text-slate-500" />
                         </button>
-                        {loan.status === 'Pending' && (
-                          <>
-                            <button onClick={() => handleEdit(loan)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                              <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                            </button>
-                            <button onClick={() => handleDelete(loan.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }}>
-                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                            </button>
-                          </>
-                        )}
+                        <button onClick={() => handleEdit(loan)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="Edit">
+                          <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                        <button onClick={() => handleDelete(loan.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }} title="Delete">
+                          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
                 {filteredLoans.length === 0 && (
                   <tr>
-                    <td colSpan={8} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
                       <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                       No loans found
                     </td>
@@ -333,8 +320,7 @@ export default function Loans() {
               <div>
                 <div style={{ display: 'flex', itemsStart: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{loan.loan_id}</p>
-                    <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{loan.employee_name}</p>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{loan.employee_name}</p>
                   </div>
                   <span style={{ 
                     padding: '2px 8px',
@@ -351,16 +337,16 @@ export default function Loans() {
                     <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{loan.loan_type}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Amount</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Full Amount</span>
                     <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>₹{loan.amount?.toLocaleString()}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>EMI</span>
-                    <span style={{ fontWeight: 600, color: 'var(--emerald)' }}>₹{loan.emi_amount?.toLocaleString()}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Paid Amount</span>
+                    <span style={{ fontWeight: 600, color: '#10b981' }}>₹{getLoanPaidAmount(loan).toLocaleString()}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Tenure</span>
-                    <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{loan.tenure_months} months</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Balance Amount</span>
+                    <span style={{ fontWeight: 700, color: '#b45309' }}>₹{Math.max(0, loan.amount - getLoanPaidAmount(loan)).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -368,16 +354,12 @@ export default function Loans() {
                 <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
                   <Eye className="w-3.5 h-3.5" /> View
                 </button>
-                {loan.status === 'Pending' && (
-                  <>
-                    <button onClick={() => handleEdit(loan)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <Edit2 className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <button onClick={() => handleDelete(loan.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </button>
-                  </>
-                )}
+                <button onClick={() => handleEdit(loan)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                </button>
+                <button onClick={() => handleDelete(loan.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
               </div>
             </div>
           ))}
@@ -406,7 +388,7 @@ export default function Loans() {
           </div>
           
           <div className="p-6 space-y-4">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>Employee *</label>
                 <select
@@ -431,48 +413,28 @@ export default function Loans() {
                   {loanTypes.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div className="form-group">
-                <label>Amount (₹) *</label>
+                <label>Date *</label>
                 <input
-                  type="number"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  type="date"
+                  value={form.applied_date}
+                  onChange={(e) => setForm({ ...form, applied_date: e.target.value })}
                   className="form-control"
-                  placeholder="50000"
-                />
-              </div>
-              <div className="form-group">
-                <label>Interest Rate (%)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  value={form.interest_rate}
-                  onChange={(e) => setForm({ ...form, interest_rate: e.target.value })}
-                  className="form-control"
-                  placeholder="0"
-                />
-              </div>
-              <div className="form-group">
-                <label>Tenure (months) *</label>
-                <input
-                  type="number"
-                  value={form.tenure_months}
-                  onChange={(e) => setForm({ ...form, tenure_months: e.target.value })}
-                  className="form-control"
-                  placeholder="12"
+                  required
                 />
               </div>
             </div>
             
-            {calculatedEMI > 0 && (
-              <div style={{ background: '#4f46e510', border: '1px solid #4f46e520', padding: 12, borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>Calculated EMI</p>
-                <p style={{ margin: 0, fontSize: 18, fontStyle: 'normal', fontWeight: 800, color: 'var(--primary)' }}>₹{calculatedEMI.toLocaleString()}/month</p>
-              </div>
-            )}
+            <div className="form-group">
+              <label>Amount (₹) *</label>
+              <input
+                type="number"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                className="form-control"
+                placeholder="50000"
+              />
+            </div>
             
             <div className="form-group">
               <label>Purpose</label>
@@ -521,8 +483,7 @@ export default function Loans() {
             </div>
             
             <div className="p-6 space-y-4">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)' }}>{viewingLoan.loan_id}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                 <span style={{ 
                   padding: '4px 12px',
                   borderRadius: 16,
@@ -544,29 +505,25 @@ export default function Loans() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Amount</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Full Amount</p>
                   <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>₹{viewingLoan.amount?.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Interest</p>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{viewingLoan.interest_rate}%</p>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>EMI</p>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: 'var(--emerald)' }}>₹{viewingLoan.emi_amount?.toLocaleString()}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Applied On</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{formatDate(viewingLoan.applied_date)}</p>
                 </div>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Tenure</p>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: 500, color: 'var(--text-primary)' }}>{viewingLoan.tenure_months} months</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Paid Amount</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: '#10b981' }}>₹{getLoanPaidAmount(viewingLoan).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Applied On</p>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: 500, color: 'var(--text-primary)' }}>{formatDate(viewingLoan.applied_date)}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Balance Amount</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: '#b45309' }}>₹{Math.max(0, viewingLoan.amount - getLoanPaidAmount(viewingLoan)).toLocaleString()}</p>
                 </div>
               </div>
               
@@ -614,68 +571,6 @@ export default function Loans() {
         </div>
       )}
 
-      {/* EMI Calculator Modal */}
-      {showCalculator && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 animate-fade">
-          <div className="card" style={{ width: '100%', maxWidth: 450, padding: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>EMI Calculator</h2>
-              <button onClick={() => setShowCalculator(false)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div className="form-group">
-                <label>Principal Amount (₹)</label>
-                <input
-                  type="number"
-                  id="calcAmount"
-                  className="form-control"
-                  placeholder="100000"
-                />
-              </div>
-              <div className="form-group">
-                <label>Interest Rate (% per annum)</label>
-                <input
-                  type="number"
-                  id="calcRate"
-                  step="0.5"
-                  className="form-control"
-                  placeholder="12"
-                />
-              </div>
-              <div className="form-group">
-                <label>Tenure (months)</label>
-                <input
-                  type="number"
-                  id="calcTenure"
-                  className="form-control"
-                  placeholder="12"
-                />
-              </div>
-              
-              <button
-                onClick={() => {
-                  const amt = parseFloat(document.getElementById('calcAmount').value);
-                  const rate = parseFloat(document.getElementById('calcRate').value);
-                  const months = parseInt(document.getElementById('calcTenure').value);
-                  if (amt && months) {
-                    const emi = calculateEMI(amt, rate || 0, months);
-                    const totalPayment = emi * months;
-                    const totalInterest = totalPayment - amt;
-                    alert(`EMI: ₹${emi.toLocaleString()}\nTotal Payment: ₹${totalPayment.toLocaleString()}\nTotal Interest: ₹${totalInterest.toLocaleString()}`);
-                  }
-                }}
-                className="btn btn-primary"
-                style={{ width: '100%', padding: 12 }}
-              >
-                Calculate EMI
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

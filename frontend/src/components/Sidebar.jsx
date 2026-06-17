@@ -19,7 +19,7 @@ const modules = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
 
-  
+
   { section: 'Masters' },
   { path: '/party-master', label: 'Party Master', icon: Users },
 
@@ -440,25 +440,25 @@ const modules = [
       { section: 'DASHBOARDS' },
       { path: '/hr', label: 'HR Dashboard', icon: LayoutDashboard },
 
-      { section: 'master'},
-        { path: '/hr/departments', label: 'Departments', icon: Building },
+      { section: 'master' },
+      { path: '/hr/departments', label: 'Departments', icon: Building },
       { path: '/hr/designations', label: 'Designations', icon: Award },
-      { path: '/hr/employees', label: 'Employee Master', icon: Shield },
       { path: '/hr/shifts', label: 'Shifts', icon: RefreshCw },
       { path: '/hr/holidays', label: 'Holidays', icon: Calendar },
+      { path: '/hr/employees', label: 'Employee Master', icon: Shield },
 
 
       { section: ' ATTENDANCE' },
       { path: '/hr/attendance', label: 'Attendance & Leave', icon: Calendar },
-     { path: '/hr/payroll', label: 'Payroll', icon: FileText },
+      { path: '/hr/payroll', label: 'Payroll', icon: FileText },
 
-   
+
 
       { section: 'COMPENSATION' },
       { path: '/hr/loans', label: 'Loans', icon: DollarSign },
       { path: '/hr/benefits', label: 'Benefits', icon: Award },
-     { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
       { path: '/hr/travel', label: 'Travel Requests', icon: Globe },
+      { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
 
 
     ]
@@ -637,7 +637,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         ) : (
           <button
             onClick={onToggleSidebar}
-            className="sidebar-toggle-btn"
+            className="sidebar-toggle-btn"                            
             style={{
               background: 'none',
               border: 'none',
