@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { Plus, Save, Trash2, X, FileText, CheckSquare, Layers, AlertCircle } from 'lucide-react';
-
+import { Plus, Save, Trash2, X, FileText, CheckSquare, Layers, AlertCircle, Search } from 'lucide-react';
 export default function FabricInspectionBook() {
   const [inwardId, setInwardId] = useState('');
   const [rolls, setRolls] = useState([]);
@@ -113,135 +112,149 @@ export default function FabricInspectionBook() {
   const avgPoints = rolls.length > 0 ? (rolls.reduce((acc, r) => acc + r.points, 0) / rolls.length).toFixed(1) : 0;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header section */}
-      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Piece-to-Piece Fabric Inspection</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: '4px 0 0 0' }}>Digitized Inspection Book: log individual rolls, yardage, and defect counts</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Layers style={{ color: '#6366f1' }} /> Piece-to-Piece Fabric Inspection
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Digitized Inspection Book: log individual rolls, yardage, and defect counts</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           <input 
             type="text" 
             placeholder="Enter Fabric Inward ID (e.g. INW-104)"
             value={inwardId}
             onChange={(e) => setInwardId(e.target.value)}
             className="form-control"
-            style={{ width: '250px', borderRadius: '8px', border: '1px solid var(--border)' }}
+            style={{ width: '280px' }}
           />
-          <button onClick={loadRolls} className="btn btn-primary" style={{ borderRadius: '8px', padding: '10px 18px', fontWeight: 600 }}>
-            Load Inspection
+          <button onClick={loadRolls} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Search size={16} /> Load Inspection
           </button>
         </div>
       </div>
 
       {inwardId && rolls.length > 0 && (
-        /* Metrics Display */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-          <div className="card" style={{ padding: '16px 20px', borderRadius: '10px', background: 'white', border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Rolls Inspected</span>
-            <h2 style={{ fontSize: 28, fontWeight: 800, margin: '4px 0 0 0' }}>{rolls.length}</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
+          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Rolls Inspected</span>
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{rolls.length}</h2>
           </div>
-          <div className="card" style={{ padding: '16px 20px', borderRadius: '10px', background: 'white', border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Declared Meters</span>
-            <h2 style={{ fontSize: 28, fontWeight: 800, margin: '4px 0 0 0', color: 'var(--text-primary)' }}>{totalMetersDeclared.toFixed(2)} m</h2>
+          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Declared (m)</span>
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{totalMetersDeclared.toFixed(2)}</h2>
           </div>
-          <div className="card" style={{ padding: '16px 20px', borderRadius: '10px', background: 'white', border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Actual Meters</span>
-            <h2 style={{ fontSize: 28, fontWeight: 800, margin: '4px 0 0 0', color: 'var(--primary)' }}>{totalMetersActual.toFixed(2)} m</h2>
+          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Actual (m)</span>
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: '#4f46e5' }}>{totalMetersActual.toFixed(2)}</h2>
           </div>
-          <div className="card" style={{ padding: '16px 20px', borderRadius: '10px', background: 'white', border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Difference / Shrinkage</span>
-            <h2 style={{ fontSize: 28, fontWeight: 800, margin: '4px 0 0 0', color: totalDifference >= 0 ? '#166534' : '#991b1b' }}>
-              {totalDifference >= 0 ? '+' : ''}{totalDifference.toFixed(2)} m
+          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Difference / Shrinkage</span>
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: totalDifference >= 0 ? '#10b981' : '#ef4444' }}>
+              {totalDifference >= 0 ? '+' : ''}{totalDifference.toFixed(2)}
             </h2>
           </div>
-          <div className="card" style={{ padding: '16px 20px', borderRadius: '10px', background: 'white', border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Avg Defect Points / Roll</span>
-            <h2 style={{ fontSize: 28, fontWeight: 800, margin: '4px 0 0 0', color: Number(avgPoints) > 10 ? '#b91c1c' : 'var(--text-primary)' }}>{avgPoints}</h2>
+          <div className="card" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Avg Defect Points</span>
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: Number(avgPoints) > 10 ? '#ef4444' : 'var(--text-primary)' }}>{avgPoints}</h2>
           </div>
         </div>
       )}
 
       {inwardId ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'flex-start' }}>
-          {/* List of Rolls */}
-          <div className="card" style={{ padding: 0, borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: '#f8fafc' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Inspected Pieces / Rolls</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 24, alignItems: 'flex-start' }}>
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Inspected Pieces / Rolls</h3>
             </div>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Roll No</th>
-                  <th>Declared (m)</th>
-                  <th>Actual (m)</th>
-                  <th>Diff (m)</th>
-                  <th>Defect Points</th>
-                  <th>Defects Breakdown</th>
-                  <th>Remarks</th>
-                  <th style={{ textAlign: 'center' }}>Delete</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rolls.map(roll => {
-                  const diff = roll.actual_meters - roll.declared_meters;
-                  const def = roll.defects || {};
-                  return (
-                    <tr key={roll.id}>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{roll.roll_no}</td>
-                      <td>{roll.declared_meters.toFixed(2)}</td>
-                      <td style={{ fontWeight: 600 }}>{roll.actual_meters.toFixed(2)}</td>
-                      <td style={{ color: diff >= 0 ? '#166534' : '#991b1b', fontWeight: 600 }}>
-                        {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
-                      </td>
-                      <td style={{ fontWeight: 700 }}>{roll.points}</td>
-                      <td>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                          {Object.entries(def).map(([k, v]) => v > 0 ? `${k.replace('_', ' ')}: ${v}` : null).filter(Boolean).join(', ') || 'None'}
-                        </div>
-                      </td>
-                      <td>{roll.remarks || '-'}</td>
-                      <td style={{ textAlign: 'center' }}>
-                        <button onClick={() => handleDeleteRoll(roll.id)} className="btn btn-outline" style={{ padding: '4px 8px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2' }}>
-                          <Trash2 size={14} />
-                        </button>
+            
+            <div className="table-responsive" style={{ flex: 1 }}>
+              <table className="table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th>Roll No</th>
+                    <th>Declared (m)</th>
+                    <th>Actual (m)</th>
+                    <th>Diff (m)</th>
+                    <th>Points</th>
+                    <th>Defects Breakdown</th>
+                    <th>Remarks</th>
+                    <th style={{ textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rolls.map(roll => {
+                    const diff = roll.actual_meters - roll.declared_meters;
+                    const def = roll.defects || {};
+                    return (
+                      <tr key={roll.id}>
+                        <td style={{ fontFamily: 'monospace', color: '#4f46e5', fontWeight: 600 }}>{roll.roll_no}</td>
+                        <td>{roll.declared_meters.toFixed(2)}</td>
+                        <td style={{ fontWeight: 600 }}>{roll.actual_meters.toFixed(2)}</td>
+                        <td style={{ fontWeight: 700, color: diff >= 0 ? '#10b981' : '#ef4444' }}>
+                          {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
+                        </td>
+                        <td style={{ fontWeight: 700 }}>
+                          <span style={{ background: roll.points > 10 ? '#fef2f2' : '#f8fafc', color: roll.points > 10 ? '#ef4444' : 'var(--text-primary)', padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>
+                            {roll.points}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                            {Object.entries(def).map(([k, v]) => v > 0 ? `${k.replace('_', ' ')}: ${v}` : null).filter(Boolean).join(', ') || '-'}
+                          </div>
+                        </td>
+                        <td style={{ color: '#64748b' }}>{roll.remarks || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button onClick={() => handleDeleteRoll(roll.id)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2', borderRadius: '8px' }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {rolls.length === 0 && (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+                        <CheckSquare size={48} style={{ margin: '0 auto 16px auto', opacity: 0.3 }} />
+                        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>No rolls inspected</h3>
+                        <p style={{ margin: 0 }}>Start entering roll inspection data on the right panel.</p>
                       </td>
                     </tr>
-                  );
-                })}
-
-                {rolls.length === 0 && (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                      <CheckSquare size={36} style={{ margin: '0 auto 8px auto', opacity: 0.5 }} />
-                      <div>No rolls inspected yet for this Inward ID.</div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Add Roll Form */}
-          <div className="card" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: 12, marginBottom: 16 }}>New Roll Entry</h3>
-            <form onSubmit={handleAddRoll} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
+                <Plus size={20} />
+              </div>
               <div>
-                <label>Roll Number *</label>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>New Roll Entry</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Add inspection findings</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddRoll} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div className="form-group">
+                <label>Roll Number <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="text" 
                   required 
                   value={newRoll.roll_no}
                   onChange={(e) => setNewRoll({ ...newRoll, roll_no: e.target.value })}
                   className="form-control"
-                  style={{ borderRadius: '6px' }}
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label>Declared (m) *</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group">
+                  <label>Declared (m) <span style={{ color: '#ef4444' }}>*</span></label>
                   <input 
                     type="number" 
                     required 
@@ -251,11 +264,10 @@ export default function FabricInspectionBook() {
                     value={newRoll.declared_meters}
                     onChange={(e) => setNewRoll({ ...newRoll, declared_meters: e.target.value })}
                     className="form-control"
-                    style={{ borderRadius: '6px' }}
                   />
                 </div>
-                <div>
-                  <label>Actual (m) *</label>
+                <div className="form-group">
+                  <label>Actual (m) <span style={{ color: '#ef4444' }}>*</span></label>
                   <input 
                     type="number" 
                     required 
@@ -265,74 +277,68 @@ export default function FabricInspectionBook() {
                     value={newRoll.actual_meters}
                     onChange={(e) => setNewRoll({ ...newRoll, actual_meters: e.target.value })}
                     className="form-control"
-                    style={{ borderRadius: '6px' }}
                   />
                 </div>
               </div>
 
-              {/* Defect Counters */}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 8, color: 'var(--text-secondary)' }}>Defect Counts (4-Point System)</span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Oil Spot</label>
+              <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 16, color: 'var(--text-primary)' }}>Defect Counts (4-Point System)</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: 13 }}>Oil Spot</label>
                     <input 
                       type="number" 
                       min="0"
                       value={newRoll.defects.oil_spot}
                       onChange={(e) => handleDefectChange('oil_spot', e.target.value)}
                       className="form-control"
-                      style={{ borderRadius: '6px', padding: '6px 10px' }}
                     />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Weft Bar</label>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: 13 }}>Weft Bar</label>
                     <input 
                       type="number" 
                       min="0"
                       value={newRoll.defects.weft_bar}
                       onChange={(e) => handleDefectChange('weft_bar', e.target.value)}
                       className="form-control"
-                      style={{ borderRadius: '6px', padding: '6px 10px' }}
                     />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Arrow Mark</label>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: 13 }}>Arrow Mark</label>
                     <input 
                       type="number" 
                       min="0"
                       value={newRoll.defects.arrow_mark}
                       onChange={(e) => handleDefectChange('arrow_mark', e.target.value)}
                       className="form-control"
-                      style={{ borderRadius: '6px', padding: '6px 10px' }}
                     />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Holes</label>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: 13 }}>Holes</label>
                     <input 
                       type="number" 
                       min="0"
                       value={newRoll.defects.hole}
                       onChange={(e) => handleDefectChange('hole', e.target.value)}
                       className="form-control"
-                      style={{ borderRadius: '6px', padding: '6px 10px' }}
                     />
                   </div>
                 </div>
               </div>
 
-              <div>
+              <div className="form-group">
                 <label>Defect Points (Estimated)</label>
                 <input 
                   type="number"
                   value={newRoll.points}
                   onChange={(e) => setNewRoll({ ...newRoll, points: Number(e.target.value) })}
                   className="form-control"
-                  style={{ borderRadius: '6px', fontWeight: 700 }}
+                  style={{ fontWeight: 700, color: '#4f46e5' }}
                 />
               </div>
 
-              <div>
+              <div className="form-group">
                 <label>Remarks</label>
                 <input 
                   type="text" 
@@ -340,21 +346,22 @@ export default function FabricInspectionBook() {
                   value={newRoll.remarks}
                   onChange={(e) => setNewRoll({ ...newRoll, remarks: e.target.value })}
                   className="form-control"
-                  style={{ borderRadius: '6px' }}
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', width: '100%', padding: '10px 0', borderRadius: '8px', fontWeight: 600, marginTop: 8 }}>
-                <Save size={16} /> Save Roll Record
-              </button>
+              <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)', marginTop: 4 }}>
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', width: '100%' }}>
+                  <Save size={16} /> Save Roll Record
+                </button>
+              </div>
             </form>
           </div>
         </div>
       ) : (
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <AlertCircle size={44} style={{ marginBottom: 12, color: 'var(--primary)', opacity: 0.8 }} />
-          <h3>No Fabric Inward Loaded</h3>
-          <p>Please enter a Fabric Inward ID above and click "Load Inspection" to view or enter inspection rolls.</p>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', textAlign: 'center', color: 'var(--text-muted)', flex: 1 }}>
+          <Search size={48} style={{ marginBottom: 16, color: '#cbd5e1' }} />
+          <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>No Fabric Inward Loaded</h3>
+          <p style={{ margin: 0 }}>Please enter a Fabric Inward ID above and click "Load Inspection" to view or enter inspection rolls.</p>
         </div>
       )}
     </div>

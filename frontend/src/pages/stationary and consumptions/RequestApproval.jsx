@@ -26,109 +26,168 @@ export default function RequestApproval() {
     alert('Request rejected.');
   };
 
+  const [view, setView] = useState('list');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredRequests = requests.filter(req => 
+    req.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    req.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    req.requestedBy?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card">
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Department Request Approval</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Review and authorize department material request slips</p>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Check style={{ color: '#6366f1' }} /> Department Request Approval
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Review and authorize department material request slips</p>
+        </div>
+        {view === 'form' && (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
       </div>
 
-      <div className="form-row">
-        <div className="lg:col-span-2 bg-white rounded-lg border shadow-sm overflow-hidden">
-          <table className="data-table">
+      {view === 'list' ? (
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Approval Queue ({filteredRequests.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search requests..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
+          </div>
+
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
               <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Request No</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Requested By</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Status</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500">Action</th>
-              </tr>
-            </thead>
-            <tbody >
-              {requests.map(req => (
-                <tr key={req.id} >
-                  <td style={{ fontFamily: "monospace" }}>{req.id}</td>
-                  <td >{req.date}</td>
-                  <td style={{ fontWeight: 600 }}>{req.department}</td>
-                  <td >{req.requestedBy}</td>
-                  <td >
-                    <span className={`badge ${(req.status === 'Approved' ? 'bg-green-100 text-green-800' : req.status === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800')}`}>
-                      {req.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: "center" }}>
-                    <button onClick={() => setSelectedReq(req)} className="text-indigo-600 hover:text-indigo-800 font-semibold text-xs flex items-center gap-1 mx-auto">
-                      <Eye size={14} /> Review
-                    </button>
-                  </td>
+                <tr>
+                  <th>Request No</th>
+                  <th>Date</th>
+                  <th>Department</th>
+                  <th>Requested By</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                  <th style={{ textAlign: 'center' }}>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredRequests.map(req => (
+                  <tr key={req.id}>
+                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{req.id}</td>
+                    <td>{req.date}</td>
+                    <td style={{ fontWeight: 600 }}>{req.department}</td>
+                    <td>{req.requestedBy}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span style={{ 
+                        background: req.status === 'Approved' ? '#dcfce7' : req.status === 'Pending' ? '#fef3c7' : '#fee2e2', 
+                        color: req.status === 'Approved' ? '#166534' : req.status === 'Pending' ? '#92400e' : '#991b1b', 
+                        padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 600 
+                      }}>
+                        {req.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <button onClick={() => { setSelectedReq(req); setView('form'); }} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <Eye size={14} /> Review
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredRequests.length === 0 && (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No requests found in the queue.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <div className="card">
-          {selectedReq ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              <div className="border-b pb-4">
-                <h3 className="card-title">Review Request</h3>
-                <span className="text-xs font-mono text-indigo-600 font-bold">{selectedReq.id}</span>
-              </div>
-              <div className="form-row">
+      ) : (
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
+          {selectedReq && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
                 <div>
-                  <span className="text-slate-500 block">Department</span>
-                  <span className="font-semibold">{selectedReq.department}</span>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Review Request: {selectedReq.id}</h3>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review requested quantities before authorizing.</p>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">Requested By</span>
-                  <span className="font-semibold">{selectedReq.requestedBy}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Priority</span>
-                  <span className="font-semibold">{selectedReq.priority}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Remarks</span>
-                  <span className="font-semibold">{selectedReq.remarks || '-'}</span>
-                </div>
+                <span style={{ 
+                  background: selectedReq.status === 'Approved' ? '#dcfce7' : selectedReq.status === 'Pending' ? '#fef3c7' : '#fee2e2', 
+                  color: selectedReq.status === 'Approved' ? '#166534' : selectedReq.status === 'Pending' ? '#92400e' : '#991b1b', 
+                  padding: '6px 14px', borderRadius: '12px', fontSize: 13, fontWeight: 600 
+                }}>
+                  {selectedReq.status}
+                </span>
               </div>
 
-              <div className="border-t pt-4 space-y-2">
-                <h4 className="text-xs font-bold text-slate-900">Items Requested</h4>
-                <div className="space-y-2">
-                  {selectedReq.items.map((i, k) => {
-                    const detail = itemsList.find(x => x.id === i.itemId);
-                    return (
-                      <div key={k} className="flex justify-between text-xs bg-slate-50 p-2 rounded border">
-                        <span>{detail?.name || 'Item'}</span>
-                        <span className="font-bold">Qty: {i.qty}</span>
-                      </div>
-                    );
-                  })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid var(--border)' }}>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Department</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{selectedReq.department}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Requested By</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{selectedReq.requestedBy}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Priority</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: selectedReq.priority === 'High' ? '#ef4444' : 'var(--text-primary)' }}>{selectedReq.priority}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Remarks</span>
+                  <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)' }}>{selectedReq.remarks || '-'}</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Items Requested</h4>
+                <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Code</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Name</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Quantity Requested</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedReq.items.map((i, k) => {
+                        const detail = itemsList.find(x => x.id === i.itemId);
+                        return (
+                          <tr key={k} style={{ borderBottom: k !== selectedReq.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                            <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b' }}>{i.itemId}</td>
+                            <td style={{ padding: '12px 16px', fontWeight: 600 }}>{detail?.name || 'Item'}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: '#6366f1', background: '#e0e7ff30' }}>{i.qty}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {selectedReq.status === 'Pending' && (
-                <div className="flex gap-3 pt-4 border-t">
-                  <button onClick={() => handleReject(selectedReq.id)} className="btn btn-danger">
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 'auto' }}>
+                  <button onClick={() => { handleReject(selectedReq.id); setView('list'); }} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#dc2626', borderColor: '#fee2e2' }}>
                     <X size={16} /> Reject
                   </button>
-                  <button onClick={() => handleApprove(selectedReq.id)} className="btn btn-primary">
-                    <Check size={16} /> Approve
+                  <button onClick={() => { handleApprove(selectedReq.id); setView('list'); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#10b981' }}>
+                    <Check size={16} /> Approve Request
                   </button>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12 text-center">
-              <Eye size={48} className="mb-2 stroke-1" />
-              <p className="text-sm">Select a request from the table to review and approve</p>
-            </div>
+            </>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
