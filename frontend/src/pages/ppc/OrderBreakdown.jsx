@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Factory, Search, Save, ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import { buyerOrderAPI, subMasterAPI } from '../../services/api';
+import { Factory, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
+import { ppcAPI, buyerOrderAPI, subMasterAPI } from '../../services/api';
 
 export default function OrderBreakdown() {
   const [records, setRecords] = useState([]);
@@ -139,6 +139,21 @@ export default function OrderBreakdown() {
     } catch (err) {
       console.error(err);
       alert('Error saving record.');
+    }
+  };
+  const handleEdit = (record) => {
+    setFormData(prev => ({ ...prev, order_id: record.name, total_meters: record.extra_field_1, split_logic: record.extra_field_2 }));
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await subMasterAPI.delete('ppc_order_breakdown', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete record');
     }
   };
 
@@ -324,13 +339,14 @@ export default function OrderBreakdown() {
                   <th>Total Meters</th>
                   <th>Split Logic</th>
                   <th>Allocated Looms</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
                     <td style={{ fontWeight: 600 }}>{record.name}</td>
@@ -345,6 +361,19 @@ export default function OrderBreakdown() {
                       </span>
                     </td>
                     <td>{record.description}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

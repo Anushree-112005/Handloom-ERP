@@ -33,18 +33,36 @@ const FleetDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [vehicles, setVehicles] = useState([]);
+  const [trips, setTrips] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const parseTripNotes = (trip) => {
+    if (!trip) return { material: '', customer: '', quantity: '', rate: '' };
+    const notes = trip.notes || '';
+    const parts = notes.split(' | ');
+    return {
+      material: parts[0] || 'General Cargo',
+      customer: parts[1] || 'Internal Transfer',
+      quantity: parts[2]?.replace('Qty: ', '') || '0 Tons',
+      rate: parts[3]?.replace('Rate: ', '') || '₹0'
+    };
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [statsRes, vehiclesRes] = await Promise.all([
+        const [statsRes, vehiclesRes, tripsRes, driversRes] = await Promise.all([
           api.get('/fleet/stats'),
-          api.get('/fleet/vehicles')
+          api.get('/fleet/vehicles'),
+          api.get('/fleet/trips').catch(() => ({ data: [] })),
+          api.get('/fleet/drivers').catch(() => ({ data: [] }))
         ]);
         setDashboardData(statsRes.data);
         const vList = vehiclesRes.data.items || vehiclesRes.data || [];
         setVehicles(vList);
+        setTrips(tripsRes.data || []);
+        setDrivers(driversRes.data || []);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -225,6 +243,7 @@ const FleetDashboard = () => {
               <tr>
                 <th style={{ padding: '12px 16px' }}>Vehicle Details</th>
                 <th style={{ padding: '12px 16px' }}>Current Status</th>
+                <th style={{ padding: '12px 16px' }}>Trip / Route (From &rarr; To)</th>
                 <th style={{ padding: '12px 16px' }}>Live Speed</th>
                 <th style={{ padding: '12px 16px' }}>Document Expiry</th>
                 <th style={{ padding: '12px 16px' }}>Driver</th>
@@ -234,19 +253,40 @@ const FleetDashboard = () => {
             <tbody>
               {filteredVehicles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
                     No vehicles found
                   </td>
                 </tr>
               ) : (
                 filteredVehicles.map((vehicle, idx) => {
-                  const statuses = [
-                    { label: 'IGNITION ON', color: '#10b981', speed: '7 km/h' },
-                    { label: 'IGNITION OFF', color: '#ef4444', speed: '0 km/h' },
-                    { label: 'IDLE', color: '#f97316', speed: '0 km/h' }
-                  ];
-                  const status = statuses[idx % 3];
-                  
+                  // Find active or planned trip for this vehicle
+                  const activeTrip = trips
+                    .filter(t => t.vehicle_id === vehicle.id && t.status !== 'Completed' && t.status !== 'Cancelled')
+                    .sort((a, b) => b.id - a.id)[0];
+
+                  let status = { label: 'IGNITION OFF', color: '#ef4444', speed: '0 km/h' };
+                  let tripInfo = null;
+
+                  if (activeTrip) {
+                    const parsedNotes = parseTripNotes(activeTrip);
+                    tripInfo = {
+                      from: activeTrip.start_location,
+                      to: activeTrip.end_location,
+                      customer: parsedNotes.customer,
+                      material: parsedNotes.material
+                    };
+
+                    if (activeTrip.status === 'In Progress' || activeTrip.status === 'In_Progress') {
+                      status = { label: 'IGNITION ON', color: '#10b981', speed: '45 km/h' };
+                    } else if (activeTrip.status === 'Planned') {
+                      status = { label: 'PLANNED', color: '#3b82f6', speed: '0 km/h' };
+                    }
+                  }
+
+                  // Find driver by trip driver_id or default vehicle assignment
+                  const tripDriver = activeTrip ? drivers.find(d => d.id === activeTrip.driver_id) : null;
+                  const assignedDriver = tripDriver || drivers.find(d => d.assigned_vehicle_id === vehicle.id);
+
                   return (
                     <tr key={vehicle.id}>
                       <td style={{ padding: '12px 16px' }}>
@@ -266,8 +306,25 @@ const FleetDashboard = () => {
                             <span style={{ width: 10, height: 10, borderRadius: '50%', background: status.color, boxShadow: `0 0 6px ${status.color}` }}></span>
                             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{status.label}</span>
                           </div>
-                          <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 16 }}>4:50:27 PM</span>
+                          <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 16 }}>
+                            {activeTrip ? new Date(activeTrip.created_at || new Date()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }) : '4:50:27 PM'}
+                          </span>
                         </div>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        {tripInfo ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <MapPin size={13} style={{ color: 'var(--primary)' }} />
+                              {tripInfo.from} &rarr; {tripInfo.to}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                              Order: {tripInfo.customer} ({tripInfo.material})
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>No active trip</span>
+                        )}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#4f46e5', fontWeight: 700 }}>
@@ -292,7 +349,16 @@ const FleetDashboard = () => {
                         </div>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Not Assigned</span>
+                        {assignedDriver ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{assignedDriver.driver_name}</div>
+                            {assignedDriver.phone_number && (
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{assignedDriver.phone_number}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Not Assigned</span>
+                        )}
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         <button 

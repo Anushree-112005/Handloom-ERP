@@ -45,7 +45,7 @@ export default function BreakdownEntry() {
     try {
       setLoading(true);
       const [entriesRes, vehiclesRes] = await Promise.all([
-        api.get('/fleet/vehicles'),
+        api.get('/fleet/breakdowns'),
         api.get('/fleet/vehicles')
       ]);
       setEntries(entriesRes.data || []);
@@ -80,6 +80,7 @@ export default function BreakdownEntry() {
     try {
       const payload = {
         ...formData,
+        vehicle_id: parseInt(formData.vehicle_id),
         resolution_time_hours: Number(formData.resolution_time_hours) || 0
       };
 

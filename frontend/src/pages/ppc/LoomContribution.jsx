@@ -1,15 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Search, FileText } from 'lucide-react';
+import { PieChart, Search, FileText, Factory, TrendingUp, CheckCircle2, RefreshCw } from 'lucide-react';
 import { buyerOrderAPI, subMasterAPI } from '../../services/api';
+
+const ContributionGauge = ({ percent, color }) => {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const clampedPercent = Math.min(100, Math.max(0, percent));
+  const strokeDashoffset = circumference - (clampedPercent / 100) * circumference;
+
+  return (
+    <div style={{ position: 'relative', width: 90, height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="90" height="90" style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.05))' }}>
+        <circle cx="45" cy="45" r={radius} stroke="var(--bg-secondary)" strokeWidth="8" fill="none" />
+        <circle 
+          cx="45" cy="45" r={radius} 
+          stroke={color} strokeWidth="8" fill="none" 
+          strokeDasharray={circumference} 
+          strokeDashoffset={Math.max(0, strokeDashoffset)} 
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease' }}
+        />
+      </svg>
+      <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>{Math.round(percent)}%</span>
+      </div>
+    </div>
+  );
+};
 
 export default function LoomContribution() {
   const [orders, setOrders] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState(() => sessionStorage.getItem('ppc_contrib_order') || '');
   const [allocations, setAllocations] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchOrders();
+    const savedOrder = sessionStorage.getItem('ppc_contrib_order');
+    if (savedOrder) {
+      handleOrderChange({ target: { value: savedOrder } });
+    }
   }, []);
 
   const fetchOrders = async () => {
@@ -27,6 +57,8 @@ export default function LoomContribution() {
   const handleOrderChange = async (e) => {
     const oId = e.target.value;
     setSelectedOrder(oId);
+    sessionStorage.setItem('ppc_contrib_order', oId);
+    
     if (!oId) {
       setAllocations([]);
       return;
@@ -34,17 +66,16 @@ export default function LoomContribution() {
 
     setLoading(true);
     try {
-      // Fetch allocations for this order. We would ideally fetch ppc_order_allocation
-      // Here we will mock the data realistically based on the schema requested.
+      // Mock Data Generation
       const totalOrder = 30000;
-      const numLooms = Math.floor(Math.random() * 3) + 2; // 2 to 4 looms
+      const numLooms = Math.floor(Math.random() * 3) + 2; 
       const allocMeters = Math.floor(totalOrder / numLooms);
       
       const mockAllocations = Array.from({ length: numLooms }).map((_, i) => {
         const allocated = i === numLooms - 1 ? totalOrder - (allocMeters * i) : allocMeters;
         const produced = Math.floor(allocated * (Math.random() * 0.8 + 0.1));
         const remaining = allocated - produced;
-        const contribution = (produced / (totalOrder * 0.6)) * 100; // Simulated % of total produced so far
+        const contribution = (produced / (totalOrder * 0.6)) * 100;
         
         return {
           loom_id: `LM-00${i + 1}`,
@@ -56,7 +87,6 @@ export default function LoomContribution() {
         };
       });
 
-      // Recalculate true contribution % based on total produced across all mock looms
       const totalProduced = mockAllocations.reduce((sum, a) => sum + a.produced, 0);
       mockAllocations.forEach(a => {
         a.contribution = totalProduced > 0 ? ((a.produced / totalProduced) * 100).toFixed(1) : 0;
@@ -70,8 +100,13 @@ export default function LoomContribution() {
     }
   };
 
+  const totalAllocated = allocations.reduce((s, a) => s + a.allocated, 0);
+  const totalProduced = allocations.reduce((s, a) => s + a.produced, 0);
+  const overallProgress = totalAllocated > 0 ? (totalProduced / totalAllocated) * 100 : 0;
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      {/* Header Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -79,97 +114,109 @@ export default function LoomContribution() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Analyze which machines are driving order completion</p>
         </div>
-      </div>
-
-      <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, maxWidth: 500 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: 14 }}>Select Order ID to Analyze</label>
-            <select className="form-control" value={selectedOrder} onChange={handleOrderChange}>
-              <option value="">-- Choose Order --</option>
-              {orders.map(o => (
-                <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id} - {o.party_name}</option>
-              ))}
-            </select>
-          </div>
-          <button className="btn btn-primary" style={{ marginTop: 28, background: '#f59e0b', borderColor: '#f59e0b' }} onClick={() => handleOrderChange({ target: { value: selectedOrder }})}>
-            <Search size={16} /> Load Data
-          </button>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: 300 }}>
+          <select className="form-control" style={{ flex: 1, padding: '10px 16px', background: 'var(--bg-primary)', borderColor: 'var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }} value={selectedOrder} onChange={handleOrderChange}>
+            <option value="">-- Choose Order to Analyze --</option>
+            {orders.map(o => (
+              <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id} - {o.party_name}</option>
+            ))}
+          </select>
         </div>
-
-        {selectedOrder ? (
-          <div>
-            <div style={{ padding: '16px 20px', background: '#f59e0b15', border: '1px solid #f59e0b30', borderRadius: 8, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h4 style={{ margin: 0, color: '#b45309', fontSize: 16, fontWeight: 700 }}>Order: {selectedOrder}</h4>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Showing individual machine contributions towards total completion</span>
-              </div>
-              <div style={{ display: 'flex', gap: 24 }}>
-                <div>
-                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)' }}>Total Allocated</span>
-                  <span style={{ fontWeight: 700, fontSize: 16 }}>{allocations.reduce((s, a) => s + a.allocated, 0).toLocaleString()} m</span>
-                </div>
-                <div>
-                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)' }}>Total Produced</span>
-                  <span style={{ fontWeight: 700, fontSize: 16, color: '#10b981' }}>{allocations.reduce((s, a) => s + a.produced, 0).toLocaleString()} m</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="table" style={{ width: '100%' }}>
-                <thead>
-                  <tr>
-                    <th>Loom ID</th>
-                    <th>Allocated Meters</th>
-                    <th>Produced Meters</th>
-                    <th>Remaining Meters</th>
-                    <th>Contribution %</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
-                  ) : allocations.length === 0 ? (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No looms allocated to this order.</td></tr>
-                  ) : allocations.map((row, idx) => (
-                    <tr key={idx}>
-                      <td style={{ fontWeight: 700 }}>{row.loom_id}</td>
-                      <td>{row.allocated.toLocaleString()} m</td>
-                      <td><span style={{ color: '#047857', fontWeight: 600 }}>{row.produced.toLocaleString()} m</span></td>
-                      <td>{row.remaining.toLocaleString()} m</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontWeight: 700, color: '#b45309', minWidth: '45px' }}>{row.contribution}%</span>
-                          <div style={{ width: 80, height: 6, background: 'var(--bg-secondary)', borderRadius: 3, overflow: 'hidden' }}>
-                            <div style={{ width: `${row.contribution}%`, height: '100%', background: '#f59e0b' }}></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span style={{ 
-                          color: row.status === 'Completed' ? '#047857' : '#1d4ed8', 
-                          fontWeight: 600, 
-                          backgroundColor: row.status === 'Completed' ? '#10b98120' : '#3b82f620', 
-                          padding: '4px 8px', borderRadius: 12, fontSize: 12 
-                        }}>
-                          {row.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', minHeight: 300 }}>
-            <FileText size={48} style={{ opacity: 0.2, marginBottom: 16 }} />
-            <p>Select an Order ID to view the loom contribution matrix</p>
-          </div>
-        )}
       </div>
+
+      {!selectedOrder ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', minHeight: 400, background: 'var(--bg-primary)', borderRadius: 16, border: '1px dashed var(--border)' }}>
+          <Factory size={64} style={{ opacity: 0.1, marginBottom: 16 }} />
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-secondary)' }}>No Order Selected</h3>
+          <p style={{ marginTop: 8 }}>Select an Order ID from the dropdown to view the loom contribution matrix.</p>
+        </div>
+      ) : loading ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, color: 'var(--text-muted)' }}>
+          <RefreshCw className="animate-spin" size={32} style={{ marginBottom: 16, opacity: 0.5 }} />
+          <p>Processing Contribution Analytics...</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Summary KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            <div className="card" style={{ padding: 24, borderLeft: '4px solid #3b82f6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ padding: 8, background: '#3b82f615', borderRadius: 8, color: '#3b82f6' }}><Factory size={20} /></div>
+                <h3 style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Total Allocated</h3>
+              </div>
+              <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800 }}>{totalAllocated.toLocaleString()} <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-muted)' }}>meters</span></h2>
+            </div>
+            
+            <div className="card" style={{ padding: 24, borderLeft: '4px solid #10b981' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ padding: 8, background: '#10b98115', borderRadius: 8, color: '#10b981' }}><TrendingUp size={20} /></div>
+                <h3 style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Total Produced</h3>
+              </div>
+              <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#10b981' }}>{totalProduced.toLocaleString()} <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-muted)' }}>meters</span></h2>
+            </div>
+            
+            <div className="card" style={{ padding: 24, borderLeft: '4px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Overall Progress</h3>
+                <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#f59e0b' }}>{overallProgress.toFixed(1)}%</h2>
+              </div>
+              <ContributionGauge percent={overallProgress} color="#f59e0b" />
+            </div>
+          </div>
+
+          {/* Grid of Looms */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24 }}>
+            {allocations.map((row, idx) => {
+              const isCompleted = row.status === 'Completed';
+              const cardColor = isCompleted ? '#10b981' : '#f59e0b';
+              const bgFade = isCompleted ? '#10b98110' : '#f59e0b10';
+
+              return (
+                <div key={idx} className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <div style={{ padding: '16px 24px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: cardColor, boxShadow: `0 0 10px ${cardColor}` }}></div>
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>{row.loom_id}</h3>
+                    </div>
+                    <div style={{ background: bgFade, color: cardColor, padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {isCompleted ? <CheckCircle2 size={14} /> : <RefreshCw size={14} className="animate-spin" />}
+                      {row.status}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                      <div>
+                        <p style={{ margin: '0 0 4px 0', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Contribution</p>
+                        <h4 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: cardColor }}>
+                          {row.contribution}<span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-muted)' }}>%</span>
+                        </h4>
+                      </div>
+                      <ContributionGauge percent={parseFloat(row.contribution)} color={cardColor} />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 16 }}>
+                      <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: 11, color: 'var(--text-secondary)' }}>Allocated</p>
+                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{row.allocated.toLocaleString()}m</h4>
+                      </div>
+                      <div style={{ flex: 1, padding: 12, background: bgFade, borderRadius: 8, border: `1px solid ${cardColor}30` }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: 11, color: 'var(--text-secondary)' }}>Produced</p>
+                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: cardColor }}>{row.produced.toLocaleString()}m</h4>
+                      </div>
+                      <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: 11, color: 'var(--text-secondary)' }}>Remaining</p>
+                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{row.remaining.toLocaleString()}m</h4>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

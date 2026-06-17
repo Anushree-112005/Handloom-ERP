@@ -27,7 +27,7 @@ export default function VehicleList() {
   // Form state
   const initialForm = {
     vehicle_number: '',
-    vehicle_type: 'TIPPER',
+    vehicle_type: 'YARN_CARRIER',
     make: '',
     model: '',
     year_of_manufacture: '',
@@ -47,9 +47,12 @@ export default function VehicleList() {
   const [formData, setFormData] = useState(initialForm);
 
   const vehicleTypes = [
-    { value: 'TIPPER', label: 'Tipper' },
-    { value: 'CONTAINER', label: 'Container' },
-    { value: 'FLATBED', label: 'Flatbed' }
+    { value: 'YARN_CARRIER', label: 'Yarn Carrier' },
+    { value: 'FABRIC_TRUCK', label: 'Fabric Roll Truck' },
+    { value: 'GARMENT_CONTAINER', label: 'Garment Container' },
+    { value: 'GENERAL_CARGO', label: 'General Cargo' },
+    { value: 'SUBCONTRACT_VAN', label: 'Subcontracting Van' },
+    { value: 'DELIVERY_VAN', label: 'Local Delivery Van' }
   ];
 
   const statusOptions = [
@@ -166,7 +169,7 @@ export default function VehicleList() {
       'Make': v.make,
       'Model': v.model,
       'Year': v.year_of_manufacture,
-      'Capacity (Tons)': v.capacity_tons,
+      'Capacity': v.capacity_tons,
       'Chassis No': v.chassis_number,
       'Engine No': v.engine_number,
       'RC No': v.rc_number,
@@ -263,7 +266,7 @@ export default function VehicleList() {
                   <input className="form-control" name="engine_number" value={formData.engine_number} onChange={handleInputChange} />
                 </div>
                 <div className="form-group">
-                  <label>Capacity (Tons)</label>
+                  <label>Capacity</label>
                   <input type="number" className="form-control" name="capacity_tons" value={formData.capacity_tons} onChange={handleInputChange} step="0.1" />
                 </div>
 
@@ -424,7 +427,7 @@ export default function VehicleList() {
                       <td style={{ fontWeight: 600 }}>{v.vehicle_number}</td>
                       <td>{v.make} {v.model}</td>
                       <td>{v.vehicle_type}</td>
-                      <td>{v.capacity_tons ? `${v.capacity_tons} Tons` : '-'}</td>
+                      <td>{v.capacity_tons ? v.capacity_tons : '-'}</td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: v.status === 'ACTIVE' ? '#d1fae5' : v.status === 'INACTIVE' ? '#f3f4f6' : '#fef3c7', color: v.status === 'ACTIVE' ? '#065f46' : v.status === 'INACTIVE' ? '#374151' : '#92400e' }}>
                           {v.status.replace('_', ' ')}
@@ -468,7 +471,7 @@ export default function VehicleList() {
                 <DetailRow label="Make" value={selectedViewVehicle.make} />
                 <DetailRow label="Model" value={selectedViewVehicle.model} />
                 <DetailRow label="Year" value={selectedViewVehicle.year_of_manufacture} />
-                <DetailRow label="Capacity" value={selectedViewVehicle.capacity_tons ? `${selectedViewVehicle.capacity_tons} Tons` : '-'} />
+                <DetailRow label="Capacity" value={selectedViewVehicle.capacity_tons ? selectedViewVehicle.capacity_tons : '-'} />
                 <DetailRow label="Chassis No" value={selectedViewVehicle.chassis_number} />
                 <DetailRow label="Engine No" value={selectedViewVehicle.engine_number} />
                 <DetailRow label="RC No" value={selectedViewVehicle.rc_number} />

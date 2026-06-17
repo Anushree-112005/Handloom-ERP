@@ -24,9 +24,9 @@ export default function ServiceSchedule() {
   const initialForm = {
     vehicle_id: '',
     service_type: 'General Service',
-    schedule_date: new Date().toISOString().split('T')[0],
-    next_service_due_date: '',
-    service_center_name: '',
+    scheduled_date: new Date().toISOString().split('T')[0],
+    notes: '',
+    service_provider: '',
     estimated_cost: '',
     status: 'Scheduled'
   };
@@ -44,7 +44,7 @@ export default function ServiceSchedule() {
     try {
       setLoading(true);
       const [schedulesRes, vehiclesRes] = await Promise.all([
-        api.get('/fleet/vehicles'),
+        api.get('/fleet/service-schedules'),
         api.get('/fleet/vehicles')
       ]);
       setSchedules(schedulesRes.data || []);
@@ -79,6 +79,7 @@ export default function ServiceSchedule() {
     try {
       const payload = {
         ...formData,
+        vehicle_id: parseInt(formData.vehicle_id),
         estimated_cost: formData.estimated_cost ? Number(formData.estimated_cost) : 0
       };
 
@@ -121,7 +122,7 @@ export default function ServiceSchedule() {
   const filteredSchedules = schedules.filter(s => {
     const matchesSearch = searchTerm === '' ||
       s.service_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.service_center_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      s.service_provider?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All Status' || s.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -169,11 +170,11 @@ export default function ServiceSchedule() {
 
                 <div className="form-group">
                   <label>Schedule Date *</label>
-                  <input type="date" className="form-control" name="schedule_date" value={formData.schedule_date} onChange={handleInputChange} required />
+                  <input type="date" className="form-control" name="scheduled_date" value={formData.scheduled_date} onChange={handleInputChange} required />
                 </div>
                 <div className="form-group">
-                  <label>Next Service Due Date</label>
-                  <input type="date" className="form-control" name="next_service_due_date" value={formData.next_service_due_date} onChange={handleInputChange} />
+                  <label>Notes</label>
+                  <input type="text" className="form-control" name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Additional notes..." />
                 </div>
                 <div className="form-group">
                   <label>Estimated Cost (₹)</label>
@@ -182,7 +183,7 @@ export default function ServiceSchedule() {
 
                 <div className="form-group" style={{ gridColumn: 'span 3' }}>
                   <label>Service Center Name</label>
-                  <input className="form-control" name="service_center_name" value={formData.service_center_name} onChange={handleInputChange} />
+                  <input className="form-control" name="service_provider" value={formData.service_provider} onChange={handleInputChange} />
                 </div>
               </div>
             </form>
@@ -293,8 +294,8 @@ export default function ServiceSchedule() {
                   filteredSchedules.map(s => (
                     <tr key={s.id} onClick={() => setSelectedViewSchedule(s)} style={{ cursor: 'pointer', background: selectedViewSchedule?.id === s.id ? 'var(--bg-secondary)' : 'transparent' }}>
                       <td style={{ fontWeight: 600 }}>{s.service_type}</td>
-                      <td>{s.service_center_name || '-'}</td>
-                      <td>{s.schedule_date}</td>
+                      <td>{s.service_provider || '-'}</td>
+                      <td>{s.scheduled_date}</td>
                       <td>₹{Number(s.estimated_cost || 0).toFixed(2)}</td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: s.status === 'Completed' ? '#d1fae5' : s.status === 'In Progress' ? '#fef3c7' : s.status === 'Scheduled' ? '#dbeafe' : '#f3f4f6', color: s.status === 'Completed' ? '#065f46' : s.status === 'In Progress' ? '#92400e' : s.status === 'Scheduled' ? '#1e40af' : '#374151' }}>
@@ -335,9 +336,9 @@ export default function ServiceSchedule() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto' }}>
                 <DetailRow label="Service Type" value={selectedViewSchedule.service_type} />
-                <DetailRow label="Center Name" value={selectedViewSchedule.service_center_name} />
-                <DetailRow label="Schedule Date" value={selectedViewSchedule.schedule_date} />
-                <DetailRow label="Next Service Due" value={selectedViewSchedule.next_service_due_date} />
+                <DetailRow label="Center Name" value={selectedViewSchedule.service_provider} />
+                <DetailRow label="Schedule Date" value={selectedViewSchedule.scheduled_date} />
+                <DetailRow label="Notes" value={selectedViewSchedule.notes} />
                 <DetailRow label="Estimated Cost" value={`₹${Number(selectedViewSchedule.estimated_cost || 0).toFixed(2)}`} />
                 <DetailRow label="Status" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>{selectedViewSchedule.status}</span>} />
               </div>

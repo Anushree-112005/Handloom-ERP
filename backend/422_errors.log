@@ -100,3 +100,18 @@ Body: b''
 Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
 Body: b''
 
+Validation Error: [{'type': 'missing', 'loc': ('body', 'scheduled_date'), 'msg': 'Field required', 'input': {'vehicle_id': '1', 'service_type': 'Oil Change', 'schedule_date': '2026-06-17', 'next_service_due_date': '2026-11-27', 'service_center_name': 'svm motors', 'estimated_cost': 30000, 'status': 'In Progress'}}]
+Body: b'{"vehicle_id":"1","service_type":"Oil Change","schedule_date":"2026-06-17","next_service_due_date":"2026-11-27","service_center_name":"svm motors","estimated_cost":30000,"status":"In Progress"}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'scheduled_date'), 'msg': 'Field required', 'input': {'vehicle_id': '1', 'service_type': 'Oil Change', 'schedule_date': '2026-06-17', 'next_service_due_date': '2026-11-27', 'service_center_name': 'svm motors', 'estimated_cost': 30000, 'status': 'In Progress'}}]
+Body: b'{"vehicle_id":"1","service_type":"Oil Change","schedule_date":"2026-06-17","next_service_due_date":"2026-11-27","service_center_name":"svm motors","estimated_cost":30000,"status":"In Progress"}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'scheduled_date'), 'msg': 'Field required', 'input': {'vehicle_id': '1', 'service_type': 'Oil Change', 'schedule_date': '2026-06-17', 'next_service_due_date': '2026-11-27', 'service_center_name': 'svm motors', 'estimated_cost': 30000, 'status': 'In Progress'}}]
+Body: b'{"vehicle_id":"1","service_type":"Oil Change","schedule_date":"2026-06-17","next_service_due_date":"2026-11-27","service_center_name":"svm motors","estimated_cost":30000,"status":"In Progress"}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'scheduled_date'), 'msg': 'Field required', 'input': {'vehicle_id': 1, 'service_type': 'Oil Change', 'schedule_date': '2026-06-17', 'next_service_due_date': '2026-11-27', 'service_center_name': 'svm motors', 'estimated_cost': 30000, 'status': 'In Progress'}}]
+Body: b'{"vehicle_id":1,"service_type":"Oil Change","schedule_date":"2026-06-17","next_service_due_date":"2026-11-27","service_center_name":"svm motors","estimated_cost":30000,"status":"In Progress"}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'scheduled_date'), 'msg': 'Field required', 'input': {'vehicle_id': 1, 'service_type': 'Oil Change', 'schedule_date': '2026-06-17', 'next_service_due_date': '2026-11-27', 'service_center_name': 'svm motors', 'estimated_cost': 30000, 'status': 'In Progress'}}]
+Body: b'{"vehicle_id":1,"service_type":"Oil Change","schedule_date":"2026-06-17","next_service_due_date":"2026-11-27","service_center_name":"svm motors","estimated_cost":30000,"status":"In Progress"}'
+

@@ -18,5 +18,6 @@ class Driver(Base):
     qualification = Column(String(100), default="HMV")  # LMV, HMV, Multi-Axle, Hazmat
     aadhar_number = Column(String(50))
     emergency_contact = Column(String(20))
+    assigned_vehicle_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

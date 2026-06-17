@@ -76,6 +76,11 @@ export default function BreakdownEntry() {
         description: `Action: ${formData.action_taken} | Attended: ${formData.attended_by}`,
         is_active: true
       });
+
+      // Update actual Loom status
+      const newStatus = formData.status === 'Open' ? 'Breakdown' : 'Running';
+      await ppcAPI.updateLoomStatus(formData.loom_id, newStatus);
+
       setIsFormOpen(false);
       fetchData();
     } catch (err) {

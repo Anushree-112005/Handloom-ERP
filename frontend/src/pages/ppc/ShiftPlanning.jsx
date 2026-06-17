@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { UserCheck, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function ShiftPlanning() {
@@ -13,6 +13,7 @@ export default function ShiftPlanning() {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
+    id: null,
     schedule_id: '',
     shift: '',
     shift_start: '',
@@ -34,7 +35,7 @@ export default function ShiftPlanning() {
         subMasterAPI.list('ppc_shift_planning_v2').catch(() => ({ data: [] })),
         subMasterAPI.list('ppc_start_end_plan').catch(() => ({ data: [] })),
         subMasterAPI.list('ppc_shift_master').catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_operator_master').catch(() => ({ data: [] })),
+        ppcAPI.getOperators().catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
@@ -47,7 +48,17 @@ export default function ShiftPlanning() {
         setShifts(fetchedShifts);
       }
 
-      setOperators(opRes?.data || []);
+      const fetchedOperators = opRes?.data || [];
+      if (fetchedOperators.length === 0) {
+        setOperators([
+          { id: 1, name: 'Siva Kumar' },
+          { id: 2, name: 'Ramesh' },
+          { id: 3, name: 'Karthik' }
+        ]);
+      } else {
+        setOperators(fetchedOperators);
+      }
+      
       setLooms(loomRes?.data || []);
     } catch (err) {
       console.error(err);
@@ -116,19 +127,56 @@ export default function ShiftPlanning() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await subMasterAPI.create('ppc_shift_planning_v2', {
+      const payload = {
         name: formData.schedule_id,
         code: formData.shift,
         extra_field_1: formData.operator_name,
         extra_field_2: `${formData.target_meters} m`,
         description: `Loom: ${formData.loom_id} | ${formData.working_hours} hrs`,
         is_active: true
-      });
+      };
+      
+      if (formData.id) {
+        await subMasterAPI.update('ppc_shift_planning_v2', formData.id, payload);
+      } else {
+        await subMasterAPI.create('ppc_shift_planning_v2', payload);
+      }
       setIsFormOpen(false);
       fetchData();
     } catch (err) {
       console.error(err);
       alert('Error creating shift plan.');
+    }
+  };
+
+  const handleEdit = (record) => {
+    // Basic extraction
+    const loomMatch = record.description?.match(/Loom: (.*?) \|/);
+    const hrsMatch = record.description?.match(/\| (.*?) hrs/);
+    const targetMatch = record.extra_field_2?.match(/(\d+)/);
+    
+    setFormData({
+      id: record.id,
+      schedule_id: record.name,
+      shift: record.code,
+      operator_name: record.extra_field_1,
+      target_meters: targetMatch ? targetMatch[1] : '',
+      working_hours: hrsMatch ? hrsMatch[1] : '',
+      loom_id: loomMatch ? loomMatch[1] : '',
+      shift_start: '',
+      shift_end: ''
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this shift plan?')) return;
+    try {
+      await subMasterAPI.delete('ppc_shift_planning_v2', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete plan');
     }
   };
 
@@ -152,6 +200,7 @@ export default function ShiftPlanning() {
             className="btn btn-primary" 
             onClick={() => {
               setFormData({
+                id: null,
                 schedule_id: '', shift: '', shift_start: '', shift_end: '',
                 working_hours: '', target_meters: '', operator_name: '', loom_id: ''
               });
@@ -229,7 +278,7 @@ export default function ShiftPlanning() {
                 <select className="form-control" value={formData.operator_name} onChange={e => setFormData({...formData, operator_name: e.target.value})} required>
                   <option value="">-- Select Operator --</option>
                   {operators.map(o => (
-                    <option key={o.id} value={o.name}>{o.name}</option>
+                    <option key={o.id} value={o.operator_name || o.name}>{o.operator_name || o.name}</option>
                   ))}
                 </select>
               </div>
@@ -278,19 +327,33 @@ export default function ShiftPlanning() {
                   <th>Shift</th>
                   <th>Operator</th>
                   <th>Target / Details</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
                     <td style={{ fontWeight: 600 }}>{record.name}</td>
                     <td>{record.code}</td>
                     <td>{record.extra_field_1}</td>
                     <td><span style={{ color: '#be123c', fontWeight: 600 }}>{record.extra_field_2}</span> <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>({record.description})</span></td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
