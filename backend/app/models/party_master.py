@@ -1,5 +1,6 @@
 """Party Master model — customers, vendors, agents, processors."""
-from sqlalchemy import Column, Integer, String, DateTime, Text, Float, func
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKey, func
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 class PartyMaster(Base):
     __tablename__ = "party_master"
@@ -12,6 +13,7 @@ class PartyMaster(Base):
     customer_grade = Column(String(10))
     status = Column(String(20), default="Active")
     
+    address_type = Column(String(50), default="Bill")
     address = Column(Text)
     city = Column(String(100))
     district = Column(String(100))
@@ -59,3 +61,24 @@ class PartyMaster(Base):
     delivery_address = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    addresses = relationship("PartyAddress", back_populates="party", cascade="all, delete-orphan")
+
+
+class PartyAddress(Base):
+    __tablename__ = "party_addresses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    party_id = Column(Integer, ForeignKey("party_master.id", ondelete="CASCADE"), nullable=False)
+    
+    address = Column(Text)
+    city = Column(String(100))
+    district = Column(String(100))
+    state = Column(String(100))
+    state_code = Column(String(10))
+    pin_code = Column(String(20))
+    country = Column(String(100), default="India")
+    sales_region = Column(String(100))
+    address_type = Column(String(50), default="Bill")  # Bill, Ship, Branch, Head Office
+
+    party = relationship("PartyMaster", back_populates="addresses")

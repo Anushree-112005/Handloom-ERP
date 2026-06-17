@@ -22,7 +22,6 @@ export default function Shifts() {
     break_duration: 60,
     shift_type: 'Day',
     color: '#10B981',
-    grace_period: 15,
     half_day_hours: 4
   };
   const [form, setForm] = useState(initialForm);
@@ -54,7 +53,7 @@ export default function Shifts() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.code) {
+    if (!form.name) {
       alert('Please fill required fields');
       return;
     }
@@ -87,7 +86,6 @@ export default function Shifts() {
       break_duration: shift.break_duration || 60,
       shift_type: shift.shift_type || 'Day',
       color: shift.color || '#10B981',
-      grace_period: shift.grace_period || 15,
       half_day_hours: shift.half_day_hours || 4
     });
     setEditingId(shift.id);
@@ -157,46 +155,8 @@ export default function Shifts() {
               <p style={{ color: 'var(--text-muted)' }}>Manage working hours, break durations, and shift types.</p>
             </div>
 
-            {/* RIGHT: Filter dropdown + view toggle + Add button */}
+            {/* RIGHT: Add button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className="relative">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                >
-                  <Filter size={16} /> Filter
-                  {filterShiftType && <span className="badge badge-active" style={{ padding: '2px 6px', fontSize: 10 }}>1</span>}
-                </button>
-                {showFilters && (
-                  <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                      <button onClick={() => setFilterShiftType('')} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                    </div>
-                    <div className="form-group">
-                      <label>Shift Type</label>
-                      <select value={filterShiftType} onChange={(e) => setFilterShiftType(e.target.value)} className="form-control">
-                        <option value="">All Types</option>
-                        <option value="Day">Day</option>
-                        <option value="Night">Night</option>
-                        <option value="Flexible">Flexible</option>
-                        <option value="Rotational">Rotational</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-                <button onClick={() => setViewMode('list')} style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                  <LayoutList size={16} />
-                </button>
-                <button onClick={() => setViewMode('grid')} style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-
               <button
                 onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
                 className="btn btn-primary"
@@ -256,7 +216,6 @@ export default function Shifts() {
                   <tr>
                     <th>Shift Type</th>
                     <th>Name</th>
-                    <th>Code</th>
                     <th>Start Time</th>
                     <th>End Time</th>
                     <th>Working Hours</th>
@@ -267,7 +226,7 @@ export default function Shifts() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredShifts.length === 0 ? (
-                    <tr><td colSpan={9} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No shifts found</td></tr>
+                    <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No shifts found</td></tr>
                   ) : filteredShifts.map(shift => (
                     <tr key={shift.id}>
                       <td>
@@ -281,7 +240,6 @@ export default function Shifts() {
                         </div>
                       </td>
                       <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{shift.name}</td>
-                      <td><span className="badge badge-inactive">{shift.code}</span></td>
                       <td style={{ fontWeight: 600 }}>{formatTime(shift.start_time)}</td>
                       <td style={{ fontWeight: 600 }}>{formatTime(shift.end_time)}</td>
                       <td>{shift.working_hours} hrs</td>
@@ -319,7 +277,6 @@ export default function Shifts() {
                         </div>
                         <div>
                           <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{shift.name}</h3>
-                          <span className="badge badge-inactive">{shift.code}</span>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 4 }}>
@@ -383,7 +340,7 @@ export default function Shifts() {
             </div>
             <div style={{ padding: 24, background: '#fff' }}>
               <div className="form-row">
-                <div className="col-span-2">
+                <div className="col-span-3" style={{ gridColumn: 'span 3' }}>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Shift Name *</label>
                   <input
                     type="text"
@@ -391,16 +348,6 @@ export default function Shifts() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="form-control"
                     placeholder="Morning Shift"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Code *</label>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                    className="form-control"
-                    placeholder="MS"
                   />
                 </div>
                 <div>
@@ -443,15 +390,6 @@ export default function Shifts() {
                     type="number"
                     value={form.break_duration}
                     onChange={(e) => setForm({ ...form, break_duration: parseInt(e.target.value) || 0 })}
-                    className="form-control"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Grace Period (mins)</label>
-                  <input
-                    type="number"
-                    value={form.grace_period}
-                    onChange={(e) => setForm({ ...form, grace_period: parseInt(e.target.value) || 0 })}
                     className="form-control"
                   />
                 </div>

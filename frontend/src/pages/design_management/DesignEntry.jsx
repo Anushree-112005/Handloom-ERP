@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown } from 'lucide-react';
-import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI } from '../../services/api';
+import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -26,6 +26,78 @@ export default function DesignEntry() {
   const [activeTab, setActiveTab] = useState('basic');
   const [searchTerm, setSearchTerm] = useState('');
   
+  const [colorMasters, setColorMasters] = useState([]);
+  const [yarnCountMasters, setYarnCountMasters] = useState([]);
+  const [yarnRows, setYarnRows] = useState([]);
+  const [fabricDesignRows, setFabricDesignRows] = useState([]);
+  const [newYarnRow, setNewYarnRow] = useState({
+    type: 'Warp',
+    yarn_count: '',
+    act_count: '',
+    ends: '',
+    crimp_pct: ''
+  });
+  const [newFabricDesignRow, setNewFabricDesignRow] = useState({
+    type: 'Warp',
+    yarn_count: '',
+    color: '',
+    threads: '',
+    times: '1',
+    line: '',
+    pick: '',
+    drawing_order: '',
+    dents: '',
+    line_val: '',
+    ends_for_dents: ''
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+  const [showPatternModal, setShowPatternModal] = useState(false);
+
+  const addYarnRow = () => {
+    if (!newYarnRow.yarn_count) {
+      alert("Please select a yarn count.");
+      return;
+    }
+    setYarnRows([...yarnRows, { ...newYarnRow, id: Date.now() }]);
+    setNewYarnRow({
+      type: 'Warp',
+      yarn_count: '',
+      act_count: '',
+      ends: '',
+      crimp_pct: ''
+    });
+  };
+
+  const deleteYarnRow = (idx) => {
+    setYarnRows(yarnRows.filter((_, i) => i !== idx));
+  };
+
+  const addFabricDesignRow = () => {
+    if (!newFabricDesignRow.yarn_count) {
+      alert("Please select a yarn count.");
+      return;
+    }
+    setFabricDesignRows([...fabricDesignRows, { ...newFabricDesignRow, id: Date.now() }]);
+    setNewFabricDesignRow({
+      type: 'Warp',
+      yarn_count: '',
+      color: '',
+      threads: '',
+      times: '1',
+      line: '',
+      pick: '',
+      drawing_order: '',
+      dents: '',
+      line_val: '',
+      ends_for_dents: ''
+    });
+  };
+
+  const deleteFabricDesignRow = (idx) => {
+    setFabricDesignRows(fabricDesignRows.filter((_, i) => i !== idx));
+  };
+  
   // Filters
   const [fabricFilter, setFabricFilter] = useState('All Fabrics');
   const [weavingFilter, setWeavingFilter] = useState('All Weaves');
@@ -47,13 +119,20 @@ export default function DesignEntry() {
 
   const loadData = async () => {
     try {
-      const [entriesRes, partiesRes, empRes, ordRes] = await Promise.all([
-        designEntryAPI.list(), partyAPI.list(), employeeAPI.list(), buyerOrderAPI.list()
+      const [entriesRes, partiesRes, empRes, ordRes, colorRes, countRes] = await Promise.all([
+        designEntryAPI.list(),
+        partyAPI.list(),
+        employeeAPI.list(),
+        buyerOrderAPI.list(),
+        subMasterAPI.list('color_master').catch(() => ({ data: [] })),
+        subMasterAPI.list('yarn_count_master').catch(() => ({ data: [] }))
       ]);
       setEntries(entriesRes.data);
       setBuyers(partiesRes.data.filter(p => p.party_type === 'Sales Party'));
       setEmployees(empRes.data);
       setOrders(ordRes.data);
+      setColorMasters(colorRes.data || []);
+      setYarnCountMasters(countRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,13 +142,55 @@ export default function DesignEntry() {
 
   useEffect(() => { loadData(); }, []);
 
+  const handleUploadImageOnly = async () => {
+    if (!selectedFile) {
+      alert("Please choose a file first");
+      return;
+    }
+    if (!editingId) {
+      alert("Please save the design entry first before uploading an image directly, or the image will be uploaded automatically when you click Save Design.");
+      return;
+    }
+    try {
+      const res = await designEntryAPI.uploadImage(editingId, selectedFile);
+      alert("Image uploaded successfully!");
+      setImagePreviewUrl(res.data.image_path);
+      loadData();
+    } catch (err) {
+      alert("Failed to upload image.");
+      console.error(err);
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      if (editingId) await designEntryAPI.update(editingId, form);
-      else await designEntryAPI.create(form);
+      const payload = {
+        ...form,
+        yarn_details: JSON.stringify(yarnRows),
+        fabric_design_details: JSON.stringify(fabricDesignRows)
+      };
+      let savedEntry = null;
+      if (editingId) {
+        const res = await designEntryAPI.update(editingId, payload);
+        savedEntry = res.data;
+      } else {
+        const res = await designEntryAPI.create(payload);
+        savedEntry = res.data;
+      }
+
+      if (selectedFile && savedEntry && savedEntry.id) {
+        await designEntryAPI.uploadImage(savedEntry.id, selectedFile);
+      }
       
-      setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
+      setShowForm(false);
+      setEditingId(null);
+      setForm(initialForm);
+      setSelectedFile(null);
+      setImagePreviewUrl(null);
+      setYarnRows([]);
+      setFabricDesignRows([]);
+      loadData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving design entry');
       console.error(err);
@@ -80,6 +201,21 @@ export default function DesignEntry() {
     try {
       const { data } = await designEntryAPI.get(entry.id);
       if (data.ds_date) data.ds_date = data.ds_date.substring(0, 10);
+      
+      let yDetails = [];
+      let fdDetails = [];
+      try {
+        if (data.yarn_details) yDetails = JSON.parse(data.yarn_details);
+      } catch (e) {}
+      try {
+        if (data.fabric_design_details) fdDetails = JSON.parse(data.fabric_design_details);
+      } catch (e) {}
+      
+      setYarnRows(yDetails);
+      setFabricDesignRows(fdDetails);
+      setImagePreviewUrl(data.image_path || null);
+      setSelectedFile(null);
+
       setForm({ ...initialForm, ...data });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
@@ -116,6 +252,69 @@ export default function DesignEntry() {
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+
+    if (name === 'ibpo_no') {
+      if (!value) {
+        setForm(prev => ({
+          ...prev,
+          ibpo_no: '',
+          buyer_name: '',
+          design_no: '',
+          color: '',
+          gry_const: '',
+          fabric: 'Cotton',
+          weaving: 'Plain',
+          pick_ot: 0,
+          finish_width: 0,
+          order_mtr: 0,
+          ex_mtr: 0,
+          total_mtr: 0,
+          reed: 0
+        }));
+        return;
+      }
+      const selectedOrder = orders.find(o => o.ibpo_number === value);
+      if (selectedOrder) {
+        const firstItem = selectedOrder.items?.[0] || {};
+        const ordMtr = firstItem.order_mtrs || 0;
+        const exMtr = 0;
+        setForm(prev => ({
+          ...prev,
+          ibpo_no: value,
+          buyer_name: selectedOrder.party_name || selectedOrder.buyer_name || prev.buyer_name,
+          design_no: firstItem.design_no || prev.design_no,
+          color: firstItem.color || prev.color,
+          gry_const: firstItem.gry_construction || prev.gry_const,
+          fabric: firstItem.fabric_type || prev.fabric,
+          weaving: firstItem.weaving_type || prev.weaving,
+          pick_ot: firstItem.pick_on_table || prev.pick_ot,
+          finish_width: firstItem.finish_width || prev.finish_width,
+          order_mtr: ordMtr,
+          ex_mtr: exMtr,
+          total_mtr: ordMtr + exMtr,
+          reed: firstItem.finish_reed || prev.reed,
+        }));
+        return;
+      }
+    }
+
+    if (name === 'order_mtr') {
+      setForm(prev => ({
+        ...prev,
+        order_mtr: value,
+        total_mtr: value + prev.ex_mtr
+      }));
+      return;
+    }
+    if (name === 'ex_mtr') {
+      setForm(prev => ({
+        ...prev,
+        ex_mtr: value,
+        total_mtr: prev.order_mtr + value
+      }));
+      return;
+    }
+
     setForm({ ...form, [name]: value });
   };
 
@@ -243,7 +442,7 @@ export default function DesignEntry() {
                   </div>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); setYarnRows([]); setFabricDesignRows([]); setSelectedFile(null); setImagePreviewUrl(null); }}>
                 <Plus size={16} /> New Design
               </button>
             </div>
@@ -356,6 +555,17 @@ export default function DesignEntry() {
                     <DetailRow label="Total Mtr" value={selectedViewEntry.total_mtr} />
                     <DetailRow label="Finish Width" value={selectedViewEntry.finish_width} />
                     <DetailRow label="Weight (g)" value={selectedViewEntry.weight_grm} />
+                    {selectedViewEntry.image_path && (
+                      <div style={{ marginTop: 12 }}>
+                        <h4 style={{ margin: '8px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Design Image</h4>
+                        <img 
+                          src={`http://localhost:8000${selectedViewEntry.image_path}`} 
+                          alt="Design Preview" 
+                          style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)', marginTop: 4, cursor: 'pointer' }}
+                          onClick={() => window.open(`http://localhost:8000${selectedViewEntry.image_path}`, '_blank')}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -398,145 +608,631 @@ export default function DesignEntry() {
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               <form id="designForm" onSubmit={handleCreate}>
-                {activeTab === 'basic' && (
-                  <div className="animate-fade">
-                    {/* Section 1: Basic & Buyer Info */}
-                    <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic & Buyer Info</h4>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                      <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
-                      <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
-                      <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Created By</label>
-                        <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
-                          <option value="">Select Employee...</option>
-                          {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                        </select>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24, alignItems: 'start' }}>
+                  {/* Left Column: Form Fields per active tab */}
+                  <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
+                    {activeTab === 'basic' && (
+                      <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                        {/* Section 1: Basic & Buyer Info */}
+                        <div>
+                          <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic & Buyer Info</h4>
+                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                            <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
+                            <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
+                            <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Created By</label>
+                              <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
+                                <option value="">Select Employee...</option>
+                                {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                              </select>
+                            </div>
+                            <div className="form-group"><label>Buyer Name</label>
+                              <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
+                                <option value="">Select Buyer...</option>
+                                {buyers.map(b => <option key={b.id} value={b.company_name}>{b.company_name}</option>)}
+                                {form.buyer_name && !buyers.some(b => b.company_name === form.buyer_name) && (
+                                  <option value={form.buyer_name}>{form.buyer_name}</option>
+                                )}
+                              </select>
+                            </div>
+                            <div className="form-group"><label>IBPO No</label>
+                              <select className="form-control" name="ibpo_no" value={form.ibpo_no} onChange={handleChange}>
+                                <option value="">Select Order...</option>
+                                {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
+                              </select>
+                            </div>
+                            <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'fabric', 'fabric')} /></div>
+                          </div>
+                        </div>
+
+                        {/* Section 2: Fabric & Weaving */}
+                        <div>
+                          <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric & Weaving</h4>
+                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                            <div className="form-group"><label>Fabric</label>
+                              <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
+                                <option>Cotton</option><option>Polyester</option><option>Blended</option><option>Silk</option>
+                              </select>
+                            </div>
+                            <div className="form-group"><label>Weaving</label>
+                              <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
+                                <option>Plain</option><option>Twill</option><option>Satin</option><option>Jacquard</option>
+                              </select>
+                            </div>
+                            <div className="form-group"><label>Design Type</label>
+                              <select className="form-control" name="design_type" value={form.design_type} onChange={handleChange}>
+                                <option>Normal</option><option>Special</option><option>Sample</option>
+                              </select>
+                            </div>
+                            <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'metrics', 'order_mtr')} /></div>
+                          </div>
+                        </div>
+
+                        {/* Section 3: Metrics & Lengths */}
+                        <div>
+                          <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics & Lengths</h4>
+                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                            <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
+                            <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'allowances', 'crimp_pct')} /></div>
+                          </div>
+                        </div>
+
+                        {/* Section 4: Allowances & Percentages */}
+                        <div>
+                          <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Allowances & Percentages</h4>
+                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                            <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="form-group"><label>Buyer Name</label>
-                        <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
-                          <option value="">Select Buyer...</option>
-                          {buyers.map(b => <option key={b.id} value={b.company_name}>{b.company_name}</option>)}
-                        </select>
+                    )}
+
+                    {activeTab === 'fabric' && (
+                      <div className="animate-fade">
+                        <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric & Weaving</h4>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                          <div className="form-group"><label>Fabric</label>
+                            <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
+                              <option>Cotton</option><option>Polyester</option><option>Blended</option><option>Silk</option>
+                            </select>
+                          </div>
+                          <div className="form-group"><label>Weaving</label>
+                            <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
+                              <option>Plain</option><option>Twill</option><option>Satin</option><option>Jacquard</option>
+                            </select>
+                          </div>
+                          <div className="form-group"><label>Design Type</label>
+                            <select className="form-control" name="design_type" value={form.design_type} onChange={handleChange}>
+                              <option>Normal</option><option>Special</option><option>Sample</option>
+                            </select>
+                          </div>
+                          <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'metrics', 'order_mtr')} /></div>
+                        </div>
                       </div>
-                      <div className="form-group"><label>IBPO No</label>
-                        <select className="form-control" name="ibpo_no" value={form.ibpo_no} onChange={handleChange}>
-                          <option value="">Select Order...</option>
-                          {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
-                        </select>
+                    )}
+
+                    {activeTab === 'metrics' && (
+                      <div className="animate-fade">
+                        <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics & Lengths</h4>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                          <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
+                          <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'allowances', 'crimp_pct')} /></div>
+                        </div>
                       </div>
-                      <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'fabric', 'fabric')} /></div>
+                    )}
+
+                    {activeTab === 'allowances' && (
+                      <div className="animate-fade">
+                        <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Allowances & Percentages</h4>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                          <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Yarn Count Specifications Table */}
+                    <div style={{ marginTop: 32, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                      <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Yarn Count Specifications</h4>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table" style={{ fontSize: 12, width: '100%' }}>
+                          <thead>
+                            <tr>
+                              <th>Type</th>
+                              <th>Yarn Count</th>
+                              <th>Act Count</th>
+                              <th>End's</th>
+                              <th>Crimp %</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {yarnRows.map((row, idx) => (
+                              <tr key={row.id || idx}>
+                                <td style={{ fontWeight: 600 }}>{row.type}</td>
+                                <td>{row.yarn_count}</td>
+                                <td>{row.act_count}</td>
+                                <td>{row.ends}</td>
+                                <td>{row.crimp_pct}%</td>
+                                <td>
+                                  {!isReadOnly && (
+                                    <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => deleteYarnRow(idx)}>
+                                      <Trash2 size={14} color="#ef4444" />
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                            {!isReadOnly && (
+                              <tr>
+                                <td>
+                                  <select 
+                                    className="form-control" 
+                                    style={{ padding: '4px 6px', margin: 0, minWidth: 70 }}
+                                    value={newYarnRow.type}
+                                    onChange={e => setNewYarnRow({ ...newYarnRow, type: e.target.value })}
+                                  >
+                                    <option>Warp</option>
+                                    <option>Weft</option>
+                                  </select>
+                                </td>
+                                <td>
+                                  <select 
+                                    className="form-control" 
+                                    style={{ padding: '4px 6px', margin: 0, minWidth: 100 }}
+                                    value={newYarnRow.yarn_count}
+                                    onChange={e => setNewYarnRow({ ...newYarnRow, yarn_count: e.target.value })}
+                                  >
+                                    <option value="">Select...</option>
+                                    {yarnCountMasters.map(y => <option key={y.id} value={y.name}>{y.name}</option>)}
+                                  </select>
+                                </td>
+                                <td>
+                                  <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ padding: '4px 6px', margin: 0 }}
+                                    placeholder="Act"
+                                    value={newYarnRow.act_count}
+                                    onChange={e => setNewYarnRow({ ...newYarnRow, act_count: e.target.value })}
+                                  />
+                                </td>
+                                <td>
+                                  <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ padding: '4px 6px', margin: 0 }}
+                                    placeholder="Ends"
+                                    value={newYarnRow.ends}
+                                    onChange={e => setNewYarnRow({ ...newYarnRow, ends: e.target.value })}
+                                  />
+                                </td>
+                                <td>
+                                  <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ padding: '4px 6px', margin: 0 }}
+                                    placeholder="Crimp"
+                                    value={newYarnRow.crimp_pct}
+                                    onChange={e => setNewYarnRow({ ...newYarnRow, crimp_pct: e.target.value })}
+                                  />
+                                </td>
+                                <td>
+                                  <button 
+                                    type="button" 
+                                    className="btn btn-primary" 
+                                    style={{ padding: '6px 10px', background: '#10b981', borderColor: '#10b981' }}
+                                    onClick={addYarnRow}
+                                  >
+                                    Add
+                                  </button>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
+                  </div>
+                </div>
 
-                    {/* Section 2: Fabric & Weaving */}
-                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric & Weaving</h4>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                      <div className="form-group"><label>Fabric</label>
-                        <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
-                          <option>Cotton</option><option>Polyester</option><option>Blended</option><option>Silk</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Weaving</label>
-                        <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
-                          <option>Plain</option><option>Twill</option><option>Satin</option><option>Jacquard</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Design Type</label>
-                        <select className="form-control" name="design_type" value={form.design_type} onChange={handleChange}>
-                          <option>Normal</option><option>Special</option><option>Sample</option>
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'metrics', 'order_mtr')} /></div>
-                    </div>
+                {/* Fabric Design Blue Header bar */}
+                <div style={{ 
+                  background: '#1e3a8a', 
+                  color: '#fff', 
+                  padding: '12px 20px', 
+                  borderRadius: '6px 6px 0 0', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  marginTop: 32 
+                }}>
+                  <span style={{ fontWeight: 700, fontSize: 16 }}>Fabric Design</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      id="fabric-design-file" 
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setSelectedFile(file);
+                          setImagePreviewUrl(URL.createObjectURL(file));
+                        }
+                      }}
+                      disabled={isReadOnly}
+                    />
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      style={{ padding: '4px 12px', background: '#fff', color: '#1e3a8a', fontWeight: 600 }}
+                      onClick={() => document.getElementById('fabric-design-file').click()}
+                      disabled={isReadOnly}
+                    >
+                      Choose File
+                    </button>
+                    {!isReadOnly && (
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ padding: '4px 12px', background: '#10b981', color: '#fff', fontWeight: 600 }}
+                        onClick={handleUploadImageOnly}
+                      >
+                        Upload
+                      </button>
+                    )}
+                    <span style={{ fontSize: 13, color: '#e5e7eb', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {selectedFile ? selectedFile.name : (imagePreviewUrl ? "Design image loaded" : "No file chosen")}
+                    </span>
+                    {imagePreviewUrl && (
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ padding: '4px 12px', background: '#f59e0b', color: '#fff', fontWeight: 600 }}
+                        onClick={() => {
+                          window.open(imagePreviewUrl.startsWith('blob:') ? imagePreviewUrl : `http://localhost:8000${imagePreviewUrl}`, '_blank');
+                        }}
+                      >
+                        View Image
+                      </button>
+                    )}
+                    <button 
+                      type="button" 
+                      className="btn" 
+                      style={{ padding: '4px 12px', background: '#f59e0b', color: '#fff', fontWeight: 600 }}
+                      onClick={() => setShowPatternModal(true)}
+                    >
+                      View Design
+                    </button>
+                  </div>
+                </div>
 
-                    {/* Section 3: Metrics & Lengths */}
-                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics & Lengths</h4>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                      <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
-                      
-                      <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
-                      <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'allowances', 'crimp_pct')} /></div>
-                    </div>
-
-                    {/* Section 4: Allowances & Percentages */}
-                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Allowances & Percentages</h4>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                      <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
-                      <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Group 2: Fabric & Weaving */}
-                {activeTab === 'fabric' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Fabric</label>
-                    <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
-                      <option>Cotton</option><option>Polyester</option><option>Blended</option><option>Silk</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Weaving</label>
-                    <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
-                      <option>Plain</option><option>Twill</option><option>Satin</option><option>Jacquard</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Design Type</label>
-                    <select className="form-control" name="design_type" value={form.design_type} onChange={handleChange}>
-                      <option>Normal</option><option>Special</option><option>Sample</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'metrics', 'order_mtr')} /></div>
-                  </div>
-                )}
-
-                {/* Group 3: Metrics & Lengths */}
-                {activeTab === 'metrics' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                  <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
-                  <div className="form-group"><label>QLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'allowances', 'crimp_pct')} /></div>
-                  </div>
-                )}
-
-                {/* Group 4: Allowances & Percentages */}
-                {activeTab === 'allowances' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                  <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
-                  </div>
-                )}
+                {/* Fabric Design Specifications Table */}
+                <div className="card" style={{ padding: 0, borderRadius: '0 0 6px 6px', borderTop: 'none', overflowX: 'auto', marginBottom: 24 }}>
+                  <table className="data-table" style={{ fontSize: 12, width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>S. No</th>
+                        <th>Type</th>
+                        <th>Yarn Count</th>
+                        <th>Color</th>
+                        <th>Threads</th>
+                        <th>Times</th>
+                        <th>Line</th>
+                        <th>Pick</th>
+                        <th>Drawing Order</th>
+                        <th>DENTS</th>
+                        <th>Line</th>
+                        <th>ENDS FOR DENTS</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fabricDesignRows.map((row, idx) => (
+                        <tr key={row.id || idx}>
+                          <td>{idx + 1}</td>
+                          <td style={{ fontWeight: 600 }}>{row.type}</td>
+                          <td>{row.yarn_count}</td>
+                          <td>
+                            <span style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: 6 
+                            }}>
+                              <span style={{ 
+                                width: 12, 
+                                height: 12, 
+                                borderRadius: '50%', 
+                                background: colorMasters.find(c => c.name === row.color)?.code || '#ccc',
+                                border: '1px solid #999'
+                              }} />
+                              {row.color}
+                            </span>
+                          </td>
+                          <td>{row.threads}</td>
+                          <td>{row.times}</td>
+                          <td>{row.line || '-'}</td>
+                          <td>{row.pick || '-'}</td>
+                          <td>{row.drawing_order || '-'}</td>
+                          <td>{row.dents || '-'}</td>
+                          <td>{row.line_val || '-'}</td>
+                          <td>{row.ends_for_dents || '-'}</td>
+                          <td>
+                            {!isReadOnly && (
+                              <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => deleteFabricDesignRow(idx)}>
+                                <Trash2 size={14} color="#ef4444" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {!isReadOnly && (
+                        <tr>
+                          <td>New</td>
+                          <td>
+                            <select 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0, minWidth: 70 }}
+                              value={newFabricDesignRow.type}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, type: e.target.value })}
+                            >
+                              <option>Warp</option>
+                              <option>Weft</option>
+                            </select>
+                          </td>
+                          <td>
+                            <select 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0, minWidth: 100 }}
+                              value={newFabricDesignRow.yarn_count}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, yarn_count: e.target.value })}
+                            >
+                              <option value="">Select...</option>
+                              {yarnCountMasters.map(y => <option key={y.id} value={y.name}>{y.name}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <select 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0, minWidth: 100 }}
+                              value={newFabricDesignRow.color}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, color: e.target.value })}
+                            >
+                              <option value="">Select...</option>
+                              {colorMasters.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <input 
+                              type="number" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Threads"
+                              value={newFabricDesignRow.threads}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, threads: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="number" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Times"
+                              value={newFabricDesignRow.times}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, times: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Line"
+                              value={newFabricDesignRow.line}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, line: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Pick"
+                              value={newFabricDesignRow.pick}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, pick: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Drawing"
+                              value={newFabricDesignRow.drawing_order}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, drawing_order: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Dents"
+                              value={newFabricDesignRow.dents}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, dents: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Line"
+                              value={newFabricDesignRow.line_val}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, line_val: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ padding: '4px 6px', margin: 0 }}
+                              placeholder="Ends/Dent"
+                              value={newFabricDesignRow.ends_for_dents}
+                              onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, ends_for_dents: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <button 
+                              type="button" 
+                              className="btn btn-primary" 
+                              style={{ padding: '6px 10px', background: '#10b981', borderColor: '#10b981' }}
+                              onClick={addFabricDesignRow}
+                            >
+                              Add
+                            </button>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </form>
             </fieldset>
+          </div>
+        </div>
+      )}
+
+      {showPatternModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="card" style={{ width: 600, padding: 24, background: '#fff', position: 'relative' }}>
+            <h3 style={{ margin: '0 0 16px 0', color: 'var(--primary)', fontWeight: 700 }}>Fabric Design Preview</h3>
+            <button 
+              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
+              onClick={() => setShowPatternModal(false)}
+            >
+              <X size={20} />
+            </button>
+            <div style={{ display: 'flex', gap: 20, flexDirection: 'column' }}>
+              <div>
+                <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Warp Stripes Repeat Layout</h5>
+                <div style={{ display: 'flex', height: 40, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden' }}>
+                  {fabricDesignRows.filter(r => r.type === 'Warp').map((row, idx) => {
+                    const colorCode = colorMasters.find(c => c.name === row.color)?.code || '#ccc';
+                    const weight = parseFloat(row.threads) || 1;
+                    return (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          background: colorCode, 
+                          flexGrow: weight,
+                          height: '100%',
+                          borderRight: '1px solid rgba(0,0,0,0.1)'
+                        }} 
+                        title={`Warp: ${row.threads} thds of ${row.color}`}
+                      />
+                    );
+                  })}
+                  {fabricDesignRows.filter(r => r.type === 'Warp').length === 0 && (
+                    <div style={{ padding: 8, color: '#999', fontSize: 13 }}>No Warp stripes configured.</div>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Weft Stripes Repeat Layout</h5>
+                <div style={{ display: 'flex', flexDirection: 'column', width: 40, height: 150, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden' }}>
+                  {fabricDesignRows.filter(r => r.type === 'Weft').map((row, idx) => {
+                    const colorCode = colorMasters.find(c => c.name === row.color)?.code || '#ccc';
+                    const weight = parseFloat(row.threads) || 1;
+                    return (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          background: colorCode, 
+                          flexGrow: weight,
+                          width: '100%',
+                          borderBottom: '1px solid rgba(0,0,0,0.1)'
+                        }} 
+                        title={`Weft: ${row.threads} thds of ${row.color}`}
+                      />
+                    );
+                  })}
+                  {fabricDesignRows.filter(r => r.type === 'Weft').length === 0 && (
+                    <div style={{ padding: 8, color: '#999', fontSize: 13 }}>No Weft stripes configured.</div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Grid Fabric Intersect (Simulated Weave)</h5>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: `repeat(${Math.max(1, fabricDesignRows.filter(r => r.type === 'Warp').length)}, 1fr)`,
+                  gridTemplateRows: `repeat(${Math.max(1, fabricDesignRows.filter(r => r.type === 'Weft').length)}, 1fr)`,
+                  height: 150, 
+                  border: '1px solid #ccc',
+                  borderRadius: 4,
+                  overflow: 'hidden'
+                }}>
+                  {fabricDesignRows.filter(r => r.type === 'Weft').map((weftRow) => {
+                    const weftColor = colorMasters.find(c => c.name === weftRow.color)?.code || '#ccc';
+                    return fabricDesignRows.filter(r => r.type === 'Warp').map((warpRow, wIdx) => {
+                      const warpColor = colorMasters.find(c => c.name === warpRow.color)?.code || '#ccc';
+                      const isWarpFacing = (wIdx % 2 === 0);
+                      return (
+                        <div 
+                          key={wIdx} 
+                          style={{ 
+                            background: isWarpFacing ? warpColor : weftColor,
+                            width: '100%',
+                            height: '100%',
+                            border: '0.5px solid rgba(0,0,0,0.05)'
+                          }} 
+                        />
+                      );
+                    });
+                  })}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 24, textAlign: 'right' }}>
+              <button className="btn btn-secondary" onClick={() => setShowPatternModal(false)}>Close Preview</button>
+            </div>
           </div>
         </div>
       )}

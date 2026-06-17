@@ -53,3 +53,12 @@ api_router.include_router(chat.router)
 
 from app.api.v1.endpoints import reports
 api_router.include_router(reports.router)
+
+from app.modules.hr.router import router as hr_router
+from app.modules.vehicle_management.router import router as fleet_router
+from app.modules.stationary.router import router as stationary_router
+api_router.include_router(hr_router)
+api_router.include_router(fleet_router)
+api_router.include_router(stationary_router)
+
+

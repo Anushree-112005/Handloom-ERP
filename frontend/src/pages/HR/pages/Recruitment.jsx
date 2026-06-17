@@ -227,27 +227,6 @@ Missing Skills:
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Filter Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setActiveFilter(activeFilter === 'All' ? '' : 'All')}
-                className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${activeFilter !== 'All' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50 text-slate-700'}`}
-              >
-                <Filter size={14} /> Filter
-                {activeFilter !== 'All' && <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />}
-              </button>
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex bg-slate-100 border border-slate-200 rounded-md p-0.5">
-              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-                <LayoutList size={16} />
-              </button>
-              <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-                <LayoutGrid size={16} />
-              </button>
-            </div>
-
             <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Plus size={16} /> Add Candidate
             </button>

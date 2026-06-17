@@ -21,7 +21,6 @@ export default function HRSettings() {
     leaveTypes: ['Casual', 'Sick', 'Earned', 'Maternity', 'Paternity'],
     
     // Attendance
-    gracePeriod: 15,
     halfDayHours: 4,
     fullDayHours: 8,
     allowRemote: true,
@@ -241,15 +240,6 @@ export default function HRSettings() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800 mb-4">Timing Configuration</h3>
         <div className="form-row">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Grace Period (mins)</label>
-            <input
-              type="number"
-              value={settings.gracePeriod}
-              onChange={(e) => updateSetting('gracePeriod', parseInt(e.target.value))}
-              className="form-control"
-            />
-          </div>
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-1">Half Day Hours</label>
             <input

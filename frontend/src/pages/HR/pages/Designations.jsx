@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, Search, X, Save, Edit2, Trash2, Users, TrendingUp, ChevronUp, ChevronDown, Eye, Building2, Award, DollarSign, FileText, Filter, LayoutList, LayoutGrid } from 'lucide-react';
-import { fetchDesignations, createDesignation, updateDesignation, deleteDesignation } from '../../../services/hrService';
+import { fetchDesignations, createDesignation, updateDesignation, deleteDesignation, fetchDepartments } from '../../../services/hrService';
 
 export default function Designations() {
   const [designations, setDesignations] = useState([]);
+  const [deptList, setDeptList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -19,18 +20,29 @@ export default function Designations() {
     code: '',
     level: '',
     department: '',
-    grade: '',
     min_salary: '',
     max_salary: '',
     description: ''
   };
   const [form, setForm] = useState(initialForm);
 
-  const grades = ['E1', 'E2', 'M1', 'M2', 'L4', 'L3', 'L2', 'L1'];
-
   useEffect(() => {
     loadDesignations();
+    loadDepartments();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('add') === 'true') {
+      setShowForm(true);
+    }
   }, []);
+
+  const loadDepartments = async () => {
+    try {
+      const data = await fetchDepartments();
+      setDeptList(data || []);
+    } catch (e) {
+      console.error('Failed to load departments:', e);
+    }
+  };
 
   const loadDesignations = async () => {
     setLoading(true);
@@ -44,7 +56,7 @@ export default function Designations() {
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.code || !form.level) {
+    if (!form.title) {
       alert('Please fill required fields');
       return;
     }
@@ -55,7 +67,6 @@ export default function Designations() {
     if (payload.min_salary === '') payload.min_salary = null;
     if (payload.max_salary === '') payload.max_salary = null;
     if (payload.department === '') payload.department = null;
-    if (payload.grade === '') payload.grade = null;
     if (payload.description === '') payload.description = null;
 
     try {
@@ -80,7 +91,6 @@ export default function Designations() {
       code: des.code,
       level: des.level,
       department: des.department || '',
-      grade: des.grade || '',
       min_salary: des.min_salary || '',
       max_salary: des.max_salary || '',
       description: des.description || ''
@@ -110,10 +120,10 @@ export default function Designations() {
   const filteredDesignations = designations.filter(des => {
     const matchesSearch = !searchTerm || 
       des.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      des.code?.toLowerCase().includes(searchTerm.toLowerCase());
+      des.department?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDept = !filterDepartment || des.department === filterDepartment;
     return matchesSearch && matchesDept;
-  }).sort((a, b) => a.level - b.level);
+  }).sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 
   const stats = {
     total: designations.length,
@@ -153,69 +163,20 @@ export default function Designations() {
               <p style={{ color: 'var(--text-muted)' }}>Manage job titles, grades, and salary bands.</p>
             </div>
 
-            {/* RIGHT: Filter dropdown + view toggle + Add button */}
+            {/* RIGHT: Search + Add button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className="relative">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                >
-                  <Filter size={16} /> Filter
-                  {(searchTerm || filterDepartment) && <span className="badge badge-active" style={{ padding: '2px 6px', fontSize: 10 }}>1</span>}
-                </button>
-                {showFilters && (
-                  <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                      <button onClick={() => { setSearchTerm(''); setFilterDepartment(''); }} style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}>Reset</button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div className="form-group">
-                        <label>Search</label>
-                        <input
-                          type="text"
-                          placeholder="Search designations..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="form-control"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Department</label>
-                        <select
-                          value={filterDepartment}
-                          onChange={(e) => setFilterDepartment(e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">All Departments</option>
-                          {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label>Grade</label>
-                        <select className="form-control">
-                          <option value="">All Grades</option>
-                          {grades.map(g => <option key={g} value={g}>{g}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-                <button onClick={() => setViewMode('list')} style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                  <LayoutList size={16} />
-                </button>
-                <button onClick={() => setViewMode('grid')} style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
-
+              <input
+                type="text"
+                placeholder="Search designations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ width: 200, margin: 0 }}
+              />
               <button
                 onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
                 className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
               >
                 <Plus size={16} /> Add Designation
               </button>
@@ -223,7 +184,7 @@ export default function Designations() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, marginBottom: 24 }}>
             <div className="card stat-card" style={{ padding: 20 }}>
               <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
                 <Briefcase size={24} />
@@ -231,15 +192,6 @@ export default function Designations() {
               <div className="stat-details">
                 <h3>Designations</h3>
                 <div className="value">{stats.total}</div>
-              </div>
-            </div>
-            <div className="card stat-card" style={{ padding: 20 }}>
-              <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
-                <Users size={24} />
-              </div>
-              <div className="stat-details">
-                <h3>Total Employees</h3>
-                <div className="value">{stats.totalEmployees}</div>
               </div>
             </div>
             <div className="card stat-card" style={{ padding: 20 }}>
@@ -259,34 +211,20 @@ export default function Designations() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Level</th>
                     <th>Designation</th>
-                    <th>Code</th>
                     <th>Department</th>
-                    <th>Grade</th>
                     <th>Salary Range</th>
-                    <th>Employees</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredDesignations.length === 0 ? (
-                    <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No designations found</td></tr>
+                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No designations found</td></tr>
                   ) : filteredDesignations.map((des, idx) => (
                     <tr key={des.id}>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span className="badge badge-active">{des.level}</span>
-                          {idx > 0 && filteredDesignations[idx - 1].level < des.level && <ChevronDown size={12} color="var(--text-muted)" />}
-                          {idx > 0 && filteredDesignations[idx - 1].level > des.level && <ChevronUp size={12} color="var(--text-muted)" />}
-                        </div>
-                      </td>
                       <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{des.title}</td>
-                      <td><span className="badge badge-inactive">{des.code}</span></td>
                       <td>{des.department || '—'}</td>
-                      <td>{des.grade ? <span className="badge badge-success">{des.grade}</span> : '—'}</td>
                       <td>{formatSalary(des.min_salary)} - {formatSalary(des.max_salary)}</td>
-                      <td>{des.employee_count || 0}</td>
                       <td>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => handleView(des)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="View">
@@ -314,12 +252,7 @@ export default function Designations() {
                 <div key={des.id} className="card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                     <div>
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                        <span className="badge badge-active">L{des.level}</span>
-                        {des.grade && <span className="badge badge-success">{des.grade}</span>}
-                      </div>
                       <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{des.title}</h3>
-                      <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{des.code}</p>
                     </div>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button onClick={() => handleView(des)} className="btn btn-secondary" style={{ padding: '4px 8px' }}>
@@ -340,9 +273,6 @@ export default function Designations() {
                         <Building2 size={12} style={{ marginRight: 4 }} /> {des.department}
                       </span>
                     )}
-                    <span className="badge badge-inactive">
-                      <Users size={12} style={{ marginRight: 4 }} /> {des.employee_count || 0}
-                    </span>
                   </div>
 
                   <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
@@ -386,55 +316,22 @@ export default function Designations() {
                     placeholder="Senior Software Engineer"
                   />
                 </div>
-                <div className="form-group">
-                  <label>Code *</label>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                    className="form-control"
-                    placeholder="SSE"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Level *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={form.level}
-                    onChange={(e) => setForm({ ...form, level: parseInt(e.target.value) || '' })}
-                    className="form-control"
-                    placeholder="1-10"
-                  />
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div className="form-group">
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Department</label>
-                  <input
-                    type="text"
-                    value={form.department}
+                  <select
+                    value={form.department || ''}
                     onChange={(e) => setForm({ ...form, department: e.target.value })}
                     className="form-control"
-                    placeholder="Engineering"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Grade</label>
-                  <select
-                    value={form.grade}
-                    onChange={(e) => setForm({ ...form, grade: e.target.value })}
-                    className="form-control"
                   >
-                    <option value="">Select Grade</option>
-                    {grades.map(g => <option key={g} value={g}>{g}</option>)}
+                    <option value="">Select Department</option>
+                    {deptList.map(dept => (
+                      <option key={dept.id} value={dept.name}>{dept.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
               
-              <div className="form-row">
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
                 <div className="form-group">
                   <label>Min Salary (₹)</label>
                   <input
@@ -483,16 +380,6 @@ export default function Designations() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800">{viewingDesignation.title}</h2>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">
-                      Code: {viewingDesignation.code}
-                    </span>
-                    {viewingDesignation.grade && (
-                      <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">
-                        Grade: {viewingDesignation.grade}
-                      </span>
-                    )}
-                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -514,17 +401,6 @@ export default function Designations() {
             <div className="p-6 space-y-6">
               {/* Stats Row */}
               <div className="form-row">
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
-                      <Users className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-indigo-900">{viewingDesignation.employee_count || 0}</p>
-                      <p className="text-xs text-indigo-600">Employees</p>
-                    </div>
-                  </div>
-                </div>
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-4">
                   <div className="flex items-center gap-3">
                     <div style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
@@ -548,30 +424,6 @@ export default function Designations() {
                     <span>Department</span>
                   </div>
                   <p className="text-slate-900 font-medium pl-6">{viewingDesignation.department || 'Not Assigned'}</p>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <Award className="w-4 h-4" />
-                    <span>Grade</span>
-                  </div>
-                  <p className="text-slate-900 font-medium pl-6">{viewingDesignation.grade || 'Not Set'}</p>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <Briefcase className="w-4 h-4" />
-                    <span>Job Code</span>
-                  </div>
-                  <p className="text-slate-900 font-medium font-mono pl-6">{viewingDesignation.code}</p>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>Hierarchy Level</span>
-                  </div>
-                  <p className="text-slate-900 font-medium pl-6">{viewingDesignation.level || 'Not Set'}</p>
                 </div>
               </div>
 

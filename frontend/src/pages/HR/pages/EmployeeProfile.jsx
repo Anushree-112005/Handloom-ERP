@@ -128,7 +128,7 @@ const EmployeeProfile = () => {
   }
 
   const age = calculateAge(employee.date_of_birth);
-  const tenure = calculateTenure(employee.date_of_joining);
+  const tenure = calculateTenure(employee.date_of_joining || employee.created_at);
 
   const handlePredictAttrition = async () => {
     setPredictingAttrition(true);
@@ -227,7 +227,7 @@ const EmployeeProfile = () => {
         <div className="mt-6 pt-4 border-t border-white/20 flex flex-wrap gap-6 text-sm">
           <div>
             <p className="text-white/60">Joined</p>
-            <p className="font-medium">{employee.date_of_joining ? new Date(employee.date_of_joining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+            <p className="font-medium">{(employee.date_of_joining || employee.created_at) ? new Date(employee.date_of_joining || employee.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
           </div>
           <div>
             <p className="text-white/60">Tenure</p>

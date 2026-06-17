@@ -21,6 +21,9 @@ const modules = [
   { path: '/overview', label: 'Overview', icon: PieChart },
 
 
+  { section: 'Masters' },
+  { path: '/party-master', label: 'Party Master', icon: Users },
+
   { section: 'Sub Masters' },
   {
     label: 'Core System Basics',
@@ -296,7 +299,6 @@ const modules = [
       { path: '/cubebook/masters', label: 'Create', icon: Plus },
       { path: '/cubebook/masters/alter', label: 'Alter', icon: Edit },
       { path: '/cubebook/masters/chart', label: 'Chart of Accounts', icon: BookOpen },
-      { path: '/party-master', label: 'Party Master', icon: Users },
 
 
       { section: 'TRANSACTIONS' },
@@ -355,55 +357,29 @@ const modules = [
     children: [
       { section: 'DASHBOARDS' },
       { path: '/hr', label: 'HR Dashboard', icon: LayoutDashboard },
-      // { path: '/hr/ai-dashboard', label: 'AI HR Dashboard', icon: Sparkles },
 
-      { section: 'WORKFORCE' },
-      // { path: '/hr/workforce', label: 'Workforce Hub', icon: Users },
-      { path: '/employee', label: 'Employee Master', icon: Shield },
-      { path: '/hr/org-chart', label: 'Organization Chart', icon: Layers },
+      { section: 'master' },
       { path: '/hr/departments', label: 'Departments', icon: Building },
       { path: '/hr/designations', label: 'Designations', icon: Award },
-      { path: '/hr/projects', label: 'Projects', icon: FolderOpen },
-
-      // { section: 'RECRUITMENT' },
-      // { path: '/hr/recruitment-hub', label: 'Recruitment Hub', icon: Users },
-      // { path: '/hr/requisitions', label: 'Job Requisitions', icon: ClipboardList },
-      // { path: '/hr/recruitment', label: 'Recruitment', icon: Users },
-      // { path: '/hr/offers-onboarding', label: 'Offers & Onboarding', icon: ClipboardList },
-
-      { section: 'TIME & ATTENDANCE' },
-      { path: '/hr/time-attendance', label: 'Time & Attendance Hub', icon: Clock3 },
-      { path: '/hr/attendance', label: 'Attendance & Leave', icon: Calendar },
-      // { path: '/hr/timesheet', label: 'Timesheet', icon: Clock3 },
       { path: '/hr/shifts', label: 'Shifts', icon: RefreshCw },
       { path: '/hr/holidays', label: 'Holidays', icon: Calendar },
+      { path: '/hr/employees', label: 'Employee Master', icon: Shield },
+
+
+      { section: ' ATTENDANCE' },
+      { path: '/hr/attendance', label: 'Attendance & Leave', icon: Calendar },
+      { path: '/hr/payroll', label: 'Payroll', icon: FileText },
+
+
 
       { section: 'COMPENSATION' },
-      // { path: '/hr/compensation', label: 'Compensation Hub', icon: DollarSign },
-      { path: '/hr/payroll', label: 'Payroll', icon: FileText },
       { path: '/hr/loans', label: 'Loans', icon: DollarSign },
       { path: '/hr/benefits', label: 'Benefits', icon: Award },
-
-      { section: 'GROWTH' },
-      // { path: '/hr/growth', label: 'Growth Hub', icon: Target },
-      // { path: '/hr/performance', label: 'Performance & Offboarding', icon: Target },
-      // { path: '/hr/goals', label: 'Goals', icon: Target },
-      // { path: '/hr/learning', label: 'Learning & Development', icon: BookOpen },
-      { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
       { path: '/hr/travel', label: 'Travel Requests', icon: Globe },
+      { path: '/hr/expenses', label: 'Expense Claims', icon: DollarSign },
 
-      { section: 'OPERATIONS' },
-      // { path: '/hr/operations', label: 'Operations Hub', icon: Settings },
-      // { path: '/hr/tasks', label: 'Task Management', icon: ClipboardList },
-      { path: '/hr/reports', label: 'HR Reports', icon: FileText },
-      { path: '/hr/settings', label: 'HR Settings', icon: Settings },
-
-      { section: 'ADMINISTRATION' },
-      { path: '/hr/administration', label: 'Administration Hub', icon: Settings },
-      { path: '/hr/documents', label: 'Documents', icon: FolderOpen },
-      { path: '/hr/assets', label: 'Assets', icon: Box },
-      { path: '/hr/announcements', label: 'Announcements', icon: FileText },
-      { path: '/hr/helpdesk', label: 'Helpdesk', icon: Info },
+      { section: 'REPORTS' },
+      { path: '/hr/reports', label: 'Reports', icon: FileText }
     ]
   },
   // {
@@ -418,7 +394,6 @@ const modules = [
   //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
   //   ]
   // },
-  // { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
 
   { section: 'Vehicle Management' },
   {
@@ -456,13 +431,19 @@ const modules = [
       { section: 'TRANSACTIONS' },
       { path: '/stores-consumables/request', label: 'Department Request', icon: FileText },
       { path: '/stores-consumables/requisition', label: 'Purchase Requisition', icon: ClipboardList },
+      { path: '/stores-consumables/quotation', label: 'Vendor Quotation', icon: FileText },
       { path: '/stores-consumables/po', label: 'Purchase Order', icon: ShoppingBag },
+
       { path: '/stores-consumables/grn', label: 'Stock Inward (GRN)', icon: ArrowRightLeft },
       { path: '/stores-consumables/issue', label: 'Issue to Dept', icon: ArrowUpRight },
       { path: '/stores-consumables/return', label: 'Return to Store', icon: ArrowDownLeft },
       { path: '/stores-consumables/transfer', label: 'Store Transfer', icon: ArrowRightLeft },
       { path: '/stores-consumables/adjustment', label: 'Stock Adjustment', icon: AlertTriangle },
       { path: '/stores-consumables/physical', label: 'Physical Verification', icon: CheckSquare },
+      { path: '/stores-consumables/swatch-cards', label: 'Swatch Cards', icon: Palette },
+      { path: '/stores-consumables/fabric-inspection', label: 'Fabric Inspection Book', icon: CheckSquare },
+      { path: '/stores-consumables/returnable-dc', label: 'Returnable DC', icon: FileText },
+
 
       { section: 'APPROVALS' },
       { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
@@ -575,7 +556,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         ) : (
           <button
             onClick={onToggleSidebar}
-            className="sidebar-toggle-btn"
+            className="sidebar-toggle-btn"                            
             style={{
               background: 'none',
               border: 'none',

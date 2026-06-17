@@ -1,21 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Trash2, X, PlusCircle } from 'lucide-react';
+import { Plus, Save, Trash2, X, PlusCircle, Upload, Download, FileText } from 'lucide-react';
+import api from '../../services/api';
 
 export default function PurchaseOrder() {
   const [view, setView] = useState('list');
   const [pos, setPOs] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [itemsList, setItemsList] = useState([]);
+  
   const [formData, setFormData] = useState({
-    vendor: '', paymentTerms: '30 Days Credit', expectedDate: '', items: []
+    vendor: '', 
+    paymentTerms: '30 Days Credit', 
+    expectedDate: '', 
+    items: [],
+    quotation_file_path: ''
   });
+
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     setPOs(mockDb.get('consumables_pos'));
     setVendors(mockDb.get('consumables_vendors'));
     setItemsList(mockDb.get('consumables_items'));
   }, [view]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    
+    try {
+      const res = await api.post('/stationary/po/upload-quotation', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setFormData(prev => ({ ...prev, quotation_file_path: res.data.quotation_file_path }));
+    } catch (err) {
+      console.error('Failed to upload quotation file:', err);
+      alert('Quotation file upload failed.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleAddField = () => {
     const itm = itemsList[0];
@@ -63,7 +92,8 @@ export default function PurchaseOrder() {
       paymentTerms: formData.paymentTerms,
       expectedDate: formData.expectedDate,
       status: 'Ordered',
-      items: formData.items
+      items: formData.items,
+      quotation_file_path: formData.quotation_file_path
     };
     mockDb.add('consumables_pos', newPo);
     setView('list');
@@ -79,7 +109,7 @@ export default function PurchaseOrder() {
               <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Issue Purchase Orders for replenishment of stock</p>
             </div>
             <button onClick={() => {
-              setFormData({ vendor: vendors[0]?.name || '', paymentTerms: '30 Days Credit', expectedDate: '', items: [] });
+              setFormData({ vendor: vendors[0]?.name || '', paymentTerms: '30 Days Credit', expectedDate: '', items: [], quotation_file_path: '' });
               setView('form');
             }} className="btn btn-primary">
               <Plus size={16} /> Create PO
@@ -96,6 +126,7 @@ export default function PurchaseOrder() {
                   <th >Payment Terms</th>
                   <th >Expected Date</th>
                   <th style={{ textAlign: "right" }}>Value</th>
+                  <th style={{ textAlign: "center" }}>Quotation</th>
                   <th style={{ textAlign: "center" }}>Status</th>
                 </tr>
               </thead>
@@ -110,6 +141,18 @@ export default function PurchaseOrder() {
                       <td >{po.paymentTerms}</td>
                       <td >{po.expectedDate || '-'}</td>
                       <td className="px-6 py-4 text-sm text-right font-bold text-slate-900">₹{val.toLocaleString()}</td>
+                      <td style={{ textAlign: "center" }}>
+                        {po.quotation_file_path ? (
+                          <a 
+                            href={`${api.defaults.baseURL || ''}${po.quotation_file_path}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--primary)', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
+                          >
+                            <Download size={14} /> View
+                          </a>
+                        ) : '-'}
+                      </td>
                       <td style={{ textAlign: "center" }}>
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800`}>
                           {po.status}
@@ -155,6 +198,34 @@ export default function PurchaseOrder() {
                   onChange={(e) => setFormData({...formData, expectedDate: e.target.value})} 
                   className="form-control" 
                 />
+              </div>
+            </div>
+
+            {/* Quotation upload field */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: '400px' }}>
+              <label style={{ fontWeight: 600 }}>Quotation File Attachment</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {formData.quotation_file_path ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px', fontSize: 13 }}>
+                    <FileText size={16} style={{ color: 'var(--primary)' }} />
+                    <span style={{ fontFamily: 'monospace' }}>{formData.quotation_file_path.split('/').pop()}</span>
+                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, quotation_file_path: '' }))} style={{ border: 'none', background: 'none', color: '#dc2626', cursor: 'pointer', padding: 2 }} title="Remove file">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input 
+                      type="file" 
+                      id="quotation-upload" 
+                      onChange={handleFileUpload} 
+                      style={{ display: 'none' }} 
+                    />
+                    <label htmlFor="quotation-upload" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '8px 14px', borderRadius: '6px', fontSize: 13, border: '1px solid var(--border)' }}>
+                      <Upload size={16} /> {isUploading ? 'Uploading...' : 'Upload Quotation'}
+                    </label>
+                  </>
+                )}
               </div>
             </div>
 

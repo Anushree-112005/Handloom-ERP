@@ -191,76 +191,22 @@ const PerformanceOffboarding = () => {
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
 
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         {/* LEFT: Title + stat badges */}
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">PERFORMANCE & OFFBOARDING</h1>
-          <span className="btn btn-primary">
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             Avg Score: {summary.avg}
           </span>
           {summary.pendingOff > 0 && (
-            <span className="btn btn-danger">
+            <span className="badge badge-inactive" style={{ padding: '4px 10px', fontSize: 12, backgroundColor: '#fef2f2', color: '#ef4444' }}>
               {summary.pendingOff} Pending Exits
             </span>
           )}
         </div>
 
-        {/* RIGHT: Filter dropdown + view toggle + Add button */}
+        {/* RIGHT: Add button */}
         <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-                }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterStatus || filterOffStatus) && <span className="btn btn-primary" />}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => { setFilterStatus(''); setFilterOffStatus(''); }} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                {activeTab === 'performance' ? (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Manager review">Manager Review</option>
-                      <option value="HR review">HR Review</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                    <select value={filterOffStatus} onChange={(e) => setFilterOffStatus(e.target.value)}
-                      className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
           {activeTab === 'performance' ? (
             <button onClick={() => setShowPerfForm(true)}
               className="btn btn-primary">

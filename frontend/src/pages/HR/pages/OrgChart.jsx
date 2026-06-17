@@ -7,7 +7,7 @@ export default function OrgChart() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // grid, tree
+  const [viewMode, setViewMode] = useState('tree'); // grid, tree
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [showFilters, setShowFilters] = useState(false);
 
@@ -171,80 +171,6 @@ export default function OrgChart() {
           <span className="bg-indigo-600 text-white px-3 py-1 rounded-sm text-xs font-bold shadow-sm">
             {employees.length} Records
           </span>
-        </div>
-
-        {/* RIGHT: Filter + View Toggle */}
-        <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(selectedDept || searchTerm) && (
-                <span className="w-2 h-2 rounded-full bg-indigo-500 absolute top-1 right-1" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="absolute top-[100%] right-0 mt-1 w-56 bg-white rounded-sm shadow-md border border-slate-300 z-50 p-4">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button
-                    onClick={() => { setSelectedDept(''); setSearchTerm(''); }}
-                    className="text-xs text-indigo-600 hover:underline"
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Department</label>
-                    <select
-                      value={selectedDept}
-                      onChange={(e) => setSelectedDept(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Departments</option>
-                      {departments.map(dept => (
-                        <option key={dept} value={dept}>{dept}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Search</label>
-                    <input
-                      type="text"
-                      placeholder="Search employees..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', padding: '2px' }}>
-            <button
-              onClick={() => setViewMode('tree')}
-              className={`p-1.5 rounded ${viewMode === 'tree' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-              title="Tree View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
         </div>
       </div>
 
