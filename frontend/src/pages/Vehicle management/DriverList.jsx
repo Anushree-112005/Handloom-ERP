@@ -683,7 +683,7 @@ const DriverList = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="data-table">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
                 <tr>
                   <th className="px-6 py-3 text-left w-10">
                     <input type="checkbox" 
@@ -710,7 +710,7 @@ const DriverList = () => {
                   </tr>
                 ) : (
                   drivers.map((driver) => (
-                     <tr key={driver.id} className={`hover:bg-gray-50 transition-colors ${selectedIds.includes(driver.id) ? 'bg-blue-50/30' : ''}`}>
+                     <tr key={driver.id} className={`hover:bg-purple-50/15 transition-colors align-top ${selectedIds.includes(driver.id) ? 'bg-blue-50/30' : ''}`}>
                       <td className="px-6 py-4">
                         <input type="checkbox" 
                           checked={selectedIds.includes(driver.id)}

@@ -19,4 +19,4 @@ aiosqlite==0.22.1
 opencv-python-headless
 Jinja2
 bcrypt==4.0.1
-weasyprint
+xhtml2pdf

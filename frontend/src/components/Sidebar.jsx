@@ -488,19 +488,6 @@ const modules = [
       { path: '/hr/helpdesk', label: 'Helpdesk', icon: Info },
     ]
   },
-  // {
-  //   label: 'Account Transaction',
-  //   icon: Briefcase,
-  //   children: [
-  //     { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: FileDigit },
-  //     { path: '/accounts/transaction', label: 'Accounts Details', icon: FolderKanban },
-  //     { path: '/finance/desk/bills', label: 'Creditors Bills', icon: Receipt },
-  //     { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileText },
-  //     { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
-  //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
-  //   ]
-  // },
-  { path: '/cubebook', label: 'CubeBook Finance', icon: Briefcase },
 
   { section: 'Vehicle Management' },
   {

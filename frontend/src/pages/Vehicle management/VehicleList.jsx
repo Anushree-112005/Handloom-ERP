@@ -708,7 +708,7 @@ const VehicleList = () => {
             </div>
           ) : (
             <table className="data-table">
-              <thead className="bg-gray-50 border-b sticky top-0">
+              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
                 <tr>
                   <th className="px-6 py-3 text-left w-10">
                     <input 
@@ -728,7 +728,7 @@ const VehicleList = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {vehicles.map((vehicle) => (
-                  <tr key={vehicle.id} className={`hover:bg-gray-50 ${selectedVehicles.includes(vehicle.id) ? 'bg-blue-50/50' : ''}`}>
+                  <tr key={vehicle.id} className={`hover:bg-purple-50/15 transition-colors align-top ${selectedVehicles.includes(vehicle.id) ? 'bg-blue-50/50' : ''}`}>
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <input 
                         type="checkbox" 

@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
 class LoomMasterBase(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     loom_name: str
     loom_type: Optional[str] = None
     manufacturer: Optional[str] = None
