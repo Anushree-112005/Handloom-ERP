@@ -60,6 +60,10 @@ async def lifespan(app: FastAPI):
             session.add(admin)
             await session.commit()
 
+        # Seed PPC Data
+        from app.seed_ppc import seed_ppc_data
+        await seed_ppc_data(session)
+
     yield
     await engine.dispose()
 

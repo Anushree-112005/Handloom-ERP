@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Scale, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { Scale, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function LoadBalancing() {
@@ -123,6 +123,22 @@ export default function LoadBalancing() {
     } catch (err) {
       console.error(err);
       alert('Error saving record.');
+    }
+  };
+
+  const handleEdit = (record) => {
+    // Note: Re-calculates on generation, so edit just opens a fresh form for now
+    handleGenerateCalculation();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await subMasterAPI.delete('ppc_load_balancing', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete record');
     }
   };
 
@@ -252,19 +268,33 @@ export default function LoadBalancing() {
                   <th>Total Pending Load</th>
                   <th>Rebalance Suggestion</th>
                   <th>Over / Under Details</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
                     <td style={{ fontWeight: 600 }}>{record.code}</td>
                     <td><span style={{ color: '#6d28d9', fontWeight: 600 }}>{record.extra_field_1}</span></td>
                     <td style={{ fontWeight: 600, color: '#b91c1c' }}>{record.extra_field_2}</td>
                     <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

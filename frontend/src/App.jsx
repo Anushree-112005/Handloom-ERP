@@ -44,6 +44,7 @@ import SubMasterPage from './pages/masters/SubMasterPage';
 import CubeBookPage from './pages/cubebook/CubeBookPage';
 import HRModule from './pages/HR/HRModule';
 import PPCMultiModule from './pages/ppc/PPCMultiModule';
+import LiveDashboard from './pages/ppc/LiveDashboard';
 
 // Fleet & Vehicle Management Imports
 import FleetDashboard from './pages/Vehicle management/FleetDashboard';
@@ -192,6 +193,7 @@ export default function App() {
         <Route path="greige/transaction/administration" element={<GreigeTransaction defaultSection="Greige Administration" />} />
 
         {/* Production Planning & Control (PPC) - Full 10 Module Structure */}
+        <Route path="ppc/tracking/live-dashboard" element={<LiveDashboard />} />
         <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
 
         {/* LAB & Shade Management Routes */}
