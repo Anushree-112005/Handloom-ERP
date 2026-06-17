@@ -1,0 +1,244 @@
+/* ---- CUBEBOOK TO ERP THEME ADAPTER ---- */
+/* This file maps CubeBook specific classes (.cb-*) to the main ERP CSS variables */
+
+/* ── Shared input style ── */
+.cb-input {
+  width: 100%;
+  background: var(--bg-input, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--text-primary, #0f172a) !important;
+  transition: all var(--transition-fast, 150ms) !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.02) !important;
+}
+
+.cb-input:focus {
+  outline: none !important;
+  border-color: var(--primary, #4f46e5) !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+}
+
+.cb-input-mini {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--text-primary, #0f172a);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 4px);
+  transition: background 0.2s;
+}
+.cb-input-mini:focus {
+  outline: none;
+  background: var(--bg-hover, #f1f5f9);
+}
+
+/* ── Card ── */
+.cb-card {
+  background: var(--bg-card, #ffffff) !important;
+  border-radius: var(--radius-lg, 16px) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  overflow: hidden;
+}
+
+/* ── Page title ── */
+.cb-page-title {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: var(--text-primary, #0f172a) !important;
+  letter-spacing: normal !important;
+  margin: 0 !important;
+}
+
+.cb-page-subtitle {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: var(--text-muted, #64748b) !important;
+  margin-top: 4px !important;
+}
+
+/* ── Table header cell ── */
+.cb-th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--text-muted, #64748b) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  padding: 12px 16px !important;
+  background: var(--bg-secondary, #f1f5f9) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
+}
+
+/* ── Table body cell ── */
+.cb-td {
+  font-size: 14px !important;
+  color: var(--text-secondary, #334155) !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
+  background: transparent !important;
+}
+
+/* ── Section label (small caps) ── */
+.cb-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--text-muted, #64748b) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.2px !important;
+}
+
+/* ── Badge ── */
+.cb-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 10px !important;
+  border-radius: 100px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* ── Primary button ── */
+.cb-btn-primary {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  background: linear-gradient(135deg, var(--primary, #4f46e5), var(--primary-dark, #4338ca)) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all var(--transition-fast, 150ms) !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+.cb-btn-primary:hover {
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── Secondary button ── */
+.cb-btn-secondary {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  background: var(--bg-card, #ffffff) !important;
+  color: var(--text-primary, #0f172a) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  transition: all var(--transition-fast, 150ms) !important;
+  cursor: pointer !important;
+}
+.cb-btn-secondary:hover {
+  background: var(--bg-hover, #f1f5f9) !important;
+  border-color: var(--border-light, #cbd5e1) !important;
+}
+
+/* ── Stat card ── */
+.cb-stat-card {
+  background: var(--bg-card, #ffffff) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: var(--radius-lg, 16px) !important;
+  box-shadow: var(--shadow-sm) !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.cb-stat-value {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: var(--text-primary, #0f172a) !important;
+}
+
+.cb-stat-label {
+  font-size: 13px !important;
+  color: var(--text-muted, #64748b) !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ── Overrides for generic inline Tailwind classes in Finance Module ── */
+/* So that hardcoded bg-slate-50, text-slate-800 adapt to dark mode and ERP variables */
+.hr-module-container .bg-slate-50,
+.hr-module-container .bg-gray-50,
+.hr-module-container .bg-\[\#f8f9fc\] { background-color: var(--bg-secondary, #f1f5f9) !important; }
+
+.hr-module-container .bg-white { background-color: var(--bg-card, #ffffff) !important; }
+
+.hr-module-container .text-slate-900,
+.hr-module-container .text-slate-800,
+.hr-module-container .text-gray-900,
+.hr-module-container .text-gray-800 { color: var(--text-primary, #0f172a) !important; }
+
+.hr-module-container .text-slate-700,
+.hr-module-container .text-slate-600,
+.hr-module-container .text-gray-700,
+.hr-module-container .text-gray-600 { color: var(--text-secondary, #334155) !important; }
+
+.hr-module-container .text-slate-500,
+.hr-module-container .text-slate-400,
+.hr-module-container .text-gray-500,
+.hr-module-container .text-gray-400 { color: var(--text-muted, #64748b) !important; }
+
+.hr-module-container .border-slate-200,
+.hr-module-container .border-slate-100,
+.hr-module-container .border-gray-200,
+.hr-module-container .border-gray-100 { border-color: var(--border, #e2e8f0) !important; }
+
+/* DayBook specific overrides */
+.hr-module-container .bg-purple-50 { background-color: rgba(79, 70, 229, 0.1) !important; }
+.hr-module-container .text-purple-600 { color: var(--primary, #4f46e5) !important; }
+.hr-module-container .border-purple-100 { border-color: rgba(79, 70, 229, 0.2) !important; }
+
+/* CUBEBOOK POPUP TO FULL-PAGE CONVERSION */
+#root div:has(> div[class*="fixed"][class*="bg-black"]) > *:not(div[class*="fixed"][class*="bg-black"]),
+#root div:has(> div[class*="fixed"][class*="bg-slate-"]) > *:not(div[class*="fixed"][class*="bg-slate-"]) {
+  display: none !important;
+}
+
+#root div[class*="fixed"][class*="bg-black"],
+#root div[class*="fixed"][class*="bg-slate-"] {
+  position: static !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: calc(100vh - 120px) !important;
+  display: block !important;
+  z-index: auto !important;
+  animation: none !important;
+}
+
+#root div[class*="fixed"][class*="bg-black"] > form,
+#root div[class*="fixed"][class*="bg-black"] > div,
+#root div[class*="fixed"][class*="bg-slate-"] > form,
+#root div[class*="fixed"][class*="bg-slate-"] > div {
+  max-width: 100% !important;
+  width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  border-radius: var(--radius-lg, 12px) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  background: var(--bg-card, #ffffff) !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+#root div[class*="fixed"][class*="bg-black"] form,
+#root div[class*="fixed"][class*="bg-slate-"] form {
+  width: 100% !important;
+  max-width: 100% !important;
+}

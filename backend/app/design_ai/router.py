@@ -6,7 +6,7 @@ import numpy as np
 import traceback
 import os
 import io
-import weasyprint
+from xhtml2pdf import pisa
 from jinja2 import Environment, FileSystemLoader
 from app.design_ai.image_analyzer import extract_colors_and_pipeline, classify_weave
 
@@ -22,7 +22,8 @@ async def analyze_image(
         
         # Save a copy to uploads/debug for inspection and analysis debugging
         os.makedirs("uploads/debug", exist_ok=True)
-        debug_path = os.path.join("uploads/debug", file.filename)
+        safe_filename = file.filename or "debug_image.png"
+        debug_path = os.path.join("uploads/debug", safe_filename)
         with open(debug_path, "wb") as f_debug:
             f_debug.write(content)
             
@@ -92,8 +93,15 @@ async def generate_pdf(payload: dict):
             grand_total_kg=payload.get("grand_total_kg", 0.0)
         )
         
-        # Compile HTML to PDF using Weasyprint
-        pdf_bytes = weasyprint.HTML(string=html_out).write_pdf()
+        # Compile HTML to PDF using xhtml2pdf
+        pdf_file = io.BytesIO()
+        pisa_status = pisa.CreatePDF(
+            io.StringIO(html_out),
+            dest=pdf_file
+        )
+        if pisa_status.err:
+            raise Exception("PDF generation failed")
+        pdf_bytes = pdf_file.getvalue()
         
         filename = payload.get("design_no", "design").replace(" ", "_")
         return StreamingResponse(
