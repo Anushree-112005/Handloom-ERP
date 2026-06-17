@@ -10,7 +10,7 @@ class Vehicle(Base):
     
     # Vehicle Identification
     vehicle_number = Column(String(50), unique=True, index=True, nullable=False)
-    vehicle_type = Column(String(50), default="TIPPER")  # TIPPER, CONTAINER, FLATBED, etc.
+    vehicle_type = Column(String(50), default="YARN_CARRIER")  # YARN_CARRIER, FABRIC_TRUCK, etc.
     
     # Vehicle Details
     make = Column(String(100), nullable=False)

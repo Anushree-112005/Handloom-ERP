@@ -22,12 +22,15 @@ export default function PPCMultiModule() {
   const moduleConfig = {
     'master': {
       title: 'Master Setup',
+      subtitle: 'Manage looms, shifts, operators, yarn and fabric configurations',
       icon: Settings,
       tabs: [
         { id: 'loom-master', label: 'Loom Master', component: <LoomRegistration /> },
         { id: 'shift-master', label: 'Shift Master' },
         { id: 'operator-master', label: 'Operator Master' },
-        { id: 'downtime-reason', label: 'Downtime Reason Master' }
+        { id: 'yarn-master', label: 'Yarn Master' },
+        { id: 'fabric-master', label: 'Fabric Master' },
+        { id: 'downtime-reason', label: 'Downtime Reasons' }
       ]
     },
     'planning': {
@@ -37,7 +40,6 @@ export default function PPCMultiModule() {
         { id: 'availability', label: 'Loom Availability Check' },
         { id: 'capacity', label: 'Capacity Calculation' },
         { id: 'order-breakdown', label: 'Order Breakdown' },
-        { id: 'load-balancing', label: 'Load Balancing' },
         { id: 'allocation', label: 'Loom Allocation', component: <OrderAllocation /> }
       ]
     },
@@ -46,7 +48,6 @@ export default function PPCMultiModule() {
       icon: Calendar,
       tabs: [
         { id: 'start-end', label: 'Start & End Date Planning' },
-        { id: 'runtime', label: 'Runtime Calculation' },
         { id: 'shift-planning', label: 'Shift Planning' },
         { id: 'operator-assign', label: 'Operator Assignment' },
         { id: 'priority', label: 'Priority Scheduling' }
@@ -57,7 +58,6 @@ export default function PPCMultiModule() {
       icon: Activity,
       tabs: [
         { id: 'loom-start', label: 'Loom Start Entry' },
-        { id: 'shift-entry', label: 'Shift-wise Production Entry' },
         { id: 'iot-entry', label: 'IoT / Auto Entry' },
         { id: 'speed-monitoring', label: 'Speed Monitoring' },
         { id: 'status-update', label: 'Loom Status Update' }
@@ -67,7 +67,6 @@ export default function PPCMultiModule() {
       title: 'Daily Monitoring',
       icon: Eye,
       tabs: [
-        { id: 'daily-report', label: 'Daily Production Report' },
         { id: 'target-actual', label: 'Target vs Actual' },
         { id: 'efficiency', label: 'Efficiency Calculation' },
         { id: 'loss-analysis', label: 'Loss Analysis' },
@@ -80,7 +79,6 @@ export default function PPCMultiModule() {
       tabs: [
         { id: 'order-progress', label: 'Order Progress View' },
         { id: 'loom-contribution', label: 'Loom Contribution Report' },
-        { id: 'live-dashboard', label: 'Live Dashboard' },
         { id: 'multi-loom', label: 'Multi-loom Order View' }
       ]
     },
@@ -91,27 +89,16 @@ export default function PPCMultiModule() {
         { id: 'breakdown-entry', label: 'Breakdown Entry' },
         { id: 'downtime-calc', label: 'Downtime Calculation' },
         { id: 'lost-meters', label: 'Lost Meters Calculation' },
-        { id: 'reallocation', label: 'Reallocation Engine' },
         { id: 'maintenance', label: 'Maintenance Log' }
-      ]
-    },
-    'prediction': {
-      title: 'Finish Prediction (ETA)',
-      icon: Clock,
-      tabs: [
-        { id: 'eta-calc', label: 'ETA Calculation' },
-        { id: 'dynamic-eta', label: 'Dynamic ETA Update' }
       ]
     },
     'alerts': {
       title: 'Alert & Notification',
       icon: Bell,
       tabs: [
-        { id: 'finishing-alert', label: 'Loom Finishing Alert' },
+        { id: 'eta-calc', label: 'ETA Calculation' },
         { id: 'low-efficiency', label: 'Low Efficiency Alert' },
-        { id: 'breakdown-alert', label: 'Breakdown Alert' },
-        { id: 'delay-alert', label: 'Delay Risk Alert' },
-        { id: 'next-order', label: 'Next Order Assignment Alert' }
+        { id: 'breakdown-alert', label: 'Breakdown Alert' }
       ]
     },
     'reports': {
@@ -121,9 +108,7 @@ export default function PPCMultiModule() {
         { id: 'loom-wise', label: 'Loom-wise Production Report' },
         { id: 'order-wise', label: 'Order-wise Production Report' },
         { id: 'daily-factory', label: 'Daily Factory Report' },
-        { id: 'efficiency-trend', label: 'Efficiency Report', component: <LoomUtilizationReport /> },
-        { id: 'downtime-history', label: 'Downtime Report' },
-        { id: 'delivery-forecast', label: 'Delivery Forecast Report' }
+        { id: 'downtime-history', label: 'Downtime Report' }
       ]
     }
   };
@@ -137,18 +122,33 @@ export default function PPCMultiModule() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '24px 32px', borderBottom: '1px solid var(--border)', background: 'white', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ padding: 12, background: 'var(--primary-light)', borderRadius: 12, color: 'white' }}>
-          <config.icon size={24} />
+      
+      {/* Header and Tabs container */}
+      <div style={{ padding: '24px 32px 0 32px', background: 'var(--bg-primary)' }}>
+        <div className="page-header" style={{ marginBottom: 20 }}>
+          <div>
+            <h1 className="page-title" style={{ fontSize: '24px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{config.title}</h1>
+            <p className="page-subtitle" style={{ color: 'var(--text-secondary)', marginTop: '4px', fontSize: '14px' }}>{config.subtitle || `Manage settings and operations for ${config.title.toLowerCase()}`}</p>
+          </div>
         </div>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>{config.title}</h2>
-          <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Production Planning & Control System</p>
+
+        {/* Tab Bar */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--bg-secondary)',
+                      padding: 4, borderRadius: 10, border: '1px solid var(--border)', overflowX: 'auto' }}>
+          {config.tabs.map(t => (
+            <button key={t.id} onClick={() => navigate(`/ppc/${moduleName}/${t.id}`)}
+              style={{ padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13,
+                       fontWeight: 600, whiteSpace: 'nowrap', transition: 'all 0.2s',
+                       background: currentTab === t.id ? '#2563eb' : 'transparent',
+                       color: currentTab === t.id ? 'white' : 'var(--text-secondary)' }}>
+              {t.label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <div style={{ flex: 1, padding: 32, overflowY: 'auto', background: 'var(--bg-primary)' }}>
+        <div style={{ flex: 1, padding: '0 32px 32px 32px', overflowY: 'auto', overflowX: 'hidden', minWidth: 0, background: 'var(--bg-primary)' }}>
           {activeTabConfig.component ? (
             activeTabConfig.component
           ) : PPC_REGISTRY[activeTabConfig.id] ? (

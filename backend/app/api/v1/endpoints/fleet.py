@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 class VehicleCreate(BaseModel):
     vehicle_number: str
-    vehicle_type: str = "TIPPER"
+    vehicle_type: str = "YARN_CARRIER"
     make: str
     model: str
     year_of_manufacture: Optional[int] = None
@@ -190,7 +190,7 @@ async def delete_vehicle(vehicle_id: int, db: AsyncSession = Depends(get_db)):
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
     
-    db.delete(vehicle)
+    await db.delete(vehicle)
     await db.commit()
     
     return {"message": "Vehicle deleted successfully"}
@@ -199,26 +199,47 @@ async def delete_vehicle(vehicle_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/stats", response_model=FleetStatsResponse)
 async def get_fleet_stats(db: AsyncSession = Depends(get_db)):
     """Get fleet dashboard statistics."""
+    # 1. Total vehicles
     result = await db.execute(select(func.count(Vehicle.id)))
     total_vehicles = result.scalar() or 0
     
+    # 2. Active trips (In Progress or In_Progress)
     result = await db.execute(
-        select(func.count(Vehicle.id)).where(Vehicle.status == "ACTIVE")
+        select(func.count(Trip.id)).where(Trip.status.in_(["In Progress", "In_Progress"]))
     )
-    active_vehicles = result.scalar() or 0
+    active_trips = result.scalar() or 0
     
-    # Mock data for now - in production, integrate with GPS/tracking system
+    # 3. Completed trips
+    result = await db.execute(
+        select(func.count(Trip.id)).where(Trip.status == "Completed")
+    )
+    completed_trips_today = result.scalar() or 0
+    
+    # 4. Total drivers
+    result = await db.execute(select(func.count(Driver.id)))
+    total_drivers = result.scalar() or 0
+    
+    # 5. Breakdown vehicles
+    result = await db.execute(
+        select(func.count(BreakdownEntry.id)).where(BreakdownEntry.status == "Open")
+    )
+    breakdown_vehicles = result.scalar() or 0
+
+    # Calculate idle and stopped based on total and active trips
+    stopped_vehicles = max(0, total_vehicles - active_trips)
+    idle_vehicles = 0
+    
     stats = FleetStatsResponse(
         total_vehicles=total_vehicles,
-        active_trips=0,
+        active_trips=active_trips,
         fuel_cost_today=0.0,
-        breakdown_vehicles=0,
+        breakdown_vehicles=breakdown_vehicles,
         expiring_documents=0,
-        total_drivers=0,
-        completed_trips_today=0,
+        total_drivers=total_drivers,
+        completed_trips_today=completed_trips_today,
         total_revenue=0.0,
-        idle_vehicles=0,
-        stopped_vehicles=0,
+        idle_vehicles=idle_vehicles,
+        stopped_vehicles=stopped_vehicles,
         recent_activities=[]
     )
     
@@ -238,6 +259,7 @@ class DriverCreate(BaseModel):
     qualification: str = "HMV"
     aadhar_number: Optional[str] = None
     emergency_contact: Optional[str] = None
+    assigned_vehicle_id: Optional[int] = None
 
 
 class DriverUpdate(BaseModel):
@@ -251,6 +273,7 @@ class DriverUpdate(BaseModel):
     qualification: Optional[str] = None
     aadhar_number: Optional[str] = None
     emergency_contact: Optional[str] = None
+    assigned_vehicle_id: Optional[int] = None
 
 
 class DriverResponse(BaseModel):
@@ -265,6 +288,7 @@ class DriverResponse(BaseModel):
     qualification: str
     aadhar_number: Optional[str]
     emergency_contact: Optional[str]
+    assigned_vehicle_id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -323,7 +347,7 @@ async def delete_driver(driver_id: int, db: AsyncSession = Depends(get_db)):
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
     
-    db.delete(driver)
+    await db.delete(driver)
     await db.commit()
     return {"message": "Driver deleted successfully"}
 
@@ -402,7 +426,7 @@ async def delete_service_schedule(schedule_id: int, db: AsyncSession = Depends(g
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
     
-    db.delete(schedule)
+    await db.delete(schedule)
     await db.commit()
     return {"message": "Schedule deleted successfully"}
 
@@ -481,7 +505,7 @@ async def delete_maintenance_log(log_id: int, db: AsyncSession = Depends(get_db)
     if not log:
         raise HTTPException(status_code=404, detail="Log not found")
     
-    db.delete(log)
+    await db.delete(log)
     await db.commit()
     return {"message": "Log deleted successfully"}
 
@@ -562,7 +586,7 @@ async def delete_breakdown(entry_id: int, db: AsyncSession = Depends(get_db)):
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
     
-    db.delete(entry)
+    await db.delete(entry)
     await db.commit()
     return {"message": "Entry deleted successfully"}
 
@@ -643,7 +667,7 @@ async def delete_fuel_entry(entry_id: int, db: AsyncSession = Depends(get_db)):
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
     
-    db.delete(entry)
+    await db.delete(entry)
     await db.commit()
     return {"message": "Entry deleted successfully"}
 
@@ -832,7 +856,7 @@ async def delete_document(doc_id: int, db: AsyncSession = Depends(get_db)):
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     
-    db.delete(doc)
+    await db.delete(doc)
     await db.commit()
     return {"message": "Document deleted successfully"}
 
@@ -911,7 +935,7 @@ async def delete_route(route_id: int, db: AsyncSession = Depends(get_db)):
     if not route:
         raise HTTPException(status_code=404, detail="Route not found")
     
-    db.delete(route)
+    await db.delete(route)
     await db.commit()
     return {"message": "Route deleted successfully"}
 
@@ -1006,7 +1030,7 @@ async def delete_trip(trip_id: int, db: AsyncSession = Depends(get_db)):
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     
-    db.delete(trip)
+    await db.delete(trip)
     await db.commit()
     return {"message": "Trip deleted successfully"}
 

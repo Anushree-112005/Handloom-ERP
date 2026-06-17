@@ -18,7 +18,7 @@ from app.api.v1.router import api_router
 
 # Import all models so tables are registered with Base.metadata
 import app.models  # noqa: F401
-
+    
 
 RESET_DATABASE = False  # Change to True to clear all data from tables on restart
 
@@ -135,7 +135,7 @@ async def lifespan(app: FastAPI):
                 "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
                 "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
                 "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
-                "Assistant", "Operator", "Technician", "Worker", "Trainee"
+                "Assistant", "Operator", "Technician", "Worker", "Trainee", "Driver"
             ]
             for desg_title in default_designations:
                 code = "".join([w[0] for w in desg_title.split() if w]).upper()[:6]
@@ -148,6 +148,20 @@ async def lifespan(app: FastAPI):
                     is_active=True
                 ))
             await session.commit()
+        else:
+            # Ensure 'Driver' is present even if the database is already seeded
+            driver_check = await session.execute(
+                select(SubMaster).where(SubMaster.entity == "designation", SubMaster.name == "Driver")
+            )
+            if not driver_check.scalars().first():
+                logger.info("Adding missing 'Driver' designation to database...")
+                session.add(SubMaster(
+                    entity="designation",
+                    name="Driver",
+                    code="DRIVER",
+                    is_active=True
+                ))
+                await session.commit()
 
         # Seed default yarn counts
         yc_result = await session.execute(select(SubMaster).where(SubMaster.entity == "yarn_count_master"))

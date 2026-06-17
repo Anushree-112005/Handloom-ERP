@@ -160,7 +160,8 @@ export const fetchDesignations = async () => {
       { id: 1, title: 'Software Engineer', department: 'Engineering' },
       { id: 2, title: 'Senior Software Engineer', department: 'Engineering' },
       { id: 3, title: 'HR Manager', department: 'HR' },
-      { id: 4, title: 'Sales Executive', department: 'Sales' }
+      { id: 4, title: 'Sales Executive', department: 'Sales' },
+      { id: 5, title: 'Driver', department: 'Logistics' }
     ]);
   }
 };

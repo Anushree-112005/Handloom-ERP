@@ -5,6 +5,10 @@ import { subMasterAPI, ppcAPI } from '../../services/api';
 export default function EfficiencyCalculation() {
   const [records, setRecords] = useState([]);
   const [looms, setLooms] = useState([]);
+  const [productions, setProductions] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [downtimes, setDowntimes] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,12 +47,20 @@ export default function EfficiencyCalculation() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes] = await Promise.all([
+      const [recRes, loomRes, prodRes, allocRes, schedRes, dtRes] = await Promise.all([
         subMasterAPI.list('ppc_efficiency_calc').catch(() => ({ data: [] })),
-        ppcAPI.getLooms().catch(() => ({ data: [] }))
+        ppcAPI.getLooms().catch(() => ({ data: [] })),
+        subMasterAPI.list('ppc_shift_production').catch(() => ({ data: [] })),
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        subMasterAPI.list('ppc_start_end_plan').catch(() => ({ data: [] })),
+        subMasterAPI.list('ppc_downtime_calc').catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
+      setProductions(prodRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setSchedules(schedRes?.data || []);
+      setDowntimes(dtRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -59,19 +71,48 @@ export default function EfficiencyCalculation() {
   const handleRecalc = (name, value, currentData) => {
     const updated = { ...currentData, [name]: value };
     
-    // Auto-fill mocks for Loom/Shift context
     if (updated.loom_id) {
-      const loom = looms.find(l => l.id.toString() === updated.loom_id);
-      updated.loom_name = loom ? loom.loom_name : '';
+      const loomIdStr = updated.loom_id.toString();
+      const loom = looms.find(l => l.id.toString() === loomIdStr || l.loom_name === loomIdStr);
+      const lName = loom ? loom.loom_name : loomIdStr;
+      const lIdNum = loom ? loom.id : parseInt(loomIdStr) || 0;
+      updated.loom_name = lName;
       
-      // We will just mock fetching the values for order, operator, actuals since it depends heavily on multiple joins
-      if (name === 'loom_id' || name === 'shift') {
-        updated.order_id = 'ORD-2024-001';
-        updated.operator_name = 'Ramesh Kumar';
-        updated.planned_meters = 425;
-        updated.actual_meters = 398;
-        updated.downtime_hrs = 1.5;
-        updated.loss_reason = 'Yarn Break';
+      if (name === 'loom_id' || name === 'shift' || name === 'date') {
+         // 1. Find Order ID from allocations or schedule
+         const alloc = allocations.find(a => a.loom_id?.toString() === lIdNum.toString() && a.allocation_status !== 'Completed');
+         if (alloc) {
+            updated.order_id = alloc.order_id || alloc.order_no || '';
+         } else {
+            const sched = schedules.find(s => s.description && s.description.includes(lName));
+            if (sched) updated.order_id = sched.code;
+            else updated.order_id = '';
+         }
+
+         // 2. Find actual production
+         const prod = productions.find(p => p.code?.toString() === loomIdStr && p.extra_field_1?.includes(updated.shift));
+         if (prod) {
+            const opMatch = prod.extra_field_1?.match(/Op:\s*(.+)/);
+            updated.operator_name = opMatch ? opMatch[1] : '';
+
+            const defectMatch = prod.description?.match(/Defects:\s*(\d+)m/);
+            const defects = defectMatch ? parseFloat(defectMatch[1]) : 0;
+            updated.defect_meters = defects;
+
+            const goodMeters = parseFloat(prod.extra_field_2) || 0;
+            updated.actual_meters = goodMeters + defects;
+         } else {
+            updated.operator_name = '';
+            updated.actual_meters = '';
+            updated.defect_meters = 0;
+         }
+
+         // 3. Planned meters based on loom capacity
+         updated.planned_meters = loom ? Math.round(loom.capacity_per_day / (24 / parseFloat(updated.available_hours || 8))) : 400;
+
+         // 4. Default downtime, can be adjusted manually
+         updated.downtime_hrs = 0;
+         updated.loss_reason = '';
       }
       
       const actual = parseFloat(updated.actual_meters) || 0;

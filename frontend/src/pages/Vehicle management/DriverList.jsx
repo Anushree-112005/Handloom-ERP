@@ -3,6 +3,7 @@ import { Plus, Users, Search, Filter, Edit2, Trash2, X, Save, Phone, Award } fro
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
+import { fetchEmployees } from '../../services/hrService';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -14,6 +15,8 @@ const DetailRow = ({ label, value }) => (
 export default function DriverList() {
   const [view, setView] = useState('list');
   const [drivers, setDrivers] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [selectedViewDriver, setSelectedViewDriver] = useState(null);
@@ -30,13 +33,13 @@ export default function DriverList() {
     status: 'Active',
     qualification: 'HMV',
     aadhar_number: '',
-    emergency_contact: ''
+    emergency_contact: '',
+    assigned_vehicle_id: ''
   };
 
   const [formData, setFormData] = useState(initialForm);
 
   const statuses = ['Active', 'Inactive', 'On Leave'];
-  const qualifications = ['LMV', 'HMV', 'Multi-Axle', 'Hazmat'];
 
   useEffect(() => {
     fetchData();
@@ -45,8 +48,14 @@ export default function DriverList() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/fleet/drivers');
-      setDrivers(res.data || []);
+      const [driversRes, empData, vehiclesRes] = await Promise.all([
+        api.get('/fleet/drivers'),
+        fetchEmployees().catch(() => []),
+        api.get('/fleet/vehicles').catch(() => ({ data: [] }))
+      ]);
+      setDrivers(driversRes.data || []);
+      setEmployees(empData || []);
+      setVehicles(vehiclesRes.data || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       showError('Failed to load driver list');
@@ -58,7 +67,11 @@ export default function DriverList() {
   const handleOpenForm = (driver = null) => {
     if (driver) {
       setEditingId(driver.id);
-      setFormData(driver);
+      setFormData({
+        ...initialForm,
+        ...driver,
+        assigned_vehicle_id: driver.assigned_vehicle_id !== null && driver.assigned_vehicle_id !== undefined ? String(driver.assigned_vehicle_id) : ''
+      });
     } else {
       setEditingId(null);
       setFormData(initialForm);
@@ -77,7 +90,8 @@ export default function DriverList() {
     try {
       const payload = {
         ...formData,
-        years_of_experience: Number(formData.years_of_experience) || 0
+        years_of_experience: Number(formData.years_of_experience) || 0,
+        assigned_vehicle_id: formData.assigned_vehicle_id ? parseInt(formData.assigned_vehicle_id, 10) : null
       };
 
       if (editingId) {
@@ -149,7 +163,34 @@ export default function DriverList() {
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Driver Name *</label>
-                  <input type="text" className="form-control" name="driver_name" value={formData.driver_name} onChange={handleInputChange} required />
+                  <select
+                    className="form-control"
+                    name="driver_name"
+                    value={formData.driver_name}
+                    onChange={(e) => {
+                      const selectedName = e.target.value;
+                      const selectedEmp = employees.find(emp => emp.name === selectedName);
+                      setFormData(prev => ({
+                        ...prev,
+                        driver_name: selectedName,
+                        phone_number: selectedEmp ? (selectedEmp.phone || prev.phone_number) : prev.phone_number
+                      }));
+                    }}
+                    required
+                  >
+                    <option value="">Select Driver</option>
+                    {employees
+                      .filter(emp => emp.designation && emp.designation.toLowerCase() === 'driver')
+                      .map(emp => (
+                        <option key={emp.id} value={emp.name}>
+                          {emp.name}
+                        </option>
+                      ))
+                    }
+                    {formData.driver_name && !employees.some(emp => emp.name === formData.driver_name) && (
+                      <option value={formData.driver_name}>{formData.driver_name}</option>
+                    )}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Phone Number *</label>
@@ -171,28 +212,25 @@ export default function DriverList() {
                   <input type="date" className="form-control" name="license_expiry_date" value={formData.license_expiry_date} onChange={handleInputChange} required />
                 </div>
                 <div className="form-group">
-                  <label>Qualification *</label>
-                  <select className="form-control" name="qualification" value={formData.qualification} onChange={handleInputChange} required>
-                    {qualifications.map(q => <option key={q} value={q}>{q}</option>)}
+                  <label>Assigned Vehicle</label>
+                  <select
+                    className="form-control"
+                    name="assigned_vehicle_id"
+                    value={formData.assigned_vehicle_id}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select a Vehicle</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.vehicle_number}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Years of Experience</label>
                   <input type="number" className="form-control" name="years_of_experience" value={formData.years_of_experience} onChange={handleInputChange} min="0" />
-                </div>
-                <div className="form-group">
-                  <label>Aadhar Number</label>
-                  <input type="text" className="form-control" name="aadhar_number" value={formData.aadhar_number} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Emergency Contact</label>
-                  <input type="tel" className="form-control" name="emergency_contact" value={formData.emergency_contact} onChange={handleInputChange} />
-                </div>
-
-                <div className="form-group" style={{ gridColumn: 'span 3' }}>
-                  <label>Address</label>
-                  <textarea className="form-control" name="address" value={formData.address} onChange={handleInputChange} rows="3" style={{ resize: 'vertical' }}></textarea>
                 </div>
               </div>
             </form>
@@ -289,7 +327,7 @@ export default function DriverList() {
                   <th>Name</th>
                   <th>Phone</th>
                   <th>License</th>
-                  <th>Qualification</th>
+                  <th>Assigned Vehicle</th>
                   <th style={{ textAlign: 'right' }}>Experience</th>
                   <th style={{ textAlign: 'center' }}>Status</th>
                   <th style={{ textAlign: 'center' }}>Actions</th>
@@ -306,7 +344,7 @@ export default function DriverList() {
                       <td style={{ fontWeight: 600 }}>{d.driver_name}</td>
                       <td><div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={14} color="var(--primary)" /> {d.phone_number}</div></td>
                       <td>{d.driver_license}</td>
-                      <td><span style={{ background: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700, color: '#3b82f6' }}>{d.qualification}</span></td>
+                      <td>{vehicles.find(v => v.id === d.assigned_vehicle_id)?.vehicle_number || '-'}</td>
                       <td style={{ textAlign: 'right' }}>{Number(d.years_of_experience || 0)} yrs</td>
                       <td style={{ textAlign: 'center' }}>
                         <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: d.status === 'Active' ? '#d1fae5' : d.status === 'On Leave' ? '#fef3c7' : '#fee2e2', color: d.status === 'Active' ? '#065f46' : d.status === 'On Leave' ? '#92400e' : '#7f1d1d' }}>
@@ -350,12 +388,9 @@ export default function DriverList() {
                 <DetailRow label="Phone" value={selectedViewDriver.phone_number} />
                 <DetailRow label="License" value={selectedViewDriver.driver_license} />
                 <DetailRow label="License Expiry" value={selectedViewDriver.license_expiry_date} />
-                <DetailRow label="Qualification" value={selectedViewDriver.qualification} />
+                <DetailRow label="Assigned Vehicle" value={vehicles.find(v => v.id === selectedViewDriver.assigned_vehicle_id)?.vehicle_number || '-'} />
                 <DetailRow label="Experience" value={`${Number(selectedViewDriver.years_of_experience || 0)} years`} />
                 <DetailRow label="Status" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>{selectedViewDriver.status}</span>} />
-                <DetailRow label="Aadhar" value={selectedViewDriver.aadhar_number || '-'} />
-                <DetailRow label="Emergency Contact" value={selectedViewDriver.emergency_contact || '-'} />
-                <DetailRow label="Address" value={selectedViewDriver.address || '-'} />
               </div>
             </div>
           </div>

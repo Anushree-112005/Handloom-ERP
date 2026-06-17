@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { Calendar, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
 import { ppcAPI, buyerOrderAPI, subMasterAPI } from '../../services/api';
 
 export default function StartDatePlanning() {
@@ -12,6 +12,7 @@ export default function StartDatePlanning() {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
+    id: null,
     schedule_id: '',
     order_id: '',
     loom_id: '',
@@ -149,19 +150,59 @@ export default function StartDatePlanning() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await subMasterAPI.create('ppc_start_end_plan', {
+      const payload = {
         name: formData.schedule_id,
         code: formData.order_id,
         extra_field_1: `${formData.planned_start} to ${formData.planned_end}`,
         extra_field_2: `Buffer: ${formData.buffer_days} days`,
         description: `Loom: ${formData.loom_id} | Runtime: ${formData.runtime_days} days`,
         is_active: true
-      });
+      };
+
+      if (formData.id) {
+        await subMasterAPI.update('ppc_start_end_plan', formData.id, payload);
+      } else {
+        await subMasterAPI.create('ppc_start_end_plan', payload);
+      }
       setIsFormOpen(false);
       fetchData();
     } catch (err) {
       console.error(err);
       alert('Error creating schedule.');
+    }
+  };
+
+  const handleEdit = (record) => {
+    // Parse description/extra fields back into form data roughly
+    const loomMatch = record.description?.match(/Loom: (.*?) \|/);
+    const runtimeMatch = record.description?.match(/Runtime: (.*?) days/);
+    const startEndMatch = record.extra_field_1?.split(' to ');
+    const bufferMatch = record.extra_field_2?.match(/Buffer: (.*?) days/);
+
+    setFormData({
+      id: record.id,
+      schedule_id: record.name,
+      order_id: record.code,
+      loom_id: loomMatch ? loomMatch[1] : '',
+      allocated_meters: '', // Would need to re-fetch to be exact
+      daily_production: '',
+      runtime_days: runtimeMatch ? runtimeMatch[1] : '',
+      planned_start: startEndMatch ? startEndMatch[0] : new Date().toISOString().split('T')[0],
+      planned_end: startEndMatch ? startEndMatch[1] : '',
+      delivery_date: '', // Re-fetch
+      buffer_days: bufferMatch ? bufferMatch[1] : ''
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this schedule?')) return;
+    try {
+      await subMasterAPI.delete('ppc_start_end_plan', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete schedule');
     }
   };
 
@@ -184,6 +225,7 @@ export default function StartDatePlanning() {
             className="btn btn-primary" 
             onClick={() => {
               setFormData({
+                id: null,
                 schedule_id: `SC-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
                 order_id: '', loom_id: '', allocated_meters: '', daily_production: '',
                 runtime_days: '', planned_start: new Date().toISOString().split('T')[0],
@@ -315,19 +357,33 @@ export default function StartDatePlanning() {
                   <th>Order ID</th>
                   <th>Dates</th>
                   <th>Buffer / Details</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
                     <td style={{ fontWeight: 600 }}>{record.name}</td>
                     <td><span style={{ color: '#ec4899', fontWeight: 600 }}>{record.code}</span></td>
                     <td>{record.extra_field_1}</td>
                     <td>{record.extra_field_2} ({record.description})</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
