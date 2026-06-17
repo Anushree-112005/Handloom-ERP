@@ -17,7 +17,7 @@ pipeline {
 
         // ── VM Deployment Target ────────────────────────────────────────────
         VM_USER    = "cubeai"                            // your-vm-username
-        VM_HOST    = "192.168.1.65"                     // your.vm.ip.address
+        VM_HOST    = "192.168.1.53"                     // your.vm.ip.address
         VM_APP_DIR = "/home/cubeai/dinesh-tex-deploy"    // /home/your-vm-username/your-project-name
 
         // ── Git Configuration ───────────────────────────────────────────────
@@ -38,7 +38,7 @@ pipeline {
     stages {
 
         // ── 1. Verify SSH to VM ─────────────────────────────────────────────
-        stage('Verify VM SSH Connection') {
+        stage('🔌 Verify VM SSH Connection') {
             steps {
                 echo '🔌 Testing SSH connection to VM...'
                 withCredentials([sshUserPrivateKey(
@@ -54,7 +54,7 @@ pipeline {
         }
 
         // ── 2. Checkout Source Code ─────────────────────────────────────────
-        stage('Checkout Code') {
+        stage('📥 Checkout Code') {
             steps {
                 echo '📥 Fetching source code...'
                 git branch: "${GIT_BRANCH}",
@@ -64,7 +64,7 @@ pipeline {
         }
 
         // ── 3. Build & Push Backend ─────────────────────────────────────────
-        stage('Build & Push Backend Image') {
+        stage('🐳 Build & Push Backend Image') {
             steps {
                 echo '🐳 Building backend Docker image...'
                 dir("${BACKEND_DIR}") {
@@ -84,7 +84,7 @@ pipeline {
         }
 
         // ── 4. Build & Push Frontend ────────────────────────────────────────
-        stage('Build & Push Frontend Image') {
+        stage('🐳 Build & Push Frontend Image') {
             steps {
                 echo '🐳 Building frontend Docker image...'
                 dir("${FRONTEND_DIR}") {
@@ -104,7 +104,7 @@ pipeline {
         }
 
         // ── 5. Sync Files to VM ─────────────────────────────────────────────
-        stage('Copy Config to VM') {
+        stage('📂 Copy Config to VM') {
             steps {
                 echo '📂 Copying project files to VM...'
                 withCredentials([
@@ -136,7 +136,7 @@ pipeline {
         }
 
         // ── 6. Pull Images & Deploy on VM ───────────────────────────────────
-        stage('Deploy to VM') {
+        stage('🚀 Deploy to VM') {
             steps {
                 echo '🚀 Deploying application on VM...'
                 withCredentials([
