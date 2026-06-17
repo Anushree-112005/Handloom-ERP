@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, datetime
+import os, uuid
 
 from app.core.database import get_db
 from app.models.design_entry import DesignEntry
@@ -42,6 +43,9 @@ class DesignEntryBase(BaseModel):
     packing_less: Optional[float] = 0.0
     weight_grm: Optional[float] = 0.0
     dyeing_loss_pct: Optional[float] = 0.0
+    yarn_details: Optional[str] = None
+    fabric_design_details: Optional[str] = None
+    image_path: Optional[str] = None
 
 class DesignEntryCreate(DesignEntryBase):
     pass
@@ -105,3 +109,26 @@ async def delete_design_entry(entry_id: int, db: AsyncSession = Depends(get_db))
     await db.delete(entry)
     await db.commit()
     return None
+
+@router.post("/{entry_id}/upload-image")
+async def upload_design_entry_image(entry_id: int, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(DesignEntry).where(DesignEntry.id == entry_id))
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Design Entry not found")
+
+    UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "uploads", "designs")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    ext = os.path.splitext(file.filename)[1] or ".png"
+    filename = f"{entry.ds_ref_no}_{uuid.uuid4().hex[:8]}{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    content = await file.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    entry.image_path = f"/uploads/designs/{filename}"
+    await db.commit()
+    await db.refresh(entry)
+
+    return {"image_path": entry.image_path, "filename": filename}

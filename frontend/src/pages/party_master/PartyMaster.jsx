@@ -71,6 +71,9 @@ export default function PartyMaster() {
   const [isCustomDeliverParty, setIsCustomDeliverParty] = useState(false);
   const [customDeliverPartyVal, setCustomDeliverPartyVal] = useState('');
 
+  const [isCustomBuyerName, setIsCustomBuyerName] = useState(false);
+  const [customBuyerNameVal, setCustomBuyerNameVal] = useState('');
+
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
 
@@ -97,7 +100,9 @@ export default function PartyMaster() {
     gst_no: '', gst_type: '', pan_no: '', tds: '', tds_percent: 0,
     pc_id: '', merchandiser: '', manager: '', credit_days: 30,
     credit_limit: 0, account_incharge: '', deliver_party_name: '',
-    payment_terms: '', transport_name: '', delivery_address: '', agent_name: '', buyer_name: ''
+    payment_terms: '', transport_name: '', delivery_address: '', agent_name: '', buyer_name: '',
+    address_type: 'Bill',
+    addresses: []
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -129,7 +134,11 @@ export default function PartyMaster() {
       const sanitizedParty = Object.fromEntries(
         Object.entries(party).map(([k, v]) => [k, v === null ? '' : v])
       );
-      setFormData(sanitizedParty);
+      setFormData({
+        ...sanitizedParty,
+        address_type: party.address_type || 'Bill',
+        addresses: party.addresses || []
+      });
       setEditingId(party.id);
     } else {
       setFormData(initialForm);
@@ -639,6 +648,29 @@ export default function PartyMaster() {
     } catch (err) { console.error("Failed to add custom Delivery Party", err); }
   };
 
+  const handleSaveCustomBuyer = async () => {
+    if (!customBuyerNameVal.trim()) return;
+    try {
+      await subMasterAPI.create('buyer', { 
+        entity: 'buyer', 
+        name: customBuyerNameVal.trim(), 
+        is_active: true 
+      });
+      setOptions(prev => ({
+        ...prev,
+        masters: {
+          ...prev.masters,
+          buyer: [...(prev.masters.buyer || []), customBuyerNameVal.trim()]
+        }
+      }));
+      setFormData(prev => ({ ...prev, buyer_name: customBuyerNameVal.trim() }));
+      setIsCustomBuyerName(false);
+      setCustomBuyerNameVal('');
+    } catch (err) {
+      console.error("Failed to add custom Buyer Name", err);
+    }
+  };
+
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -655,6 +687,158 @@ export default function PartyMaster() {
   const renderOptions = (category) => {
     return (options.masters[category] || []).map(val => (
       <option key={val} value={val}>{val}</option>
+    ));
+  };
+
+  const renderMultipleAddressesSection = () => {
+    return (formData.addresses || []).map((addr, idx) => (
+      <div key={idx} style={{ marginTop: 24, borderTop: '1px dashed var(--border)', paddingTop: 24 }} className="animate-fade">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h5 style={{ color: 'var(--primary)', margin: 0, fontSize: 14, fontWeight: 700 }}>
+            Additional Address #{idx + 1}
+          </h5>
+          {!isReadOnly && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ padding: '4px 12px', fontSize: 12, color: 'var(--danger, #ef4444)', borderColor: 'var(--border)', display: 'flex', alignItems: 'center', gap: 4 }}
+              onClick={() => {
+                const updated = formData.addresses.filter((_, i) => i !== idx);
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+            >
+              <X size={12} /> Remove Address
+            </button>
+          )}
+        </div>
+        <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="form-group">
+            <label>Address Type</label>
+            <select
+              className="form-control"
+              value={addr.address_type || 'Bill'}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].address_type = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            >
+              <option value="Bill">Bill</option>
+              <option value="Ship">Ship</option>
+              <option value="Branch">Branch</option>
+              <option value="Head Office">Head Office</option>
+            </select>
+          </div>
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <label>Complete Address</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.address || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].address = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group">
+            <label>State</label>
+            <select
+              className="form-control"
+              value={addr.state || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].state = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            >
+              <option value="">-- Select State --</option>
+              {renderOptions('state')}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>City</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.city || ''}
+              placeholder="Enter City"
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].city = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group">
+            <label>District</label>
+            <select
+              className="form-control"
+              value={addr.district || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].district = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            >
+              <option value="">-- Select District --</option>
+              {renderOptions('district')}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Pincode</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.pin_code || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].pin_code = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group">
+            <label>Sales Region</label>
+            <select
+              className="form-control"
+              value={addr.sales_region || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].sales_region = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            >
+              <option value="">-- Select Sales Region --</option>
+              {renderOptions('sales_region')}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Country</label>
+            <select
+              className="form-control"
+              value={addr.country || 'India'}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].country = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            >
+              <option value="">-- Select Country --</option>
+              {renderOptions('country')}
+            </select>
+          </div>
+        </div>
+      </div>
     ));
   };
 
@@ -884,7 +1068,38 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Buyer Name</label>
-                        <input className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleChange} placeholder="Enter Buyer Name" />
+                        {isCustomBuyerName ? (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              autoFocus
+                              className="form-control" 
+                              placeholder="Type new Buyer..."
+                              value={customBuyerNameVal}
+                              onChange={(e) => setCustomBuyerNameVal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveCustomBuyer();
+                                }
+                              }}
+                            />
+                            <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomBuyer} title="Save">
+                              <CheckCircle size={16} />
+                            </button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomBuyerName(false); setFormData(prev => ({ ...prev, buyer_name: '' })); }} title="Cancel">
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <select className="form-control" name="buyer_name" value={formData.buyer_name} onChange={handleChange}>
+                            <option value="">-- Select Buyer --</option>
+                            {formData.buyer_name && !(options.masters['buyer'] || []).includes(formData.buyer_name) && (
+                              <option value={formData.buyer_name}>{formData.buyer_name}</option>
+                            )}
+                            {renderOptions('buyer')}
+                            <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
+                          </select>
+                        )}
                       </div>
                       <div className="form-group">
                         <label>Customer Grade</label>
@@ -939,10 +1154,39 @@ export default function PartyMaster() {
                     </div>
 
                     {/* Section 2: Location & Address */}
-                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
-                      Location & Address
-                    </h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                      <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+                        Location & Address
+                      </h4>
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 12px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
+                          onClick={() => {
+                            const newAddress = {
+                              address: '', city: '', district: '', state: '', state_code: '', pin_code: '', country: 'India', sales_region: '', address_type: 'Delivery'
+                            };
+                            setFormData(prev => ({
+                              ...prev,
+                              addresses: [...(prev.addresses || []), newAddress]
+                            }));
+                          }}
+                        >
+                          <Plus size={14} /> Add Address
+                        </button>
+                      )}
+                    </div>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Address Type</label>
+                        <select className="form-control" name="address_type" value={formData.address_type || 'Bill'} onChange={handleChange}>
+                          <option value="Bill">Bill</option>
+                          <option value="Ship">Ship</option>
+                          <option value="Branch">Branch</option>
+                          <option value="Head Office">Head Office</option>
+                        </select>
+                      </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>Complete Address</label>
                         <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
@@ -1090,6 +1334,8 @@ export default function PartyMaster() {
                         )}
                       </div>
                     </div>
+
+                    {renderMultipleAddressesSection()}
 
                     {/* Section 3: Tax & Legal Info */}
                     <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
@@ -1468,55 +1714,90 @@ export default function PartyMaster() {
 
                 {/* Group 2: Location & Address */}
                 {activeTab === 'location' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Complete Address</label>
-                  <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>State</label>
-                  <select className="form-control" name="state" value={formData.state} onChange={handleChange}>
-                    <option value="">-- Select State --</option>
-                    {renderOptions('state')}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>City</label>
-                  <input 
-                    className="form-control" 
-                    name="city" 
-                    value={formData.city} 
-                    onChange={handleChange} 
-                    placeholder="Enter City" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>District</label>
-                  <select className="form-control" name="district" value={formData.district} onChange={handleChange}>
-                    <option value="">-- Select District --</option>
-                    {renderOptions('district')}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Pincode</label>
-                  <input className="form-control" name="pin_code" value={formData.pin_code} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label>Sales Region</label>
-                  <select className="form-control" name="sales_region" value={formData.sales_region} onChange={handleChange}>
-                    <option value="">-- Select Zone --</option>
-                    {renderOptions('sales_region')}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Country</label>
-                  <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gst_no')}>
-                    <option value="">-- Select Country --</option>
-                    {renderOptions('country')}
-                  </select>
-                </div>
-              </div>
-            )}
+                  <div className="animate-fade">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                      <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
+                        Location & Address
+                      </h4>
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 12px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
+                          onClick={() => {
+                            const newAddress = {
+                              address: '', city: '', district: '', state: '', state_code: '', pin_code: '', country: 'India', sales_region: '', address_type: 'Delivery'
+                            };
+                            setFormData(prev => ({
+                              ...prev,
+                              addresses: [...(prev.addresses || []), newAddress]
+                            }));
+                          }}
+                        >
+                          <Plus size={14} /> Add Address
+                        </button>
+                      )}
+                    </div>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Address Type</label>
+                        <select className="form-control" name="address_type" value={formData.address_type || 'Bill'} onChange={handleChange}>
+                          <option value="Bill">Bill</option>
+                          <option value="Ship">Ship</option>
+                          <option value="Branch">Branch</option>
+                          <option value="Head Office">Head Office</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Complete Address</label>
+                        <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>State</label>
+                        <select className="form-control" name="state" value={formData.state} onChange={handleChange}>
+                          <option value="">-- Select State --</option>
+                          {renderOptions('state')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>City</label>
+                        <input 
+                          className="form-control" 
+                          name="city" 
+                          value={formData.city} 
+                          onChange={handleChange} 
+                          placeholder="Enter City" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>District</label>
+                        <select className="form-control" name="district" value={formData.district} onChange={handleChange}>
+                          <option value="">-- Select District --</option>
+                          {renderOptions('district')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Pincode</label>
+                        <input className="form-control" name="pin_code" value={formData.pin_code} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Sales Region</label>
+                        <select className="form-control" name="sales_region" value={formData.sales_region} onChange={handleChange}>
+                          <option value="">-- Select Zone --</option>
+                          {renderOptions('sales_region')}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Country</label>
+                        <select className="form-control" name="country" value={formData.country} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gst_no')}>
+                          <option value="">-- Select Country --</option>
+                          {renderOptions('country')}
+                        </select>
+                      </div>
+                    </div>
+                    {renderMultipleAddressesSection()}
+                  </div>
+                )}
 
             {/* Group 3: Tax & Legal Info */}
                 {activeTab === 'tax' && (
@@ -2051,11 +2332,28 @@ export default function PartyMaster() {
                 <DetailRow label="Email" value={selectedViewParty.email} />
 
                 <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</h4>
+                <DetailRow label="Address Type" value={selectedViewParty.address_type || 'Bill'} />
+                <DetailRow label="Address" value={selectedViewParty.address} />
                 <DetailRow label="City" value={selectedViewParty.city} />
                 <DetailRow label="District" value={selectedViewParty.district} />
                 <DetailRow label="State" value={selectedViewParty.state} />
                 <DetailRow label="Region" value={selectedViewParty.sales_region} />
                 <DetailRow label="Country" value={selectedViewParty.country} />
+
+                {selectedViewParty.addresses && selectedViewParty.addresses.length > 0 && (
+                  <>
+                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Other Addresses</h4>
+                    {selectedViewParty.addresses.map((addr, idx) => (
+                      <div key={idx} style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 8, fontSize: 12, background: 'var(--bg-primary)' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: 2 }}>{addr.address_type} Address</div>
+                        <div style={{ color: 'var(--text-primary)' }}>{addr.address}</div>
+                        <div style={{ color: 'var(--text-secondary)' }}>
+                          {addr.city}, {addr.district}, {addr.state} {addr.sales_region ? `(${addr.sales_region})` : ''} - {addr.pin_code}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
 
                 <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tax & Legal</h4>
                 <DetailRow label="GSTIN" value={selectedViewParty.gst_no} />

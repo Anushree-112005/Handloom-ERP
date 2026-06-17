@@ -11,7 +11,6 @@ import {
   TrendingUp,
   Activity,
   Calendar,
-  Radio,
   Clock,
   Power,
   Search
@@ -140,40 +139,6 @@ const FleetDashboard = () => {
             </div>
           );
         })}
-      </div>
-
-      {/* Premium Live Track Button Section */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-        <button
-          onClick={() => window.open('https://navilap.com/gps/', '_blank')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '16px 36px',
-            background: 'linear-gradient(135deg, var(--primary) 0%, #6366f1 100%)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: 50,
-            fontWeight: 700,
-            fontSize: 18,
-            cursor: 'pointer',
-            boxShadow: '0 8px 20px 0 rgba(79, 70, 229, 0.35)',
-            transition: 'all 0.2s ease-in-out'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 12px 24px 0 rgba(79, 70, 229, 0.5)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'none';
-            e.currentTarget.style.boxShadow = '0 8px 20px 0 rgba(79, 70, 229, 0.35)';
-          }}
-        >
-          <Radio size={22} className="animate-pulse" />
-          <span style={{ trackingWide: '0.05em' }}>Live Track</span>
-          <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: 12, marginLeft: 4 }}>GPS</span>
-        </button>
       </div>
 
       {/* Quick Actions Panel */}

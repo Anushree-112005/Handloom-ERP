@@ -472,7 +472,7 @@ export default function EmployeeMaster() {
             <button onClick={() => setFormTab('salary')} style={{ padding: '16px 20px', background: formTab === 'salary' ? '#fff' : 'transparent', border: 'none', borderBottom: formTab === 'salary' ? '3px solid var(--primary)' : '3px solid transparent', fontWeight: 600, color: formTab === 'salary' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}><IndianRupee size={16}/> Salary</button>
             <button onClick={() => setFormTab('education')} style={{ padding: '16px 20px', background: formTab === 'education' ? '#fff' : 'transparent', border: 'none', borderBottom: formTab === 'education' ? '3px solid var(--primary)' : '3px solid transparent', fontWeight: 600, color: formTab === 'education' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap size={16}/> Education & Exp.</button>
             <button onClick={() => setFormTab('bank')} style={{ padding: '16px 20px', background: formTab === 'bank' ? '#fff' : 'transparent', border: 'none', borderBottom: formTab === 'bank' ? '3px solid var(--primary)' : '3px solid transparent', fontWeight: 600, color: formTab === 'bank' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}><Building size={16}/> Bank Details</button>
-            <button onClick={() => setFormTab('flags')} style={{ padding: '16px 20px', background: formTab === 'flags' ? '#fff' : 'transparent', border: 'none', borderBottom: formTab === 'flags' ? '3px solid var(--primary)' : '3px solid transparent', fontWeight: 600, color: formTab === 'flags' ? 'var(--primary)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}><ShieldAlert size={16}/> Status & Flags</button>
+
           </div>
 
           <form id="empForm" onSubmit={handleSubmit} style={{ padding: 32 }}>
@@ -1272,74 +1272,13 @@ export default function EmployeeMaster() {
                     </div>
                     <div className="form-group">
                       <label>Gratuity Nominee</label>
-                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'flags', 'status')} />
+                      <input className="form-control" name="gratuity_nominee" value={formData.gratuity_nominee} onChange={handleChange} />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* STATUS & FLAGS */}
-              {formTab === 'flags' && (
-                <div className="animate-fade">
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 24 }}>
-                    <div className="form-group">
-                      <label>Employment Status</label>
-                      {isCustomStatus ? (
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <input 
-                            autoFocus
-                            className="form-control" 
-                            placeholder="Type Status..."
-                            value={customStatusVal}
-                            onChange={(e) => setCustomStatusVal(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleSaveCustomStatus();
-                              }
-                            }}
-                          />
-                          <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomStatus} title="Save">
-                            <CheckCircle size={16} />
-                          </button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomStatus(false); setFormData(prev => ({ ...prev, status: '' })); }} title="Cancel">
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="status" value={formData.status} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {statuses.map(st => <option key={st} value={st}>{st}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>ERP Login Password {editingId && '(Optional: Leave blank to keep current)'}</label>
-                      <input type="password" className="form-control" name="password" value={formData.password} onChange={handleChange} />
-                    </div>
-                  </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                      <input type="checkbox" name="biometric_link" checked={formData.biometric_link} onChange={handleChange} style={{ width: 18, height: 18 }} />
-                      <span style={{ fontWeight: 500 }}>Biometric Linked</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                      <input type="checkbox" name="canteen" checked={formData.canteen} onChange={handleChange} style={{ width: 18, height: 18 }} />
-                      <span style={{ fontWeight: 500 }}>Canteen Facility</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                      <input type="checkbox" name="transport" checked={formData.transport} onChange={handleChange} style={{ width: 18, height: 18 }} />
-                      <span style={{ fontWeight: 500 }}>Transport Facility</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: 12, background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                      <input type="checkbox" name="accommodation" checked={formData.accommodation} onChange={handleChange} style={{ width: 18, height: 18 }} />
-                      <span style={{ fontWeight: 500 }}>Accommodation</span>
-                    </label>
-                  </div>
-                </div>
-              )}
 
             </fieldset>
           </form>

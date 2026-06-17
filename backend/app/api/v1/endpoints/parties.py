@@ -6,10 +6,26 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
+from sqlalchemy.orm import selectinload
 from app.core.database import get_db
-from app.models.party_master import PartyMaster
+from app.models.party_master import PartyMaster, PartyAddress
 
 router = APIRouter(prefix="/parties", tags=["Party Master"])
+
+class PartyAddressSchema(BaseModel):
+    id: Optional[int] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    district: Optional[str] = None
+    state: Optional[str] = None
+    state_code: Optional[str] = None
+    pin_code: Optional[str] = None
+    country: Optional[str] = "India"
+    sales_region: Optional[str] = None
+    address_type: Optional[str] = "Bill"
+
+    class Config:
+        from_attributes = True
 
 class PartyMasterBase(BaseModel):
     party_type: str
@@ -17,6 +33,7 @@ class PartyMasterBase(BaseModel):
     customer_grade: Optional[str] = None
     status: Optional[str] = "Active"
     party_group: Optional[str] = None
+    address_type: Optional[str] = "Bill"
     address: Optional[str] = None
     state_code: Optional[str] = None
     pin_code: Optional[str] = None
@@ -55,6 +72,7 @@ class PartyMasterBase(BaseModel):
     bank_name: Optional[str] = None
     bank_account: Optional[str] = None
     ifsc_code: Optional[str] = None
+    addresses: Optional[List[PartyAddressSchema]] = []
 
 class PartyMasterCreate(PartyMasterBase):
     pass
@@ -73,7 +91,7 @@ class PartyMasterOut(PartyMasterBase):
 
 @router.get("/", response_model=List[PartyMasterOut])
 async def list_parties(skip: int = 0, limit: int = 100, party_type: Optional[str] = None, db: AsyncSession = Depends(get_db)):
-    q = select(PartyMaster)
+    q = select(PartyMaster).options(selectinload(PartyMaster.addresses))
     if party_type:
         q = q.where(PartyMaster.party_type == party_type)
     q = q.offset(skip).limit(limit)
@@ -87,25 +105,56 @@ async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_
     max_id = max_id_q.scalar() or 0
     customer_code = f"{max_id + 2401}"
 
-    db_party = PartyMaster(**party.model_dump(), customer_code=customer_code)
+    party_data = party.model_dump()
+    addresses_data = party_data.pop("addresses", []) or []
+
+    db_party = PartyMaster(**party_data, customer_code=customer_code)
+    for addr in addresses_data:
+        db_party.addresses.append(PartyAddress(**addr))
+
     db.add(db_party)
     await db.commit()
     await db.refresh(db_party)
-    return db_party
+    
+    # Reload party with addresses
+    result = await db.execute(
+        select(PartyMaster).options(selectinload(PartyMaster.addresses)).where(PartyMaster.id == db_party.id)
+    )
+    return result.scalar_one()
 
 @router.put("/{party_id}", response_model=PartyMasterOut)
 async def update_party(party_id: int, party: PartyMasterUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(PartyMaster).where(PartyMaster.id == party_id))
+    result = await db.execute(
+        select(PartyMaster).options(selectinload(PartyMaster.addresses)).where(PartyMaster.id == party_id)
+    )
     db_party = result.scalar_one_or_none()
     if not db_party:
         raise HTTPException(status_code=404, detail="Party not found")
 
-    for key, value in party.model_dump(exclude_unset=True).items():
+    party_data = party.model_dump(exclude_unset=True)
+    addresses_data = party_data.pop("addresses", None)
+
+    for key, value in party_data.items():
         setattr(db_party, key, value)
+
+    if addresses_data is not None:
+        # Delete existing addresses
+        for addr in db_party.addresses:
+            await db.delete(addr)
+        db_party.addresses = []
+        # Add new addresses
+        for addr in addresses_data:
+            addr.pop("id", None)
+            db_party.addresses.append(PartyAddress(**addr))
         
     await db.commit()
     await db.refresh(db_party)
-    return db_party
+    
+    # Reload party with addresses
+    result = await db.execute(
+        select(PartyMaster).options(selectinload(PartyMaster.addresses)).where(PartyMaster.id == party_id)
+    )
+    return result.scalar_one()
 
 @router.get("/stats/summary")
 async def party_summary(db: AsyncSession = Depends(get_db)):
@@ -115,7 +164,9 @@ async def party_summary(db: AsyncSession = Depends(get_db)):
 
 @router.get("/{party_id}", response_model=PartyMasterOut)
 async def get_party(party_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(PartyMaster).where(PartyMaster.id == party_id))
+    result = await db.execute(
+        select(PartyMaster).options(selectinload(PartyMaster.addresses)).where(PartyMaster.id == party_id)
+    )
     db_party = result.scalar_one_or_none()
     if not db_party:
         raise HTTPException(status_code=404, detail="Party not found")

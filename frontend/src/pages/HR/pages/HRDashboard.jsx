@@ -92,13 +92,6 @@ const HRDashboard = () => {
         <p className="text-xs md:text-sm text-slate-500">Manage your workforce lifecycle</p>
       </div>
 
-      {/* Quick Actions - Mobile First */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <QuickAction icon={Plus} label="New Job" onClick={() => navigate('/hr/requisitions')} />
-        <QuickAction icon={UserPlus} label="Add Candidate" onClick={() => navigate('/hr/recruitment')} color="emerald" />
-        <QuickAction icon={FileText} label="Payroll" onClick={() => navigate('/hr/payroll')} color="amber" />
-        <QuickAction icon={Calendar} label="Attendance" onClick={() => navigate('/hr/attendance')} color="blue" />
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

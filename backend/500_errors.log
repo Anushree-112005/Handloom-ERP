@@ -16279,6 +16279,57 @@ Traceback (most recent call last):
 ModuleNotFoundError: No module named 'pycountry'
 
 
+<<<<<<< HEAD
+Global Error on http://localhost:8000/api/v1/parties/: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column party_addresses.state_code does not exist
+[SQL: SELECT party_addresses.party_id AS party_addresses_party_id, party_addresses.id AS party_addresses_id, party_addresses.address AS party_addresses_address, party_addresses.city AS party_addresses_city, party_addresses.district AS party_addresses_district, party_addresses.state AS party_addresses_state, party_addresses.state_code AS party_addresses_state_code, party_addresses.pin_code AS party_addresses_pin_code, party_addresses.country AS party_addresses_country, party_addresses.address_type AS party_addresses_address_type 
+FROM party_addresses 
+WHERE party_addresses.party_id IN ($1::INTEGER)]
+[parameters: (4,)]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 514, in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 760, in _prepare
+    prepared_stmt = await self._connection.prepare(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 636, in prepare
+    return await self._prepare(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 654, in _prepare
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 433, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 166, in prepare
+asyncpg.exceptions.UndefinedColumnError: column party_addresses.state_code does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.UndefinedColumnError'>: column party_addresses.state_code does not exist
+
+The above exception was the direct cause of the following exception:
+=======
 Global Error on http://localhost:8000/api/v1/fleet/vehicles: 2 validation errors:
   {'type': 'string_type', 'loc': ('response', 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
   {'type': 'string_type', 'loc': ('response', 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
@@ -16346,6 +16397,7 @@ Global Error on http://localhost:8000/api/v1/fleet/vehicles: 2 validation errors
     +------------------------------------
 
 During handling of the above exception, another exception occurred:
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
 
 Traceback (most recent call last):
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
@@ -16361,7 +16413,11 @@ Traceback (most recent call last):
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
     response = await self.dispatch_func(request, call_next)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<<<<<<< HEAD
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 153, in dispatch
+=======
   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
     response = await call_next(request)
                ^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
@@ -16389,6 +16445,146 @@ Traceback (most recent call last):
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
     response = await f(request)
                ^^^^^^^^^^^^^^^^
+<<<<<<< HEAD
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/parties.py", line 96, in list_parties
+    result = await db.execute(q)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 461, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 308, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 600, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 261, in instances
+    _prebuffered = list(chunks(None))
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 246, in chunks
+    post_load.invoke(context, path)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1560, in invoke
+    loader(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/strategies.py", line 3270, in _load_for_path
+    self._load_via_parent(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/strategies.py", line 3346, in _load_via_parent
+    context.session.execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 305, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column party_addresses.state_code does not exist
+[SQL: SELECT party_addresses.party_id AS party_addresses_party_id, party_addresses.id AS party_addresses_id, party_addresses.address AS party_addresses_address, party_addresses.city AS party_addresses_city, party_addresses.district AS party_addresses_district, party_addresses.state AS party_addresses_state, party_addresses.state_code AS party_addresses_state_code, party_addresses.pin_code AS party_addresses_pin_code, party_addresses.country AS party_addresses_country, party_addresses.address_type AS party_addresses_address_type 
+FROM party_addresses 
+WHERE party_addresses.party_id IN ($1::INTEGER)]
+[parameters: (4,)]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+
+
+Global Error on http://localhost:8000/api/v1/parties/: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column party_addresses.state_code does not exist
+[SQL: SELECT party_addresses.party_id AS party_addresses_party_id, party_addresses.id AS party_addresses_id, party_addresses.address AS party_addresses_address, party_addresses.city AS party_addresses_city, party_addresses.district AS party_addresses_district, party_addresses.state AS party_addresses_state, party_addresses.state_code AS party_addresses_state_code, party_addresses.pin_code AS party_addresses_pin_code, party_addresses.country AS party_addresses_country, party_addresses.address_type AS party_addresses_address_type 
+FROM party_addresses 
+WHERE party_addresses.party_id IN ($1::INTEGER)]
+[parameters: (4,)]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 514, in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 760, in _prepare
+    prepared_stmt = await self._connection.prepare(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 636, in prepare
+    return await self._prepare(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 654, in _prepare
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 433, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 166, in prepare
+asyncpg.exceptions.UndefinedColumnError: column party_addresses.state_code does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.UndefinedColumnError'>: column party_addresses.state_code does not exist
+
+The above exception was the direct cause of the following exception:
+=======
   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
     content = await serialize_response(
               ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -16467,6 +16663,7 @@ Global Error on http://localhost:8000/api/v1/fleet/vehicles: 2 validation errors
     +------------------------------------
 
 During handling of the above exception, another exception occurred:
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
 
 Traceback (most recent call last):
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
@@ -16482,7 +16679,11 @@ Traceback (most recent call last):
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
     response = await self.dispatch_func(request, call_next)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<<<<<<< HEAD
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 153, in dispatch
+=======
   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
     response = await call_next(request)
                ^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
@@ -16510,6 +16711,354 @@ Traceback (most recent call last):
   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
     response = await f(request)
                ^^^^^^^^^^^^^^^^
+<<<<<<< HEAD
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/parties.py", line 96, in list_parties
+    result = await db.execute(q)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 461, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 308, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 600, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 261, in instances
+    _prebuffered = list(chunks(None))
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 246, in chunks
+    post_load.invoke(context, path)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/loading.py", line 1560, in invoke
+    loader(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/strategies.py", line 3270, in _load_for_path
+    self._load_via_parent(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/strategies.py", line 3346, in _load_via_parent
+    context.session.execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2247, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 305, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column party_addresses.state_code does not exist
+[SQL: SELECT party_addresses.party_id AS party_addresses_party_id, party_addresses.id AS party_addresses_id, party_addresses.address AS party_addresses_address, party_addresses.city AS party_addresses_city, party_addresses.district AS party_addresses_district, party_addresses.state AS party_addresses_state, party_addresses.state_code AS party_addresses_state_code, party_addresses.pin_code AS party_addresses_pin_code, party_addresses.country AS party_addresses_country, party_addresses.address_type AS party_addresses_address_type 
+FROM party_addresses 
+WHERE party_addresses.party_id IN ($1::INTEGER)]
+[parameters: (4,)]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+
+
+Global Error on http://127.0.0.1:8000/api/v1/parties/: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column "state_code" of relation "party_addresses" does not exist
+[SQL: INSERT INTO party_addresses (party_id, address, city, district, state, state_code, pin_code, country, address_type) SELECT p0::INTEGER, p1::VARCHAR, p2::VARCHAR, p3::VARCHAR, p4::VARCHAR, p5::VARCHAR, p6::VARCHAR, p7::VARCHAR, p8::VARCHAR FROM (VALUE ... 293 characters truncated ...  p7, p8, sen_counter) ORDER BY sen_counter RETURNING party_addresses.id, party_addresses.id AS id__1]
+[parameters: (7, '123 Spinning Mill Road', 'Coimbatore', 'Coimbatore', 'Tamil Nadu', '33', '641001', 'India', 'Billing', 7, 'Warehouse Block B, NH-47', 'Tiruppur', 'Tiruppur', 'Tamil Nadu', '33', '641601', 'India', 'Delivery')]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 514, in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 760, in _prepare
+    prepared_stmt = await self._connection.prepare(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 636, in prepare
+    return await self._prepare(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 654, in _prepare
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 433, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 166, in prepare
+asyncpg.exceptions.UndefinedColumnError: column "state_code" of relation "party_addresses" does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2118, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.UndefinedColumnError'>: column "state_code" of relation "party_addresses" does not exist
+
+The above exception was the direct cause of the following exception:
+=======
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    content = await serialize_response(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 2 validation errors:
+  {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
+  {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
+
+
+
+Global Error on http://localhost:8000/api/v1/fleet/vehicles: 2 validation errors:
+  {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
+  {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
+
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    |     raise app_exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
+    |     content = await serialize_response(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 2 validation errors:
+    |   {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
+    |   {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<<<<<<< HEAD
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 153, in dispatch
+=======
+  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+<<<<<<< HEAD
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/parties.py", line 114, in create_party
+    await db.commit()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1143, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1844, in _execute_context
+    return self._exec_insertmany_context(dialect, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2126, in _exec_insertmany_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2118, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedColumnError'>: column "state_code" of relation "party_addresses" does not exist
+[SQL: INSERT INTO party_addresses (party_id, address, city, district, state, state_code, pin_code, country, address_type) SELECT p0::INTEGER, p1::VARCHAR, p2::VARCHAR, p3::VARCHAR, p4::VARCHAR, p5::VARCHAR, p6::VARCHAR, p7::VARCHAR, p8::VARCHAR FROM (VALUE ... 293 characters truncated ...  p7, p8, sen_counter) ORDER BY sen_counter RETURNING party_addresses.id, party_addresses.id AS id__1]
+[parameters: (7, '123 Spinning Mill Road', 'Coimbatore', 'Coimbatore', 'Tamil Nadu', '33', '641001', 'India', 'Billing', 7, 'Warehouse Block B, NH-47', 'Tiruppur', 'Tiruppur', 'Tamil Nadu', '33', '641601', 'India', 'Delivery')]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+=======
   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
     content = await serialize_response(
               ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18334,127 +18883,7 @@ fastapi.exceptions.ResponseValidationError: 2 validation errors:
   {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
   {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
 
-
-
-Global Error on http://localhost:8000/api/v1/fleet/vehicles: 2 validation errors:
-  {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
-  {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
-
-  + Exception Group Traceback (most recent call last):
-  |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
-  |     yield
-  |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |   File "/home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
-  |     raise BaseExceptionGroup(
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
-    |     with collapse_excgroups():
-    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
-    |     self.gen.throw(value)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
-    |     raise exc
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
-    |     response = await call_next(request)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
-    |     raise app_exc
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    |     raise exc
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
-    |     await route.handle(scope, receive, send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
-    |     await self.app(scope, receive, send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    |     raise exc
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
-    |     content = await serialize_response(
-    |               ^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
-    |     raise ResponseValidationError(
-    | fastapi.exceptions.ResponseValidationError: 2 validation errors:
-    |   {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
-    |   {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
-    | 
-    +------------------------------------
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
-    await self.app(scope, receive, _send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
-    await self.app(scope, receive, send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
-    with collapse_excgroups():
-  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
-    self.gen.throw(value)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
-    raise exc
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
-    response = await self.dispatch_func(request, call_next)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/cubeai/Desktop/Dinesh/dinesh-tex/backend/app/main.py", line 153, in dispatch
-    response = await call_next(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
-    raise app_exc
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
-    await self.app(scope, receive_or_disconnect, send_no_error)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    raise exc
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    await app(scope, receive, sender)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
-    await route.handle(scope, receive, send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
-    await self.app(scope, receive, send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    raise exc
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    await app(scope, receive, sender)
-  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 327, in app
-    content = await serialize_response(
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 176, in serialize_response
-    raise ResponseValidationError(
-fastapi.exceptions.ResponseValidationError: 2 validation errors:
-  {'type': 'string_type', 'loc': ('response', 0, 'created_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
-  {'type': 'string_type', 'loc': ('response', 0, 'updated_at'), 'msg': 'Input should be a valid string', 'input': datetime.datetime(2026, 6, 16, 11, 38, 27, 838476)}
-
+>>>>>>> 1c27c14a12d2248fee0ac272a0c9385c750ff1f2
 
 
 Global Error on http://localhost:8000/api/v1/ppc/looms: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DataError'>: invalid input for query argument $5: datetime.datetime(2026, 6, 5, 0, 0, tzin... (can't subtract offset-naive and offset-aware datetimes)

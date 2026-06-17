@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Filter, LayoutList, LayoutGrid, CheckCircle, XCircle, Clock, DollarSign, Calendar, FileText, Upload, X, Save, Eye, Trash2, Edit2 } from 'lucide-react';
-import { fetchExpenseClaims, createExpenseClaim, updateExpenseClaim, deleteExpenseClaim, fetchEmployees } from '../../../services/hrService';
+import { fetchExpenseClaims, createExpenseClaim, updateExpenseClaim, deleteExpenseClaim, fetchEmployees, fetchTravelRequests } from '../../../services/hrService';
 
 const expenseCategories = ['Travel', 'Food & Meals', 'Accommodation', 'Office Supplies', 'Communication', 'Transportation', 'Training', 'Client Entertainment', 'Medical', 'Other'];
 
@@ -15,6 +15,7 @@ const statusColors = {
 export default function ExpenseClaims() {
   const [claims, setClaims] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [travelRequests, setTravelRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -33,8 +34,10 @@ export default function ExpenseClaims() {
     amount: '',
     currency: 'INR',
     receipt_number: '',
-    project: '',
-    cost_center: ''
+    travel_request_id: '',
+    travel_request_detail: null,
+    actual_expense_amount: '',
+    advance_amount_received: ''
   };
   const [form, setForm] = useState(initialForm);
 
@@ -45,12 +48,14 @@ export default function ExpenseClaims() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [claimsData, empData] = await Promise.all([
+      const [claimsData, empData, travelData] = await Promise.all([
         fetchExpenseClaims(),
-        fetchEmployees()
+        fetchEmployees(),
+        fetchTravelRequests().catch(() => [])
       ]);
       setClaims(claimsData);
       setEmployees(empData);
+      setTravelRequests(travelData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -68,7 +73,8 @@ export default function ExpenseClaims() {
       const payload = {
         ...form,
         employee_id: parseInt(form.employee_id),
-        amount: parseFloat(form.amount)
+        amount: parseFloat(form.amount),
+        status: form.status || 'Pending'
       };
 
       if (editingId) {
@@ -96,8 +102,11 @@ export default function ExpenseClaims() {
       amount: claim.amount,
       currency: claim.currency,
       receipt_number: claim.receipt_number || '',
-      project: claim.project || '',
-      cost_center: claim.cost_center || ''
+      travel_request_id: claim.travel_request_id || '',
+      travel_request_detail: claim.travel_request_detail || null,
+      actual_expense_amount: claim.actual_expense_amount !== undefined ? claim.actual_expense_amount : '',
+      advance_amount_received: claim.advance_amount_received !== undefined ? claim.advance_amount_received : '',
+      status: claim.status || 'Pending'
     });
     setEditingId(claim.id);
     setShowForm(true);
@@ -141,10 +150,10 @@ export default function ExpenseClaims() {
 
   const stats = {
     total: claims.length,
-    pending: claims.filter(c => c.status === 'Pending').length,
+    pending: claims.filter(c => (c.status || 'Pending') === 'Pending').length,
     approved: claims.filter(c => ['Manager Approved', 'Finance Approved'].includes(c.status)).length,
-    totalAmount: claims.reduce((sum, c) => sum + (c.amount || 0), 0),
-    paidAmount: claims.filter(c => c.status === 'Paid').reduce((sum, c) => sum + (c.amount || 0), 0)
+    totalAmount: claims.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0),
+    paidAmount: claims.filter(c => c.status === 'Paid').reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0)
   };
 
   return (
@@ -152,97 +161,25 @@ export default function ExpenseClaims() {
       {!showForm && (
         <>
           {/* HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-            <Receipt size={24} color="var(--primary)" /> Expense Claims
-          </h2>
-          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
-            {filteredClaims.length} Records
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-            >
-              <Filter size={14} />
-              Filter
-              {(filterStatus || filterCategory) && (
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />
-              )}
-            </button>
-            {showFilters && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 8, background: '#fff', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: 16, zIndex: 100, minWidth: 280 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Filters</span>
-                  <button
-                    onClick={() => { setFilterStatus(''); setFilterCategory(''); setShowFilters(false); }}
-                    style={{ fontSize: 12, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Status</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Manager Approved">Manager Approved</option>
-                      <option value="Finance Approved">Finance Approved</option>
-                      <option value="Rejected">Rejected</option>
-                      <option value="Paid">Paid</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Category</label>
-                    <select
-                      value={filterCategory}
-                      onChange={(e) => setFilterCategory(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Categories</option>
-                      {expenseCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                <Receipt size={24} color="var(--primary)" /> Expense Claims
+              </h2>
+              <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
+                {filteredClaims.length} Records
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+              >
+                <Plus size={14} /> New Claim
+              </button>
+            </div>
           </div>
-          <div style={{ display: 'flex', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: 2 }}>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{ padding: '6px 10px', background: viewMode === 'list' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-              title="List View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              style={{ padding: '6px 10px', background: viewMode === 'grid' ? '#fff' : 'transparent', border: 'none', borderRadius: 4, cursor: 'pointer', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-          <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <Plus size={14} /> New Claim
-          </button>
-        </div>
-      </div>
 
       {/* DATA AREA */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -303,7 +240,6 @@ export default function ExpenseClaims() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Claim ID</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employee</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Date</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Category</th>
@@ -313,45 +249,47 @@ export default function ExpenseClaims() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredClaims.map(claim => (
-                  <tr key={claim.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-semibold text-indigo-600">{claim.claim_id}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-800">{claim.employee_name}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{claim.expense_date}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{claim.category}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-800 text-right">₹{claim.amount?.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '4px 10px',
-                        borderRadius: 12,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        backgroundColor: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#10b98118' : claim.status === 'Manager Approved' ? '#3b82f618' : claim.status === 'Rejected' ? '#ef444418' : '#f59e0b18',
-                        color: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#047857' : claim.status === 'Manager Approved' ? '#1d4ed8' : claim.status === 'Rejected' ? '#b91c1c' : '#b45309'
-                      }}>
-                        {claim.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                        <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="View">
-                          <Eye className="w-4 h-4 text-slate-500" />
-                        </button>
-                        {claim.status === 'Pending' && (
-                          <>
-                            <button onClick={() => handleEdit(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="Edit">
-                              <Edit2 className="w-4 h-4 text-slate-500" />
-                            </button>
-                            <button onClick={() => handleDelete(claim.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }} title="Delete">
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredClaims.map(claim => {
+                  const resolvedStatus = claim.status || 'Pending';
+                  return (
+                    <tr key={claim.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-slate-800">{claim.employee_name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{claim.expense_date}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{claim.category}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-slate-800 text-right">₹{parseFloat(claim.amount || 0).toLocaleString('en-IN')}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '4px 10px',
+                          borderRadius: 12,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          backgroundColor: resolvedStatus === 'Paid' || resolvedStatus === 'Finance Approved' ? '#10b98118' : resolvedStatus === 'Manager Approved' ? '#3b82f618' : resolvedStatus === 'Rejected' ? '#ef444418' : '#f59e0b18',
+                          color: resolvedStatus === 'Paid' || resolvedStatus === 'Finance Approved' ? '#047857' : resolvedStatus === 'Manager Approved' ? '#1d4ed8' : resolvedStatus === 'Rejected' ? '#b91c1c' : '#b45309'
+                        }}>
+                          {resolvedStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                          <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="View">
+                            <Eye className="w-4 h-4 text-slate-500" />
+                          </button>
+                          {(resolvedStatus === 'Pending') && (
+                            <>
+                              <button onClick={() => handleEdit(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="Edit">
+                                <Edit2 className="w-4 h-4 text-slate-500" />
+                              </button>
+                              <button onClick={() => handleDelete(claim.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }} title="Delete">
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredClaims.length === 0 && (
                   <tr>
                     <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
@@ -374,55 +312,57 @@ export default function ExpenseClaims() {
               <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500" style={{ margin: 0 }}>No expense claims found</p>
             </div>
-          ) : filteredClaims.map(claim => (
-            <div key={claim.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{claim.claim_id}</p>
-                    <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{claim.employee_name}</p>
+          ) : filteredClaims.map(claim => {
+            const resolvedStatus = claim.status || 'Pending';
+            return (
+              <div key={claim.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{claim.employee_name}</p>
+                    </div>
+                    <span style={{ 
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      backgroundColor: resolvedStatus === 'Paid' || resolvedStatus === 'Finance Approved' ? '#10b98118' : resolvedStatus === 'Manager Approved' ? '#3b82f618' : resolvedStatus === 'Rejected' ? '#ef444418' : '#f59e0b18',
+                      color: resolvedStatus === 'Paid' || resolvedStatus === 'Finance Approved' ? '#047857' : resolvedStatus === 'Manager Approved' ? '#1d4ed8' : resolvedStatus === 'Rejected' ? '#b91c1c' : '#b45309'
+                    }}>{resolvedStatus}</span>
                   </div>
-                  <span style={{ 
-                    padding: '2px 8px',
-                    borderRadius: 12,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    backgroundColor: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#10b98118' : claim.status === 'Manager Approved' ? '#3b82f618' : claim.status === 'Rejected' ? '#ef444418' : '#f59e0b18',
-                    color: claim.status === 'Paid' || claim.status === 'Finance Approved' ? '#047857' : claim.status === 'Manager Approved' ? '#1d4ed8' : claim.status === 'Rejected' ? '#b91c1c' : '#b45309'
-                  }}>{claim.status}</span>
+                  <div className="space-y-1.5" style={{ marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Category</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{claim.category}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Date</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>{claim.expense_date}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Amount</span>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>₹{parseFloat(claim.amount || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1.5" style={{ marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Category</span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{claim.category}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-muted)' }}>Date</span>
-                    <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>{claim.expense_date}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Amount</span>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>₹{claim.amount?.toLocaleString()}</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                  <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
+                    <Eye className="w-3.5 h-3.5" /> View
+                  </button>
+                  {resolvedStatus === 'Pending' && (
+                    <>
+                      <button onClick={() => handleEdit(claim)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        <Edit2 className="w-3.5 h-3.5" /> Edit
+                      </button>
+                      <button onClick={() => handleDelete(claim.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
-                  <Eye className="w-3.5 h-3.5" /> View
-                </button>
-                {claim.status === 'Pending' && (
-                  <>
-                    <button onClick={() => handleEdit(claim)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <Edit2 className="w-3.5 h-3.5" /> Edit
-                    </button>
-                    <button onClick={() => handleDelete(claim.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       </div>{/* END DATA AREA */}
@@ -484,6 +424,75 @@ export default function ExpenseClaims() {
                 </select>
               </div>
             </div>
+
+            {form.category === 'Travel' && (
+              <div className="form-group" style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8, border: '1px solid var(--border)' }}>
+                <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Associate Travel Request</label>
+                <select
+                  value={form.travel_request_id || ''}
+                  onChange={(e) => {
+                    const reqId = e.target.value;
+                    const req = travelRequests.find(r => String(r.id) === String(reqId) || String(r.request_id) === String(reqId));
+                    setForm({
+                      ...form,
+                      travel_request_id: reqId,
+                      travel_request_detail: req ? {
+                        request_id: req.request_id,
+                        from_location: req.from_location,
+                        to_location: req.to_location,
+                        departure_date: req.departure_date,
+                        return_date: req.return_date,
+                        purpose: req.purpose,
+                        estimated_cost: req.estimated_cost,
+                        co_travelers: req.co_travelers
+                      } : null,
+                      actual_expense_amount: req ? String(req.estimated_cost || '') : '',
+                      advance_amount_received: req ? String(req.advance_required || '') : '',
+                      amount: req ? String((req.estimated_cost || 0) - (req.advance_required || 0)) : form.amount,
+                      description: req ? `Travel Request ${req.request_id}: ${req.from_location} to ${req.to_location}` : form.description
+                    });
+                  }}
+                  className="form-control"
+                  style={{ width: '100%', maxWidth: '300px' }}
+                >
+                  <option value="">Select Travel Request...</option>
+                  {travelRequests
+                    .filter(r => String(r.employee_id) === String(form.employee_id) || (r.co_travelers && r.co_travelers.some(c => String(c.id) === String(form.employee_id))))
+                    .map(r => (
+                      <option key={r.id} value={r.request_id || r.id}>
+                        {r.request_id} ({r.from_location} → {r.to_location})
+                      </option>
+                    ))}
+                </select>
+
+                {form.travel_request_detail && (
+                  <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-primary)', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13 }} className="space-y-1">
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span className="text-slate-500">Route:</span>
+                      <span className="font-semibold">{form.travel_request_detail.from_location} → {form.travel_request_detail.to_location}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span className="text-slate-500">Dates:</span>
+                      <span className="font-semibold">{form.travel_request_detail.departure_date ? new Date(form.travel_request_detail.departure_date).toLocaleDateString('en-IN') : ''} to {form.travel_request_detail.return_date ? new Date(form.travel_request_detail.return_date).toLocaleDateString('en-IN') : ''}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span className="text-slate-500">Purpose:</span>
+                      <span className="font-semibold">{form.travel_request_detail.purpose}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span className="text-slate-500">Estimated Cost:</span>
+                      <span className="font-bold text-indigo-600">₹{form.travel_request_detail.estimated_cost?.toLocaleString()}</span>
+                    </div>
+                    {form.travel_request_detail.co_travelers && form.travel_request_detail.co_travelers.length > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span className="text-slate-500">Co-travelers:</span>
+                        <span className="font-semibold">{form.travel_request_detail.co_travelers.map(c => c.name).join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="form-group">
               <label>Description</label>
               <textarea
@@ -494,50 +503,90 @@ export default function ExpenseClaims() {
                 placeholder="Brief description of expense..."
               />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Amount *</label>
-                <input
-                  type="number"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="form-control"
-                  placeholder="0.00"
-                />
+            {form.category === 'Travel' ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+                <div className="form-group">
+                  <label>Total Actual Expense (₹) *</label>
+                  <input
+                    type="number"
+                    value={form.actual_expense_amount}
+                    onChange={(e) => {
+                      const exp = parseFloat(e.target.value) || 0;
+                      const adv = parseFloat(form.advance_amount_received) || 0;
+                      setForm({
+                        ...form,
+                        actual_expense_amount: e.target.value,
+                        amount: String(exp - adv)
+                      });
+                    }}
+                    className="form-control"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Advance Received (₹)</label>
+                  <input
+                    type="number"
+                    value={form.advance_amount_received}
+                    onChange={(e) => {
+                      const exp = parseFloat(form.actual_expense_amount) || 0;
+                      const adv = parseFloat(e.target.value) || 0;
+                      setForm({
+                        ...form,
+                        advance_amount_received: e.target.value,
+                        amount: String(exp - adv)
+                      });
+                    }}
+                    className="form-control"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Net Claimable Amount (₹) *</label>
+                  <input
+                    type="number"
+                    value={form.amount}
+                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                    className="form-control"
+                    placeholder="0.00"
+                    style={{ fontWeight: 'bold', color: 'var(--primary)' }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Receipt #</label>
+                  <input
+                    type="text"
+                    value={form.receipt_number}
+                    onChange={(e) => setForm({ ...form, receipt_number: e.target.value })}
+                    className="form-control"
+                    placeholder="Receipt number"
+                  />
+                </div>
               </div>
-              <div className="form-group">
-                <label>Receipt #</label>
-                <input
-                  type="text"
-                  value={form.receipt_number}
-                  onChange={(e) => setForm({ ...form, receipt_number: e.target.value })}
-                  className="form-control"
-                  placeholder="Receipt number"
-                />
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group">
+                  <label>Amount *</label>
+                  <input
+                    type="number"
+                    value={form.amount}
+                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                    className="form-control"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Receipt #</label>
+                  <input
+                    type="text"
+                    value={form.receipt_number}
+                    onChange={(e) => setForm({ ...form, receipt_number: e.target.value })}
+                    className="form-control"
+                    placeholder="Receipt number"
+                  />
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Project</label>
-                <input
-                  type="text"
-                  value={form.project}
-                  onChange={(e) => setForm({ ...form, project: e.target.value })}
-                  className="form-control"
-                  placeholder="Project name"
-                />
-              </div>
-              <div className="form-group">
-                <label>Cost Center</label>
-                <input
-                  type="text"
-                  value={form.cost_center}
-                  onChange={(e) => setForm({ ...form, cost_center: e.target.value })}
-                  className="form-control"
-                  placeholder="Cost center code"
-                />
-              </div>
-            </div>
+            )}
           </div>
         </form>
       )}
@@ -554,7 +603,7 @@ export default function ExpenseClaims() {
             </div>
             <div className="p-6 space-y-4">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{viewingClaim.claim_id}</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>Expense Claim</span>
                 <span style={{ 
                   padding: '4px 10px',
                   borderRadius: 12,
@@ -569,7 +618,16 @@ export default function ExpenseClaims() {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Employee</span><span className="font-semibold text-slate-800">{viewingClaim.employee_name}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Expense Date</span><span className="font-semibold text-slate-800">{viewingClaim.expense_date}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Category</span><span className="font-semibold text-slate-800">{viewingClaim.category}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Amount</span><span className="font-bold text-emerald-600 text-lg">₹{viewingClaim.amount?.toLocaleString()}</span></div>
+                {viewingClaim.category === 'Travel' && viewingClaim.actual_expense_amount !== undefined && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Total Actual Expense</span><span className="font-semibold text-slate-800">₹{parseFloat(viewingClaim.actual_expense_amount || 0).toLocaleString()}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="text-slate-500">Advance Received</span><span className="font-semibold text-slate-800">₹{parseFloat(viewingClaim.advance_amount_received || 0).toLocaleString()}</span></div>
+                  </>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span className="text-slate-500">{viewingClaim.category === 'Travel' ? 'Net Claimed Amount' : 'Amount'}</span>
+                  <span className="font-bold text-emerald-600 text-lg">₹{parseFloat(viewingClaim.amount || 0).toLocaleString('en-IN')}</span>
+                </div>
               </div>
               
               {viewingClaim.description && (
@@ -578,19 +636,27 @@ export default function ExpenseClaims() {
                   <p className="text-sm text-slate-600 mt-1" style={{ margin: 0 }}>{viewingClaim.description}</p>
                 </div>
               )}
-              
-              {viewingClaim.project && (
-                <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div>
-                    <span className="text-xs text-slate-500">Project</span>
-                    <p className="font-semibold text-slate-800" style={{ margin: 0 }}>{viewingClaim.project}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-500">Cost Center</span>
-                    <p className="font-semibold text-slate-800" style={{ margin: 0 }}>{viewingClaim.cost_center || '—'}</p>
+
+              {viewingClaim.travel_request_id && (
+                <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                  <span className="text-xs text-slate-500">Associated Travel Request</span>
+                  <div style={{ marginTop: 6, padding: 12, background: 'var(--bg-secondary)', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13 }} className="space-y-1">
+                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--primary)' }}>{viewingClaim.travel_request_id}</p>
+                    {viewingClaim.travel_request_detail && (
+                      <>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Route: {viewingClaim.travel_request_detail.from_location} → {viewingClaim.travel_request_detail.to_location}</p>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Dates: {viewingClaim.travel_request_detail.departure_date ? new Date(viewingClaim.travel_request_detail.departure_date).toLocaleDateString('en-IN') : ''} - {viewingClaim.travel_request_detail.return_date ? new Date(viewingClaim.travel_request_detail.return_date).toLocaleDateString('en-IN') : ''}</p>
+                        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Purpose: {viewingClaim.travel_request_detail.purpose}</p>
+                        {viewingClaim.travel_request_detail.co_travelers && viewingClaim.travel_request_detail.co_travelers.length > 0 && (
+                          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Co-travelers: {viewingClaim.travel_request_detail.co_travelers.map(c => c.name).join(', ')}</p>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               )}
+              
+
               
               {viewingClaim.approved_by && (
                 <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)' }}>
