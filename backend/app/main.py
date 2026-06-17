@@ -102,6 +102,7 @@ async def lifespan(app: FastAPI):
             session.add(admin)
             await session.commit()
 
+<<<<<<< HEAD
         # Seed default departments and designations
         from app.models.sub_master import SubMaster
         
@@ -188,6 +189,11 @@ async def lifespan(app: FastAPI):
                     is_active=True
                 ))
             await session.commit()
+=======
+        # Seed PPC Data
+        from app.seed_ppc import seed_ppc_data
+        await seed_ppc_data(session)
+>>>>>>> 0bd13df646a1b66a24f7e943a3357af4699393a0
 
     yield
     await engine.dispose()

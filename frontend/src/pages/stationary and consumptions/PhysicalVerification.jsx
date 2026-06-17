@@ -72,20 +72,106 @@ export default function PhysicalVerification() {
     setAuditor('');
   };
 
+  const [view, setView] = useState('list');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredVerifications = verifications.filter(v => 
+    v.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.auditor?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700 }}>Physical Stock Verification</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Audit stock count, match physical inventories, and auto-correct ledger differences</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clipboard style={{ color: '#6366f1' }} /> Physical Stock Verification
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Audit stock count, match physical inventories, and auto-correct ledger differences</p>
         </div>
+        {view === 'list' ? (
+          <button onClick={() => {
+            setAuditor('');
+            // Reset actual quantities to current system quantities
+            const initial = {};
+            items.forEach(i => {
+              initial[i.id] = i.currentStock || 0;
+            });
+            setActualQtys(initial);
+            setView('form');
+          }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clipboard size={16} /> New Verification
+          </button>
+        ) : (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
       </div>
 
-      <div className="form-row">
-        <div className="lg:col-span-2 bg-white rounded-lg border p-6 shadow-sm space-y-4">
-          <div className="flex justify-between items-center border-b pb-2">
-            <h3 className="card-title">Verification Process Sheet</h3>
-            <div className="w-1/2">
+      {view === 'list' ? (
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Verifications ({filteredVerifications.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search verifications..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
+          </div>
+
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Verification ID</th>
+                  <th>Date</th>
+                  <th>Auditor</th>
+                  <th style={{ textAlign: 'center' }}>Total Items Audited</th>
+                  <th style={{ textAlign: 'center' }}>Discrepancies</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVerifications.length === 0 ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No past verifications found</td></tr>
+                ) : filteredVerifications.map(v => {
+                  const discrepancies = v.items.filter(i => i.difference !== 0).length;
+                  return (
+                    <tr key={v.id}>
+                      <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{v.id}</td>
+                      <td>{v.date}</td>
+                      <td style={{ fontWeight: 600 }}>{v.auditor}</td>
+                      <td style={{ textAlign: 'center' }}>{v.items.length}</td>
+                      <td style={{ textAlign: 'center', fontWeight: 600, color: discrepancies > 0 ? '#ef4444' : '#10b981' }}>
+                        {discrepancies > 0 ? `${discrepancies} Mismatches` : '100% Match'}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
+                          Completed
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Verification Process Sheet</h3>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Log actual physical quantities to auto-generate adjustments</p>
+            </div>
+            <div style={{ width: 300 }}>
               <input 
                 type="text" required value={auditor} 
                 onChange={(e) => setAuditor(e.target.value)} 
@@ -96,75 +182,53 @@ export default function PhysicalVerification() {
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <table className="form-control">
-              <thead className="bg-slate-50 border-b">
-                <tr>
-                  <th className="px-4 py-2 border-r">Item Code</th>
-                  <th className="px-4 py-2 border-r">Item Name</th>
-                  <th className="px-4 py-2 border-r text-center w-28">System Qty</th>
-                  <th className="px-4 py-2 border-r text-center w-32">Actual Qty</th>
-                  <th className="px-4 py-2 text-center w-28">Difference</th>
-                </tr>
-              </thead>
-              <tbody >
-                {items.map(itm => {
-                  const system = itm.currentStock || 0;
-                  const actual = actualQtys[itm.id] !== undefined ? actualQtys[itm.id] : system;
-                  const diff = actual - system;
-                  return (
-                    <tr key={itm.id} >
-                      <td className="px-4 py-2 border-r font-mono">{itm.code || itm.id}</td>
-                      <td className="px-4 py-2 border-r font-semibold">{itm.name}</td>
-                      <td className="px-4 py-2 border-r text-center font-bold">{system}</td>
-                      <td className="px-4 py-2 border-r text-center">
-                        <input 
-                          type="number" required min="0" value={actual} 
-                          onChange={(e) => handleQtyChange(itm.id, e.target.value)} 
-                          className="form-control" 
-                        />
-                      </td>
-                      <td className={`px-4 py-2 text-center font-bold ${diff < 0 ? 'text-red-600' : diff > 0 ? 'text-green-600' : 'text-slate-500'}`}>
-                        {diff}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Code</th>
+                    <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Name</th>
+                    <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>System Qty</th>
+                    <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Actual Qty</th>
+                    <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Difference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((itm, idx) => {
+                    const system = itm.currentStock || 0;
+                    const actual = actualQtys[itm.id] !== undefined ? actualQtys[itm.id] : system;
+                    const diff = actual - system;
+                    return (
+                      <tr key={itm.id} style={{ borderBottom: idx !== items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                        <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b' }}>{itm.code || itm.id}</td>
+                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>{itm.name}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: '#6366f1', background: '#e0e7ff30' }}>{system}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <input 
+                            type="number" required min="0" value={actual} 
+                            onChange={(e) => handleQtyChange(itm.id, e.target.value)} 
+                            className="form-control" style={{ width: '90px', margin: '0 auto', textAlign: 'center' }}
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: diff < 0 ? '#ef4444' : diff > 0 ? '#10b981' : '#94a3b8' }}>
+                          {diff > 0 ? '+' : ''}{diff}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-            <div className="flex justify-end pt-2">
-              <button type="submit" className="btn btn-primary">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 16, borderTop: '1px solid var(--border)', marginTop: 8 }}>
+              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Save size={16} /> Post Verification Audit
               </button>
             </div>
           </form>
         </div>
-
-        <div className="card">
-          <h3 className="text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-1">
-            <Clipboard size={16} /> Audit History
-          </h3>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {verifications.map(v => (
-              <div key={v.id} className="p-3 bg-slate-50 rounded border text-xs">
-                <div className="card-header">
-                  <span className="font-mono font-bold text-indigo-600">{v.id}</span>
-                  <span className="text-slate-500">{v.date}</span>
-                </div>
-                <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Auditor: {v.auditor}</p>
-                <div className="mt-2 space-y-1">
-                  {v.items.filter(i => i.difference !== 0).map((i, k) => (
-                    <div key={k} className="flex justify-between text-[10px]">
-                      <span>{i.name}</span>
-                      <span className={i.difference < 0 ? 'text-red-600' : 'text-green-600'}>{i.difference}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

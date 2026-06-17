@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Edit2, Trash2, Search, X } from 'lucide-react';
+import { Plus, Save, Edit2, Trash2, Search, X, Box } from 'lucide-react';
 
 export default function ItemMaster() {
   const [view, setView] = useState('list');
@@ -67,63 +67,75 @@ export default function ItemMaster() {
   );
 
   return (
-    <div className="animate-fade">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Box style={{ color: '#6366f1' }} /> Item Master
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Register stationery, packaging, and safety supplies</p>
+        </div>
+        {view === 'list' ? (
+          <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={16} /> New Item
+          </button>
+        ) : (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
+      </div>
+
       {view === 'list' ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <div>
-              <h1 style={{ fontSize: 24, fontWeight: 700 }}>Item Master</h1>
-              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Register stationery, packaging, and safety supplies</p>
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Items ({filtered.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
             </div>
-            <button onClick={() => handleOpenForm()} className="btn btn-primary">
-              <Plus size={16} /> Add Item
-            </button>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
-            <div className="card" style={{ padding: "12px 20px", marginBottom: 0, borderRadius: 0, display: "flex", alignItems: "center", gap: 16, background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-              <div style={{ position: "relative", flex: 1, minWidth: 250, maxWidth: 350 }}>
-                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search items..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="form-control" style={{ paddingLeft: 38 }} 
-                />
-              </div>
-            </div>
-
-            <table className="data-table">
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  <th >Item Code</th>
-                  <th >Item Name</th>
-                  <th >Category</th>
-                  <th >UOM</th>
+                  <th>Item Code</th>
+                  <th>Item Name</th>
+                  <th>Category</th>
+                  <th>UOM</th>
                   <th style={{ textAlign: "right" }}>Stock</th>
                   <th style={{ textAlign: "right" }}>Min Stock</th>
                   <th style={{ textAlign: "right" }}>Rate</th>
                   <th style={{ textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
-              <tbody >
-                {filtered.map(itm => (
-                  <tr key={itm.id} >
-                    <td style={{ fontFamily: "monospace" }}>{itm.code || itm.id}</td>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                ) : filtered.map(itm => (
+                  <tr key={itm.id}>
+                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{itm.code || itm.id}</td>
                     <td style={{ fontWeight: 600 }}>{itm.name}</td>
-                    <td >{itm.category}</td>
-                    <td >{itm.uom}</td>
-                    <td style={{ textAlign: "right", fontWeight: 700 }}>{itm.currentStock || 0}</td>
+                    <td>{itm.category}</td>
+                    <td>{itm.uom}</td>
+                    <td style={{ textAlign: "right", fontWeight: 700, color: (itm.currentStock || 0) <= itm.minStock ? '#ef4444' : 'var(--text-primary)' }}>{itm.currentStock || 0}</td>
                     <td style={{ textAlign: "right" }}>{itm.minStock}</td>
                     <td style={{ textAlign: "right" }}>₹{itm.rate}</td>
                     <td style={{ textAlign: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        <button onClick={() => handleOpenForm(itm)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
-                          <Edit2 size={16} />
+                        <button onClick={() => handleOpenForm(itm)} style={{ padding: 6, borderRadius: 8, color: '#4f46e5', background: '#e0e7ff', cursor: "pointer", border: "none" }}>
+                          <Edit2 size={14} />
                         </button>
-                        <button onClick={() => handleDelete(itm.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
-                          <Trash2 size={16} />
+                        <button onClick={() => handleDelete(itm.id)} style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }}>
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -134,38 +146,37 @@ export default function ItemMaster() {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Item' : 'Add New Item'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
-                <X size={16} /> Close
-              </button>
-              <button className="btn btn-primary" type="submit">
-                <Save size={16} /> Save Item
-              </button>
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
+              {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingId ? 'Edit Item' : 'New Item Registration'}</h3>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Fill out the required information</p>
             </div>
           </div>
-          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 24 }}>
-            <div className="form-row" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-              <div>
-                <label >Item Name *</label>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+              <div className="form-group">
+                <label>Item Name <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="text" required value={formData.name} 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                  className="form-control" 
+                  className="form-control" placeholder="E.g., Packing Tape"
                 />
               </div>
-              <div>
-                <label >Item Code / Short Name *</label>
+              <div className="form-group">
+                <label>Item Code / Short Name <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="text" required value={formData.code} 
                   onChange={(e) => setFormData({...formData, code: e.target.value})} 
-                  className="form-control" 
+                  className="form-control" placeholder="E.g., PT-001"
                 />
               </div>
-              <div>
-                <label >Category *</label>
+              <div className="form-group">
+                <label>Category <span style={{ color: '#ef4444' }}>*</span></label>
                 <select 
                   value={formData.category} 
                   onChange={(e) => setFormData({...formData, category: e.target.value})} 
@@ -174,8 +185,8 @@ export default function ItemMaster() {
                   {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label >UOM *</label>
+              <div className="form-group">
+                <label>UOM <span style={{ color: '#ef4444' }}>*</span></label>
                 <select 
                   value={formData.uom} 
                   onChange={(e) => setFormData({...formData, uom: e.target.value})} 
@@ -184,32 +195,32 @@ export default function ItemMaster() {
                   {uoms.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label >GST % *</label>
+              <div className="form-group">
+                <label>GST % <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="number" required value={formData.gstPercent} 
                   onChange={(e) => setFormData({...formData, gstPercent: Number(e.target.value)})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Standard Cost / Rate *</label>
+              <div className="form-group">
+                <label>Standard Cost / Rate <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="number" required value={formData.rate} 
                   onChange={(e) => setFormData({...formData, rate: Number(e.target.value)})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Min Stock *</label>
+              <div className="form-group">
+                <label>Min Stock Level <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="number" required value={formData.minStock} 
                   onChange={(e) => setFormData({...formData, minStock: Number(e.target.value)})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Preferred Vendor *</label>
+              <div className="form-group">
+                <label>Preferred Vendor <span style={{ color: '#ef4444' }}>*</span></label>
                 <select 
                   value={formData.vendor} 
                   onChange={(e) => setFormData({...formData, vendor: e.target.value})} 
@@ -219,8 +230,15 @@ export default function ItemMaster() {
                 </select>
               </div>
             </div>
-          </div>
-        </form>
+            
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 8 }}>
+              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Save size={16} /> Save Item
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );

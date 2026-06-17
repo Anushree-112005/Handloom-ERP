@@ -142,14 +142,15 @@ export default function ReturnableDCManagement() {
   });
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {view === 'list' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Header section */}
-          <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Returnable Delivery Challan (DC)</h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14, margin: '4px 0 0 0' }}>Track equipment repairs, external services, and asset returns</p>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <RefreshCw style={{ color: '#6366f1' }} /> Returnable Delivery Challan (DC)
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Track equipment repairs, external services, and asset returns</p>
             </div>
             <button onClick={() => {
               setFormData({
@@ -170,344 +171,344 @@ export default function ReturnableDCManagement() {
               });
               setEditingId(null);
               setView('form');
-            }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: '8px', fontWeight: 600 }}>
-              <Plus size={18} /> Generate Returnable DC
+            }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Plus size={16} /> Generate Returnable DC
             </button>
           </div>
 
-          {/* Filtering and Search Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {/* Stream Tabs */}
-              <div style={{ display: 'flex', gap: 6, background: '#f1f5f9', padding: 4, borderRadius: '8px' }}>
-                <button 
-                  onClick={() => setActiveStream('All')}
-                  style={{ border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: activeStream === 'All' ? 'white' : 'transparent', color: activeStream === 'All' ? 'var(--text-primary)' : 'var(--text-secondary)', boxShadow: activeStream === 'All' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
-                >
-                  All Streams
-                </button>
-                {dcStreams.map(s => (
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                   <button 
-                    key={s}
-                    onClick={() => setActiveStream(s)}
-                    style={{ border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: activeStream === s ? 'white' : 'transparent', color: activeStream === s ? 'var(--text-primary)' : 'var(--text-secondary)', boxShadow: activeStream === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                    onClick={() => setActiveStream('All')}
+                    className={`btn ${activeStream === 'All' ? 'btn-primary' : 'btn-outline'}`}
+                    style={{ padding: '6px 14px', borderRadius: '8px', fontWeight: 600, fontSize: 13 }}
                   >
-                    {s}
+                    All Streams
                   </button>
-                ))}
-              </div>
-
-              {/* Status filter */}
-              <select 
-                value={activeStatus} 
-                onChange={(e) => setActiveStatus(e.target.value)} 
-                className="form-control"
-                style={{ width: '150px', borderRadius: '8px', border: '1px solid var(--border)' }}
-              >
-                <option value="All">All Statuses</option>
-                {statuses.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ position: 'relative', width: '320px' }}>
-              <Search size={18} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }} />
-              <input 
-                type="text" 
-                placeholder="Search DC no, asset, vendor..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 38, borderRadius: '8px', border: '1px solid var(--border)' }}
-              />
-            </div>
-          </div>
-
-          {/* Data Table */}
-          <div className="card" style={{ padding: 0, borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>DC No</th>
-                  <th>Date</th>
-                  <th>Stream</th>
-                  <th>Asset & Vendor</th>
-                  <th>Quotation / PO</th>
-                  <th>Advance</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDcs.map(dc => (
-                  <tr key={dc.id}>
-                    <td style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{dc.dc_no}</td>
-                    <td>{dc.date}</td>
-                    <td>
-                      <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: '6px', background: dc.dc_stream === 'Yarn Unit' ? '#fef3c7' : dc.dc_stream === 'Fabric Unit' ? '#dbeafe' : '#f1f5f9', color: dc.dc_stream === 'Yarn Unit' ? '#d97706' : dc.dc_stream === 'Fabric Unit' ? '#2563eb' : '#475569' }}>
-                        {dc.dc_stream}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{dc.asset_name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Vendor: {dc.service_vendor}</div>
-                    </td>
-                    <td>
-                      {dc.quotation_no ? (
-                        <>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>₹{dc.quotation_amount} ({dc.quotation_no})</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PO: {dc.service_po_no || '-'}</div>
-                        </>
-                      ) : '-'}
-                    </td>
-                    <td style={{ fontWeight: 700 }}>₹{dc.advance_payment}</td>
-                    <td>
-                      <span style={{ 
-                        fontSize: 12, 
-                        fontWeight: 700, 
-                        padding: '4px 10px', 
-                        borderRadius: '20px', 
-                        background: dc.status === 'Outward' ? '#fee2e2' : dc.status === 'Returned' ? '#dcfce7' : '#e2e8f0', 
-                        color: dc.status === 'Outward' ? '#991b1b' : dc.status === 'Returned' ? '#166534' : '#475569' 
-                      }}>
-                        {dc.status}
-                      </span>
-                      {dc.return_date && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Ret: {dc.return_date}</div>}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                        {dc.status === 'Outward' && (
-                          <button onClick={() => handleMarkReturned(dc)} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, color: '#166534', borderColor: '#bbf7d0' }}>
-                            <CheckCircle size={14} /> Mark Returned
-                          </button>
-                        )}
-                        <button onClick={() => handleEdit(dc)} className="btn btn-outline" style={{ padding: '6px 10px', minWidth: 0 }}>
-                          Edit
-                        </button>
-                        <button onClick={() => handleDelete(dc.id)} className="btn btn-outline" style={{ padding: '6px 10px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2' }}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredDcs.length === 0 && (
-                  <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                      <FileText size={40} style={{ margin: '0 auto 8px auto', opacity: 0.5 }} />
-                      <div style={{ fontWeight: 600 }}>No Returnable DCs found</div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        /* Form View */
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Returnable DC' : 'Create Returnable DC'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
-                <X size={16} /> Close
-              </button>
-              <button className="btn btn-primary" type="submit">
-                <Save size={16} /> Save Returnable DC
-              </button>
-            </div>
-          </div>
-          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 20 }}>
-            <div className="form-row">
-              <div>
-                <label>DC Stream *</label>
-                <select 
-                  value={formData.dc_stream} 
-                  onChange={(e) => setFormData({ ...formData, dc_stream: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                >
                   {dcStreams.map(s => (
-                    <option key={s} value={s}>{s}</option>
+                    <button 
+                      key={s}
+                      onClick={() => setActiveStream(s)}
+                      className={`btn ${activeStream === s ? 'btn-primary' : 'btn-outline'}`}
+                      style={{ padding: '6px 14px', borderRadius: '8px', fontWeight: 600, fontSize: 13 }}
+                    >
+                      {s}
+                    </button>
                   ))}
-                </select>
-              </div>
-
-              <div>
-                <label>DC Number *</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="e.g. RDC-GEN-1002" 
-                    value={formData.dc_no}
-                    onChange={(e) => setFormData({ ...formData, dc_no: e.target.value })}
-                    className="form-control"
-                    style={{ borderRadius: '8px' }}
-                  />
-                  <button type="button" onClick={generateDCNumber} className="btn btn-outline" style={{ borderRadius: '8px', padding: '0 12px', fontWeight: 600 }}>
-                    Auto-Gen
-                  </button>
                 </div>
-              </div>
 
-              <div>
-                <label>Date *</label>
-                <input 
-                  type="date" 
-                  required 
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div>
-                <label>Asset / Item Name *</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. Sewing Machine Motor, Dyeing Pump" 
-                  value={formData.asset_name}
-                  onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-
-              <div>
-                <label>Serial Number / Model</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. SN-998271" 
-                  value={formData.serial_no}
-                  onChange={(e) => setFormData({ ...formData, serial_no: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-
-              <div>
-                <label>Service Vendor *</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. Apex Electricals" 
-                  value={formData.service_vendor}
-                  onChange={(e) => setFormData({ ...formData, service_vendor: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label>Technical Fault Description</label>
-              <textarea 
-                rows="3" 
-                placeholder="Describe the fault or service requirements..."
-                value={formData.fault_description}
-                onChange={(e) => setFormData({ ...formData, fault_description: e.target.value })}
-                className="form-control"
-                style={{ borderRadius: '8px', resize: 'vertical' }}
-              />
-            </div>
-
-            <div className="form-row">
-              <div>
-                <label>Quotation Reference</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. QT-882" 
-                  value={formData.quotation_no}
-                  onChange={(e) => setFormData({ ...formData, quotation_no: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-
-              <div>
-                <label>Quotation Amount (₹)</label>
-                <input 
-                  type="number" 
-                  min="0"
-                  value={formData.quotation_amount}
-                  onChange={(e) => setFormData({ ...formData, quotation_amount: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-
-              <div>
-                <label>Service PO No.</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. SPO-2026-004" 
-                  value={formData.service_po_no}
-                  onChange={(e) => setFormData({ ...formData, service_po_no: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-
-              <div>
-                <label>Advance Payment (₹)</label>
-                <input 
-                  type="number" 
-                  min="0"
-                  value={formData.advance_payment}
-                  onChange={(e) => setFormData({ ...formData, advance_payment: e.target.value })}
-                  className="form-control"
-                  style={{ borderRadius: '8px' }}
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div>
-                <label>Status</label>
                 <select 
-                  value={formData.status} 
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  value={activeStatus} 
+                  onChange={(e) => setActiveStatus(e.target.value)} 
                   className="form-control"
-                  style={{ borderRadius: '8px' }}
+                  style={{ width: '150px' }}
                 >
+                  <option value="All">All Statuses</option>
                   {statuses.map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
               </div>
 
-              <div>
-                <label>Return Date</label>
+              <div className="search-bar" style={{ position: 'relative', width: 280 }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input 
-                  type="date" 
-                  value={formData.return_date}
-                  onChange={(e) => setFormData({ ...formData, return_date: e.target.value })}
+                  type="text" 
+                  placeholder="Search DC no, asset, vendor..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="form-control"
-                  style={{ borderRadius: '8px' }}
+                  style={{ paddingLeft: 36, fontSize: 13 }}
                 />
               </div>
             </div>
 
-            <div>
-              <label>Remarks / Notes</label>
-              <textarea 
-                rows="2" 
-                placeholder="Additional comments or instructions..."
-                value={formData.remarks}
-                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                className="form-control"
-                style={{ borderRadius: '8px', resize: 'vertical' }}
-              />
+            <div className="table-responsive" style={{ flex: 1 }}>
+              <table className="table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th>DC No</th>
+                    <th>Date</th>
+                    <th>Stream</th>
+                    <th>Asset & Vendor</th>
+                    <th>Quotation / PO</th>
+                    <th>Advance</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'center' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDcs.map(dc => (
+                    <tr key={dc.id}>
+                      <td style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{dc.dc_no}</td>
+                      <td>{dc.date}</td>
+                      <td>
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 8px', borderRadius: '6px', background: dc.dc_stream === 'Yarn Unit' ? '#fef3c7' : dc.dc_stream === 'Fabric Unit' ? '#dbeafe' : '#f1f5f9', color: dc.dc_stream === 'Yarn Unit' ? '#d97706' : dc.dc_stream === 'Fabric Unit' ? '#2563eb' : '#475569' }}>
+                          {dc.dc_stream}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{dc.asset_name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Vendor: {dc.service_vendor}</div>
+                      </td>
+                      <td>
+                        {dc.quotation_no ? (
+                          <>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>₹{dc.quotation_amount} ({dc.quotation_no})</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PO: {dc.service_po_no || '-'}</div>
+                          </>
+                        ) : '-'}
+                      </td>
+                      <td style={{ fontWeight: 700 }}>₹{dc.advance_payment}</td>
+                      <td>
+                        <span style={{ 
+                          fontSize: 12, 
+                          fontWeight: 700, 
+                          padding: '4px 10px', 
+                          borderRadius: '20px', 
+                          background: dc.status === 'Outward' ? '#fee2e2' : dc.status === 'Returned' ? '#dcfce7' : '#f8fafc', 
+                          color: dc.status === 'Outward' ? '#991b1b' : dc.status === 'Returned' ? '#166534' : 'var(--text-primary)' 
+                        }}>
+                          {dc.status}
+                        </span>
+                        {dc.return_date && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Ret: {dc.return_date}</div>}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                          {dc.status === 'Outward' && (
+                            <button onClick={() => handleMarkReturned(dc)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#166534', borderColor: '#bbf7d0', borderRadius: '8px' }} title="Mark Returned">
+                              <CheckCircle size={14} />
+                            </button>
+                          )}
+                          <button onClick={() => handleEdit(dc)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, borderRadius: '8px' }} title="Edit">
+                            <FileText size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(dc.id)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2', borderRadius: '8px' }} title="Delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {filteredDcs.length === 0 && (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+                        <RefreshCw size={48} style={{ margin: '0 auto 16px auto', opacity: 0.3 }} />
+                        <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>No Returnable DCs found</h3>
+                        <p style={{ margin: 0 }}>Generate a new DC to start tracking.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-        </form>
+        </>
+      ) : (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <RefreshCw style={{ color: '#6366f1' }} /> {editingId ? 'Edit Returnable DC' : 'Create Returnable DC'}
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Enter details for equipment repairs or external services</p>
+            </div>
+            <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Back to List
+            </button>
+          </div>
+
+          <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+                <div className="form-group">
+                  <label>DC Stream <span style={{ color: '#ef4444' }}>*</span></label>
+                  <select 
+                    value={formData.dc_stream} 
+                    onChange={(e) => setFormData({ ...formData, dc_stream: e.target.value })}
+                    className="form-control"
+                  >
+                    {dcStreams.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>DC Number <span style={{ color: '#ef4444' }}>*</span></label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. RDC-GEN-1002" 
+                      value={formData.dc_no}
+                      onChange={(e) => setFormData({ ...formData, dc_no: e.target.value })}
+                      className="form-control"
+                    />
+                    <button type="button" onClick={generateDCNumber} className="btn btn-outline" style={{ whiteSpace: 'nowrap' }}>
+                      Auto-Gen
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Date <span style={{ color: '#ef4444' }}>*</span></label>
+                  <input 
+                    type="date" 
+                    required 
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+
+              <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Asset / Item Name <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. Sewing Machine Motor, Dyeing Pump" 
+                      value={formData.asset_name}
+                      onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Serial Number / Model</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. SN-998271" 
+                      value={formData.serial_no}
+                      onChange={(e) => setFormData({ ...formData, serial_no: e.target.value })}
+                      className="form-control"
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Service Vendor <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. Apex Electricals" 
+                      value={formData.service_vendor}
+                      onChange={(e) => setFormData({ ...formData, service_vendor: e.target.value })}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Technical Fault Description</label>
+                <textarea 
+                  rows="3" 
+                  placeholder="Describe the fault or service requirements..."
+                  value={formData.fault_description}
+                  onChange={(e) => setFormData({ ...formData, fault_description: e.target.value })}
+                  className="form-control"
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+                <div className="form-group">
+                  <label>Quotation Reference</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. QT-882" 
+                    value={formData.quotation_no}
+                    onChange={(e) => setFormData({ ...formData, quotation_no: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Quotation Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    value={formData.quotation_amount}
+                    onChange={(e) => setFormData({ ...formData, quotation_amount: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Service PO No.</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. SPO-2026-004" 
+                    value={formData.service_po_no}
+                    onChange={(e) => setFormData({ ...formData, service_po_no: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Advance Payment (₹)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    value={formData.advance_payment}
+                    onChange={(e) => setFormData({ ...formData, advance_payment: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select 
+                    value={formData.status} 
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="form-control"
+                  >
+                    {statuses.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Return Date</label>
+                  <input 
+                    type="date" 
+                    value={formData.return_date}
+                    onChange={(e) => setFormData({ ...formData, return_date: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Remarks / Notes</label>
+                <textarea 
+                  rows="2" 
+                  placeholder="Additional comments or instructions..."
+                  value={formData.remarks}
+                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                  className="form-control"
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 8 }}>
+                <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Save size={16} /> Save Returnable DC
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
       )}
     </div>
   );

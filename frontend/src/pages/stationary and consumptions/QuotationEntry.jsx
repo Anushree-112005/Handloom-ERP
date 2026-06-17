@@ -117,27 +117,55 @@ export default function QuotationEntry() {
     setQuotations(mockDb.get('consumables_quotations'));
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredQuotations = quotations.filter(q => 
+    q.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    q.vendor?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="animate-fade" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText style={{ color: '#6366f1' }} /> Vendor Quotations
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Log and compare quotation rates from stationery and item suppliers</p>
+        </div>
+        {view === 'list' ? (
+          <button onClick={() => {
+            setFormData({ vendor: vendors[0]?.name || '', validityDate: '', paymentTerms: '30 Days Credit', items: [], quotation_file_path: '' });
+            setView('form');
+          }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={16} /> Add Quotation
+          </button>
+        ) : (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
+      </div>
+
       {view === 'list' ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* Header */}
-          <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: '12px', background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', border: '1px solid var(--border)' }}>
-            <div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Vendor Quotations</h1>
-              <p style={{ color: "var(--text-muted)", fontSize: 14, margin: '4px 0 0 0' }}>Log and compare quotation rates from stationery and item suppliers</p>
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Quotations ({filteredQuotations.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search quotations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
             </div>
-            <button onClick={() => {
-              setFormData({ vendor: vendors[0]?.name || '', validityDate: '', paymentTerms: '30 Days Credit', items: [], quotation_file_path: '' });
-              setView('form');
-            }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-              <Plus size={16} /> Add Quotation
-            </button>
           </div>
 
-          {/* Quotations List */}
-          <div className="card" style={{ padding: 0, borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-            <table className="data-table">
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
               <thead>
                 <tr>
                   <th>Quotation No</th>
@@ -152,11 +180,13 @@ export default function QuotationEntry() {
                 </tr>
               </thead>
               <tbody>
-                {quotations.map(q => {
+                {filteredQuotations.length === 0 ? (
+                  <tr><td colSpan="9" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                ) : filteredQuotations.map(q => {
                   const val = q.items.reduce((acc, i) => acc + i.total, 0);
                   return (
                     <tr key={q.id}>
-                      <td style={{ fontFamily: "monospace", fontWeight: 700 }}>{q.id}</td>
+                      <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{q.id}</td>
                       <td>{q.date}</td>
                       <td style={{ fontWeight: 600 }}>{q.vendor}</td>
                       <td>{q.validityDate || '-'}</td>
@@ -168,7 +198,7 @@ export default function QuotationEntry() {
                             href={`${api.defaults.baseURL || ''}${q.quotation_file_path}`} 
                             target="_blank" 
                             rel="noreferrer" 
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--primary)', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#4f46e5', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
                           >
                             <Download size={14} /> View
                           </a>
@@ -176,12 +206,10 @@ export default function QuotationEntry() {
                       </td>
                       <td style={{ textAlign: "center" }}>
                         <span style={{ 
-                          fontSize: 11, 
-                          fontWeight: 700, 
-                          padding: '3px 8px', 
-                          borderRadius: '12px', 
-                          background: q.status === 'Approved' ? '#dcfce7' : '#fef3c7', 
-                          color: q.status === 'Approved' ? '#15803d' : '#b45309' 
+                          color: q.status === 'Pending' ? '#d97706' : '#047857', 
+                          fontWeight: 600, 
+                          backgroundColor: q.status === 'Pending' ? '#fef3c7' : '#d1fae5', 
+                          padding: '4px 10px', borderRadius: 12, fontSize: 12 
                         }}>
                           {q.status}
                         </span>
@@ -189,87 +217,72 @@ export default function QuotationEntry() {
                       <td style={{ textAlign: "center" }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                           {q.status === 'Pending' && (
-                            <button onClick={() => handleApprove(q.id)} className="btn btn-outline" style={{ padding: '4px 8px', fontSize: 12, color: '#15803d', borderColor: '#bbf7d0', display: 'flex', alignItems: 'center', gap: 4 }}>
-                              <CheckCircle size={12} /> Approve
+                            <button onClick={() => handleApprove(q.id)} style={{ padding: 6, borderRadius: 8, color: '#15803d', background: '#dcfce7', cursor: "pointer", border: "none" }} title="Approve">
+                              <CheckCircle size={14} />
                             </button>
                           )}
-                          <button onClick={() => handleDelete(q.id)} className="btn btn-outline" style={{ padding: '4px 8px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2' }}>
-                            <Trash2 size={13} />
+                          <button onClick={() => handleDelete(q.id)} style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }} title="Delete">
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
                     </tr>
                   );
                 })}
-
-                {quotations.length === 0 && (
-                  <tr>
-                    <td colSpan="9" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                      <FileText size={36} style={{ margin: '0 auto 8px auto', opacity: 0.5 }} />
-                      <div>No vendor quotations registered.</div>
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </div>
       ) : (
-        /* Form View */
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Record Vendor Quotation</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
-                <X size={16} /> Close
-              </button>
-              <button className="btn btn-primary" type="submit">
-                <Save size={16} /> Save Quotation
-              </button>
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
+              <Plus size={20} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Record Vendor Quotation</h3>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Log a new quotation from a vendor</p>
             </div>
           </div>
-          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 24 }}>
-            <div className="form-row" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              <div>
-                <label>Select Vendor *</label>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+              <div className="form-group">
+                <label>Select Vendor <span style={{ color: '#ef4444' }}>*</span></label>
                 <select 
                   value={formData.vendor} 
                   onChange={(e) => setFormData({...formData, vendor: e.target.value})} 
                   className="form-control"
-                  style={{ borderRadius: '8px' }}
                 >
                   {vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
                 </select>
               </div>
-              <div>
+              <div className="form-group">
                 <label>Validity Date</label>
                 <input 
                   type="date" value={formData.validityDate} 
                   onChange={(e) => setFormData({...formData, validityDate: e.target.value})} 
                   className="form-control" 
-                  style={{ borderRadius: '8px' }}
                 />
               </div>
-              <div>
+              <div className="form-group">
                 <label>Payment Terms</label>
                 <input 
                   type="text" value={formData.paymentTerms} 
                   onChange={(e) => setFormData({...formData, paymentTerms: e.target.value})} 
                   className="form-control" 
-                  style={{ borderRadius: '8px' }}
                 />
               </div>
             </div>
 
-            {/* Quotation file upload field */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: '400px' }}>
-              <label style={{ fontWeight: 600 }}>Quotation Attachment (PDF/Image)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="form-group" style={{ maxWidth: '400px' }}>
+              <label>Quotation Attachment (PDF/Image)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
                 {formData.quotation_file_path ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px', fontSize: 13 }}>
-                    <FileText size={16} style={{ color: 'var(--primary)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }}>
+                    <FileText size={16} style={{ color: '#6366f1' }} />
                     <span style={{ fontFamily: 'monospace' }}>{formData.quotation_file_path.split('/').pop()}</span>
-                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, quotation_file_path: '' }))} style={{ border: 'none', background: 'none', color: '#dc2626', cursor: 'pointer', padding: 2 }} title="Remove file">
+                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, quotation_file_path: '' }))} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: 2 }}>
                       <X size={14} />
                     </button>
                   </div>
@@ -281,7 +294,7 @@ export default function QuotationEntry() {
                       onChange={handleFileUpload} 
                       style={{ display: 'none' }} 
                     />
-                    <label htmlFor="quotation-file-upload" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '8px 14px', borderRadius: '6px', fontSize: 13, border: '1px solid var(--border)' }}>
+                    <label htmlFor="quotation-file-upload" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                       <Upload size={16} /> {isUploading ? 'Uploading...' : 'Upload File'}
                     </label>
                   </>
@@ -289,59 +302,69 @@ export default function QuotationEntry() {
               </div>
             </div>
 
-            <div className="border-t pt-4 space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 className="card-title" style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Quotation Items</h3>
-                <button type="button" onClick={handleAddField} className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 font-semibold text-sm" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}>
-                  <PlusCircle size={16} /> Add Item
+                <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Quotation Items</h4>
+                <button type="button" onClick={handleAddField} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                  <PlusCircle size={14} /> Add Item
                 </button>
               </div>
 
-              <div className="space-y-3" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {formData.items.map((field, idx) => (
-                  <div key={idx} className="flex gap-4 items-end bg-slate-50 p-3 rounded-lg border border-dashed text-xs" style={{ display: 'flex', gap: 16, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px dashed var(--border)', alignItems: 'flex-end' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Item</label>
-                      <select 
-                        value={field.itemId} 
-                        onChange={(e) => handleItemChange(idx, e.target.value)} 
-                        className="form-control"
-                        style={{ borderRadius: '6px' }}
-                      >
-                        {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                      </select>
+              {formData.items.length === 0 ? (
+                <div style={{ padding: 32, textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 12, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                  No items added yet. Click 'Add Item'.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {formData.items.map((field, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', background: 'var(--bg-secondary)', padding: 16, borderRadius: 12, border: '1px solid var(--border)' }}>
+                      <div className="form-group" style={{ flex: 2, margin: 0 }}>
+                        <label>Item</label>
+                        <select 
+                          value={field.itemId} 
+                          onChange={(e) => handleItemChange(idx, e.target.value)} 
+                          className="form-control"
+                        >
+                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Qty</label>
+                        <input 
+                          type="number" required min="1" value={field.qty} 
+                          onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
+                          className="form-control" 
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Rate (₹)</label>
+                        <input 
+                          type="number" step="0.01" value={field.rate} 
+                          onChange={(e) => handleRateChange(idx, e.target.value)} 
+                          className="form-control" 
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Total (₹)</label>
+                        <input type="text" readOnly value={field.total} className="form-control" style={{ background: '#f8fafc', fontWeight: 600 }} />
+                      </div>
+                      <button type="button" onClick={() => handleRemoveField(idx)} className="btn btn-secondary" style={{ padding: '10px 12px', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2' }}>
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <div style={{ width: '100px' }}>
-                      <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Qty</label>
-                      <input 
-                        type="number" required min="1" value={field.qty} 
-                        onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
-                        className="form-control" 
-                        style={{ borderRadius: '6px' }}
-                      />
-                    </div>
-                    <div style={{ width: '120px' }}>
-                      <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Rate (₹)</label>
-                      <input 
-                        type="number" step="0.01" value={field.rate} 
-                        onChange={(e) => handleRateChange(idx, e.target.value)} 
-                        className="form-control" 
-                        style={{ borderRadius: '6px' }}
-                      />
-                    </div>
-                    <div style={{ width: '140px' }}>
-                      <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Total (₹)</label>
-                      <input type="text" readOnly value={field.total} className="form-control" style={{ borderRadius: '6px', background: '#e2e8f0', fontWeight: 600 }} />
-                    </div>
-                    <button type="button" onClick={() => handleRemoveField(idx)} className="btn btn-danger" style={{ borderRadius: '6px', padding: 8 }}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        </form>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 8 }}>
+              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Save size={16} /> Save Quotation
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );
