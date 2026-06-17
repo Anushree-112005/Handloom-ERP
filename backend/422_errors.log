@@ -34,3 +34,69 @@ Body: b'{"name":"FA-478","code":"","extra_field_1":"","extra_field_2":"Pending",
 Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'is_active': True, 'name': 'pink', 'code': 'PNK', 'extra_field_1': '#ea10bb'}}]
 Body: b'{"is_active":true,"name":"pink","code":"PNK","extra_field_1":"#ea10bb"}'
 
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0003'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0003'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0003'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0003'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'DET-0002'}]
+Body: b''
+

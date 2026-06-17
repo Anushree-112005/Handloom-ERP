@@ -33,6 +33,35 @@ const mapFrontendToBackend = (form) => {
   };
 };
 
+const mapBackendToFrontendShift = (item) => {
+  if (!item) return null;
+  let extra = {};
+  if (item.extra_field_3) {
+    try {
+      const trimmed = item.extra_field_3.trim();
+      if (trimmed.startsWith('{')) {
+        extra = JSON.parse(trimmed);
+      } else {
+        extra = { break_duration: parseInt(trimmed) || 0 };
+      }
+    } catch (e) {
+      console.error('Failed to parse extra_field_3:', e);
+    }
+  }
+  return {
+    id: item.id,
+    name: item.name,
+    shift_type: item.code || 'Day',
+    start_time: item.extra_field_1 || '09:00',
+    end_time: item.extra_field_2 || '18:00',
+    break_duration: extra.break_duration !== undefined ? extra.break_duration : 60,
+    half_day_hours: extra.half_day_hours !== undefined ? extra.half_day_hours : 4,
+    color: extra.color || '#10B981',
+    working_hours: extra.working_hours !== undefined ? extra.working_hours : 8.0,
+    description: item.description || ''
+  };
+};
+
 // Generic API helper functions to query Postgres via our new dynamic HR router
 const fetchHRItems = async (category) => {
   const res = await api.get(`/hr/${category}`);
@@ -117,13 +146,21 @@ export const fetchDepartments = async () => {
 export const fetchDesignations = async () => {
   try {
     const res = await subMasterAPI.list('designation');
-    return res.data || [];
+    return (res.data || []).map(item => ({
+      id: item.id,
+      title: item.name,
+      department: item.code || '',
+      description: item.description || '',
+      grade: item.extra_field_1 || '',
+      min_salary: item.extra_field_2 ? parseInt(item.extra_field_2) : null,
+      max_salary: item.extra_field_3 ? parseInt(item.extra_field_3) : null,
+    }));
   } catch {
     return getLocalItems('designations', [
-      { id: 1, title: 'Software Engineer' },
-      { id: 2, title: 'Senior Software Engineer' },
-      { id: 3, title: 'HR Manager' },
-      { id: 4, title: 'Sales Executive' }
+      { id: 1, title: 'Software Engineer', department: 'Engineering' },
+      { id: 2, title: 'Senior Software Engineer', department: 'Engineering' },
+      { id: 3, title: 'HR Manager', department: 'HR' },
+      { id: 4, title: 'Sales Executive', department: 'Sales' }
     ]);
   }
 };
@@ -131,7 +168,7 @@ export const fetchDesignations = async () => {
 export const fetchShifts = async () => {
   try {
     const res = await subMasterAPI.list('shift');
-    return res.data || [];
+    return (res.data || []).map(mapBackendToFrontendShift);
   } catch {
     return getLocalItems('shifts', [
       { id: 1, name: 'General Shift' },
@@ -166,7 +203,15 @@ export const deleteDepartment = async (id) => {
 
 export const createDesignation = async (data) => {
   try {
-    const res = await subMasterAPI.create('designation', data);
+    const payload = {
+      name: data.title,
+      code: data.department || null,
+      description: data.description || null,
+      extra_field_1: data.grade || null,
+      extra_field_2: data.min_salary !== undefined && data.min_salary !== null ? String(data.min_salary) : null,
+      extra_field_3: data.max_salary !== undefined && data.max_salary !== null ? String(data.max_salary) : null,
+    };
+    const res = await subMasterAPI.create('designation', payload);
     return res.data;
   } catch {
     return addLocalItem('designations', data);
@@ -174,7 +219,15 @@ export const createDesignation = async (data) => {
 };
 export const updateDesignation = async (id, data) => {
   try {
-    const res = await subMasterAPI.update('designation', id, data);
+    const payload = {
+      name: data.title,
+      code: data.department || null,
+      description: data.description || null,
+      extra_field_1: data.grade || null,
+      extra_field_2: data.min_salary !== undefined && data.min_salary !== null ? String(data.min_salary) : null,
+      extra_field_3: data.max_salary !== undefined && data.max_salary !== null ? String(data.max_salary) : null,
+    };
+    const res = await subMasterAPI.update('designation', id, payload);
     return res.data;
   } catch {
     return updateLocalItem('designations', id, data);
@@ -190,16 +243,44 @@ export const deleteDesignation = async (id) => {
 
 export const createShift = async (data) => {
   try {
-    const res = await subMasterAPI.create('shift', data);
-    return res.data;
+    const extra = {
+      break_duration: data.break_duration !== undefined ? data.break_duration : 60,
+      half_day_hours: data.half_day_hours !== undefined ? data.half_day_hours : 4,
+      color: data.color || '#10B981',
+      working_hours: data.working_hours !== undefined ? data.working_hours : 8.0
+    };
+    const payload = {
+      name: data.name,
+      code: data.shift_type || 'Day',
+      description: data.description || '',
+      extra_field_1: data.start_time || '09:00',
+      extra_field_2: data.end_time || '18:00',
+      extra_field_3: JSON.stringify(extra)
+    };
+    const res = await subMasterAPI.create('shift', payload);
+    return mapBackendToFrontendShift(res.data);
   } catch {
     return addLocalItem('shifts', data);
   }
 };
 export const updateShift = async (id, data) => {
   try {
-    const res = await subMasterAPI.update('shift', id, data);
-    return res.data;
+    const extra = {
+      break_duration: data.break_duration !== undefined ? data.break_duration : 60,
+      half_day_hours: data.half_day_hours !== undefined ? data.half_day_hours : 4,
+      color: data.color || '#10B981',
+      working_hours: data.working_hours !== undefined ? data.working_hours : 8.0
+    };
+    const payload = {
+      name: data.name,
+      code: data.shift_type || 'Day',
+      description: data.description || '',
+      extra_field_1: data.start_time || '09:00',
+      extra_field_2: data.end_time || '18:00',
+      extra_field_3: JSON.stringify(extra)
+    };
+    const res = await subMasterAPI.update('shift', id, payload);
+    return mapBackendToFrontendShift(res.data);
   } catch {
     return updateLocalItem('shifts', id, data);
   }
@@ -248,6 +329,7 @@ export const deleteLoan = (id) => deleteLocalItem('loans', id);
 export const fetchPayroll = () => fetchLocalItemsWithEmployee('payroll');
 export const createPayroll = (data) => addLocalItem('payroll', data);
 export const updatePayroll = (id, data) => updateLocalItem('payroll', id, data);
+export const deletePayroll = (id) => deleteLocalItem('payroll', id);
 
 export const fetchExpenseClaims = () => fetchLocalItemsWithEmployee('expense_claims');
 export const createExpenseClaim = (data) => addLocalItem('expense_claims', data);
@@ -350,6 +432,7 @@ const hrService = {
   listPerformance: async () => fetchHRItems('performance'),
   listOffboarding: async () => fetchHRItems('offboarding'),
   listPayroll: async () => fetchHRItems('payroll'),
+  deletePayroll: async (id) => deleteHRItem('payroll', id),
   
   getEmployee: async (id) => getEmployeeById(id),
   fetchEmployeeAttendance: async (id) => {

@@ -19,15 +19,16 @@ export default function TravelRequests() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterType, setFilterType] = useState('');
   const [viewingRequest, setViewingRequest] = useState(null);
+  const [viewMode, setViewMode] = useState('list');
+  const [showFilters, setShowFilters] = useState(false);
 
   const initialForm = {
+    request_id: '',
+    status: 'Pending',
     employee_id: '',
     employee_name: '',
+    co_travelers: [],
     purpose: '',
     travel_type: 'Domestic',
     from_location: '',
@@ -66,16 +67,19 @@ export default function TravelRequests() {
   };
 
   const handleSubmit = async () => {
-    if (!form.employee_id || !form.purpose || !form.from_location || !form.to_location || !form.departure_date || !form.return_date) {
+    if (!form.employee_id || !form.from_location || !form.to_location || !form.departure_date || !form.return_date) {
       alert('Please fill required fields');
       return;
     }
 
     try {
       const payload = {
+        request_id: form.request_id || `TRV-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: form.status || 'Pending',
         employee_id: parseInt(form.employee_id),
         employee_name: form.employee_name,
-        purpose: form.purpose,
+        co_travelers: form.co_travelers || [],
+        purpose: form.purpose || 'General Travel',
         travel_type: form.travel_type,
         from_location: form.from_location,
         to_location: form.to_location,
@@ -109,9 +113,12 @@ export default function TravelRequests() {
 
   const handleEdit = (req) => {
     setForm({
+      request_id: req.request_id || '',
+      status: req.status || 'Pending',
       employee_id: req.employee_id,
       employee_name: req.employee_name,
-      purpose: req.purpose,
+      co_travelers: req.co_travelers || [],
+      purpose: req.purpose || '',
       travel_type: req.travel_type,
       from_location: req.from_location,
       to_location: req.to_location,
@@ -160,11 +167,7 @@ export default function TravelRequests() {
     });
   };
 
-  const filteredRequests = requests.filter(req => {
-    const matchesStatus = !filterStatus || req.status === filterStatus;
-    const matchesType = !filterType || req.travel_type === filterType;
-    return matchesStatus && matchesType;
-  });
+  const filteredRequests = requests;
 
   const stats = {
     total: requests.length,
@@ -192,74 +195,6 @@ export default function TravelRequests() {
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div className="relative">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="btn btn-secondary"
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Filter size={16} /> Filter
-                  {(filterStatus || filterType) && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }} />}
-                </button>
-                {showFilters && (
-                  <div className="card" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 220, zIndex: 10, padding: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Filters</span>
-                      <button
-                        onClick={() => { setFilterStatus(''); setFilterType(''); setShowFilters(false); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--primary)' }}
-                      >
-                        Reset
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-                        <select
-                          value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">All Status</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Manager Approved">Approved</option>
-                          <option value="Travel Booked">Booked</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Travel Type</label>
-                        <select
-                          value={filterType}
-                          onChange={(e) => setFilterType(e.target.value)}
-                          className="form-control"
-                        >
-                          <option value="">All Types</option>
-                          <option value="Domestic">Domestic</option>
-                          <option value="International">International</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px' }}>
-                <button
-                  onClick={() => setViewMode('list')}
-                  style={{ padding: 4, background: viewMode === 'list' ? 'var(--bg-primary)' : 'none', border: 'none', cursor: 'pointer', borderRadius: 4, display: 'flex', alignItems: 'center' }}
-                  title="List View"
-                >
-                  <LayoutList size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  style={{ padding: 4, background: viewMode === 'grid' ? 'var(--bg-primary)' : 'none', border: 'none', cursor: 'pointer', borderRadius: 4, display: 'flex', alignItems: 'center' }}
-                  title="Grid View"
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
               <button
                 onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
                 className="btn btn-primary"
@@ -393,7 +328,14 @@ export default function TravelRequests() {
                     {filteredRequests.map(req => (
                       <tr key={req.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td className="px-6 py-4 text-sm font-semibold text-indigo-600">{req.request_id}</td>
-                        <td className="px-6 py-4 text-sm text-slate-800 font-medium">{req.employee_name}</td>
+                        <td className="px-6 py-4 text-sm text-slate-800 font-medium">
+                          {req.employee_name}
+                          {req.co_travelers && req.co_travelers.length > 0 && (
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                              + {req.co_travelers.map(c => c.name).join(', ')}
+                            </div>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-sm text-slate-600">
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span>{req.from_location}</span>
@@ -499,9 +441,78 @@ export default function TravelRequests() {
                 </select>
               </div>
             </div>
+
+            <div className="form-group" style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8, border: '1px dashed var(--border)' }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Co-Travelers / Additional Employees (Optional)</label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <select
+                  id="coTravelerSelect"
+                  className="form-control"
+                  style={{ maxWidth: 300 }}
+                  defaultValue=""
+                  onChange={(e) => {
+                    const empId = e.target.value;
+                    if (!empId) return;
+                    const emp = employees.find(emp => emp.id === parseInt(empId));
+                    if (!emp) return;
+                    
+                    if (parseInt(form.employee_id) === emp.id) {
+                      alert("Cannot add main employee as co-traveler.");
+                      e.target.value = "";
+                      return;
+                    }
+                    if (form.co_travelers?.some(c => c.id === emp.id)) {
+                      alert("Employee is already added.");
+                      e.target.value = "";
+                      return;
+                    }
+
+                    const updated = [...(form.co_travelers || []), { id: emp.id, name: emp.name }];
+                    setForm({ ...form, co_travelers: updated });
+                    e.target.value = "";
+                  }}
+                >
+                  <option value="">Choose Employee to Add...</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {form.co_travelers && form.co_travelers.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {form.co_travelers.map(ct => (
+                    <span
+                      key={ct.id}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        background: 'rgba(79, 70, 229, 0.1)',
+                        color: 'var(--primary)',
+                        padding: '4px 10px',
+                        borderRadius: 20,
+                        fontSize: 12,
+                        fontWeight: 600
+                      }}
+                    >
+                      {ct.name}
+                      <X
+                        size={12}
+                        style={{ cursor: 'pointer', opacity: 0.8 }}
+                        onClick={() => {
+                          const updated = form.co_travelers.filter(c => c.id !== ct.id);
+                          setForm({ ...form, co_travelers: updated });
+                        }}
+                      />
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             
             <div className="form-group">
-              <label>Purpose *</label>
+              <label>Purpose</label>
               <textarea
                 value={form.purpose}
                 onChange={(e) => setForm({ ...form, purpose: e.target.value })}
@@ -668,8 +679,15 @@ export default function TravelRequests() {
               </div>
               
               <div className="pt-4 border-t">
-                <p className="text-sm text-slate-500 mb-1">Employee</p>
-                <p className="font-semibold">{viewingRequest.employee_name}</p>
+                <p className="text-sm text-slate-500 mb-1">Employee(s)</p>
+                <p className="font-semibold">
+                  {viewingRequest.employee_name}
+                  {viewingRequest.co_travelers && viewingRequest.co_travelers.length > 0 && (
+                    <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>
+                      {' '}and {viewingRequest.co_travelers.map(c => c.name).join(', ')}
+                    </span>
+                  )}
+                </p>
               </div>
               
               <div className="pt-4 border-t">

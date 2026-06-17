@@ -26,6 +26,10 @@ export default function Departments() {
 
   useEffect(() => {
     loadDepartments();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('add') === 'true') {
+      setShowForm(true);
+    }
   }, []);
 
   const loadDepartments = async () => {
@@ -151,7 +155,7 @@ export default function Departments() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 300px))', gap: 24, marginBottom: 24 }}>
             <div className="card stat-card" style={{ padding: 20 }}>
               <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
                 <Building2 size={24} />
@@ -159,15 +163,6 @@ export default function Departments() {
               <div className="stat-details">
                 <h3>Total Departments</h3>
                 <div className="value">{stats.total}</div>
-              </div>
-            </div>
-            <div className="card stat-card" style={{ padding: 20 }}>
-              <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
-                <Users size={24} />
-              </div>
-              <div className="stat-details">
-                <h3>Total Employees</h3>
-                <div className="value">{stats.totalEmployees}</div>
               </div>
             </div>
           </div>
@@ -180,18 +175,16 @@ export default function Departments() {
                   <tr>
                     <th>Department</th>
                     <th>Head</th>
-                    <th>Employees</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredDepartments.length === 0 ? (
-                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No departments found</td></tr>
+                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No departments found</td></tr>
                   ) : filteredDepartments.map((dept) => (
                     <tr key={dept.id}>
                       <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{dept.name}</td>
                       <td>{dept.head_name || '—'}</td>
-                      <td>{dept.employee_count || 0}</td>
                       <td>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => handleView(dept)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="View">
@@ -234,14 +227,10 @@ export default function Departments() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
                     <div>
                       <p className="text-xs text-slate-500">Head</p>
                       <p className="text-sm font-medium text-slate-700">{dept.head_name || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Employees</p>
-                      <p className="text-sm font-medium text-slate-700">{dept.employee_count || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -350,20 +339,7 @@ export default function Departments() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Stats Row */}
-              <div className="form-row">
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="btn btn-primary">
-                      <Users className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-indigo-900">{viewingDepartment.employee_count || 0}</p>
-                      <p className="text-xs text-indigo-600">Employees</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
 
               {/* Details Grid */}
               <div className="form-row">

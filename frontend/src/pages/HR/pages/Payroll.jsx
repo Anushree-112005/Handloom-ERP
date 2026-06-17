@@ -1,15 +1,23 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Calculator, AlertTriangle, CheckCircle2, FileText, Plus, Trash2, X, DollarSign, Eye, User, Calendar, Building, RefreshCw, Download, Printer, FileSpreadsheet, Filter, LayoutList, LayoutGrid, Sparkles } from 'lucide-react';
-import hrService, { fetchPayroll, createPayroll, updatePayroll, fetchEmployees } from '../../../services/hrService';
+import hrService, { fetchPayroll, createPayroll, updatePayroll, deletePayroll, fetchLoans, fetchEmployees } from '../../../services/hrService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+const monthsList = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const initialForm = {
-  employee: '', period: 'Monthly',
-  basic: 0, allowances: 0, deductions: 0, lop_days: 0, ot_hours: 0
+  employee: '', period: 'Monthly', month: monthsList[new Date().getMonth()],
+  basic: 0, allowances: 0, deductions: 0, lop_days: 0, ot_hours: 0, loan_amount: 0
 };
 
 const Payroll = () => {
   const [rows, setRows] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
@@ -29,12 +37,14 @@ const Payroll = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [payrollData, empData] = await Promise.all([
+      const [payrollData, empData, loanData] = await Promise.all([
         fetchPayroll(),
-        fetchEmployees()
+        fetchEmployees(),
+        fetchLoans().catch(() => [])
       ]);
       setRows(payrollData || []);
       setEmployees(empData || []);
+      setLoans(loanData || []);
     } catch (err) {
       console.error('Failed to load payroll:', err);
       setError('Failed to load data');
@@ -48,8 +58,21 @@ const Payroll = () => {
 
   const computeSalary = (r) => {
     const gross = (Number(r.basic) || 0) + (Number(r.allowances) || 0) + ((Number(r.ot_hours) || 0) * 200);
-    const totalDeductions = (Number(r.deductions) || 0) + (((Number(r.basic) || 0) / 26) * (Number(r.lop_days) || 0));
+    const totalDeductions = (Number(r.deductions) || 0) + (((Number(r.basic) || 0) / 26) * (Number(r.lop_days) || 0)) + (Number(r.loan_amount) || 0);
     return { gross, deductions: totalDeductions, net: gross - totalDeductions };
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this payroll entry?')) return;
+    try {
+      await deletePayroll(id);
+      setSuccess('Payroll entry deleted successfully.');
+      setViewingPayslip(null);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to delete payroll entry.');
+    }
   };
 
   const filteredRows = useMemo(() => {
@@ -77,7 +100,8 @@ const Payroll = () => {
         allowances: 0,
         deductions: 0,
         lop_days: 0,
-        ot_hours: 0
+        ot_hours: 0,
+        loan_amount: 0
       }));
       return;
     }
@@ -90,6 +114,14 @@ const Payroll = () => {
       const empId = selectedEmp.id;
       const empCode = selectedEmp.employee_id;
       
+      const empLoans = loans.filter(l => 
+        (selectedEmp.id && Number(l.employee_id) === Number(selectedEmp.id)) ||
+        (selectedEmp.name && l.employee_name && l.employee_name.toLowerCase() === selectedEmp.name.toLowerCase())
+      );
+      const activeLoansTotal = empLoans
+        .filter(l => l.status !== 'Rejected' && l.status !== 'Closed')
+        .reduce((sum, l) => sum + (Number(l.amount) || 0), 0);
+
       setForm(prev => ({
         ...prev,
         employee: employeeValue,
@@ -97,7 +129,8 @@ const Payroll = () => {
         allowances: selectedEmp.allowances || 0,
         deductions: selectedEmp.deductions || 0,
         lop_days: 0,
-        ot_hours: 0
+        ot_hours: 0,
+        loan_amount: activeLoansTotal
       }));
 
       try {
@@ -131,7 +164,7 @@ const Payroll = () => {
         console.error("Error fetching employee details:", err);
       }
     } else {
-      setForm(prev => ({ ...prev, employee: employeeValue }));
+      setForm(prev => ({ ...prev, employee: employeeValue, loan_amount: 0 }));
     }
   };
 
@@ -159,7 +192,8 @@ const Payroll = () => {
         allowances: Number(form.allowances) || 0,
         deductions: Number(form.deductions) || 0,
         lop_days: Number(form.lop_days) || 0,
-        ot_hours: Number(form.ot_hours) || 0
+        ot_hours: Number(form.ot_hours) || 0,
+        loan_amount: Number(form.loan_amount) || 0
       });
       setSuccess('Payroll entry added!');
       resetForm();
@@ -227,7 +261,7 @@ const Payroll = () => {
             <h3>Employee Details</h3>
             <p><strong>Name:</strong> ${employeeName}</p>
             <p><strong>Employee ID:</strong> ${viewingPayslip.employee}</p>
-            <p><strong>Period:</strong> ${viewingPayslip.period}</p>
+            <p><strong>Period:</strong> ${viewingPayslip.period}${viewingPayslip.month ? ' (' + viewingPayslip.month + ')' : ''}</p>
           </div>
           <div class="info-box" style="text-align: right;">
             <h3>Payslip Details</h3>
@@ -265,11 +299,145 @@ const Payroll = () => {
 
   const handleDownloadPDF = () => {
     if (!viewingPayslip) return;
-    // Use print functionality which allows Save as PDF
-    handlePrint();
-    setTimeout(() => {
-      alert('Use your browser\'s Print dialog to save as PDF');
-    }, 500);
+    const salary = computeSalary(viewingPayslip);
+    const employeeName = employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee;
+
+    const doc = new jsPDF();
+
+    // Color theme
+    const primaryColor = '#1e293b'; // Slate 800
+    const secondaryColor = '#0f766e'; // Teal 700
+    const lightBg = '#f8fafc'; // Slate 50
+
+    // Header Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(primaryColor);
+    doc.text("PAYSLIP", 14, 25);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor("#64748b");
+    doc.text("Dinesh Exports", 14, 30);
+    doc.text("The House of Fabrics", 14, 34);
+
+    // Header Right
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(primaryColor);
+    doc.text("PAYSLIP DETAILS", 140, 20);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 140, 25);
+    doc.text(`Status: ${viewingPayslip.status}`, 140, 30);
+
+    // Divider
+    doc.setDrawColor('#cbd5e1');
+    doc.setLineWidth(0.5);
+    doc.line(14, 38, 196, 38);
+
+    // Employee Details Section
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(primaryColor);
+    doc.text("EMPLOYEE INFORMATION", 14, 46);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor('#334155');
+    doc.text(`Employee Name:`, 14, 53);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${employeeName}`, 50, 53);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`Employee ID:`, 14, 59);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${viewingPayslip.employee}`, 50, 59);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`Pay Period:`, 14, 65);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${viewingPayslip.period}${viewingPayslip.month ? ' (' + viewingPayslip.month + ')' : ''}`, 50, 65);
+
+    // Earnings & Deductions Table
+    const tableColumn = ["Earnings Description", "Amount (INR)", "Deductions Description", "Amount (INR)"];
+    
+    const basicVal = viewingPayslip.basic || 0;
+    const allowancesVal = viewingPayslip.allowances || 0;
+    const otHoursVal = viewingPayslip.ot_hours || 0;
+    const otAmt = otHoursVal * 200;
+    
+    const deductionsVal = viewingPayslip.deductions || 0;
+    const lopDaysVal = viewingPayslip.lop_days || 0;
+    const lopAmt = Math.round((basicVal / 26) * lopDaysVal);
+
+    const tableRows = [
+      [
+        "Basic Salary", 
+        basicVal.toLocaleString(), 
+        "Deductions", 
+        deductionsVal.toLocaleString()
+      ],
+      [
+        "Allowances", 
+        allowancesVal.toLocaleString(), 
+        `Loss of Pay (${lopDaysVal} days)`, 
+        lopAmt.toLocaleString()
+      ],
+      [
+        `Overtime (${otHoursVal}h x 200)`, 
+        otAmt.toLocaleString(), 
+        viewingPayslip.loan_amount > 0 ? "Loan Deduction" : "-", 
+        viewingPayslip.loan_amount > 0 ? (viewingPayslip.loan_amount || 0).toLocaleString() : "-"
+      ],
+      [
+        "Gross Salary", 
+        salary.gross.toLocaleString(), 
+        "Total Deductions", 
+        salary.deductions.toLocaleString()
+      ]
+    ];
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 75,
+      theme: 'grid',
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: '#ffffff',
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 6
+      },
+      columnStyles: {
+        1: { halign: 'right' },
+        3: { halign: 'right' }
+      }
+    });
+
+    // Net Pay Block
+    const finalY = doc.lastAutoTable.finalY + 12;
+    doc.setFillColor(lightBg);
+    doc.rect(14, finalY, 182, 18, "F");
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(secondaryColor);
+    doc.text("NET TAKE-HOME PAY:", 18, finalY + 11);
+    doc.setFontSize(14);
+    doc.text(`INR ${salary.net.toLocaleString()}`, 145, finalY + 11);
+
+    // Footer note
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor("#94a3b8");
+    doc.text("This is a computer-generated document and does not require a signature.", 14, finalY + 28);
+    doc.text("© 2026 Dinesh Exports. All rights reserved.", 14, finalY + 34);
+
+    doc.save(`Payslip_${employeeName.replace(/\s+/g, '_')}_${viewingPayslip.month || 'payroll'}.pdf`);
   };
 
   const handleDownloadExcel = () => {
@@ -278,14 +446,14 @@ const Payroll = () => {
     const employeeName = employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee;
 
     // Create CSV content
-    const csvContent = [
+    const excelRows = [
       ['PAYSLIP'],
       ['Universe Enterprise v2.0'],
       [''],
       ['Employee Details'],
       ['Name', employeeName],
       ['Employee ID', viewingPayslip.employee],
-      ['Period', viewingPayslip.period],
+      ['Period', viewingPayslip.period + (viewingPayslip.month ? ' (' + viewingPayslip.month + ')' : '')],
       ['Status', viewingPayslip.status],
       ['Date', new Date().toLocaleDateString('en-IN')],
       [''],
@@ -296,9 +464,16 @@ const Payroll = () => {
       [`Overtime (${viewingPayslip.ot_hours || 0}h × ₹200)`, (viewingPayslip.ot_hours || 0) * 200],
       ['Gross Salary', salary.gross],
       ['Deductions', `-${viewingPayslip.deductions || 0}`],
-      [`Loss of Pay (${viewingPayslip.lop_days || 0} days)`, `-${Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0))}`],
-      ['NET PAY', salary.net]
-    ].map(row => row.join(',')).join('\n');
+      [`Loss of Pay (${viewingPayslip.lop_days || 0} days)`, `-${Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0))}`]
+    ];
+
+    if (viewingPayslip.loan_amount > 0) {
+      excelRows.push(['Loan Deduction', `-${viewingPayslip.loan_amount}`]);
+    }
+
+    excelRows.push(['NET PAY', salary.net]);
+
+    const csvContent = excelRows.map(row => row.join(',')).join('\n');
 
     // Create blob and download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -434,7 +609,7 @@ const Payroll = () => {
                     {employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee}
                   </h3>
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Employee ID: {viewingPayslip.employee}</p>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{viewingPayslip.period}</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{viewingPayslip.period}{viewingPayslip.month ? ` (${viewingPayslip.month})` : ''}</p>
                   <span style={{ 
                     display: 'inline-block',
                     padding: '4px 12px',
@@ -453,6 +628,9 @@ const Payroll = () => {
                   <div className="flex justify-between text-emerald-600 font-semibold border-t pt-3"><span>Gross</span><span>₹{computeSalary(viewingPayslip).gross.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{(viewingPayslip.deductions || 0).toLocaleString()}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">LOP ({viewingPayslip.lop_days || 0}d)</span><span className="font-semibold text-red-600">-₹{Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0)).toLocaleString()}</span></div>
+                  {viewingPayslip.loan_amount > 0 && (
+                    <div className="flex justify-between"><span className="text-slate-500">Loan Deduction</span><span className="font-semibold text-red-600">-₹{(viewingPayslip.loan_amount || 0).toLocaleString()}</span></div>
+                  )}
                   <div className="flex justify-between text-xl font-bold text-emerald-600 border-t pt-3"><span>Net Pay</span><span>₹{computeSalary(viewingPayslip).net.toLocaleString()}</span></div>
                 </div>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
@@ -464,6 +642,9 @@ const Payroll = () => {
                   </button>
                   <button onClick={handleDownloadExcel} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#10b981', borderColor: '#10b981' }}>
                     <FileSpreadsheet className="w-4 h-4" /> Excel
+                  </button>
+                  <button onClick={() => handleDelete(viewingPayslip.id)} className="btn btn-danger" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#dc2626', borderColor: '#dc2626' }}>
+                    <Trash2 className="w-4 h-4" /> Delete
                   </button>
                 </div>
               </div>
@@ -491,7 +672,7 @@ const Payroll = () => {
                       </div>
                       <div>
                         <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{empName}</p>
-                        <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}</p>
+                        <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}{r.month ? ` (${r.month})` : ''}</p>
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
@@ -513,6 +694,7 @@ const Payroll = () => {
                     {r.deductions > 0 && <span style={{ background: '#ef444410', color: '#b91c1c', padding: '4px 8px', borderRadius: 4 }}>Deductions: -₹{r.deductions.toLocaleString()}</span>}
                     {r.ot_hours > 0 && <span style={{ background: '#3b82f610', color: '#1d4ed8', padding: '4px 8px', borderRadius: 4 }}>OT: {r.ot_hours}h</span>}
                     {r.lop_days > 0 && <span style={{ background: '#f59e0b10', color: '#b45309', padding: '4px 8px', borderRadius: 4 }}>LOP: {r.lop_days}d</span>}
+                    {r.loan_amount > 0 && <span style={{ background: '#f59e0b10', color: '#b45309', padding: '4px 8px', borderRadius: 4 }}>Loan Deduct: -₹{r.loan_amount.toLocaleString()}</span>}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
@@ -529,6 +711,9 @@ const Payroll = () => {
                         Finance Approve
                       </button>
                     )}
+                    <button onClick={() => handleDelete(r.id)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: 13, color: '#dc2626', marginLeft: 'auto' }}>
+                      <Trash2 className="w-4 h-4" /> Delete
+                    </button>
                   </div>
                 </div>
               );
@@ -556,7 +741,7 @@ const Payroll = () => {
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{empName}</p>
-                        <p style={{ margin: '2px 0 0 0', fontSize: 11, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}</p>
+                        <p style={{ margin: '2px 0 0 0', fontSize: 11, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}{r.month ? ` (${r.month})` : ''}</p>
                       </div>
                     </div>
                     
@@ -565,6 +750,12 @@ const Payroll = () => {
                         <span style={{ color: 'var(--text-muted)' }}>Basic</span>
                         <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>₹{(r.basic || 0).toLocaleString()}</span>
                       </div>
+                      {r.loan_amount > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Loan Deduct</span>
+                          <span style={{ fontWeight: 600, color: '#b45309' }}>-₹{r.loan_amount.toLocaleString()}</span>
+                        </div>
+                      )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                         <span style={{ color: 'var(--text-muted)' }}>Net Pay</span>
                         <span style={{ fontWeight: 700, color: '#10b981' }}>₹{salary.net.toLocaleString()}</span>
@@ -597,6 +788,9 @@ const Payroll = () => {
                         Approve
                       </button>
                     )}
+                    <button onClick={() => handleDelete(r.id)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 8px', color: '#dc2626' }} title="Delete">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               );
@@ -637,12 +831,22 @@ const Payroll = () => {
               </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>Period</label>
                 <select className="form-control"
                   value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value })}>
                   <option>Monthly</option><option>Weekly</option><option>Bi-Weekly</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Month</label>
+                <select className="form-control"
+                  value={form.month} onChange={(e) => setForm({ ...form, month: e.target.value })}>
+                  <option value="">Select Month</option>
+                  {monthsList.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -665,7 +869,7 @@ const Payroll = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>LOP Days</label>
                 <input type="number" step="0.5" min="0" className="form-control"
@@ -676,12 +880,23 @@ const Payroll = () => {
                 <input type="number" min="0" className="form-control"
                   value={form.ot_hours} onChange={(e) => setForm({ ...form, ot_hours: e.target.value })} />
               </div>
+              <div className="form-group">
+                <label>Loan Amount</label>
+                <input type="number" min="0" className="form-control"
+                  value={form.loan_amount} onChange={(e) => setForm({ ...form, loan_amount: e.target.value })} />
+              </div>
             </div>
 
             {/* Preview */}
             <div className="bg-slate-50 rounded-lg p-3 space-y-2 text-sm border border-slate-100">
               <div className="flex justify-between"><span className="text-slate-500">Gross</span><span className="font-semibold text-slate-800">₹{computeSalary(form).gross.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{computeSalary(form).deductions.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{(Number(form.deductions) || 0).toLocaleString()}</span></div>
+              {Number(form.lop_days) > 0 && (
+                <div className="flex justify-between"><span className="text-slate-500">Loss of Pay ({form.lop_days} days)</span><span className="font-semibold text-red-600">-₹{Math.round(((Number(form.basic) || 0) / 26) * Number(form.lop_days)).toLocaleString()}</span></div>
+              )}
+              {Number(form.loan_amount) > 0 && (
+                <div className="flex justify-between"><span className="text-amber-700 font-semibold">Loan Deduction</span><span className="font-semibold text-amber-700">-₹{Number(form.loan_amount).toLocaleString()}</span></div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--border)', paddingTop: 8 }}><span className="font-bold text-slate-700">Net Pay</span><span className="font-bold text-emerald-600 text-base">₹{computeSalary(form).net.toLocaleString()}</span></div>
             </div>
           </div>

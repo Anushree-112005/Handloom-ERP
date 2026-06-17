@@ -110,6 +110,12 @@ async def create_employee(emp: EmployeeCreate, db: AsyncSession = Depends(get_db
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Employee Code already exists")
     
+    if not emp.mobile or not emp.mobile.strip():
+        raise HTTPException(status_code=400, detail="Phone number is required")
+    mobile_val = emp.mobile.strip()
+    if not (mobile_val.isdigit() and len(mobile_val) == 10):
+        raise HTTPException(status_code=400, detail="Phone number must be exactly 10 digits")
+    
     data = emp.model_dump(exclude={"password"})
     if emp.password:
         data["password_hash"] = get_password_hash(emp.password)
@@ -125,6 +131,13 @@ async def update_employee(emp_id: int, emp: EmployeeUpdate, db: AsyncSession = D
     db_emp = result.scalar_one_or_none()
     if not db_emp:
         raise HTTPException(status_code=404, detail="Employee not found")
+
+    if emp.mobile is not None:
+        mobile_val = emp.mobile.strip()
+        if not mobile_val:
+            raise HTTPException(status_code=400, detail="Phone number is required")
+        if not (mobile_val.isdigit() and len(mobile_val) == 10):
+            raise HTTPException(status_code=400, detail="Phone number must be exactly 10 digits")
 
     data = emp.model_dump(exclude={"password"}, exclude_unset=True)
     if emp.password:

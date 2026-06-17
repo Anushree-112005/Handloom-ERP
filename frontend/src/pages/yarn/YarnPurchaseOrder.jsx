@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown } from 'lucide-react';
-import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
+import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -16,6 +16,8 @@ export default function YarnPurchaseOrder() {
   const [orders, setOrders] = useState([]);
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
+  const [buyerOrders, setBuyerOrders] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('main');
@@ -104,12 +106,18 @@ export default function YarnPurchaseOrder() {
 
   const loadData = async () => {
     try {
-      const [ordRes, partRes, dropRes] = await Promise.all([
-        yarnPurchaseOrderAPI.list(), partyAPI.list(), dropdownAPI.getAll()
+      const [ordRes, partRes, dropRes, buyerOrdRes, designRes] = await Promise.all([
+        yarnPurchaseOrderAPI.list(), 
+        partyAPI.list(), 
+        dropdownAPI.getAll(),
+        buyerOrderAPI.list(),
+        designEntryAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
+      setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(designRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -332,6 +340,86 @@ export default function YarnPurchaseOrder() {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
     
+    if (name === 'against_ref') {
+      if (value === 'custom') {
+        setIsCustomAgainstRef(true);
+        setCustomAgainstRefVal('');
+        return;
+      }
+      
+      if (value && value !== 'No Reference') {
+        const selectedOrder = buyerOrders.find(bo => bo.ibpo_number === value);
+        const matchingDesigns = designEntries.filter(de => de.ibpo_no === value);
+        
+        if (matchingDesigns.length > 0) {
+          const newIndentDetails = matchingDesigns.map(de => {
+            let yCount = de.count_rxpxw || '';
+            try {
+              if (de.yarn_details) {
+                const parsed = JSON.parse(de.yarn_details);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  yCount = parsed[0].yarn_count || yCount;
+                }
+              }
+            } catch (e) {
+              console.error("Failed to parse design entry yarn details", e);
+            }
+            return {
+              req_ind_no: '',
+              design_no: de.design_no || '',
+              ibpo_no: de.ibpo_no || value,
+              party_name: de.buyer_name || selectedOrder?.party_name || '',
+              fabric_name: de.fabric || '',
+              yarn_count: yCount,
+              order_mtrs: parseFloat(de.order_mtr) || 0,
+              warp_qty: parseFloat(de.warp_mtr) || 0,
+              weft_qty: parseFloat(de.weft_pro_mtr) || 0,
+              tot_reqd_qty: 0,
+              appd_qty: 0,
+              order_qty: 0
+            };
+          });
+
+          setForm(prev => ({
+            ...prev,
+            against_ref: value,
+            agent_name: selectedOrder?.agent_name || prev.agent_name || '',
+            supplier_name: selectedOrder?.party_name || prev.supplier_name || '',
+            delivery_at: selectedOrder?.delivery_at || prev.delivery_at || '',
+            indent_details: newIndentDetails
+          }));
+          return;
+        } else if (selectedOrder) {
+          const newIndentDetails = (selectedOrder.items || []).map(item => {
+            return {
+              req_ind_no: '',
+              design_no: item.design_no || '',
+              ibpo_no: selectedOrder.ibpo_number,
+              party_name: selectedOrder.party_name || '',
+              fabric_name: item.fabric_type || '',
+              yarn_count: item.yarn_count || '',
+              order_mtrs: parseFloat(item.order_mtrs) || 0,
+              warp_qty: 0,
+              weft_qty: 0,
+              tot_reqd_qty: 0,
+              appd_qty: 0,
+              order_qty: 0
+            };
+          });
+
+          setForm(prev => ({
+            ...prev,
+            against_ref: value,
+            agent_name: selectedOrder.agent_name || prev.agent_name || '',
+            supplier_name: selectedOrder.party_name || prev.supplier_name || '',
+            delivery_at: selectedOrder.delivery_at || prev.delivery_at || '',
+            indent_details: newIndentDetails.length > 0 ? newIndentDetails : prev.indent_details
+          }));
+          return;
+        }
+      }
+    }
+
     if (name === 'supplier_name' && value === 'custom_add_new') {
       setIsCustomMainSupplier(true);
       setCustomMainSupplierVal('');
@@ -680,6 +768,12 @@ export default function YarnPurchaseOrder() {
                           else handleChange(e);
                         }}>
                           <option value="">Select...</option>
+                          <option value="No Reference">No Reference (Dummy PO)</option>
+                          {buyerOrders.map(bo => (
+                            <option key={bo.id} value={bo.ibpo_number}>
+                              {bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})
+                            </option>
+                          ))}
                           {options.masters?.against_reference_master?.map(o => <option key={o} value={o}>{o}</option>)}
                           <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Against Ref...</option>
                         </select>

@@ -62,6 +62,65 @@ export default function HRReports() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showReportDropdown, showFilters]);
 
+  const fetchAndAggregateExpenses = async (params = {}) => {
+    const [allClaims, employees] = await Promise.all([
+      hrService.fetchExpenseClaims().catch(() => []),
+      hrService.fetchEmployees().catch(() => [])
+    ]);
+
+    const byCategory = {};
+    const byStatus = {};
+    let totalAmount = 0;
+
+    allClaims.forEach(claim => {
+      if (params.department) {
+        const emp = employees.find(e => String(e.id) === String(claim.employee_id));
+        const empDept = emp?.department?.toLowerCase() || '';
+        if (empDept !== params.department.toLowerCase()) {
+          return;
+        }
+      }
+
+      if (params.start_date && claim.expense_date < params.start_date) {
+        return;
+      }
+      if (params.end_date && claim.expense_date > params.end_date) {
+        return;
+      }
+
+      const cat = claim.category || 'Other';
+      const amt = parseFloat(claim.amount) || 0;
+      const status = claim.status || 'Pending';
+      
+      if (!byCategory[cat]) {
+        byCategory[cat] = { count: 0, amount: 0 };
+      }
+      byCategory[cat].count += 1;
+      byCategory[cat].amount += amt;
+      
+      if (!byStatus[status]) {
+        byStatus[status] = { count: 0, amount: 0 };
+      }
+      byStatus[status].count += 1;
+      byStatus[status].amount += amt;
+      
+      totalAmount += amt;
+    });
+
+    return {
+      by_category: byCategory,
+      by_status: byStatus,
+      total: totalAmount
+    };
+  };
+
+  const formatKAmount = (amount) => {
+    if (!amount || amount === 0) return '0';
+    if (amount < 1000) return `${amount.toLocaleString('en-IN')}`;
+    const value = amount / 1000;
+    return value % 1 === 0 ? `${value.toFixed(0)}K` : `${value.toFixed(1)}K`;
+  };
+
   // Real-time data fetching
   useEffect(() => {
     const fetchReportData = async () => {
@@ -104,8 +163,7 @@ export default function HRReports() {
             data = await hrService.getReport('salary-analysis', params);
             break;
           case 'benefits':
-            // Fetch expense summary as benefits proxy
-            data = await hrService.getReport('expense-summary', params).catch(() => null);
+            data = await fetchAndAggregateExpenses(params);
             break;
           case 'hiring':
             data = await hrService.getReport('hiring', params);
@@ -174,7 +232,7 @@ export default function HRReports() {
           data = await hrService.getReport('salary-analysis', params);
           break;
         case 'benefits':
-          data = await hrService.getReport('expense-summary', params).catch(() => null);
+          data = await fetchAndAggregateExpenses(params);
           break;
         case 'hiring':
           data = await hrService.getReport('hiring', params);
@@ -263,15 +321,27 @@ export default function HRReports() {
 
   const getExpenseData = () => {
     if (!reportData || !reportData.by_category) {
-      return { byStatus: {}, byCategory: {}, total: 0 };
+      return { byStatus: {}, byCategory: {}, total: 0, pendingAmount: 0, approvedAmount: 0 };
     }
 
     const total = Object.values(reportData.by_category).reduce((sum, cat) => sum + (cat.amount || 0), 0);
 
+    const statusNormalized = {};
+    Object.entries(reportData.by_status || {}).forEach(([k, v]) => {
+      statusNormalized[k.toLowerCase()] = v;
+    });
+
+    const pendingAmount = statusNormalized['pending']?.amount || 0;
+    const approvedAmount = (statusNormalized['manager approved']?.amount || 0) + 
+                          (statusNormalized['finance approved']?.amount || 0) + 
+                          (statusNormalized['paid']?.amount || 0);
+
     return {
       byStatus: reportData.by_status || {},
       byCategory: reportData.by_category || {},
-      total
+      total: reportData.total !== undefined ? reportData.total : total,
+      pendingAmount,
+      approvedAmount
     };
   };
 
@@ -620,18 +690,18 @@ export default function HRReports() {
         <div className="form-row">
           <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 text-white">
             <p className="text-sm opacity-80">Total Expenses</p>
-            <p className="text-3xl font-bold">₹{(expenseData.total / 1000).toFixed(0)}K</p>
+            <p className="text-3xl font-bold">₹{formatKAmount(expenseData.total)}</p>
           </div>
           <div className="card">
             <p className="text-sm text-slate-500">Approved</p>
             <p className="text-3xl font-bold text-green-600">
-              ₹{((expenseData.byStatus.approved?.amount || 0) / 1000).toFixed(0)}K
+              ₹{formatKAmount(expenseData.approvedAmount)}
             </p>
           </div>
           <div className="card">
             <p className="text-sm text-slate-500">Pending</p>
             <p className="text-3xl font-bold text-amber-600">
-              ₹{((expenseData.byStatus.pending?.amount || 0) / 1000).toFixed(0)}K
+              ₹{formatKAmount(expenseData.pendingAmount)}
             </p>
           </div>
         </div>
@@ -649,7 +719,7 @@ export default function HRReports() {
                     style={{ width: `${Math.min((data.amount / expenseData.total) * 100 * 1.5, 100)}%` }}
                   />
                   <span className="absolute inset-0 flex items-center px-3 text-sm font-medium">
-                    {data.count} claims (₹{(data.amount / 1000).toFixed(1)}K)
+                    {data.count} claims (₹{formatKAmount(data.amount)})
                   </span>
                 </div>
               </div>

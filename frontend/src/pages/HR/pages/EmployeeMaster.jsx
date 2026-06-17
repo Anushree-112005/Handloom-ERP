@@ -35,20 +35,6 @@ const initialFormState = {
   basic_salary: '', allowances: '', deductions: '', net_salary: ''
 };
 
-const defaultDesignations = [
-  "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
-  "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
-  "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
-  "Assistant", "Operator", "Technician", "Worker", "Trainee"
-];
-
-const defaultDepartments = [
-  "Management", "Merchandising", "Design", "Purchase", "Stores", 
-  "Inventory", "Production", "Weaving", "Dyeing", "Quality", 
-  "Dispatch", "Export Documentation", "Logistics", "Accounts", 
-  "HR", "Payroll", "Maintenance", "IT", "Admin"
-];
-
 const EmployeeMaster = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
@@ -65,15 +51,13 @@ const EmployeeMaster = () => {
   const [form, setForm] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
 
-  const uniqueDepartments = Array.from(new Set([
-    ...departments.map(d => d.name),
-    ...defaultDepartments
-  ])).filter(Boolean);
+  const uniqueDepartments = Array.from(new Set(
+    departments.map(d => d.name)
+  )).filter(Boolean);
 
-  const uniqueDesignations = Array.from(new Set([
-    ...designations.map(d => d.title || d.name),
-    ...defaultDesignations
-  ])).filter(Boolean);
+  const uniqueDesignations = Array.from(new Set(
+    designations.map(d => d.title || d.name)
+  )).filter(Boolean);
   const [viewMode, setViewMode] = useState('list');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -105,6 +89,8 @@ const EmployeeMaster = () => {
       console.log('Master data load error:', e);
     }
   };
+
+
 
   const loadEmployees = async () => {
     try {
@@ -168,10 +154,16 @@ const EmployeeMaster = () => {
     const requiredFields = [
       { field: 'name', label: 'Full Name' },
       { field: 'email', label: 'Work Email' },
+      { field: 'phone', label: 'Phone' },
     ];
     const missingFields = requiredFields.filter(f => !form[f.field] || form[f.field].toString().trim() === '');
     if (missingFields.length > 0) {
       setMessage({ type: 'error', text: `Missing required fields: ${missingFields.map(f => f.label).join(', ')}` });
+      return;
+    }
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(form.phone.toString().trim())) {
+      setMessage({ type: 'error', text: 'Phone number must be a 10-digit number' });
       return;
     }
     setLoading(true);
@@ -342,9 +334,9 @@ const EmployeeMaster = () => {
             className="form-control" placeholder="john@company.com" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
           <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="form-control" placeholder="+91 98765 43210" />
+            className="form-control" placeholder="10-digit number" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Employee ID</label>
@@ -475,22 +467,42 @@ const EmployeeMaster = () => {
       <div className="form-row">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-          <select value={form.department || ''} onChange={(e) => setForm({ ...form, department: e.target.value })}
-            className="form-control">
+          <select
+            value={form.department || ''}
+            onChange={(e) => {
+              if (e.target.value === 'add_custom') {
+                navigate('/hr/departments?add=true');
+              } else {
+                setForm({ ...form, department: e.target.value });
+              }
+            }}
+            className="form-control"
+          >
             <option value="">Select</option>
             {uniqueDepartments.map(name => (
               <option key={name} value={name}>{name}</option>
             ))}
+            <option value="add_custom" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Designation</label>
-          <select value={form.designation || ''} onChange={(e) => setForm({ ...form, designation: e.target.value })}
-            className="form-control">
+          <select
+            value={form.designation || ''}
+            onChange={(e) => {
+              if (e.target.value === 'add_custom') {
+                navigate('/hr/designations?add=true');
+              } else {
+                setForm({ ...form, designation: e.target.value });
+              }
+            }}
+            className="form-control"
+          >
             <option value="">Select</option>
             {uniqueDesignations.map(name => (
               <option key={name} value={name}>{name}</option>
             ))}
+            <option value="add_custom" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom</option>
           </select>
         </div>
         <div>

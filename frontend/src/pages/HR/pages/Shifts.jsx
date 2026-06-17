@@ -22,7 +22,6 @@ export default function Shifts() {
     break_duration: 60,
     shift_type: 'Day',
     color: '#10B981',
-    grace_period: 15,
     half_day_hours: 4
   };
   const [form, setForm] = useState(initialForm);
@@ -87,7 +86,6 @@ export default function Shifts() {
       break_duration: shift.break_duration || 60,
       shift_type: shift.shift_type || 'Day',
       color: shift.color || '#10B981',
-      grace_period: shift.grace_period || 15,
       half_day_hours: shift.half_day_hours || 4
     });
     setEditingId(shift.id);
@@ -392,15 +390,6 @@ export default function Shifts() {
                     type="number"
                     value={form.break_duration}
                     onChange={(e) => setForm({ ...form, break_duration: parseInt(e.target.value) || 0 })}
-                    className="form-control"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Grace Period (mins)</label>
-                  <input
-                    type="number"
-                    value={form.grace_period}
-                    onChange={(e) => setForm({ ...form, grace_period: parseInt(e.target.value) || 0 })}
                     className="form-control"
                   />
                 </div>
