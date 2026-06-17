@@ -221,42 +221,67 @@ export default function TargetVsActual() {
             </div>
           </div>
           
-          <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Record ID</th>
-                  <th>Loom ID</th>
-                  <th>Actual / Target</th>
-                  <th>Status</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
-                ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
-                ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td><span style={{ fontWeight: 600 }}>{record.extra_field_1}</span></td>
-                    <td>
-                      <span style={{ 
-                        color: record.extra_field_2 === 'Delayed' ? '#b91c1c' : '#047857', 
-                        fontWeight: 600, 
-                        backgroundColor: record.extra_field_2 === 'Delayed' ? '#ef444420' : '#10b98120', 
-                        padding: '4px 8px', borderRadius: 12, fontSize: 12 
-                      }}>
-                        {record.extra_field_2}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
+            ) : filteredRecords.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                {filteredRecords.map((record, idx) => {
+                  const isDelayed = record.extra_field_2 === 'Delayed';
+                  return (
+                    <div key={record.id || idx} style={{
+                      background: 'var(--bg-primary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      padding: 20,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>{record.code}</span>
+                        <span style={{ 
+                          color: isDelayed ? '#b91c1c' : '#047857', 
+                          fontWeight: 600, 
+                          backgroundColor: isDelayed ? '#ef444420' : '#10b98120', 
+                          padding: '4px 10px', 
+                          borderRadius: 12, 
+                          fontSize: 12 
+                        }}>
+                          {record.extra_field_2}
+                        </span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}>
+                        Record ID: <span style={{ color: 'var(--text-primary)' }}>{record.name}</span>
+                      </div>
+                      
+                      <div style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Actual / Target</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>{record.extra_field_1}</span>
+                        </div>
+                        <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                           {/* Parse actual and target to render a rough progress bar if possible, otherwise just a static bar based on status */}
+                           <div style={{ 
+                             width: isDelayed ? '75%' : '100%', 
+                             height: '100%', 
+                             background: isDelayed ? '#ef4444' : '#10b981', 
+                             borderRadius: 3 
+                           }} />
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', background: isDelayed ? '#fef2f2' : '#f0fdf4', padding: 10, borderRadius: 8, border: `1px solid ${isDelayed ? '#fecaca' : '#bbf7d0'}` }}>
+                        {record.description}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings2, Save, Search, Trash2, X, ArrowLeft } from 'lucide-react';
+import { Settings2, Save, Search, Trash2, X, ArrowLeft, CheckCircle, AlertTriangle, Settings, Plus } from 'lucide-react';
 import { ppcAPI } from '../../services/api';
 
 export default function LoomRegistration() {
@@ -57,11 +57,11 @@ export default function LoomRegistration() {
         next_service_date: formData.next_service_date ? new Date(formData.next_service_date).toISOString() : null
       });
       alert('Loom successfully registered and configured!');
-      setFormData({ 
-        loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '', 
-        installation_date: '', capacity_per_day: '', running_speed_per_hr: '', 
-        efficiency_pct: '80', reed_width: '', total_ends: '', status: 'Idle', 
-        location: '', last_service_date: '', next_service_date: '', remarks: '' 
+      setFormData({
+        loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '',
+        installation_date: '', capacity_per_day: '', running_speed_per_hr: '',
+        efficiency_pct: '80', reed_width: '', total_ends: '', status: 'Idle',
+        location: '', last_service_date: '', next_service_date: '', remarks: ''
       });
       setIsFormOpen(false);
       fetchLooms();
@@ -73,40 +73,45 @@ export default function LoomRegistration() {
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Settings2 style={{ color: 'var(--primary)' }} /> Loom Registration & Configuration
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Register new machines and define their base production characteristics.</p>
+
+      {/* Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb' }}>
+            <Settings2 size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Total Looms</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.length}</div>
+          </div>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({ 
-                loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '', 
-                installation_date: '', capacity_per_day: '', running_speed_per_hr: '', 
-                efficiency_pct: '80', reed_width: '', total_ends: '', status: 'Idle', 
-                location: '', last_service_date: '', next_service_date: '', remarks: '' 
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <Settings2 size={16} /> Add Loom
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Running</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Running').length}</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Breakdown</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Breakdown').length}</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+            <Settings size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Maintenance</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Maintenance').length}</div>
+          </div>
+        </div>
       </div>
 
       {/* Inline Form */}
@@ -151,7 +156,7 @@ export default function LoomRegistration() {
                 <input type="text" className="form-control" name="model_number" value={formData.model_number} onChange={handleInputChange} placeholder="e.g. JAT910" />
               </div>
             </div>
-            
+
             <div className="form-group">
               <label>Location / Section</label>
               <input type="text" className="form-control" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g. Shed A" />
@@ -214,7 +219,7 @@ export default function LoomRegistration() {
               <label>Remarks</label>
               <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="Additional notes..." rows="3" />
             </div>
-            
+
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
               <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
               <button type="submit" className="btn btn-primary">
@@ -224,57 +229,74 @@ export default function LoomRegistration() {
           </form>
         </div>
       ) : (
-      <div className="card" style={{ padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Active Looms Roster</h3>
-          <div className="search-bar" style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--text-muted)' }} />
-            <input type="text" placeholder="Search looms..." className="form-control" style={{ paddingLeft: 36, width: 200 }} />
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Active Looms Roster</h3>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div className="search-bar" style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Search looms..." className="form-control" style={{ paddingLeft: 36, width: 200 }} />
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setFormData({
+                    loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '',
+                    installation_date: '', capacity_per_day: '', running_speed_per_hr: '',
+                    efficiency_pct: '80', reed_width: '', total_ends: '', status: 'Idle',
+                    location: '', last_service_date: '', next_service_date: '', remarks: ''
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <Plus size={16} /> Add Loom
+              </button>
+            </div>
+          </div>
+
+          <div className="table-responsive">
+            <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
+                <tr>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Loom ID/Name</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Type</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Make/Model</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Location</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Capacity (m/d)</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {looms.map((loom, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontWeight: 600, color: 'var(--primary)' }}>{loom.loom_name}</span></td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.loom_type || '-'}</td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{loom.manufacturer} {loom.model_number}</span></td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.location || '-'}</td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.capacity_per_day}</td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{
+                        padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
+                        backgroundColor: loom.status === 'Running' ? '#10b98120' : loom.status === 'Maintenance' ? '#ef444420' : loom.status === 'Breakdown' ? '#f59e0b20' : '#64748b20',
+                        color: loom.status === 'Running' ? '#10b981' : loom.status === 'Maintenance' ? '#ef4444' : loom.status === 'Breakdown' ? '#f59e0b' : '#64748b'
+                      }}>
+                        {loom.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                      <button className="btn" style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+                {looms.length === 0 && (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No looms registered yet.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-        
-        <div className="table-responsive">
-          <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
-            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-              <tr>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Loom ID/Name</th>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Type</th>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Make/Model</th>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Location</th>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Capacity (m/d)</th>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
-                <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {looms.map((loom, i) => (
-                <tr key={i}>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontWeight: 600, color: 'var(--primary)' }}>{loom.loom_name}</span></td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.loom_type || '-'}</td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{loom.manufacturer} {loom.model_number}</span></td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.location || '-'}</td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{loom.capacity_per_day}</td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{
-                      padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
-                      backgroundColor: loom.status === 'Running' ? '#10b98120' : loom.status === 'Maintenance' ? '#ef444420' : loom.status === 'Breakdown' ? '#f59e0b20' : '#64748b20',
-                      color: loom.status === 'Running' ? '#10b981' : loom.status === 'Maintenance' ? '#ef4444' : loom.status === 'Breakdown' ? '#f59e0b' : '#64748b'
-                    }}>
-                      {loom.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <button className="btn" style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={16}/></button>
-                  </td>
-                </tr>
-              ))}
-              {looms.length === 0 && (
-                <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No looms registered yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       )}
     </div>

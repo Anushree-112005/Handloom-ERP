@@ -31,3 +31,33 @@ Body: b'{"name":"ETA-792","code":"6","extra_field_1":"2026-06-24","extra_field_2
 Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'FA-478', 'code': '', 'extra_field_1': '', 'extra_field_2': 'Pending', 'description': 'Message: Loom  finishing tomorrow | Action: ', 'is_active': True}}]
 Body: b'{"name":"FA-478","code":"","extra_field_1":"","extra_field_2":"Pending","description":"Message: Loom  finishing tomorrow | Action: ","is_active":true}'
 
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'missing', 'loc': ('body', 'entity'), 'msg': 'Field required', 'input': {'name': 'Morning shift', 'code': 'Day', 'extra_field_1': '06:00', 'extra_field_2': '19:00', 'extra_field_3': '30', 'is_active': True}}]
+Body: b'{"name":"Morning shift","code":"Day","extra_field_1":"06:00","extra_field_2":"19:00","extra_field_3":"30","is_active":true}'
+
+Validation Error: [{'type': 'datetime_from_date_parsing', 'loc': ('body', 'join_date'), 'msg': 'Input should be a valid datetime or date, input is too short', 'input': '', 'ctx': {'error': 'input is too short'}}]
+Body: b'{"operator_id":"OP-002","operator_name":"Kavin","department":"Weaving","designation":"Weaver","skill_level":"Expert","assigned_loom":"LM-001","assigned_shift":"Morning shift","join_date":"","contact_number":"9876545678","status":true}'
+

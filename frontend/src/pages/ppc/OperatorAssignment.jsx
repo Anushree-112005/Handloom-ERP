@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { UserCheck, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
 import { ppcAPI, buyerOrderAPI, subMasterAPI } from '../../services/api';
 
 export default function OperatorAssignment() {
@@ -14,6 +14,7 @@ export default function OperatorAssignment() {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
+    id: null,
     assignment_id: '',
     loom_id: '',
     loom_name: '',
@@ -50,7 +51,7 @@ export default function OperatorAssignment() {
         buyerOrderAPI.list().catch(() => ({ data: [] })),
         subMasterAPI.list('ppc_start_end_plan').catch(() => ({ data: [] })), // using start-end plan as schedules
         subMasterAPI.list('ppc_shift_master').catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_operator_master').catch(() => ({ data: [] }))
+        ppcAPI.getOperators().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
@@ -96,15 +97,28 @@ export default function OperatorAssignment() {
   };
 
   const findSchedule = (lId, oId) => {
-    if (!lId || !oId) return null;
-    const loom = looms.find(l => l.id.toString() === lId);
-    const lName = loom ? loom.loom_name : '';
+    if (!lId && !oId) return null;
+    const loom = looms.find(l => l.id.toString() === lId || l.loom_name === lId);
+    const lName = loom ? loom.loom_name : lId;
     
     // Attempt to match schedule. code = order, description contains loom name
-    const match = schedules.find(s => s.code === oId && s.description && s.description.includes(lName));
+    let match = schedules.find(s => 
+      s.code?.toString() === oId?.toString() && 
+      s.description && s.description.includes(lName)
+    );
+
+    // Fallback 1: match by just order id if loom not found
+    if (!match && oId) {
+      match = schedules.find(s => s.code?.toString() === oId?.toString());
+    }
+    // Fallback 2: match by just loom name if order not found
+    if (!match && lName) {
+      match = schedules.find(s => s.description && s.description.includes(lName));
+    }
+
     if (match) {
       // Parse start and end from extra_field_1: "YYYY-MM-DD to YYYY-MM-DD"
-      const dates = match.extra_field_1.split(' to ');
+      const dates = match.extra_field_1 ? match.extra_field_1.split(' to ') : [];
       return {
         name: match.name,
         planned_start: dates[0] || '',
@@ -139,33 +153,82 @@ export default function OperatorAssignment() {
 
   const handleOperatorChange = (e) => {
     const opId = e.target.value;
-    const op = operators.find(o => o.code === opId || o.id.toString() === opId);
+    const op = operators.find(o => o.operator_id === opId || o.id.toString() === opId);
     
     setFormData(prev => ({
       ...prev,
       operator_id: opId,
-      operator_name: op ? op.name : '',
-      skill_level: op ? op.extra_field_2 : '',
-      designation: op ? op.extra_field_1 : ''
+      operator_name: op ? (op.operator_name || op.name) : '',
+      skill_level: op ? (op.skill_level || op.extra_field_2) : '',
+      designation: op ? (op.designation || op.extra_field_1) : ''
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await subMasterAPI.create('ppc_operator_assignment', {
+      const payload = {
         name: formData.assignment_id,
         code: formData.operator_name,
         extra_field_1: `${formData.loom_name} | ${formData.shift}`,
         extra_field_2: formData.status,
         description: `Order: ${formData.order_id} | Backup: ${formData.backup_operator}`,
         is_active: true
-      });
+      };
+
+      if (formData.id) {
+        await subMasterAPI.update('ppc_operator_assignment', formData.id, payload);
+      } else {
+        await subMasterAPI.create('ppc_operator_assignment', payload);
+      }
       setIsFormOpen(false);
       fetchData();
     } catch (err) {
       console.error(err);
       alert('Error creating assignment.');
+    }
+  };
+
+  const handleEdit = (record) => {
+    const loomShiftMatch = record.extra_field_1?.split(' | ');
+    const orderMatch = record.description?.match(/Order: (.*?) \|/);
+    const backupMatch = record.description?.match(/Backup: (.*)$/);
+
+    setFormData({
+      id: record.id,
+      assignment_id: record.name,
+      operator_name: record.code,
+      loom_name: loomShiftMatch ? loomShiftMatch[0] : '',
+      shift: loomShiftMatch ? loomShiftMatch[1] : '',
+      status: record.extra_field_2,
+      order_id: orderMatch ? orderMatch[1] : '',
+      backup_operator: backupMatch ? backupMatch[1] : '',
+      loom_id: '',
+      schedule_id: '',
+      planned_start: '',
+      planned_end: '',
+      shift_start: '',
+      shift_end: '',
+      operator_id: '',
+      skill_level: '',
+      designation: '',
+      target_meters: '',
+      assignment_from: new Date().toISOString().split('T')[0],
+      assignment_to: '',
+      assigned_by: 'Login User',
+      assigned_at: new Date().toISOString().split('T')[0]
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this assignment?')) return;
+    try {
+      await subMasterAPI.delete('ppc_operator_assignment', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete assignment');
     }
   };
 
@@ -189,6 +252,7 @@ export default function OperatorAssignment() {
             className="btn btn-primary" 
             onClick={() => {
               setFormData({
+                id: null,
                 assignment_id: `OA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
                 loom_id: '', loom_name: '', order_id: '', schedule_id: '',
                 planned_start: '', planned_end: '', shift: '', shift_start: '', shift_end: '',
@@ -300,7 +364,7 @@ export default function OperatorAssignment() {
                 <select className="form-control" value={formData.operator_id} onChange={handleOperatorChange} required>
                   <option value="">-- Select Operator --</option>
                   {operators.map(o => (
-                    <option key={o.id} value={o.code || o.id}>{o.code || o.id} - {o.name}</option>
+                    <option key={o.id} value={o.operator_id || o.id}>{o.operator_id || o.id} - {o.operator_name || o.name}</option>
                   ))}
                 </select>
               </div>
@@ -313,7 +377,7 @@ export default function OperatorAssignment() {
                 <select className="form-control" value={formData.backup_operator} onChange={e => setFormData({...formData, backup_operator: e.target.value})}>
                   <option value="">-- Select Backup --</option>
                   {operators.map(o => (
-                    <option key={o.id} value={o.name}>{o.code || o.id} - {o.name}</option>
+                    <option key={o.id} value={o.operator_name || o.name}>{o.operator_id || o.id} - {o.operator_name || o.name}</option>
                   ))}
                 </select>
               </div>
@@ -387,19 +451,33 @@ export default function OperatorAssignment() {
                   <th>Operator</th>
                   <th>Machine & Shift</th>
                   <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
                     <td style={{ fontWeight: 600 }}>{record.name}</td>
                     <td>{record.code}</td>
                     <td>{record.extra_field_1}</td>
                     <td><span style={{ color: '#047857', fontWeight: 600, backgroundColor: '#10b98120', padding: '4px 8px', borderRadius: 12, fontSize: 12 }}>{record.extra_field_2}</span></td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

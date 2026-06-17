@@ -63,8 +63,8 @@ export default function RuntimeCalculation() {
   };
 
   const filteredData = data.filter(d => 
-    d.loom_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.order_id?.toLowerCase().includes(searchTerm.toLowerCase())
+    String(d.loom_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(d.order_id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Search, Download, Filter, Printer } from 'lucide-react';
-import { ppcAPI } from '../../../services/api';
+import { ppcAPI, buyerOrderAPI } from '../../../services/api';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -24,39 +24,55 @@ export default function OrderWiseProduction() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Generate realistic mock data for Order-wise report
-      const mockOrders = Array.from({length: 5}).map((_, i) => {
-        const total = 30000 + (i * 10000);
-        const produced = Math.floor(total * (Math.random() * 0.5 + 0.3));
-        const remaining = total - produced;
-        const completion = (produced / total) * 100;
-        const looms = Math.floor(Math.random() * 3) + 2;
+      const [orderRes, allocRes] = await Promise.all([
+        buyerOrderAPI.list().catch(() => ({ data: [] })),
+        ppcAPI.getAllocations().catch(() => ({ data: [] }))
+      ]);
+
+      const ordersList = orderRes.data || [];
+      const allocationsList = allocRes.data || [];
+
+      const reportData = ordersList.map((order, i) => {
+        const orderIdStr = order.order_no || order.id.toString();
+        const orderAllocs = allocationsList.filter(a => a.order_id === orderIdStr || a.order_id === order.id.toString());
+        
+        const looms = orderAllocs.length;
+        // fallback to order total if no allocs
+        const total = looms > 0 ? orderAllocs.reduce((sum, a) => sum + (a.assigned_meters || 0), 0) : (order.total_amount || 0); 
+        const produced = orderAllocs.reduce((sum, a) => sum + (a.completed_meters || 0), 0);
+        const remaining = Math.max(0, total - produced);
+        const completion = total > 0 ? (produced / total) * 100 : 0;
         
         let status = '✅ On Track';
-        if (completion < 50 && i > 2) status = '❌ Delayed';
-        else if (completion < 60) status = '⚠️ At Risk';
+        if (completion >= 100) status = '🎉 Completed';
+        else if (completion < 50 && remaining > 0) status = '❌ Delayed';
+        else if (completion < 75) status = '⚠️ At Risk';
+
+        // find max ETA
+        const etas = orderAllocs.map(a => new Date(a.expected_finish_time).getTime()).filter(t => !isNaN(t));
+        const current_eta = etas.length > 0 ? new Date(Math.max(...etas)).toISOString().split('T')[0] : (order.delivery_date || 'TBD');
 
         return {
-          id: i,
-          order_id: `ORD-2024-${String(i+1).padStart(3, '0')}`,
-          buyer_name: i % 2 === 0 ? 'H&M Sweden' : 'Zara Spain',
-          fabric_type: i % 2 === 0 ? 'Cotton Poplin' : 'Denim Twill',
-          order_date: '2026-05-01',
-          delivery_date: '2026-07-10',
+          id: order.id,
+          order_id: order.order_no || `ORD-${order.id}`,
+          buyer_name: order.party_name || 'Unknown Buyer',
+          fabric_type: order.fabric_quality || 'Standard',
+          order_date: order.order_date || '2026-01-01',
+          delivery_date: order.delivery_date || '2026-12-31',
           total_ordered: total,
           total_produced: produced,
           remaining_meters: remaining,
           completion: completion,
           looms_assigned: looms,
-          downtime: Math.floor(Math.random() * 20),
-          lost_meters: Math.floor(Math.random() * 400),
-          current_eta: '2026-06-22',
-          buffer_days: status === '❌ Delayed' ? -2 : 18,
+          downtime: 0, // Could be calculated from breakdown logs
+          lost_meters: 0,
+          current_eta: current_eta,
+          buffer_days: status.includes('Delayed') ? -2 : 5,
           status: status
         };
       });
       
-      setData(mockOrders);
+      setData(reportData);
     } catch (err) {
       console.error(err);
     } finally {
