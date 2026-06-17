@@ -99,62 +99,99 @@ export default function PurchaseOrder() {
     setView('list');
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredPOs = pos.filter(po => 
+    po.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    po.vendor?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="animate-fade">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText style={{ color: '#6366f1' }} /> Purchase Order
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Issue Purchase Orders for replenishment of stock</p>
+        </div>
+        {view === 'list' ? (
+          <button onClick={() => {
+            setFormData({ vendor: vendors[0]?.name || '', paymentTerms: '30 Days Credit', expectedDate: '', items: [], quotation_file_path: '' });
+            setView('form');
+          }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={16} /> Create PO
+          </button>
+        ) : (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
+      </div>
+
       {view === 'list' ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <div>
-              <h1 style={{ fontSize: 24, fontWeight: 700 }}>Purchase Order</h1>
-              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Issue Purchase Orders for replenishment of stock</p>
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Purchase Orders ({filteredPOs.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search POs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
             </div>
-            <button onClick={() => {
-              setFormData({ vendor: vendors[0]?.name || '', paymentTerms: '30 Days Credit', expectedDate: '', items: [], quotation_file_path: '' });
-              setView('form');
-            }} className="btn btn-primary">
-              <Plus size={16} /> Create PO
-            </button>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
-            <table className="data-table">
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  <th >PO No</th>
-                  <th >Date</th>
-                  <th >Vendor</th>
-                  <th >Payment Terms</th>
-                  <th >Expected Date</th>
+                  <th>PO No</th>
+                  <th>Date</th>
+                  <th>Vendor</th>
+                  <th>Payment Terms</th>
+                  <th>Expected Date</th>
                   <th style={{ textAlign: "right" }}>Value</th>
                   <th style={{ textAlign: "center" }}>Quotation</th>
                   <th style={{ textAlign: "center" }}>Status</th>
                 </tr>
               </thead>
-              <tbody >
-                {pos.map(po => {
+              <tbody>
+                {filteredPOs.length === 0 ? (
+                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                ) : filteredPOs.map(po => {
                   const val = po.items.reduce((acc, i) => acc + i.total, 0);
                   return (
-                    <tr key={po.id} >
-                      <td style={{ fontFamily: "monospace" }}>{po.id}</td>
-                      <td >{po.date}</td>
+                    <tr key={po.id}>
+                      <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{po.id}</td>
+                      <td>{po.date}</td>
                       <td style={{ fontWeight: 600 }}>{po.vendor}</td>
-                      <td >{po.paymentTerms}</td>
-                      <td >{po.expectedDate || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-right font-bold text-slate-900">₹{val.toLocaleString()}</td>
+                      <td>{po.paymentTerms}</td>
+                      <td>{po.expectedDate || '-'}</td>
+                      <td style={{ textAlign: "right", fontWeight: 700 }}>₹{val.toLocaleString()}</td>
                       <td style={{ textAlign: "center" }}>
                         {po.quotation_file_path ? (
                           <a 
                             href={`${api.defaults.baseURL || ''}${po.quotation_file_path}`} 
                             target="_blank" 
                             rel="noreferrer" 
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--primary)', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#4f46e5', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
                           >
                             <Download size={14} /> View
                           </a>
                         ) : '-'}
                       </td>
                       <td style={{ textAlign: "center" }}>
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800`}>
+                        <span style={{ 
+                          color: '#1e40af', 
+                          fontWeight: 600, 
+                          backgroundColor: '#dbeafe', 
+                          padding: '4px 10px', borderRadius: 12, fontSize: 12 
+                        }}>
                           {po.status}
                         </span>
                       </td>
@@ -166,15 +203,21 @@ export default function PurchaseOrder() {
           </div>
         </div>
       ) : (
-        <div className="card animate-fade">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 16, marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700 }}>Create Purchase Order</h2>
-            <button onClick={() => setView('list')} style={{ padding: 4, borderRadius: "var(--radius-sm)", cursor: "pointer", background: "none", border: "none" }}><X size={20} /></button>
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
+              <Plus size={20} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Create Purchase Order</h3>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Draft a new purchase order for stock replenishment</p>
+            </div>
           </div>
+
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <div className="form-row" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-              <div>
-                <label >Select Vendor *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+              <div className="form-group">
+                <label>Select Vendor <span style={{ color: '#ef4444' }}>*</span></label>
                 <select 
                   value={formData.vendor} 
                   onChange={(e) => setFormData({...formData, vendor: e.target.value})} 
@@ -183,16 +226,16 @@ export default function PurchaseOrder() {
                   {vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label >Payment Terms</label>
+              <div className="form-group">
+                <label>Payment Terms</label>
                 <input 
                   type="text" value={formData.paymentTerms} 
                   onChange={(e) => setFormData({...formData, paymentTerms: e.target.value})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Expected Delivery Date *</label>
+              <div className="form-group">
+                <label>Expected Delivery Date <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="date" required value={formData.expectedDate} 
                   onChange={(e) => setFormData({...formData, expectedDate: e.target.value})} 
@@ -201,15 +244,14 @@ export default function PurchaseOrder() {
               </div>
             </div>
 
-            {/* Quotation upload field */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: '400px' }}>
-              <label style={{ fontWeight: 600 }}>Quotation File Attachment</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="form-group" style={{ maxWidth: '400px' }}>
+              <label>Quotation File Attachment</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
                 {formData.quotation_file_path ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f1f5f9', padding: '6px 12px', borderRadius: '6px', fontSize: 13 }}>
-                    <FileText size={16} style={{ color: 'var(--primary)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 8, fontSize: 13, border: '1px solid var(--border)' }}>
+                    <FileText size={16} style={{ color: '#6366f1' }} />
                     <span style={{ fontFamily: 'monospace' }}>{formData.quotation_file_path.split('/').pop()}</span>
-                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, quotation_file_path: '' }))} style={{ border: 'none', background: 'none', color: '#dc2626', cursor: 'pointer', padding: 2 }} title="Remove file">
+                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, quotation_file_path: '' }))} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: 2 }}>
                       <X size={14} />
                     </button>
                   </div>
@@ -221,7 +263,7 @@ export default function PurchaseOrder() {
                       onChange={handleFileUpload} 
                       style={{ display: 'none' }} 
                     />
-                    <label htmlFor="quotation-upload" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '8px 14px', borderRadius: '6px', fontSize: 13, border: '1px solid var(--border)' }}>
+                    <label htmlFor="quotation-upload" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                       <Upload size={16} /> {isUploading ? 'Uploading...' : 'Upload Quotation'}
                     </label>
                   </>
@@ -229,54 +271,60 @@ export default function PurchaseOrder() {
               </div>
             </div>
 
-            <div className="border-t pt-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="card-title">PO Line Items</h3>
-                <button type="button" onClick={handleAddField} className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 font-semibold text-sm">
-                  <PlusCircle size={16} /> Add Item
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>PO Line Items</h4>
+                <button type="button" onClick={handleAddField} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                  <PlusCircle size={14} /> Add Item
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {formData.items.map((field, idx) => (
-                  <div key={idx} className="flex gap-4 items-end bg-slate-50 p-3 rounded-lg border border-dashed text-xs">
-                    <div className="flex-1">
-                      <label className="block text-slate-500 mb-1">Item</label>
-                      <select 
-                        value={field.itemId} 
-                        onChange={(e) => handleItemChange(idx, e.target.value)} 
-                        className="form-control"
-                      >
-                        {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                      </select>
+              {formData.items.length === 0 ? (
+                <div style={{ padding: 32, textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 12, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                  No items added yet. Click 'Add Item'.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {formData.items.map((field, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', background: 'var(--bg-secondary)', padding: 16, borderRadius: 12, border: '1px solid var(--border)' }}>
+                      <div className="form-group" style={{ flex: 2, margin: 0 }}>
+                        <label>Item</label>
+                        <select 
+                          value={field.itemId} 
+                          onChange={(e) => handleItemChange(idx, e.target.value)} 
+                          className="form-control"
+                        >
+                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Qty</label>
+                        <input 
+                          type="number" required min="1" value={field.qty} 
+                          onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
+                          className="form-control" 
+                        />
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Rate (₹)</label>
+                        <input type="text" readOnly value={field.rate} className="form-control" style={{ background: '#f8fafc' }} />
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Total (₹)</label>
+                        <input type="text" readOnly value={field.total} className="form-control" style={{ background: '#f8fafc', fontWeight: 600 }} />
+                      </div>
+                      <button type="button" onClick={() => handleRemoveField(idx)} className="btn btn-secondary" style={{ padding: '10px 12px', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2' }}>
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <div className="w-28">
-                      <label className="block text-slate-500 mb-1">Qty</label>
-                      <input 
-                        type="number" required min="1" value={field.qty} 
-                        onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
-                        className="form-control" 
-                      />
-                    </div>
-                    <div className="w-32">
-                      <label className="block text-slate-500 mb-1">Rate (₹)</label>
-                      <input type="text" readOnly value={field.rate} className="form-control" />
-                    </div>
-                    <div className="w-36">
-                      <label className="block text-slate-500 mb-1">Total (₹)</label>
-                      <input type="text" readOnly value={field.total} className="form-control" />
-                    </div>
-                    <button type="button" onClick={() => handleRemoveField(idx)} className="btn btn-danger">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 20 }}>
-              <button type="button" onClick={() => setView('list')} className="px-4 py-2 border rounded-lg">Cancel</button>
-              <button type="submit" className="btn btn-primary">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 8 }}>
+              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Save size={16} /> Save Purchase Order
               </button>
             </div>

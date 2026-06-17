@@ -26,115 +26,180 @@ export default function POApproval() {
     alert('Purchase Order rejected.');
   };
 
+  const [view, setView] = useState('list');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredPOs = pos.filter(po => 
+    po.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    po.vendor?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card">
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Purchase Order Approval</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Approve Purchase Orders before dispatching them to vendors</p>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Check style={{ color: '#6366f1' }} /> Purchase Order Approval
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Approve Purchase Orders before dispatching them to vendors</p>
+        </div>
+        {view === 'form' && (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
       </div>
 
-      <div className="form-row">
-        <div className="lg:col-span-2 bg-white rounded-lg border shadow-sm overflow-hidden">
-          <table className="data-table">
+      {view === 'list' ? (
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Approval Queue ({filteredPOs.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search POs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
+          </div>
+
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
               <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">PO Number</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Vendor</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500">PO Value</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500">Status</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500">Action</th>
-              </tr>
-            </thead>
-            <tbody >
-              {pos.map(po => {
-                const totalVal = po.items.reduce((acc, i) => acc + i.total, 0);
-                return (
-                  <tr key={po.id} >
-                    <td style={{ fontFamily: "monospace" }}>{po.id}</td>
-                    <td >{po.date}</td>
-                    <td style={{ fontWeight: 600 }}>{po.vendor}</td>
-                    <td className="px-6 py-4 text-sm text-right font-bold text-slate-900">₹{totalVal.toLocaleString()}</td>
-                    <td >
-                      <span className={`badge ${(po.status === 'Approved' || po.status === 'Completed' ? 'bg-green-100 text-green-800' : po.status === 'Ordered' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')}`}>
-                        {po.status}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <button onClick={() => setSelectedPO(po)} className="text-indigo-600 hover:text-indigo-800 font-semibold text-xs flex items-center gap-1 mx-auto">
-                        <Eye size={14} /> Review
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                <tr>
+                  <th>PO Number</th>
+                  <th>Date</th>
+                  <th>Vendor</th>
+                  <th style={{ textAlign: 'right' }}>PO Value</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                  <th style={{ textAlign: 'center' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPOs.map(po => {
+                  const totalVal = po.items.reduce((acc, i) => acc + i.total, 0);
+                  return (
+                    <tr key={po.id}>
+                      <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{po.id}</td>
+                      <td>{po.date}</td>
+                      <td style={{ fontWeight: 600 }}>{po.vendor}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{totalVal.toLocaleString()}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span style={{ 
+                          background: (po.status === 'Approved' || po.status === 'Completed') ? '#dcfce7' : po.status === 'Ordered' ? '#dbeafe' : '#fef3c7', 
+                          color: (po.status === 'Approved' || po.status === 'Completed') ? '#166534' : po.status === 'Ordered' ? '#1e40af' : '#92400e', 
+                          padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 600 
+                        }}>
+                          {po.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        <button onClick={() => { setSelectedPO(po); setView('form'); }} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Eye size={14} /> Review
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredPOs.length === 0 && (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No POs found in the queue.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <div className="card">
-          {selectedPO ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              <div className="border-b pb-4">
-                <h3 className="card-title">Review PO</h3>
-                <span className="text-xs font-mono text-indigo-600 font-bold">{selectedPO.id}</span>
-              </div>
-              <div className="form-row">
+      ) : (
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
+          {selectedPO && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
                 <div>
-                  <span className="text-slate-500 block">Vendor</span>
-                  <span className="font-semibold">{selectedPO.vendor}</span>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Review Purchase Order: {selectedPO.id}</h3>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review vendor details and line items before authorizing.</p>
                 </div>
-                <div>
-                  <span className="text-slate-500 block">Payment Terms</span>
-                  <span className="font-semibold">{selectedPO.paymentTerms}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Expected Delivery</span>
-                  <span className="font-semibold">{selectedPO.expectedDate || '-'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Total Items</span>
-                  <span className="font-semibold">{selectedPO.items.length} items</span>
-                </div>
+                <span style={{ 
+                  background: (selectedPO.status === 'Approved' || selectedPO.status === 'Completed') ? '#dcfce7' : selectedPO.status === 'Ordered' ? '#dbeafe' : '#fef3c7', 
+                  color: (selectedPO.status === 'Approved' || selectedPO.status === 'Completed') ? '#166534' : selectedPO.status === 'Ordered' ? '#1e40af' : '#92400e', 
+                  padding: '6px 14px', borderRadius: '12px', fontSize: 13, fontWeight: 600 
+                }}>
+                  {selectedPO.status}
+                </span>
               </div>
 
-              <div className="border-t pt-4 space-y-2">
-                <h4 className="text-xs font-bold text-slate-900">PO Items Grid</h4>
-                <div className="space-y-2">
-                  {selectedPO.items.map((i, k) => {
-                    const detail = itemsList.find(x => x.id === i.itemId);
-                    return (
-                      <div key={k} className="flex justify-between text-xs bg-slate-50 p-2 rounded border">
-                        <div>
-                          <p className="font-semibold">{detail?.name || 'Item'}</p>
-                          <span className="text-[10px] text-slate-500">Rate: ₹{i.rate} x Qty: {i.qty}</span>
-                        </div>
-                        <span className="font-bold text-slate-900">₹{i.total.toLocaleString()}</span>
-                      </div>
-                    );
-                  })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid var(--border)' }}>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Vendor</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{selectedPO.vendor}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Payment Terms</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{selectedPO.paymentTerms}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Expected Delivery</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>{selectedPO.expectedDate || '-'}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: 13, marginBottom: 4 }}>Total Items</span>
+                  <span style={{ fontWeight: 600, fontSize: 15, color: '#6366f1' }}>{selectedPO.items.length} items</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>PO Items Grid</h4>
+                <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Code</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Name</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right' }}>Rate</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Quantity</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right' }}>Total (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedPO.items.map((i, k) => {
+                        const detail = itemsList.find(x => x.id === i.itemId);
+                        return (
+                          <tr key={k} style={{ borderBottom: k !== selectedPO.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                            <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#64748b' }}>{i.itemId}</td>
+                            <td style={{ padding: '12px 16px', fontWeight: 600 }}>{detail?.name || 'Item'}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500 }}>₹{i.rate}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: '#6366f1', background: '#e0e7ff30' }}>{i.qty}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>₹{i.total.toLocaleString()}</td>
+                          </tr>
+                        );
+                      })}
+                      <tr style={{ borderTop: '2px solid var(--border)', background: '#f8fafc' }}>
+                        <td colSpan="4" style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, fontSize: 14 }}>Grand Total:</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, fontSize: 16, color: '#6366f1' }}>
+                          ₹{selectedPO.items.reduce((acc, i) => acc + i.total, 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {selectedPO.status === 'Ordered' && (
-                <div className="flex gap-3 pt-4 border-t">
-                  <button onClick={() => handleReject(selectedPO.id)} className="btn btn-danger">
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 'auto' }}>
+                  <button onClick={() => { handleReject(selectedPO.id); setView('list'); }} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#dc2626', borderColor: '#fee2e2' }}>
                     <X size={16} /> Reject
                   </button>
-                  <button onClick={() => handleApprove(selectedPO.id)} className="btn btn-primary">
+                  <button onClick={() => { handleApprove(selectedPO.id); setView('list'); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#10b981' }}>
                     <Check size={16} /> Authorize PO
                   </button>
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12 text-center">
-              <Eye size={48} className="mb-2 stroke-1" />
-              <p className="text-sm">Select a PO from the table to review and approve</p>
-            </div>
+            </>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
