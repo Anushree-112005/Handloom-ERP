@@ -189,9 +189,9 @@ async def lifespan(app: FastAPI):
                 ))
             await session.commit()
 
-        # Seed PPC Data
-        from app.seed_ppc import seed_ppc_data
-        await seed_ppc_data(session)
+        # Seed Connected Workflow Data
+        from app.seed_all import seed_all_data
+        await seed_all_data(session)
 
     yield
     await engine.dispose()
