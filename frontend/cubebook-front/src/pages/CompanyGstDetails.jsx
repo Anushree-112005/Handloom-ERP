@@ -55,7 +55,7 @@ export default function CompanyGstDetails() {
     setSuccessMsg("Company GST details updated successfully!");
     setTimeout(() => {
       setSuccessMsg("");
-      navigate("/masters");
+      navigate("/cubebook/masters");
     }, 2000);
   };
 

@@ -15,18 +15,18 @@ export function useShortcuts() {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
 
       switch (e.key) {
-        case "F4": e.preventDefault(); navigate('/vouchers?type=Contra');   break;
-        case "F5": e.preventDefault(); navigate('/vouchers?type=Payment');  break;
-        case "F6": e.preventDefault(); navigate('/vouchers?type=Receipt');  break;
-        case "F7": e.preventDefault(); navigate('/vouchers?type=Journal');  break;
-        case "F8": e.preventDefault(); navigate('/vouchers?type=Sales');    break;
-        case "F9": e.preventDefault(); navigate('/vouchers?type=Purchase'); break;
+        case "F4": e.preventDefault(); navigate('/cubebook/vouchers?type=Contra');   break;
+        case "F5": e.preventDefault(); navigate('/cubebook/vouchers?type=Payment');  break;
+        case "F6": e.preventDefault(); navigate('/cubebook/vouchers?type=Receipt');  break;
+        case "F7": e.preventDefault(); navigate('/cubebook/vouchers?type=Journal');  break;
+        case "F8": e.preventDefault(); navigate('/cubebook/vouchers?type=Sales');    break;
+        case "F9": e.preventDefault(); navigate('/cubebook/vouchers?type=Purchase'); break;
         default:
-          if (e.altKey && e.key === "d") { e.preventDefault(); navigate("/day-book"); }
-          if (e.altKey && e.key === "m") { e.preventDefault(); navigate("/ledgers"); }
-          if (e.altKey && e.key === "g") { e.preventDefault(); navigate("/masters/group"); }
-          if (e.altKey && e.key === "v") { e.preventDefault(); navigate("/vouchers"); }
-          if (e.altKey && e.key === "r") { e.preventDefault(); navigate("/reports"); }
+          if (e.altKey && e.key === "d") { e.preventDefault(); navigate("/cubebook/day-book"); }
+          if (e.altKey && e.key === "m") { e.preventDefault(); navigate("/cubebook/ledgers"); }
+          if (e.altKey && e.key === "g") { e.preventDefault(); navigate("/cubebook/masters/group"); }
+          if (e.altKey && e.key === "v") { e.preventDefault(); navigate("/cubebook/vouchers"); }
+          if (e.altKey && e.key === "r") { e.preventDefault(); navigate("/cubebook/reports"); }
           break;
       }
     };

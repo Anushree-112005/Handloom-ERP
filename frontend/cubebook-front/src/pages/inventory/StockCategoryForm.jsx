@@ -36,7 +36,7 @@ export default function StockCategoryForm({ mode = 'create' }) {
 
   const onSuccess = () => {
     queryClient.invalidateQueries(['stock-categories', activeCompany?.id]);
-    navigate('/inventory-masters?tab=categories');
+    navigate('/cubebook/inventory-masters?tab=categories');
   };
 
   const payload = () => ({

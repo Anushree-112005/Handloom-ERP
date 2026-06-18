@@ -46,7 +46,7 @@ export default function CurrencyGateway() {
           <div className="mt-8 flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate('/currency/create')}
+              onClick={() => navigate('/cubebook/currency/create')}
               className="cb-btn-primary"
             >
               <Plus size={15} />
@@ -54,7 +54,7 @@ export default function CurrencyGateway() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/currency/alter')}
+              onClick={() => navigate('/cubebook/currency/alter')}
               className="cb-btn-secondary"
             >
               <Edit2 size={14} />

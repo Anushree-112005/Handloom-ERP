@@ -69,7 +69,7 @@ async def query_report_data(db: AsyncSession, report_id: str, filters: dict) -> 
     if not defn:
         raise ValueError(f"Unknown report: {report_id}")
 
-    model_name = defn["model"]
+    model_name = str(defn.get("model", ""))
     model_cls = MODEL_MAP.get(model_name)
     if not model_cls:
         raise ValueError(f"Model not configured: {model_name}")
@@ -113,8 +113,9 @@ async def query_report_data(db: AsyncSession, report_id: str, filters: dict) -> 
     result = await db.execute(stmt)
     rows = result.scalars().all()
 
+    import typing
     # Convert to dicts using the report column keys
-    columns = defn["columns"]
+    columns = typing.cast(list[dict[str, str]], defn.get("columns", []))
     data = []
     for row in rows:
         row_dict = {}
@@ -139,7 +140,8 @@ def generate_csv_bytes(report_id: str, data: list[dict]) -> bytes:
     defn = get_report_definition(report_id)
     if not defn:
         raise ValueError(f"Unknown report: {report_id}")
-    columns = defn["columns"]
+    import typing
+    columns = typing.cast(list[dict[str, str]], defn.get("columns", []))
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -162,11 +164,14 @@ def generate_excel_bytes(report_id: str, data: list[dict]) -> bytes:
     defn = get_report_definition(report_id)
     if not defn:
         raise ValueError(f"Unknown report: {report_id}")
-    columns = defn["columns"]
+    import typing
+    columns = typing.cast(list[dict[str, str]], defn.get("columns", []))
 
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = defn["title"][:31]  # Excel sheet name max 31 chars
+    if ws is None:
+        ws = wb.create_sheet()
+    ws.title = str(defn.get("title", "Report"))[:31]  # Excel sheet name max 31 chars
 
     # Header row with styling
     from openpyxl.styles import Font, PatternFill, Alignment
@@ -199,14 +204,15 @@ def generate_excel_bytes(report_id: str, data: list[dict]) -> bytes:
 
 
 def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
-    """Generate PDF content using WeasyPrint with Jinja2 template."""
-    import weasyprint
+    """Generate PDF content using xhtml2pdf with Jinja2 template."""
+    from xhtml2pdf import pisa
     from jinja2 import Environment, BaseLoader
 
     defn = get_report_definition(report_id)
     if not defn:
         raise ValueError(f"Unknown report: {report_id}")
-    columns = defn["columns"]
+    import typing
+    columns = typing.cast(list[dict[str, str]], defn.get("columns", []))
 
     html_template = """
     <!DOCTYPE html>
@@ -216,16 +222,15 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
       <style>
         @page { size: A4 landscape; margin: 15mm; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10px; color: #1e293b; }
-        .header { background: linear-gradient(135deg, #4f46e5, #4338ca); color: white; padding: 16px 24px; border-radius: 8px; margin-bottom: 16px; }
+        .header { background: #4f46e5; color: white; padding: 16px 24px; border-radius: 8px; margin-bottom: 16px; }
         .header h1 { font-size: 18px; margin: 0 0 4px 0; }
         .header p { font-size: 11px; margin: 0; opacity: 0.85; }
-        .meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 10px; color: #64748b; }
+        .meta { margin-bottom: 12px; font-size: 10px; color: #64748b; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 2px solid #e2e8f0; }
+        th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-size: 9px; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; }
         td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; font-size: 10px; }
         tr:nth-child(even) { background: #f8fafc; }
         .footer { margin-top: 16px; text-align: center; font-size: 9px; color: #94a3b8; }
-        .total-row { font-weight: bold; background: #eef2ff !important; }
       </style>
     </head>
     <body>
@@ -234,7 +239,7 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
         <p>Generated on {{ timestamp }}</p>
       </div>
       <div class="meta">
-        <span>Total Records: {{ total_rows }}</span>
+        <span>Total Records: {{ total_rows }}</span> | 
         <span>{{ filter_summary }}</span>
       </div>
       <table>
@@ -271,7 +276,7 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
     filter_summary = " | ".join(filter_parts) if filter_parts else "All records"
 
     html_out = template.render(
-        title=defn["title"],
+        title=str(defn.get("title", "Report")),
         timestamp=datetime.now().strftime("%d %b %Y, %H:%M"),
         total_rows=len(data),
         filter_summary=filter_summary,
@@ -279,8 +284,15 @@ def generate_pdf_bytes(report_id: str, data: list[dict]) -> bytes:
         data=data,
     )
 
-    pdf_bytes = weasyprint.HTML(string=html_out).write_pdf()
-    return pdf_bytes
+    pdf_file = io.BytesIO()
+    pisa_status = pisa.CreatePDF(
+        io.StringIO(html_out),
+        dest=pdf_file
+    )
+    if pisa_status.err:
+        raise Exception("PDF generation failed")
+    
+    return pdf_file.getvalue()
 
 
 async def cleanup_old_reports(db: AsyncSession):
@@ -292,9 +304,9 @@ async def cleanup_old_reports(db: AsyncSession):
         result = await db.execute(stmt)
         old_jobs = result.scalars().all()
         for job in old_jobs:
-            if job.file_path and os.path.exists(job.file_path):
+            if job.file_path and os.path.exists(str(job.file_path)):
                 try:
-                    os.remove(job.file_path)
+                    os.remove(str(job.file_path))
                 except Exception as e:
                     logger.warning(f"Failed to delete old report file {job.file_path}: {e}")
             await db.delete(job)
@@ -364,7 +376,7 @@ async def generate_report(
 
         # Save to disk (offload blocking I/O)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_title = defn["title"].replace(" ", "_").replace("/", "-")
+        safe_title = str(defn.get("title", "")).replace(" ", "_").replace("/", "-")
         filename = f"{safe_title}_{timestamp}.{ext}"
         filepath = os.path.join(REPORTS_DIR, filename)
 
@@ -375,18 +387,18 @@ async def generate_report(
         await asyncio.to_thread(save_file_sync)
 
         # Update job
-        job.status = "completed"
-        job.file_path = filepath
-        job.filename = filename
-        job.completed_at = datetime.now(timezone.utc)
+        job.status = "completed"  # type: ignore
+        job.file_path = filepath  # type: ignore
+        job.filename = filename  # type: ignore
+        job.completed_at = datetime.now(timezone.utc)  # type: ignore
         await db.commit()
 
         logger.info(f"Report generated: {filename} ({len(data)} rows, {len(file_bytes)} bytes)")
         return job
 
     except Exception as e:
-        job.status = "failed"
-        job.error = str(e)
+        job.status = "failed"  # type: ignore
+        job.error = str(e)  # type: ignore
         await db.commit()
         logger.error(f"Report generation failed for {report_id}: {e}")
         raise

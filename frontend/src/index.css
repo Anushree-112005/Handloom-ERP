@@ -1615,3 +1615,332 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   content: none !important;
 }
 
+/* ============================================================================
+   CUBEBOOK FINANCE MODULE — Scoped CSS
+   All cubebook-specific utility classes and overrides scoped under
+   .cubebook-module-root so they do not conflict with the main ERP styles.
+   ============================================================================ */
+
+/* ── Cubebook module root — transparent pass-through ── */
+.cubebook-module-root {
+  width: 100%;
+  min-height: 100%;
+}
+
+/* ── Scrollbar inside cubebook ── */
+.cubebook-module-root ::-webkit-scrollbar        { width: 5px; height: 5px; }
+.cubebook-module-root ::-webkit-scrollbar-track  { background: transparent; }
+.cubebook-module-root ::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 4px; }
+.cubebook-module-root ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Shared input style ── */
+.cb-input {
+  width: 100%;
+  background: #f8f9fc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 150ms ease;
+}
+.cb-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+.cb-input::placeholder { color: #cbd5e1; }
+
+.cb-input-mini {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: #1e293b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 150ms ease;
+}
+.cb-input-mini:focus {
+  outline: none;
+  background: #f8fafc;
+}
+
+/* ── Card ── */
+.cb-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* ── Page title ── */
+.cb-page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.cb-page-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Table header cell ── */
+.cb-th {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Table body cell ── */
+.cb-td {
+  font-size: 13px;
+  color: #475569;
+}
+
+/* ── Section label (small caps) ── */
+.cb-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Badge ── */
+.cb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── Primary button ── */
+.cb-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #7c3aed;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25);
+  transition: all 150ms ease;
+}
+.cb-btn-primary:hover { background: #6d28d9; }
+.cb-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Secondary button ── */
+.cb-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.cb-btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* ── Stat card ── */
+.cb-stat-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  padding: 20px;
+}
+
+.cb-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.cb-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ── Scoped class overrides inside finance module ── */
+.cubebook-module-root .card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.cubebook-module-root .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cubebook-module-root .card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.cubebook-module-root .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 150ms ease;
+  cursor: pointer;
+  border: none;
+}
+
+.cubebook-module-root .btn-primary {
+  background: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25);
+}
+.cubebook-module-root .btn-primary:hover {
+  background: #6d28d9;
+}
+
+.cubebook-module-root .btn-secondary {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+}
+.cubebook-module-root .btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.cubebook-module-root .btn-success {
+  background: #059669;
+  color: #ffffff;
+}
+.cubebook-module-root .btn-success:hover {
+  background: #047857;
+}
+
+.cubebook-module-root .btn-danger {
+  background: #e11d48;
+  color: #ffffff;
+}
+.cubebook-module-root .btn-danger:hover {
+  background: #be123c;
+}
+
+.cubebook-module-root .form-control {
+  width: 100%;
+  background: #f8f9fc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 150ms ease;
+  box-shadow: none;
+}
+.cubebook-module-root .form-control:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.cubebook-module-root .data-table {
+  min-width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
+}
+
+.cubebook-module-root .data-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.cubebook-module-root .data-table tbody td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+}
+
+.cubebook-module-root .data-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ── Fix popup form display to inline (no overlay) ── */
+.cubebook-module-root div[class*="fixed"][class*="bg-black"],
+.cubebook-module-root div[class*="fixed"][class*="bg-slate-"] {
+  position: static !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: calc(100vh - 120px) !important;
+  display: block !important;
+  z-index: auto !important;
+  animation: none !important;
+}
+
+.cubebook-module-root div[class*="fixed"][class*="bg-black"] > form,
+.cubebook-module-root div[class*="fixed"][class*="bg-black"] > div,
+.cubebook-module-root div[class*="fixed"][class*="bg-slate-"] > form,
+.cubebook-module-root div[class*="fixed"][class*="bg-slate-"] > div {
+  max-width: 100% !important;
+  width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  border: 1px solid #e2e8f0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+.cubebook-module-root div[class*="fixed"][class*="bg-black"] form,
+.cubebook-module-root div[class*="fixed"][class*="bg-slate-"] form {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+

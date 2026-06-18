@@ -20,8 +20,8 @@ const TABS = [
 const CONFIG = {
   groups: {
     api: stockGroups,
-    createRoute: '/inventory/stock-groups/create',
-    alterRoute:  (id) => `/inventory/stock-groups/alter/${id}`,
+    createRoute: '/cubebook/inventory/stock-groups/create',
+    alterRoute:  (id) => `/cubebook/inventory/stock-groups/alter/${id}`,
     emptyMsg: 'No stock groups yet.',
     columns: ['Group Name', 'Under'],
     renderRow: (row) => (
@@ -33,8 +33,8 @@ const CONFIG = {
   },
   categories: {
     api: stockCategories,
-    createRoute: '/inventory/stock-categories/create',
-    alterRoute:  (id) => `/inventory/stock-categories/alter/${id}`,
+    createRoute: '/cubebook/inventory/stock-categories/create',
+    alterRoute:  (id) => `/cubebook/inventory/stock-categories/alter/${id}`,
     emptyMsg: 'No stock categories yet.',
     columns: ['Category Name', 'Under'],
     renderRow: (row) => (
@@ -46,8 +46,8 @@ const CONFIG = {
   },
   items: {
     api: stockItems,
-    createRoute: '/inventory/stock-items/create',
-    alterRoute:  (id) => `/inventory/stock-items/alter/${id}`,
+    createRoute: '/cubebook/inventory/stock-items/create',
+    alterRoute:  (id) => `/cubebook/inventory/stock-items/alter/${id}`,
     emptyMsg: 'No stock items yet.',
     columns: ['Item Name', 'Unit', 'GST Rate', 'Selling Rate'],
     renderRow: (row) => (
@@ -74,8 +74,8 @@ const CONFIG = {
   },
   units: {
     api: units,
-    createRoute: '/inventory/units/create',
-    alterRoute:  (id) => `/inventory/units/alter/${id}`,
+    createRoute: '/cubebook/inventory/units/create',
+    alterRoute:  (id) => `/cubebook/inventory/units/alter/${id}`,
     emptyMsg: 'No units of measure yet.',
     columns: ['Symbol', 'Formal Name', 'Decimals'],
     renderRow: (row) => (
@@ -90,8 +90,8 @@ const CONFIG = {
   },
   locations: {
     api: locations,
-    createRoute: '/inventory/locations/create',
-    alterRoute:  (id) => `/inventory/locations/alter/${id}`,
+    createRoute: '/cubebook/inventory/locations/create',
+    alterRoute:  (id) => `/cubebook/inventory/locations/alter/${id}`,
     emptyMsg: 'No godowns / locations yet.',
     columns: ['Godown Name', 'Under'],
     renderRow: (row) => (
