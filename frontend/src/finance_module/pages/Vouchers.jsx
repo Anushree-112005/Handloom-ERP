@@ -4,25 +4,26 @@ import { vouchers, ledgers as ledgersApi, companies } from '../api';
 import useCompanyStore from '../store/companyStore';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import VoucherForm from '../components/VoucherForm';
-import { Plus, Search, Receipt, Filter, Trash2, X } from 'lucide-react';
+import { Plus, Search, Receipt, Filter, ArrowLeft } from 'lucide-react';
 
-const TYPE_STYLE = {
-  Sales: { bg: 'bg-indigo-50/60', text: 'text-indigo-700', border: 'border-indigo-100' },
-  Purchase: { bg: 'bg-purple-50/60', text: 'text-purple-700', border: 'border-purple-100' },
-  Receipt: { bg: 'bg-emerald-50/60', text: 'text-emerald-700', border: 'border-emerald-100' },
-  Payment: { bg: 'bg-amber-50/60', text: 'text-amber-700', border: 'border-amber-100' },
-  Journal: { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' },
-  Contra: { bg: 'bg-sky-50/60', text: 'text-sky-700', border: 'border-sky-100' },
-  'Debit Note': { bg: 'bg-rose-50/60', text: 'text-rose-700', border: 'border-rose-100' },
-  'Credit Note': { bg: 'bg-emerald-50/60', text: 'text-emerald-700', border: 'border-emerald-100' },
+/* ─── Voucher type accent colors ─── */
+const TYPE_ACCENT = {
+  Sales:        { bg: '#eef2ff', color: '#4338ca', border: '#c7d2fe' },
+  Purchase:     { bg: '#fdf2f8', color: '#be185d', border: '#f9a8d4' },
+  Receipt:      { bg: '#f0fdf4', color: '#059669', border: '#86efac' },
+  Payment:      { bg: '#fffbeb', color: '#d97706', border: '#fcd34d' },
+  Journal:      { bg: '#faf5ff', color: '#7c3aed', border: '#ddd6fe' },
+  Contra:       { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+  'Debit Note': { bg: '#fff1f2', color: '#be123c', border: '#fca5a5' },
+  'Credit Note':{ bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' },
 };
 
-const VOUCHER_TYPES = ['Contra', 'Payment', 'Receipt', 'Journal', 'Sales', 'Purchase', 'Debit Note', 'Credit Note'];
+const VOUCHER_TYPES = ['Contra','Payment','Receipt','Journal','Sales','Purchase','Debit Note','Credit Note'];
 
-const STATUS_STYLE = {
-  Posted: { bg: 'bg-emerald-50/60', text: 'text-emerald-700', border: 'border-emerald-100' },
-  Cancelled: { bg: 'bg-rose-50/60', text: 'text-rose-700', border: 'border-rose-100' },
-  Draft: { bg: 'bg-amber-50/60', text: 'text-amber-700', border: 'border-amber-100' },
+const STATUS_BADGE = {
+  Posted:    { bg: 'rgba(5,150,105,0.08)',  color: '#059669', border: 'rgba(5,150,105,0.2)' },
+  Cancelled: { bg: 'rgba(220,38,38,0.08)',  color: '#dc2626', border: 'rgba(220,38,38,0.2)' },
+  Draft:     { bg: 'rgba(217,119,6,0.08)',  color: '#d97706', border: 'rgba(217,119,6,0.2)' },
 };
 
 const fmt = n => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
@@ -33,17 +34,45 @@ export default function Vouchers() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [search,      setSearch]      = useState('');
+  const [typeFilter,  setTypeFilter]  = useState('');
+  const [isFormOpen,  setIsFormOpen]  = useState(false);
   const [voucherType, setVoucherType] = useState('Payment');
-  const [seeding, setSeeding] = useState(false);
+  const [seeding,     setSeeding]     = useState(false);
 
   const { data: vouchersList = [], isLoading } = useQuery({
     queryKey: ['vouchers', activeCompany?.id],
-    queryFn: () => vouchers.list({ company_id: activeCompany.id }),
-    enabled: !!activeCompany,
+    queryFn:  () => vouchers.list({ company_id: activeCompany.id }),
+    enabled:  !!activeCompany,
   });
+
+  const { data: ledgersList = [] } = useQuery({
+    queryKey: ['ledgers', activeCompany?.id],
+    queryFn:  () => ledgersApi.list({ company_id: activeCompany.id }),
+    enabled:  !!activeCompany,
+  });
+
+  /* Open form from URL param ?type=Payment */
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type) {
+      setVoucherType(type);
+      setIsFormOpen(true);
+    }
+  }, [searchParams]);
+
+  const openVoucher = (type) => {
+    setVoucherType(type);
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    searchParams.delete('type');
+    setSearchParams(searchParams);
+    navigate('/vouchers', { replace: true });
+  };
 
   const handleSeedVouchers = async () => {
     if (!activeCompany?.id) return;
@@ -51,36 +80,12 @@ export default function Vouchers() {
       setSeeding(true);
       await companies.seedVouchers(activeCompany.id);
       queryClient.invalidateQueries();
-      alert("Successfully seeded textile vouchers and matching accounts for this company in real-time!");
+      alert('Successfully seeded textile vouchers!');
     } catch (err) {
-      alert("Error seeding vouchers: " + (err.response?.data?.detail || err.message));
+      alert('Error seeding vouchers: ' + (err.response?.data?.detail || err.message));
     } finally {
       setSeeding(false);
     }
-  };
-
-  const { data: ledgersList = [] } = useQuery({
-    queryKey: ['ledgers', activeCompany?.id],
-    queryFn: () => ledgersApi.list({ company_id: activeCompany.id }),
-    enabled: !!activeCompany,
-  });
-
-  // Open modal when ?type= param is present
-  useEffect(() => {
-    const type = searchParams.get('type');
-    if (type) { setVoucherType(type); setIsModalOpen(true); }
-  }, [searchParams]);
-
-  const openVoucher = (type) => {
-    setVoucherType(type);
-    setIsModalOpen(true);
-  };
-
-  const closeVoucher = () => {
-    setIsModalOpen(false);
-    searchParams.delete('type');
-    setSearchParams(searchParams);
-    navigate('/vouchers', { replace: true });
   };
 
   const filtered = vouchersList.filter(v => {
@@ -92,9 +97,7 @@ export default function Vouchers() {
     return matchSearch && matchType;
   });
 
-  const totalAmt = filtered.reduce((s, v) => s + (Number(v.total_amount) || 0), 0);
-
-  // Per-type summary counts
+  const totalAmt   = filtered.reduce((s, v) => s + (Number(v.total_amount) || 0), 0);
   const typeCounts = VOUCHER_TYPES.reduce((acc, t) => {
     acc[t] = vouchersList.filter(v => v.voucher_type === t).length;
     return acc;
@@ -102,93 +105,184 @@ export default function Vouchers() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <p className="text-slate-500 font-medium">Select a company to view vouchers.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 500 }}>Select a company to view vouchers.</p>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
+  /* ── If form is open, show full-page form ── */
+  if (isFormOpen) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={closeForm}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', fontSize: 13, fontWeight: 600,
+              background: 'var(--bg-card)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              color: 'var(--text-secondary)', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+          >
+            <ArrowLeft size={14} /> Back to Vouchers
+          </button>
+          <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            → Creating <strong style={{ color: 'var(--text-primary)' }}>{voucherType}</strong> Voucher
+          </span>
+        </div>
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            <Receipt size={18} />
+        <VoucherForm
+          type={voucherType}
+          companyId={activeCompany?.id}
+          ledgers={ledgersList}
+          onClose={closeForm}
+          onSaved={() => {
+            queryClient.invalidateQueries();
+          }}
+        />
+      </div>
+    );
+  }
+
+  /* ── List view ── */
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* ── Page Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 'var(--radius-md)',
+            background: 'rgba(79,70,229,0.1)', color: 'var(--primary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <Receipt size={20} />
           </div>
           <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">Voucher Entry</h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              Record and manage company ledger transactions and vouchers
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>Voucher Entry</h2>
+            <p style={{ margin: '3px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>
+              Record and manage ledger transactions · {vouchersList.length} total vouchers
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3.5">
-          <div className="text-right text-xs">
-            <div className="text-slate-500">
-              Active Company: <span className="font-semibold text-slate-800">{activeCompany.name}</span>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">{vouchersList.length} total vouchers</p>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={handleSeedVouchers}
             disabled={seeding}
-            className="flex items-center gap-1.5 px-3.5 py-2 border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50 text-xs font-semibold rounded-xl transition-all shadow-sm"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', fontSize: 13, fontWeight: 600,
+              background: 'rgba(79,70,229,0.06)', color: 'var(--primary)',
+              border: '1px solid rgba(79,70,229,0.25)', borderRadius: 'var(--radius-sm)',
+              cursor: seeding ? 'not-allowed' : 'pointer', opacity: seeding ? 0.6 : 1,
+              transition: 'all 0.15s',
+            }}
           >
-            {seeding ? "Generating..." : "Seed Textile Vouchers"}
+            {seeding ? 'Generating…' : 'Seed Textile Vouchers'}
           </button>
           <button
             onClick={() => openVoucher('Payment')}
-            className="btn btn-primary px-3.5 py-2 text-xs rounded-xl shadow-sm animate-none"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', fontSize: 13, fontWeight: 600,
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+              color: 'white', border: 'none', borderRadius: 'var(--radius-sm)',
+              cursor: 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow-sm)'}
           >
-            <Plus size={14} /> New Voucher
+            <Plus size={15} /> New Voucher
           </button>
         </div>
       </div>
 
-      {/* ── Unified Quick Actions & Voucher Counts ── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 px-1">
-          <h2 className="text-sm font-bold text-slate-800">
-            Quick Actions & Filters
-          </h2>
-          <span className="text-[11px] text-slate-500">
-            Click to filter by type &nbsp;·&nbsp; Click <span className="font-bold">+</span> to create
+      {/* ── Quick Actions — voucher type tiles ── */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)', padding: '16px 20px',
+        boxShadow: 'var(--shadow-sm)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+            Quick Actions &amp; Filters
+          </h3>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            Click card to filter · Click <strong>+</strong> to create new
           </span>
         </div>
-        <div className="flex flex-wrap gap-2.5 sm:gap-3">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           {VOUCHER_TYPES.map(t => {
             const isActive = typeFilter === t;
+            const acc = TYPE_ACCENT[t] || { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0' };
             const count = typeCounts[t] || 0;
-            const ts = TYPE_STYLE[t] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
             return (
               <div
                 key={t}
                 onClick={() => setTypeFilter(isActive ? '' : t)}
-                className={`flex shrink-0 items-center gap-2.5 px-3.5 py-2 rounded-xl border text-[13px] font-semibold cursor-pointer transition-all hover:-translate-y-0.5 ${isActive
-                    ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-sm'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-purple-300 hover:shadow-sm'
-                  }`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  border: `1px solid ${isActive ? acc.border : 'var(--border)'}`,
+                  background: isActive ? acc.bg : 'var(--bg-secondary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  userSelect: 'none',
+                  boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+                }}
+                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = acc.bg; e.currentTarget.style.borderColor = acc.border; } }}
+                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.borderColor = 'var(--border)'; } }}
               >
-                <span className="tracking-tight">{t}</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors ${isActive ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-500'
-                  }`}>
+                {/* Type label */}
+                <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? acc.color : 'var(--text-secondary)' }}>
+                  {t}
+                </span>
+                {/* Count badge */}
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '1px 7px',
+                  borderRadius: 100, minWidth: 22, textAlign: 'center',
+                  background: isActive ? acc.color + '25' : 'var(--border)',
+                  color: isActive ? acc.color : 'var(--text-muted)',
+                }}>
                   {count}
                 </span>
+                {/* + Create button */}
                 <button
                   type="button"
-                  title={`Create New ${t}`}
-                  onClick={(e) => {
+                  title={`Create New ${t} Voucher`}
+                  onClick={e => {
                     e.stopPropagation();
                     openVoucher(t);
                   }}
-                  className={`p-1 rounded-md transition-colors ${isActive
-                      ? 'hover:bg-purple-200 text-purple-600'
-                      : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
-                    }`}
+                  style={{
+                    width: 24, height: 24,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: isActive ? acc.color + '20' : 'var(--bg-card)',
+                    border: `1px solid ${isActive ? acc.border : 'var(--border)'}`,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    color: isActive ? acc.color : 'var(--text-muted)',
+                    transition: 'all 0.15s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = acc.color + '20';
+                    e.currentTarget.style.color = acc.color;
+                    e.currentTarget.style.borderColor = acc.border;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = isActive ? acc.color + '20' : 'var(--bg-card)';
+                    e.currentTarget.style.color = isActive ? acc.color : 'var(--text-muted)';
+                    e.currentTarget.style.borderColor = isActive ? acc.border : 'var(--border)';
+                  }}
                 >
-                  <Plus size={14} strokeWidth={2.5} />
+                  <Plus size={13} strokeWidth={2.5} />
                 </button>
               </div>
             );
@@ -197,117 +291,138 @@ export default function Vouchers() {
       </div>
 
       {/* ── Table Card ── */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
+      }}>
         {/* Toolbar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-slate-100 bg-white">
-          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-72 shrink-0">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 12,
+          padding: '14px 20px', borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-secondary)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {/* Search */}
+            <div style={{ position: 'relative', width: 260 }}>
+              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search voucher no., particulars..."
-                className="w-full pl-11 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-all"
+                placeholder="Search voucher, particulars…"
+                style={{
+                  width: '100%', paddingLeft: 36, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
+                  border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                  fontSize: 13, background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none',
+                }}
               />
             </div>
-
-            {/* Type Select Dropdown */}
-            <div className="relative w-full sm:w-48 shrink-0">
-              <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            {/* Type filter */}
+            <div style={{ position: 'relative' }}>
+              <Filter size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <select
                 value={typeFilter}
                 onChange={e => setTypeFilter(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 appearance-none cursor-pointer"
+                style={{
+                  paddingLeft: 30, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
+                  border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                  fontSize: 13, background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer',
+                }}
               >
                 <option value="">All Voucher Types</option>
                 {VOUCHER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</div>
             </div>
-
-            {/* Clear Filters Button */}
             {(typeFilter || search) && (
               <button
                 onClick={() => { setTypeFilter(''); setSearch(''); }}
-                className="text-[13px] text-purple-600 hover:text-purple-800 font-semibold px-3 py-2 hover:bg-purple-50 rounded-xl transition-colors"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
               >
                 Reset Filters
               </button>
             )}
           </div>
-
-          <div className="text-[13px] text-slate-500 font-medium">
-            Showing <span className="text-slate-800 font-bold">{filtered.length}</span> of {vouchersList.length} vouchers
-          </div>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+            Showing <strong style={{ color: 'var(--text-primary)' }}>{filtered.length}</strong> of {vouchersList.length}
+          </span>
         </div>
 
-        {/* Table Container */}
-        <div className="overflow-x-auto max-h-[50vh] relative">
-          <table className="w-full text-[13px]">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+        {/* Table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
               <tr>
-                <th className="text-left px-5 py-3 font-bold w-24">Date</th>
-                <th className="text-left px-4 py-3 font-bold w-32">Voucher No.</th>
-                <th className="text-left px-4 py-3 font-bold w-28">Type</th>
-                <th className="text-left px-4 py-3 font-bold">Particulars / Narration</th>
-                <th className="text-left px-4 py-3 font-bold w-28">Ref No.</th>
-                <th className="text-center px-4 py-3 font-bold w-24">Status</th>
-                <th className="text-right px-5 py-3 font-bold w-36">Amount</th>
+                {['Date','Voucher No.','Type','Particulars / Narration','Ref No.','Status','Amount'].map((h, i) => (
+                  <th key={h} style={{
+                    padding: '11px 16px',
+                    textAlign: i === 6 ? 'right' : i === 5 ? 'center' : 'left',
+                    fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.7px',
+                    color: 'var(--text-muted)', background: 'var(--bg-secondary)',
+                    borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap',
+                  }}>
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-slate-400 animate-pulse font-medium">
+                  <td colSpan={7} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
                     Loading vouchers…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-16 text-center">
-                    <Receipt size={36} className="text-slate-200 mx-auto mb-2" />
-                    <p className="text-slate-400 font-semibold">No vouchers found</p>
+                  <td colSpan={7} style={{ padding: '56px 20px', textAlign: 'center' }}>
+                    <Receipt size={36} style={{ color: 'var(--border-light)', margin: '0 auto 10px' }} />
+                    <p style={{ color: 'var(--text-muted)', fontWeight: 600, marginBottom: 8 }}>No vouchers found</p>
                     <button
                       onClick={() => openVoucher('Payment')}
-                      className="mt-2 text-purple-600 text-xs font-semibold hover:underline"
+                      style={{ fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                     >
                       + Create your first voucher
                     </button>
                   </td>
                 </tr>
               ) : (
-                filtered.map((v, i) => {
-                  const ts = TYPE_STYLE[v.voucher_type] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
-                  const ss = STATUS_STYLE[v.status] || STATUS_STYLE.Posted;
+                filtered.map(v => {
+                  const acc = TYPE_ACCENT[v.voucher_type] || TYPE_ACCENT.Journal;
+                  const ss  = STATUS_BADGE[v.status]      || STATUS_BADGE.Posted;
                   const particulars = v.entries?.[0]?.ledger_name || v.narration || '—';
                   return (
                     <tr
                       key={v.id}
-                      className="hover:bg-purple-50/15 cursor-pointer transition-colors"
+                      style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.12s' }}
                       onClick={() => openVoucher(v.voucher_type)}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      <td className="px-5 py-2.5 text-slate-500 font-medium whitespace-nowrap">{v.date}</td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{v.voucher_number}</td>
-                      <td className="px-4 py-2.5">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${ts.bg} ${ts.text} ${ts.border}`}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{v.date}</td>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>{v.voucher_number}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 100,
+                          background: acc.bg, color: acc.color, border: `1px solid ${acc.border}`,
+                        }}>
                           {v.voucher_type}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-slate-600 max-w-md truncate">
-                        <span className="font-semibold text-slate-800">{particulars}</span>
-                        {v.narration && (
-                          <span className="text-slate-400 font-normal ml-2 italic">— {v.narration}</span>
-                        )}
+                      <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', maxWidth: 300 }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{particulars}</span>
+                        {v.narration && <span style={{ color: 'var(--text-muted)', fontSize: 12, fontStyle: 'italic', marginLeft: 8 }}>— {v.narration}</span>}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-400 font-medium">{v.reference_no || '—'}</td>
-                      <td className="px-4 py-2.5 text-center">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border ${ss.bg} ${ss.text} ${ss.border}`}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>{v.reference_no || '—'}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 100,
+                          background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`,
+                        }}>
                           {v.status}
                         </span>
                       </td>
-                      <td className="px-5 py-2.5 text-right font-mono font-bold text-slate-900 text-[13px]">
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                         ₹{fmt(v.total_amount)}
                       </td>
                     </tr>
@@ -315,15 +430,13 @@ export default function Vouchers() {
                 })
               )}
             </tbody>
-
-            {/* Summary tfoot */}
             {filtered.length > 0 && (
-              <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+              <tfoot>
                 <tr>
-                  <td colSpan={6} className="px-5 py-2.5 text-left text-slate-500 font-bold uppercase tracking-wider">
-                    Total ({filtered.length} Voucher{filtered.length !== 1 ? 's' : ''})
+                  <td colSpan={6} style={{ padding: '11px 16px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
+                    Total ({filtered.length} voucher{filtered.length !== 1 ? 's' : ''})
                   </td>
-                  <td className="px-5 py-2.5 text-right font-mono text-[13px] text-slate-900 font-bold">
+                  <td style={{ padding: '11px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
                     ₹{fmt(totalAmt)}
                   </td>
                 </tr>
@@ -332,57 +445,36 @@ export default function Vouchers() {
           </table>
         </div>
 
-        {/* ── Enterprise Pagination Footer ── */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/20 text-xs font-medium text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <span>Show</span>
-            <select className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer font-semibold">
-              <option>25</option>
-              <option>50</option>
-              <option>100</option>
-            </select>
-            <span>entries</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-[11px] text-slate-400">Page 1 of 1</span>
-            <div className="flex items-center gap-1.5">
-              <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                Previous
-              </button>
-              <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                Next
-              </button>
+        {/* Pagination footer */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 20px', borderTop: '1px solid var(--border)',
+          background: 'var(--bg-secondary)', fontSize: 12, color: 'var(--text-muted)',
+        }}>
+          <span>Showing {filtered.length} entries</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span>Page 1 of 1</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['Previous','Next'].map(label => (
+                <button key={label} disabled style={{ padding: '4px 12px', fontSize: 12, fontWeight: 600, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--border-light)', cursor: 'not-allowed' }}>
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Keyboard Shortcuts Hint ── */}
-      <div className="flex items-center gap-3.5 flex-wrap px-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mr-1">Shortcuts:</span>
-        {[
-          ['F4', 'Contra'], ['F5', 'Payment'], ['F6', 'Receipt'],
-          ['F7', 'Journal'], ['F8', 'Sales'], ['F9', 'Purchase'],
-        ].map(([k, t]) => (
-          <span key={k} className="flex items-center gap-1.5 text-xs text-slate-400">
-            <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[9px] font-mono font-bold text-slate-500 shadow-sm">{k}</kbd>
-            <span className="font-medium text-slate-500">{t}</span>
+      {/* ── Keyboard Shortcuts ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', paddingLeft: 4 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-muted)' }}>Shortcuts:</span>
+        {[['F4','Contra'],['F5','Payment'],['F6','Receipt'],['F7','Journal'],['F8','Sales'],['F9','Purchase']].map(([k, t]) => (
+          <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-muted)' }}>
+            <kbd style={{ padding: '2px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, fontSize: 10, fontFamily: 'monospace', fontWeight: 700, boxShadow: 'var(--shadow-sm)' }}>{k}</kbd>
+            {t}
           </span>
         ))}
       </div>
-
-      {/* ── Voucher Form Modal ── */}
-      {isModalOpen && (
-        <VoucherForm
-          type={voucherType}
-          companyId={activeCompany?.id}
-          ledgers={ledgersList}
-          onClose={closeVoucher}
-          onSaved={() => {
-            queryClient.invalidateQueries();
-          }}
-        />
-      )}
     </div>
   );
 }
