@@ -39,8 +39,14 @@ export default function VendorMaster() {
     if (editingId) {
       mockDb.update('consumables_vendors', editingId, formData);
     } else {
+      const currentData = mockDb.get('consumables_vendors');
+      const maxIdNum = currentData.reduce((max, item) => {
+        const numMatch = item.id.match(/\d+/);
+        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
+      }, 0);
+      const nextId = 'VEN' + String(maxIdNum + 1).padStart(3, '0');
       mockDb.add('consumables_vendors', {
-        id: 'VEN' + Math.floor(Math.random() * 1000),
+        id: nextId,
         ...formData
       });
     }

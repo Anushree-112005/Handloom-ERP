@@ -36,8 +36,14 @@ export default function DepartmentMaster() {
     if (editingId) {
       mockDb.update('consumables_departments', editingId, formData);
     } else {
+      const currentData = mockDb.get('consumables_departments');
+      const maxIdNum = currentData.reduce((max, item) => {
+        const numMatch = item.id.match(/\d+/);
+        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
+      }, 0);
+      const nextId = 'DEP' + String(maxIdNum + 1).padStart(3, '0');
       mockDb.add('consumables_departments', {
-        id: 'DEP' + Math.floor(Math.random() * 1000),
+        id: nextId,
         ...formData
       });
     }
