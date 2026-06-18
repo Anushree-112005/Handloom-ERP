@@ -9,14 +9,14 @@ const fyStart = `${new Date().getFullYear()}-04-01`;
 const today   = new Date().toISOString().split('T')[0];
 
 const TYPE_STYLE = {
-  Sales:       { bg: 'bg-indigo-50/60',   text: 'text-indigo-700',   border: 'border-indigo-100' },
-  Purchase:    { bg: 'bg-purple-50/60',   text: 'text-purple-700',   border: 'border-purple-100' },
-  Receipt:     { bg: 'bg-emerald-50/60',  text: 'text-emerald-700',  border: 'border-emerald-100' },
-  Payment:     { bg: 'bg-amber-50/60',    text: 'text-amber-700',    border: 'border-amber-100' },
-  Journal:     { bg: 'bg-slate-50',       text: 'text-slate-700',    border: 'border-slate-200' },
-  Contra:      { bg: 'bg-sky-50/60',      text: 'text-sky-700',      border: 'border-sky-100' },
-  'Debit Note':  { bg: 'bg-rose-50/60',     text: 'text-rose-700',     border: 'border-rose-100' },
-  'Credit Note': { bg: 'bg-emerald-50/60',  text: 'text-emerald-700',  border: 'border-emerald-100' },
+  Sales:       { bg: '#e0e7ff', text: '#4338ca', border: '#c7d2fe' },
+  Purchase:    { bg: '#f3e8ff', text: '#7e22ce', border: '#e9d5ff' },
+  Receipt:     { bg: '#d1fae5', text: '#047857', border: '#a7f3d0' },
+  Payment:     { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
+  Journal:     { bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
+  Contra:      { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
+  'Debit Note':  { bg: '#ffe4e6', text: '#be123c', border: '#fecdd3' },
+  'Credit Note': { bg: '#d1fae5', text: '#047857', border: '#a7f3d0' },
 };
 
 function CashBookTab({ companyId, activeFy }) {
@@ -37,104 +37,106 @@ function CashBookTab({ companyId, activeFy }) {
   });
 
   return (
-    <div className="cb-card">
+    <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/30">
-        <div className="flex flex-wrap items-center gap-3">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           {/* Period Filters */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
-            <span className="text-slate-400 text-xs font-semibold">to</span>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
           </div>
         </div>
 
         {data && (
-          <div className="flex flex-wrap items-center gap-4 text-xs font-medium self-start md:self-auto">
-            <div className="text-left md:text-right border-r border-slate-100 pr-4">
-              <p className="text-[10px] text-slate-400">Opening Balance</p>
-              <p className="font-mono font-bold text-slate-700 mt-0.5">₹{fmt(data.opening_balance)}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 24 }}>
+            <div style={{ textAlign: 'right', paddingRight: 24, borderRight: '1px solid var(--border)' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Opening Balance</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(data.opening_balance)}</p>
             </div>
-            <div className="text-left md:text-right border-r border-slate-100 pr-4">
-              <p className="text-[10px] text-slate-400 font-semibold text-slate-500">Total Receipts</p>
-              <p className="font-mono font-bold text-emerald-600 mt-0.5">₹{fmt(data.total_receipts)}</p>
+            <div style={{ textAlign: 'right', paddingRight: 24, borderRight: '1px solid var(--border)' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Receipts</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#10b981' }}>₹{fmt(data.total_receipts)}</p>
             </div>
-            <div className="text-left md:text-right border-r border-slate-100 pr-4">
-              <p className="text-[10px] text-slate-400 font-semibold text-slate-500">Total Payments</p>
-              <p className="font-mono font-bold text-rose-600 mt-0.5">₹{fmt(data.total_payments)}</p>
+            <div style={{ textAlign: 'right', paddingRight: 24, borderRight: '1px solid var(--border)' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Payments</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#ef4444' }}>₹{fmt(data.total_payments)}</p>
             </div>
-            <div className="text-left md:text-right">
-              <p className="text-[10px] text-slate-400">Closing Balance</p>
-              <p className="font-mono font-bold text-purple-700 mt-0.5">₹{fmt(data.closing_balance)}</p>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Closing Balance</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary)' }}>₹{fmt(data.closing_balance)}</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Table Container */}
-      <div className="overflow-x-auto max-h-[50vh] relative">
-        <table className="w-full text-xs min-w-[800px]">
+      <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 800 }}>
           {/* Table Header Grid */}
-          <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
             <tr>
-              <th className="text-left px-5 py-3 font-bold w-[12%]">Date</th>
-              <th className="text-left px-4 py-3 font-bold w-[15%]">Voucher No.</th>
-              <th className="text-left px-4 py-3 font-bold w-[10%]">Type</th>
-              <th className="text-left px-4 py-3 font-bold">Narration</th>
-              <th className="text-right px-4 py-3 font-bold w-[15%]">Receipts (₹)</th>
-              <th className="text-right px-5 py-3 font-bold w-[15%]">Payments (₹)</th>
+              <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '12%' }}>Date</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '15%' }}>Voucher No.</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '10%' }}>Type</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Narration</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '15%' }}>Receipts (₹)</th>
+              <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '15%' }}>Payments (₹)</th>
             </tr>
           </thead>
 
           {/* Table Body */}
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400 animate-pulse font-medium">
+                <td colSpan={6} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   Loading cash book statement…
                 </td>
               </tr>
             ) : data?.transactions?.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-16 text-center text-slate-400 font-semibold">
+                <td colSpan={6} style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>
                   No cash transactions in this period
                 </td>
               </tr>
             ) : (
               data?.transactions?.map((row, i) => {
-                const ts = TYPE_STYLE[row.voucher_type] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
+                const ts = TYPE_STYLE[row.voucher_type] || { bg: 'var(--bg-secondary)', text: 'var(--text-secondary)', border: 'var(--border)' };
                 return (
-                  <tr key={i} className="hover:bg-purple-50/15 transition-colors align-top">
-                    <td className="px-5 py-2.5 text-slate-500 font-medium whitespace-nowrap">{row.date}</td>
-                    <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{row.voucher_number}</td>
-                    <td className="px-4 py-2.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${ts.bg} ${ts.text} ${ts.border}`}>
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>{row.date}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>{row.voucher_number}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: 11, fontWeight: 700, background: ts.bg, color: ts.text, border: `1px solid ${ts.border}` }}>
                         {row.voucher_type}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-500 font-medium truncate max-w-sm" title={row.narration}>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.narration}>
                       {row.narration || '—'}
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-[13px] text-emerald-700 font-bold">
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: '#10b981', fontWeight: 700 }}>
                       {row.receipts > 0 ? `₹${fmt(row.receipts)}` : '—'}
                     </td>
-                    <td className="px-5 py-2.5 text-right font-mono text-[13px] text-rose-700 font-bold">
+                    <td style={{ padding: '12px 20px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: '#ef4444', fontWeight: 700 }}>
                       {row.payments > 0 ? `₹${fmt(row.payments)}` : '—'}
                     </td>
                   </tr>
@@ -145,45 +147,21 @@ function CashBookTab({ companyId, activeFy }) {
 
           {/* Table Footer */}
           {data && data?.transactions?.length > 0 && (
-            <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+            <tfoot style={{ position: 'sticky', bottom: 0, background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
               <tr>
-                <td colSpan={4} className="px-5 py-3 text-slate-500 font-bold uppercase tracking-wider">
+                <td colSpan={4} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>
                   Closing Balance
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[13px] text-emerald-700 font-bold">
+                <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: '#10b981' }}>
                   ₹{fmt(data.total_receipts)}
                 </td>
-                <td className="px-5 py-3 text-right font-mono text-[13px] text-indigo-700 font-bold border-l border-slate-100">
+                <td style={{ padding: '14px 20px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>
                   ₹{fmt(data.total_payments)}
                 </td>
               </tr>
             </tfoot>
           )}
         </table>
-      </div>
-
-      {/* ── Enterprise Pagination Footer ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/20 text-xs font-medium text-slate-500">
-        <div className="flex items-center gap-1.5">
-          <span>Show</span>
-          <select className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer font-semibold">
-            <option>25</option>
-            <option>50</option>
-            <option>100</option>
-          </select>
-          <span>entries</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[11px] text-slate-400">Page 1 of 1</span>
-          <div className="flex items-center gap-1.5">
-            <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-              Previous
-            </button>
-            <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-              Next
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -207,52 +185,54 @@ function BankBookTab({ companyId, activeFy }) {
   });
 
   return (
-    <div className="cb-card">
+    <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/30">
-        <div className="flex flex-wrap items-center gap-3">
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           {/* Period Filters */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
-            <span className="text-slate-400 text-xs font-semibold">to</span>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={to}
-                onChange={(e) => setToDate(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                onChange={(e) => setTo(e.target.value)}
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
           </div>
         </div>
 
         {data && (
-          <div className="flex flex-wrap items-center gap-4 text-xs font-medium self-start md:self-auto">
-            <div className="text-left md:text-right border-r border-slate-100 pr-4">
-              <p className="text-[10px] text-slate-400">Total Deposits</p>
-              <p className="font-mono font-bold text-emerald-600 mt-0.5">₹{fmt(data.total_deposits)}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 24 }}>
+            <div style={{ textAlign: 'right', paddingRight: 24, borderRight: '1px solid var(--border)' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Deposits</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#10b981' }}>₹{fmt(data.total_deposits)}</p>
             </div>
-            <div className="text-left md:text-right">
-              <p className="text-[10px] text-slate-400 font-semibold text-slate-500">Total Withdrawals</p>
-              <p className="font-mono font-bold text-rose-600 mt-0.5">₹{fmt(data.total_withdrawals)}</p>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Withdrawals</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: '#ef4444' }}>₹{fmt(data.total_withdrawals)}</p>
             </div>
           </div>
         )}
       </div>
 
       {data?.banks?.length > 0 && (
-        <div className="flex gap-2 flex-wrap px-5 py-2.5 border-b border-slate-100 bg-blue-50/10">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 20px', borderBottom: '1px solid var(--border)', background: '#eff6ff' }}>
           {data.banks.map(b => (
-            <span key={b.id} className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100/60 rounded-lg text-[10px] font-bold">
+            <span key={b.id} style={{ padding: '4px 10px', background: '#dbeafe', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '8px', fontSize: 11, fontWeight: 700 }}>
               🏦 {b.name}
             </span>
           ))}
@@ -260,57 +240,57 @@ function BankBookTab({ companyId, activeFy }) {
       )}
 
       {/* Table Container */}
-      <div className="overflow-x-auto max-h-[50vh] relative">
-        <table className="w-full text-xs min-w-[900px]">
+      <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 900 }}>
           {/* Table Header Grid */}
-          <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
             <tr>
-              <th className="text-left px-5 py-3 font-bold w-[10%]">Date</th>
-              <th className="text-left px-4 py-3 font-bold w-[12%]">Voucher No.</th>
-              <th className="text-left px-4 py-3 font-bold w-[10%]">Type</th>
-              <th className="text-left px-4 py-3 font-bold w-[15%]">Bank</th>
-              <th className="text-left px-4 py-3 font-bold w-[10%]">Ref No.</th>
-              <th className="text-left px-4 py-3 font-bold">Narration</th>
-              <th className="text-right px-4 py-3 font-bold w-[12%]">Deposits (₹)</th>
-              <th className="text-right px-5 py-3 font-bold w-[12%]">Withdrawals (₹)</th>
+              <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '10%' }}>Date</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '12%' }}>Voucher No.</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '10%' }}>Type</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '15%' }}>Bank</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '10%' }}>Ref No.</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Narration</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '12%' }}>Deposits (₹)</th>
+              <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '12%' }}>Withdrawals (₹)</th>
             </tr>
           </thead>
 
           {/* Table Body */}
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-400 animate-pulse font-medium">
+                <td colSpan={8} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                   Loading bank book statement…
                 </td>
               </tr>
             ) : data?.transactions?.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-16 text-center text-slate-400 font-semibold">
+                <td colSpan={8} style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>
                   No bank transactions in this period
                 </td>
               </tr>
             ) : (
               data?.transactions?.map((row, i) => {
-                const ts = TYPE_STYLE[row.voucher_type] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
+                const ts = TYPE_STYLE[row.voucher_type] || { bg: 'var(--bg-secondary)', text: 'var(--text-secondary)', border: 'var(--border)' };
                 return (
-                  <tr key={i} className="hover:bg-purple-50/15 transition-colors align-top">
-                    <td className="px-5 py-2.5 text-slate-500 font-medium whitespace-nowrap">{row.date}</td>
-                    <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{row.voucher_number}</td>
-                    <td className="px-4 py-2.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${ts.bg} ${ts.text} ${ts.border}`}>
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>{row.date}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>{row.voucher_number}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: 11, fontWeight: 700, background: ts.bg, color: ts.text, border: `1px solid ${ts.border}` }}>
                         {row.voucher_type}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-600 font-semibold">{row.bank_name}</td>
-                    <td className="px-4 py-2.5 text-slate-400 font-mono text-[10px]">{row.reference_no || '—'}</td>
-                    <td className="px-4 py-2.5 text-slate-500 font-medium truncate max-w-xs" title={row.narration}>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>{row.bank_name}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 11, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{row.reference_no || '—'}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.narration}>
                       {row.narration || '—'}
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-[13px] text-emerald-700 font-bold">
+                    <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: '#10b981', fontWeight: 700 }}>
                       {row.deposits > 0 ? `₹${fmt(row.deposits)}` : '—'}
                     </td>
-                    <td className="px-5 py-2.5 text-right font-mono text-[13px] text-rose-700 font-bold">
+                    <td style={{ padding: '12px 20px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: '#ef4444', fontWeight: 700 }}>
                       {row.withdrawals > 0 ? `₹${fmt(row.withdrawals)}` : '—'}
                     </td>
                   </tr>
@@ -321,45 +301,21 @@ function BankBookTab({ companyId, activeFy }) {
 
           {/* Table Footer */}
           {data && data?.transactions?.length > 0 && (
-            <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+            <tfoot style={{ position: 'sticky', bottom: 0, background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
               <tr>
-                <td colSpan={6} className="px-5 py-3 text-slate-500 font-bold uppercase tracking-wider">
+                <td colSpan={6} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>
                   Totals
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[13px] text-emerald-700 font-bold">
+                <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: '#10b981' }}>
                   ₹{fmt(data.total_deposits)}
                 </td>
-                <td className="px-5 py-3 text-right font-mono text-[13px] text-indigo-700 font-bold border-l border-slate-100">
+                <td style={{ padding: '14px 20px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>
                   ₹{fmt(data.total_withdrawals)}
                 </td>
               </tr>
             </tfoot>
           )}
         </table>
-      </div>
-
-      {/* ── Enterprise Pagination Footer ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/20 text-xs font-medium text-slate-500">
-        <div className="flex items-center gap-1.5">
-          <span>Show</span>
-          <select className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer font-semibold">
-            <option>25</option>
-            <option>50</option>
-            <option>100</option>
-          </select>
-          <span>entries</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-[11px] text-slate-400">Page 1 of 1</span>
-          <div className="flex items-center gap-1.5">
-            <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-              Previous
-            </button>
-            <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-              Next
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -371,48 +327,47 @@ export default function CashAndBankBook({ defaultTab = 'cash' }) {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <p className="text-sm font-medium">Please select a company to view Cash & Bank Book.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <DollarSign size={32} style={{ color: 'var(--primary)' }} />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company to view Cash & Bank Book.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            {tab === 'cash' ? <DollarSign size={18} /> : <CreditCard size={18} />}
-          </div>
-          <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">
-              {tab === 'cash' ? 'Cash Book' : 'Bank Book'}
-            </h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              Statement of all cash accounts and banking ledger transactions
-            </p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            {tab === 'cash' ? <DollarSign size={24} color="var(--primary)" /> : <CreditCard size={24} color="var(--primary)" />}
+            {tab === 'cash' ? 'Cash Book' : 'Bank Book'}
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Statement of all cash accounts and banking ledger transactions
+          </p>
         </div>
-        <div className="flex items-center gap-3 self-end sm:self-auto">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {/* Action Tabs Switcher */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/50">
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', padding: 4, borderRadius: 8, border: '1px solid var(--border)' }}>
             <button 
               onClick={() => setTab('cash')}
-              className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all ${tab === 'cash' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              style={{ padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s', background: tab === 'cash' ? 'var(--bg-primary)' : 'transparent', color: tab === 'cash' ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: tab === 'cash' ? 'var(--shadow-sm)' : 'none', border: 'none', cursor: 'pointer' }}
             >
-              <DollarSign size={11} /> Cash
+              <DollarSign size={14} /> Cash
             </button>
             <button 
               onClick={() => setTab('bank')}
-              className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all ${tab === 'bank' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              style={{ padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s', background: tab === 'bank' ? 'var(--bg-primary)' : 'transparent', color: tab === 'bank' ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: tab === 'bank' ? 'var(--shadow-sm)' : 'none', border: 'none', cursor: 'pointer' }}
             >
-              <CreditCard size={11} /> Bank
+              <CreditCard size={14} /> Bank
             </button>
           </div>
 
-          <button className="flex items-center gap-1.5 bg-purple-600 border border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white hover:bg-purple-700 transition-colors shadow-sm">
-            <Download size={13} /> Export
+          <button className="btn btn-primary" style={{ padding: '8px 16px', fontSize: 13 }}>
+            <Download size={14} /> Export
           </button>
         </div>
       </div>

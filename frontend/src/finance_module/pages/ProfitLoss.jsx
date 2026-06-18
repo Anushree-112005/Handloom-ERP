@@ -14,21 +14,21 @@ function GroupBlock({ title, icon: Icon, color, groups, total, emptyText }) {
   const toggle = g => setExpanded(p => ({ ...p, [g]: !p[g] }));
 
   return (
-    <div className="cb-card h-full flex flex-col">
-      <div className="overflow-x-auto flex-1">
-        <table className="w-full text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+    <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 400 }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
             <tr>
-              <th className="text-left px-5 py-3 font-bold flex items-center gap-2">
+              <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Icon size={14} style={{ color }} /> {title}
               </th>
-              <th className="text-right px-5 py-3 font-bold w-1/3">Amount (₹)</th>
+              <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '33%' }}>Amount (₹)</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody>
             {Object.keys(groups || {}).length === 0 && (
               <tr>
-                <td colSpan={2} className="text-slate-400 text-xs text-center py-8">{emptyText}</td>
+                <td colSpan={2} style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>{emptyText}</td>
               </tr>
             )}
             {Object.entries(groups || {}).map(([group, items]) => {
@@ -36,33 +36,38 @@ function GroupBlock({ title, icon: Icon, color, groups, total, emptyText }) {
               const isOpen = expanded[group] !== false;
               return (
                 <Fragment key={group}>
-                  <tr onClick={() => toggle(group)} className="hover:bg-slate-100/80 transition-colors cursor-pointer">
-                    <td className="px-5 py-2.5">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                        <span className="text-slate-400">
-                          {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  <tr 
+                    onClick={() => toggle(group)} 
+                    style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-secondary)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                  >
+                    <td style={{ padding: '10px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </span>
                         {group}
                       </div>
                     </td>
-                    <td className="px-5 py-2.5 text-right font-mono text-[13px] text-slate-600 font-semibold">
+                    <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
                       ₹{fmt(groupTotal)}
                     </td>
                   </tr>
                   {isOpen && items.map((row, i) => (
-                    <tr key={i} className="hover:bg-purple-50/15 transition-colors align-top bg-slate-50/30">
-                      <td className="px-5 py-2 pl-10 text-xs text-slate-500 font-medium">{row.ledger}</td>
-                      <td className="px-5 py-2 text-right font-mono text-[13px] text-slate-700">₹{fmt(row.amount)}</td>
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '10px 20px 10px 40px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>{row.ledger}</td>
+                      <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600 }}>₹{fmt(row.amount)}</td>
                     </tr>
                   ))}
                 </Fragment>
               );
             })}
           </tbody>
-          <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+          <tfoot style={{ position: 'sticky', bottom: 0, background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
             <tr>
-              <td className="px-5 py-3 text-slate-500 uppercase font-bold tracking-wider">Total {title}</td>
-              <td className="px-5 py-3 text-right font-mono text-[13px]" style={{ color }}>₹{fmt(total)}</td>
+              <td style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', fontSize: 12 }}>Total {title}</td>
+              <td style={{ padding: '14px 20px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color }}>₹{fmt(total)}</td>
             </tr>
           </tfoot>
         </table>
@@ -91,69 +96,69 @@ export default function ProfitLoss() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <p className="text-sm font-medium">Please select a company to view the Profit & Loss.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company to view the Profit & Loss.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            <TrendingUp size={18} />
-          </div>
-          <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">Profit & Loss Account</h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              Net income and expenditure statement for a specific period
-            </p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <TrendingUp size={24} color="var(--primary)" />
+            Profit & Loss Account
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Net income and expenditure statement for a specific period
+          </p>
         </div>
-        <div className="text-right text-xs">
-          <div className="text-slate-500">
-            Active Company: <span className="font-semibold text-slate-800">{activeCompany.name}</span>
+        <div style={{ textAlign: 'right', fontSize: 12 }}>
+          <div style={{ color: 'var(--text-secondary)' }}>
+            Active Company: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{activeCompany.name}</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
             FY: {activeFy?.label || 'Not set'}
           </p>
         </div>
       </div>
 
       {/* ── Controls and Overview Card ── */}
-      <div className="cb-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/20">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="card" style={{ padding: '16px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           {/* Period Filters */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
-            <span className="text-slate-400 text-xs font-semibold">to</span>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
           </div>
 
           {data && (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${data.is_profit ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: '8px', fontSize: 13, fontWeight: 600, border: `1px solid ${data.is_profit ? '#10b98140' : '#ef444440'}`, background: data.is_profit ? '#10b98110' : '#ef444410', color: data.is_profit ? '#10b981' : '#ef4444' }}>
               {data.is_profit ? (
-                <><TrendingUp size={12} className="text-emerald-500" /> Net Profit: ₹{fmt(Math.abs(data.net_profit))}</>
+                <><TrendingUp size={14} /> Net Profit: ₹{fmt(Math.abs(data.net_profit))}</>
               ) : (
-                <><TrendingDown size={12} className="text-rose-500" /> Net Loss: ₹{fmt(Math.abs(data.net_profit))}</>
+                <><TrendingDown size={14} /> Net Loss: ₹{fmt(Math.abs(data.net_profit))}</>
               )}
             </div>
           )}
@@ -161,22 +166,23 @@ export default function ProfitLoss() {
 
         <button 
           onClick={() => data && exportToPDF({ title: 'Profit & Loss Account', companyName: activeCompany.name, period: `${fromDate} to ${toDate}`, data, reportType: 'profit-loss' })}
-          className="self-start md:self-auto flex items-center gap-1.5 bg-purple-600 border border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white hover:bg-purple-700 transition-colors shadow-sm"
+          className="btn btn-primary"
+          style={{ padding: '8px 16px', fontSize: 13 }}
         >
-          <Download size={13} /> Export PDF
+          <Download size={14} /> Export PDF
         </button>
       </div>
 
-      {isLoading && <div className="text-center py-20 text-slate-400 animate-pulse text-xs">Computing Profit & Loss Statement…</div>}
+      {isLoading && <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontWeight: 500 }}>Computing Profit & Loss Statement…</div>}
 
       {data && (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Two-column P&L */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24 }}>
             <GroupBlock
               title="Expenses (Dr)"
               icon={TrendingDown}
-              color="#f43f5e"
+              color="#ef4444"
               groups={data.expenses?.groups}
               total={data.expenses?.total}
               emptyText="No expense accounts"
@@ -192,16 +198,16 @@ export default function ProfitLoss() {
           </div>
 
           {/* Net Result Banner */}
-          <div className={`rounded-xl p-4 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${data.is_profit ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'}`}>
+          <div style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, border: `1px solid ${data.is_profit ? '#10b98140' : '#ef444440'}`, background: data.is_profit ? '#10b9810a' : '#ef44440a' }}>
             <div>
-              <p className="text-xs font-bold text-slate-600">Period net result Summary</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">{fromDate} to {toDate}</p>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)' }}>Period net result Summary</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{fromDate} to {toDate}</p>
             </div>
-            <div className="text-left sm:text-right">
-              <p className={`text-2xl font-bold font-mono ${data.is_profit ? 'text-emerald-700' : 'text-rose-700'}`}>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: data.is_profit ? '#10b981' : '#ef4444' }}>
                 {data.is_profit ? '' : '('}₹{fmt(Math.abs(data.net_profit))}{data.is_profit ? '' : ')'}
               </p>
-              <p className="text-[10px] font-semibold text-slate-500 mt-1">
+              <p style={{ margin: '4px 0 0 0', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>
                 Income ₹{fmt(data.income?.total)} − Expenses ₹{fmt(data.expenses?.total)}
               </p>
             </div>

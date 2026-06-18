@@ -10,14 +10,14 @@ const fyStart = `${new Date().getFullYear()}-04-01`;
 const today   = new Date().toISOString().split('T')[0];
 
 const TYPE_STYLE = {
-  Sales:       { bg: 'bg-indigo-50/60',   text: 'text-indigo-700',   border: 'border-indigo-100' },
-  Purchase:    { bg: 'bg-purple-50/60',   text: 'text-purple-700',   border: 'border-purple-100' },
-  Receipt:     { bg: 'bg-emerald-50/60',  text: 'text-emerald-700',  border: 'border-emerald-100' },
-  Payment:     { bg: 'bg-amber-50/60',    text: 'text-amber-700',    border: 'border-amber-100' },
-  Journal:     { bg: 'bg-slate-50',       text: 'text-slate-700',    border: 'border-slate-200' },
-  Contra:      { bg: 'bg-sky-50/60',      text: 'text-sky-700',      border: 'border-sky-100' },
-  'Debit Note':  { bg: 'bg-rose-50/60',     text: 'text-rose-700',     border: 'border-rose-100' },
-  'Credit Note': { bg: 'bg-emerald-50/60',  text: 'text-emerald-700',  border: 'border-emerald-100' },
+  Sales:       { bg: '#e0e7ff', text: '#4338ca', border: '#c7d2fe' },
+  Purchase:    { bg: '#f3e8ff', text: '#7e22ce', border: '#e9d5ff' },
+  Receipt:     { bg: '#d1fae5', text: '#047857', border: '#a7f3d0' },
+  Payment:     { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
+  Journal:     { bg: '#f8fafc', text: '#334155', border: '#e2e8f0' },
+  Contra:      { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
+  'Debit Note':  { bg: '#ffe4e6', text: '#be123c', border: '#fecdd3' },
+  'Credit Note': { bg: '#d1fae5', text: '#047857', border: '#a7f3d0' },
 };
 
 export default function LedgerReport() {
@@ -47,75 +47,78 @@ export default function LedgerReport() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <p className="text-sm font-medium">Please select a company to view the Ledger Report.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <BookMarked size={32} style={{ color: 'var(--primary)' }} />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company to view the Ledger Report.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            <BookMarked size={18} />
-          </div>
-          <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">Ledger Report</h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              Detailed transaction statement and reconciliation for an account
-            </p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BookMarked size={24} color="var(--primary)" />
+            Ledger Report
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Detailed transaction statement and reconciliation for an account
+          </p>
         </div>
-        <div className="text-right text-xs">
-          <div className="text-slate-500">
-            Active Company: <span className="font-semibold text-slate-800">{activeCompany.name}</span>
+        <div style={{ textAlign: 'right', fontSize: 12 }}>
+          <div style={{ color: 'var(--text-secondary)' }}>
+            Active Company: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{activeCompany.name}</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
             FY: {activeFy?.label || 'Not set'} &nbsp;·&nbsp; {data?.transactions?.length || 0} ledger postings
           </p>
         </div>
       </div>
 
       {/* ── Table Card ── */}
-      <div className="cb-card">
+      <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
         {/* Toolbar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/30">
-          <div className="flex flex-wrap items-center gap-3">
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
             {/* Ledger Select Dropdown */}
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={11} />
+            <div style={{ position: 'relative' }}>
+              <Filter style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <select 
                 value={ledgerId}
                 onChange={(e) => setLedgerId(e.target.value)}
-                className="pl-7 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 appearance-none cursor-pointer min-w-[192px]"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 220, cursor: 'pointer' }}
               >
                 <option value="">— Select Ledger —</option>
                 {ledgerList.map(l => <option key={l.id} value={l.id}>{l.name} ({l.group})</option>)}
               </select>
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">▼</div>
             </div>
 
             {/* Period Filters */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ position: 'relative' }}>
+                <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
                 <input 
                   type="date" 
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                  className="cb-input"
+                  style={{ paddingLeft: 36, width: 140 }}
                 />
               </div>
-              <span className="text-slate-400 text-xs font-semibold">to</span>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+              <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
+              <div style={{ position: 'relative' }}>
+                <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
                 <input 
                   type="date" 
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                  className="cb-input"
+                  style={{ paddingLeft: 36, width: 140 }}
                 />
               </div>
             </div>
@@ -123,39 +126,40 @@ export default function LedgerReport() {
 
           <button 
             onClick={() => data && exportToPDF({ title: 'Ledger Report', companyName: activeCompany.name, period: `${fromDate} to ${toDate}`, data, reportType: 'ledger' })}
-            className="self-start md:self-auto flex items-center gap-1.5 bg-purple-600 border border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white hover:bg-purple-700 transition-colors shadow-sm"
+            className="btn btn-primary"
+            style={{ padding: '8px 16px', fontSize: 13 }}
           >
-            <Download size={13} /> Export PDF
+            <Download size={14} /> Export PDF
           </button>
         </div>
 
         {!ledgerId && (
-          <div className="py-20 text-center text-slate-400">
-            <BookMarked size={36} className="text-slate-200 mx-auto mb-2" />
-            <p className="text-xs font-semibold">Select a ledger from the list to view statement</p>
+          <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <BookMarked size={40} style={{ opacity: 0.3, margin: '0 auto 12px auto' }} />
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Select a ledger from the list to view statement</p>
           </div>
         )}
 
         {ledgerId && (
-          <div className="flex flex-col">
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
             {/* Ledger Info Summary Panel */}
             {data && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-3.5 bg-amber-50/50 border-b border-amber-100/50">
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, justifyContent: 'space-between', padding: '16px 20px', background: '#fef3c740', borderBottom: '1px solid #fde68a' }}>
                 <div>
-                  <span className="font-bold text-slate-800 text-sm">{data.ledger_name}</span>
-                  <span className="ml-3 text-[10px] text-slate-500 bg-white border border-slate-200/80 px-2 py-0.5 rounded-full font-semibold">{data.group}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{data.ledger_name}</span>
+                  <span style={{ marginLeft: 12, fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: 100, border: '1px solid var(--border)', background: 'var(--bg-primary)' }}>{data.group}</span>
                 </div>
-                <div className="flex items-center gap-8 text-xs font-medium">
-                  <div className="text-left sm:text-right">
-                    <p className="text-[10px] text-slate-400">Opening Balance</p>
-                    <p className="font-mono font-bold text-slate-700 mt-0.5">
-                      ₹{fmt(data.opening_balance)} <span className="text-[9px] text-slate-400 uppercase font-semibold">{data.opening_type}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Opening Balance</p>
+                    <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
+                      ₹{fmt(data.opening_balance)} <span style={{ fontSize: 10 }}>{data.opening_type}</span>
                     </p>
                   </div>
-                  <div className="text-left sm:text-right">
-                    <p className="text-[10px] text-slate-400">Closing Balance</p>
-                    <p className="font-mono font-bold text-purple-700 mt-0.5">
-                      ₹{fmt(data.closing_balance)} <span className="text-[9px] text-purple-500 uppercase font-semibold">{data.closing_type}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Closing Balance</p>
+                    <p style={{ margin: '2px 0 0 0', fontSize: 14, fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary)' }}>
+                      ₹{fmt(data.closing_balance)} <span style={{ fontSize: 10 }}>{data.closing_type}</span>
                     </p>
                   </div>
                 </div>
@@ -163,59 +167,58 @@ export default function LedgerReport() {
             )}
 
             {/* Table or Grid */}
-            <div className="overflow-x-auto max-h-[50vh] relative">
-              <table className="w-full text-xs min-w-[800px]">
+            <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 800 }}>
                 {/* Table Header */}
-                <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                   <tr>
-                    <th className="text-left px-5 py-3 font-bold w-[12%]">Date</th>
-                    <th className="text-left px-4 py-3 font-bold w-[15%]">Voucher No.</th>
-                    <th className="text-left px-4 py-3 font-bold w-[10%]">Type</th>
-                    <th className="text-left px-4 py-3 font-bold">Narration</th>
-                    <th className="text-right px-4 py-3 font-bold w-[12%]">Debit (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold w-[12%]">Credit (₹)</th>
-                    <th className="text-right px-5 py-3 font-bold w-[12%]">Balance (₹)</th>
+                    <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '12%' }}>Date</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '15%' }}>Voucher No.</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '10%' }}>Type</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Narration</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '12%' }}>Debit (₹)</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '12%' }}>Credit (₹)</th>
+                    <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '12%' }}>Balance (₹)</th>
                   </tr>
                 </thead>
 
                 {/* Table Body */}
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-400 animate-pulse font-medium">
+                      <td colSpan={7} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         Loading transactions statement…
                       </td>
                     </tr>
                   ) : data?.transactions?.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-16 text-center text-slate-400 font-semibold">
+                      <td colSpan={7} style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>
                         No transactions in this period
                       </td>
                     </tr>
                   ) : (
                     data?.transactions?.map((row, i) => {
-                      const ts = TYPE_STYLE[row.voucher_type] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' };
+                      const ts = TYPE_STYLE[row.voucher_type] || { bg: 'var(--bg-secondary)', text: 'var(--text-secondary)', border: 'var(--border)' };
                       return (
-                        <tr key={i} className="hover:bg-purple-50/15 transition-colors align-top">
-                          <td className="px-5 py-2.5 text-slate-500 font-medium whitespace-nowrap">{row.date}</td>
-                          <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{row.voucher_number}</td>
-                          <td className="px-4 py-2.5">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${ts.bg} ${ts.text} ${ts.border}`}>
+                        <tr key={i} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                          <td style={{ padding: '12px 20px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>{row.date}</td>
+                          <td style={{ padding: '12px 16px', fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>{row.voucher_number}</td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: 11, fontWeight: 700, background: ts.bg, color: ts.text, border: `1px solid ${ts.border}` }}>
                               {row.voucher_type}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-slate-500 font-medium truncate max-w-xs" title={row.narration}>
+                          <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.narration}>
                             {row.narration || '—'}
                           </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-[13px] text-slate-700 font-medium">
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 500 }}>
                             {row.dr_amount > 0 ? `₹${fmt(row.dr_amount)}` : '—'}
                           </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-[13px] text-slate-700 font-medium">
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 500 }}>
                             {row.cr_amount > 0 ? `₹${fmt(row.cr_amount)}` : '—'}
                           </td>
-                          <td className="px-5 py-2.5 text-right font-mono text-[13px] text-slate-800 font-bold">
-                            ₹{fmt(row.balance)} &nbsp;
-                            <span className="text-[9px] text-slate-400 uppercase font-semibold">{row.balance_type}</span>
+                          <td style={{ padding: '12px 20px', textAlign: 'right', fontSize: 13, fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 700 }}>
+                            ₹{fmt(row.balance)} <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{row.balance_type}</span>
                           </td>
                         </tr>
                       );
@@ -225,48 +228,24 @@ export default function LedgerReport() {
 
                 {/* Table Footer */}
                 {data && data?.transactions?.length > 0 && (
-                  <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+                  <tfoot style={{ position: 'sticky', bottom: 0, background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
                     <tr>
-                      <td colSpan={4} className="px-5 py-3 text-slate-500 font-bold uppercase tracking-wider">
+                      <td colSpan={4} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>
                         Period Totals
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-[13px] text-emerald-700 font-bold">
+                      <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: '#10b981' }}>
                         ₹{fmt(data.period_dr)}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-[13px] text-indigo-700 font-bold border-l border-slate-100">
+                      <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: '#6366f1' }}>
                         ₹{fmt(data.period_cr)}
                       </td>
-                      <td className="px-5 py-3 text-right font-mono text-[13px] text-slate-900 font-bold border-l border-slate-100">
-                        ₹{fmt(data.closing_balance)} <span className="text-[9px] text-slate-400 uppercase font-semibold">{data.closing_type}</span>
+                      <td style={{ padding: '14px 20px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>
+                        ₹{fmt(data.closing_balance)} <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{data.closing_type}</span>
                       </td>
                     </tr>
                   </tfoot>
                 )}
               </table>
-            </div>
-
-            {/* ── Enterprise Pagination Footer ── */}
-            <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/20 text-xs font-medium text-slate-500">
-              <div className="flex items-center gap-1.5">
-                <span>Show</span>
-                <select className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer font-semibold">
-                  <option>25</option>
-                  <option>50</option>
-                  <option>100</option>
-                </select>
-                <span>entries</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-[11px] text-slate-400">Page 1 of 1</span>
-                <div className="flex items-center gap-1.5">
-                  <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                    Previous
-                  </button>
-                  <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                    Next
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         )}

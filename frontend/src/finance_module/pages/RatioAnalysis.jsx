@@ -28,15 +28,15 @@ const statCards = [
 function RatioGauge({ label, value, suffix, color, desc }) {
   const display = suffix === '%' ? fmtP(value) : suffix === ':1' ? `${(value || 0).toFixed(2)}:1` : `₹${fmt(value)}`;
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: color + '15' }}>
-          <BarChart3 size={15} style={{ color }} />
+    <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: color + '15', color }}>
+          <BarChart3 size={20} />
         </div>
-        <span className="text-[10px] text-slate-400 text-right max-w-[120px] leading-tight font-medium">{desc}</span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right', maxWidth: 120, lineHeight: 1.3, fontWeight: 600 }}>{desc}</span>
       </div>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-      <p className="text-xl font-bold font-mono mt-1" style={{ color }}>{display}</p>
+      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</p>
+      <p style={{ margin: '8px 0 0 0', fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color }}>{display}</p>
     </div>
   );
 }
@@ -63,122 +63,127 @@ export default function RatioAnalysis() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <p className="text-sm font-medium">Please select a company to view the Ratio Analysis.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <BarChart3 size={32} style={{ color: 'var(--primary)' }} />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company to view the Ratio Analysis.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            <BarChart3 size={18} />
-          </div>
-          <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">Ratio Analysis</h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              Key operational performance and financial health ratios
-            </p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BarChart3 size={24} color="var(--primary)" />
+            Ratio Analysis
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Key operational performance and financial health ratios
+          </p>
         </div>
-        <div className="text-right text-xs">
-          <div className="text-slate-500">
-            Active Company: <span className="font-semibold text-slate-800">{activeCompany.name}</span>
+        <div style={{ textAlign: 'right', fontSize: 12 }}>
+          <div style={{ color: 'var(--text-secondary)' }}>
+            Active Company: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{activeCompany.name}</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
             FY: {activeFy?.label || 'Not set'}
           </p>
         </div>
       </div>
 
       {/* ── Controls Toolbar Card ── */}
-      <div className="cb-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/20">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="card" style={{ padding: '16px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           {/* Period Filters */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
-            <span className="text-slate-400 text-xs font-semibold">to</span>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button 
             onClick={() => refetch()}
-            className="flex items-center gap-1.5 bg-purple-600 border border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white hover:bg-purple-700 transition-colors shadow-sm"
+            className="btn btn-secondary"
+            style={{ padding: '8px 16px', fontSize: 13 }}
           >
-            <RefreshCw size={13} /> Refresh
+            <RefreshCw size={14} /> Refresh
           </button>
           <button 
             onClick={() => data && exportToPDF({ title: 'Ratio Analysis', companyName: activeCompany.name, period: `${fromDate} to ${toDate}`, data, reportType: 'ratio' })}
-            className="flex items-center gap-1.5 bg-purple-600 border border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white hover:bg-purple-700 transition-colors shadow-sm"
+            className="btn btn-primary"
+            style={{ padding: '8px 16px', fontSize: 13 }}
           >
-            <Download size={13} /> Export PDF
+            <Download size={14} /> Export PDF
           </button>
         </div>
       </div>
 
-      {isLoading && <div className="text-center py-20 text-slate-400 animate-pulse text-xs">Computing key ratios…</div>}
+      {isLoading && <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontWeight: 500 }}>Computing key ratios…</div>}
 
       {data && (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Ratio KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
             {ratioMeta.map(r => (
               <RatioGauge key={r.key} label={r.label} value={data[r.key]} suffix={r.suffix} color={r.color} desc={r.desc} />
             ))}
           </div>
 
           {/* Supporting Figures */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 font-bold text-slate-700 text-xs bg-slate-50/20">
+          <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
               Supporting Financial Figures
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-y divide-slate-100">
-              {statCards.map(s => (
-                <div key={s.key} className="p-4 text-center">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{s.label}</p>
-                  <p className="text-base font-bold font-mono mt-1" style={{ color: s.color }}>₹{fmt(data[s.key])}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+              {statCards.map((s, i) => (
+                <div key={s.key} style={{ padding: '24px 20px', textAlign: 'center', borderRight: i < statCards.length - 1 ? '1px solid var(--border)' : 'none', borderBottom: '1px solid var(--border)' }}>
+                  <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{s.label}</p>
+                  <p style={{ margin: '8px 0 0 0', fontSize: 18, fontWeight: 800, fontFamily: 'monospace', color: s.color }}>₹{fmt(data[s.key])}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Interpretation */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className={`rounded-xl p-4 border text-xs leading-relaxed ${data.current_ratio >= 2 ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800' : data.current_ratio >= 1 ? 'bg-amber-50/50 border-amber-100 text-amber-800' : 'bg-rose-50/50 border-rose-100 text-rose-800'}`}>
-              <p className="font-bold mb-1 text-xs">Current Ratio Analaysis: {data.current_ratio?.toFixed(2)}:1</p>
-              <p className="text-[11px] font-medium">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24 }}>
+            <div style={{ padding: '20px', borderRadius: '12px', border: `1px solid ${data.current_ratio >= 2 ? '#10b98140' : data.current_ratio >= 1 ? '#f59e0b40' : '#ef444440'}`, background: data.current_ratio >= 2 ? '#10b98110' : data.current_ratio >= 1 ? '#f59e0b10' : '#ef444410' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: 13, fontWeight: 700, color: data.current_ratio >= 2 ? '#065f46' : data.current_ratio >= 1 ? '#92400e' : '#991b1b' }}>Current Ratio Analaysis: {data.current_ratio?.toFixed(2)}:1</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: data.current_ratio >= 2 ? '#064e3b' : data.current_ratio >= 1 ? '#78350f' : '#7f1d1d', lineHeight: 1.5 }}>
                 {data.current_ratio >= 2 ? '✅ Excellent liquidity status — the company is in a highly secure position to meet its short-term debt obligations.' :
                  data.current_ratio >= 1 ? '⚠️ Marginal liquidity status — monitor working capital buffers. The standard baseline target is ≥ 2:1.' :
                  '❌ Critical liquidity crunch — current liabilities exceed current assets. Significant risk of short-term cash deficits.'}
               </p>
             </div>
-            <div className={`rounded-xl p-4 border text-xs leading-relaxed ${data.net_profit_ratio > 10 ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800' : data.net_profit_ratio > 0 ? 'bg-amber-50/50 border-amber-100 text-amber-800' : 'bg-rose-50/50 border-rose-100 text-rose-800'}`}>
-              <p className="font-bold mb-1 text-xs">Net Profit Ratio Analysis: {fmtP(data.net_profit_ratio)}</p>
-              <p className="text-[11px] font-medium">
+            <div style={{ padding: '20px', borderRadius: '12px', border: `1px solid ${data.net_profit_ratio > 10 ? '#10b98140' : data.net_profit_ratio > 0 ? '#f59e0b40' : '#ef444440'}`, background: data.net_profit_ratio > 10 ? '#10b98110' : data.net_profit_ratio > 0 ? '#f59e0b10' : '#ef444410' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: 13, fontWeight: 700, color: data.net_profit_ratio > 10 ? '#065f46' : data.net_profit_ratio > 0 ? '#92400e' : '#991b1b' }}>Net Profit Ratio Analysis: {fmtP(data.net_profit_ratio)}</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: data.net_profit_ratio > 10 ? '#064e3b' : data.net_profit_ratio > 0 ? '#78350f' : '#7f1d1d', lineHeight: 1.5 }}>
                 {data.net_profit_ratio > 10 ? '✅ Strong profitability — outstanding net yield margin exceeding 10% on sales revenues.' :
                  data.net_profit_ratio > 0 ? '⚠️ Profitable but slim net returns. Suggests checking operational cost optimization strategies.' :
-                 '❌ Operating deficit — business has run at a net loss in this period. Review overhead overheads and pricing structures.'}
+                 '❌ Operating deficit — business has run at a net loss in this period. Review overhead costs and pricing structures.'}
               </p>
             </div>
           </div>

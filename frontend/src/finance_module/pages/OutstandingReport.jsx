@@ -30,73 +30,75 @@ export default function OutstandingReport() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <p className="text-sm font-medium">Please select a company to view the Outstanding Report.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <AlertTriangle size={32} style={{ color: 'var(--primary)' }} />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company to view the Outstanding Report.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            <AlertTriangle size={18} />
-          </div>
-          <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">Outstanding Report</h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              Reconcile receivables from debtors and payables to creditors
-            </p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={24} color="var(--primary)" />
+            Outstanding Report
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Reconcile receivables from debtors and payables to creditors
+          </p>
         </div>
-        <div className="text-right text-xs">
-          <div className="text-slate-500">
-            Active Company: <span className="font-semibold text-slate-800">{activeCompany.name}</span>
+        <div style={{ textAlign: 'right', fontSize: 12 }}>
+          <div style={{ color: 'var(--text-secondary)' }}>
+            Active Company: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{activeCompany.name}</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-0.5">
+          <p style={{ color: 'var(--text-muted)', marginTop: 4 }}>
             FY: {activeFy?.label || 'Not set'}
           </p>
         </div>
       </div>
 
       {/* ── Controls Toolbar Card ── */}
-      <div className="cb-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/20">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="card" style={{ padding: '16px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
           {/* As Of date */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 text-xs font-semibold">As of:</span>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>As of:</span>
+            <div style={{ position: 'relative' }}>
+              <Calendar style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
               <input 
                 type="date" 
                 value={asOf}
                 onChange={(e) => setAsOf(e.target.value)}
-                className="pl-10 pr-3 py-1.5 w-36 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 140 }}
               />
             </div>
           </div>
 
           {/* Party type select */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={11} />
+          <div style={{ position: 'relative' }}>
+            <Filter style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
             <select 
               value={partyType}
               onChange={(e) => setPartyType(e.target.value)}
-              className="pl-7 pr-8 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 appearance-none cursor-pointer"
+              className="cb-input"
+              style={{ paddingLeft: 36, width: 200, cursor: 'pointer' }}
             >
               <option value="">All Parties</option>
               <option value="debtor">Debtors (Receivables)</option>
               <option value="creditor">Creditors (Payables)</option>
             </select>
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px]">▼</div>
           </div>
 
           {partyType && (
             <button
               onClick={() => setPartyType('')}
-              className="text-xs text-purple-600 hover:text-purple-800 font-semibold px-2 py-1 hover:bg-purple-50 rounded-md transition-colors"
+              style={{ color: 'var(--primary)', fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13 }}
             >
               Reset Filters
             </button>
@@ -105,34 +107,35 @@ export default function OutstandingReport() {
 
         <button 
           onClick={() => data && exportToPDF({ title: 'Outstanding Report', companyName: activeCompany.name, period: `As of ${asOf}`, data: { items: partyType === 'debtor' ? debtors : partyType === 'creditor' ? creditors : data.rows }, reportType: 'outstanding' })}
-          className="flex items-center gap-1.5 bg-purple-600 border border-transparent px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white hover:bg-purple-700 transition-colors shadow-sm"
+          className="btn btn-primary"
+          style={{ padding: '8px 16px', fontSize: 13 }}
         >
-          <Download size={13} /> Export PDF
+          <Download size={14} /> Export PDF
         </button>
       </div>
 
       {/* ── KPI Summary Cards ── */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ background: '#3b82f610', border: '1px solid #3b82f640', borderRadius: '12px', padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: 'var(--shadow-sm)' }}>
             <div>
-              <p className="text-[10px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1">
-                <ArrowUpRight size={13} /> Total Receivables
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <ArrowUpRight size={14} /> Total Receivables
               </p>
-              <p className="text-2xl font-bold font-mono text-blue-900 mt-1">₹{fmt(data.total_receivable)}</p>
-              <p className="text-[10px] font-semibold text-blue-400 mt-0.5">
+              <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: '#1e3a8a' }}>₹{fmt(data.total_receivable)}</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: 12, fontWeight: 600, color: '#3b82f6' }}>
                 {debtors.length} active customer account{debtors.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
 
-          <div className="bg-amber-50/40 border border-amber-100 rounded-xl p-4 flex items-center justify-between shadow-sm">
+          <div className="card" style={{ background: '#f59e0b10', border: '1px solid #f59e0b40', borderRadius: '12px', padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: 'var(--shadow-sm)' }}>
             <div>
-              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1">
-                <ArrowDownLeft size={13} /> Total Payables
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#b45309', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <ArrowDownLeft size={14} /> Total Payables
               </p>
-              <p className="text-2xl font-bold font-mono text-amber-900 mt-1">₹{fmt(data.total_payable)}</p>
-              <p className="text-[10px] font-semibold text-amber-400 mt-0.5">
+              <p style={{ margin: '8px 0 0 0', fontSize: 28, fontWeight: 800, fontFamily: 'monospace', color: '#78350f' }}>₹{fmt(data.total_payable)}</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: 12, fontWeight: 600, color: '#d97706' }}>
                 {creditors.length} active vendor account{creditors.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -140,155 +143,108 @@ export default function OutstandingReport() {
         </div>
       )}
 
-      {isLoading && <div className="text-center py-20 text-slate-400 animate-pulse text-xs">Computing outstanding balances…</div>}
+      {isLoading && <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontWeight: 500 }}>Computing outstanding balances…</div>}
 
       {/* Debtors Table */}
       {(!partyType || partyType === 'debtor') && debtors.length > 0 && (
-        <div className="cb-card">
-          <div className="px-5 py-3 border-b border-slate-100 bg-blue-50/15 flex items-center gap-2">
-            <ArrowUpRight size={15} className="text-blue-600" />
-            <span className="text-xs font-bold text-blue-800">Receivables — Sundry Debtors</span>
+        <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: '#3b82f615', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ArrowUpRight size={18} style={{ color: '#2563eb' }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#1e40af' }}>Receivables — Sundry Debtors</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 600 }}>
+              <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                 <tr>
-                  <th className="text-left px-5 py-3 font-bold">Party Name</th>
-                  <th className="text-left px-4 py-3 font-bold w-1/4">Group</th>
-                  <th className="text-right px-4 py-3 font-bold w-1/4">Outstanding (₹)</th>
-                  <th className="text-center px-5 py-3 font-bold w-24">Type</th>
+                  <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Party Name</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '25%' }}>Group</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '25%' }}>Outstanding (₹)</th>
+                  <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'center', width: 100 }}>Type</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody>
                 {debtors.map(r => (
-                  <tr key={r.ledger_id} className="hover:bg-purple-50/15 transition-colors align-top">
-                    <td className="px-5 py-2.5 font-semibold text-slate-800">{r.ledger_name}</td>
-                    <td className="px-4 py-2.5 text-slate-500 font-medium">{r.group}</td>
-                    <td className="px-4 py-2.5 text-right font-mono text-[13px] text-blue-700 font-bold">₹{fmt(r.outstanding)}</td>
-                    <td className="px-5 py-2.5 text-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border bg-blue-50/60 text-blue-700 border-blue-100">
+                  <tr key={r.ledger_id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.ledger_name}</td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{r.group}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: '#1d4ed8' }}>₹{fmt(r.outstanding)}</td>
+                    <td style={{ padding: '14px 20px', textAlign: 'center' }}>
+                      <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: 11, fontWeight: 700, background: '#dbeafe', color: '#1d4ed8', border: '1px solid #bfdbfe' }}>
                         {r.balance_type}
                       </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800">
+              <tfoot style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
                 <tr>
-                  <td colSpan={2} className="px-5 py-3 text-slate-500 uppercase font-bold tracking-wider">
+                  <td colSpan={2} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>
                     Total Receivables
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-[13px] text-blue-800 font-bold border-l border-slate-100">
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: '#1e40af' }}>
                     ₹{fmt(data?.total_receivable)}
                   </td>
-                  <td className="border-l border-slate-100" />
+                  <td />
                 </tr>
               </tfoot>
             </table>
-          </div>
-
-          {/* ── Enterprise Pagination Footer ── */}
-          <div className="flex items-center justify-between px-5 py-2.5 border-t border-slate-100 bg-slate-50/20 text-xs font-medium text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <span>Show</span>
-              <select className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer font-semibold">
-                <option>25</option>
-                <option>50</option>
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[11px] text-slate-400">Page 1 of 1</span>
-              <div className="flex items-center gap-1.5">
-                <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                  Previous
-                </button>
-                <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                  Next
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
       {/* Creditors Table */}
       {(!partyType || partyType === 'creditor') && creditors.length > 0 && (
-        <div className="cb-card mt-6">
-          <div className="px-5 py-3 border-b border-slate-100 bg-amber-50/15 flex items-center gap-2">
-            <ArrowDownLeft size={15} className="text-amber-600" />
-            <span className="text-xs font-bold text-amber-800">Payables — Sundry Creditors</span>
+        <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: '#f59e0b15', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ArrowDownLeft size={18} style={{ color: '#d97706' }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#92400e' }}>Payables — Sundry Creditors</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 600 }}>
+              <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                 <tr>
-                  <th className="text-left px-5 py-3 font-bold">Party Name</th>
-                  <th className="text-left px-4 py-3 font-bold w-1/4">Group</th>
-                  <th className="text-right px-4 py-3 font-bold w-1/4">Outstanding (₹)</th>
-                  <th className="text-center px-5 py-3 font-bold w-24">Type</th>
+                  <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Party Name</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', width: '25%' }}>Group</th>
+                  <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right', width: '25%' }}>Outstanding (₹)</th>
+                  <th style={{ padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'center', width: 100 }}>Type</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody>
                 {creditors.map(r => (
-                  <tr key={r.ledger_id} className="hover:bg-purple-50/15 transition-colors align-top">
-                    <td className="px-5 py-2.5 font-semibold text-slate-800">{r.ledger_name}</td>
-                    <td className="px-4 py-2.5 text-slate-500 font-medium">{r.group}</td>
-                    <td className="px-4 py-2.5 text-right font-mono text-[13px] text-amber-700 font-bold">₹{fmt(r.outstanding)}</td>
-                    <td className="px-5 py-2.5 text-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border bg-amber-50/60 text-amber-700 border-amber-100">
+                  <tr key={r.ledger_id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.ledger_name}</td>
+                    <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{r.group}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: '#b45309' }}>₹{fmt(r.outstanding)}</td>
+                    <td style={{ padding: '14px 20px', textAlign: 'center' }}>
+                      <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: 11, fontWeight: 700, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}>
                         {r.balance_type}
                       </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800">
+              <tfoot style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
                 <tr>
-                  <td colSpan={2} className="px-5 py-3 text-slate-500 uppercase font-bold tracking-wider">
+                  <td colSpan={2} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>
                     Total Payables
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-[13px] text-amber-800 font-bold border-l border-slate-100">
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: '#92400e' }}>
                     ₹{fmt(data?.total_payable)}
                   </td>
-                  <td className="border-l border-slate-100" />
+                  <td />
                 </tr>
               </tfoot>
             </table>
-          </div>
-
-          {/* ── Enterprise Pagination Footer ── */}
-          <div className="flex items-center justify-between px-5 py-2.5 border-t border-slate-100 bg-slate-50/20 text-xs font-medium text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <span>Show</span>
-              <select className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer font-semibold">
-                <option>25</option>
-                <option>50</option>
-                <option>100</option>
-              </select>
-              <span>entries</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-[11px] text-slate-400">Page 1 of 1</span>
-              <div className="flex items-center gap-1.5">
-                <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                  Previous
-                </button>
-                <button disabled className="px-2.5 py-1.5 border border-slate-200/80 rounded-lg bg-white text-slate-300 cursor-not-allowed text-xs font-semibold transition-colors">
-                  Next
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
       {data && data.rows?.length === 0 && (
-        <div className="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl bg-white">
-          <AlertTriangle size={36} className="text-slate-200 mx-auto mb-2" />
-          <p className="text-xs font-semibold">No outstanding balances found</p>
+        <div style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--bg-primary)', border: '1px dashed var(--border)', borderRadius: '12px' }}>
+          <AlertTriangle size={40} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 12px auto' }} />
+          <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>No outstanding balances found</p>
         </div>
       )}
     </div>
