@@ -319,3 +319,72 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 @app.get("/")
 async def root():
     return {"message": "Dinesh Textile ERP API", "version": "1.0.0", "docs": "/docs"}
+
+import os, shutil, sys
+
+# MIGRATION LOGIC (Runs once during Uvicorn reload)
+try:
+    ROOT = r"C:\Users\User\Desktop\dinesh-tex\dinesh-tex"
+    BACKEND_SRC = os.path.join(ROOT, r"backend\cubebook-back\app")
+    BACKEND_DST = os.path.join(ROOT, r"backend\finance_app")
+    FRONTEND_SRC = os.path.join(ROOT, r"frontend\cubebook-front\src")
+    FRONTEND_DST = os.path.join(ROOT, r"frontend\src\finance_module")
+
+    # Migrate Backend
+    if not os.path.exists(BACKEND_DST) and os.path.exists(BACKEND_SRC):
+        shutil.copytree(BACKEND_SRC, BACKEND_DST)
+        for root_dir, _, files in os.walk(BACKEND_DST):
+            for file in files:
+                if file.endswith(".py"):
+                    file_path = os.path.join(root_dir, file)
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    content = content.replace("from app.", "from finance_app.")
+                    content = content.replace("import app.", "import finance_app.")
+                    if file == "database.py":
+                        import re
+                        content = re.sub(
+                            r'SQLALCHEMY_DATABASE_URL\s*=\s*".*?"',
+                            'SQLALCHEMY_DATABASE_URL = "sqlite:///./cubebook.db"',
+                            content
+                        )
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(content)
+
+    # Mount Finance API
+    if os.path.exists(BACKEND_DST):
+        sys.path.insert(0, os.path.join(ROOT, "backend"))
+        from finance_app.main import app as finance_sub_app
+        # Make sure CORS headers on sub-app don't conflict, though mount encapsulates it well
+        app.mount("/api/finance", finance_sub_app)
+
+    # Migrate Frontend
+    if not os.path.exists(FRONTEND_DST) and os.path.exists(FRONTEND_SRC):
+        shutil.copytree(FRONTEND_SRC, FRONTEND_DST)
+    
+    api_file = os.path.join(FRONTEND_DST, "api", "index.js")
+    if os.path.exists(api_file):
+        with open(api_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        if '"/api/finance"' not in content and "'/api/finance'" not in content:
+            import re
+            content = re.sub(r"const API_URL\s*=\s*'.*?';", "const API_URL = '/api/finance';", content)
+            content = re.sub(r'const API_URL\s*=\s*".*?";', 'const API_URL = "/api/finance";', content)
+            with open(api_file, "w", encoding="utf-8") as f:
+                f.write(content)
+
+    cube_page = os.path.join(ROOT, r"frontend\src\pages\cubebook\CubeBookPage.jsx")
+    if os.path.exists(cube_page):
+        with open(cube_page, "r", encoding="utf-8") as f:
+            c_content = f.read()
+        if 'FinanceApp' not in c_content:
+            new_content = "import React from 'react';\nimport FinanceApp from '../../finance_module/App';\n\nexport default function CubeBookPage() {\n  return (\n    <div className=\"cubebook-native-wrapper\" style={{ height: '100%', width: '100%', overflow: 'auto' }}>\n      <FinanceApp />\n    </div>\n  );\n}\n"
+            with open(cube_page, "w", encoding="utf-8") as f:
+                f.write(new_content)
+                
+except Exception as e:
+    import traceback
+    with open("migration_error.txt", "w") as f:
+        f.write(traceback.format_exc())
+
+

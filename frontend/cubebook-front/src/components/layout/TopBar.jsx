@@ -21,7 +21,7 @@ const TopBar = () => {
     localStorage.removeItem('cb_auth_token');
     localStorage.removeItem('cb_auth_user');
     clearCompany();
-    navigate('/login');
+    navigate('/cubebook/login');
   };
 
   return (

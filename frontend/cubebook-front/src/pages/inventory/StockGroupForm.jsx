@@ -36,7 +36,7 @@ export default function StockGroupForm({ mode = 'create' }) {
 
   const onSuccess = () => {
     queryClient.invalidateQueries(['stock-groups', activeCompany?.id]);
-    navigate('/inventory-masters?tab=groups');
+    navigate('/cubebook/inventory-masters?tab=groups');
   };
 
   const payload = () => ({

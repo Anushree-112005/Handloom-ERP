@@ -80,7 +80,7 @@ export default function BudgetsList() {
           </div>
         </div>
         <button
-          onClick={() => navigate("/masters/chart")}
+          onClick={() => navigate("/cubebook/masters/chart")}
           className="cb-btn-secondary"
         >
           <ArrowLeft size={15} />

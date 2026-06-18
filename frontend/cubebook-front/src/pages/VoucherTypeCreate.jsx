@@ -63,7 +63,7 @@ export default function VoucherTypeCreate() {
 
     localStorage.setItem(MOCK_VOUCHER_TYPES_KEY, JSON.stringify([...existing, newType]));
     alert(`Voucher Type "${form.name}" created successfully!`);
-    navigate("/masters/voucher-types"); // Navigate to list view
+    navigate("/cubebook/masters/voucher-types"); // Navigate to list view
   };
 
   return (
