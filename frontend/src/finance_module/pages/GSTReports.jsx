@@ -106,48 +106,37 @@ export default function GSTReports() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <p className="text-sm font-medium">Please select a company first.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company first.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center border border-purple-100/30 shadow-sm">
-            <BadgePercent size={18} />
-          </div>
-          <div>
-            <h1 className="cb-page-title text-slate-900 tracking-tight font-bold">GST Reports</h1>
-            <p className="cb-page-subtitle text-slate-400 mt-0.5">
-              GST summary, compliance filings, and GSTR forms details
-            </p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BadgePercent size={24} color="var(--primary)" />
+            GST Reports
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            GST summary, compliance filings, and GSTR forms details
+          </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="cb-btn-secondary px-3.5 py-1.5 text-xs rounded-xl shadow-sm self-start flex items-center gap-2 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors"
-        >
+        <button onClick={handleExport} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Download size={14} /> Export PDF
         </button>
       </div>
 
       {/* ── Tab Bar switcher ── */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit border border-slate-200/40">
+      <div style={{ display: 'flex', gap: 4, background: 'var(--bg-secondary)', padding: 4, borderRadius: 10, width: 'fit-content', border: '1px solid var(--border)' }}>
         {['summary', 'gstr1', 'gstr3b', 'itc'].map(t => {
           const active = tab === t;
           return (
-            <button
-              key={t}
-              onClick={() => navigate(t === 'summary' ? '/gst' : `/gst/${t}`)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                active
-                  ? 'bg-white text-purple-700 shadow-sm border border-purple-100/60'
-                  : 'text-slate-500 hover:text-slate-800 bg-transparent border border-transparent'
-              }`}
+            <button key={t} onClick={() => navigate(t === 'summary' ? '/gst' : `/gst/${t}`)}
+              style={{ padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, transition: 'all 0.2s', background: active ? 'var(--bg-primary)' : 'transparent', color: active ? 'var(--primary)' : 'var(--text-muted)', boxShadow: active ? 'var(--shadow-sm)' : 'none', border: 'none', cursor: 'pointer' }}
             >
               {t === 'summary' ? 'GST Summary' : t === 'gstr1' ? 'GSTR-1' : t === 'gstr3b' ? 'GSTR-3B' : 'Input Tax Credit'}
             </button>
@@ -155,90 +144,60 @@ export default function GSTReports() {
         })}
       </div>
 
-      {/* ── Date Filter ── */}
-      <div className="cb-card p-4 flex flex-wrap items-center gap-4 bg-slate-50/20">
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">From:</label>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={e => setFromDate(e.target.value)}
-            className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
-          />
+      {/* ── Date Filter Toolbar ── */}
+      <div className="card" style={{ padding: '16px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>From:</label>
+          <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="cb-input" style={{ width: 140 }} />
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">To:</label>
-          <input
-            type="date"
-            value={toDate}
-            onChange={e => setToDate(e.target.value)}
-            className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all"
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>To:</label>
+          <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="cb-input" style={{ width: 140 }} />
         </div>
         {data && (
-          <div className={`ml-auto px-3 py-1.5 rounded-lg text-xs font-bold border ${
-            data.net_payable >= 0
-              ? 'bg-rose-50 text-rose-700 border-rose-100'
-              : 'bg-emerald-50 text-emerald-700 border-emerald-100'
-          }`}>
-            {data.net_payable >= 0
-              ? `GST Payable: ₹${fmt(data.net_payable)}`
-              : `GST Refundable: ₹${fmt(Math.abs(data.net_payable))}`}
+          <div style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: data.net_payable >= 0 ? '#fee2e2' : '#d1fae5', color: data.net_payable >= 0 ? '#b91c1c' : '#065f46', border: `1px solid ${data.net_payable >= 0 ? '#fecaca' : '#a7f3d0'}` }}>
+            {data.net_payable >= 0 ? `GST Payable: ₹${fmt(data.net_payable)}` : `GST Refundable: ₹${fmt(Math.abs(data.net_payable))}`}
           </div>
         )}
       </div>
 
-      {isLoading && <div className="text-center py-16 text-slate-400 animate-pulse text-xs font-semibold">Loading GST data…</div>}
+      {isLoading && <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontWeight: 500 }}>Loading GST data…</div>}
 
       {/* ── Summary Tab ── */}
       {tab === 'summary' && data && (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* KPI Row */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-indigo-50/50 border border-indigo-150 rounded-xl p-4 text-center">
-              <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Output Tax (Sales)</p>
-              <p className="text-2xl font-bold font-mono text-indigo-800 mt-1.5">₹{fmt(data.output_tax)}</p>
-            </div>
-            <div className="bg-emerald-50/50 border border-emerald-150 rounded-xl p-4 text-center">
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Input Tax (Purchase)</p>
-              <p className="text-2xl font-bold font-mono text-emerald-800 mt-1.5">₹{fmt(data.input_tax)}</p>
-            </div>
-            <div className={`border rounded-xl p-4 text-center ${
-              data.net_payable >= 0 ? 'bg-rose-50/50 border-rose-150' : 'bg-emerald-50/50 border-emerald-150'
-            }`}>
-              <p className={`text-[10px] font-bold uppercase tracking-widest ${
-                data.net_payable >= 0 ? 'text-rose-600' : 'text-emerald-600'
-              }`}>
-                Net {data.net_payable >= 0 ? 'Payable' : 'Refundable'}
-              </p>
-              <p className={`text-2xl font-bold font-mono mt-1.5 ${
-                data.net_payable >= 0 ? 'text-rose-800' : 'text-emerald-800'
-              }`}>
-                ₹{fmt(Math.abs(data.net_payable))}
-              </p>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            {[
+              { label: 'Output Tax (Sales)', value: `₹${fmt(data.output_tax)}`, bg: '#e0e7ff', color: '#4338ca', border: '#c7d2fe' },
+              { label: 'Input Tax (Purchase)', value: `₹${fmt(data.input_tax)}`, bg: '#d1fae5', color: '#065f46', border: '#a7f3d0' },
+              { label: `Net ${data.net_payable >= 0 ? 'Payable' : 'Refundable'}`, value: `₹${fmt(Math.abs(data.net_payable))}`, bg: data.net_payable >= 0 ? '#fee2e2' : '#d1fae5', color: data.net_payable >= 0 ? '#b91c1c' : '#065f46', border: data.net_payable >= 0 ? '#fecaca' : '#a7f3d0' },
+            ].map(({ label, value, bg, color, border }) => (
+              <div key={label} style={{ padding: '20px 24px', borderRadius: 12, background: bg, border: `1px solid ${border}`, textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 24, fontWeight: 800, fontFamily: 'monospace', color }}>{value}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
             <GSTBreakdownCard title="Output Tax" data={data.breakdown?.output} type="output" color="#6366f1" />
             <GSTBreakdownCard title="Input Tax"  data={data.breakdown?.input}  type="input"  color="#10b981" />
             
-            <div className="cb-card p-5 flex flex-col items-center bg-white justify-between">
-              <h3 className="font-bold text-slate-700 text-xs self-start uppercase tracking-wider">Tax Distribution</h3>
+            <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-sm)' }}>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Tax Distribution</h3>
               {pieData.some(d => d.value > 0) ? (
-                <div className="w-full flex-1 flex flex-col justify-center items-center mt-3">
-                  <ResponsiveContainer width="100%" height={180}>
-                    <PieChart>
-                      <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
-                        {pieData.map((_, i) => <Cell key={i} fill={[COLORS[0], COLORS[1]][i]} />)}
-                      </Pie>
-                      <Tooltip formatter={v => `₹${fmt(v)}`} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '11px' }} />
-                      <Legend iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
+                      {pieData.map((_, i) => <Cell key={i} fill={[COLORS[0], COLORS[1]][i]} />)}
+                    </Pie>
+                    <Tooltip formatter={v => `₹${fmt(v)}`} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '11px' }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
               ) : (
-                <div className="flex-1 flex items-center justify-center text-slate-300 text-xs mt-6">No GST data</div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13, marginTop: 24 }}>No GST data</div>
               )}
             </div>
           </div>
@@ -247,60 +206,53 @@ export default function GSTReports() {
 
       {/* ── GSTR-1 Tab ── */}
       {tab === 'gstr1' && (
-        <div className="cb-card">
-          <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <span className="font-bold text-slate-800 text-xs uppercase tracking-wider">GSTR-1 — Outward Supplies (Sales)</span>
+        <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13, textTransform: 'uppercase' }}>GSTR-1 — Outward Supplies (Sales)</span>
             {gstr1Data?.summary && (
-              <span className="text-xs font-semibold text-slate-500">
-                Total Taxable Value: <strong className="font-mono text-slate-800">₹{fmt(gstr1Data.summary.total_taxable_value)}</strong> | Total Tax: <strong className="font-mono text-slate-800">₹{fmt(gstr1Data.summary.total_tax)}</strong>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Total Taxable: <strong style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(gstr1Data.summary.total_taxable_value)}</strong> | Total Tax: <strong style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(gstr1Data.summary.total_tax)}</strong>
               </span>
             )}
           </div>
           {gstr1Loading ? (
-            <div className="text-center py-16 text-slate-400 animate-pulse text-xs font-semibold">Loading GSTR-1 data…</div>
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading GSTR-1 data…</div>
           ) : !gstr1Data?.rows?.length ? (
-            <div className="text-center py-20 text-slate-400 text-xs font-semibold">No GSTR-1 records found in this period.</div>
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>No GSTR-1 records found in this period.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs min-w-[800px]">
-                <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 900 }}>
+                <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                   <tr>
-                    <th className="text-left px-5 py-3 font-bold">Date</th>
-                    <th className="text-left px-4 py-3 font-bold">Invoice No.</th>
-                    <th className="text-left px-4 py-3 font-bold">Customer Name</th>
-                    <th className="text-left px-4 py-3 font-bold">GSTIN</th>
-                    <th className="text-center px-2 py-3 font-bold">State</th>
-                    <th className="text-right px-4 py-3 font-bold">Taxable Value (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold">CGST (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold">SGST (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold">IGST (₹)</th>
-                    <th className="text-right px-5 py-3 font-bold">Invoice Value (₹)</th>
+                    {['Date','Invoice No.','Customer Name','GSTIN','State','Taxable Value (₹)','CGST (₹)','SGST (₹)','IGST (₹)','Invoice Value (₹)'].map((h,i) => (
+                      <th key={h} style={{ padding: `12px ${i===0?'20px':i===9?'20px':'16px'}`, fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: i>=5 ? 'right' : i===4 ? 'center' : 'left' }}>{h}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody>
                   {gstr1Data.rows.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-purple-50/15 transition-colors align-top">
-                      <td className="px-5 py-2.5 text-slate-500 font-medium whitespace-nowrap">{row.date}</td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{row.voucher_number}</td>
-                      <td className="px-4 py-2.5 text-slate-700 font-semibold">{row.customer_name}</td>
-                      <td className="px-4 py-2.5 text-slate-500 font-mono text-[11px]">{row.customer_gstin}</td>
-                      <td className="px-2 py-2.5 text-center text-slate-500 font-semibold">{row.state_code}</td>
-                      <td className="px-4 py-2.5 text-right font-mono font-semibold text-slate-700">₹{fmt(row.taxable_value)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-slate-650">₹{fmt(row.cgst)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-slate-650">₹{fmt(row.sgst)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-slate-655">₹{fmt(row.igst)}</td>
-                      <td className="px-5 py-2.5 text-right font-mono font-bold text-slate-900">₹{fmt(row.invoice_value)}</td>
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                      <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 12, whiteSpace: 'nowrap' }}>{row.date}</td>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>{row.voucher_number}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{row.customer_name}</td>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 11, color: 'var(--text-muted)' }}>{row.customer_gstin}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 600 }}>{row.state_code}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: 'var(--text-primary)' }}>₹{fmt(row.taxable_value)}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(row.cgst)}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(row.sgst)}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(row.igst)}</td>
+                      <td style={{ padding: '12px 20px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>₹{fmt(row.invoice_value)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+                <tfoot style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
                   <tr>
-                    <td colSpan={5} className="px-5 py-3 text-left text-slate-500 font-bold uppercase tracking-wider">Grand Total</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(gstr1Data.summary.total_taxable_value)}</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(gstr1Data.summary.total_cgst)}</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(gstr1Data.summary.total_sgst)}</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(gstr1Data.summary.total_igst)}</td>
-                    <td className="px-5 py-3 text-right font-mono text-emerald-700">₹{fmt(gstr1Data.summary.total_invoice_value)}</td>
+                    <td colSpan={5} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>Grand Total</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>₹{fmt(gstr1Data.summary.total_taxable_value)}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(gstr1Data.summary.total_cgst)}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(gstr1Data.summary.total_sgst)}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(gstr1Data.summary.total_igst)}</td>
+                    <td style={{ padding: '14px 20px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 800, color: '#10b981' }}>₹{fmt(gstr1Data.summary.total_invoice_value)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -429,60 +381,53 @@ export default function GSTReports() {
 
       {/* ── ITC Ledger Tab ── */}
       {tab === 'itc' && (
-        <div className="cb-card">
-          <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <span className="font-bold text-slate-800 text-xs uppercase tracking-wider">Input Tax Credit (ITC) Ledger — Inward Supplies (Purchases)</span>
+        <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13, textTransform: 'uppercase' }}>Input Tax Credit (ITC) Ledger — Inward Supplies</span>
             {itcData?.summary && (
-              <span className="text-xs font-semibold text-slate-500">
-                Total Taxable Value: <strong className="font-mono text-slate-800">₹{fmt(itcData.summary.total_taxable_value)}</strong> | Total ITC Available: <strong className="font-mono text-emerald-750">₹{fmt(itcData.summary.total_tax)}</strong>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                Total Taxable: <strong style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(itcData.summary.total_taxable_value)}</strong> | Total ITC: <strong style={{ fontFamily: 'monospace', color: '#10b981' }}>₹{fmt(itcData.summary.total_tax)}</strong>
               </span>
             )}
           </div>
           {itcLoading ? (
-            <div className="text-center py-16 text-slate-400 animate-pulse text-xs font-semibold">Loading ITC Ledger data…</div>
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading ITC Ledger data…</div>
           ) : !itcData?.rows?.length ? (
-            <div className="text-center py-20 text-slate-400 text-xs font-semibold">No ITC records found in this period.</div>
+            <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>No ITC records found in this period.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs min-w-[800px]">
-                <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 900 }}>
+                <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
                   <tr>
-                    <th className="text-left px-5 py-3 font-bold">Date</th>
-                    <th className="text-left px-4 py-3 font-bold">Bill No.</th>
-                    <th className="text-left px-4 py-3 font-bold">Supplier Name</th>
-                    <th className="text-left px-4 py-3 font-bold">GSTIN</th>
-                    <th className="text-center px-2 py-3 font-bold">State</th>
-                    <th className="text-right px-4 py-3 font-bold">Taxable Value (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold">CGST Input (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold">SGST Input (₹)</th>
-                    <th className="text-right px-4 py-3 font-bold">IGST Input (₹)</th>
-                    <th className="text-right px-5 py-3 font-bold">Total ITC (₹)</th>
+                    {['Date','Bill No.','Supplier Name','GSTIN','State','Taxable Value (₹)','CGST Input (₹)','SGST Input (₹)','IGST Input (₹)','Total ITC (₹)'].map((h,i) => (
+                      <th key={h} style={{ padding: `12px ${i===0?'20px':i===9?'20px':'16px'}`, fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: i>=5 ? 'right' : i===4 ? 'center' : 'left' }}>{h}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody>
                   {itcData.rows.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-purple-50/15 transition-colors align-top">
-                      <td className="px-5 py-2.5 text-slate-500 font-medium whitespace-nowrap">{row.date}</td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-slate-800">{row.voucher_number}</td>
-                      <td className="px-4 py-2.5 text-slate-700 font-semibold">{row.supplier_name}</td>
-                      <td className="px-4 py-2.5 text-slate-500 font-mono text-[11px]">{row.supplier_gstin}</td>
-                      <td className="px-2 py-2.5 text-center text-slate-500 font-semibold">{row.state_code}</td>
-                      <td className="px-4 py-2.5 text-right font-mono font-semibold text-slate-700">₹{fmt(row.taxable_value)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-slate-650">₹{fmt(row.cgst)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-slate-650">₹{fmt(row.sgst)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-slate-655">₹{fmt(row.igst)}</td>
-                      <td className="px-5 py-2.5 text-right font-mono font-bold text-emerald-700">₹{fmt(row.total_tax)}</td>
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background='var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                      <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontSize: 12, whiteSpace: 'nowrap' }}>{row.date}</td>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>{row.voucher_number}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{row.supplier_name}</td>
+                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 11, color: 'var(--text-muted)' }}>{row.supplier_gstin}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 600 }}>{row.state_code}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: 'var(--text-primary)' }}>₹{fmt(row.taxable_value)}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(row.cgst)}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(row.sgst)}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>₹{fmt(row.igst)}</td>
+                      <td style={{ padding: '12px 20px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: '#10b981' }}>₹{fmt(row.total_tax)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 text-xs font-bold text-slate-800 sticky bottom-0">
+                <tfoot style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)' }}>
                   <tr>
-                    <td colSpan={5} className="px-5 py-3 text-left text-slate-500 font-bold uppercase tracking-wider">Grand Total</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(itcData.summary.total_taxable_value)}</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(itcData.summary.total_cgst)}</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(itcData.summary.total_sgst)}</td>
-                    <td className="px-4 py-3 text-right font-mono">₹{fmt(itcData.summary.total_igst)}</td>
-                    <td className="px-5 py-3 text-right font-mono text-emerald-700">₹{fmt(itcData.summary.total_tax)}</td>
+                    <td colSpan={5} style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: 12 }}>Grand Total</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--text-primary)' }}>₹{fmt(itcData.summary.total_taxable_value)}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(itcData.summary.total_cgst)}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(itcData.summary.total_sgst)}</td>
+                    <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)' }}>₹{fmt(itcData.summary.total_igst)}</td>
+                    <td style={{ padding: '14px 20px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 800, color: '#10b981' }}>₹{fmt(itcData.summary.total_tax)}</td>
                   </tr>
                 </tfoot>
               </table>

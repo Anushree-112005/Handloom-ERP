@@ -8,29 +8,29 @@ import { Network, Layers, Users, Package, Grid, Search, Receipt, Globe, Calculat
 const masterSections = [
   {
     title: 'Accounting Masters',
-    color: 'purple',
-    gradient: 'from-purple-500 to-indigo-500',
+    color: '#6366f1',
+    gradient: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
     icon: Layers,
     items: [
-      { id: 'groups', label: 'Groups', icon: Layers, description: 'Ledger classification groups.', color: 'text-purple-600', bg: 'bg-purple-50', hover: 'hover:border-purple-300 hover:shadow-purple-100' },
-      { id: 'ledgers', label: 'Ledgers', icon: Users, description: 'Account ledger masters.', color: 'text-blue-600', bg: 'bg-blue-50', hover: 'hover:border-blue-300 hover:shadow-blue-100' },
-      { id: 'voucherTypes', label: 'Voucher Types', icon: Receipt, description: 'Numbering and prefixes.', color: 'text-amber-600', bg: 'bg-amber-50', hover: 'hover:border-amber-300 hover:shadow-amber-100' },
-      { id: 'currencies', label: 'Currencies', icon: Globe, description: 'Foreign currency settings.', color: 'text-emerald-600', bg: 'bg-emerald-50', hover: 'hover:border-emerald-300 hover:shadow-emerald-100' },
-      { id: 'budgets', label: 'Budgets', icon: Calculator, description: 'Financial budgets.', color: 'text-rose-600', bg: 'bg-rose-50', hover: 'hover:border-rose-300 hover:shadow-rose-100' },
-      { id: 'scenarios', label: 'Scenarios', icon: Compass, description: 'Financial scenarios.', color: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:border-indigo-300 hover:shadow-indigo-100' },
+      { id: 'groups', label: 'Groups', icon: Layers, description: 'Ledger classification groups.', color: '#6366f1' },
+      { id: 'ledgers', label: 'Ledgers', icon: Users, description: 'Account ledger masters.', color: '#3b82f6' },
+      { id: 'voucherTypes', label: 'Voucher Types', icon: Receipt, description: 'Numbering and prefixes.', color: '#f59e0b' },
+      { id: 'currencies', label: 'Currencies', icon: Globe, description: 'Foreign currency settings.', color: '#10b981' },
+      { id: 'budgets', label: 'Budgets', icon: Calculator, description: 'Financial budgets.', color: '#ef4444' },
+      { id: 'scenarios', label: 'Scenarios', icon: Compass, description: 'Financial scenarios.', color: '#8b5cf6' },
     ],
   },
   {
     title: 'Inventory Masters',
-    color: 'emerald',
-    gradient: 'from-emerald-500 to-teal-500',
+    color: '#10b981',
+    gradient: 'linear-gradient(90deg, #10b981, #14b8a6)',
     icon: Package,
     items: [
-      { id: 'stockGroups', label: 'Stock Groups', icon: Grid, description: 'Stock grouping categories.', color: 'text-emerald-600', bg: 'bg-emerald-50', hover: 'hover:border-emerald-300 hover:shadow-emerald-100' },
-      { id: 'stockCategories', label: 'Stock Categories', icon: Box, description: 'Inventory item categories.', color: 'text-cyan-600', bg: 'bg-cyan-50', hover: 'hover:border-cyan-300 hover:shadow-cyan-100' },
-      { id: 'stockItems', label: 'Stock Items', icon: Package, description: 'Base stock items.', color: 'text-blue-600', bg: 'bg-blue-50', hover: 'hover:border-blue-300 hover:shadow-blue-100' },
-      { id: 'units', label: 'Units', icon: Scale, description: 'Units of measure.', color: 'text-indigo-600', bg: 'bg-indigo-50', hover: 'hover:border-indigo-300 hover:shadow-indigo-100' },
-      { id: 'locations', label: 'Locations', icon: MapPin, description: 'Storage locations.', color: 'text-rose-600', bg: 'bg-rose-50', hover: 'hover:border-rose-300 hover:shadow-rose-100' },
+      { id: 'stockGroups', label: 'Stock Groups', icon: Grid, description: 'Stock grouping categories.', color: '#10b981' },
+      { id: 'stockCategories', label: 'Stock Categories', icon: Box, description: 'Inventory item categories.', color: '#06b6d4' },
+      { id: 'stockItems', label: 'Stock Items', icon: Package, description: 'Base stock items.', color: '#3b82f6' },
+      { id: 'units', label: 'Units', icon: Scale, description: 'Units of measure.', color: '#6366f1' },
+      { id: 'locations', label: 'Locations', icon: MapPin, description: 'Storage locations.', color: '#ef4444' },
     ],
   }
 ];
@@ -86,16 +86,15 @@ export default function ChartOfAccounts() {
     enabled: !!activeCompany && activeTab === 'locations'
   });
 
-  // Since we don't have APIs for Voucher Types (using localStorage/mock currently), Budgets, and Scenarios:
   const MOCK_VOUCHER_TYPES_KEY = "cb_mock_voucher_types";
   const voucherTypesData = localStorage.getItem(MOCK_VOUCHER_TYPES_KEY) ? JSON.parse(localStorage.getItem(MOCK_VOUCHER_TYPES_KEY)) : [];
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <div className="flex flex-col items-center gap-3">
-          <Network size={32} className="animate-pulse text-purple-600" />
-          <p className="text-sm font-medium">Please select a company to view the chart of accounts.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <Network size={32} style={{ color: 'var(--primary)' }} />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company to view the chart of accounts.</p>
         </div>
       </div>
     );
@@ -108,180 +107,167 @@ export default function ChartOfAccounts() {
     if (activeTab === 'groups') {
       const filtered = groupsData.filter(g => g.name.toLowerCase().includes(searchLower) || (g.parent_group && g.parent_group.toLowerCase().includes(searchLower)));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Group Name</th>
-                <th className="cb-th">Under (Parent)</th>
-                <th className="cb-th text-center">Type</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Group Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Under (Parent)</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'center' }}>Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingGroups ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Groups...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Groups Found</td></tr> :
+             filtered.map(g => (
+              <tr key={g.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--text-primary)' }}>{g.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{g.parent_group || 'Primary'}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 100, background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{g.is_primary ? 'Primary' : 'Sub-Group'}</span>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingGroups ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">Loading Groups...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">No Groups Found</td></tr> :
-               filtered.map(g => (
-                <tr key={g.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-slate-800">{g.name}</td>
-                  <td className="cb-td text-slate-600">{g.parent_group || 'Primary'}</td>
-                  <td className="cb-td text-center">
-                    <span className="cb-badge bg-slate-100 text-slate-600 border-slate-200">{g.is_primary ? 'Primary' : 'Sub-Group'}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'ledgers') {
       const filtered = ledgersData.filter(l => l.name.toLowerCase().includes(searchLower) || (l.group && l.group.toLowerCase().includes(searchLower)));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Ledger Name</th>
-                <th className="cb-th">Under Group</th>
-                <th className="cb-th text-right">Opening Balance</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Ledger Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Under Group</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right' }}>Opening Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingLedgers ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Ledgers...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Ledgers Found</td></tr> :
+             filtered.map(l => (
+              <tr key={l.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#6366f1' }}>{l.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{l.group}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 600 }}>₹{l.opening_balance?.toLocaleString()} {l.balance_type}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingLedgers ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">Loading Ledgers...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">No Ledgers Found</td></tr> :
-               filtered.map(l => (
-                <tr key={l.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-purple-700">{l.name}</td>
-                  <td className="cb-td text-slate-600">{l.group}</td>
-                  <td className="cb-td text-right font-mono text-slate-700">₹{l.opening_balance?.toLocaleString()} {l.balance_type}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'stockGroups') {
       const filtered = stockGroupsData.filter(g => g.name.toLowerCase().includes(searchLower) || (g.parent_id && String(g.parent_id).includes(searchLower)));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Stock Group Name</th>
-                <th className="cb-th">Parent Group ID</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Stock Group Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Parent Group ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingStockGroups ? <tr><td colSpan="2" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Stock Groups...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="2" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Stock Groups Found</td></tr> :
+             filtered.map(g => (
+              <tr key={g.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#10b981' }}>{g.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{g.parent_id || 'Primary'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingStockGroups ? <tr><td colSpan="2" className="p-8 text-center text-slate-400">Loading Stock Groups...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="2" className="p-8 text-center text-slate-400">No Stock Groups Found</td></tr> :
-               filtered.map(g => (
-                <tr key={g.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-emerald-700">{g.name}</td>
-                  <td className="cb-td text-slate-600">{g.parent_id || 'Primary'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'stockItems') {
       const filtered = stockItemsData.filter(i => i.name.toLowerCase().includes(searchLower) || (i.part_no && i.part_no.toLowerCase().includes(searchLower)));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Item Name</th>
-                <th className="cb-th">Part No.</th>
-                <th className="cb-th">Group ID</th>
-                <th className="cb-th text-right">Opening Qty</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Item Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Part No.</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Group ID</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'right' }}>Opening Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingStockItems ? <tr><td colSpan="4" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Stock Items...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="4" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Stock Items Found</td></tr> :
+             filtered.map(i => (
+              <tr key={i.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#3b82f6' }}>{i.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: 12 }}>{i.part_no || '-'}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{i.group_id || 'Primary'}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: 'var(--text-primary)' }}>{i.opening_balance || 0}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingStockItems ? <tr><td colSpan="4" className="p-8 text-center text-slate-400">Loading Stock Items...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="4" className="p-8 text-center text-slate-400">No Stock Items Found</td></tr> :
-               filtered.map(i => (
-                <tr key={i.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-blue-700">{i.name}</td>
-                  <td className="cb-td text-slate-500 font-mono text-xs">{i.part_no || '-'}</td>
-                  <td className="cb-td text-slate-600">{i.group_id || 'Primary'}</td>
-                  <td className="cb-td text-right font-mono text-slate-700">{i.opening_balance || 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'voucherTypes') {
       const filtered = voucherTypesData.filter(v => v.name.toLowerCase().includes(searchLower) || v.baseType.toLowerCase().includes(searchLower));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Voucher Type Name</th>
-                <th className="cb-th">Base Type</th>
-                <th className="cb-th">Numbering Method</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Voucher Type Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Base Type</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Numbering Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Voucher Types Found</td></tr> :
+             filtered.map((v, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#f59e0b' }}>{v.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{v.baseType}</td>
+                <td style={{ padding: '14px 16px' }}><span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 100, background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{v.numbering}</span></td>
               </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">No Voucher Types Found</td></tr> :
-               filtered.map((v, i) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-amber-700">{v.name}</td>
-                  <td className="cb-td text-slate-600">{v.baseType}</td>
-                  <td className="cb-td"><span className="cb-badge bg-slate-100 text-slate-600 border-slate-200">{v.numbering}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'currencies') {
-      // Active Company Currency
       const c = activeCompany;
       if (!c) return null;
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Currency Name</th>
-                <th className="cb-th">Symbol</th>
-                <th className="cb-th">ISO Code</th>
-                <th className="cb-th text-center">Decimals</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="cb-td font-bold text-emerald-700">{c.currency_name || 'INR'}</td>
-                <td className="cb-td font-mono text-slate-600">{c.currency_symbol || '₹'}</td>
-                <td className="cb-td text-slate-600">{c.currency_iso_code || 'INR'}</td>
-                <td className="cb-td text-center">{c.currency_decimal_places ?? 2}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Currency Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Symbol</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>ISO Code</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'center' }}>Decimals</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <td style={{ padding: '14px 16px', fontWeight: 700, color: '#10b981' }}>{c.currency_name || 'INR'}</td>
+              <td style={{ padding: '14px 16px', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{c.currency_symbol || '₹'}</td>
+              <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{c.currency_iso_code || 'INR'}</td>
+              <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--text-primary)' }}>{c.currency_decimal_places ?? 2}</td>
+            </tr>
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'budgets' || activeTab === 'scenarios') {
       return (
-        <div className="p-16 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Network size={32} className="text-slate-300" />
+        <div style={{ padding: 64, textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, background: 'var(--bg-secondary)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+            <Network size={32} style={{ color: 'var(--text-muted)' }} />
           </div>
-          <h3 className="text-lg font-bold text-slate-700 mb-1">No Records Available</h3>
-          <p className="text-slate-500 text-sm">There are no {activeTab} defined yet for this company.</p>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>No Records Available</h3>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)' }}>There are no {activeTab} defined yet for this company.</p>
         </div>
       );
     }
@@ -289,128 +275,128 @@ export default function ChartOfAccounts() {
     if (activeTab === 'stockCategories') {
       const filtered = stockCategoriesData.filter(c => c.name.toLowerCase().includes(searchLower));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Category Name</th>
-                <th className="cb-th">Parent Category ID</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Category Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Parent Category ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingStockCategories ? <tr><td colSpan="2" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Stock Categories...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="2" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Stock Categories Found</td></tr> :
+             filtered.map(c => (
+              <tr key={c.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#06b6d4' }}>{c.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{c.parent_id || 'Primary'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingStockCategories ? <tr><td colSpan="2" className="p-8 text-center text-slate-400">Loading Stock Categories...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="2" className="p-8 text-center text-slate-400">No Stock Categories Found</td></tr> :
-               filtered.map(c => (
-                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-cyan-700">{c.name}</td>
-                  <td className="cb-td text-slate-600">{c.parent_id || 'Primary'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'units') {
       const filtered = unitsData.filter(u => u.symbol.toLowerCase().includes(searchLower) || (u.formal_name && u.formal_name.toLowerCase().includes(searchLower)));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Unit Symbol</th>
-                <th className="cb-th">Formal Name</th>
-                <th className="cb-th text-center">Decimals</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Unit Symbol</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Formal Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: 'center' }}>Decimals</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingUnits ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Units...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="3" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Units Found</td></tr> :
+             filtered.map(u => (
+              <tr key={u.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#6366f1' }}>{u.symbol}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{u.formal_name || '-'}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--text-primary)' }}>{u.number_of_decimal_places || 0}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingUnits ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">Loading Units...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="3" className="p-8 text-center text-slate-400">No Units Found</td></tr> :
-               filtered.map(u => (
-                <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-indigo-700">{u.symbol}</td>
-                  <td className="cb-td text-slate-600">{u.formal_name || '-'}</td>
-                  <td className="cb-td text-center">{u.number_of_decimal_places || 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
 
     if (activeTab === 'locations') {
       const filtered = locationsData.filter(l => l.name.toLowerCase().includes(searchLower));
       return (
-        <div className="table-responsive">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="cb-th">Location Name</th>
-                <th className="cb-th">Parent Location ID</th>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Location Name</th>
+              <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Parent Location ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loadingLocations ? <tr><td colSpan="2" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Loading Locations...</td></tr> : 
+             filtered.length === 0 ? <tr><td colSpan="2" style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No Locations Found</td></tr> :
+             filtered.map(l => (
+              <tr key={l.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <td style={{ padding: '14px 16px', fontWeight: 700, color: '#ef4444' }}>{l.name}</td>
+                <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{l.parent_id || 'Primary'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loadingLocations ? <tr><td colSpan="2" className="p-8 text-center text-slate-400">Loading Locations...</td></tr> : 
-               filtered.length === 0 ? <tr><td colSpan="2" className="p-8 text-center text-slate-400">No Locations Found</td></tr> :
-               filtered.map(l => (
-                <tr key={l.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="cb-td font-bold text-rose-700">{l.name}</td>
-                  <td className="cb-td text-slate-600">{l.parent_id || 'Primary'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       );
     }
   };
 
   return (
-    <div className="space-y-6 animate-fade flex flex-col h-full">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* Page Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <Network size={24} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Chart of Accounts</h1>
-            <p className="text-sm text-slate-500 mt-1">Unified view of all master data</p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Network size={24} color="var(--primary)" />
+            Chart of Accounts
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Unified view of all master data
+          </p>
         </div>
       </div>
 
       {!activeTab ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24 }}>
           {masterSections.map((section) => (
-            <div key={section.title} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-              <div className={`h-1.5 w-full bg-gradient-to-r ${section.gradient}`}></div>
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
-                <div className={`p-2 rounded-xl text-${section.color}-600 bg-${section.color}-50`}>
+            <div key={section.title} className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ height: 3, width: '100%', background: section.gradient, position: 'absolute', top: 0, left: 0 }}></div>
+              
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-secondary)' }}>
+                <div style={{ padding: 8, borderRadius: 8, background: `${section.color}15`, color: section.color }}>
                   <section.icon size={20} />
                 </div>
-                <h2 className="text-base font-bold text-slate-800">{section.title}</h2>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{section.title}</h2>
               </div>
-              <div className="p-4 grid gap-3 sm:grid-cols-2 bg-white flex-1">
+              
+              <div style={{ padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-primary)', flex: 1 }}>
                 {section.items.map((item) => (
                   <button
                     key={item.label}
                     onClick={() => setActiveTab(item.id)}
-                    className={`text-left p-4 rounded-xl border border-slate-100 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-1 hover:shadow-md bg-white ${item.hover}`}
+                    style={{
+                      textAlign: 'left', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12, transition: 'all 0.2s', background: 'transparent', cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = `${item.color}40`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--border)'; }}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className={`w-10 h-10 rounded-xl ${item.bg} ${item.color} flex items-center justify-center`}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 8, background: `${item.color}15`, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <item.icon size={20} />
                       </div>
-                      <ArrowRight size={16} className="text-slate-300 opacity-0 -translate-x-2 transition-all duration-200" style={{ opacity: 1, transform: 'none' }} />
+                      <ArrowRight size={16} style={{ color: 'var(--text-muted)' }} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-800">
+                      <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                         {item.label}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+                      <p style={{ margin: '4px 0 0 0', fontSize: 11, color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>
                     </div>
                   </button>
                 ))}
@@ -419,44 +405,43 @@ export default function ChartOfAccounts() {
           ))}
         </div>
       ) : (
-        <div className="cb-card flex-1 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+        <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <button 
                 onClick={() => { setActiveTab(null); setSearchTerm(''); }}
-                className="btn btn-secondary !px-3"
+                className="btn btn-secondary" style={{ padding: '8px 12px' }}
               >
-                <ArrowLeft size={16} /> Back to Dashboard
+                <ArrowLeft size={16} /> Back
               </button>
-              <h2 className="font-bold text-slate-800 flex items-center gap-2 text-lg">
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 {(() => {
                   const active = ALL_TABS.find(t => t.id === activeTab);
                   const Icon = active?.icon || Layers;
                   return (
                     <>
-                      <Icon size={20} className="text-indigo-600" />
+                      <Icon size={20} style={{ color: active?.color || 'var(--primary)' }} />
                       List of {active?.label}
                     </>
                   );
                 })()}
               </h2>
             </div>
-            <div className="relative w-full sm:w-64 shrink-0">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div style={{ position: 'relative', width: 280, maxWidth: '100%' }}>
+              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={`Search ${ALL_TABS.find(t => t.id === activeTab)?.label}...`}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-400 focus:bg-white transition-colors"
+                className="cb-input"
+                style={{ paddingLeft: 36 }}
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              {renderContent()}
-            </div>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {renderContent()}
           </div>
         </div>
       )}
