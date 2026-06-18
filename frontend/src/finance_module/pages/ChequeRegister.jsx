@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { banking as bankingApi, ledgers as ledgersApi } from "../api";
 import useCompanyStore from "../store/companyStore";
-import { CreditCard, RefreshCw, CheckCircle, Clock } from "lucide-react";
+import { CreditCard, RefreshCw, CheckCircle, Clock, Filter } from "lucide-react";
 
 const fmt = (n) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2 }).format(n || 0);
 
@@ -46,113 +46,110 @@ export default function ChequeRegister() {
 
   if (!activeCompany) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400">
-        <div className="flex flex-col items-center gap-3">
-          <CreditCard size={32} className="animate-pulse text-purple-600" />
-          <p className="text-sm font-medium">Please select a company first.</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <CreditCard size={32} style={{ color: 'var(--primary)' }} />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>Please select a company first.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25">
-            <CreditCard size={20} className="text-white" />
-          </div>
-          <div>
-            <h1 className="cb-page-title">Cheque Register</h1>
-            <p className="cb-page-subtitle">Track all payment and receipt instruments across bank accounts</p>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <CreditCard size={24} color="var(--primary)" />
+            Cheque Register
+          </h2>
+          <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0', fontSize: 14 }}>
+            Track all payment and receipt instruments across bank accounts
+          </p>
         </div>
-        <button onClick={() => refetch()} className="cb-btn-secondary text-xs py-1.5 px-3">
-          <RefreshCw size={13} /> Refresh
+        <button onClick={() => refetch()} className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
       {/* Bank Summary Cards */}
       {bankSummary.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
           {bankSummary.map((b) => (
-            <div key={b.name} className="cb-stat-card border-l-4 border-l-purple-500">
-              <h4 className="font-bold text-slate-800 text-sm mb-2">{b.name}</h4>
-              <div className="flex justify-between text-xs text-slate-500 mt-2">
-                <span>Total: <strong className="text-slate-700">{b.total}</strong></span>
-                <span className="text-green-600">✓ {b.reconciled} cleared</span>
-                <span className="text-amber-600">⏳ {b.pending} pending</span>
+            <div key={b.name} className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderLeft: '4px solid #6366f1', borderRadius: '12px', padding: '20px', boxShadow: 'var(--shadow-sm)' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{b.name}</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                <span>Total: <strong style={{ color: 'var(--text-primary)' }}>{b.total}</strong></span>
+                <span style={{ color: '#10b981' }}>✓ {b.reconciled} cleared</span>
+                <span style={{ color: '#f59e0b' }}>⏳ {b.pending} pending</span>
               </div>
-              <div className="mt-3 font-mono font-bold text-purple-700">₹ {fmt(b.totalAmount)}</div>
+              <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 16, color: '#6366f1' }}>₹ {fmt(b.totalAmount)}</div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4 bg-white p-4 cb-card">
-        <div className="flex items-center gap-2">
-          <label className="cb-label text-xs">Bank Account:</label>
-          <select value={filterLedger} onChange={e => setFilterLedger(e.target.value)}
-            className="cb-input py-1 px-2 text-xs max-w-[200px]">
-            <option value="">All Banks</option>
-            {bankLedgers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
+      {/* Filters + Table Card */}
+      <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+        {/* Filters */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Bank Account:</label>
+            <div style={{ position: 'relative' }}>
+              <Filter style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={14} />
+              <select value={filterLedger} onChange={e => setFilterLedger(e.target.value)}
+                className="cb-input"
+                style={{ paddingLeft: 36, width: 200, cursor: 'pointer' }}>
+                <option value="">All Banks</option>
+                {bankLedgers.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Status:</label>
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+              className="cb-input"
+              style={{ width: 150, cursor: 'pointer' }}>
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="reconciled">Cleared</option>
+            </select>
+          </div>
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>{filtered.length} instruments</span>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="cb-label text-xs">Status:</label>
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-            className="cb-input py-1 px-2 text-xs max-w-[150px]">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="reconciled">Cleared</option>
-          </select>
-        </div>
-        <span className="ml-auto text-xs text-slate-500">{filtered.length} instruments</span>
-      </div>
 
-      {/* Cheque Table */}
-      <div className="cb-card">
-        <div className="overflow-x-auto max-h-[55vh] relative">
-          <table className="w-full text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+        {/* Cheque Table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 900 }}>
+            <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
               <tr>
-                <th className="text-left px-5 py-3 font-bold">Issue Date</th>
-                <th className="text-left px-4 py-3 font-bold">Voucher</th>
-                <th className="text-left px-4 py-3 font-bold">Payee / Narration</th>
-                <th className="text-left px-4 py-3 font-bold">Bank</th>
-                <th className="text-left px-4 py-3 font-bold">Reference No</th>
-                <th className="text-right px-4 py-3 font-bold">Amount</th>
-                <th className="text-center px-4 py-3 font-bold">Status</th>
-                <th className="text-center px-5 py-3 font-bold">Bank Date</th>
+                {['Issue Date','Voucher','Payee / Narration','Bank','Reference No','Amount','Status','Bank Date'].map((h, i) => (
+                  <th key={h} style={{ padding: '12px ' + (i === 0 ? '20px' : '16px'), fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase', textAlign: ['Amount'].includes(h) ? 'right' : ['Status','Bank Date'].includes(h) ? 'center' : 'left' }}>{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody>
               {isLoading ? (
-                <tr><td colSpan="8" className="py-12 text-center text-slate-400 animate-pulse">Loading cheque register…</td></tr>
+                <tr><td colSpan="8" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading cheque register…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan="8" className="px-5 py-12 text-center text-slate-400">
+                <tr><td colSpan="8" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 500 }}>
                   No instruments found. Record Payment/Receipt vouchers to see them here.
                 </td></tr>
               ) : filtered.map((c) => (
-                <tr key={c.voucher_id} className="hover:bg-purple-50/15 transition-colors align-top">
-                  <td className="px-5 py-2.5 font-mono text-slate-500">{c.date}</td>
-                  <td className="px-4 py-2.5 font-semibold text-purple-700">{c.voucher_number}</td>
-                  <td className="px-4 py-2.5 font-semibold text-slate-800 truncate max-w-[180px]">{c.payee}</td>
-                  <td className="px-4 py-2.5 text-slate-500">{c.bank_ledger_name}</td>
-                  <td className="px-4 py-2.5 font-mono text-slate-500">{c.reference_no || '—'}</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-800">₹{fmt(c.amount)}</td>
-                  <td className="px-4 py-2.5 text-center">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold border ${
-                      c.is_reconciled
-                        ? 'bg-green-50 text-green-700 border-green-150'
-                        : 'bg-amber-50 text-amber-700 border-amber-100'
-                    }`}>
-                      {c.is_reconciled ? <><CheckCircle size={10}/> Cleared</> : <><Clock size={10}/> Pending</>}
+                <tr key={c.voucher_id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <td style={{ padding: '12px 20px', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)' }}>{c.date}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{c.voucher_number}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.payee}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{c.bank_ledger_name}</td>
+                  <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>{c.reference_no || '—'}</td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>₹{fmt(c.amount)}</td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: '4px', fontSize: 11, fontWeight: 700, background: c.is_reconciled ? '#d1fae5' : '#fef3c7', color: c.is_reconciled ? '#047857' : '#b45309', border: `1px solid ${c.is_reconciled ? '#a7f3d0' : '#fde68a'}` }}>
+                      {c.is_reconciled ? <><CheckCircle size={11}/> Cleared</> : <><Clock size={11}/> Pending</>}
                     </span>
                   </td>
-                  <td className="px-5 py-2.5 text-center font-mono text-slate-400">
+                  <td style={{ padding: '12px 20px', textAlign: 'center', fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>
                     {c.bank_date || '—'}
                   </td>
                 </tr>
