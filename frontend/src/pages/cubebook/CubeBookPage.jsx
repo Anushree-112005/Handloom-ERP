@@ -1,5 +1,5 @@
 import React from 'react';
-import FinanceApp from '../../../cubebook-front/src/App';
+import FinanceApp from '../../finance_module/App';
 
 export default function CubeBookPage() {
   return (

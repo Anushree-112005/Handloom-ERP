@@ -30,10 +30,10 @@ export default function TallyFormLayout({
 
   return (
     <div className="w-full space-y-6">
-      <div className="card">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
 
         {/* Header */}
-        <div className="btn btn-secondary"
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60"
           style={{ borderLeftWidth: 4, borderLeftColor: accentColor }}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -50,7 +50,7 @@ export default function TallyFormLayout({
             </div>
           </div>
           <button onClick={handleQuit}
-            className="btn btn-secondary">
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
             <X size={17} />
           </button>
         </div>
@@ -61,13 +61,13 @@ export default function TallyFormLayout({
         </div>
 
         {/* Footer */}
-        <div className="btn btn-secondary">
+        <div className="flex items-center justify-between px-6 py-4 bg-slate-50/60 border-t border-slate-100">
           <div className="flex items-center gap-4 text-xs text-slate-400">
             <span>
-              <kbd className="card">Ctrl+S</kbd> Save
+              <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500 mr-1 shadow-sm">Ctrl+S</kbd> Save
             </span>
             <span>
-              <kbd className="card">Esc</kbd> Cancel
+              <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500 mr-1 shadow-sm">Esc</kbd> Cancel
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export default function TallyFormLayout({
 /** Labelled field row */
 export function FormRow({ label, required, hint, children }) {
   return (
-    <div className="btn btn-secondary">
+    <div className="grid grid-cols-12 gap-4 py-3.5 items-start border-b border-slate-100 last:border-b-0">
       <label className="col-span-4 text-sm font-semibold text-slate-600 pt-2 leading-tight">
         {label}
         {required && <span className="text-red-400 ml-0.5">*</span>}
@@ -138,7 +138,7 @@ export function SectionHeader({ title }) {
   return (
     <div className="flex items-center gap-3 pt-4 pb-1 first:pt-0">
       <span className="text-[10px] font-bold uppercase tracking-widest text-purple-600">{title}</span>
-      <div className="btn btn-primary" />
+      <div className="flex-1 h-px bg-slate-100" />
     </div>
   );
 }
