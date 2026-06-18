@@ -324,11 +324,12 @@ import os, shutil, sys
 
 # MIGRATION LOGIC (Runs once during Uvicorn reload)
 try:
-    ROOT = r"C:\Users\User\Desktop\dinesh-tex\dinesh-tex"
-    BACKEND_SRC = os.path.join(ROOT, r"backend\cubebook-back\app")
-    BACKEND_DST = os.path.join(ROOT, r"backend\finance_app")
-    FRONTEND_SRC = os.path.join(ROOT, r"frontend\cubebook-front\src")
-    FRONTEND_DST = os.path.join(ROOT, r"frontend\src\finance_module")
+    # Dynamically find the project root path
+    ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    BACKEND_SRC = os.path.join(ROOT, "backend", "cubebook-back", "app")
+    BACKEND_DST = os.path.join(ROOT, "backend", "finance_app")
+    FRONTEND_SRC = os.path.join(ROOT, "frontend", "cubebook-front", "src")
+    FRONTEND_DST = os.path.join(ROOT, "frontend", "src", "finance_module")
 
     # Migrate Backend
     if not os.path.exists(BACKEND_DST) and os.path.exists(BACKEND_SRC):
@@ -373,7 +374,7 @@ try:
             with open(api_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
-    cube_page = os.path.join(ROOT, r"frontend\src\pages\cubebook\CubeBookPage.jsx")
+    cube_page = os.path.join(ROOT, "frontend", "src", "pages", "cubebook", "CubeBookPage.jsx")
     if os.path.exists(cube_page):
         with open(cube_page, "r", encoding="utf-8") as f:
             c_content = f.read()
