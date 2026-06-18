@@ -53,8 +53,14 @@ export default function ItemMaster() {
     if (editingId) {
       mockDb.update('consumables_items', editingId, updated);
     } else {
+      const currentData = mockDb.get('consumables_items');
+      const maxIdNum = currentData.reduce((max, item) => {
+        const numMatch = item.id.match(/\d+/);
+        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
+      }, 0);
+      const nextId = 'ITM' + String(maxIdNum + 1).padStart(3, '0');
       mockDb.add('consumables_items', {
-        id: 'ITM' + Math.floor(Math.random() * 1000),
+        id: nextId,
         ...updated
       });
     }

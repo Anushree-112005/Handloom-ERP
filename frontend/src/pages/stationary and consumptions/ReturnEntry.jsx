@@ -129,7 +129,6 @@ export default function ReturnEntry() {
           </div>
         </div>
       ) : (
-<<<<<<< HEAD
         <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Create Return Entry</h2>
@@ -143,28 +142,6 @@ export default function ReturnEntry() {
             </div>
           </div>
           <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label >Department *</label>
-              <select 
-                value={formData.department} 
-                onChange={(e) => setFormData({...formData, department: e.target.value})} 
-                className="form-control"
-              >
-                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-              </select>
-=======
-        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-            <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
-              <Plus size={20} />
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Create Return Entry</h3>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Log items returned to the store</p>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
               <div className="form-group">
                 <label>Department <span style={{ color: '#ef4444' }}>*</span></label>
@@ -184,7 +161,6 @@ export default function ReturnEntry() {
                   className="form-control" placeholder="E.g., John Doe"
                 />
               </div>
->>>>>>> 0bd13df646a1b66a24f7e943a3357af4699393a0
             </div>
 
             <div style={{ padding: 20, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border)' }}>
@@ -219,20 +195,8 @@ export default function ReturnEntry() {
                 className="form-control" 
               />
             </div>
-<<<<<<< HEAD
           </div>
         </form>
-=======
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 8 }}>
-              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Save size={16} /> Save Return
-              </button>
-            </div>
-          </form>
-        </div>
->>>>>>> 0bd13df646a1b66a24f7e943a3357af4699393a0
       )}
     </div>
   );

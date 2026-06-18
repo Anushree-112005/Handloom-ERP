@@ -440,8 +440,8 @@ const modules = [
       { path: '/stores-consumables/transfer', label: 'Store Transfer', icon: ArrowRightLeft },
       { path: '/stores-consumables/adjustment', label: 'Stock Adjustment', icon: AlertTriangle },
       { path: '/stores-consumables/physical', label: 'Physical Verification', icon: CheckSquare },
-      { path: '/stores-consumables/swatch-cards', label: 'Swatch Cards', icon: Palette },
-      { path: '/stores-consumables/fabric-inspection', label: 'Fabric Inspection Book', icon: CheckSquare },
+      // { path: '/stores-consumables/swatch-cards', label: 'Swatch Cards', icon: Palette },
+      // { path: '/stores-consumables/fabric-inspection', label: 'Fabric Inspection Book', icon: CheckSquare },
       { path: '/stores-consumables/returnable-dc', label: 'Returnable DC', icon: FileText },
 
 
