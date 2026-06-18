@@ -28,5 +28,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-# Force SQLite connection to bypass any broken DATABASE_URL environment variables
-settings.DATABASE_URL = "sqlite+aiosqlite:///./textile_erp.db"
