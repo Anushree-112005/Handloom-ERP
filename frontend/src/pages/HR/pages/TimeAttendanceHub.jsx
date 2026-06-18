@@ -55,25 +55,27 @@ const TimeAttendanceHub = () => {
         </p>
       </div>
 
-      <div className="form-row">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
             <div
               key={section.path}
               onClick={() => navigate(section.path)}
-              className={`${section.color} border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg group`}
+              className={`${section.color} border-2 rounded-sm p-6 cursor-pointer transition-all hover:shadow-lg group flex flex-col justify-between min-h-[160px]`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-lg bg-white ${section.iconColor}`}>
-                  <Icon className="w-6 h-6" />
+              <div>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 rounded-sm bg-white shadow-sm ${section.iconColor}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  {section.title}
+                </h3>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                {section.title}
-              </h3>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-600 mt-auto">
                 {section.description}
               </p>
             </div>

@@ -85,22 +85,35 @@ function AppRoutes() {
   const { setCompany } = useCompanyStore();
   const [loading, setLoading] = useState(true);
   const company = localStorage.getItem('cb_company_id') || activeCompany;
-  const isLoggedIn = !!localStorage.getItem('cb_auth_token');
+  const isLoggedIn = !!localStorage.getItem('cb_auth_token') || !!localStorage.getItem('token');
 
   useEffect(() => {
     async function doAutoLogin() {
       try {
         let token = localStorage.getItem('cb_auth_token');
         if (!token) {
-          const data = await auth.login({ username: 'admin', password: 'CubeBook@2026' });
-          localStorage.setItem('cb_auth_token', data.access_token);
-          localStorage.setItem('cb_auth_user', JSON.stringify({
-            id:        data.user_id,
-            username:  data.username,
-            full_name: data.full_name,
-            role:      data.role,
-          }));
-          token = data.access_token;
+          try {
+            const data = await auth.login({ username: 'admin', password: 'CubeBook@2026' });
+            localStorage.setItem('cb_auth_token', data.access_token);
+            localStorage.setItem('cb_auth_user', JSON.stringify({
+              id:        data.user_id,
+              username:  data.username,
+              full_name: data.full_name,
+              role:      data.role,
+            }));
+            token = data.access_token;
+          } catch (e) {
+            console.log("First finance login attempt failed, trying alternative password");
+            const data = await auth.login({ username: 'admin', password: 'admin123' });
+            localStorage.setItem('cb_auth_token', data.access_token);
+            localStorage.setItem('cb_auth_user', JSON.stringify({
+              id:        data.user_id,
+              username:  data.username,
+              full_name: data.full_name,
+              role:      data.role,
+            }));
+            token = data.access_token;
+          }
         }
 
         let companyId = localStorage.getItem('cb_company_id');
@@ -201,9 +214,7 @@ function AppRoutes() {
       )}
 
       {company && (
-        <Route path="/*" element={
-          <Layout>
-            <Routes>
+        <Route element={<Layout />}>
               <Route path="/" element={<Navigate to="/cubebook/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="companies" element={<CompanyList />} />
@@ -295,9 +306,7 @@ function AppRoutes() {
               <Route path="audit/vouchers" element={<Audit />} />
 
               <Route path="*" element={<Navigate to="/cubebook/dashboard" replace />} />
-            </Routes>
-          </Layout>
-        } />
+        </Route>
       )}
     </Routes>
   );

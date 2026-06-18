@@ -20,7 +20,7 @@ export default function GroupCreate() {
   const createMutation = useMutation({
     mutationFn: (data) => ledgerGroups.create(data),
     onSuccess: () => {
-      navigate('/ledgers');
+      navigate('/cubebook/ledgers');
     },
   });
 

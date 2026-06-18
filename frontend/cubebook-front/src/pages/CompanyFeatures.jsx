@@ -115,9 +115,9 @@ export default function CompanyFeatures() {
     setTimeout(() => {
       setSuccessMsg("");
       if (features.alterGstDetails === "Yes") {
-        navigate("/masters/gst-registration");
+        navigate("/cubebook/masters/gst-registration");
       } else {
-        navigate("/");
+        navigate("/cubebook/");
       }
     }, 1500);
   };
@@ -532,7 +532,7 @@ export default function CompanyFeatures() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/cubebook/")}
               className="cb-btn-secondary"
             >
               Cancel

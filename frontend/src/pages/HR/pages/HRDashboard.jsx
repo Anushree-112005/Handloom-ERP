@@ -33,15 +33,15 @@ const StatCard = ({ icon: Icon, label, value, hint, tone = 'default', onClick })
 };
 
 const QuickAction = ({ icon: Icon, label, onClick, color = 'indigo' }) => (
-  <button
+  <div
     onClick={onClick}
-    className={`flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-200 bg-white hover:bg-${color}-50 hover:border-${color}-200 active:scale-[0.98] transition-all`}
+    className={`card cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center gap-3 p-6 min-h-[140px] border-t-4 border-t-${color}-500`}
   >
-    <div className={`p-3 rounded-full bg-${color}-100`}>
-      <Icon className={`w-5 h-5 text-${color}-600`} />
+    <div className={`w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center mb-1`}>
+      <Icon className={`w-6 h-6 text-${color}-600`} />
     </div>
-    <span className="text-xs font-medium text-slate-700 text-center">{label}</span>
-  </button>
+    <span className="text-sm font-bold text-slate-700 text-center">{label}</span>
+  </div>
 );
 
 const HRDashboard = () => {
@@ -92,16 +92,9 @@ const HRDashboard = () => {
         <p className="text-xs md:text-sm text-slate-500">Manage your workforce lifecycle</p>
       </div>
 
-      {/* Quick Actions - Mobile First */}
-      <div className="form-row">
-        <QuickAction icon={Plus} label="New Job" onClick={() => navigate('/hr/requisitions')} />
-        <QuickAction icon={UserPlus} label="Add Candidate" onClick={() => navigate('/hr/recruitment')} color="emerald" />
-        <QuickAction icon={FileText} label="Payroll" onClick={() => navigate('/hr/payroll')} color="amber" />
-        <QuickAction icon={Calendar} label="Attendance" onClick={() => navigate('/hr/attendance')} color="blue" />
-      </div>
 
       {/* Stats Grid */}
-      <div className="form-row">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={ClipboardList} label="Requisitions" value={summary?.requisitions ?? '—'} hint="Draft / pending / approved" onClick={() => navigate('/hr/requisitions')} />
         <StatCard icon={Users} label="Candidates" value={summary?.candidates ?? '—'} hint="In pipeline" tone="info" onClick={() => navigate('/hr/recruitment')} />
         <StatCard icon={Clock3} label="Onboarding" value={summary?.onboarding_tasks ?? '—'} hint="Pending tasks" tone="warning" onClick={() => navigate('/hr/offers-onboarding')} />
@@ -109,7 +102,7 @@ const HRDashboard = () => {
       </div>
 
       {/* Requisitions & Candidates */}
-      <div className="form-row">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Open Positions</h2>
@@ -117,7 +110,7 @@ const HRDashboard = () => {
           </div>
           <div className="space-y-2">
             {requisitions.map((req) => (
-              <div key={req.id} className="btn btn-secondary" onClick={() => navigate('/hr/requisitions')}>
+              <div key={req.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3" onClick={() => navigate('/hr/requisitions')}>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900 truncate">{req.title}</p>
                   <p className="text-xs text-slate-500">{req.department}</p>
@@ -143,7 +136,7 @@ const HRDashboard = () => {
               const rating = cand.rating || {};
               const score = ((rating.technical || 0) * 0.4 + (rating.communication || 0) * 0.3 + (rating.domain || 0) * 0.2 + (rating.culture || 0) * 0.1).toFixed(1);
               return (
-                <div key={cand.id} className="btn btn-secondary" onClick={() => navigate('/hr/recruitment')}>
+                <div key={cand.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3" onClick={() => navigate('/hr/recruitment')}>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-900 truncate">{cand.name}</p>
                     <p className="text-xs text-slate-500">{cand.position || cand.position_applied}</p>
@@ -165,7 +158,7 @@ const HRDashboard = () => {
       </div>
 
       {/* Onboarding & Payroll */}
-      <div className="form-row">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Onboarding Tasks</h2>
@@ -173,7 +166,7 @@ const HRDashboard = () => {
           </div>
           <div className="space-y-2">
             {onboarding.map((task) => (
-              <div key={task.id} className="btn btn-secondary">
+              <div key={task.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900 truncate">{task.title}</p>
                   <p className="text-xs text-slate-500">{task.owner} {task.due_date ? `• ${task.due_date}` : ''}</p>
@@ -195,7 +188,7 @@ const HRDashboard = () => {
           </div>
           <div className="space-y-2">
             {performance.map((row) => (
-              <div key={row.id} className="btn btn-secondary">
+              <div key={row.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900 truncate">{row.employee}</p>
                   <p className="text-xs text-slate-500">Score: {row.final_score}</p>
@@ -217,9 +210,9 @@ const HRDashboard = () => {
           <h2 className="card-title">Offboarding</h2>
           <Briefcase className="w-4 h-4 text-slate-600" />
         </div>
-        <div className="form-row">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {offboarding.map((item) => (
-            <div key={item.id} className="btn btn-secondary">
+            <div key={item.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-900 truncate">{item.employee}</p>
                 <p className="text-xs text-slate-500">{item.step}</p>

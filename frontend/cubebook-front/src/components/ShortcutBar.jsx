@@ -5,14 +5,14 @@ export default function ShortcutBar({ currentDate, company }) {
   const navigate = useNavigate();
 
   const shortcuts = [
-    { key: 'F4', label: 'Contra',   route: '/vouchers?type=Contra' },
-    { key: 'F5', label: 'Payment',  route: '/vouchers?type=Payment' },
-    { key: 'F6', label: 'Receipt',  route: '/vouchers?type=Receipt' },
-    { key: 'F7', label: 'Journal',  route: '/vouchers?type=Journal' },
-    { key: 'F8', label: 'Sales',    route: '/vouchers?type=Sales' },
-    { key: 'F9', label: 'Purchase', route: '/vouchers?type=Purchase' },
-    { key: 'Alt+D', label: 'Day Book',  route: '/day-book' },
-    { key: 'Alt+R', label: 'Reports',   route: '/reports' },
+    { key: 'F4', label: 'Contra',   route: '/cubebook/vouchers?type=Contra' },
+    { key: 'F5', label: 'Payment',  route: '/cubebook/vouchers?type=Payment' },
+    { key: 'F6', label: 'Receipt',  route: '/cubebook/vouchers?type=Receipt' },
+    { key: 'F7', label: 'Journal',  route: '/cubebook/vouchers?type=Journal' },
+    { key: 'F8', label: 'Sales',    route: '/cubebook/vouchers?type=Sales' },
+    { key: 'F9', label: 'Purchase', route: '/cubebook/vouchers?type=Purchase' },
+    { key: 'Alt+D', label: 'Day Book',  route: '/cubebook/day-book' },
+    { key: 'Alt+R', label: 'Reports',   route: '/cubebook/reports' },
   ];
 
   return (

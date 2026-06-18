@@ -51,9 +51,9 @@ export default function PaymentVoucher() {
       : "employees";
 
   const handleTabChange = (tab) => {
-    if (tab === "processing") navigate("/payroll/processing");
-    else if (tab === "reports") navigate("/payroll/reports");
-    else navigate("/payroll/employees");
+    if (tab === "processing") navigate("/cubebook/payroll/processing");
+    else if (tab === "reports") navigate("/cubebook/payroll/reports");
+    else navigate("/cubebook/payroll/employees");
   };
 
   // ── Tab 1: Employee Master Logic ──

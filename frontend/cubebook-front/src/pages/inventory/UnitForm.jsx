@@ -36,7 +36,7 @@ export default function UnitForm({ mode = 'create' }) {
 
   const onSuccess = () => {
     queryClient.invalidateQueries(['units', activeCompany?.id]);
-    navigate('/inventory-masters?tab=units');
+    navigate('/cubebook/inventory-masters?tab=units');
   };
 
   const payload = () => ({

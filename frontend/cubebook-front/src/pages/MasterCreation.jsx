@@ -6,34 +6,34 @@ const masterSections = [
   {
     title: 'Accounting Masters',
     items: [
-      { label: 'Group', description: 'Create custom ledger classification groups.', route: '/masters/group' },
-      { label: 'Ledger', description: 'Create and configure account ledger masters.', route: '/masters/ledger' },
-      { label: 'Currency', description: 'Define base or foreign currency settings.', route: '/currency/create' },
-      { label: 'Voucher Type', description: 'Define numbering, prefixes and rules for vouchers.', route: '/masters/voucher-type/create' },
+      { label: 'Group', description: 'Create custom ledger classification groups.', route: '/cubebook/masters/group' },
+      { label: 'Ledger', description: 'Create and configure account ledger masters.', route: '/cubebook/masters/ledger' },
+      { label: 'Currency', description: 'Define base or foreign currency settings.', route: '/cubebook/currency/create' },
+      { label: 'Voucher Type', description: 'Define numbering, prefixes and rules for vouchers.', route: '/cubebook/masters/voucher-type/create' },
     ],
   },
   {
     title: 'Inventory Masters',
     items: [
-      { label: 'Stock Group',    description: 'Create custom stock grouping categories.',      route: '/inventory/stock-groups/create' },
-      { label: 'Stock Category', description: 'Create custom inventory item categories.',   route: '/inventory/stock-categories/create' },
-      { label: 'Stock Item',     description: 'Create and configure base stock items.',        route: '/inventory/stock-items/create' },
-      { label: 'Unit',           description: 'Create units of measure parameters.',   route: '/inventory/units/create' },
-      { label: 'Location',       description: 'Create godowns and storage locations.',  route: '/inventory/locations/create' },
+      { label: 'Stock Group',    description: 'Create custom stock grouping categories.',      route: '/cubebook/inventory/stock-groups/create' },
+      { label: 'Stock Category', description: 'Create custom inventory item categories.',   route: '/cubebook/inventory/stock-categories/create' },
+      { label: 'Stock Item',     description: 'Create and configure base stock items.',        route: '/cubebook/inventory/stock-items/create' },
+      { label: 'Unit',           description: 'Create units of measure parameters.',   route: '/cubebook/inventory/units/create' },
+      { label: 'Location',       description: 'Create godowns and storage locations.',  route: '/cubebook/inventory/locations/create' },
     ],
   },
   {
     title: 'Statutory Masters',
     items: [
-      { label: 'GST Registration', description: 'GST state-wise registration configuration.', route: '/masters/gst-registration' },
-      { label: 'GST Classification', description: 'Define custom HSN/SAC groups and rates.', route: '/masters/gst-classification' },
+      { label: 'GST Registration', description: 'GST state-wise registration configuration.', route: '/cubebook/masters/gst-registration' },
+      { label: 'GST Classification', description: 'Define custom HSN/SAC groups and rates.', route: '/cubebook/masters/gst-classification' },
     ],
   },
   {
     title: 'Statutory Details',
     items: [
-      { label: 'Company GST Details', description: 'Configure active company GSTIN profiles.', route: '/masters/gst-details' },
-      { label: 'PAN/CIN Details', description: 'Corporate identification details registration.', route: '/masters/pan-cin-details' },
+      { label: 'Company GST Details', description: 'Configure active company GSTIN profiles.', route: '/cubebook/masters/gst-details' },
+      { label: 'PAN/CIN Details', description: 'Corporate identification details registration.', route: '/cubebook/masters/pan-cin-details' },
     ],
   },
 ];
@@ -46,7 +46,7 @@ export default function MasterCreation() {
     clearCompany();
     localStorage.removeItem('cb_company_id');
     localStorage.removeItem('cb_company_name');
-    navigate('/dashboard');
+    navigate('/cubebook/dashboard');
   };
 
   if (!activeCompany) {

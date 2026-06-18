@@ -128,7 +128,7 @@ const EmployeeProfile = () => {
   }
 
   const age = calculateAge(employee.date_of_birth);
-  const tenure = calculateTenure(employee.date_of_joining);
+  const tenure = calculateTenure(employee.date_of_joining || employee.created_at);
 
   const handlePredictAttrition = async () => {
     setPredictingAttrition(true);
@@ -227,7 +227,7 @@ const EmployeeProfile = () => {
         <div className="mt-6 pt-4 border-t border-white/20 flex flex-wrap gap-6 text-sm">
           <div>
             <p className="text-white/60">Joined</p>
-            <p className="font-medium">{employee.date_of_joining ? new Date(employee.date_of_joining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+            <p className="font-medium">{(employee.date_of_joining || employee.created_at) ? new Date(employee.date_of_joining || employee.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
           </div>
           <div>
             <p className="text-white/60">Tenure</p>
@@ -250,7 +250,7 @@ const EmployeeProfile = () => {
       <div className="form-row">
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="btn btn-success">
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
@@ -272,7 +272,7 @@ const EmployeeProfile = () => {
         </div>
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
+            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
               <ClipboardList className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
@@ -283,7 +283,7 @@ const EmployeeProfile = () => {
         </div>
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="btn btn-success">
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
@@ -294,7 +294,7 @@ const EmployeeProfile = () => {
         </div>
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
               <Timer className="w-5 h-5 text-purple-600" />
             </div>
             <div>
@@ -305,7 +305,7 @@ const EmployeeProfile = () => {
         </div>
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="btn btn-danger">
+            <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-rose-600" />
             </div>
             <div>
@@ -362,7 +362,7 @@ const EmployeeProfile = () => {
                 <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <Heart className="w-5 h-5 text-rose-600" /> Emergency Contact
                 </h3>
-                <div className="btn btn-danger">
+                <div className="form-row">
                   <div><p className="text-slate-500 text-sm">Contact Name</p><p className="font-medium text-slate-900">{employee.emergency_contact_name || 'Not Provided'}</p></div>
                   <div><p className="text-slate-500 text-sm">Contact Phone</p><p className="font-medium text-slate-900">{employee.emergency_contact_phone || 'Not Provided'}</p></div>
                   <div><p className="text-slate-500 text-sm">Relationship</p><p className="font-medium text-slate-900">{employee.emergency_contact_relation || 'Not Provided'}</p></div>
@@ -469,7 +469,7 @@ const EmployeeProfile = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {attendance.map((a, idx) => (
-                      <tr key={idx} className="btn btn-secondary">
+                      <tr key={idx} className="hover:bg-slate-50/50">
                         <td className="px-4 py-3 font-medium">{a.created_at ? new Date(a.created_at).toLocaleDateString() : '—'}</td>
                         <td className="px-4 py-3">{a.shift || 'General'}</td>
                         <td className="px-4 py-3 text-emerald-600">{a.check_in || '—'}</td>
@@ -547,19 +547,19 @@ const EmployeeProfile = () => {
               <IndianRupee className="w-5 h-5 text-emerald-600" /> Salary Details
             </h3>
             <div className="form-row">
-              <div className="btn btn-primary">
+              <div className="card" style={{ padding: 16, borderLeft: '4px solid var(--primary)' }}>
                 <p className="text-xs text-indigo-500 mb-1">Basic Salary</p>
                 <p className="text-2xl font-bold text-indigo-700">₹{(employee.basic_salary || 0).toLocaleString('en-IN')}</p>
               </div>
-              <div className="btn btn-success">
+              <div className="card" style={{ padding: 16, borderLeft: '4px solid #10b981' }}>
                 <p className="text-xs text-emerald-500 mb-1">Allowances</p>
                 <p className="text-2xl font-bold text-emerald-700">+₹{(employee.allowances || 0).toLocaleString('en-IN')}</p>
               </div>
-              <div className="btn btn-danger">
+              <div className="card" style={{ padding: 16, borderLeft: '4px solid #ef4444' }}>
                 <p className="text-xs text-rose-500 mb-1">Deductions</p>
                 <p className="text-2xl font-bold text-rose-700">-₹{(employee.deductions || 0).toLocaleString('en-IN')}</p>
               </div>
-              <div className="btn btn-primary">
+              <div className="card" style={{ padding: 16, borderLeft: '4px solid #8b5cf6' }}>
                 <p className="text-xs text-purple-500 mb-1">Net Salary</p>
                 <p className="text-2xl font-bold text-purple-700">₹{(employee.net_salary || ((employee.basic_salary || 0) + (employee.allowances || 0) - (employee.deductions || 0))).toLocaleString('en-IN')}</p>
               </div>
@@ -592,7 +592,7 @@ const EmployeeProfile = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {payroll.map((p, idx) => (
-                      <tr key={idx} className="btn btn-secondary">
+                      <tr key={idx} className="hover:bg-slate-50/50">
                         <td className="px-4 py-3 font-medium">{p.period || 'Monthly'}</td>
                         <td className="px-4 py-3 text-right">₹{(p.basic || 0).toLocaleString()}</td>
                         <td className="px-4 py-3 text-right text-emerald-600">+₹{(p.allowances || 0).toLocaleString()}</td>
@@ -656,13 +656,13 @@ const EmployeeProfile = () => {
       {/* AI Attrition Risk Modal */}
       {showAiModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="card">
-            <div className="btn btn-secondary">
+          <div className="card" style={{ width: '100%', maxWidth: 600, padding: 0 }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <div className="flex items-center gap-3">
-                <div className="btn btn-primary">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
                   <Sparkles size={16} />
                 </div>
-                <h2 className="card-title">AI Attrition Prediction</h2>
+                <h2 className="card-title" style={{ margin: 0 }}>AI Attrition Prediction</h2>
               </div>
               <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-slate-600 p-2">
                 <X size={20} />
@@ -697,7 +697,7 @@ const EmployeeProfile = () => {
                     <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Key Contributing Factors</h4>
                     <ul className="space-y-2">
                       {(attritionData.factors || []).map((factor, idx) => (
-                        <li key={idx} className="btn btn-secondary">
+                        <li key={idx} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
                           <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
                           <span>{factor}</span>
                         </li>
@@ -710,7 +710,7 @@ const EmployeeProfile = () => {
                     <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Recommended Actions</h4>
                     <ul className="space-y-2">
                       {(attritionData.recommended_actions || []).map((action, idx) => (
-                        <li key={idx} className="btn btn-primary">
+                        <li key={idx} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
                           <CheckCircle2 className="w-5 h-5 text-indigo-500 shrink-0" />
                           <span>{action}</span>
                         </li>

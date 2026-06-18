@@ -177,7 +177,7 @@ export default function GstClassification() {
             if (viewMode === "create" || viewMode === "alter") {
               setViewMode("list");
             } else {
-              navigate("/masters");
+              navigate("/cubebook/masters");
             }
           }}
           className="cb-btn-secondary"

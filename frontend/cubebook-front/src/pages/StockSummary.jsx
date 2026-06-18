@@ -43,7 +43,7 @@ export default function StockSummary() {
           </div>
         </div>
         <button
-          onClick={() => navigate('/inventory/stock-items/create')}
+          onClick={() => navigate('/cubebook/inventory/stock-items/create')}
           className="cb-btn-primary px-3.5 py-2 text-xs rounded-xl shadow-sm self-start flex items-center gap-2"
         >
           <Plus size={14} /> Add Item
@@ -93,7 +93,7 @@ export default function StockSummary() {
                     <Boxes size={36} className="text-slate-200 mx-auto mb-2" />
                     <p className="text-slate-400 font-semibold">No stock items found</p>
                     <button
-                      onClick={() => navigate('/inventory/stock-items/create')}
+                      onClick={() => navigate('/cubebook/inventory/stock-items/create')}
                       className="mt-2 text-purple-600 text-xs font-semibold hover:underline"
                     >
                       + Add your first item
@@ -166,7 +166,7 @@ export default function StockSummary() {
           </div>
         </div>
         <button
-          onClick={() => navigate('/inventory/movement')}
+          onClick={() => navigate('/cubebook/inventory/movement')}
           className="btn btn-primary"
         >
           View Movement

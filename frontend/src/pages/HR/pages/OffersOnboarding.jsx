@@ -253,12 +253,12 @@ const OffersOnboarding = () => {
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* LEFT: Title & Stats */}
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Offers & Onboarding</h1>
           <div className="flex items-center gap-2">
-            <span className="btn btn-success">
+            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-emerald-200">
               {totals.employees} Converted
             </span>
             <span className="bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-amber-200">
@@ -278,8 +278,8 @@ const OffersOnboarding = () => {
               <Filter size={14} /> Filter
             </button>
             {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="btn btn-secondary">
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="flex items-center justify-between border-b pb-2 mb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase">Filter</span>
                   <button onClick={() => setShowFilters(false)} className="text-xs text-indigo-600 hover:underline font-bold">Close</button>
                 </div>
@@ -316,7 +316,7 @@ const OffersOnboarding = () => {
           </div>
 
           {/* View Toggle */}
-          <div className="btn btn-secondary">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
             <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
               <LayoutList size={16} />
             </button>
@@ -343,7 +343,7 @@ const OffersOnboarding = () => {
       <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
 
         {/* Tab Switcher */}
-        <div className="btn btn-secondary">
+        <div className="flex items-center gap-2 mb-6 bg-slate-100 p-1 rounded-lg w-fit">
           <button onClick={() => setActiveTab('offers')}
             className={`flex items-center justify-center gap-2 px-5 py-2 rounded-md text-xs font-bold transition-all ${activeTab === 'offers' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
               }`}>
@@ -370,14 +370,14 @@ const OffersOnboarding = () => {
             {/* Offer Form Modal */}
             {showOfferForm && (
               <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-                <div className="card">
-                  <div className="btn btn-secondary">
+                <div className="card" style={{ width: '100%', maxWidth: 700, padding: 0 }}>
+                  <div className="flex items-center justify-between p-4 border-b">
                     <h2 className="card-title">Create Offer</h2>
-                    <button onClick={resetOfferForm} className="btn btn-secondary"><X className="w-5 h-5" /></button>
+                    <button onClick={resetOfferForm} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                   </div>
 
                   {/* Form Tabs */}
-                  <div className="btn btn-secondary">
+                  <div className="flex border-b bg-slate-50">
                     {offerFormTabs.map((tab) => (
                       <button key={tab.id} onClick={() => setFormTab(tab.id)}
                         className={`shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${formTab === tab.id ? 'border-indigo-600 text-indigo-600 bg-white' : 'border-transparent text-slate-500'
@@ -408,13 +408,13 @@ const OffersOnboarding = () => {
                               className="form-control"
                             />
                             {showCandDrop && candidates.length > 0 && (
-                              <ul className="btn btn-secondary">
+                              <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto py-1 text-sm">
                                 {candidates
                                   .filter(c => !candQuery || c.name?.toLowerCase().includes(candQuery.toLowerCase()))
                                   .map(c => (
                                     <li
                                       key={c.id}
-                                      className="btn btn-primary"
+                                      className="cursor-pointer hover:bg-slate-50 px-3 py-2 flex items-center justify-between transition-colors"
                                       onMouseDown={() => {
                                         setForm(prev => ({
                                           ...prev,
@@ -427,7 +427,7 @@ const OffersOnboarding = () => {
                                         setShowCandDrop(false);
                                       }}
                                     >
-                                      <span className="font-medium">{c.name}</span>
+                                      <span className="font-medium text-slate-900">{c.name}</span>
                                       {c.position_applied ? <span className="text-xs text-slate-400">— {c.position_applied}</span> : null}
                                     </li>
                                   ))}
@@ -511,7 +511,7 @@ const OffersOnboarding = () => {
                     {/* Salary Tab */}
                     {formTab === 'salary' && (
                       <div className="space-y-4">
-                        <p className="btn btn-success">Earnings (Monthly)</p>
+                        <p className="text-sm font-semibold text-slate-900 border-b pb-1">Earnings (Monthly)</p>
                         <div className="form-row">
                           <div>
                             <label className="block text-xs text-slate-600 mb-1">Gross Salary * (Monthly)</label>
@@ -536,7 +536,7 @@ const OffersOnboarding = () => {
                     )}
                   </form>
 
-                  <div className="btn btn-secondary">
+                  <div className="flex justify-end gap-3 p-4 border-t bg-slate-50 rounded-b-xl">
                     <button type="button" onClick={resetOfferForm}
                       className="btn btn-secondary">Cancel</button>
                     <button onClick={addOffer}
@@ -549,17 +549,17 @@ const OffersOnboarding = () => {
             {/* View Offer Modal */}
             {viewingOffer && (
               <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-                <div className="card">
-                  <div className="btn btn-secondary">
+                <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+                  <div className="flex items-center justify-between p-4 border-b">
                     <h2 className="card-title">Offer Details</h2>
-                    <button onClick={() => setViewingOffer(null)} className="btn btn-secondary"><X className="w-5 h-5" /></button>
+                    <button onClick={() => setViewingOffer(null)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                   </div>
-                  <div className="p-4 space-y-4">
+                  <div className="p-6 space-y-6">
                     <div className="text-center pb-4 border-b">
-                      <div className="btn btn-primary">
+                      <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Users className="w-7 h-7 text-indigo-600" />
                       </div>
-                      <h3 className="font-semibold text-lg">{viewingOffer.candidate_name}</h3>
+                      <h3 className="font-semibold text-lg text-slate-900">{viewingOffer.candidate_name}</h3>
                       <p className="text-sm text-slate-500">{viewingOffer.position}</p>
                       <div className="flex items-center justify-center gap-2 mt-2">
                         <span className={`text-xs px-3 py-1 rounded-full ${viewingOffer.status === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
@@ -570,21 +570,21 @@ const OffersOnboarding = () => {
                       </div>
                     </div>
                     <div className="form-row">
-                      <div><span className="text-slate-500">Candidate:</span> <span className="block font-medium">{viewingOffer.candidate_name}</span></div>
-                      <div><span className="text-slate-500">Position:</span> <span className="block font-medium">{viewingOffer.position}</span></div>
-                      <div><span className="text-slate-500">Status:</span> <span className="block font-medium">{viewingOffer.status}</span></div>
+                      <div><span className="text-slate-500 text-xs">Candidate:</span> <span className="block font-medium text-slate-900">{viewingOffer.candidate_name}</span></div>
+                      <div><span className="text-slate-500 text-xs">Position:</span> <span className="block font-medium text-slate-900">{viewingOffer.position}</span></div>
+                      <div><span className="text-slate-500 text-xs">Status:</span> <span className="block font-medium text-slate-900">{viewingOffer.status}</span></div>
                     </div>
-                    <div className="btn btn-primary">
+                    <div className="bg-slate-50 rounded-xl p-4">
                       <div className="form-row">
-                        <div><p className="text-slate-500">Gross</p><p className="font-semibold text-emerald-600">₹{(Number(viewingOffer.gross) || 0).toLocaleString()}</p></div>
-                        <div><p className="text-slate-500">Deductions</p><p className="font-semibold text-rose-600">₹{(Number(viewingOffer.deductions) || 0).toLocaleString()}</p></div>
-                        <div><p className="text-slate-500">Net</p><p className="font-bold text-indigo-600">₹{(Number(viewingOffer.gross) + Number(viewingOffer.allowances) - Number(viewingOffer.deductions) || 0).toLocaleString()}</p></div>
+                        <div><p className="text-slate-500 text-xs">Gross</p><p className="font-semibold text-emerald-600">₹{(Number(viewingOffer.gross) || 0).toLocaleString()}</p></div>
+                        <div><p className="text-slate-500 text-xs">Deductions</p><p className="font-semibold text-rose-600">₹{(Number(viewingOffer.deductions) || 0).toLocaleString()}</p></div>
+                        <div><p className="text-slate-500 text-xs">Net</p><p className="font-bold text-indigo-600">₹{(Number(viewingOffer.gross) + Number(viewingOffer.allowances) - Number(viewingOffer.deductions) || 0).toLocaleString()}</p></div>
                       </div>
                     </div>
                     {viewingOffer.employee_id && (
-                      <div className="btn btn-success">
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center animate-fade-in">
                         <p className="text-xs text-emerald-600">Converted to Employee</p>
-                        <p className="font-bold text-emerald-700">{viewingOffer.employee_id}</p>
+                        <p className="font-bold text-emerald-700 text-lg mt-1">{viewingOffer.employee_id}</p>
                       </div>
                     )}
                   </div>
@@ -596,7 +596,7 @@ const OffersOnboarding = () => {
             {viewMode === 'list' && (
               <div className="space-y-3">
                 {offers.length === 0 ? (
-                  <div className="card">
+                  <div className="card text-center py-12">
                     <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">No offers yet</p>
                   </div>
@@ -606,7 +606,7 @@ const OffersOnboarding = () => {
                     <div key={o.id} className="card">
                       <div className="flex items-start justify-between cursor-pointer" onClick={() => setViewingOffer(o)}>
                         <div className="flex items-center gap-3">
-                          <div className="btn btn-primary">
+                          <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
                             <Users className="w-5 h-5 text-indigo-600" />
                           </div>
                           <div>
@@ -617,14 +617,14 @@ const OffersOnboarding = () => {
                         <span className={`text-xs px-2 py-1 rounded-full ${o.status === 'Accepted' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                           }`}>{o.status}</span>
                       </div>
-                      <div className="flex flex-wrap gap-2 text-xs">
+                      <div className="flex flex-wrap gap-2 text-xs mt-3">
                         <span className={`px-2 py-1 rounded-lg ${o.documents_ok ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
                           Docs {o.documents_ok ? '✓' : 'Pending'}
                         </span>
-                        <span className="btn btn-primary">Net ₹{salary.net.toLocaleString()}</span>
-                        {o.employee_id && <span className="btn btn-success">{o.employee_id}</span>}
+                        <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg">Net ₹{salary.net.toLocaleString()}</span>
+                        {o.employee_id && <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg">{o.employee_id}</span>}
                       </div>
-                      <div className="btn btn-secondary">
+                      <div className="flex items-center justify-end gap-2 border-t pt-3 mt-3">
                         <button onClick={() => setViewingOffer(o)} className="btn btn-secondary">
                           <Eye className="w-3 h-3" /> View
                         </button>
@@ -657,7 +657,7 @@ const OffersOnboarding = () => {
             {viewMode === 'grid' && (
               <div className="form-row">
                 {offers.length === 0 ? (
-                  <div className="btn btn-secondary">
+                  <div className="text-center py-12 w-full">
                     <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">No offers yet</p>
                   </div>
@@ -666,7 +666,7 @@ const OffersOnboarding = () => {
                   return (
                     <div key={o.id} className="card">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="btn btn-primary">
+                        <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
                           <Users className="w-5 h-5 text-indigo-600" />
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${o.status === 'Accepted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
@@ -677,20 +677,20 @@ const OffersOnboarding = () => {
                       <h3 className="font-semibold text-slate-900 mb-1 truncate" title={o.candidate_name}>{o.candidate_name}</h3>
                       <p className="text-xs text-slate-500 mb-3 truncate">{o.position}</p>
 
-                      <div className="btn btn-secondary">
+                      <div className="space-y-2 text-xs py-3 border-t border-b border-slate-100 my-3">
                         <div className="flex justify-between">
                           <span className="text-slate-500">Net Salary</span>
                           <span className="font-medium text-emerald-600">₹{sal.net.toLocaleString()}</span>
                         </div>
                         {o.joiningDate && (
-                          <div className="flex items-center gap-1 text-slate-500">
-                            <Calendar className="w-3 h-3" />
-                            <span>{o.joiningDate}</span>
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>Joining Date</span>
+                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{o.joiningDate}</span>
                           </div>
                         )}
                       </div>
 
-                      <div className="btn btn-secondary">
+                      <div className="flex items-center justify-end gap-2">
                         <button onClick={() => setViewingOffer(o)} className="btn btn-secondary">
                           <Eye className="w-3 h-3 mx-auto" />
                         </button>
@@ -718,12 +718,12 @@ const OffersOnboarding = () => {
             {/* Task Form Modal */}
             {showTaskForm && (
               <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-                <div className="card">
-                  <div className="btn btn-secondary">
+                <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+                  <div className="flex items-center justify-between p-4 border-b">
                     <h2 className="card-title">Add Onboarding Task</h2>
-                    <button onClick={resetTaskForm} className="btn btn-secondary"><X className="w-5 h-5" /></button>
+                    <button onClick={resetTaskForm} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                   </div>
-                  <form onSubmit={addTask} className="p-4 space-y-4">
+                  <form onSubmit={addTask} className="p-6 space-y-4">
                     {/* ── Employee Name combobox (from offers) ── */}
                     <div className="relative">
                       <label className="block text-sm font-medium text-slate-700 mb-1">Employee Name</label>
@@ -742,20 +742,20 @@ const OffersOnboarding = () => {
                         className="form-control"
                       />
                       {showOnbDrop && offers.length > 0 && (
-                        <ul className="btn btn-secondary">
+                        <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto py-1 text-sm">
                           {offers
                             .filter(o => !onbQuery || o.candidate_name?.toLowerCase().includes(onbQuery.toLowerCase()))
                             .map(o => (
                               <li
                                 key={o.id}
-                                className="btn btn-primary"
+                                className="cursor-pointer hover:bg-slate-50 px-3 py-2 flex items-center justify-between transition-colors"
                                 onMouseDown={() => {
                                   setTaskForm(prev => ({ ...prev, employeeName: o.candidate_name || '' }));
                                   setOnbQuery('');
                                   setShowOnbDrop(false);
                                 }}
                               >
-                                <span className="font-medium">{o.candidate_name}</span>
+                                <span className="font-medium text-slate-900">{o.candidate_name}</span>
                                 <span className="text-xs text-slate-400">— {o.position || ''}</span>
                                 <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${o.employee_id ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                   }`}>{o.employee_id ? 'Converted' : o.status}</span>
@@ -786,20 +786,20 @@ const OffersOnboarding = () => {
                           className="form-control"
                         />
                         {showRptDrop && employees.length > 0 && (
-                          <ul className="btn btn-secondary">
+                          <ul className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto py-1 text-sm">
                             {employees
                               .filter(e => !rptQuery || e.name?.toLowerCase().includes(rptQuery.toLowerCase()))
                               .map(e => (
                                 <li
                                   key={e.id}
-                                  className="btn btn-primary"
+                                  className="cursor-pointer hover:bg-slate-50 px-3 py-2 flex items-center justify-between transition-colors"
                                   onMouseDown={() => {
                                     setTaskForm(prev => ({ ...prev, reporting_to: e.name || '' }));
                                     setRptQuery('');
                                     setShowRptDrop(false);
                                   }}
                                 >
-                                  <span className="font-medium">{e.name}</span>
+                                  <span className="font-medium text-slate-900">{e.name}</span>
                                   {e.designation && <span className="text-xs text-slate-400">— {e.designation}</span>}
                                 </li>
                               ))}
@@ -873,7 +873,7 @@ const OffersOnboarding = () => {
             {viewMode === 'list' && (
               <div className="space-y-3">
                 {tasks.length === 0 ? (
-                  <div className="card">
+                  <div className="card text-center py-12">
                     <CheckSquare className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">No onboarding tasks</p>
                   </div>
@@ -910,7 +910,7 @@ const OffersOnboarding = () => {
                           }`}>{t.priority}</span>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs">
+                    <div className="flex flex-wrap gap-2 text-xs my-3">
                       <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600">{t.category}</span>
                       {t.due && <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 flex items-center gap-1"><Calendar className="w-3 h-3" />{t.due}</span>}
                       {t.requiresAttachment && (
@@ -918,7 +918,7 @@ const OffersOnboarding = () => {
                       )}
                     </div>
                     {t.description && <p className="text-sm text-slate-500">{t.description}</p>}
-                    <div className="btn btn-secondary">
+                    <div className="flex items-center justify-end gap-2 border-t pt-3 mt-3">
                       <button onClick={() => updateTaskStatus(t.id, 'In Progress')}
                         className="btn btn-secondary">In Progress</button>
                       <button onClick={() => updateTaskStatus(t.id, 'Completed')}
@@ -936,7 +936,7 @@ const OffersOnboarding = () => {
             {viewMode === 'grid' && (
               <div className="form-row">
                 {tasks.length === 0 ? (
-                  <div className="btn btn-secondary">
+                  <div className="text-center py-12 w-full">
                     <CheckSquare className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">No onboarding tasks</p>
                   </div>
@@ -983,14 +983,14 @@ const OffersOnboarding = () => {
                       )}
                     </div>
 
-                    <div className="btn btn-secondary">
+                    <div className="flex items-center justify-between border-t pt-3 mt-3">
                       <div className="flex gap-1">
                         <button onClick={() => updateTaskStatus(t.id, 'In Progress')}
                           className="btn btn-secondary">Progress</button>
                         <button onClick={() => updateTaskStatus(t.id, 'Completed')}
                           className="btn btn-success">Done</button>
                       </div>
-                      <button onClick={() => deleteTask(t.id)} className="form-control">
+                      <button onClick={() => deleteTask(t.id)} className="btn btn-danger">
                         <Trash2 className="w-3 h-3 mx-auto" />
                       </button>
                     </div>

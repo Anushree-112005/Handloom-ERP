@@ -1,3 +1,5 @@
+import api from '../../services/api';
+
 // Mock Database and Helper Functions for Stationery & Consumables Management
 const defaultCategories = [
   { id: 'CAT001', name: 'Office Stationery', description: 'Pens, papers, folders, binders, office tools', active: 'Yes' },
@@ -66,6 +68,28 @@ const defaultLedger = [
   { id: 'LED002', date: '2026-06-11', itemId: 'ITM001', refType: 'Issue', refId: 'ISS001', inQty: 0, outQty: 3, balance: 45 }
 ];
 
+const defaultQuotations = [
+  { id: 'QTN001', date: '2026-06-05', vendor: 'Apex Supplies Ltd', validityDate: '2026-07-05', paymentTerms: '30 Days Credit', status: 'Approved', items: [{ itemId: 'ITM001', qty: 10, rate: 270, total: 2700 }], quotation_file_path: '' }
+];
+
+const keys = [
+  'consumables_categories',
+  'consumables_uoms',
+  'consumables_departments',
+  'consumables_vendors',
+  'consumables_items',
+  'consumables_requests',
+  'consumables_pos',
+  'consumables_grns',
+  'consumables_issues',
+  'consumables_ledger',
+  'consumables_returns',
+  'consumables_transfers',
+  'consumables_adjustments',
+  'consumables_verifications',
+  'consumables_quotations'
+];
+
 const initializeDb = () => {
   const getOrSet = (key, defaultData) => {
     const val = localStorage.getItem(key);
@@ -86,6 +110,7 @@ const initializeDb = () => {
   getOrSet('consumables_grns', defaultGRNs);
   getOrSet('consumables_issues', defaultIssues);
   getOrSet('consumables_ledger', defaultLedger);
+  getOrSet('consumables_quotations', defaultQuotations);
   getOrSet('consumables_returns', []);
   getOrSet('consumables_transfers', []);
   getOrSet('consumables_adjustments', []);
@@ -94,14 +119,51 @@ const initializeDb = () => {
 
 initializeDb();
 
+let lastSyncTime = 0;
+const syncFromBackend = async () => {
+  const now = Date.now();
+  if (now - lastSyncTime < 5000) return; // Limit background sync checks
+  lastSyncTime = now;
+  try {
+    for (const key of keys) {
+      const res = await api.get(`/stationary/${key}`);
+      if (res.data && res.data.length > 0) {
+        localStorage.setItem(key, JSON.stringify(res.data));
+      } else {
+        const localData = JSON.parse(localStorage.getItem(key) || '[]');
+        if (localData.length > 0) {
+          await api.post(`/stationary/${key}/bulk`, { items: localData });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to sync stationary from backend:", err);
+  }
+};
+
+// Start background sync on script load
+setTimeout(syncFromBackend, 200);
+
 export const mockDb = {
-  get: (key) => JSON.parse(localStorage.getItem(key) || '[]'),
-  set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+  get: (key) => {
+    setTimeout(syncFromBackend, 0);
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  },
+  
+  set: (key, data) => {
+    localStorage.setItem(key, JSON.stringify(data));
+    api.post(`/stationary/${key}/bulk`, { items: data }).catch(err => {
+      console.error(`Failed to bulk save ${key}:`, err);
+    });
+  },
   
   add: (key, item) => {
     const data = mockDb.get(key);
     data.push(item);
-    mockDb.set(key, data);
+    localStorage.setItem(key, JSON.stringify(data));
+    api.post(`/stationary/${key}`, item).catch(err => {
+      console.error(`Failed to add item to ${key}:`, err);
+    });
     return item;
   },
 
@@ -110,14 +172,20 @@ export const mockDb = {
     const index = data.findIndex(x => x.id === id);
     if (index !== -1) {
       data[index] = { ...data[index], ...updatedItem };
-      mockDb.set(key, data);
+      localStorage.setItem(key, JSON.stringify(data));
+      api.put(`/stationary/${key}/${id}`, data[index]).catch(err => {
+        console.error(`Failed to update item ${id} in ${key}:`, err);
+      });
     }
   },
 
   delete: (key, id) => {
     const data = mockDb.get(key);
     const filtered = data.filter(x => x.id !== id);
-    mockDb.set(key, filtered);
+    localStorage.setItem(key, JSON.stringify(filtered));
+    api.delete(`/stationary/${key}/${id}`).catch(err => {
+      console.error(`Failed to delete item ${id} in ${key}:`, err);
+    });
   },
 
   // Stock Ledger Helper
@@ -140,7 +208,8 @@ export const mockDb = {
       }
 
       items[itemIndex].currentStock = current;
-      mockDb.set('consumables_items', items);
+      localStorage.setItem('consumables_items', JSON.stringify(items));
+      api.post('/stationary/consumables_items/bulk', { items }).catch(err => console.error(err));
 
       const newLedgerEntry = {
         id: 'LED' + Math.floor(Math.random() * 1000000),
@@ -153,7 +222,8 @@ export const mockDb = {
         balance: current
       };
       ledger.push(newLedgerEntry);
-      mockDb.set('consumables_ledger', ledger);
+      localStorage.setItem('consumables_ledger', JSON.stringify(ledger));
+      api.post('/stationary/consumables_ledger', newLedgerEntry).catch(err => console.error(err));
     }
   }
 };

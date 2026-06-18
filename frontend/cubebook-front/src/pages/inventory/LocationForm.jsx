@@ -39,7 +39,7 @@ export default function LocationForm({ mode = 'create' }) {
 
   const onSuccess = () => {
     queryClient.invalidateQueries(['locations', activeCompany?.id]);
-    navigate('/inventory-masters?tab=locations');
+    navigate('/cubebook/inventory-masters?tab=locations');
   };
 
   const payload = () => ({

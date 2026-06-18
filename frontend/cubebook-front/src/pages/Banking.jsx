@@ -190,7 +190,7 @@ export default function Banking() {
             </table>
           </div>
           {unreconciledAll.length > 8 && (
-            <button onClick={() => navigate('/banking/activities')}
+            <button onClick={() => navigate('/cubebook/banking/activities')}
               className="text-xs text-purple-600 font-semibold hover:underline">
               View all {unreconciledAll.length} unreconciled →
             </button>

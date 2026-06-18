@@ -154,10 +154,11 @@ export default function Holidays() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-
-      {/* HEADER */}
-      <div className="btn btn-secondary">
+    <div className="animate-in fade-in" style={{ padding: '4px 0px' }}>
+      {!showForm && (
+        <div style={{ padding: 24 }}>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         {/* LEFT: Title + badge */}
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">HOLIDAY CALENDAR</h1>
@@ -166,126 +167,55 @@ export default function Holidays() {
           </span>
         </div>
 
-        {/* RIGHT: Year nav + Filter dropdown + view toggle + Add button */}
-        <div className="flex items-center gap-2">
-          {/* Year Navigator */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setYear(y => y - 1)} className="p-1 hover:bg-white rounded text-slate-500">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="font-bold text-slate-800 text-sm min-w-[48px] text-center">{year}</span>
-            <button onClick={() => setYear(y => y + 1)} className="p-1 hover:bg-white rounded text-slate-500">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          {/* RIGHT: Year nav + Add button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Year Navigator */}
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px' }}>
+              <button onClick={() => setYear(y => y - 1)} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4 }}>
+                <ChevronLeft size={16} />
+              </button>
+              <span style={{ fontWeight: 700, fontSize: 14, minWidth: 48, textAlign: 'center' }}>{year}</span>
+              <button onClick={() => setYear(y => y + 1)} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', borderRadius: 4 }}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
 
-          {/* Filter Dropdown */}
-          <div className="relative">
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
+              onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <Filter className="w-4 h-4" /> Filter
-              {filterType && <span className="btn btn-primary" />}
+              <Plus size={16} /> Add Holiday
             </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => setFilterType('')} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Holiday Type</label>
-                  <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
-                    className="form-control">
-                    <option value="">All Types</option>
-                    {holidayTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
+          </div>
+        </div>
+
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+          {[
+            { label: 'Total Holidays', value: stats.total, color: 'rgba(99,102,241,0.1)', text: '#6366f1', icon: Calendar },
+            { label: 'Mandatory', value: stats.mandatory, color: 'rgba(249,115,22,0.1)', text: '#f97316', icon: Building2 },
+            { label: 'Optional', value: stats.optional, color: 'rgba(168,85,247,0.1)', text: '#a855f7', icon: PartyPopper },
+            { label: 'Upcoming', value: stats.upcoming, color: 'rgba(16,185,129,0.1)', text: '#10b981', icon: Calendar },
+          ].map(({ label, value, color, text, icon: Icon }) => (
+            <div key={label} className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: color, color: text }}>
+                <Icon size={24} />
               </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary"
-          >
-            <Plus className="w-4 h-4" /> Add Holiday
-          </button>
+              <div className="stat-details">
+                <h3>{label}</h3>
+                <div className="value">{value}</div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-
-      {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-
-      {/* Stats */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Calendar className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Holidays</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.mandatory}</p>
-              <p className="text-xs text-slate-500">Mandatory</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <PartyPopper className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.optional}</p>
-              <p className="text-xs text-slate-500">Optional</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <Calendar className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.upcoming}</p>
-              <p className="text-xs text-slate-500">Upcoming</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* List View */}
       {viewMode === 'list' && (
-        <div className="card">
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead className="btn btn-secondary">
+        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+          <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
                 <tr>
                   <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Date</th>
                   <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Holiday</th>
@@ -345,7 +275,6 @@ export default function Holidays() {
               </tbody>
             </table>
           </div>
-        </div>
       )}
 
       {/* Grid View (Month View) */}
@@ -397,20 +326,27 @@ export default function Holidays() {
           )}
         </div>
       )}
-
-      </div>{/* END DATA AREA */}
-
-      {/* Form Modal */}
+        </div>
+      )}
+      {/* Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'Add'} Holiday</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
+        <div style={{ padding: 24 }}>
+          <div className="card" style={{ padding: 0 }}>
+            {/* Form Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                {editingId ? 'Edit Holiday' : 'Add Holiday'}
+              </h2>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <X size={16} /> Close
+                </button>
+                <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Save size={16} /> {editingId ? 'Update' : 'Save'}
+                </button>
+              </div>
             </div>
-            <div className="p-4 space-y-4">
+            <div style={{ padding: 24, background: '#fff' }}>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Holiday Name *</label>
                 <input
@@ -422,7 +358,7 @@ export default function Holidays() {
                 />
               </div>
               
-              <div className="form-row">
+              <div className="form-row" style={{ marginTop: 16 }}>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
                   <input
@@ -444,37 +380,29 @@ export default function Holidays() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" style={{ marginTop: 16 }}>
                 <input
                   type="checkbox"
                   id="optional"
                   checked={form.is_optional}
                   onChange={(e) => setForm({ ...form, is_optional: e.target.checked })}
-                  className="btn btn-secondary"
+                  style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
                 />
-                <label htmlFor="optional" className="text-sm text-slate-700">
+                <label htmlFor="optional" className="text-sm font-medium text-slate-700 cursor-pointer">
                   Optional / Restricted Holiday
                 </label>
               </div>
               
-              <div>
+              <div style={{ marginTop: 16 }}>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={2}
+                  rows={3}
                   className="form-control"
                   placeholder="Description of the holiday..."
                 />
               </div>
-            </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
-                <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Save'}
-              </button>
             </div>
           </div>
         </div>

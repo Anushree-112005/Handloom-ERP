@@ -163,150 +163,88 @@ export default function Benefits() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title + record count */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">BENEFITS</h1>
-          <span className="btn btn-primary">
-            {filteredBenefits.length} Records
-          </span>
-        </div>
-
-        {/* RIGHT: Filter dropdown + view toggle + Add button */}
-        <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterType || filterStatus) && <span className="btn btn-primary" />}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => { setFilterType(''); setFilterStatus(''); }} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Benefit Type</label>
-                    <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
-                      className="form-control">
-                      <option value="">All Types</option>
-                      {benefitTypes.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Active">Active</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Expired">Expired</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
+    <div className="animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', minHeight: 'calc(100vh - 80px)' }}>
+      {!showForm && (
+        <>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                <Heart size={24} color="var(--primary)" /> Benefits Management
+              </h2>
+              <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
+                {filteredBenefits.length} Records
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+                className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
+                <Plus className="w-4 h-4" /> Add Benefit
+              </button>
+            </div>
           </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary">
-            <Plus className="w-4 h-4" /> Add Benefit
-          </button>
-        </div>
-      </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Stats */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Heart className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.totalBenefits}</p>
-              <p className="text-xs text-slate-500">Total Benefits</p>
-            </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Heart className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.totalBenefits}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Benefits</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.activeBenefits}</p>
-              <p className="text-xs text-slate-500">Active</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.activeBenefits}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Active</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Shield className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">₹{(stats.totalCoverage / 100000).toFixed(1)}L</p>
-              <p className="text-xs text-slate-500">Total Coverage</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(stats.totalCoverage / 100000).toFixed(1)}L</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Coverage</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">₹{(stats.employerCost / 1000).toFixed(0)}K</p>
-              <p className="text-xs text-slate-500">Employer Cost/Mo</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(stats.employerCost / 1000).toFixed(0)}K</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Employer Cost/Mo</p>
           </div>
         </div>
       </div>
-
-      {/* Benefit Types Summary */}
-      <div className="card">
-        <h3 className="font-semibold text-slate-800 mb-4">Benefit Programs</h3>
-        <div className="form-row">
+      {/* Benefit Programs Summary */}
+      <div className="card" style={{ padding: 20 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>Benefit Programs</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
           {benefitSummary.slice(0, 5).map(type => {
             const IconComponent = type.icon;
             return (
               <div 
                 key={type.name} 
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${filterType === type.name ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                className={`p-4 rounded-lg border cursor-pointer transition-all ${filterType === type.name ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 hover:border-indigo-300'}`}
+                style={{ background: filterType === type.name ? 'rgba(79, 70, 229, 0.04)' : '#fff' }}
                 onClick={() => setFilterType(filterType === type.name ? '' : type.name)}
               >
-                <div className={`w-8 h-8 rounded-lg bg-${type.color}-100 flex items-center justify-center mb-2`}>
-                  <IconComponent className={`w-4 h-4 text-${type.color}-600`} />
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: '#4f46e510', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                  <IconComponent className="w-4 h-4" />
                 </div>
-                <p className="text-sm font-medium text-slate-700 truncate">{type.name}</p>
-                <p className="text-lg font-bold text-slate-800">{type.count}</p>
-                <p className="text-xs text-slate-500">enrollments</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }} className="truncate">{type.name}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{type.count}</p>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>enrollments</p>
               </div>
             );
           })}
@@ -315,59 +253,66 @@ export default function Benefits() {
 
       {/* Benefits Grid View */}
       {viewMode === 'grid' && (
-        <div className="form-row">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
           {filteredBenefits.map(benefit => (
-          <div key={benefit.id} className="card">
-            <div className="flex items-start justify-between mb-3">
+            <div key={benefit.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[benefit.status]}`}>
-                  {benefit.status}
+                <div style={{ display: 'flex', itemsStart: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div>
+                    <span style={{ 
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      backgroundColor: benefit.status === 'Active' ? '#10b98118' : benefit.status === 'Pending' ? '#f59e0b18' : benefit.status === 'Expired' ? '#ef444418' : '#64748b18',
+                      color: benefit.status === 'Active' ? '#047857' : benefit.status === 'Pending' ? '#b45309' : benefit.status === 'Expired' ? '#b91c1c' : '#475569'
+                    }}>{benefit.status}</span>
+                    <h3 style={{ margin: '8px 0 2px 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{benefit.benefit_type}</h3>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>{benefit.employee_name}</p>
+                  </div>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#4f46e510', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Heart className="w-4 h-4" />
+                  </div>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 12 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>Coverage</p>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>₹{benefit.coverage_amount?.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>Your Share</p>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>₹{benefit.employee_contribution?.toLocaleString()}/mo</p>
+                  </div>
+                </div>
+                
+                {benefit.provider_name && (
+                  <div style={{ marginBottom: 12, fontSize: 12 }}>
+                    <p style={{ margin: 0, color: 'var(--text-muted)' }}>Provider: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{benefit.provider_name}</span></p>
+                    {benefit.policy_number && <p style={{ margin: '2px 0 0 0', color: 'var(--text-muted)' }}>Policy: <span style={{ fontFamily: 'monospace' }}>{benefit.policy_number}</span></p>}
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 12 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  Valid: {formatDate(benefit.start_date)} - {formatDate(benefit.end_date)}
                 </span>
-                <h3 className="font-semibold text-slate-800 mt-2">{benefit.benefit_type}</h3>
-                <p className="text-sm text-slate-500">{benefit.employee_name}</p>
-              </div>
-              <div className="btn btn-primary">
-                <Heart className="w-5 h-5 text-indigo-600" />
-              </div>
-            </div>
-            
-            <div className="btn btn-secondary">
-              <div>
-                <p className="text-xs text-slate-500">Coverage</p>
-                <p className="text-sm font-semibold text-slate-800">₹{benefit.coverage_amount?.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Your Share</p>
-                <p className="text-sm font-semibold text-slate-800">₹{benefit.employee_contribution?.toLocaleString()}/mo</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button onClick={() => handleEdit(benefit)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
+                    <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                  </button>
+                  <button onClick={() => handleDelete(benefit.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }}>
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </button>
+                </div>
               </div>
             </div>
-            
-            {benefit.provider_name && (
-              <div className="btn btn-secondary">
-                <p className="text-xs text-slate-500">Provider: {benefit.provider_name}</p>
-                {benefit.policy_number && <p className="text-xs text-slate-400">Policy: {benefit.policy_number}</p>}
-              </div>
-            )}
-            
-            <div className="btn btn-secondary">
-              <span className="text-xs text-slate-500">
-                Valid: {formatDate(benefit.start_date)} - {formatDate(benefit.end_date)}
-              </span>
-              <div className="flex items-center gap-1">
-                <button onClick={() => handleEdit(benefit)} className="btn btn-secondary">
-                  <Edit2 className="w-4 h-4 text-slate-500" />
-                </button>
-                <button onClick={() => handleDelete(benefit.id)} className="btn btn-danger">
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
           {filteredBenefits.length === 0 && (
-            <div className="btn btn-secondary">
+            <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
               <Heart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No benefits found</p>
+              <p className="text-slate-500" style={{ margin: 0 }}>No benefits found</p>
             </div>
           )}
         </div>
@@ -375,49 +320,55 @@ export default function Benefits() {
 
       {/* Benefits List View */}
       {viewMode === 'list' && (
-        <div className="card">
+        <div className="card" style={{ padding: 0 }}>
           <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead className="btn btn-secondary">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Employee</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Benefit Type</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Coverage</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Employer</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Employee</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Provider</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Valid Period</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employee</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Benefit Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Coverage</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employer</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employee</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Provider</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Valid Period</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-100">
                 {filteredBenefits.map(benefit => (
-                  <tr key={benefit.id} className="btn btn-secondary">
-                    <td className="px-6 py-4 text-sm text-slate-800">{benefit.employee_name}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-700">{benefit.benefit_type}</td>
+                  <tr key={benefit.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-slate-800">{benefit.employee_name}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">{benefit.benefit_type}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[benefit.status]}`}>
-                        {benefit.status}
-                      </span>
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: benefit.status === 'Active' ? '#10b98118' : benefit.status === 'Pending' ? '#f59e0b18' : benefit.status === 'Expired' ? '#ef444418' : '#64748b18',
+                        color: benefit.status === 'Active' ? '#047857' : benefit.status === 'Pending' ? '#b45309' : benefit.status === 'Expired' ? '#b91c1c' : '#475569'
+                      }}>{benefit.status}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-800">₹{benefit.coverage_amount?.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800">₹{benefit.coverage_amount?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">₹{benefit.employer_contribution?.toLocaleString()}/mo</td>
                     <td className="px-6 py-4 text-sm text-slate-600">₹{benefit.employee_contribution?.toLocaleString()}/mo</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      {benefit.provider_name || '—'}
-                      {benefit.policy_number && <div className="text-xs text-slate-400">{benefit.policy_number}</div>}
+                      <span className="font-semibold text-slate-700">{benefit.provider_name || '—'}</span>
+                      {benefit.policy_number && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{benefit.policy_number}</div>}
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-500">
                       {formatDate(benefit.start_date)} - {formatDate(benefit.end_date)}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleEdit(benefit)} className="btn btn-secondary">
-                          <Edit2 className="w-4 h-4 text-slate-500" />
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+                        <button onClick={() => handleEdit(benefit)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
+                          <Edit2 className="w-3.5 h-3.5 text-slate-500" />
                         </button>
-                        <button onClick={() => handleDelete(benefit.id)} className="btn btn-danger">
-                          <Trash2 className="w-4 h-4 text-red-500" />
+                        <button onClick={() => handleDelete(benefit.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }}>
+                          <Trash2 className="w-3.5 h-3.5 text-red-500" />
                         </button>
                       </div>
                     </td>
@@ -425,9 +376,9 @@ export default function Benefits() {
                 ))}
                 {filteredBenefits.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center">
+                    <td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
                       <Heart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <p className="text-slate-500">No benefits found</p>
+                      No benefits found
                     </td>
                   </tr>
                 )}
@@ -438,143 +389,144 @@ export default function Benefits() {
       )}
 
       </div>{/* END DATA AREA */}
+        </>
+      )}
 
-      {/* Form Modal */}
+      {/* Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'Add'} Benefit</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                  <select
-                    value={form.employee_id}
-                    onChange={handleEmployeeChange}
-                    className="form-control"
-                  >
-                    <option value="">Select Employee</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Benefit Type *</label>
-                  <select
-                    value={form.benefit_type}
-                    onChange={(e) => setForm({ ...form, benefit_type: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="">Select Type</option>
-                    {benefitTypes.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={2}
-                  className="form-control"
-                  placeholder="Benefit details..."
-                />
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Coverage (₹)</label>
-                  <input
-                    type="number"
-                    value={form.coverage_amount}
-                    onChange={(e) => setForm({ ...form, coverage_amount: e.target.value })}
-                    className="form-control"
-                    placeholder="500000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employer (₹/mo)</label>
-                  <input
-                    type="number"
-                    value={form.employer_contribution}
-                    onChange={(e) => setForm({ ...form, employer_contribution: e.target.value })}
-                    className="form-control"
-                    placeholder="1000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employee (₹/mo)</label>
-                  <input
-                    type="number"
-                    value={form.employee_contribution}
-                    onChange={(e) => setForm({ ...form, employee_contribution: e.target.value })}
-                    className="form-control"
-                    placeholder="500"
-                  />
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={form.start_date}
-                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={form.end_date}
-                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Provider Name</label>
-                  <input
-                    type="text"
-                    value={form.provider_name}
-                    onChange={(e) => setForm({ ...form, provider_name: e.target.value })}
-                    className="form-control"
-                    placeholder="Insurance company"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Policy Number</label>
-                  <input
-                    type="text"
-                    value={form.policy_number}
-                    onChange={(e) => setForm({ ...form, policy_number: e.target.value })}
-                    className="form-control"
-                    placeholder="POL123456"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
+        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+          {/* Form Header */}
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Benefit' : 'Add Benefit'}
+            </h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Save'}
+              </button>
+              <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X className="w-5 h-5" /> Close
               </button>
             </div>
           </div>
-        </div>
+          
+          <div className="p-6 space-y-4">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Employee *</label>
+                <select
+                  value={form.employee_id}
+                  onChange={handleEmployeeChange}
+                  className="form-control"
+                >
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Benefit Type *</label>
+                <select
+                  value={form.benefit_type}
+                  onChange={(e) => setForm({ ...form, benefit_type: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="">Select Type</option>
+                  {benefitTypes.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+                </select>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={2}
+                className="form-control"
+                placeholder="Benefit details..."
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div className="form-group">
+                <label>Coverage (₹)</label>
+                <input
+                  type="number"
+                  value={form.coverage_amount}
+                  onChange={(e) => setForm({ ...form, coverage_amount: e.target.value })}
+                  className="form-control"
+                  placeholder="500000"
+                />
+              </div>
+              <div className="form-group">
+                <label>Employer (₹/mo)</label>
+                <input
+                  type="number"
+                  value={form.employer_contribution}
+                  onChange={(e) => setForm({ ...form, employer_contribution: e.target.value })}
+                  className="form-control"
+                  placeholder="1000"
+                />
+              </div>
+              <div className="form-group">
+                <label>Employee (₹/mo)</label>
+                <input
+                  type="number"
+                  value={form.employee_contribution}
+                  onChange={(e) => setForm({ ...form, employee_contribution: e.target.value })}
+                  className="form-control"
+                  placeholder="500"
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Start Date</label>
+                <input
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label>End Date</label>
+                <input
+                  type="date"
+                  value={form.end_date}
+                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Provider Name</label>
+                <input
+                  type="text"
+                  value={form.provider_name}
+                  onChange={(e) => setForm({ ...form, provider_name: e.target.value })}
+                  className="form-control"
+                  placeholder="Insurance company"
+                />
+              </div>
+              <div className="form-group">
+                <label>Policy Number</label>
+                <input
+                  type="text"
+                  value={form.policy_number}
+                  onChange={(e) => setForm({ ...form, policy_number: e.target.value })}
+                  className="form-control"
+                  placeholder="POL123456"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
       )}
     </div>
   );

@@ -101,6 +101,11 @@ export const designEntryAPI = {
   create: (data) => api.post('/design-entries/', data),
   update: (id, data) => api.put(`/design-entries/${id}`, data),
   delete: (id) => api.delete(`/design-entries/${id}`),
+  uploadImage: (id, file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post(`/design-entries/${id}/upload-image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
 };
 
 // ---- AI Textile Design ----
@@ -317,8 +322,11 @@ export const subMasterAPI = {
 export const ppcAPI = {
   getLooms: () => api.get('/ppc/looms'),
   createLoom: (data) => api.post('/ppc/looms', data),
+  updateLoomStatus: (id, status) => api.put(`/ppc/looms/${id}/status`, null, { params: { status } }),
   getAllocations: () => api.get('/ppc/allocations'),
   createAllocation: (data) => api.post('/ppc/allocations', data),
+  updateAllocation: (id, data) => api.put(`/ppc/allocations/${id}`, data),
+  deleteAllocation: (id) => api.delete(`/ppc/allocations/${id}`),
   logProduction: (data) => api.post('/ppc/logs', data),
   getOperators: () => api.get('/ppc/operators'),
   createOperator: (data) => api.post('/ppc/operators', data),

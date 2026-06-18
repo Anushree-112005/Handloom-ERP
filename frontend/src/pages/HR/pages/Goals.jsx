@@ -194,72 +194,17 @@ export default function Goals() {
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
 
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', background: '#fff', borderBottom: '1px solid var(--border)' }}>
         {/* LEFT: Title + record count */}
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">GOALS & KPIs</h1>
-          <span className="btn btn-primary">
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             {filteredGoals.length} Records
           </span>
         </div>
 
-        {/* RIGHT: Filter dropdown + view toggle + Add button */}
+        {/* RIGHT: Add button */}
         <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterStatus || filterCategory) && <span className="btn btn-primary" />}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => { setFilterStatus(''); setFilterCategory(''); }} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Not Started">Not Started</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="On Track">On Track</option>
-                      <option value="At Risk">At Risk</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Category</label>
-                    <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}
-                      className="form-control">
-                      <option value="">All Categories</option>
-                      {goalCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
           <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
             className="btn btn-primary">
             <Plus className="w-4 h-4" /> Add Goal

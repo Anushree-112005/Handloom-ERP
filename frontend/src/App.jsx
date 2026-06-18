@@ -44,6 +44,7 @@ import SubMasterPage from './pages/masters/SubMasterPage';
 import CubeBookPage from './pages/cubebook/CubeBookPage';
 import HRModule from './pages/HR/HRModule';
 import PPCMultiModule from './pages/ppc/PPCMultiModule';
+import LiveDashboard from './pages/ppc/LiveDashboard';
 
 // Fleet & Vehicle Management Imports
 import FleetDashboard from './pages/Vehicle management/FleetDashboard';
@@ -94,6 +95,10 @@ import ConsumptionReport from './pages/stationary and consumptions/ConsumptionRe
 import PurchaseReport from './pages/stationary and consumptions/PurchaseReport';
 import ReorderReport from './pages/stationary and consumptions/ReorderReport';
 import AuditReport from './pages/stationary and consumptions/AuditReport';
+import SwatchCardManagement from './pages/stationary and consumptions/SwatchCardManagement';
+import ReturnableDCManagement from './pages/stationary and consumptions/ReturnableDCManagement';
+import FabricInspectionBook from './pages/stationary and consumptions/FabricInspectionBook';
+import QuotationEntry from './pages/stationary and consumptions/QuotationEntry';
 
 
 // Core Yarn & Warping Imports
@@ -192,6 +197,7 @@ export default function App() {
         <Route path="greige/transaction/administration" element={<GreigeTransaction defaultSection="Greige Administration" />} />
 
         {/* Production Planning & Control (PPC) - Full 10 Module Structure */}
+        <Route path="ppc/tracking/live-dashboard" element={<LiveDashboard />} />
         <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
 
         {/* LAB & Shade Management Routes */}
@@ -290,6 +296,7 @@ export default function App() {
         <Route path="stores-consumables/request" element={<MaterialRequest />} />
         <Route path="stores-consumables/requisition" element={<PurchaseRequisition />} />
         <Route path="stores-consumables/po" element={<PurchaseOrder />} />
+        <Route path="stores-consumables/quotation" element={<QuotationEntry />} />
         <Route path="stores-consumables/grn" element={<GRNStockInward />} />
         <Route path="stores-consumables/issue" element={<IssueEntry />} />
         <Route path="stores-consumables/return" element={<ReturnEntry />} />
@@ -305,6 +312,9 @@ export default function App() {
         <Route path="stores-consumables/report-purchase" element={<PurchaseReport />} />
         <Route path="stores-consumables/report-reorder" element={<ReorderReport />} />
         <Route path="stores-consumables/report-audit" element={<AuditReport />} />
+        <Route path="stores-consumables/swatch-cards" element={<SwatchCardManagement />} />
+        <Route path="stores-consumables/returnable-dc" element={<ReturnableDCManagement />} />
+        <Route path="stores-consumables/fabric-inspection" element={<FabricInspectionBook />} />
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>

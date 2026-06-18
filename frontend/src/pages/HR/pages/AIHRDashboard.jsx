@@ -186,13 +186,13 @@ export default function AIHRDashboard() {
   ];
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6 bg-slate-50/50 min-h-screen">
+    <div className="animate-in fade-in" style={{ padding: '12px 24px' }}>
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Brain className="w-8 h-8 text-indigo-600" />
+            <div style={{ width: 48, height: 48, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Brain className="w-6 h-6 text-indigo-600" />
             </div>
             AI HR Intelligence Dashboard
           </h1>
@@ -202,7 +202,7 @@ export default function AIHRDashboard() {
           <button className="btn btn-secondary" title="Export coming soon" disabled>
             Export Report
           </button>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <AlertTriangle className="w-4 h-4" />
             View Alerts (2)
           </button>
@@ -210,7 +210,7 @@ export default function AIHRDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 24 }}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -218,10 +218,11 @@ export default function AIHRDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-auto flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200
+              className={`flex-auto flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200
                 ${isActive 
                   ? 'bg-indigo-50 text-indigo-700 shadow-sm' 
                   : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              style={{ minWidth: 120 }}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
@@ -267,8 +268,8 @@ export default function AIHRDashboard() {
           </div>
 
           <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold text-slate-900">Historical AI Insights</h2>
+            <div className="card-header">
+              <h2 className="text-lg font-semibold text-slate-900" style={{ margin: 0 }}>Historical AI Insights</h2>
             </div>
             <div className="p-6 h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -299,17 +300,17 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'attrition' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <Brain className="w-16 h-16 text-indigo-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">AI Attrition Risk Detector</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Run AI analysis to detect employees with high flight risk based on compensation, engagement, and tenure patterns.</p>
-            <button onClick={handleFetchAttrition} disabled={loading} className="btn btn-primary">
+            <button onClick={handleFetchAttrition} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Run Attrition Analysis
             </button>
 
             {attritionData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <h4 className="font-bold flex items-center gap-2 mb-4"><Users className="w-5 h-5 text-indigo-600" /> Risk Level: <span className={attritionData.risk_level === 'High' ? 'text-red-600' : 'text-orange-500'}>{attritionData.risk_level}</span></h4>
                     <p className="font-semibold mb-2">Key Factors:</p>
                     <ul className="list-disc pl-5 space-y-1 text-slate-700">
@@ -322,7 +323,7 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'payroll' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <AlertTriangle className="w-16 h-16 text-orange-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">AI Payroll Anomaly Detection</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Use machine learning to spot unusual patterns, suspected fraud, or systemic calculation errors in recent payroll runs.</p>
@@ -332,7 +333,7 @@ export default function AIHRDashboard() {
             </button>
 
             {payrollData && (
-                <div className="w-full mt-8 grid grid-cols-1 gap-4">
+                <div className="w-full mt-8 grid grid-cols-1 gap-4" style={{ maxWidth: 600 }}>
                     {payrollData.map((err, i) => (
                         <div key={i} className="p-4 bg-white border border-red-200 rounded-lg flex justify-between items-center shadow-sm">
                             <div>
@@ -350,25 +351,25 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'skills' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <Briefcase className="w-16 h-16 text-emerald-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">AI Skill Gap Analysis</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Evaluate workforce readiness against future departmental demands and identify missing key competencies.</p>
-            <button onClick={handleFetchSkillGaps} disabled={loading} className="btn btn-success">
+            <button onClick={handleFetchSkillGaps} disabled={loading} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Analyze Readiness
             </button>
 
             {skillGapData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <p className="mb-2"><strong>Recommended Training:</strong> {skillGapData.recommended_training}</p>
                     <p className="mb-4"><strong>Department Readiness:</strong> <span className={skillGapData.department_readiness < '80%' ? 'text-red-500 font-bold' : 'text-emerald-500 font-bold'}>{skillGapData.department_readiness}</span></p>
                     <p className="font-semibold mb-3">Critical Missing Skills:</p>
                     <div className="flex flex-wrap gap-2">
                         {skillGapData.missing_skills?.map((s, i) => (
-                            <span key={i} className="btn btn-secondary">
-                                {s}
-                            </span>
+                          <span key={i} className="badge badge-inactive" style={{ fontSize: 13, padding: '4px 10px' }}>
+                              {s}
+                          </span>
                         ))}
                     </div>
                 </div>
@@ -377,16 +378,16 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'attendance' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <Calendar className="w-16 h-16 text-blue-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Smart Attendance & Shift Intelligence</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Predict and prevent absenteeism. Auto-generate optimized shift rosters based on real-time workforce availability and production demand.</p>
-            <button onClick={async () => { setLoading(true); const data = await hrService.runSmartAttendance(); setAttendanceData(data); setLoading(false); }} disabled={loading} className="btn btn-primary">
+            <button onClick={async () => { setLoading(true); const data = await hrService.runSmartAttendance(); setAttendanceData(data); setLoading(false); }} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Analyze Shifts & Attendance
             </button>
             {attendanceData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <p className="font-semibold mb-3">AI Intelligence Insights:</p>
                     <ul className="list-disc pl-5 space-y-2 text-slate-700">
                         {attendanceData.insights.map((insight, i) => <li key={i}>{insight}</li>)}
@@ -397,16 +398,16 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'demand' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <LineChartIcon className="w-16 h-16 text-purple-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Workforce Demand Forecasting</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Forecast workforce demand accurately using upcoming production schedules and seasonality trends.</p>
-            <button onClick={async () => { setLoading(true); const data = await hrService.runDemandForecast(); setDemandData(data); setLoading(false); }} disabled={loading} className="btn btn-primary">
+            <button onClick={async () => { setLoading(true); const data = await hrService.runDemandForecast(); setDemandData(data); setLoading(false); }} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Run Demand Forecast
             </button>
             {demandData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <p className="mb-2"><strong>Demand Forecast:</strong> {demandData.forecast}</p>
                     <p className="mb-2"><strong>AI Recommendation:</strong> {demandData.recommendation}</p>
                 </div>
@@ -415,7 +416,7 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'productivity' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <Target className="w-16 h-16 text-teal-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Productivity Performance Scoring</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Automatically calculate and dynamically normalize employee productivity across different job functions.</p>
@@ -424,7 +425,7 @@ export default function AIHRDashboard() {
                 Evaluate Productivity
             </button>
             {productivityData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div><p className="text-sm text-slate-500">Average Output</p><h4 className="text-xl font-bold text-teal-700">{productivityData.avgScore}</h4></div>
                     <div><p className="text-sm text-slate-500">Top Performing</p><h4 className="text-xl font-bold text-slate-800">{productivityData.topPerformers}</h4></div>
                     <div><p className="text-sm text-slate-500">Needs Focus</p><h4 className="text-xl font-bold text-slate-800">{productivityData.lowPerformers}</h4></div>
@@ -434,16 +435,16 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'resume' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <FileText className="w-16 h-16 text-indigo-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">AI Resume Screening & Auto-JD</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Zero-touch resume parsing, automated semantic candidate ranking against job descriptions, and instant JD generation.</p>
-            <button onClick={async () => { setLoading(true); const data = await hrService.runResumeScreening(); setResumeData(data); setLoading(false); }} disabled={loading} className="btn btn-primary">
+            <button onClick={async () => { setLoading(true); const data = await hrService.runResumeScreening(); setResumeData(data); setLoading(false); }} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Process New Applications
             </button>
             {resumeData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div><p className="text-sm text-slate-500">Resumes Scanned</p><h4 className="text-2xl font-bold">{resumeData.scanned}</h4></div>
                     <div><p className="text-sm text-slate-500">Auto-Shortlisted</p><h4 className="text-2xl font-bold text-indigo-600">{resumeData.shortlisted}</h4></div>
                     <div><p className="text-sm text-slate-500">Top Sematic Match</p><h4 className="text-lg font-bold">{resumeData.topMatch}</h4></div>
@@ -453,16 +454,16 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'safety' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <ShieldAlert className="w-16 h-16 text-red-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Safety Risk Prediction</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Correlate overtime, fatigue models, and incident history to predict and prevent future workplace accidents.</p>
-            <button onClick={async () => { setLoading(true); const data = await hrService.runSafetyRisk(); setSafetyData(data); setLoading(false); }} disabled={loading} className="btn btn-danger">
+            <button onClick={async () => { setLoading(true); const data = await hrService.runSafetyRisk(); setSafetyData(data); setLoading(false); }} disabled={loading} className="btn btn-danger" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Scan Safety Risks
             </button>
             {safetyData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <p className="mb-2 text-red-800"><strong>Identified Risk Zone:</strong> {safetyData.riskZone}</p>
                     <p className="mb-2 text-red-800"><strong>Primary Predictor:</strong> {safetyData.causalFactor}</p>
                     <p className="text-red-800"><strong>Current Status:</strong> <span className="font-bold">{safetyData.status}</span></p>
@@ -472,7 +473,7 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'leave' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <CalendarClock className="w-16 h-16 text-cyan-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Intelligent Leave Management</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Auto-approve leaves instantly mapping to compliance conditions, team strength targets, and peak operational times.</p>
@@ -481,7 +482,7 @@ export default function AIHRDashboard() {
                 Run Leave Balancer
             </button>
             {leaveData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div><p className="text-sm text-slate-500">Leaves Evaluated</p><h4 className="text-2xl font-bold">{leaveData.pending}</h4></div>
                     <div><p className="text-sm text-slate-500">Auto-Approved</p><h4 className="text-2xl font-bold text-cyan-600">{leaveData.autoApproved}</h4></div>
                     <div><p className="text-sm text-slate-500">Flagged to Manager</p><h4 className="text-2xl font-bold text-orange-500">{leaveData.flagged}</h4></div>
@@ -491,16 +492,16 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'overtime' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <DollarSign className="w-16 h-16 text-green-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Overtime Optimization</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Eliminate unnecessary excess hours by actively comparing the financial impact of overtimes vs. temp worker utilization.</p>
-            <button onClick={async () => { setLoading(true); const data = await hrService.runOvertimeOpt(); setOvertimeData(data); setLoading(false); }} disabled={loading} className="btn btn-success">
+            <button onClick={async () => { setLoading(true); const data = await hrService.runOvertimeOpt(); setOvertimeData(data); setLoading(false); }} disabled={loading} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {loading ? <Clock className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
                 Optimize Overhead
             </button>
             {overtimeData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <p className="mb-2 text-green-800"><strong>Estimated Cost Avoidance:</strong> <span className="text-xl font-bold">{overtimeData.savedCost}</span></p>
                     <p className="text-green-800"><strong>AI Decision Route:</strong> {overtimeData.recommendation}</p>
                 </div>
@@ -509,7 +510,7 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'allocation' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <UserCheck className="w-16 h-16 text-pink-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Smart Employee Allocation</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Dynamically match daily resources and cross-trained employees to specific production lines anticipating maximum yield.</p>
@@ -518,7 +519,7 @@ export default function AIHRDashboard() {
                 Auto-Allocate Floor
             </button>
             {allocationData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500 }}>
                     <p className="font-semibold mb-3">Live Allocation Tweaks:</p>
                     <ul className="list-disc pl-5 space-y-2 text-slate-700">
                         {allocationData.actions.map((act, i) => <li key={i}>{act}</li>)}
@@ -529,7 +530,7 @@ export default function AIHRDashboard() {
       )}
 
       {activeTab === 'face_recognition' && (
-        <div className="btn btn-secondary">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px' }}>
             <Video className="w-16 h-16 text-amber-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Face Recognition & Proxy Prevention</h3>
             <p className="text-slate-500 mb-6 text-center max-w-md">Computer vision module ensuring zero-touch, real-time presence validation directly linked to the gate cameras.</p>
@@ -538,7 +539,7 @@ export default function AIHRDashboard() {
                 Sync Gate Feeds
             </button>
             {faceData && (
-                <div className="form-control">
+                <div className="form-control" style={{ marginTop: 24, width: '100%', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <div><p className="text-sm text-slate-500">Live Captures</p><h4 className="text-2xl font-bold">{faceData.captures}</h4></div>
                     <div><p className="text-sm text-slate-500">Discrepancies Stopped</p><h4 className="text-2xl font-bold text-red-500">{faceData.proxiesPrevented}</h4></div>
                     <div><p className="text-sm text-slate-500">Vision Confidence</p><h4 className="text-2xl font-bold text-amber-600">{faceData.confidenceAvg}</h4></div>

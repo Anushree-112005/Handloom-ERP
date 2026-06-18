@@ -40,7 +40,7 @@ export default function LedgerCreate() {
     mutationFn: (data) => ledgersApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['ledgers', activeCompany?.id]);
-      navigate('/ledgers');
+      navigate('/cubebook/ledgers');
     },
   });
 
@@ -82,7 +82,7 @@ export default function LedgerCreate() {
         </div>
         <button
           type="button"
-          onClick={() => navigate('/ledgers')}
+          onClick={() => navigate('/cubebook/ledgers')}
           className="cb-btn-secondary"
         >
           <ArrowLeft size={15} />
@@ -268,7 +268,7 @@ export default function LedgerCreate() {
           <div className="pt-2 flex items-center justify-end gap-3">
             <button
               type="button"
-              onClick={() => navigate('/ledgers')}
+              onClick={() => navigate('/cubebook/ledgers')}
               className="cb-btn-secondary"
             >
               Cancel

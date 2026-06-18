@@ -22,7 +22,6 @@ export default function Shifts() {
     break_duration: 60,
     shift_type: 'Day',
     color: '#10B981',
-    grace_period: 15,
     half_day_hours: 4
   };
   const [form, setForm] = useState(initialForm);
@@ -54,7 +53,7 @@ export default function Shifts() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.code) {
+    if (!form.name) {
       alert('Please fill required fields');
       return;
     }
@@ -87,7 +86,6 @@ export default function Shifts() {
       break_duration: shift.break_duration || 60,
       shift_type: shift.shift_type || 'Day',
       color: shift.color || '#10B981',
-      grace_period: shift.grace_period || 15,
       half_day_hours: shift.half_day_hours || 4
     });
     setEditingId(shift.id);
@@ -145,296 +143,204 @@ export default function Shifts() {
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
 
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title + badge */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">SHIFT MANAGEMENT</h1>
-          <span className="btn btn-primary">
-            {filteredShifts.length} Records
-          </span>
-        </div>
+      {/* DATA AREA */}
+      {!showForm && (
+        <div className="animate-fade" style={{ padding: 24 }}>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Clock size={24} color="var(--primary)" /> Shift Management
+              </h2>
+              <p style={{ color: 'var(--text-muted)' }}>Manage working hours, break durations, and shift types.</p>
+            </div>
 
-        {/* RIGHT: Filter dropdown + view toggle + Add button */}
-        <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {filterShiftType && <span className="btn btn-primary" />}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => setFilterShiftType('')} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Shift Type</label>
-                  <select value={filterShiftType} onChange={(e) => setFilterShiftType(e.target.value)}
-                    className="form-control">
-                    <option value="">All Types</option>
-                    <option value="Day">Day</option>
-                    <option value="Night">Night</option>
-                    <option value="Flexible">Flexible</option>
-                    <option value="Rotational">Rotational</option>
-                  </select>
-                </div>
-              </div>
-            )}
+            {/* RIGHT: Add button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+                className="btn btn-primary"
+              >
+                <Plus size={16} /> Add Shift
+              </button>
+            </div>
           </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary"
-          >
-            <Plus className="w-4 h-4" /> Add Shift
-          </button>
-        </div>
-      </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-
-      {/* Stats */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Clock className="w-5 h-5 text-indigo-600" />
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+            <div className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+                <Clock size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Total Shifts</h3>
+                <div className="value">{stats.total}</div>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Shifts</p>
+            <div className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+                <Sun size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Day Shifts</h3>
+                <div className="value">{stats.dayShifts}</div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-              <Sun className="w-5 h-5 text-amber-600" />
+            <div className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+                <Moon size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Night Shifts</h3>
+                <div className="value">{stats.nightShifts}</div>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.dayShifts}</p>
-              <p className="text-xs text-slate-500">Day Shifts</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Moon className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.nightShifts}</p>
-              <p className="text-xs text-slate-500">Night Shifts</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <Users className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.totalEmployees}</p>
-              <p className="text-xs text-slate-500">Assigned</p>
+            <div className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+                <Users size={24} />
+              </div>
+              <div className="stat-details">
+                <h3>Assigned</h3>
+                <div className="value">{stats.totalEmployees}</div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
       {/* Shifts List/Grid */}
-      {viewMode === 'list' && (
-        <div className="space-y-3">
-          {filteredShifts.map(shift => (
-          <div key={shift.id} className="card">
-            {/* Color Bar */}
-            <div className="h-2" style={{ backgroundColor: shift.color }} />
-            
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-                    style={{ backgroundColor: shift.color }}
-                  >
-                    {getShiftIcon(shift.shift_type)}
-                  </div>
-                  <div>
-                    <h3 className="card-title">{shift.name}</h3>
-                    <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded">{shift.code}</span>
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => handleEdit(shift)} className="btn btn-secondary">
-                    <Edit2 className="w-4 h-4 text-slate-500" />
-                  </button>
-                  <button onClick={() => handleDelete(shift.id)} className="btn btn-danger">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Time Display */}
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-800">{formatTime(shift.start_time)}</p>
-                  <p className="text-xs text-slate-500">Start</p>
-                </div>
-                <div className="flex-1 px-4">
-                  <div className="h-0.5 bg-slate-200 relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-full" />
-                  </div>
-                  <p className="text-center text-xs text-slate-500 mt-1">{shift.working_hours} hrs</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-800">{formatTime(shift.end_time)}</p>
-                  <p className="text-xs text-slate-500">End</p>
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="btn btn-secondary">
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    shift.shift_type === 'Night' ? 'bg-purple-100 text-purple-700' :
-                    shift.shift_type === 'Flexible' ? 'bg-amber-100 text-amber-700' :
-                    'bg-green-100 text-green-700'
-                  }`}>
-                    {shift.shift_type}
-                  </span>
-                  <span className="text-slate-500">{shift.break_duration} min break</span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-600">
-                  <Users className="w-4 h-4" />
-                  <span className="font-medium">{shift.employee_count || 0}</span>
-                </div>
-              </div>
+          {/* Shifts List */}
+          {viewMode === 'list' && (
+            <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Shift Type</th>
+                    <th>Name</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Working Hours</th>
+                    <th>Break (min)</th>
+                    <th>Assigned</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredShifts.length === 0 ? (
+                    <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No shifts found</td></tr>
+                  ) : filteredShifts.map(shift => (
+                    <tr key={shift.id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 24, height: 24, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: shift.color, color: '#fff' }}>
+                            {getShiftIcon(shift.shift_type)}
+                          </div>
+                          <span className={`badge ${shift.shift_type === 'Night' ? 'badge-inactive' : 'badge-active'}`}>
+                            {shift.shift_type}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{shift.name}</td>
+                      <td style={{ fontWeight: 600 }}>{formatTime(shift.start_time)}</td>
+                      <td style={{ fontWeight: 600 }}>{formatTime(shift.end_time)}</td>
+                      <td>{shift.working_hours} hrs</td>
+                      <td>{shift.break_duration}</td>
+                      <td>{shift.employee_count || 0}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => handleEdit(shift)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="Edit">
+                            <Edit2 size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(shift.id)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="Delete">
+                            <Trash2 size={14} color="#ef4444" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        ))}
-        
-        {filteredShifts.length === 0 && (
-          <div className="card">
-            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No shifts found</p>
-          </div>
-        )}
-        </div>
-      )}
+          )}
 
-      {viewMode === 'grid' && (
-        <div className="form-row">
-          {filteredShifts.map(shift => (
-            <div key={shift.id} className="card">
-              {/* Color Bar */}
-              <div className="h-2" style={{ backgroundColor: shift.color }} />
-              
-              <div className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-                      style={{ backgroundColor: shift.color }}
-                    >
-                      {getShiftIcon(shift.shift_type)}
+          {/* GRID VIEW - Cards */}
+          {viewMode === 'grid' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
+              {filteredShifts.map(shift => (
+                <div key={shift.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ height: 4, backgroundColor: shift.color }} />
+                  
+                  <div style={{ padding: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: shift.color, color: '#fff' }}>
+                          {getShiftIcon(shift.shift_type)}
+                        </div>
+                        <div>
+                          <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>{shift.name}</h3>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button onClick={() => handleEdit(shift)} className="btn btn-secondary" style={{ padding: '4px 8px' }}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(shift.id)} className="btn btn-secondary" style={{ padding: '4px 8px' }}>
+                          <Trash2 size={14} color="#ef4444" />
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="card-title">{shift.name}</h3>
-                      <span className="text-xs font-mono bg-slate-100 px-1.5 py-0.5 rounded">{shift.code}</span>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{formatTime(shift.start_time)}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Start</p>
+                      </div>
+                      <div style={{ flex: 1, padding: '0 16px', position: 'relative' }}>
+                        <div style={{ height: 2, background: 'var(--border)', width: '100%' }} />
+                        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{shift.working_hours} hrs</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{formatTime(shift.end_time)}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>End</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => handleEdit(shift)} className="btn btn-secondary">
-                      <Edit2 className="w-4 h-4 text-slate-500" />
-                    </button>
-                    <button onClick={() => handleDelete(shift.id)} className="btn btn-danger">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className={`badge ${shift.shift_type === 'Night' ? 'badge-inactive' : 'badge-active'}`}>
+                          {shift.shift_type}
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{shift.break_duration}m break</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12 }}>
+                        <Users size={14} /> {shift.employee_count || 0}
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {/* Time Display */}
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-800">{formatTime(shift.start_time)}</p>
-                    <p className="text-xs text-slate-500">Start</p>
-                  </div>
-                  <div className="flex-1 px-4">
-                    <div className="h-0.5 bg-slate-200 relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-full" />
-                    </div>
-                    <p className="text-center text-xs text-slate-500 mt-1">{shift.working_hours} hrs</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-slate-800">{formatTime(shift.end_time)}</p>
-                    <p className="text-xs text-slate-500">End</p>
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="btn btn-secondary">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      shift.shift_type === 'Night' ? 'bg-purple-100 text-purple-700' :
-                      shift.shift_type === 'Flexible' ? 'bg-amber-100 text-amber-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
-                      {shift.shift_type}
-                    </span>
-                    <span className="text-slate-500">{shift.break_duration} min break</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-slate-600">
-                    <Users className="w-4 h-4" />
-                    <span className="font-medium">{shift.employee_count || 0}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {filteredShifts.length === 0 && (
-            <div className="btn btn-secondary">
-              <Clock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No shifts found</p>
+              ))}
             </div>
           )}
         </div>
       )}
 
-      </div>{/* END DATA AREA */}
-
-      {/* Form Modal */}
+      {/* Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'Add'} Shift</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+          <div className="card animate-fade" style={{ padding: 0 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit' : 'Add'} Shift</h2>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                  <X size={16} /> Close
+                </button>
+                <button className="btn btn-primary" onClick={handleSubmit}>
+                  <Save size={16} /> {editingId ? 'Update' : 'Save'}
+                </button>
+              </div>
             </div>
-            <div className="p-4 space-y-4">
+            <div style={{ padding: 24, background: '#fff' }}>
               <div className="form-row">
-                <div className="col-span-2">
+                <div className="col-span-3" style={{ gridColumn: 'span 3' }}>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Shift Name *</label>
                   <input
                     type="text"
@@ -442,16 +348,6 @@ export default function Shifts() {
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="form-control"
                     placeholder="Morning Shift"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Code *</label>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                    className="form-control"
-                    placeholder="MS"
                   />
                 </div>
                 <div>
@@ -497,15 +393,6 @@ export default function Shifts() {
                     className="form-control"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Grace Period (mins)</label>
-                  <input
-                    type="number"
-                    value={form.grace_period}
-                    onChange={(e) => setForm({ ...form, grace_period: parseInt(e.target.value) || 0 })}
-                    className="form-control"
-                  />
-                </div>
               </div>
 
               <div>
@@ -541,14 +428,6 @@ export default function Shifts() {
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
-                <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Save'}
-              </button>
             </div>
           </div>
         </div>

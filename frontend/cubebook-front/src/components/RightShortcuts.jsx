@@ -5,14 +5,14 @@ import KeymapHelp from './KeymapHelp';
 
 const VOUCHER_KEYS = [
   { key: 'F2',  label: 'Date',           route: null },
-  { key: 'F3',  label: 'Change Company',  route: '/company-setup' },
-  { key: 'F4',  label: 'Contra',         route: '/vouchers?type=Contra' },
-  { key: 'F5',  label: 'Payment',        route: '/vouchers?type=Payment' },
-  { key: 'F6',  label: 'Receipt',        route: '/vouchers?type=Receipt' },
-  { key: 'F7',  label: 'Journal',        route: '/vouchers?type=Journal' },
-  { key: 'F8',  label: 'Sales',          route: '/vouchers?type=Sales' },
-  { key: 'F9',  label: 'Purchase',       route: '/vouchers?type=Purchase' },
-  { key: 'F10', label: 'Other Vouchers', route: '/vouchers' },
+  { key: 'F3',  label: 'Change Company',  route: '/cubebook/company-setup' },
+  { key: 'F4',  label: 'Contra',         route: '/cubebook/vouchers?type=Contra' },
+  { key: 'F5',  label: 'Payment',        route: '/cubebook/vouchers?type=Payment' },
+  { key: 'F6',  label: 'Receipt',        route: '/cubebook/vouchers?type=Receipt' },
+  { key: 'F7',  label: 'Journal',        route: '/cubebook/vouchers?type=Journal' },
+  { key: 'F8',  label: 'Sales',          route: '/cubebook/vouchers?type=Sales' },
+  { key: 'F9',  label: 'Purchase',       route: '/cubebook/vouchers?type=Purchase' },
+  { key: 'F10', label: 'Other Vouchers', route: '/cubebook/vouchers' },
 ];
 
 const ACTION_KEYS = [

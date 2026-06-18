@@ -118,7 +118,7 @@ export default function CompanyCreate() {
       localStorage.setItem("cb_company_name", newCompany.name);
       setCompany(newCompany);
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      navigate("/masters/company-features?created=true");
+      navigate("/cubebook/masters/company-features?created=true");
     },
     onError: (err) => {
       setErrorMessage(err.response?.data?.detail || "Error creating company");
@@ -131,7 +131,7 @@ export default function CompanyCreate() {
       localStorage.setItem("cb_company_name", updatedCompany.name);
       setCompany(updatedCompany);
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      navigate("/");
+      navigate("/cubebook/");
     },
     onError: (err) => {
       setErrorMessage(err.response?.data?.detail || "Error updating company");
@@ -212,7 +212,7 @@ export default function CompanyCreate() {
         </div>
 
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/cubebook/")}
           className="btn btn-secondary"
           title="Close"
         >
@@ -412,7 +412,7 @@ export default function CompanyCreate() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/cubebook/")}
                   className="btn btn-secondary"
                 >
                   Cancel

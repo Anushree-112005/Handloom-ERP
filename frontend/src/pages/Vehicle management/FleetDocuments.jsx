@@ -1,54 +1,113 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
-  Folder, Plus, Search, FileText, AlertCircle, Edit2, Trash2, 
-  X, Save, CheckCircle, Upload, Calendar, Truck, ArrowLeft, Eye
+  Plus, Folder, Search, Filter, Edit2, Trash2, X, Save, 
+  Calendar, AlertCircle, CheckCircle, FileText, Upload, ArrowLeft 
 } from 'lucide-react';
 import api from '../../services/api';
-import { showSuccess, showError } from '../../utils/notifications';
+import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
-// Constants moved to component or state if dynamic
-const DOC_TYPES = ['RC (Registration Certificate)', 'Insurance', 'Permit', 'Fitness Certificate', 'Pollution (PUC)'];
-const STATUSES = ['Active', 'Expired', 'Renewed'];
-const REMINDER_DAYS = [7, 15, 30, 45, 60];
+const DetailRow = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
+    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
 
-const FleetDocuments = () => {
-  const navigate = useNavigate();
+export default function FleetDocuments() {
+  const [view, setView] = useState('list');
   const [documents, setDocuments] = useState([]);
   const [vehicles, setVehicles] = useState([]);
-  const [mode, setMode] = useState('list'); // 'list' | 'form'
-  const [loading, setLoading] = useState(false);
-  const [viewingDoc, setViewingDoc] = useState(null);
-  
-  const [formData, setFormData] = useState({
-    id: null,
-    vehicle: '',
-    documentType: '',
-    documentNumber: '',
-    issueDate: '',
-    expiryDate: '',
-    issuedBy: '',
-    reminderBeforeDays: '',
-    status: 'Active',
-    documentUpload: null, // Just storing file name or object
-    notes: '',
-  });
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedViewDoc, setSelectedViewDoc] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Status');
+  const [typeFilter, setTypeFilter] = useState('All Types');
 
-  const resetForm = () => {
-    setFormData({
-      id: null,
-      vehicle: '',
-      documentType: '',
-      documentNumber: '',
-      issueDate: '',
-      expiryDate: '',
-      issuedBy: '',
-      reminderBeforeDays: '',
-      status: 'Active',
-      documentUpload: null,
-      notes: '',
-    });
+  const initialForm = {
+    vehicle_id: '',
+    document_type: 'RC (Registration Certificate)',
+    reference_number: '',
+    issued_date: new Date().toISOString().split('T')[0],
+    expiry_date: '',
+    authority: '',
+    notes: '',
+    document_name: '',
+    document_path: '',
+  };
+
+  const [formData, setFormData] = useState(initialForm);
+
+  const docTypes = [
+    'RC (Registration Certificate)', 
+    'Insurance', 
+    'Permit', 
+    'Fitness Certificate', 
+    'Pollution (PUC)'
+  ];
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [docsRes, vehiclesRes] = await Promise.all([
+        api.get('/fleet/documents'),
+        api.get('/fleet/vehicles')
+      ]);
+      setDocuments(docsRes.data || []);
+      setVehicles(vehiclesRes.data || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      showError('Failed to load compliance documents');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getVehicleNumber = (vehicleId) => {
+    const v = vehicles.find(item => item.id === vehicleId);
+    return v ? v.vehicle_number : `ID: ${vehicleId}`;
+  };
+
+  const getDocStatus = (expiryDate) => {
+    if (!expiryDate) return 'Active';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const exp = new Date(expiryDate);
+    return exp < today ? 'Expired' : 'Active';
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Expired': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const handleOpenForm = (doc = null) => {
+    if (doc) {
+      setEditingId(doc.id);
+      setFormData({
+        vehicle_id: doc.vehicle_id || '',
+        document_type: doc.document_type || 'RC (Registration Certificate)',
+        reference_number: doc.reference_number || '',
+        issued_date: doc.issued_date || '',
+        expiry_date: doc.expiry_date || '',
+        authority: doc.authority || '',
+        notes: doc.notes || '',
+        document_name: doc.document_name || '',
+        document_path: doc.document_path || '',
+      });
+    } else {
+      setEditingId(null);
+      setFormData(initialForm);
+    }
+    setView('form');
   };
 
   const handleInputChange = (e) => {
@@ -58,476 +117,396 @@ const FleetDocuments = () => {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFormData(prev => ({ ...prev, documentUpload: e.target.files[0] }));
-    }
-  };
-
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
-
-  const fetchDocuments = async () => {
-    setLoading(true);
-    try {
-      const [docsRes, vehiclesRes] = await Promise.all([
-        api.get('/fleet/documents'),
-        api.get('/fleet/vehicles?status=Active')
-      ]);
-      setDocuments(docsRes.data || []);
-      setVehicles(vehiclesRes.data || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+      const file = e.target.files[0];
+      setFormData(prev => ({ 
+        ...prev, 
+        document_name: file.name,
+        document_path: `/uploads/${file.name}`
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.vehicle || !formData.documentType || !formData.documentNumber || !formData.issueDate || !formData.expiryDate || !formData.status) {
+    if (!formData.vehicle_id || !formData.document_type || !formData.reference_number || !formData.issued_date || !formData.expiry_date) {
       showError("Please fill in all required fields marked with *");
       return;
     }
 
     try {
-      if (formData.id) {
-        await api.put(`/fleet/documents/${formData.id}`, formData);
+      const payload = {
+        vehicle_id: Number(formData.vehicle_id),
+        document_type: formData.document_type,
+        document_name: formData.document_name || null,
+        document_path: formData.document_path || null,
+        expiry_date: formData.expiry_date,
+        issued_date: formData.issued_date,
+        authority: formData.authority || null,
+        reference_number: formData.reference_number,
+        notes: formData.notes || null,
+      };
+
+      if (editingId) {
+        await api.put(`/fleet/documents/${editingId}`, payload);
         showSuccess("Document updated successfully!");
       } else {
-        await api.post('/fleet/documents', formData);
-        showSuccess("Document added successfully!");
+        await api.post('/fleet/documents', payload);
+        showSuccess("Document created successfully!");
       }
-      fetchDocuments();
-      setMode('list');
-      resetForm();
+      setView('list');
+      fetchData();
     } catch (error) {
       console.error("Error saving document:", error);
-      showError("Failed to save document");
+      showError(error.response?.data?.detail || "Failed to save document");
     }
   };
 
-  const handleEdit = (doc) => {
-    setFormData(doc);
-    setMode('form');
-  };
-
-  const handleCancel = async () => {
-    const isFormEmpty = !formData.vehicle && !formData.documentNumber;
-    if (!isFormEmpty) {
-      const confirmed = await showConfirm({
-        title: 'Cancel Changes',
-        description: 'Are you sure you want to cancel? Any unsaved changes will be lost.',
-        confirmText: 'Yes, Cancel',
-        cancelText: 'No, Stay',
-        variant: 'destructive'
-      });
-      if (!confirmed) return;
-    }
-    setMode('list');
-    resetForm();
-  };
-
-  const handleView = (doc) => {
-    setFormData(doc);
-    setViewingDoc(doc);
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
     const confirmed = await showConfirm({
       title: 'Delete Document',
       description: 'Are you sure you want to delete this document? This action cannot be undone.',
       confirmText: 'Delete',
+      cancelText: 'Cancel',
       variant: 'destructive'
     });
 
-    if (confirmed) {
-      try {
-        await api.delete(`/fleet/documents/${id}`);
-        showSuccess("Document deleted successfully");
-        fetchDocuments();
-      } catch (error) {
-        console.error("Error deleting document:", error);
-        showError("Failed to delete document");
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/fleet/documents/${id}`);
+      showSuccess('Document deleted successfully');
+      if (selectedViewDoc?.id === id) setSelectedViewDoc(null);
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      showError('Failed to delete document');
+    }
+  };
+
+  // Stats calculations
+  const totalDocs = documents.length;
+  
+  const activeCount = documents.filter(d => getDocStatus(d.expiry_date) === 'Active').length;
+  
+  const expiredCount = documents.filter(d => getDocStatus(d.expiry_date) === 'Expired').length;
+  
+  const soonToExpireCount = documents.filter(d => {
+    if (!d.expiry_date) return false;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const exp = new Date(d.expiry_date);
+    const diffTime = exp - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 && diffDays <= 30;
+  }).length;
+
+  // Filtering
+  const filteredDocs = documents.filter(d => {
+    const vehicleNo = getVehicleNumber(d.vehicle_id).toLowerCase();
+    const docType = (d.document_type || '').toLowerCase();
+    const refNo = (d.reference_number || '').toLowerCase();
+    const notes = (d.notes || '').toLowerCase();
+    const authority = (d.authority || '').toLowerCase();
+    
+    const matchesSearch = searchTerm === '' ||
+      vehicleNo.includes(searchTerm.toLowerCase()) ||
+      docType.includes(searchTerm.toLowerCase()) ||
+      refNo.includes(searchTerm.toLowerCase()) ||
+      notes.includes(searchTerm.toLowerCase()) ||
+      authority.includes(searchTerm.toLowerCase());
+      
+    const docStatus = getDocStatus(d.expiry_date);
+    let matchesStatus = true;
+    if (statusFilter === 'Active') {
+      matchesStatus = docStatus === 'Active';
+    } else if (statusFilter === 'Expired') {
+      matchesStatus = docStatus === 'Expired';
+    } else if (statusFilter === 'Soon Expiring') {
+      if (!d.expiry_date) {
+        matchesStatus = false;
+      } else {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const exp = new Date(d.expiry_date);
+        const diffTime = exp - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        matchesStatus = diffDays > 0 && diffDays <= 30;
       }
     }
-  };
+    
+    const matchesType = typeFilter === 'All Types' || d.document_type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'Expired': return 'bg-red-100 text-red-800';
-      case 'Renewed': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // FORM VIEW
+  if (view === 'form') {
+    return (
+      <div className="animate-fade">
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Compliance Document' : 'New Compliance Document'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              <button type="submit" form="docForm" className="btn btn-primary"><Save size={16} /> Save Document</button>
+            </div>
+          </div>
 
-  const filteredDocs = documents;
+          <div style={{ padding: 32 }}>
+            <form id="docForm" onSubmit={handleSubmit}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Document Details</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <div className="form-group">
+                  <label>Vehicle *</label>
+                  <select className="form-control" name="vehicle_id" value={formData.vehicle_id} onChange={handleInputChange} required>
+                    <option value="">-- Select Vehicle --</option>
+                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.vehicle_number}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Document Type *</label>
+                  <select className="form-control" name="document_type" value={formData.document_type} onChange={handleInputChange} required>
+                    {docTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Document / Ref Number *</label>
+                  <input type="text" className="form-control" name="reference_number" value={formData.reference_number} onChange={handleInputChange} placeholder="Enter Ref No" required />
+                </div>
 
-  return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="card">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="text-gray-500 hover:text-gray-700 transition"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <Folder className="h-7 w-7 text-indigo-600" />
-              RC / Insurance / Permit
-            </h1>
-            <p className="text-gray-600 mt-1">Manage vehicle compliance documents</p>
+                <div className="form-group">
+                  <label>Issue Date *</label>
+                  <input type="date" className="form-control" name="issued_date" value={formData.issued_date} onChange={handleInputChange} required />
+                </div>
+                <div className="form-group">
+                  <label>Expiry Date *</label>
+                  <input type="date" className="form-control" name="expiry_date" value={formData.expiry_date} onChange={handleInputChange} required />
+                </div>
+                <div className="form-group">
+                  <label>Issued By / Authority</label>
+                  <input type="text" className="form-control" name="authority" value={formData.authority} onChange={handleInputChange} placeholder="E.g. RTO, Insurance Co" />
+                </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                  <label>Document File (PDF / Image)</label>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <input type="file" accept=".pdf,image/*" onChange={handleFileChange} className="form-control" style={{ flex: 1 }} />
+                    {formData.document_name && (
+                      <span style={{ fontSize: 13, color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <CheckCircle size={16} /> {formData.document_name.substring(0, 20)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                  <label>Notes / Remarks</label>
+                  <textarea className="form-control" name="notes" value={formData.notes} onChange={handleInputChange} rows="4" style={{ resize: 'vertical' }} placeholder="Any additional details..."></textarea>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-        {mode === 'list' ? (
-          <button 
-            onClick={() => { resetForm(); setMode('form'); }}
-            className="btn btn-primary"
-          >
-            <Plus size={18} />
-            New Document
-          </button>
-        ) : (
-          <button 
-            onClick={handleCancel}
-            className="btn btn-secondary"
-          >
-            <X size={18} />
-            Cancel
-          </button>
-        )}
+      </div>
+    );
+  }
+
+  // LIST VIEW
+  return (
+    <div className="animate-fade">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Folder size={24} color="var(--primary)" /> RC / Insurance / Permit
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>Manage vehicle compliance and safety documents</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+          <Plus size={18} /> Add Document
+        </button>
       </div>
 
-      {mode === 'list' && (
-        <div className="card">
-          <div className="overflow-x-auto">
+      {/* Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('All Status')} style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+          <div className="stat-icon" style={{ background: 'rgba(79,70,229,0.1)', color: 'var(--primary)' }}>
+            <Folder size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Docs</h3>
+            <div className="value">{totalDocs}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" onClick={() => setStatusFilter('Active')} style={{ cursor: 'pointer', border: statusFilter === 'Active' ? '2px solid #10b981' : '1px solid transparent' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Active</h3>
+            <div className="value">{activeCount}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" onClick={() => setStatusFilter('Expired')} style={{ cursor: 'pointer', border: statusFilter === 'Expired' ? '2px solid #ef4444' : '1px solid transparent' }}>
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Expired</h3>
+            <div className="value">{expiredCount}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" onClick={() => setStatusFilter('Soon Expiring')} style={{ cursor: 'pointer', border: statusFilter === 'Soon Expiring' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+            <Calendar size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Soon Expiring</h3>
+            <div className="value">{soonToExpireCount}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input type="text" className="form-control" placeholder="Search by type, ref no, vehicle..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+          <Filter size={16} />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Type:</span>
+        </div>
+        <select className="form-control" style={{ width: 200, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+          <option value="All Types">All Types</option>
+          {docTypes.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+          <Filter size={16} />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Status:</span>
+        </div>
+        <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="All Status">All Status</option>
+          <option value="Active">Active</option>
+          <option value="Expired">Expired</option>
+          <option value="Soon Expiring">Soon Expiring</option>
+        </select>
+      </div>
+
+      {/* Split Layout */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        {/* Table */}
+        <div style={{ flex: 1, overflowX: 'auto' }}>
+          <div className="card" style={{ padding: 0 }}>
             <table className="data-table">
-              <thead className="bg-gray-100">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Vehicle / Doc No</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Issue / Expiry</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Reminder</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                  <th>Vehicle</th>
+                  <th>Document Type</th>
+                  <th>Ref Number</th>
+                  <th>Expiry Date</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredDocs.length > 0 ? filteredDocs.map((doc) => (
-                  <tr key={doc.id} className="btn btn-secondary">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{doc.vehicle}</div>
-                      <div className="text-sm text-gray-500">{doc.documentNumber}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{doc.documentType}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">Issue: {doc.issueDate}</div>
-                      <div className="text-sm text-red-600 font-medium">Exp: {doc.expiryDate}</div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex px-2 py-1 text-xs rounded-full font-semibold ${getStatusColor(doc.status)}`}>
-                        {doc.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-700">
-                      {doc.reminderBeforeDays ? `${doc.reminderBeforeDays} Days` : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-center space-x-3">
-                      <button onClick={() => handleView(doc)} className="text-blue-600 hover:text-blue-900" title="View">
-                        <Eye size={18} />
-                      </button>
-                      <button onClick={() => handleEdit(doc)} className="text-indigo-600 hover:text-indigo-900" title="Edit">
-                        <Edit2 size={18} />
-                      </button>
-                      <button onClick={() => handleDelete(doc.id)} className="text-red-600 hover:text-red-900" title="Delete">
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                      <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                      <p className="text-lg font-medium text-gray-900">No documents found</p>
-                      <p>Click "New Document" to create one.</p>
-                    </td>
-                  </tr>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                ) : filteredDocs.length === 0 ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No compliance documents found</td></tr>
+                ) : (
+                  filteredDocs.map(d => {
+                    const docStatus = getDocStatus(d.expiry_date);
+                    return (
+                      <tr key={d.id} onClick={() => setSelectedViewDoc(d)} style={{ cursor: 'pointer', background: selectedViewDoc?.id === d.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                        <td style={{ fontWeight: 600 }}>{getVehicleNumber(d.vehicle_id)}</td>
+                        <td>{d.document_type}</td>
+                        <td>{d.reference_number || '-'}</td>
+                        <td style={{ color: docStatus === 'Expired' ? '#ef4444' : 'inherit', fontWeight: docStatus === 'Expired' ? 600 : 'normal' }}>
+                          {d.expiry_date}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={`badge ${docStatus === 'Active' ? 'badge-active' : 'badge-pending'}`} style={{ 
+                            background: docStatus === 'Active' ? '#d1fae5' : '#fee2e2', 
+                            color: docStatus === 'Active' ? '#065f46' : '#991b1b' 
+                          }}>
+                            {docStatus}
+                          </span>
+                        </td>
+                        <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(d)}>
+                              <Edit2 size={16} />
+                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(d.id, e)}>
+                              <Trash2 size={16} color="#ef4444" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
         </div>
-      )}
 
-      {/* View Modal Popup */}
-      {viewingDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="card">
-            <div className="btn btn-primary">
-              <h2 className="text-xl font-bold text-indigo-900 flex items-center gap-3">
-                <FileText className="h-6 w-6 text-indigo-600" />
-                Document Details
-              </h2>
-              <button 
-                onClick={() => setViewingDoc(null)}
-                className="btn btn-primary"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="p-8 overflow-y-auto max-h-[75vh] bg-white">
-              <div className="form-row">
-                <div className="btn btn-primary">
-                  <h3 className="font-bold text-indigo-800 text-lg border-b border-indigo-200 pb-3 mb-2 flex items-center gap-2">
-                    <Truck size={20} className="text-indigo-500" />
-                    Basic Info
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Vehicle</span><p className="font-bold text-gray-900 text-lg">{formData.vehicle}</p></div>
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Document Type</span><p className="font-semibold text-gray-800">{formData.documentType}</p></div>
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Document Number</span><p className="btn btn-primary">{formData.documentNumber}</p></div>
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Status</span>
-                      <span className={`inline-flex mt-1 px-3 py-1 text-xs rounded-full font-bold uppercase tracking-tighter ${getStatusColor(formData.status)}`}>
-                        {formData.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+        {/* Details Panel */}
+        {selectedViewDoc && (
+          <div style={{ flex: '0 0 380px' }}>
+            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
+              <div style={{ display: 'flex', justifyView: 'space-between', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)' }}>
+                  <FileText size={16} style={{ display: 'inline', marginRight: 8 }} />
+                  Document Details
+                </h3>
+                <button onClick={() => setSelectedViewDoc(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={18} />
+                </button>
+              </div>
 
-                <div className="btn btn-primary">
-                  <h3 className="font-bold text-blue-800 text-lg border-b border-blue-200 pb-3 mb-2 flex items-center gap-2">
-                    <Calendar size={20} className="text-blue-500" />
-                    Dates & Authority
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Issued By</span><p className="font-semibold text-gray-800 text-lg">{formData.issuedBy || 'N/A'}</p></div>
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Issue Date</span><p className="font-semibold text-gray-800">{formData.issueDate}</p></div>
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Expiry Date</span><p className="font-bold text-red-600 flex items-center gap-2"><AlertCircle size={14} />{formData.expiryDate}</p></div>
-                    <div className="group"><span className="text-gray-500 text-xs font-bold uppercase tracking-wider block mb-1">Reminder Before</span><p className="font-semibold text-gray-800">{formData.reminderBeforeDays ? `${formData.reminderBeforeDays} Days` : 'N/A'}</p></div>
-                  </div>
-                </div>
-
-                {formData.notes && (
-                  <div className="btn btn-secondary">
-                    <h3 className="btn btn-secondary">Notes & Remarks</h3>
-                    <p className="text-gray-700 whitespace-pre-wrap italic leading-relaxed">"{formData.notes}"</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto' }}>
+                <DetailRow label="Vehicle" value={getVehicleNumber(selectedViewDoc.vehicle_id)} />
+                <DetailRow label="Document Type" value={selectedViewDoc.document_type} />
+                <DetailRow label="Ref Number" value={selectedViewDoc.reference_number} />
+                <DetailRow label="Issue Date" value={selectedViewDoc.issued_date} />
+                <DetailRow label="Expiry Date" value={selectedViewDoc.expiry_date} />
+                <DetailRow label="Issued By" value={selectedViewDoc.authority} />
+                <DetailRow label="Notes" value={selectedViewDoc.notes} />
+                <DetailRow label="Status" value={
+                  <span style={{ 
+                    fontWeight: 800, 
+                    color: getDocStatus(selectedViewDoc.expiry_date) === 'Active' ? 'var(--success)' : 'var(--danger)' 
+                  }}>
+                    {getDocStatus(selectedViewDoc.expiry_date)}
+                  </span>
+                } />
+                {selectedViewDoc.document_name && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 500, display: 'block', marginBottom: 6 }}>Attached File</span>
+                    <a 
+                      href={selectedViewDoc.document_path} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="btn btn-secondary" 
+                      style={{ width: '100%', justifyContent: 'center', gap: 6, fontSize: 12 }}
+                    >
+                      <FileText size={14} /> {selectedViewDoc.document_name}
+                    </a>
                   </div>
                 )}
               </div>
             </div>
-            
-            <div className="px-8 py-5 border-t bg-slate-50 shadow-inner flex justify-end gap-3">
-              <button
-                onClick={() => setViewingDoc(null)}
-                className="btn btn-secondary"
-              >
-                Close
-              </button>
-              <button 
-                onClick={() => { setViewingDoc(null); setMode('form'); }} 
-                className="btn btn-primary"
-              >
-                <Edit2 size={18} /> Edit Document
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-
-      {mode === 'form' && (
-        <div className="card">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            
-            {/* Basic Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2 border-b pb-2">
-                <Truck size={20} /> Basic Details
-              </h3>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle *</label>
-                  <select 
-                    name="vehicle" 
-                    value={formData.vehicle} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="form-control"
-                  >
-                    <option value="">Select Vehicle</option>
-                    {vehicles.map(v => <option key={v.id} value={v.vehicle_number}>{v.vehicle_number}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Document Type *</label>
-                  <select 
-                    name="documentType" 
-                    value={formData.documentType} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="form-control"
-                  >
-                    <option value="">Select Document Type</option>
-                    {DOC_TYPES.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Document Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2 border-b pb-2">
-                <FileText size={20} /> Document Information
-              </h3>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Document Number *</label>
-                  <input 
-                    type="text" 
-                    name="documentNumber" 
-                    value={formData.documentNumber} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="form-control" 
-                    placeholder="Enter Document No" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Issued By</label>
-                  <input 
-                    type="text" 
-                    name="issuedBy" 
-                    value={formData.issuedBy} 
-                    onChange={handleInputChange} 
-                    className="form-control" 
-                    placeholder="E.g., RTO Office, Insurance Co." 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date *</label>
-                  <input 
-                    type="date" 
-                    name="issueDate" 
-                    value={formData.issueDate} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="form-control" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
-                  <input 
-                    type="date" 
-                    name="expiryDate" 
-                    value={formData.expiryDate} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="form-control" 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Auto Links & Reminders */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2 border-b pb-2">
-                <AlertCircle size={20} /> Linking & Alerts
-              </h3>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Link (Auto)</label>
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={formData.vehicle || 'Auto from selection'} 
-                    className="form-control" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Reminder Before (Days)</label>
-                  <select 
-                    name="reminderBeforeDays" 
-                    value={formData.reminderBeforeDays} 
-                    onChange={handleInputChange} 
-                    className="form-control"
-                  >
-                    <option value="">Select Days</option>
-                    {REMINDER_DAYS.map(days => <option key={days} value={days}>{days} Days</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
-                  <select 
-                    name="status" 
-                    value={formData.status} 
-                    onChange={handleInputChange} 
-                    required 
-                    className="form-control"
-                  >
-                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Document Upload & Additional Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-indigo-700 flex items-center gap-2 border-b pb-2">
-                <Upload size={20} /> Attachment & Notes
-              </h3>
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Document Upload * (PDF / Image)</label>
-                  <input 
-                    type="file" 
-                    accept=".pdf,image/*"
-                    onChange={handleFileChange} 
-                    required={!formData.id && !formData.documentUpload} // required on create only
-                    className="form-control" 
-                  />
-                  {formData.documentUpload && formData.documentUpload.name && (
-                    <p className="mt-1 text-sm text-gray-500">Selected: {formData.documentUpload.name}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes / Remarks</label>
-                  <textarea 
-                    name="notes" 
-                    value={formData.notes} 
-                    onChange={handleInputChange} 
-                    rows={3}
-                    placeholder="Any additional information..."
-                    className="form-control" 
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t flex justify-end gap-4">
-              <button 
-                type="button" 
-                onClick={handleCancel} 
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-              >
-                <Save size={18} />
-                Save Document
-              </button>
-            </div>
-
-          </form>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
-};
-
-export default FleetDocuments;
+}

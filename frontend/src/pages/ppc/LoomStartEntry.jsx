@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlayCircle, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { PlayCircle, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
 import { subMasterAPI, ppcAPI } from '../../services/api';
 
 export default function LoomStartEntry() {
@@ -7,16 +7,21 @@ export default function LoomStartEntry() {
   const [looms, setLooms] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [operators, setOperators] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
+    id: null,
     entry_id: '',
     entry_date: new Date().toISOString().split('T')[0],
     loom_id: '',
     order_id: '',
     shift: '',
+    operator_id: '',
     operator_name: '',
     warp_beam_no: '',
     start_time: '',
@@ -31,16 +36,22 @@ export default function LoomStartEntry() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, shiftRes, assignRes] = await Promise.all([
+      const [recRes, loomRes, shiftRes, assignRes, schedRes, allocRes, opRes] = await Promise.all([
         subMasterAPI.list('ppc_loom_start').catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] })),
         subMasterAPI.list('ppc_shift_master').catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_operator_assignment').catch(() => ({ data: [] }))
+        subMasterAPI.list('ppc_operator_assignment').catch(() => ({ data: [] })),
+        subMasterAPI.list('ppc_start_end_plan').catch(() => ({ data: [] })),
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getOperators().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
       setShifts(shiftRes?.data || []);
       setAssignments(assignRes?.data || []);
+      setSchedules(schedRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setOperators(opRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -52,20 +63,55 @@ export default function LoomStartEntry() {
     const updated = { ...formData, [name]: value };
     
     // Auto-fill logic
-    if (updated.loom_id && updated.shift) {
-      const loom = looms.find(l => l.id.toString() === updated.loom_id);
-      const lName = loom ? loom.loom_name : updated.loom_id;
-      
-      const assign = assignments.find(a => 
-        a.extra_field_1 && a.extra_field_1.includes(lName) && a.extra_field_1.includes(updated.shift)
-      );
+    if (updated.loom_id) {
+       const loomIdStr = updated.loom_id.toString();
+       const loom = looms.find(l => l.id.toString() === loomIdStr || l.loom_name === loomIdStr);
+       const lName = loom ? loom.loom_name : loomIdStr;
+       const lIdNum = loom ? loom.id : parseInt(loomIdStr) || 0;
 
-      if (assign) {
-         updated.operator_name = assign.code || assign.extra_field_1;
-         
-         const orderMatch = assign.description ? assign.description.match(/Order:\s*([^|]+)/) : null;
-         updated.order_id = orderMatch ? orderMatch[1].trim() : '';
-      }
+       // 1. Find operator from assignments
+       const assign = assignments.find(a => 
+         a.extra_field_1 && a.extra_field_1.includes(lName) && (!updated.shift || a.extra_field_1.includes(updated.shift))
+       );
+       if (assign) {
+         // assign.code has operator name or id. Try to match back to operators
+         const opVal = assign.code || assign.extra_field_1;
+         const opMatch = operators.find(o => (o.operator_name || o.name) === opVal || (o.operator_id || o.id.toString()) === opVal);
+         if (opMatch) {
+            updated.operator_id = opMatch.operator_id || opMatch.id.toString();
+            updated.operator_name = opMatch.operator_name || opMatch.name;
+         } else {
+            updated.operator_name = opVal;
+         }
+       } else {
+         updated.operator_id = '';
+         updated.operator_name = '';
+       }
+
+       let foundOrderId = '';
+
+       // 2. Find order from allocations (most accurate)
+       const alloc = allocations.find(a => a.loom_id?.toString() === lIdNum.toString() && a.allocation_status !== 'Completed');
+       if (alloc) {
+          foundOrderId = alloc.order_id || alloc.order_no || '';
+       }
+
+       // 3. Fallback to schedule
+       if (!foundOrderId) {
+          const sched = schedules.find(s => s.description && s.description.includes(lName));
+          if (sched) foundOrderId = sched.code;
+       }
+
+       // 4. Fallback to operator assignment description
+       if (!foundOrderId) {
+          const assignOrd = assignments.find(a => a.extra_field_1 && a.extra_field_1.includes(lName));
+          if (assignOrd && assignOrd.description) {
+            const orderMatch = assignOrd.description.match(/Order:\s*([^|]+)/);
+            if (orderMatch) foundOrderId = orderMatch[1].trim();
+          }
+       }
+
+       updated.order_id = foundOrderId || '';
     }
     
     // Auto-fill time if shift is selected
@@ -91,22 +137,71 @@ export default function LoomStartEntry() {
     setFormData(updated);
   };
 
+  const handleOperatorChange = (e) => {
+    const opId = e.target.value;
+    const opMatch = operators.find(o => (o.operator_id || o.id.toString()) === opId);
+    setFormData(prev => ({
+      ...prev,
+      operator_id: opId,
+      operator_name: opMatch ? (opMatch.operator_name || opMatch.name) : ''
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await subMasterAPI.create('ppc_loom_start', {
+      const payload = {
         name: formData.entry_id,
         code: formData.loom_id,
         extra_field_1: formData.order_id,
         extra_field_2: `${formData.shift} - ${formData.operator_name}`,
         description: `Beam: ${formData.warp_beam_no} | Start: ${formData.start_meter}m`,
         is_active: true
-      });
+      };
+
+      if (formData.id) {
+        await subMasterAPI.update('ppc_loom_start', formData.id, payload);
+      } else {
+        await subMasterAPI.create('ppc_loom_start', payload);
+      }
       setIsFormOpen(false);
       fetchData();
     } catch (err) {
       console.error(err);
       alert('Error creating entry.');
+    }
+  };
+
+  const handleEdit = (record) => {
+    const shiftOpMatch = record.extra_field_2?.split(' - ');
+    const beamMatch = record.description?.match(/Beam: (.*?) \|/);
+    const startMatch = record.description?.match(/Start: (.*?)m/);
+
+    setFormData({
+      id: record.id,
+      entry_id: record.name,
+      entry_date: new Date().toISOString().split('T')[0],
+      loom_id: record.code,
+      order_id: record.extra_field_1,
+      shift: shiftOpMatch ? shiftOpMatch[0] : '',
+      operator_id: '',
+      operator_name: shiftOpMatch ? shiftOpMatch[1] : '',
+      warp_beam_no: beamMatch ? beamMatch[1] : '',
+      start_meter: startMatch ? startMatch[1] : 0,
+      start_time: '',
+      status: 'Running'
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this entry?')) return;
+    try {
+      await subMasterAPI.delete('ppc_loom_start', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete entry');
     }
   };
 
@@ -129,9 +224,10 @@ export default function LoomStartEntry() {
             className="btn btn-primary" 
             onClick={() => {
               setFormData({
+                id: null,
                 entry_id: `PE-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
                 entry_date: new Date().toISOString().split('T')[0],
-                loom_id: '', order_id: '', shift: '', operator_name: '',
+                loom_id: '', order_id: '', shift: '', operator_id: '', operator_name: '',
                 warp_beam_no: '', start_time: '', start_meter: 0, status: 'Running'
               });
               setIsFormOpen(true);
@@ -194,10 +290,19 @@ export default function LoomStartEntry() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>Order ID (Auto-fill)</label>
                 <input type="text" className="form-control" value={formData.order_id} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Operator ID</label>
+                <select className="form-control" value={formData.operator_id} onChange={handleOperatorChange} required>
+                  <option value="">-- Select Operator --</option>
+                  {operators.map(o => (
+                    <option key={o.id} value={o.operator_id || o.id}>{o.operator_id || o.id}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label>Operator Name (Auto-fill)</label>
@@ -259,13 +364,14 @@ export default function LoomStartEntry() {
                   <th>Order</th>
                   <th>Shift & Operator</th>
                   <th>Details</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
                     <td style={{ fontWeight: 600 }}>{record.name}</td>
@@ -273,6 +379,19 @@ export default function LoomStartEntry() {
                     <td><span style={{ color: '#0369a1', fontWeight: 600 }}>{record.extra_field_1}</span></td>
                     <td>{record.extra_field_2}</td>
                     <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
