@@ -208,7 +208,7 @@ export default function Gateway() {
       localStorage.setItem("cb_company_name", newCompany.name);
       setCompany(newCompany);
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      navigate("/");
+      navigate("/cubebook/");
     },
   });
 
@@ -232,7 +232,7 @@ export default function Gateway() {
     localStorage.setItem("cb_company_id", company.id);
     localStorage.setItem("cb_company_name", company.name);
     setCompany(company);
-    navigate("/");
+    navigate("/cubebook/");
   };
 
   if (!activeCompany && storedCompanyId && storedCompanyLoading) {
@@ -310,7 +310,7 @@ export default function Gateway() {
                 </div>
               </div>
               <button
-                onClick={() => navigate('/company/create')}
+                onClick={() => navigate('/cubebook/company/create')}
                 className="btn btn-primary"
               >
                 <Plus size={16} />
@@ -353,7 +353,7 @@ export default function Gateway() {
 
               {/* New Company Card */}
               <button
-                onClick={() => navigate('/company/create')}
+                onClick={() => navigate('/cubebook/company/create')}
                 className="btn btn-secondary"
               >
                 <div className="btn btn-primary">
@@ -443,8 +443,8 @@ export default function Gateway() {
   const renderCompanyDropdown = () => {
     return (
       <div className="absolute top-[42px] left-0 w-[240px] bg-[#e2f1fc] border border-[#a2c8e6] shadow-2xl rounded z-50 text-[12px] text-black py-1">
-        {renderDropdownItem("Create", "C", () => { navigate('/company/create'); setActiveDropdown(null); })}
-        {renderDropdownItem("Alter", "A", () => { navigate('/company/alter'); setActiveDropdown(null); })}
+        {renderDropdownItem("Create", "C", () => { navigate('/cubebook/company/create'); setActiveDropdown(null); })}
+        {renderDropdownItem("Alter", "A", () => { navigate('/cubebook/company/alter'); setActiveDropdown(null); })}
         {renderDropdownItem("ChanGe", "G", () => { setActiveDropdown(null); }, "F3")}
         {renderDropdownItem("Select", "S", () => { setActiveDropdown(null); }, "Alt+F3")}
         {renderDropdownItem("SHut", "H", () => { setActiveDropdown(null); }, "Ctrl+F3")}
@@ -459,7 +459,7 @@ export default function Gateway() {
         
         <div className="mx-2 border-t border-[#b6d5ee] my-1" />
         <div className="px-4 py-0.5 text-[9px] uppercase tracking-wider text-slate-500 font-bold">Configure</div>
-        {renderDropdownItem("Features", "F", () => { navigate('/masters/company-features'); setActiveDropdown(null); }, "F11")}
+        {renderDropdownItem("Features", "F", () => { navigate('/cubebook/masters/company-features'); setActiveDropdown(null); }, "F11")}
         {renderDropdownItem("SEcurity", "E", () => { setActiveDropdown(null); })}
         {renderDropdownItem("TallyVault", "T", () => { setActiveDropdown(null); })}
         {renderDropdownItem("ONline Access", "N", () => { setActiveDropdown(null); })}
@@ -754,8 +754,8 @@ export default function Gateway() {
 
             {/* Right Column: Actions */}
             <div className="w-[30%] bg-white/50 overflow-y-auto py-2 text-[12px] flex flex-col">
-              <button onClick={() => { navigate('/company/create'); setActiveDropdown(null); }} className="form-control">Create Company</button>
-              <button onClick={() => { navigate('/company/alter'); setActiveDropdown(null); }} className="form-control">Alter Company</button>
+              <button onClick={() => { navigate('/cubebook/company/create'); setActiveDropdown(null); }} className="form-control">Create Company</button>
+              <button onClick={() => { navigate('/cubebook/company/alter'); setActiveDropdown(null); }} className="form-control">Alter Company</button>
               <button onClick={() => { setActiveDropdown(null); }} className="form-control">Select Company</button>
               <button onClick={() => { setActiveDropdown(null); }} className="form-control">Shut Company</button>
             </div>
@@ -1112,29 +1112,29 @@ export default function Gateway() {
               <div className="w-[200px]">
                 {/* Masters */}
                 <div className="text-[10px] uppercase text-[#3b82f6] tracking-[0.1em] text-center mb-1 mt-2">Masters</div>
-                {renderMenuItem("Create", "C", () => navigate('/masters'))}
-                {renderMenuItem("Alter", "A", () => navigate('/masters/alter'))}
-                {renderMenuItem("CHart of Accounts", "H", () => navigate('/masters/chart'))}
+                {renderMenuItem("Create", "C", () => navigate('/cubebook/masters'))}
+                {renderMenuItem("Alter", "A", () => navigate('/cubebook/masters/alter'))}
+                {renderMenuItem("CHart of Accounts", "H", () => navigate('/cubebook/masters/chart'))}
                 
                 {/* Transactions */}
                 <div className="text-[10px] uppercase text-[#3b82f6] tracking-[0.1em] text-center mb-1 mt-5">Transactions</div>
-                {renderMenuItem("Vouchers", "V", () => navigate('/vouchers'))}
-                {renderMenuItem("Day BooK", "K", () => navigate('/day-book'))}
+                {renderMenuItem("Vouchers", "V", () => navigate('/cubebook/vouchers'))}
+                {renderMenuItem("Day BooK", "K", () => navigate('/cubebook/day-book'))}
                 
                 {/* Utilities */}
                 <div className="text-[10px] uppercase text-[#3b82f6] tracking-[0.1em] text-center mb-1 mt-5">Utilities</div>
-                {renderMenuItem("BaNking", "N", () => navigate('/banking'))}
+                {renderMenuItem("BaNking", "N", () => navigate('/cubebook/banking'))}
                 
                 {/* Reports */}
                 <div className="text-[10px] uppercase text-[#3b82f6] tracking-[0.1em] text-center mb-1 mt-5">Reports</div>
-                {renderMenuItem("Balance Sheet", "B", () => navigate('/reports'))}
-                {renderMenuItem("Profit & Loss A/c", "P", () => navigate('/reports'))}
-                {renderMenuItem("Stock Summary", "S", () => navigate('/stock'))}
+                {renderMenuItem("Balance Sheet", "B", () => navigate('/cubebook/reports'))}
+                {renderMenuItem("Profit & Loss A/c", "P", () => navigate('/cubebook/reports'))}
+                {renderMenuItem("Stock Summary", "S", () => navigate('/cubebook/stock'))}
                 {renderMenuItem("Ratio Analysis", "R", () => {})}
                 
                 <div className="mt-5">
-                  {renderMenuItem("Display More Reports", "D", () => navigate('/gst'))}
-                  {renderMenuItem("DashbOard", "O", () => navigate('/dashboard'))}
+                  {renderMenuItem("Display More Reports", "D", () => navigate('/cubebook/gst'))}
+                  {renderMenuItem("DashbOard", "O", () => navigate('/cubebook/dashboard'))}
                 </div>
                 
                 <div className="mt-8 mb-4">

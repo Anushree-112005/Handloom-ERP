@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Plus, Search, Calendar, CheckCircle, XCircle, Clock, X, Save, Eye, Edit2, Trash2, DollarSign, Calculator, Filter, LayoutList, LayoutGrid } from 'lucide-react';
-import { fetchLoans, createLoan, updateLoan, deleteLoan, fetchEmployees } from '../../../services/hrService';
+import { Wallet, Plus, Search, Calendar, CheckCircle, XCircle, Clock, X, Save, Eye, Edit2, Trash2, DollarSign, Filter, LayoutList, LayoutGrid } from 'lucide-react';
+import { fetchLoans, createLoan, updateLoan, deleteLoan, fetchEmployees, fetchPayroll } from '../../../services/hrService';
 
 const loanTypes = ['Personal Loan', 'Salary Advance', 'Emergency Loan', 'Education Loan', 'Housing Loan', 'Vehicle Loan'];
 
@@ -16,13 +16,13 @@ const statusColors = {
 export default function Loans() {
   const [loans, setLoans] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [viewingLoan, setViewingLoan] = useState(null);
-  const [showCalculator, setShowCalculator] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [showFilters, setShowFilters] = useState(false);
   const [filterType, setFilterType] = useState('');
@@ -32,11 +32,10 @@ export default function Loans() {
     employee_name: '',
     loan_type: '',
     amount: '',
-    interest_rate: '0',
-    tenure_months: '12',
     purpose: '',
     guarantor_name: '',
-    guarantor_contact: ''
+    guarantor_contact: '',
+    applied_date: new Date().toISOString().split('T')[0]
   };
   const [form, setForm] = useState(initialForm);
 
@@ -47,12 +46,14 @@ export default function Loans() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [loanData, empData] = await Promise.all([
+      const [loanData, empData, payrollData] = await Promise.all([
         fetchLoans(),
-        fetchEmployees()
+        fetchEmployees(),
+        fetchPayroll().catch(() => [])
       ]);
       setLoans(loanData);
       setEmployees(empData);
+      setPayrolls(payrollData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -60,8 +61,22 @@ export default function Loans() {
     }
   };
 
+  const getLoanPaidAmount = (loan) => {
+    if (!loan) return 0;
+    const selectedEmp = employees.find(
+      emp => String(emp.id) === String(loan.employee_id) || String(emp.employee_id) === String(loan.employee_id) || (emp.name && loan.employee_name && emp.name.toLowerCase() === loan.employee_name.toLowerCase())
+    );
+    if (!selectedEmp) return 0;
+    return payrolls
+      .filter(p => 
+        String(p.employee) === String(selectedEmp.id) || 
+        String(p.employee) === String(selectedEmp.employee_id)
+      )
+      .reduce((sum, p) => sum + (Number(p.loan_amount) || 0), 0);
+  };
+
   const handleSubmit = async () => {
-    if (!form.employee_id || !form.loan_type || !form.amount || !form.tenure_months) {
+    if (!form.employee_id || !form.loan_type || !form.amount) {
       alert('Please fill required fields');
       return;
     }
@@ -70,10 +85,7 @@ export default function Loans() {
       const payload = {
         ...form,
         employee_id: parseInt(form.employee_id),
-        amount: parseFloat(form.amount),
-        interest_rate: parseFloat(form.interest_rate) || 0,
-        tenure_months: parseInt(form.tenure_months),
-        emi_amount: calculateEMI(parseFloat(form.amount), parseFloat(form.interest_rate), parseInt(form.tenure_months))
+        amount: parseFloat(form.amount)
       };
 
       if (editingId) {
@@ -97,11 +109,10 @@ export default function Loans() {
       employee_name: loan.employee_name,
       loan_type: loan.loan_type,
       amount: loan.amount,
-      interest_rate: loan.interest_rate || 0,
-      tenure_months: loan.tenure_months,
       purpose: loan.purpose || '',
       guarantor_name: loan.guarantor_name || '',
-      guarantor_contact: loan.guarantor_contact || ''
+      guarantor_contact: loan.guarantor_contact || '',
+      applied_date: loan.applied_date || new Date().toISOString().split('T')[0]
     });
     setEditingId(loan.id);
     setShowForm(true);
@@ -137,13 +148,6 @@ export default function Loans() {
     });
   };
 
-  const calculateEMI = (principal, rate, months) => {
-    if (rate === 0) return principal / months;
-    const r = rate / 12 / 100;
-    const emi = principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
-    return Math.round(emi);
-  };
-
   const filteredLoans = loans.filter(loan => {
     const matchesStatus = !filterStatus || loan.status === filterStatus;
     const matchesType = !filterType || loan.loan_type === filterType;
@@ -162,214 +166,142 @@ export default function Loans() {
     return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const calculatedEMI = form.amount && form.tenure_months 
-    ? calculateEMI(parseFloat(form.amount), parseFloat(form.interest_rate) || 0, parseInt(form.tenure_months))
-    : 0;
-
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title + record count */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">LOANS & ADVANCES</h1>
-          <span className="btn btn-primary">
+    <div className="animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, height: '100%', minHeight: 'calc(100vh - 80px)' }}>
+      {!showForm && (
+        <>
+          {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+            <Wallet size={24} color="var(--primary)" /> Loans & Advances
+          </h2>
+          <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
             {filteredLoans.length} Records
           </span>
         </div>
 
-        {/* RIGHT: Filter dropdown + view toggle + EMI Calculator + New Loan */}
-        <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(filterStatus || filterType) && <span className="btn btn-primary" />}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => { setFilterStatus(''); setFilterType(''); }} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control">
-                      <option value="">All Status</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Disbursed">Disbursed</option>
-                      <option value="Repaying">Repaying</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Loan Type</label>
-                    <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
-                      className="form-control">
-                      <option value="">All Types</option>
-                      {loanTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <button onClick={() => setShowCalculator(true)}
-            className="btn btn-secondary">
-            <Calculator className="w-4 h-4" /> EMI Calculator
-          </button>
-
+        {/* RIGHT: New Loan */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary">
+            className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}>
             <Plus className="w-4 h-4" /> New Loan
           </button>
         </div>
       </div>
 
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Stats */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Wallet className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Loans</p>
-            </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Loans</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.pending}</p>
-              <p className="text-xs text-slate-500">Pending</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Clock className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.pending}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Pending</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-success">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.active}</p>
-              <p className="text-xs text-slate-500">Active Loans</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CheckCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.active}</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Active Loans</p>
           </div>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <DollarSign className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">₹{(stats.totalAmount / 100000).toFixed(1)}L</p>
-              <p className="text-xs text-slate-500">Outstanding</p>
-            </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(stats.totalAmount / 100000).toFixed(1)}L</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Outstanding</p>
           </div>
         </div>
       </div>
 
       {/* Loans Table - List View */}
       {viewMode === 'list' && (
-        <div className="card">
+        <div className="card" style={{ padding: 0 }}>
           <div className="overflow-x-auto">
-            <table className="data-table">
-            <thead className="btn btn-secondary">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Loan ID</th>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Type</th>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Amount</th>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">EMI</th>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Tenure</th>
-                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
-                <th className="text-right px-6 py-4 text-xs uppercase font-bold text-slate-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredLoans.map(loan => (
-                <tr key={loan.id} className="btn btn-secondary">
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-indigo-600">{loan.loan_id}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-700">{loan.employee_name}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-600">{loan.loan_type}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-slate-800">₹{loan.amount?.toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-600">₹{loan.emi_amount?.toLocaleString()}/mo</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-slate-600">{loan.tenure_months} months</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[loan.status]}`}>
-                      {loan.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary">
-                        <Eye className="w-4 h-4 text-slate-500" />
-                      </button>
-                      {loan.status === 'Pending' && (
-                        <>
-                          <button onClick={() => handleEdit(loan)} className="btn btn-secondary">
-                            <Edit2 className="w-4 h-4 text-slate-500" />
-                          </button>
-                          <button onClick={() => handleDelete(loan.id)} className="btn btn-danger">
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredLoans.length === 0 && (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500">No loans found</p>
-                  </td>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Employee</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Type</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Full Amount</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Paid Amount</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Balance Amount</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Status</th>
+                  <th className="text-right px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Actions</th>
                 </tr>
-              )}
-            </tbody>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredLoans.map(loan => (
+                  <tr key={loan.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-slate-800">{loan.employee_name}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-600">{loan.loan_type}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-slate-800">₹{loan.amount?.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-emerald-600">₹{getLoanPaidAmount(loan).toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-amber-600">₹{Math.max(0, loan.amount - getLoanPaidAmount(loan)).toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        backgroundColor: loan.status === 'Approved' || loan.status === 'Disbursed' || loan.status === 'Repaying' ? '#10b98118' : loan.status === 'Pending' ? '#f59e0b18' : loan.status === 'Rejected' ? '#ef444418' : '#64748b18',
+                        color: loan.status === 'Approved' || loan.status === 'Disbursed' || loan.status === 'Repaying' ? '#047857' : loan.status === 'Pending' ? '#b45309' : loan.status === 'Rejected' ? '#b91c1c' : '#475569'
+                      }}>{loan.status}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+                        <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
+                          <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                        <button onClick={() => handleEdit(loan)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="Edit">
+                          <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                        <button onClick={() => handleDelete(loan.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }} title="Delete">
+                          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredLoans.length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      No loans found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
             </table>
           </div>
         </div>
@@ -377,55 +309,57 @@ export default function Loans() {
 
       {/* Loans Grid - Grid View */}
       {viewMode === 'grid' && (
-        <div className="form-row">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
           {filteredLoans.length === 0 ? (
-            <div className="btn btn-secondary">
+            <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
               <Wallet className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No loans found</p>
+              <p className="text-slate-500" style={{ margin: 0 }}>No loans found</p>
             </div>
           ) : filteredLoans.map(loan => (
-            <div key={loan.id} className="card">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-indigo-600 truncate">{loan.loan_id}</p>
-                  <p className="text-sm text-slate-700 truncate mt-1">{loan.employee_name}</p>
+            <div key={loan.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', itemsStart: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{loan.employee_name}</p>
+                  </div>
+                  <span style={{ 
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    backgroundColor: loan.status === 'Approved' || loan.status === 'Disbursed' || loan.status === 'Repaying' ? '#10b98118' : loan.status === 'Pending' ? '#f59e0b18' : loan.status === 'Rejected' ? '#ef444418' : '#64748b18',
+                    color: loan.status === 'Approved' || loan.status === 'Disbursed' || loan.status === 'Repaying' ? '#047857' : loan.status === 'Pending' ? '#b45309' : loan.status === 'Rejected' ? '#b91c1c' : '#475569'
+                  }}>{loan.status}</span>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[loan.status]}`}>
-                  {loan.status}
-                </span>
+                <div className="space-y-2" style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Type</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{loan.loan_type}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Full Amount</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>₹{loan.amount?.toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Paid Amount</span>
+                    <span style={{ fontWeight: 600, color: '#10b981' }}>₹{getLoanPaidAmount(loan).toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Balance Amount</span>
+                    <span style={{ fontWeight: 700, color: '#b45309' }}>₹{Math.max(0, loan.amount - getLoanPaidAmount(loan)).toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2 mb-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Type</span>
-                  <span className="font-medium text-slate-700">{loan.loan_type}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Amount</span>
-                  <span className="font-semibold text-slate-800">₹{loan.amount?.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">EMI</span>
-                  <span className="font-medium text-green-600">₹{loan.emi_amount?.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Tenure</span>
-                  <span className="font-medium">{loan.tenure_months} months</span>
-                </div>
-              </div>
-              <div className="btn btn-secondary">
-                <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary">
-                  <Eye className="w-3 h-3" /> View
+              <div style={{ display: 'flex', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
+                  <Eye className="w-3.5 h-3.5" /> View
                 </button>
-                {loan.status === 'Pending' && (
-                  <>
-                    <button onClick={() => handleEdit(loan)} className="btn btn-secondary">
-                      <Edit2 className="w-3 h-3 text-slate-500" />
-                    </button>
-                    <button onClick={() => handleDelete(loan.id)} className="btn btn-danger">
-                      <Trash2 className="w-3 h-3 text-red-500" />
-                    </button>
-                  </>
-                )}
+                <button onClick={() => handleEdit(loan)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                </button>
+                <button onClick={() => handleDelete(loan.id)} className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
               </div>
             </div>
           ))}
@@ -433,282 +367,210 @@ export default function Loans() {
       )}
 
       </div>{/* END DATA AREA */}
+        </>
+      )}
 
-      {/* Form Modal */}
+      {/* Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'New'} Loan Request</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                  <select
-                    value={form.employee_id}
-                    onChange={handleEmployeeChange}
-                    className="form-control"
-                  >
-                    <option value="">Select Employee</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Loan Type *</label>
-                  <select
-                    value={form.loan_type}
-                    onChange={(e) => setForm({ ...form, loan_type: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="">Select Type</option>
-                    {loanTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₹) *</label>
-                  <input
-                    type="number"
-                    value={form.amount}
-                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                    className="form-control"
-                    placeholder="50000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Interest Rate (%)</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={form.interest_rate}
-                    onChange={(e) => setForm({ ...form, interest_rate: e.target.value })}
-                    className="form-control"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Tenure (months) *</label>
-                  <input
-                    type="number"
-                    value={form.tenure_months}
-                    onChange={(e) => setForm({ ...form, tenure_months: e.target.value })}
-                    className="form-control"
-                    placeholder="12"
-                  />
-                </div>
-              </div>
-              
-              {calculatedEMI > 0 && (
-                <div className="btn btn-primary">
-                  <p className="text-sm text-indigo-600">Calculated EMI</p>
-                  <p className="text-2xl font-bold text-indigo-700">₹{calculatedEMI.toLocaleString()}/month</p>
-                </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
-                <textarea
-                  value={form.purpose}
-                  onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                  rows={2}
-                  className="form-control"
-                  placeholder="Reason for loan..."
-                />
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Guarantor Name</label>
-                  <input
-                    type="text"
-                    value={form.guarantor_name}
-                    onChange={(e) => setForm({ ...form, guarantor_name: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Guarantor Contact</label>
-                  <input
-                    type="text"
-                    value={form.guarantor_contact}
-                    onChange={(e) => setForm({ ...form, guarantor_contact: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
+        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Loan Request' : 'New Loan Request'}
+            </h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Submit'}
+              </button>
+              <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X className="w-5 h-5" /> Close
               </button>
             </div>
           </div>
-        </div>
+          
+          <div className="p-6 space-y-4">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Employee *</label>
+                <select
+                  value={form.employee_id}
+                  onChange={handleEmployeeChange}
+                  className="form-control"
+                >
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Loan Type *</label>
+                <select
+                  value={form.loan_type}
+                  onChange={(e) => setForm({ ...form, loan_type: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="">Select Type</option>
+                  {loanTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Date *</label>
+                <input
+                  type="date"
+                  value={form.applied_date}
+                  onChange={(e) => setForm({ ...form, applied_date: e.target.value })}
+                  className="form-control"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label>Amount (₹) *</label>
+              <input
+                type="number"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                className="form-control"
+                placeholder="50000"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label>Purpose</label>
+              <textarea
+                value={form.purpose}
+                onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+                rows={2}
+                className="form-control"
+                placeholder="Reason for loan..."
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Guarantor Name</label>
+                <input
+                  type="text"
+                  value={form.guarantor_name}
+                  onChange={(e) => setForm({ ...form, guarantor_name: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label>Guarantor Contact</label>
+                <input
+                  type="text"
+                  value={form.guarantor_contact}
+                  onChange={(e) => setForm({ ...form, guarantor_contact: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
       )}
 
       {/* View Modal */}
       {viewingLoan && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">Loan Details</h2>
-              <button onClick={() => setViewingLoan(null)} className="btn btn-secondary">
+        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 animate-fade">
+          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Loan Details</h2>
+              <button onClick={() => setViewingLoan(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-indigo-600">{viewingLoan.loan_id}</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[viewingLoan.status]}`}>
-                  {viewingLoan.status}
-                </span>
+            
+            <div className="p-6 space-y-4">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                <span style={{ 
+                  padding: '4px 12px',
+                  borderRadius: 16,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  backgroundColor: viewingLoan.status === 'Approved' || viewingLoan.status === 'Disbursed' || viewingLoan.status === 'Repaying' ? '#10b98118' : viewingLoan.status === 'Pending' ? '#f59e0b18' : viewingLoan.status === 'Rejected' ? '#ef444418' : '#64748b18',
+                  color: viewingLoan.status === 'Approved' || viewingLoan.status === 'Disbursed' || viewingLoan.status === 'Repaying' ? '#047857' : viewingLoan.status === 'Pending' ? '#b45309' : viewingLoan.status === 'Rejected' ? '#b91c1c' : '#475569'
+                }}>{viewingLoan.status}</span>
               </div>
               
-              <div className="form-row">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Employee</p>
-                  <p className="font-semibold">{viewingLoan.employee_name}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Employee</p>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>{viewingLoan.employee_name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Loan Type</p>
-                  <p className="font-semibold">{viewingLoan.loan_type}</p>
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Amount</p>
-                  <p className="text-xl font-bold text-slate-800">₹{viewingLoan.amount?.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Interest</p>
-                  <p className="text-xl font-bold text-slate-800">{viewingLoan.interest_rate}%</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">EMI</p>
-                  <p className="text-xl font-bold text-green-600">₹{viewingLoan.emi_amount?.toLocaleString()}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Loan Type</p>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>{viewingLoan.loan_type}</p>
                 </div>
               </div>
               
-              <div className="form-row">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Tenure</p>
-                  <p className="font-medium">{viewingLoan.tenure_months} months</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Full Amount</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>₹{viewingLoan.amount?.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Applied On</p>
-                  <p className="font-medium">{formatDate(viewingLoan.applied_date)}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Applied On</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{formatDate(viewingLoan.applied_date)}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 16, borderRadius: 8 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Paid Amount</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: '#10b981' }}>₹{getLoanPaidAmount(viewingLoan).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Balance Amount</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 16, fontWeight: 700, color: '#b45309' }}>₹{Math.max(0, viewingLoan.amount - getLoanPaidAmount(viewingLoan)).toLocaleString()}</p>
                 </div>
               </div>
               
               {viewingLoan.purpose && (
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-slate-500 mb-1">Purpose</p>
-                  <p className="text-slate-700">{viewingLoan.purpose}</p>
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Purpose</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--text-primary)' }}>{viewingLoan.purpose}</p>
                 </div>
               )}
             </div>
             
-            {viewingLoan.status === 'Pending' && (
-              <div className="btn btn-secondary">
-                <button 
-                  onClick={() => handleStatusChange(viewingLoan.id, 'Rejected')}
-                  className="btn btn-danger"
-                >
-                  <XCircle className="w-4 h-4" /> Reject
-                </button>
-                <button 
-                  onClick={() => handleStatusChange(viewingLoan.id, 'Approved')}
-                  className="btn btn-success"
-                >
-                  <CheckCircle className="w-4 h-4" /> Approve
-                </button>
-              </div>
-            )}
-            {viewingLoan.status === 'Approved' && (
-              <div className="btn btn-secondary">
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
+              {viewingLoan.status === 'Pending' && (
+                <>
+                  <button 
+                    onClick={() => handleStatusChange(viewingLoan.id, 'Rejected')}
+                    className="btn btn-danger"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <XCircle className="w-4 h-4" /> Reject
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange(viewingLoan.id, 'Approved')}
+                    className="btn btn-success"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <CheckCircle className="w-4 h-4" /> Approve
+                  </button>
+                </>
+              )}
+              {viewingLoan.status === 'Approved' && (
                 <button 
                   onClick={() => handleStatusChange(viewingLoan.id, 'Disbursed')}
                   className="btn btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <DollarSign className="w-4 h-4" /> Mark Disbursed
                 </button>
-              </div>
-            )}
+              )}
+              <button onClick={() => setViewingLoan(null)} className="btn btn-secondary">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* EMI Calculator Modal */}
-      {showCalculator && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">EMI Calculator</h2>
-              <button onClick={() => setShowCalculator(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Principal Amount (₹)</label>
-                <input
-                  type="number"
-                  id="calcAmount"
-                  className="form-control"
-                  placeholder="100000"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Interest Rate (% per annum)</label>
-                <input
-                  type="number"
-                  id="calcRate"
-                  step="0.5"
-                  className="form-control"
-                  placeholder="12"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tenure (months)</label>
-                <input
-                  type="number"
-                  id="calcTenure"
-                  className="form-control"
-                  placeholder="12"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  const amt = parseFloat(document.getElementById('calcAmount').value);
-                  const rate = parseFloat(document.getElementById('calcRate').value);
-                  const months = parseInt(document.getElementById('calcTenure').value);
-                  if (amt && months) {
-                    const emi = calculateEMI(amt, rate || 0, months);
-                    const totalPayment = emi * months;
-                    const totalInterest = totalPayment - amt;
-                    alert(`EMI: ₹${emi.toLocaleString()}\nTotal Payment: ₹${totalPayment.toLocaleString()}\nTotal Interest: ₹${totalInterest.toLocaleString()}`);
-                  }
-                }}
-                className="form-control"
-              >
-                Calculate EMI
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

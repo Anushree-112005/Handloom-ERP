@@ -45,7 +45,7 @@ export default function PanCinDetails() {
       setSuccessMsg("PAN/CIN details updated successfully!");
       setTimeout(() => {
         setSuccessMsg("");
-        navigate("/masters");
+        navigate("/cubebook/masters");
       }, 2000);
     }
   });

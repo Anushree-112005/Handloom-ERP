@@ -6,34 +6,34 @@ const masterSections = [
   {
     title: 'Accounting Masters',
     items: [
-      { label: 'Group', description: 'Alter custom ledger classification groups.', route: '/masters/group' },
-      { label: 'Ledger', description: 'Alter and configure account ledger masters.', route: '/masters/ledger' },
-      { label: 'Currency', description: 'Define base or foreign currency settings.', route: '/currency/alter' },
-      { label: 'Voucher Type', description: 'Alter numbering, prefixes and rules for vouchers.', route: '/masters/voucher-types' },
+      { label: 'Group', description: 'Alter custom ledger classification groups.', route: '/cubebook/masters/group' },
+      { label: 'Ledger', description: 'Alter and configure account ledger masters.', route: '/cubebook/masters/ledger' },
+      { label: 'Currency', description: 'Define base or foreign currency settings.', route: '/cubebook/currency/alter' },
+      { label: 'Voucher Type', description: 'Alter numbering, prefixes and rules for vouchers.', route: '/cubebook/masters/voucher-types' },
     ],
   },
   {
     title: 'Inventory Masters',
     items: [
-      { label: 'Stock Group',    description: 'Alter custom stock grouping categories.',      route: '/inventory-masters?tab=groups' },
-      { label: 'Stock Category', description: 'Alter custom inventory item categories.',   route: '/inventory-masters?tab=categories' },
-      { label: 'Stock Item',     description: 'Alter and configure base stock items.',        route: '/inventory-masters?tab=items' },
-      { label: 'Unit',           description: 'Alter units of measure parameters.',   route: '/inventory-masters?tab=units' },
-      { label: 'Location',       description: 'Alter godowns and storage locations.',  route: '/inventory-masters?tab=locations' },
+      { label: 'Stock Group',    description: 'Alter custom stock grouping categories.',      route: '/cubebook/inventory-masters?tab=groups' },
+      { label: 'Stock Category', description: 'Alter custom inventory item categories.',   route: '/cubebook/inventory-masters?tab=categories' },
+      { label: 'Stock Item',     description: 'Alter and configure base stock items.',        route: '/cubebook/inventory-masters?tab=items' },
+      { label: 'Unit',           description: 'Alter units of measure parameters.',   route: '/cubebook/inventory-masters?tab=units' },
+      { label: 'Location',       description: 'Alter godowns and storage locations.',  route: '/cubebook/inventory-masters?tab=locations' },
     ],
   },
   {
     title: 'Statutory Masters',
     items: [
-      { label: 'GST Registration', description: 'Alter GST state-wise registration configuration.', route: '/masters/gst-registration?mode=alter' },
-      { label: 'GST Classification', description: 'Define custom HSN/SAC groups and rates.', route: '/masters/gst-classification?mode=alter' },
+      { label: 'GST Registration', description: 'Alter GST state-wise registration configuration.', route: '/cubebook/masters/gst-registration?mode=alter' },
+      { label: 'GST Classification', description: 'Define custom HSN/SAC groups and rates.', route: '/cubebook/masters/gst-classification?mode=alter' },
     ],
   },
   {
     title: 'Statutory Details',
     items: [
-      { label: 'Company GST Details', description: 'Configure active company GSTIN profiles.', route: '/masters/gst-details' },
-      { label: 'PAN/CIN Details', description: 'Corporate identification details registration.', route: '/masters/pan-cin-details' },
+      { label: 'Company GST Details', description: 'Configure active company GSTIN profiles.', route: '/cubebook/masters/gst-details' },
+      { label: 'PAN/CIN Details', description: 'Corporate identification details registration.', route: '/cubebook/masters/pan-cin-details' },
     ],
   },
 ];
@@ -46,7 +46,7 @@ export default function MasterAlteration() {
     clearCompany();
     localStorage.removeItem('cb_company_id');
     localStorage.removeItem('cb_company_name');
-    navigate('/dashboard');
+    navigate('/cubebook/dashboard');
   };
 
   if (!activeCompany) {

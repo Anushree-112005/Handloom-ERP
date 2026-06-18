@@ -91,7 +91,7 @@ export default function Dashboard() {
         <div className="text-5xl">📊</div>
         <h2 className="text-xl font-bold text-slate-700">No Company Selected</h2>
         <p className="text-slate-400 text-sm">Please create or select a company to get started.</p>
-        <button onClick={() => navigate('/company/create')}
+        <button onClick={() => navigate('/cubebook/cubebook/company/create')}
           className="btn btn-primary">
           Create Company
         </button>
@@ -123,7 +123,7 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-2">
           {VOUCHER_ACTIONS.map(a => (
             <button key={a.type}
-              onClick={() => navigate(`/vouchers?type=${a.type}`)}
+              onClick={() => navigate(`/cubebook/vouchers?type=${a.type}`)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-all hover:shadow-sm"
               style={{ background: a.bg, color: a.color, borderColor: a.border }}>
               <Receipt size={14} /> {a.label}
@@ -140,7 +140,7 @@ export default function Dashboard() {
           subtitle={pl?.is_profit ? 'Profit this year' : 'Loss this year'}
           icon={pl?.is_profit ? TrendingUp : TrendingDown}
           color={pl?.is_profit ? '#22c55e' : '#ef4444'}
-          onClick={() => navigate('/reports/profit-loss')}
+          onClick={() => navigate('/cubebook/cubebook/reports/profit-loss')}
         />
         <KpiCard
           title="Total Assets"
@@ -148,7 +148,7 @@ export default function Dashboard() {
           subtitle="Balance sheet total"
           icon={Scale}
           color="#6366f1"
-          onClick={() => navigate('/reports/balance-sheet')}
+          onClick={() => navigate('/cubebook/cubebook/reports/balance-sheet')}
         />
         <KpiCard
           title="Receivables"
@@ -156,7 +156,7 @@ export default function Dashboard() {
           subtitle="Sundry debtors"
           icon={ArrowUpRight}
           color="#3b82f6"
-          onClick={() => navigate('/reports/outstanding')}
+          onClick={() => navigate('/cubebook/cubebook/reports/outstanding')}
         />
         <KpiCard
           title="Payables"
@@ -164,7 +164,7 @@ export default function Dashboard() {
           subtitle="Sundry creditors"
           icon={AlertTriangle}
           color="#f59e0b"
-          onClick={() => navigate('/reports/outstanding')}
+          onClick={() => navigate('/cubebook/cubebook/reports/outstanding')}
         />
         <KpiCard
           title="Cash Balance"
@@ -172,7 +172,7 @@ export default function Dashboard() {
           subtitle="Cash in hand"
           icon={DollarSign}
           color="#14b8a6"
-          onClick={() => navigate('/reports/cash-book')}
+          onClick={() => navigate('/cubebook/cubebook/reports/cash-book')}
         />
         <KpiCard
           title="Total Income"
@@ -180,7 +180,7 @@ export default function Dashboard() {
           subtitle="All income accounts"
           icon={TrendingUp}
           color="#22c55e"
-          onClick={() => navigate('/reports/profit-loss')}
+          onClick={() => navigate('/cubebook/cubebook/reports/profit-loss')}
         />
         <KpiCard
           title="Total Expenses"
@@ -188,7 +188,7 @@ export default function Dashboard() {
           subtitle="All expense accounts"
           icon={TrendingDown}
           color="#ef4444"
-          onClick={() => navigate('/reports/profit-loss')}
+          onClick={() => navigate('/cubebook/cubebook/reports/profit-loss')}
         />
         <KpiCard
           title="Total Liabilities"
@@ -196,7 +196,7 @@ export default function Dashboard() {
           subtitle="Balance sheet total"
           icon={CreditCard}
           color="#a855f7"
-          onClick={() => navigate('/reports/balance-sheet')}
+          onClick={() => navigate('/cubebook/cubebook/reports/balance-sheet')}
         />
       </div>
 
@@ -259,7 +259,7 @@ export default function Dashboard() {
         <div className="btn btn-secondary">
           <div className="btn btn-secondary">
             <h3 className="font-bold text-slate-800 text-sm">Recent Transactions</h3>
-            <button onClick={() => navigate('/day-book')} className="text-xs text-purple-600 font-medium hover:underline">
+            <button onClick={() => navigate('/cubebook/cubebook/day-book')} className="text-xs text-purple-600 font-medium hover:underline">
               View Day Book →
             </button>
           </div>
@@ -274,7 +274,7 @@ export default function Dashboard() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {(recent || []).slice(0, 8).map(v => (
-                <tr key={v.id} className="btn btn-secondary" onClick={() => navigate('/vouchers')}>
+                <tr key={v.id} className="btn btn-secondary" onClick={() => navigate('/cubebook/cubebook/vouchers')}>
                   <td className="px-5 py-2.5 text-slate-500 text-xs whitespace-nowrap">{v.date}</td>
                   <td className="px-4 py-2.5 font-mono text-xs font-semibold text-slate-700">{v.voucher_number}</td>
                   <td className="px-4 py-2.5">
@@ -305,14 +305,14 @@ export default function Dashboard() {
           </div>
           <div className="p-3 space-y-1">
             {[
-              { icon: Scale,      label: 'Trial Balance',     path: '/reports/trial-balance',    color: '#6366f1' },
-              { icon: TrendingUp, label: 'Profit & Loss',     path: '/reports/profit-loss',      color: '#22c55e' },
-              { icon: Package,    label: 'Balance Sheet',     path: '/reports/balance-sheet',    color: '#3b82f6' },
-              { icon: BookOpen,   label: 'Day Book',          path: '/day-book',                 color: '#f59e0b' },
-              { icon: DollarSign, label: 'Cash Book',         path: '/reports/cash-book',        color: '#14b8a6' },
-              { icon: CreditCard, label: 'Bank Book',         path: '/reports/bank-book',        color: '#8b5cf6' },
-              { icon: AlertTriangle,label:'Outstanding',      path: '/reports/outstanding',      color: '#ef4444' },
-              { icon: FileText,   label: 'GST Summary',       path: '/gst',                      color: '#f97316' },
+              { icon: Scale,      label: 'Trial Balance',     path: '/cubebook/reports/trial-balance',    color: '#6366f1' },
+              { icon: TrendingUp, label: 'Profit & Loss',     path: '/cubebook/reports/profit-loss',      color: '#22c55e' },
+              { icon: Package,    label: 'Balance Sheet',     path: '/cubebook/reports/balance-sheet',    color: '#3b82f6' },
+              { icon: BookOpen,   label: 'Day Book',          path: '/cubebook/day-book',                 color: '#f59e0b' },
+              { icon: DollarSign, label: 'Cash Book',         path: '/cubebook/reports/cash-book',        color: '#14b8a6' },
+              { icon: CreditCard, label: 'Bank Book',         path: '/cubebook/reports/bank-book',        color: '#8b5cf6' },
+              { icon: AlertTriangle,label:'Outstanding',      path: '/cubebook/reports/outstanding',      color: '#ef4444' },
+              { icon: FileText,   label: 'GST Summary',       path: '/cubebook/gst',                      color: '#f97316' },
             ].map(({ icon: Icon, label, path, color }) => (
               <button key={path} onClick={() => navigate(path)}
                 className="form-control">

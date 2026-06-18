@@ -37,8 +37,12 @@ api.interceptors.response.use(
       localStorage.removeItem('cb_auth_token');
       localStorage.removeItem('cb_auth_user');
       localStorage.removeItem('cb_company_id');
-      // Only redirect if not already on login page
-      if (!window.location.pathname.includes('/login')) {
+      
+      const isAuthEndpoint = error.config?.url?.includes('/auth/login');
+      const hasMainToken = !!localStorage.getItem('token');
+      
+      // Only redirect if not already on login page, not a login request, and no main token
+      if (!isAuthEndpoint && !hasMainToken && !window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
     }

@@ -29,7 +29,7 @@ export default function LoomAvailability() {
   };
 
   const getLoomStats = (loom) => {
-    const activeAlloc = allocations.find(a => a.loom_id === loom.id && a.allocation_status === 'Active');
+    const activeAlloc = allocations.find(a => a.loom_id === loom.id && ['Active', 'Pending'].includes(a.allocation_status));
     const orderId = activeAlloc ? activeAlloc.order_id : '-';
     const allocMeters = activeAlloc ? activeAlloc.assigned_meters : 0;
     const prodMeters = activeAlloc ? activeAlloc.completed_meters : 0;
@@ -76,7 +76,7 @@ export default function LoomAvailability() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <Filter size={18} style={{ color: 'var(--text-muted)' }} />
@@ -95,7 +95,7 @@ export default function LoomAvailability() {
           </div>
         </div>
         
-        <div className="table-responsive" style={{ flex: 1 }}>
+        <div className="table-responsive" style={{ flex: 1, overflowX: 'auto', minHeight: 0 }}>
           <table className="table" style={{ width: '100%', whiteSpace: 'nowrap' }}>
             <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
               <tr>

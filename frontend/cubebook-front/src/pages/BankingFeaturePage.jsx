@@ -114,7 +114,7 @@ export default function BankingFeaturePage() {
             <p className="cb-page-subtitle">{subtitle}</p>
           </div>
         </div>
-        <button onClick={() => navigate('/banking')} className="cb-btn-secondary">
+        <button onClick={() => navigate('/cubebook/banking')} className="cb-btn-secondary">
           <ArrowLeft size={15} /> Back to Portal
         </button>
       </div>

@@ -40,16 +40,17 @@ export default function Vouchers() {
   const [seeding,     setSeeding]     = useState(false);
 
   const { data: vouchersList = [], isLoading } = useQuery({
-    queryKey: ['vouchers', activeCompany?.id],
-    queryFn:  () => vouchers.list({ company_id: activeCompany.id }),
-    enabled:  !!activeCompany,
+    queryKey: ['vouchers', activeCompany?.id || 1],
+    queryFn:  () => vouchers.list({ company_id: activeCompany?.id || 1 }),
+    enabled:  true,
   });
 
   const handleSeedVouchers = async () => {
-    if (!activeCompany?.id) return;
+    const compId = activeCompany?.id || 1;
+    if (!compId) return;
     try {
       setSeeding(true);
-      await companies.seedVouchers(activeCompany.id);
+      await companies.seedVouchers(compId);
       queryClient.invalidateQueries();
       alert("Successfully seeded textile vouchers and matching accounts for this company in real-time!");
     } catch (err) {
@@ -60,9 +61,9 @@ export default function Vouchers() {
   };
 
   const { data: ledgersList = [] } = useQuery({
-    queryKey: ['ledgers', activeCompany?.id],
-    queryFn:  () => ledgersApi.list({ company_id: activeCompany.id }),
-    enabled:  !!activeCompany,
+    queryKey: ['ledgers', activeCompany?.id || 1],
+    queryFn:  () => ledgersApi.list({ company_id: activeCompany?.id || 1 }),
+    enabled:  true,
   });
 
   // Open modal when ?type= param is present
@@ -80,7 +81,7 @@ export default function Vouchers() {
     setIsModalOpen(false);
     searchParams.delete('type');
     setSearchParams(searchParams);
-    navigate('/vouchers', { replace: true });
+    navigate('/cubebook/vouchers', { replace: true });
   };
 
   const filtered = vouchersList.filter(v => {
@@ -112,7 +113,7 @@ export default function Vouchers() {
     return (
       <VoucherForm
         type={voucherType}
-        companyId={activeCompany?.id}
+        companyId={activeCompany?.id || 1}
         ledgers={ledgersList}
         onClose={closeVoucher}
         onSaved={() => {

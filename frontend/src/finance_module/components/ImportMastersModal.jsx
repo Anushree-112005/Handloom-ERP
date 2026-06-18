@@ -18,10 +18,10 @@ export default function ImportMastersModal({ isOpen, onClose, companyName }) {
       </div>
       
       {/* Modal Content - Absolute positioned */}
-      <div className="btn btn-secondary">
+      <div className="absolute top-[66px] left-[15%] right-[25%] bg-[#efebe7] border border-[#a09c98] flex flex-col z-30 shadow-2xl">
         
         {/* Header */}
-        <div className="btn btn-secondary">
+        <div className="bg-[#005e6a] text-white text-[12px] font-bold px-4 py-1 flex items-center justify-between border-b border-[#0d211d]">
           Import Masters
         </div>
         

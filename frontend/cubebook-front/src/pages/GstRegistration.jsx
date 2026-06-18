@@ -183,7 +183,7 @@ export default function GstRegistration() {
       if (updatedList.length > 1) {
         setViewMode("list");
       } else {
-        navigate("/masters");
+        navigate("/cubebook/masters");
       }
     }, 1500);
   };
@@ -200,7 +200,7 @@ export default function GstRegistration() {
       if (updatedList.length > 0) {
         setViewMode("list");
       } else {
-        navigate("/masters");
+        navigate("/cubebook/masters");
       }
     }, 1500);
   };
@@ -252,7 +252,7 @@ export default function GstRegistration() {
               } else if (viewMode === "alter" && registrations.length > 1) {
                 setViewMode("list");
               } else {
-                navigate("/masters");
+                navigate("/cubebook/masters");
               }
             }}
             className="cb-btn-secondary"
@@ -637,7 +637,7 @@ export default function GstRegistration() {
                     if (registrations.length > 0) {
                       setViewMode("list");
                     } else {
-                      navigate("/masters");
+                      navigate("/cubebook/masters");
                     }
                   }}
                   className="cb-btn-secondary"

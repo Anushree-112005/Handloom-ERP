@@ -7,7 +7,7 @@ export default function OrgChart() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
-  const [viewMode, setViewMode] = useState('tree'); // tree, grid
+  const [viewMode, setViewMode] = useState('tree'); // grid, tree
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [showFilters, setShowFilters] = useState(false);
 
@@ -84,7 +84,7 @@ export default function OrgChart() {
             <div className="flex items-center gap-2">
               <span className="font-medium text-slate-800 truncate">{employee.name}</span>
               {hasReports && (
-                <span className="btn btn-primary">
+                <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold border border-indigo-200">
                   {reports.length}
                 </span>
               )}
@@ -110,7 +110,7 @@ export default function OrgChart() {
   };
 
   const renderGridView = () => (
-    <div className="form-row">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filteredEmployees.map(emp => (
         <div key={emp.id} className="card">
           <div className="flex items-start gap-3">
@@ -124,7 +124,7 @@ export default function OrgChart() {
             </div>
           </div>
           
-          <div className="btn btn-secondary">
+          <div className="flex flex-col gap-1 mt-4">
             {emp.email && (
               <div className="flex items-center gap-2 text-xs text-slate-500">
                 <Mail className="w-3 h-3" />
@@ -140,7 +140,7 @@ export default function OrgChart() {
           </div>
           
           {emp.reporting_manager_id && (
-            <div className="btn btn-secondary">
+            <div className="mt-3 p-2 bg-slate-50 rounded-sm border border-slate-100">
               <span className="text-xs text-slate-400">Reports to:</span>
               <p className="text-xs font-medium text-slate-600">
                 {employees.find(e => e.id === emp.reporting_manager_id)?.name || '—'}
@@ -164,87 +164,13 @@ export default function OrgChart() {
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
 
       {/* HEADER */}
-      <div className="btn btn-secondary">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 24px 0 24px' }}>
         {/* LEFT: Title + badge */}
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Organization Chart</h1>
-          <span className="btn btn-primary">
+          <span className="bg-indigo-600 text-white px-3 py-1 rounded-sm text-xs font-bold shadow-sm">
             {employees.length} Records
           </span>
-        </div>
-
-        {/* RIGHT: Filter + View Toggle */}
-        <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${
-                showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {(selectedDept || searchTerm) && (
-                <span className="btn btn-primary" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button
-                    onClick={() => { setSelectedDept(''); setSearchTerm(''); }}
-                    className="text-xs text-indigo-600 hover:underline"
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Department</label>
-                    <select
-                      value={selectedDept}
-                      onChange={(e) => setSelectedDept(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Departments</option>
-                      {departments.map(dept => (
-                        <option key={dept} value={dept}>{dept}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Search</label>
-                    <input
-                      type="text"
-                      placeholder="Search employees..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button
-              onClick={() => setViewMode('tree')}
-              className={`p-1.5 rounded ${viewMode === 'tree' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-              title="Tree View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
         </div>
       </div>
 

@@ -33,48 +33,68 @@ const mapFrontendToBackend = (form) => {
   };
 };
 
-// Generic localStorage helper functions
-const getLocalItems = (key, defaultVal = []) => {
-  const items = localStorage.getItem(`hr_${key}`);
-  if (!items) {
-    localStorage.setItem(`hr_${key}`, JSON.stringify(defaultVal));
-    return defaultVal;
+const mapBackendToFrontendShift = (item) => {
+  if (!item) return null;
+  let extra = {};
+  if (item.extra_field_3) {
+    try {
+      const trimmed = item.extra_field_3.trim();
+      if (trimmed.startsWith('{')) {
+        extra = JSON.parse(trimmed);
+      } else {
+        extra = { break_duration: parseInt(trimmed) || 0 };
+      }
+    } catch (e) {
+      console.error('Failed to parse extra_field_3:', e);
+    }
   }
-  return JSON.parse(items);
+  return {
+    id: item.id,
+    name: item.name,
+    shift_type: item.code || 'Day',
+    start_time: item.extra_field_1 || '09:00',
+    end_time: item.extra_field_2 || '18:00',
+    break_duration: extra.break_duration !== undefined ? extra.break_duration : 60,
+    half_day_hours: extra.half_day_hours !== undefined ? extra.half_day_hours : 4,
+    color: extra.color || '#10B981',
+    working_hours: extra.working_hours !== undefined ? extra.working_hours : 8.0,
+    description: item.description || ''
+  };
 };
 
-const saveLocalItems = (key, items) => {
-  localStorage.setItem(`hr_${key}`, JSON.stringify(items));
+// Generic API helper functions to query Postgres via our new dynamic HR router
+const fetchHRItems = async (category) => {
+  const res = await api.get(`/hr/${category}`);
+  return res.data || [];
 };
 
-const addLocalItem = (key, item) => {
-  const items = getLocalItems(key);
-  const newItem = { ...item, id: item.id || Date.now() };
-  items.push(newItem);
-  saveLocalItems(key, items);
-  return newItem;
+const createHRItem = async (category, data) => {
+  const res = await api.post(`/hr/${category}`, data);
+  return res.data;
 };
 
-const updateLocalItem = (key, id, data) => {
-  const items = getLocalItems(key);
-  const idx = items.findIndex(i => i.id === id);
-  if (idx !== -1) {
-    items[idx] = { ...items[idx], ...data };
-    saveLocalItems(key, items);
-    return items[idx];
-  }
-  return null;
+const updateHRItem = async (category, id, data) => {
+  const res = await api.put(`/hr/${category}/${id}`, data);
+  return res.data;
 };
 
-const deleteLocalItem = (key, id) => {
-  const items = getLocalItems(key);
-  const filtered = items.filter(i => i.id !== id);
-  saveLocalItems(key, filtered);
+const deleteHRItem = async (category, id) => {
+  await api.delete(`/hr/${category}/${id}`);
 };
 
 const fetchLocalItemsWithEmployee = (key) => {
-  return getLocalItems(key);
+  return fetchHRItems(key);
 };
+const addLocalItem = (key, item) => {
+  return createHRItem(key, item);
+};
+const updateLocalItem = (key, id, data) => {
+  return updateHRItem(key, id, data);
+};
+const deleteLocalItem = (key, id) => {
+  return deleteHRItem(key, id);
+};
+
 
 // Core API / Database wrappers
 export const fetchEmployees = async () => {
@@ -126,13 +146,22 @@ export const fetchDepartments = async () => {
 export const fetchDesignations = async () => {
   try {
     const res = await subMasterAPI.list('designation');
-    return res.data || [];
+    return (res.data || []).map(item => ({
+      id: item.id,
+      title: item.name,
+      department: item.code || '',
+      description: item.description || '',
+      grade: item.extra_field_1 || '',
+      min_salary: item.extra_field_2 ? parseInt(item.extra_field_2) : null,
+      max_salary: item.extra_field_3 ? parseInt(item.extra_field_3) : null,
+    }));
   } catch {
     return getLocalItems('designations', [
-      { id: 1, title: 'Software Engineer' },
-      { id: 2, title: 'Senior Software Engineer' },
-      { id: 3, title: 'HR Manager' },
-      { id: 4, title: 'Sales Executive' }
+      { id: 1, title: 'Software Engineer', department: 'Engineering' },
+      { id: 2, title: 'Senior Software Engineer', department: 'Engineering' },
+      { id: 3, title: 'HR Manager', department: 'HR' },
+      { id: 4, title: 'Sales Executive', department: 'Sales' },
+      { id: 5, title: 'Driver', department: 'Logistics' }
     ]);
   }
 };
@@ -140,7 +169,7 @@ export const fetchDesignations = async () => {
 export const fetchShifts = async () => {
   try {
     const res = await subMasterAPI.list('shift');
-    return res.data || [];
+    return (res.data || []).map(mapBackendToFrontendShift);
   } catch {
     return getLocalItems('shifts', [
       { id: 1, name: 'General Shift' },
@@ -175,7 +204,15 @@ export const deleteDepartment = async (id) => {
 
 export const createDesignation = async (data) => {
   try {
-    const res = await subMasterAPI.create('designation', data);
+    const payload = {
+      name: data.title,
+      code: data.department || null,
+      description: data.description || null,
+      extra_field_1: data.grade || null,
+      extra_field_2: data.min_salary !== undefined && data.min_salary !== null ? String(data.min_salary) : null,
+      extra_field_3: data.max_salary !== undefined && data.max_salary !== null ? String(data.max_salary) : null,
+    };
+    const res = await subMasterAPI.create('designation', payload);
     return res.data;
   } catch {
     return addLocalItem('designations', data);
@@ -183,7 +220,15 @@ export const createDesignation = async (data) => {
 };
 export const updateDesignation = async (id, data) => {
   try {
-    const res = await subMasterAPI.update('designation', id, data);
+    const payload = {
+      name: data.title,
+      code: data.department || null,
+      description: data.description || null,
+      extra_field_1: data.grade || null,
+      extra_field_2: data.min_salary !== undefined && data.min_salary !== null ? String(data.min_salary) : null,
+      extra_field_3: data.max_salary !== undefined && data.max_salary !== null ? String(data.max_salary) : null,
+    };
+    const res = await subMasterAPI.update('designation', id, payload);
     return res.data;
   } catch {
     return updateLocalItem('designations', id, data);
@@ -199,16 +244,44 @@ export const deleteDesignation = async (id) => {
 
 export const createShift = async (data) => {
   try {
-    const res = await subMasterAPI.create('shift', data);
-    return res.data;
+    const extra = {
+      break_duration: data.break_duration !== undefined ? data.break_duration : 60,
+      half_day_hours: data.half_day_hours !== undefined ? data.half_day_hours : 4,
+      color: data.color || '#10B981',
+      working_hours: data.working_hours !== undefined ? data.working_hours : 8.0
+    };
+    const payload = {
+      name: data.name,
+      code: data.shift_type || 'Day',
+      description: data.description || '',
+      extra_field_1: data.start_time || '09:00',
+      extra_field_2: data.end_time || '18:00',
+      extra_field_3: JSON.stringify(extra)
+    };
+    const res = await subMasterAPI.create('shift', payload);
+    return mapBackendToFrontendShift(res.data);
   } catch {
     return addLocalItem('shifts', data);
   }
 };
 export const updateShift = async (id, data) => {
   try {
-    const res = await subMasterAPI.update('shift', id, data);
-    return res.data;
+    const extra = {
+      break_duration: data.break_duration !== undefined ? data.break_duration : 60,
+      half_day_hours: data.half_day_hours !== undefined ? data.half_day_hours : 4,
+      color: data.color || '#10B981',
+      working_hours: data.working_hours !== undefined ? data.working_hours : 8.0
+    };
+    const payload = {
+      name: data.name,
+      code: data.shift_type || 'Day',
+      description: data.description || '',
+      extra_field_1: data.start_time || '09:00',
+      extra_field_2: data.end_time || '18:00',
+      extra_field_3: JSON.stringify(extra)
+    };
+    const res = await subMasterAPI.update('shift', id, payload);
+    return mapBackendToFrontendShift(res.data);
   } catch {
     return updateLocalItem('shifts', id, data);
   }
@@ -257,6 +330,7 @@ export const deleteLoan = (id) => deleteLocalItem('loans', id);
 export const fetchPayroll = () => fetchLocalItemsWithEmployee('payroll');
 export const createPayroll = (data) => addLocalItem('payroll', data);
 export const updatePayroll = (id, data) => updateLocalItem('payroll', id, data);
+export const deletePayroll = (id) => deleteLocalItem('payroll', id);
 
 export const fetchExpenseClaims = () => fetchLocalItemsWithEmployee('expense_claims');
 export const createExpenseClaim = (data) => addLocalItem('expense_claims', data);
@@ -298,52 +372,52 @@ export const createLeave = (data) => addLocalItem('leaves', data);
 export const updateLeave = (id, data) => updateLocalItem('leaves', id, data);
 export const deleteLeave = (id) => deleteLocalItem('leaves', id);
 
-export const fetchHolidays = () => getLocalItems('holidays');
-export const createHoliday = (data) => addLocalItem('holidays', data);
-export const updateHoliday = (id, data) => updateLocalItem('holidays', id, data);
-export const deleteHoliday = (id) => deleteLocalItem('holidays', id);
+export const fetchHolidays = () => fetchHRItems('holidays');
+export const createHoliday = (data) => createHRItem('holidays', data);
+export const updateHoliday = (id, data) => updateHRItem('holidays', id, data);
+export const deleteHoliday = (id) => deleteHRItem('holidays', id);
 
-export const fetchRequisitions = () => getLocalItems('requisitions');
-export const createRequisition = (data) => addLocalItem('requisitions', data);
-export const updateRequisition = (id, data) => updateLocalItem('requisitions', id, data);
-export const deleteRequisition = (id) => deleteLocalItem('requisitions', id);
+export const fetchRequisitions = () => fetchHRItems('requisitions');
+export const createRequisition = (data) => createHRItem('requisitions', data);
+export const updateRequisition = (id, data) => updateHRItem('requisitions', id, data);
+export const deleteRequisition = (id) => deleteHRItem('requisitions', id);
 
-export const fetchCandidates = () => getLocalItems('candidates');
-export const createCandidate = (data) => addLocalItem('candidates', data);
-export const updateCandidate = (id, data) => updateLocalItem('candidates', id, data);
-export const deleteCandidate = (id) => deleteLocalItem('candidates', id);
+export const fetchCandidates = () => fetchHRItems('candidates');
+export const createCandidate = (data) => createHRItem('candidates', data);
+export const updateCandidate = (id, data) => updateHRItem('candidates', id, data);
+export const deleteCandidate = (id) => deleteHRItem('candidates', id);
 
-export const fetchAnnouncements = () => getLocalItems('announcements');
-export const createAnnouncement = (data) => addLocalItem('announcements', data);
-export const updateAnnouncement = (id, data) => updateLocalItem('announcements', id, data);
-export const deleteAnnouncement = (id) => deleteLocalItem('announcements', id);
+export const fetchAnnouncements = () => fetchHRItems('announcements');
+export const createAnnouncement = (data) => createHRItem('announcements', data);
+export const updateAnnouncement = (id, data) => updateHRItem('announcements', id, data);
+export const deleteAnnouncement = (id) => deleteHRItem('announcements', id);
 
-export const fetchTravelRequests = () => fetchLocalItemsWithEmployee('travel_requests');
-export const createTravelRequest = (data) => addLocalItem('travel_requests', data);
-export const updateTravelRequest = (id, data) => updateLocalItem('travel_requests', id, data);
-export const deleteTravelRequest = (id) => deleteLocalItem('travel_requests', id);
+export const fetchTravelRequests = () => fetchHRItems('travel_requests');
+export const createTravelRequest = (data) => createHRItem('travel_requests', data);
+export const updateTravelRequest = (id, data) => updateHRItem('travel_requests', id, data);
+export const deleteTravelRequest = (id) => deleteHRItem('travel_requests', id);
 
-export const fetchTrainingPrograms = () => getLocalItems('training_programs');
-export const createTrainingProgram = (data) => addLocalItem('training_programs', data);
-export const updateTrainingProgram = (id, data) => updateLocalItem('training_programs', id, data);
-export const deleteTrainingProgram = (id) => deleteLocalItem('training_programs', id);
+export const fetchTrainingPrograms = () => fetchHRItems('training_programs');
+export const createTrainingProgram = (data) => createHRItem('training_programs', data);
+export const updateTrainingProgram = (id, data) => updateHRItem('training_programs', id, data);
+export const deleteTrainingProgram = (id) => deleteHRItem('training_programs', id);
 
-export const fetchCertifications = () => fetchLocalItemsWithEmployee('certifications');
-export const createCertification = (data) => addLocalItem('certifications', data);
-export const updateCertification = (id, data) => updateLocalItem('certifications', id, data);
-export const deleteCertification = (id) => deleteLocalItem('certifications', id);
+export const fetchCertifications = () => fetchHRItems('certifications');
+export const createCertification = (data) => createHRItem('certifications', data);
+export const updateCertification = (id, data) => updateHRItem('certifications', id, data);
+export const deleteCertification = (id) => deleteHRItem('certifications', id);
 
-export const deleteOnboardingTask = (id) => deleteLocalItem('tasks', id);
-export const deleteOffer = (id) => deleteLocalItem('offers', id);
+export const deleteOnboardingTask = (id) => deleteHRItem('tasks', id);
+export const deleteOffer = (id) => deleteHRItem('offers', id);
 
 // hrService main export object (used in default imports)
 const hrService = {
   getSummary: async () => {
     const emps = await fetchEmployees().catch(() => []);
-    const requisitions = getLocalItems('requisitions');
-    const candidates = getLocalItems('candidates');
-    const tasks = getLocalItems('tasks');
-    const payroll = getLocalItems('payroll');
+    const requisitions = await fetchHRItems('requisitions').catch(() => []);
+    const candidates = await fetchHRItems('candidates').catch(() => []);
+    const tasks = await fetchHRItems('tasks').catch(() => []);
+    const payroll = await fetchHRItems('payroll').catch(() => []);
     return {
       employees: emps.length,
       requisitions: requisitions.length,
@@ -352,72 +426,112 @@ const hrService = {
       payroll: payroll.length,
     };
   },
-  listRequisitions: async () => getLocalItems('requisitions'),
-  listCandidates: async () => getLocalItems('candidates'),
-  listTasks: async () => getLocalItems('tasks'),
-  listOffers: async () => getLocalItems('offers'),
-  listPerformance: async () => getLocalItems('performance'),
-  listOffboarding: async () => getLocalItems('offboarding'),
-  listPayroll: async () => getLocalItems('payroll'),
+  listRequisitions: async () => fetchHRItems('requisitions'),
+  listCandidates: async () => fetchHRItems('candidates'),
+  listTasks: async () => fetchHRItems('tasks'),
+  listOffers: async () => fetchHRItems('offers'),
+  listPerformance: async () => fetchHRItems('performance'),
+  listOffboarding: async () => fetchHRItems('offboarding'),
+  listPayroll: async () => fetchHRItems('payroll'),
+  deletePayroll: async (id) => deleteHRItem('payroll', id),
   
   getEmployee: async (id) => getEmployeeById(id),
   fetchEmployeeAttendance: async (id) => {
-    const list = getLocalItems('attendance');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('attendance')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchEmployeeLeaves: async (id) => {
-    const list = getLocalItems('leaves');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('leaves')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchEmployeeTasks: async (id) => {
-    const list = getLocalItems('tasks');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('tasks')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchEmployeePayroll: async (id) => {
-    const list = getLocalItems('payroll');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('payroll')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   fetchLeaveBalances: async (id, year) => {
     return [
-      { type: 'Casual Leave', total: 12, used: 3, available: 9 },
-      { type: 'Sick Leave', total: 10, used: 2, available: 8 },
-      { type: 'Earned Leave', total: 15, used: 0, available: 15 }
+      { leave_type: 'Casual Leave', accrued: 12, used: 3, current_balance: 9 },
+      { leave_type: 'Sick Leave', accrued: 10, used: 2, current_balance: 8 },
+      { leave_type: 'Earned Leave', accrued: 15, used: 0, current_balance: 15 }
     ];
   },
   fetchEmployeeTrainings: async (id) => {
-    const list = getLocalItems('certifications');
-    return list.filter(item => String(item.employee_id) === String(id));
+    const [emp, list] = await Promise.all([
+      getEmployeeById(id).catch(() => null),
+      fetchHRItems('certifications')
+    ]);
+    const empCode = emp?.employee_code;
+    return list.filter(item => 
+      String(item.employee_id) === String(id) || 
+      (empCode && String(item.employee) === String(empCode))
+    );
   },
   predictAttrition: async (data) => {
     const score = Math.floor(Math.random() * 40) + 5;
     return {
-      attrition_risk: score > 30 ? 'Medium' : 'Low',
+      risk_level: score > 30 ? 'Medium' : 'Low',
       risk_score: score,
-      insights: [
+      factors: [
         'Employee has stable attendance.',
         'Last performance review score was positive.',
         'Salary is competitive within range.'
+      ],
+      recommended_actions: [
+        'Keep conducting regular 1-on-1 feedback sessions.',
+        'Provide opportunities for skill development.'
       ]
     };
   },
   getEmployeesWithTasks: async () => {
     const emps = await fetchEmployees().catch(() => []);
-    const tasks = getLocalItems('tasks');
+    const tasks = await fetchHRItems('tasks');
     return emps.map(emp => ({
       ...emp,
       tasks: tasks.filter(t => String(t.employee_id) === String(emp.id))
     }));
   },
-  createTask: async (data) => addLocalItem('tasks', data),
-  updateTask: async (id, data) => updateLocalItem('tasks', id, data),
-  deleteTask: async (id) => deleteLocalItem('tasks', id),
+  createTask: async (data) => createHRItem('tasks', data),
+  updateTask: async (id, data) => updateHRItem('tasks', id, data),
+  deleteTask: async (id) => deleteHRItem('tasks', id),
   addTaskComment: async (taskId, comment) => {
-    const tasks = getLocalItems('tasks');
+    const tasks = await fetchHRItems('tasks');
     const idx = tasks.findIndex(t => t.id === taskId);
     if (idx !== -1) {
       if (!tasks[idx].comments) tasks[idx].comments = [];
       tasks[idx].comments.push({ id: Date.now(), ...comment, created_at: new Date().toISOString() });
-      saveLocalItems('tasks', tasks);
+      await updateHRItem('tasks', taskId, tasks[idx]);
       return tasks[idx];
     }
     return null;
@@ -429,10 +543,10 @@ const hrService = {
       message: 'No payroll discrepancies or errors detected for current cycle.'
     };
   },
-  updatePerformance: async (id, data) => updateLocalItem('performance', id, data),
-  createPerformance: async (data) => addLocalItem('performance', data),
-  createOffboarding: async (data) => addLocalItem('offboarding', data),
-  updateOffboarding: async (id, data) => updateLocalItem('offboarding', id, data),
+  updatePerformance: async (id, data) => updateHRItem('performance', id, data),
+  createPerformance: async (data) => createHRItem('performance', data),
+  createOffboarding: async (data) => createHRItem('offboarding', data),
+  updateOffboarding: async (id, data) => updateHRItem('offboarding', id, data),
   
   getReport: async (type, params) => {
     if (type === 'headcount') {
@@ -450,13 +564,14 @@ const hrService = {
     }
     return { data: [] };
   },
-  deleteOnboardingTask: async (id) => deleteLocalItem('tasks', id),
-  deleteOffer: async (id) => deleteLocalItem('offers', id),
+  deleteOnboardingTask: async (id) => deleteHRItem('tasks', id),
+  deleteOffer: async (id) => deleteHRItem('offers', id),
   analyzeSkillGaps: async (skills, roles) => {
     return {
       analysis: 'Overall match is high. Recommended training includes Node.js and compliance courses.'
     };
   }
 };
+
 
 export default hrService;

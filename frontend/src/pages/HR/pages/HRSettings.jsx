@@ -21,7 +21,6 @@ export default function HRSettings() {
     leaveTypes: ['Casual', 'Sick', 'Earned', 'Maternity', 'Paternity'],
     
     // Attendance
-    gracePeriod: 15,
     halfDayHours: 4,
     fullDayHours: 8,
     allowRemote: true,
@@ -73,13 +72,21 @@ export default function HRSettings() {
   ];
 
   const Toggle = ({ checked, onChange }) => (
-    <button onClick={() => onChange(!checked)} className="focus:outline-none">
-      {checked ? (
-        <ToggleRight className="w-10 h-6 text-indigo-600" />
-      ) : (
-        <ToggleLeft className="w-10 h-6 text-slate-400" />
-      )}
-    </button>
+    <div
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+        checked ? 'bg-indigo-600' : 'bg-slate-300'
+      }`}
+      role="switch"
+      aria-checked={checked}
+    >
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+          checked ? 'translate-x-4' : 'translate-x-0'
+        }`}
+      />
+    </div>
   );
 
   const renderGeneralSettings = () => (
@@ -233,15 +240,6 @@ export default function HRSettings() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800 mb-4">Timing Configuration</h3>
         <div className="form-row">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Grace Period (mins)</label>
-            <input
-              type="number"
-              value={settings.gracePeriod}
-              onChange={(e) => updateSetting('gracePeriod', parseInt(e.target.value))}
-              className="form-control"
-            />
-          </div>
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-1">Half Day Hours</label>
             <input
@@ -458,33 +456,33 @@ export default function HRSettings() {
         )}
       </div>
 
-      <div className="form-row">
+      <div className="flex flex-col md:flex-row gap-6">
         {/* Tabs Sidebar */}
-        <div className="col-span-12 md:col-span-3">
-          <div className="card">
+        <div className="w-full md:w-64 lg:w-72 flex-shrink-0">
+          <div className="flex flex-col gap-1">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center justify-between p-4 text-left border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors ${
-                  activeTab === tab.id ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : ''
-                }`}
+                className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+                style={{ 
+                  width: 'calc(100% - 16px)', 
+                  border: 'none', 
+                  background: activeTab === tab.id ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
+                  textAlign: 'left',
+                  cursor: 'pointer'
+                }}
               >
-                <div className="flex items-center gap-3">
-                  <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-indigo-600' : 'text-slate-400'}`} />
-                  <span className={`text-sm font-medium ${activeTab === tab.id ? 'text-indigo-600' : 'text-slate-700'}`}>
-                    {tab.label}
-                  </span>
-                </div>
-                <ChevronRight className={`w-4 h-4 ${activeTab === tab.id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                <tab.icon style={{ width: 18, height: 18 }} />
+                <span>{tab.label}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Settings Content */}
-        <div className="col-span-12 md:col-span-9">
-          <div className="card">
+        <div className="flex-1 min-w-0">
+          <div className="card shadow-sm border-0 rounded-xl">
             {renderTabContent()}
           </div>
         </div>

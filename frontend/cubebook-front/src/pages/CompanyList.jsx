@@ -55,7 +55,7 @@ export default function CompanyList() {
     localStorage.setItem("cb_company_id", company.id);
     localStorage.setItem("cb_company_name", company.name);
     setCompany(company);
-    navigate("/dashboard");
+    navigate("/cubebook/dashboard");
   };
 
   const filtered = companyList.filter((c) =>
@@ -95,7 +95,7 @@ export default function CompanyList() {
             {seeding ? "Seeding..." : seedingSuccess ? "Demo Loaded!" : "Load Textile Demo"}
           </button>
           <button
-            onClick={() => navigate("/company/create")}
+            onClick={() => navigate("/cubebook/company/create")}
             className="cb-btn-primary"
           >
             <Plus size={14} />
@@ -177,7 +177,7 @@ export default function CompanyList() {
             </p>
             {!search && (
               <button
-                onClick={() => navigate("/company/create")}
+                onClick={() => navigate("/cubebook/company/create")}
                 className="text-purple-600 text-sm font-semibold hover:underline"
               >
                 + Create your first company
@@ -252,7 +252,7 @@ export default function CompanyList() {
                 <button
                   onClick={() => {
                     handleOpen(company);
-                    navigate("/company/alter");
+                    navigate("/cubebook/company/alter");
                   }}
                   title="Alter Company"
                   className="btn btn-primary"

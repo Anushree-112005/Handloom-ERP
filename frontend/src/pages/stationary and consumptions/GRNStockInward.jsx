@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Trash2, X } from 'lucide-react';
+import { Plus, Save, Trash2, X, FileText } from 'lucide-react';
 
 export default function GRNStockInward() {
   const [view, setView] = useState('list');
@@ -91,48 +91,92 @@ export default function GRNStockInward() {
     setView('list');
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredGrns = grns.filter(g => 
+    g.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    g.vendor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    g.poId?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="animate-fade">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText style={{ color: '#6366f1' }} /> Goods Receipt Note (GRN)
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Inward received supplies and update stock counts</p>
+        </div>
+        {view === 'list' ? (
+          <button onClick={() => {
+            setFormData({ vendor: '', poId: '', invoiceNo: '', invoiceDate: '', items: [] });
+            setSelectedPoId('');
+            setView('form');
+          }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={16} /> New Stock Inward
+          </button>
+        ) : (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
+      </div>
+
       {view === 'list' ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-            <div>
-              <h1 style={{ fontSize: 24, fontWeight: 700 }}>Goods Receipt Note (GRN)</h1>
-              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Inward received supplies and update stock counts</p>
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All GRNs ({filteredGrns.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search GRNs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
             </div>
-            <button onClick={() => {
-              setFormData({ vendor: '', poId: '', invoiceNo: '', invoiceDate: '', items: [] });
-              setSelectedPoId('');
-              setView('form');
-            }} className="btn btn-primary">
-              <Plus size={16} /> New Stock Inward
-            </button>
           </div>
 
-          <div className="card" style={{ padding: 0 }}>
-            <table className="data-table">
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  <th >GRN No</th>
-                  <th >Date</th>
-                  <th >Vendor</th>
-                  <th >PO Reference</th>
-                  <th >Invoice Number</th>
+                  <th>GRN No</th>
+                  <th>Date</th>
+                  <th>Vendor</th>
+                  <th>PO Reference</th>
+                  <th>Invoice Number</th>
                   <th style={{ textAlign: "right" }}>Total Items</th>
                   <th style={{ textAlign: "center" }}>Status</th>
                 </tr>
               </thead>
-              <tbody >
-                {grns.map(g => (
-                  <tr key={g.id} >
-                    <td style={{ fontFamily: "monospace" }}>{g.id}</td>
-                    <td >{g.date}</td>
+              <tbody>
+                {filteredGrns.length === 0 ? (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                ) : filteredGrns.map(g => (
+                  <tr key={g.id}>
+                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{g.id}</td>
+                    <td>{g.date}</td>
                     <td style={{ fontWeight: 600 }}>{g.vendor}</td>
-                    <td className="px-6 py-4 text-sm font-mono">{g.poId || '-'}</td>
-                    <td >{g.invoiceNo || '-'}</td>
-                    <td style={{ textAlign: "right", fontWeight: 700 }}>{g.items.length}</td>
+                    <td style={{ fontFamily: "monospace", color: '#64748b' }}>{g.poId || '-'}</td>
+                    <td>{g.invoiceNo || '-'}</td>
+                    <td style={{ textAlign: "right", fontWeight: 700 }}>
+                      <span style={{ background: '#f8fafc', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
+                        {g.items.length} items
+                      </span>
+                    </td>
                     <td style={{ textAlign: "center" }}>
-                      <span className="btn btn-success">{g.status}</span>
+                      <span style={{ 
+                        color: g.status === 'Accepted' ? '#047857' : '#1e40af', 
+                        fontWeight: 600, 
+                        backgroundColor: g.status === 'Accepted' ? '#d1fae5' : '#dbeafe', 
+                        padding: '4px 10px', borderRadius: 12, fontSize: 12 
+                      }}>
+                        {g.status}
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -141,15 +185,21 @@ export default function GRNStockInward() {
           </div>
         </div>
       ) : (
-        <div className="card animate-fade">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 16, marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700 }}>Goods Receipt Note Entry</h2>
-            <button onClick={() => setView('list')} style={{ padding: 4, borderRadius: "var(--radius-sm)", cursor: "pointer", background: "none", border: "none" }}><X size={20} /></button>
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
+              <Plus size={20} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Goods Receipt Note Entry</h3>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Log inward stock against an approved Purchase Order</p>
+            </div>
           </div>
+
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <div className="form-row">
-              <div>
-                <label >Select Pending PO</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
+              <div className="form-group">
+                <label>Select Pending PO</label>
                 <select 
                   value={selectedPoId} 
                   onChange={(e) => handleLoadPO(e.target.value)} 
@@ -161,20 +211,20 @@ export default function GRNStockInward() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label >Vendor *</label>
-                <input type="text" readOnly value={formData.vendor} className="form-control" />
+              <div className="form-group">
+                <label>Vendor <span style={{ color: '#ef4444' }}>*</span></label>
+                <input type="text" readOnly value={formData.vendor} className="form-control" style={{ background: '#f8fafc' }} />
               </div>
-              <div>
-                <label >Invoice Number *</label>
+              <div className="form-group">
+                <label>Invoice Number <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="text" required value={formData.invoiceNo} 
                   onChange={(e) => setFormData({...formData, invoiceNo: e.target.value})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Invoice Date *</label>
+              <div className="form-group">
+                <label>Invoice Date <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="date" required value={formData.invoiceDate} 
                   onChange={(e) => setFormData({...formData, invoiceDate: e.target.value})} 
@@ -183,49 +233,57 @@ export default function GRNStockInward() {
               </div>
             </div>
 
-            <div className="border-t pt-4 space-y-4">
-              <h3 className="card-title">Items Received</h3>
-              <table className="form-control">
-                <thead className="bg-slate-50 border-b">
-                  <tr>
-                    <th className="px-4 py-2 border-r">Item Name</th>
-                    <th className="px-4 py-2 border-r text-center w-28">Ordered Qty</th>
-                    <th className="px-4 py-2 border-r text-center w-28">Received Qty</th>
-                    <th className="px-4 py-2 border-r text-center w-28">Accepted Qty</th>
-                    <th className="px-4 py-2 border-r text-center w-28">Rejected Qty</th>
-                    <th className="px-4 py-2 text-right w-32">Rate (₹)</th>
-                  </tr>
-                </thead>
-                <tbody >
-                  {formData.items.map((item, idx) => (
-                    <tr key={idx} >
-                      <td className="px-4 py-2 border-r font-semibold">{item.name}</td>
-                      <td className="px-4 py-2 border-r text-center font-bold bg-slate-100">{item.orderedQty}</td>
-                      <td className="px-4 py-2 border-r text-center">
-                        <input 
-                          type="number" required min="0" value={item.receivedQty} 
-                          onChange={(e) => handleQtyChange(idx, 'receivedQty', e.target.value)} 
-                          className="form-control" 
-                        />
-                      </td>
-                      <td className="btn btn-success">
-                        <input 
-                          type="number" required min="0" max={item.receivedQty} value={item.acceptedQty} 
-                          onChange={(e) => handleQtyChange(idx, 'acceptedQty', e.target.value)} 
-                          className="form-control" 
-                        />
-                      </td>
-                      <td className="btn btn-danger">{item.rejectedQty}</td>
-                      <td className="px-4 py-2 text-right font-semibold">₹{item.rate}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Items Received</h4>
+              {formData.items.length === 0 ? (
+                <div style={{ padding: 32, textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 12, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                  Please select a Pending PO to load items.
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Item Name</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Ordered Qty</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Received Qty</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Accepted Qty</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Rejected Qty</th>
+                        <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right' }}>Rate (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formData.items.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: idx !== formData.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                          <td style={{ padding: '12px 16px', fontWeight: 600 }}>{item.name}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700, color: '#6366f1', background: '#e0e7ff30' }}>{item.orderedQty}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                            <input 
+                              type="number" required min="0" value={item.receivedQty} 
+                              onChange={(e) => handleQtyChange(idx, 'receivedQty', e.target.value)} 
+                              className="form-control" style={{ width: '90px', margin: '0 auto', textAlign: 'center' }}
+                            />
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center', background: '#dcfce730' }}>
+                            <input 
+                              type="number" required min="0" max={item.receivedQty} value={item.acceptedQty} 
+                              onChange={(e) => handleQtyChange(idx, 'acceptedQty', e.target.value)} 
+                              className="form-control" style={{ width: '90px', margin: '0 auto', textAlign: 'center', borderColor: '#86efac' }}
+                            />
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center', color: '#ef4444', fontWeight: 600, background: '#fee2e230' }}>{item.rejectedQty}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>₹{item.rate}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 20 }}>
-              <button type="button" onClick={() => setView('list')} className="px-4 py-2 border rounded-lg">Cancel</button>
-              <button type="submit" className="btn btn-primary">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 8 }}>
+              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Save size={16} /> Save GRN
               </button>
             </div>

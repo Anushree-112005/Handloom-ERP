@@ -36,8 +36,14 @@ export default function DepartmentMaster() {
     if (editingId) {
       mockDb.update('consumables_departments', editingId, formData);
     } else {
+      const currentData = mockDb.get('consumables_departments');
+      const maxIdNum = currentData.reduce((max, item) => {
+        const numMatch = item.id.match(/\d+/);
+        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
+      }, 0);
+      const nextId = 'DEP' + String(maxIdNum + 1).padStart(3, '0');
       mockDb.add('consumables_departments', {
-        id: 'DEP' + Math.floor(Math.random() * 1000),
+        id: nextId,
         ...formData
       });
     }
@@ -107,12 +113,19 @@ export default function DepartmentMaster() {
           </div>
         </div>
       ) : (
-        <div className="card animate-fade" style={{ maxWidth: 640, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 16, marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700 }}>{editingId ? 'Edit Department' : 'Add New Department'}</h2>
-            <button onClick={() => setView('list')} style={{ padding: 4, borderRadius: "var(--radius-sm)", cursor: "pointer", background: "none", border: "none" }}><X size={20} /></button>
+        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Department' : 'Add New Department'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
+                <X size={16} /> Close
+              </button>
+              <button className="btn btn-primary" type="submit">
+                <Save size={16} /> Save Department
+              </button>
+            </div>
           </div>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
               <label >Department Name *</label>
               <input 
@@ -140,14 +153,8 @@ export default function DepartmentMaster() {
                 <option value="No">No</option>
               </select>
             </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 20 }}>
-              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary">
-                <Save size={16} /> Save Department
-              </button>
-            </div>
-          </form>
-        </div>
+          </div>
+        </form>
       )}
     </div>
   );

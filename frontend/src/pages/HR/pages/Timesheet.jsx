@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Plus, Search, Calendar, CheckCircle, Play, Pause, Save, X, Edit2, Trash2, ChevronLeft, ChevronRight, BarChart3, Eye } from 'lucide-react';
+import { Clock, Plus, Search, Calendar, CheckCircle, Play, Pause, Save, X, Edit2, Trash2, ChevronLeft, ChevronRight, BarChart3, Eye, LayoutList } from 'lucide-react';
 import { fetchTimesheets, createTimesheet, updateTimesheet, deleteTimesheet, fetchEmployees, fetchShifts, fetchAttendance } from '../../../services/hrService';
 import { getProjects } from '../../../services/projectService';
 
@@ -94,7 +94,7 @@ export default function Timesheet() {
         fetchEmployees(),
         getProjects({ limit: 100 }).catch(() => ({ data: { projects: [] } })),
         fetchShifts().catch(() => []),
-        fetchAttendance().catch(() => [])
+        Promise.resolve(fetchAttendance()).catch(() => [])
       ]);
       
       // Get projects list
@@ -434,7 +434,9 @@ export default function Timesheet() {
         </div>
       ) : (
         <>
-          {/* Header */}
+          {!showForm && (
+            <>
+              {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-800">Timesheet</h1>
@@ -443,7 +445,7 @@ export default function Timesheet() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); setIsEmployeeAbsent(false); setEmployeeSearchTerm(''); setShowEmployeeDropdown(false); }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90"
+                className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <Plus className="w-4 h-4" /> Add Entry
               </button>
@@ -454,7 +456,7 @@ export default function Timesheet() {
           <div className="form-row">
             <div className="card">
               <div className="flex items-center gap-3">
-                <div className="btn btn-primary">
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
@@ -465,7 +467,7 @@ export default function Timesheet() {
             </div>
             <div className="card">
               <div className="flex items-center gap-3">
-                <div className="btn btn-success">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
@@ -487,7 +489,7 @@ export default function Timesheet() {
             </div>
             <div className="card">
               <div className="flex items-center gap-3">
-                <div className="btn btn-primary">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
@@ -498,35 +500,7 @@ export default function Timesheet() {
             </div>
           </div>
 
-          {/* View Toggle and Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewMode === 'list' ? 'bg-indigo-100 text-indigo-700' : 'bg-white border border-slate-200 text-slate-600'}`}
-              >
-                List View
-              </button>
-              <button
-                onClick={() => setViewMode('calendar')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewMode === 'calendar' ? 'bg-indigo-100 text-indigo-700' : 'bg-white border border-slate-200 text-slate-600'}`}
-              >
-                Week View
-              </button>
-            </div>
-            {viewMode === 'list' && (
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search timesheets..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="form-control"
-                />
-              </div>
-            )}
-          </div>
+
 
           {/* Week Navigation (Calendar View) */}
           {viewMode === 'calendar' && (
@@ -598,7 +572,7 @@ export default function Timesheet() {
             <div className="card">
               <div className="overflow-x-auto">
                 <table className="data-table">
-                  <thead className="btn btn-secondary">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-700">
                     <tr>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Date</th>
                       <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Employee</th>
@@ -611,7 +585,7 @@ export default function Timesheet() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredTimesheets.map(ts => (
-                      <tr key={ts.timesheet_id || ts.id} className="btn btn-secondary">
+                      <tr key={ts.timesheet_id || ts.id} className="hover:bg-slate-50/50">
                         <td className="px-4 py-3">
                           <span className="text-sm font-medium text-slate-700">{formatDate(ts.date)}</span>
                         </td>
@@ -665,29 +639,27 @@ export default function Timesheet() {
             </div>
           )}
 
-          {/* Form Modal */}
+            </>
+          )}
+
+          {/* Form Inline */}
           {showForm && (
-            <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-              <div className="card">
-                {/* Header with Gradient */}
-                <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
-                          <Clock className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <h2 className="text-2xl font-bold">{viewingId ? 'View' : editingId ? 'Edit' : 'New'} Timesheet</h2>
-                          <p className="text-white/80 text-sm">Track your work hours and project allocation</p>
-                        </div>
-                      </div>
-                    </div>
-                    <button onClick={() => { setShowForm(false); setEditingId(null); setViewingId(null); setIsEmployeeAbsent(false); setEmployeeSearchTerm(''); setShowEmployeeDropdown(false); }} className="p-2 hover:bg-white/20 rounded-lg">
-                      <X className="w-5 h-5" />
+            <div className="card" style={{ width: '100%', padding: 0 }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                  {viewingId ? 'View Timesheet' : editingId ? 'Edit Timesheet' : 'New Timesheet'}
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button onClick={() => { setShowForm(false); setEditingId(null); setViewingId(null); setEmployeeSearchTerm(''); setShowEmployeeDropdown(false); }} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <X className="w-4 h-4" /> Close
+                  </button>
+                  {!viewingId && (
+                    <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Save Entry'}
                     </button>
-                  </div>
+                  )}
                 </div>
+              </div>
                 
                 {/* Form Content */}
                 <div className="p-6 space-y-5">
@@ -709,10 +681,10 @@ export default function Timesheet() {
                       
                       {/* Custom Dropdown */}
                       {showEmployeeDropdown && !viewingId && (
-                        <div className="btn btn-secondary">
+                        <div className="card" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, maxHeight: 250, overflowY: 'auto', marginTop: 4, padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
                           {presentEmployees.length > 0 && (
                             <>
-                              <div className="btn btn-success">
+                              <div style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, color: '#047857', textTransform: 'uppercase', tracking: 'wide' }}>
                                 Present Today
                               </div>
                               {presentEmployees.filter(emp => emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())).map(emp => (
@@ -728,13 +700,14 @@ export default function Timesheet() {
                                     }
                                   }}
                                   className="form-control"
+                                  style={{ textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                 >
-                                  {emp.name} <span className="text-xs text-emerald-600">✓ Present</span>
+                                  <span>{emp.name}</span> <span className="text-xs text-emerald-600 font-medium">✓ Present</span>
                                 </button>
                               ))}
                             </>
                           )}
-                          <div className="btn btn-secondary">
+                          <div style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', tracking: 'wide' }}>
                             All Employees
                           </div>
                           {employees.filter(emp => emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())).map(emp => (
@@ -743,14 +716,15 @@ export default function Timesheet() {
                               type="button"
                               onClick={() => {
                                 setForm({ ...form, employee_id: emp.id });
-                                setEmployeeSearchTerm('');
-                                setShowEmployeeDropdown(false);
-                                const presentEmp = presentEmployees.find(p => p.id === emp.id);
-                                if (presentEmp && presentEmp.attendance) {
-                                  fillAttendanceData(presentEmp);
-                                }
+                                  setEmployeeSearchTerm('');
+                                  setShowEmployeeDropdown(false);
+                                  const presentEmp = presentEmployees.find(p => p.id === emp.id);
+                                  if (presentEmp && presentEmp.attendance) {
+                                    fillAttendanceData(presentEmp);
+                                  }
                               }}
                               className="form-control"
+                              style={{ textAlign: 'left' }}
                             >
                               {emp.name}
                             </button>
@@ -774,9 +748,9 @@ export default function Timesheet() {
                   </div>
 
                   {isEmployeeAbsent && form.employee_id && (
-                    <div className="btn btn-danger">
-                      <p className="text-sm font-semibold text-red-700">⚠️ Employee Absent or On Leave</p>
-                      <p className="text-xs text-red-600">Cannot create timesheet for absent/leave employees on this date</p>
+                    <div style={{ padding: 12, borderRadius: 8, background: '#fee2e2', border: '1px solid #fca5a5', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <p className="text-sm font-semibold text-red-700" style={{ margin: 0 }}>⚠️ Employee Absent or On Leave</p>
+                      <p className="text-xs text-red-600" style={{ margin: 0 }}>Cannot create timesheet for absent/leave employees on this date</p>
                     </div>
                   )}
 
@@ -862,9 +836,9 @@ export default function Timesheet() {
                         </div>
                       </div>
                       {form.shift_id && (
-                        <div className="btn btn-secondary">
-                          <p className="text-xs text-slate-600 font-semibold mb-1">Summary</p>
-                          <p className="text-sm text-slate-700">
+                        <div className="card" style={{ padding: 12, background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+                          <p className="text-xs text-slate-600 font-semibold mb-1" style={{ margin: 0 }}>Summary</p>
+                          <p className="text-sm text-slate-700" style={{ margin: '4px 0 0 0' }}>
                             Worked <span className="font-bold">{parseFloat(form.hours_worked || 0).toFixed(1)}h</span> 
                             {form.shift_working_hours > 0 && (
                               <> ({form.shift_working_hours.toFixed(1)}h shift + {form.overtime_hours > 0 ? form.overtime_hours.toFixed(1) : '0.0'}h overtime)</>
@@ -875,19 +849,6 @@ export default function Timesheet() {
                     </div>
                   )}
                 </div>
-
-                {/* Footer */}
-                <div className="btn btn-secondary">
-                  <button onClick={() => { setShowForm(false); setEditingId(null); setViewingId(null); setEmployeeSearchTerm(''); setShowEmployeeDropdown(false); }} className="btn btn-secondary">
-                    {viewingId ? 'Close' : 'Cancel'}
-                  </button>
-                  {!viewingId && (
-                    <button onClick={handleSubmit} className="btn btn-primary">
-                      <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Save'}
-                    </button>
-                  )}
-                </div>
-              </div>
             </div>
           )}
         </>

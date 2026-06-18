@@ -60,7 +60,7 @@ export default function StockItemForm({ mode = 'create' }) {
   const onSuccess = () => {
     queryClient.invalidateQueries(['stock-items', activeCompany?.id]);
     queryClient.invalidateQueries(['items', activeCompany?.id]);
-    navigate('/inventory-masters?tab=items');
+    navigate('/cubebook/inventory-masters?tab=items');
   };
 
   const openingValue = (parseFloat(form.opening_qty) || 0) * (parseFloat(form.opening_rate) || 0);

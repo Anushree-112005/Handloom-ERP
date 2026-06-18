@@ -24,7 +24,7 @@ export default function CurrencyCreate() {
     mutationFn: (payload) => companies.update(activeCompany.id, payload),
     onSuccess: (data) => {
       setCompany(data);
-      navigate('/currency');
+      navigate('/cubebook/currency');
     },
   });
 
@@ -52,7 +52,7 @@ export default function CurrencyCreate() {
         </div>
         <button
           type="button"
-          onClick={() => navigate('/currency')}
+          onClick={() => navigate('/cubebook/currency')}
           className="cb-btn-secondary"
         >
           <ArrowLeft size={15} />
@@ -213,7 +213,7 @@ export default function CurrencyCreate() {
           <div className="btn btn-secondary">
             <button
               type="button"
-              onClick={() => navigate('/currency')}
+              onClick={() => navigate('/cubebook/currency')}
               className="cb-btn-secondary"
             >
               Cancel

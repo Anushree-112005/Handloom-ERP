@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   Sparkles, Upload, Cpu, Download, Plus, Trash2, ArrowRight, ArrowLeft, CheckCircle,
   AlertCircle, RefreshCw, Layers, Settings, ChevronDown, Eye, Database
@@ -18,6 +18,21 @@ const YARN_COUNTS = {
   "2/60S CTN": 30.0,
   "2/80S CTN": 40.0,
 };
+
+function parseEnglishCount(label) {
+  if (!label) return 20.0;
+  let cleaned = label.toUpperCase().replace(/\s+/g, '');
+  if (cleaned.includes('/')) {
+    const parts = cleaned.split('/');
+    const ply = parseFloat(parts[0]) || 1.0;
+    const countPart = parts[1].match(/\d+/);
+    const count = countPart ? parseFloat(countPart[0]) : 40.0;
+    return count / ply;
+  } else {
+    const match = cleaned.match(/\d+/);
+    return match ? parseFloat(match[0]) : 20.0;
+  }
+}
 
 const KG_PER_LB = 0.45359237;
 const YARDS_PER_HANK = 840;
@@ -108,9 +123,38 @@ export default function DesignAI() {
 
   /* ── Crop State removed ─── */
 
+  const [dbYarnCounts, setDbYarnCounts] = useState([]);
+
+  useEffect(() => {
+    const loadYarnCounts = async () => {
+      try {
+        const res = await subMasterAPI.list('yarn_count_master');
+        setDbYarnCounts(res.data || []);
+      } catch (err) {
+        console.error("Failed to load yarn count master", err);
+      }
+    };
+    loadYarnCounts();
+  }, []);
+
+  const activeYarnCounts = useMemo(() => {
+    return dbYarnCounts.length > 0 
+      ? dbYarnCounts.map(yc => yc.code || yc.name)
+      : Object.keys(YARN_COUNTS);
+  }, [dbYarnCounts]);
+
   /* ── Derived values ─── */
-  const warpEqCount = YARN_COUNTS[warpCountLabel] || 20.0;
-  const weftEqCount = YARN_COUNTS[weftCountLabel] || 20.0;
+  const warpEqCount = useMemo(() => {
+    return YARN_COUNTS[warpCountLabel] !== undefined 
+      ? YARN_COUNTS[warpCountLabel] 
+      : parseEnglishCount(warpCountLabel);
+  }, [warpCountLabel]);
+
+  const weftEqCount = useMemo(() => {
+    return YARN_COUNTS[weftCountLabel] !== undefined 
+      ? YARN_COUNTS[weftCountLabel] 
+      : parseEnglishCount(weftCountLabel);
+  }, [weftCountLabel]);
   const totalWarpEnds = Math.round(reed * targetWidth);
   // Weft width includes selvage allowance (standard 3" each side)
   const weftWidth = targetWidth + selvage;
@@ -779,12 +823,12 @@ export default function DesignAI() {
 
           <label className="dai-label">Warp Yarn Count</label>
           <select className="dai-input" value={warpCountLabel} onChange={e => setWarpCountLabel(e.target.value)}>
-            {Object.keys(YARN_COUNTS).map(k => <option key={k} value={k}>{k}</option>)}
+            {activeYarnCounts.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
 
           <label className="dai-label">Weft Yarn Count</label>
           <select className="dai-input" value={weftCountLabel} onChange={e => setWeftCountLabel(e.target.value)}>
-            {Object.keys(YARN_COUNTS).map(k => <option key={k} value={k}>{k}</option>)}
+            {activeYarnCounts.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
 
           <div className="dai-divider" />

@@ -15,6 +15,8 @@ export default function Dashboard() {
 
   const [departmentData, setDepartmentData] = useState([]);
   const [recentLedger, setRecentLedger] = useState([]);
+  const [maxDeptValue, setMaxDeptValue] = useState(20000);
+  const [auditScore, setAuditScore] = useState('100.0%');
 
   useEffect(() => {
     // Calculate Stats
@@ -23,6 +25,7 @@ export default function Dashboard() {
     const pos = mockDb.get('consumables_pos');
     const ledger = mockDb.get('consumables_ledger');
     const issues = mockDb.get('consumables_issues');
+    const verifications = mockDb.get('consumables_verifications') || [];
 
     const totalVal = items.reduce((acc, x) => acc + ((x.currentStock || 0) * (x.rate || 0)), 0);
     const lowStockCount = items.filter(x => (x.currentStock || 0) <= (x.minStock || 0)).length;
@@ -35,23 +38,75 @@ export default function Dashboard() {
       .filter(x => x.date === todayStr)
       .reduce((acc, x) => acc + x.items.reduce((sum, item) => sum + (item.qty * (item.rate || 0)), 0), 0);
 
+    // Dead Stock Items (currentStock > 0 and no outbound ledger transactions)
+    const deadStockCount = items.filter(itm => {
+      if ((itm.currentStock || 0) <= 0) return false;
+      const hasOutbound = ledger.some(l => l.itemId === itm.id && (l.outQty > 0 || l.refType === 'Issue' || l.refType === 'Transfer'));
+      return !hasOutbound;
+    }).length;
+
     setStats({
       stockValue: totalVal,
-      todayIssues: todayIssuesVal || 1280,
-      todayReceipts: 4850,
+      todayIssues: todayIssuesVal,
+      todayReceipts: 0,
       pendingRequests: pendingReqCount,
       pendingApprovals: pendingPoCount,
       lowStockItems: lowStockCount,
-      deadStockItems: 2
+      deadStockItems: deadStockCount
     });
 
-    // Department wise data
-    setDepartmentData([
-      { name: 'Production', value: 15400, color: '#4f46e5' },
-      { name: 'HR & Admin', value: 3200, color: '#06b6d4' },
-      { name: 'Accounts', value: 1800, color: '#10b981' },
-      { name: 'Stores & Warehouse', value: 950, color: '#f59e0b' }
-    ]);
+    // Calculate Audit Score
+    if (verifications.length > 0) {
+      const latestVer = verifications[verifications.length - 1];
+      const totalSystem = (latestVer.items || []).reduce((sum, i) => sum + (i.systemQty || 0), 0);
+      const totalDiff = (latestVer.items || []).reduce((sum, i) => sum + Math.abs(i.difference || 0), 0);
+      if (totalSystem > 0) {
+        const score = Math.max(0, Math.min(100, (1 - (totalDiff / totalSystem)) * 100));
+        setAuditScore(score.toFixed(1) + '%');
+      } else {
+        setAuditScore('100.0%');
+      }
+    } else {
+      setAuditScore('100.0%');
+    }
+
+    // Department wise consumption data calculated dynamically from issues
+    const deptColors = {
+      'Production': '#4f46e5',
+      'HR & Admin': '#06b6d4',
+      'Accounts': '#10b981',
+      'Stores & Warehouse': '#f59e0b',
+      'Quality Assurance': '#ec4899',
+      'Accounts & Finance': '#10b981'
+    };
+
+    const deptTotals = {};
+    issues.forEach(issue => {
+      const dept = issue.department || 'Other';
+      const issueTotal = (issue.items || []).reduce((sum, item) => {
+        let rate = item.rate;
+        if (rate === undefined || rate === null) {
+          const matchedItem = items.find(itm => itm.id === item.itemId);
+          rate = matchedItem ? (matchedItem.rate || 0) : 0;
+        }
+        return sum + ((item.qty || 0) * rate);
+      }, 0);
+      deptTotals[dept] = (deptTotals[dept] || 0) + issueTotal;
+    });
+
+    const defaultDepts = mockDb.get('consumables_departments') || [];
+    const allDeptNames = Array.from(new Set([...defaultDepts.map(d => d.name), ...Object.keys(deptTotals)]));
+    
+    const computedDeptData = allDeptNames.map(name => ({
+      name,
+      value: deptTotals[name] || 0,
+      color: deptColors[name] || '#6366f1'
+    })).sort((a, b) => b.value - a.value);
+
+    setDepartmentData(computedDeptData);
+    
+    const maxVal = Math.max(...computedDeptData.map(d => d.value), 20000);
+    setMaxDeptValue(maxVal);
 
     setRecentLedger(ledger.slice(-5).reverse());
   }, []);
@@ -135,7 +190,7 @@ export default function Dashboard() {
                       style={{
                         height: 8,
                         borderRadius: 100,
-                        width: `${(dept.value / 20000) * 100}%`,
+                        width: `${maxDeptValue > 0 ? (dept.value / maxDeptValue) * 100 : 0}%`,
                         backgroundColor: dept.color,
                         transition: 'width 0.6s ease'
                       }}
@@ -157,7 +212,7 @@ export default function Dashboard() {
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, marginTop: 4 }}>Pending Material Requests</p>
               </div>
               <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--success)' }}>98.5%</span>
+                <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--success)' }}>{auditScore}</span>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, marginTop: 4 }}>Audit Score</p>
               </div>
               <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>

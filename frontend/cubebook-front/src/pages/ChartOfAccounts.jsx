@@ -6,22 +6,22 @@ const sections = [
   {
     title: 'Accounting Masters',
     items: [
-      { label: 'Groups', description: 'View chart of ledger groups.', route: '/masters/group' },
-      { label: 'Ledgers', description: 'View chart of account ledgers.', route: '/ledgers' },
-      { label: 'Voucher Types', description: 'View configured voucher templates.', route: '/masters/voucher-types' },
-      { label: 'Currencies', description: 'View configured foreign currencies.', route: '/masters/currencies' },
-      { label: 'Budgets', description: 'View financial budget configurations.', route: '/masters/budgets' },
-      { label: 'Scenarios', description: 'View scenario analysis profiles.', route: '/masters/scenarios' },
+      { label: 'Groups', description: 'View chart of ledger groups.', route: '/cubebook/masters/group' },
+      { label: 'Ledgers', description: 'View chart of account ledgers.', route: '/cubebook/ledgers' },
+      { label: 'Voucher Types', description: 'View configured voucher templates.', route: '/cubebook/masters/voucher-types' },
+      { label: 'Currencies', description: 'View configured foreign currencies.', route: '/cubebook/masters/currencies' },
+      { label: 'Budgets', description: 'View financial budget configurations.', route: '/cubebook/masters/budgets' },
+      { label: 'Scenarios', description: 'View scenario analysis profiles.', route: '/cubebook/masters/scenarios' },
     ],
   },
   {
     title: 'Inventory Masters',
     items: [
-      { label: 'Stock Groups', description: 'View stock group categories hierarchy.', route: '/inventory-masters?tab=groups' },
-      { label: 'Stock Items', description: 'View inventory stock item directories.', route: '/inventory-masters?tab=items' },
-      { label: 'Stock Categories', description: 'View inventory category directories.', route: '/inventory-masters?tab=categories' },
-      { label: 'Units', description: 'View measurement units directories.', route: '/inventory-masters?tab=units' },
-      { label: 'Locations', description: 'View warehouse and storage directories.', route: '/inventory-masters?tab=locations' },
+      { label: 'Stock Groups', description: 'View stock group categories hierarchy.', route: '/cubebook/inventory-masters?tab=groups' },
+      { label: 'Stock Items', description: 'View inventory stock item directories.', route: '/cubebook/inventory-masters?tab=items' },
+      { label: 'Stock Categories', description: 'View inventory category directories.', route: '/cubebook/inventory-masters?tab=categories' },
+      { label: 'Units', description: 'View measurement units directories.', route: '/cubebook/inventory-masters?tab=units' },
+      { label: 'Locations', description: 'View warehouse and storage directories.', route: '/cubebook/inventory-masters?tab=locations' },
     ],
   },
 ];
@@ -34,7 +34,7 @@ export default function ChartOfAccounts() {
     clearCompany();
     localStorage.removeItem('cb_company_id');
     localStorage.removeItem('cb_company_name');
-    navigate('/dashboard');
+    navigate('/cubebook/dashboard');
   };
 
   if (!activeCompany) {

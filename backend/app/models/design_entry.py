@@ -40,6 +40,10 @@ class DesignEntry(Base):
     packing_less = Column(Float, default=0.0)
     weight_grm = Column(Float, default=0.0)
     dyeing_loss_pct = Column(Float, default=0.0)
+    
+    yarn_details = Column(String(4000), nullable=True)
+    fabric_design_details = Column(String(4000), nullable=True)
+    image_path = Column(String(500), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

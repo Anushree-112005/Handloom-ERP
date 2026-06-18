@@ -38,7 +38,7 @@ export default function CompanySetup() {
     localStorage.setItem("cb_company_id", company.id);
     localStorage.setItem("cb_company_name", company.name);
     setCompany(company);
-    navigate("/dashboard");
+    navigate("/cubebook/dashboard");
   };
 
   const filtered = companyList.filter((c) =>
@@ -86,7 +86,7 @@ export default function CompanySetup() {
         {/* Back button */}
         {activeCompany && (
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/cubebook/dashboard")}
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "7px 14px", borderRadius: 10,
@@ -167,7 +167,7 @@ export default function CompanySetup() {
 
             {/* Add Company */}
             <button
-              onClick={() => navigate("/company/create")}
+              onClick={() => navigate("/cubebook/company/create")}
               style={{
                 display: "flex", alignItems: "center", gap: 7,
                 padding: "9px 18px", borderRadius: 10,
@@ -220,7 +220,7 @@ export default function CompanySetup() {
                 </p>
                 {!search && (
                   <button
-                    onClick={() => navigate("/company/create")}
+                    onClick={() => navigate("/cubebook/company/create")}
                     style={{
                       fontSize: 13, fontWeight: 700, color: "#7c3aed",
                       background: "none", border: "none", cursor: "pointer",
@@ -328,7 +328,7 @@ export default function CompanySetup() {
 
                     {/* Edit */}
                     <button
-                      onClick={() => { handleSelect(company); navigate("/company/alter"); }}
+                      onClick={() => { handleSelect(company); navigate("/cubebook/company/alter"); }}
                       title="Edit Company"
                       style={{
                         padding: "7px 10px", borderRadius: 9,

@@ -19,15 +19,16 @@ export default function TravelRequests() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterType, setFilterType] = useState('');
   const [viewingRequest, setViewingRequest] = useState(null);
+  const [viewMode, setViewMode] = useState('list');
+  const [showFilters, setShowFilters] = useState(false);
 
   const initialForm = {
+    request_id: '',
+    status: 'Pending',
     employee_id: '',
     employee_name: '',
+    co_travelers: [],
     purpose: '',
     travel_type: 'Domestic',
     from_location: '',
@@ -66,16 +67,19 @@ export default function TravelRequests() {
   };
 
   const handleSubmit = async () => {
-    if (!form.employee_id || !form.purpose || !form.from_location || !form.to_location || !form.departure_date || !form.return_date) {
+    if (!form.employee_id || !form.from_location || !form.to_location || !form.departure_date || !form.return_date) {
       alert('Please fill required fields');
       return;
     }
 
     try {
       const payload = {
+        request_id: form.request_id || `TRV-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: form.status || 'Pending',
         employee_id: parseInt(form.employee_id),
         employee_name: form.employee_name,
-        purpose: form.purpose,
+        co_travelers: form.co_travelers || [],
+        purpose: form.purpose || 'General Travel',
         travel_type: form.travel_type,
         from_location: form.from_location,
         to_location: form.to_location,
@@ -109,9 +113,12 @@ export default function TravelRequests() {
 
   const handleEdit = (req) => {
     setForm({
+      request_id: req.request_id || '',
+      status: req.status || 'Pending',
       employee_id: req.employee_id,
       employee_name: req.employee_name,
-      purpose: req.purpose,
+      co_travelers: req.co_travelers || [],
+      purpose: req.purpose || '',
       travel_type: req.travel_type,
       from_location: req.from_location,
       to_location: req.to_location,
@@ -160,11 +167,7 @@ export default function TravelRequests() {
     });
   };
 
-  const filteredRequests = requests.filter(req => {
-    const matchesStatus = !filterStatus || req.status === filterStatus;
-    const matchesType = !filterType || req.travel_type === filterType;
-    return matchesStatus && matchesType;
-  });
+  const filteredRequests = requests;
 
   const stats = {
     total: requests.length,
@@ -179,511 +182,512 @@ export default function TravelRequests() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Travel Requests</h1>
-          <span className="btn btn-primary">
-            {filteredRequests.length} Records
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all ${
-                showFilters || filterStatus || filterType
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Filter size={14} />
-              Filter
-              {(filterStatus || filterType) && (
-                <span className="btn btn-primary" />
-              )}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button
-                    onClick={() => { setFilterStatus(''); setFilterType(''); setShowFilters(false); }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Status</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Manager Approved">Approved</option>
-                      <option value="Travel Booked">Booked</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Travel Type</label>
-                    <select
-                      value={filterType}
-                      onChange={(e) => setFilterType(e.target.value)}
-                      className="form-control"
-                    >
-                      <option value="">All Types</option>
-                      <option value="Domestic">Domestic</option>
-                      <option value="International">International</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="btn btn-secondary">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1 rounded transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-              title="List View"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1 rounded transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-              title="Grid View"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-          <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary"
-          >
-            <Plus size={14} /> New Request
-          </button>
-        </div>
-      </div>
-
-      {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-
-      {/* Stats */}
-      <div className="form-row">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Plane className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              <p className="text-xs text-slate-500">Total Requests</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.pending}</p>
-              <p className="text-xs text-slate-500">Pending</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <CheckCircle className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.approved}</p>
-              <p className="text-xs text-slate-500">Approved</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="btn btn-primary">
-              <Hotel className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stats.booked}</p>
-              <p className="text-xs text-slate-500">Booked</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Requests Grid View */}
-      {viewMode === 'grid' && (
-        <div className="form-row">
-          {filteredRequests.map(req => (
-          <div key={req.id} className="card">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <span className="text-xs font-medium text-indigo-600">{req.request_id}</span>
-                <h3 className="card-title">{req.employee_name}</h3>
-              </div>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[req.status]}`}>
-                {req.status}
+    <div className="animate-in fade-in" style={{ padding: '4px 0px' }}>
+      {!showForm && (
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="flex items-center gap-4">
+              <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Travel Requests</h1>
+              <span className="badge badge-active" style={{ padding: '4px 10px', fontSize: 12 }}>
+                {filteredRequests.length} Records
               </span>
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
-              <MapPin className="w-4 h-4 text-slate-400" />
-              <span>{req.from_location}</span>
-              <span className="text-slate-400">→</span>
-              <span>{req.to_location}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Plus size={16} /> New Request
+              </button>
             </div>
-            
-            <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <span>{formatDate(req.departure_date)} - {formatDate(req.return_date)}</span>
-            </div>
-            
-            <div className="btn btn-secondary">
-              <div className="flex items-center gap-2">
-                {req.transport_mode && (
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{req.transport_mode}</span>
-                )}
-                {req.hotel_required && (
-                  <span className="btn btn-primary">Hotel</span>
-                )}
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Plane className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setViewingRequest(req)} className="btn btn-secondary">
-                  <Eye className="w-4 h-4 text-slate-500" />
-                </button>
-                {req.status === 'Pending' && (
-                  <>
-                    <button onClick={() => handleEdit(req)} className="btn btn-secondary">
-                      <Edit2 className="w-4 h-4 text-slate-500" />
-                    </button>
-                    <button onClick={() => handleDelete(req.id)} className="btn btn-danger">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
-                  </>
-                )}
+              <div>
+                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.total}</p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Requests</p>
+              </div>
+            </div>
+            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.pending}</p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Pending</p>
+              </div>
+            </div>
+            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, background: '#3b82f618', color: '#1d4ed8', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.approved}</p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Approved</p>
+              </div>
+            </div>
+            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, background: '#a855f718', color: '#7e22ce', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Hotel className="w-5 h-5" />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.booked}</p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Booked</p>
               </div>
             </div>
           </div>
-        ))}
-          {filteredRequests.length === 0 && (
-            <div className="btn btn-secondary">
-              <Plane className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500">No travel requests found</p>
+
+          {/* Requests Grid View */}
+          {viewMode === 'grid' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+              {filteredRequests.map(req => (
+                <div key={req.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)' }}>{req.request_id}</span>
+                      <h3 className="card-title" style={{ margin: '4px 0 0 0' }}>{req.employee_name}</h3>
+                    </div>
+                    <span className={`badge ${req.status === 'Completed' || req.status === 'Manager Approved' ? 'badge-active' : req.status === 'Cancelled' ? 'badge-inactive' : 'badge-pending'}`}>
+                      {req.status}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
+                    <MapPin size={16} style={{ color: 'var(--text-muted)' }} />
+                    <span>{req.from_location}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>→</span>
+                    <span>{req.to_location}</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
+                    <Calendar size={16} style={{ color: 'var(--text-muted)' }} />
+                    <span>{formatDate(req.departure_date)} - {formatDate(req.return_date)}</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {req.transport_mode && (
+                        <span style={{ fontSize: 11, background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 4, color: 'var(--text-secondary)' }}>{req.transport_mode}</span>
+                      )}
+                      {req.hotel_required && (
+                        <span style={{ fontSize: 11, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: '2px 8px', borderRadius: 4 }}>Hotel</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => setViewingRequest(req)} className="btn btn-secondary" style={{ padding: 6 }}>
+                        <Eye size={14} />
+                      </button>
+                      {req.status === 'Pending' && (
+                        <>
+                          <button onClick={() => handleEdit(req)} className="btn btn-secondary" style={{ padding: 6 }}>
+                            <Edit2 size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(req.id)} className="btn btn-danger" style={{ padding: 6 }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {filteredRequests.length === 0 && (
+                <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 24px' }}>
+                  <Plane className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p style={{ margin: 0, color: 'var(--text-muted)' }}>No travel requests found</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Requests List View */}
+          {viewMode === 'list' && (
+            <div className="card" style={{ padding: 0 }}>
+              <div className="overflow-x-auto">
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Request ID</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Employee</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Route</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Travel Dates</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Transport</th>
+                      <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Status</th>
+                      <th className="text-right px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRequests.map(req => (
+                      <tr key={req.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td className="px-6 py-4 text-sm font-semibold text-indigo-600">{req.request_id}</td>
+                        <td className="px-6 py-4 text-sm text-slate-800 font-medium">
+                          {req.employee_name}
+                          {req.co_travelers && req.co_travelers.length > 0 && (
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                              + {req.co_travelers.map(c => c.name).join(', ')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span>{req.from_location}</span>
+                            <span style={{ color: 'var(--text-muted)' }}>→</span>
+                            <span>{req.to_location}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-600">
+                          {formatDate(req.departure_date)} - {formatDate(req.return_date)}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {req.transport_mode && (
+                              <span style={{ fontSize: 11, background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 4, color: 'var(--text-secondary)' }}>{req.transport_mode}</span>
+                            )}
+                            {req.hotel_required && (
+                              <span style={{ fontSize: 11, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: '2px 8px', borderRadius: 4 }}>Hotel</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className={`badge ${req.status === 'Completed' || req.status === 'Manager Approved' ? 'badge-active' : req.status === 'Cancelled' ? 'badge-inactive' : 'badge-pending'}`}>
+                            {req.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                            <button onClick={() => setViewingRequest(req)} className="btn btn-secondary" style={{ padding: 6 }}>
+                              <Eye size={14} />
+                            </button>
+                            {req.status === 'Pending' && (
+                              <>
+                                <button onClick={() => handleEdit(req)} className="btn btn-secondary" style={{ padding: 6 }}>
+                                  <Edit2 size={14} />
+                                </button>
+                                <button onClick={() => handleDelete(req.id)} className="btn btn-danger" style={{ padding: 6 }}>
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredRequests.length === 0 && (
+                      <tr>
+                        <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+                          <Plane className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                          No travel requests found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Requests List View */}
-      {viewMode === 'list' && (
-        <div className="card">
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead className="btn btn-secondary">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Request ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Employee</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Route</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Travel Dates</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Transport</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredRequests.map(req => (
-                  <tr key={req.id} className="btn btn-secondary">
-                    <td className="px-4 py-3 text-sm font-medium text-indigo-600">{req.request_id}</td>
-                    <td className="px-4 py-3 text-sm text-slate-800">{req.employee_name}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      <div className="flex items-center gap-1">
-                        <span>{req.from_location}</span>
-                        <span className="text-slate-400">→</span>
-                        <span>{req.to_location}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {formatDate(req.departure_date)} - {formatDate(req.return_date)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        {req.transport_mode && (
-                          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{req.transport_mode}</span>
-                        )}
-                        {req.hotel_required && (
-                          <span className="btn btn-primary">Hotel</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[req.status]}`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setViewingRequest(req)} className="btn btn-secondary">
-                          <Eye className="w-4 h-4 text-slate-500" />
-                        </button>
-                        {req.status === 'Pending' && (
-                          <>
-                            <button onClick={() => handleEdit(req)} className="btn btn-secondary">
-                              <Edit2 className="w-4 h-4 text-slate-500" />
-                            </button>
-                            <button onClick={() => handleDelete(req.id)} className="btn btn-danger">
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filteredRequests.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center">
-                      <Plane className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <p className="text-slate-500">No travel requests found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      </div>{/* END DATA AREA */}
-
-      {/* Form Modal */}
+      {/* Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'New'} Travel Request</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                  <select
-                    value={form.employee_id}
-                    onChange={handleEmployeeChange}
-                    className="form-control"
-                  >
-                    <option value="">Select Employee</option>
-                    {employees.map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Travel Type</label>
-                  <select
-                    value={form.travel_type}
-                    onChange={(e) => setForm({ ...form, travel_type: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="Domestic">Domestic</option>
-                    <option value="International">International</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Purpose *</label>
-                <textarea
-                  value={form.purpose}
-                  onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                  rows={2}
-                  className="form-control"
-                  placeholder="Purpose of travel..."
-                />
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">From Location *</label>
-                  <input
-                    type="text"
-                    value={form.from_location}
-                    onChange={(e) => setForm({ ...form, from_location: e.target.value })}
-                    className="form-control"
-                    placeholder="Departure city"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">To Location *</label>
-                  <input
-                    type="text"
-                    value={form.to_location}
-                    onChange={(e) => setForm({ ...form, to_location: e.target.value })}
-                    className="form-control"
-                    placeholder="Destination city"
-                  />
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Departure Date *</label>
-                  <input
-                    type="date"
-                    value={form.departure_date}
-                    onChange={(e) => setForm({ ...form, departure_date: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Return Date *</label>
-                  <input
-                    type="date"
-                    value={form.return_date}
-                    onChange={(e) => setForm({ ...form, return_date: e.target.value })}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Transport Mode</label>
-                  <select
-                    value={form.transport_mode}
-                    onChange={(e) => setForm({ ...form, transport_mode: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="">Select Mode</option>
-                    {transportModes.map(m => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Class</label>
-                  <select
-                    value={form.transport_class}
-                    onChange={(e) => setForm({ ...form, transport_class: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="">Select Class</option>
-                    {transportClasses.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="hotelRequired"
-                  checked={form.hotel_required}
-                  onChange={(e) => setForm({ ...form, hotel_required: e.target.checked })}
-                  className="w-4 h-4 text-indigo-600 rounded"
-                />
-                <label htmlFor="hotelRequired" className="text-sm font-medium text-slate-700">Hotel/Accommodation Required</label>
-              </div>
-              
-              {form.hotel_required && (
-                <div className="form-row">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Hotel Name</label>
-                    <input
-                      type="text"
-                      value={form.hotel_name}
-                      onChange={(e) => setForm({ ...form, hotel_name: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Check-in</label>
-                    <input
-                      type="date"
-                      value={form.check_in_date}
-                      onChange={(e) => setForm({ ...form, check_in_date: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Check-out</label>
-                    <input
-                      type="date"
-                      value={form.check_out_date}
-                      onChange={(e) => setForm({ ...form, check_out_date: e.target.value })}
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Estimated Cost (₹)</label>
-                  <input
-                    type="number"
-                    value={form.estimated_cost}
-                    onChange={(e) => setForm({ ...form, estimated_cost: e.target.value })}
-                    className="form-control"
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Advance Required (₹)</label>
-                  <input
-                    type="number"
-                    value={form.advance_required}
-                    onChange={(e) => setForm({ ...form, advance_required: e.target.value })}
-                    className="form-control"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
+        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+          {/* Form Header */}
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Travel Request' : 'New Travel Request'}
+            </h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={handleSubmit} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Submit'}
               </button>
+              <button onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X className="w-5 h-5" /> Close
+              </button>
             </div>
           </div>
-        </div>
+          
+          <div className="p-6 space-y-4">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Employee *</label>
+                <select
+                  value={form.employee_id}
+                  onChange={handleEmployeeChange}
+                  className="form-control"
+                >
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Travel Type</label>
+                <select
+                  value={form.travel_type}
+                  onChange={(e) => setForm({ ...form, travel_type: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="Domestic">Domestic</option>
+                  <option value="International">International</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8, border: '1px dashed var(--border)' }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Co-Travelers / Additional Employees (Optional)</label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <select
+                  id="coTravelerSelect"
+                  className="form-control"
+                  style={{ maxWidth: 300 }}
+                  defaultValue=""
+                  onChange={(e) => {
+                    const empId = e.target.value;
+                    if (!empId) return;
+                    const emp = employees.find(emp => emp.id === parseInt(empId));
+                    if (!emp) return;
+                    
+                    if (parseInt(form.employee_id) === emp.id) {
+                      alert("Cannot add main employee as co-traveler.");
+                      e.target.value = "";
+                      return;
+                    }
+                    if (form.co_travelers?.some(c => c.id === emp.id)) {
+                      alert("Employee is already added.");
+                      e.target.value = "";
+                      return;
+                    }
+
+                    const updated = [...(form.co_travelers || []), { id: emp.id, name: emp.name }];
+                    setForm({ ...form, co_travelers: updated });
+                    e.target.value = "";
+                  }}
+                >
+                  <option value="">Choose Employee to Add...</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {form.co_travelers && form.co_travelers.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {form.co_travelers.map(ct => (
+                    <span
+                      key={ct.id}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        background: 'rgba(79, 70, 229, 0.1)',
+                        color: 'var(--primary)',
+                        padding: '4px 10px',
+                        borderRadius: 20,
+                        fontSize: 12,
+                        fontWeight: 600
+                      }}
+                    >
+                      {ct.name}
+                      <X
+                        size={12}
+                        style={{ cursor: 'pointer', opacity: 0.8 }}
+                        onClick={() => {
+                          const updated = form.co_travelers.filter(c => c.id !== ct.id);
+                          setForm({ ...form, co_travelers: updated });
+                        }}
+                      />
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="form-group">
+              <label>Purpose</label>
+              <textarea
+                value={form.purpose}
+                onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+                rows={2}
+                className="form-control"
+                placeholder="Purpose of travel..."
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>From Location *</label>
+                <input
+                  type="text"
+                  value={form.from_location}
+                  onChange={(e) => setForm({ ...form, from_location: e.target.value })}
+                  className="form-control"
+                  placeholder="Departure city"
+                />
+              </div>
+              <div className="form-group">
+                <label>To Location *</label>
+                <input
+                  type="text"
+                  value={form.to_location}
+                  onChange={(e) => setForm({ ...form, to_location: e.target.value })}
+                  className="form-control"
+                  placeholder="Destination city"
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Departure Date *</label>
+                <input
+                  type="date"
+                  value={form.departure_date}
+                  onChange={(e) => setForm({ ...form, departure_date: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+              <div className="form-group">
+                <label>Return Date *</label>
+                <input
+                  type="date"
+                  value={form.return_date}
+                  onChange={(e) => setForm({ ...form, return_date: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Transport Mode</label>
+                <select
+                  value={form.transport_mode}
+                  onChange={(e) => setForm({ ...form, transport_mode: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="">Select Mode</option>
+                  {transportModes.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Class</label>
+                <select
+                  value={form.transport_class}
+                  onChange={(e) => setForm({ ...form, transport_class: e.target.value })}
+                  className="form-control"
+                >
+                  <option value="">Select Class</option>
+                  {transportClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 bg-slate-50/50 rounded-lg border border-slate-100" style={{ margin: '16px 0' }}>
+              <input
+                type="checkbox"
+                id="hotelRequired"
+                checked={form.hotel_required}
+                onChange={(e) => setForm({ ...form, hotel_required: e.target.checked })}
+                className="w-4 h-4 text-indigo-600 rounded"
+              />
+              <label htmlFor="hotelRequired" className="text-sm font-medium text-slate-700">Hotel/Accommodation Required</label>
+            </div>
+            
+            {form.hotel_required && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div className="form-group">
+                  <label>Hotel Name</label>
+                  <input
+                    type="text"
+                    value={form.hotel_name}
+                    onChange={(e) => setForm({ ...form, hotel_name: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Check-in</label>
+                  <input
+                    type="date"
+                    value={form.check_in_date}
+                    onChange={(e) => setForm({ ...form, check_in_date: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Check-out</label>
+                  <input
+                    type="date"
+                    value={form.check_out_date}
+                    onChange={(e) => setForm({ ...form, check_out_date: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Estimated Cost (₹)</label>
+                <input
+                  type="number"
+                  value={form.estimated_cost}
+                  onChange={(e) => setForm({ ...form, estimated_cost: e.target.value })}
+                  className="form-control"
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="form-group">
+                <label>Advance Required (₹)</label>
+                <input
+                  type="number"
+                  value={form.advance_required}
+                  onChange={(e) => setForm({ ...form, advance_required: e.target.value })}
+                  className="form-control"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
       )}
 
       {/* View Modal */}
       {viewingRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">Travel Request Details</h2>
-              <button onClick={() => setViewingRequest(null)} className="btn btn-secondary">
+          <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Travel Request Details</h2>
+              <button onClick={() => setViewingRequest(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xl font-bold text-indigo-600">{viewingRequest.request_id}</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[viewingRequest.status]}`}>
+                <span className={`badge ${viewingRequest.status === 'Completed' || viewingRequest.status === 'Manager Approved' ? 'badge-active' : viewingRequest.status === 'Cancelled' ? 'badge-inactive' : 'badge-pending'}`}>
                   {viewingRequest.status}
                 </span>
               </div>
               
               <div className="pt-4 border-t">
-                <p className="text-sm text-slate-500 mb-1">Employee</p>
-                <p className="font-semibold">{viewingRequest.employee_name}</p>
+                <p className="text-sm text-slate-500 mb-1">Employee(s)</p>
+                <p className="font-semibold">
+                  {viewingRequest.employee_name}
+                  {viewingRequest.co_travelers && viewingRequest.co_travelers.length > 0 && (
+                    <span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>
+                      {' '}and {viewingRequest.co_travelers.map(c => c.name).join(', ')}
+                    </span>
+                  )}
+                </p>
               </div>
               
               <div className="pt-4 border-t">
@@ -691,7 +695,7 @@ export default function TravelRequests() {
                 <p className="text-slate-700">{viewingRequest.purpose}</p>
               </div>
               
-              <div className="form-row">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <p className="text-sm text-slate-500 mb-1">From</p>
                   <p className="font-medium">{viewingRequest.from_location}</p>
@@ -711,7 +715,7 @@ export default function TravelRequests() {
               </div>
               
               {viewingRequest.estimated_cost > 0 && (
-                <div className="form-row">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <p className="text-sm text-slate-500 mb-1">Estimated Cost</p>
                     <p className="font-bold text-lg">₹{viewingRequest.estimated_cost?.toLocaleString()}</p>
@@ -725,26 +729,29 @@ export default function TravelRequests() {
             </div>
             
             {viewingRequest.status === 'Pending' && (
-              <div className="btn btn-secondary">
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
                 <button 
                   onClick={() => handleStatusChange(viewingRequest.id, 'Cancelled')}
                   className="btn btn-danger"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <XCircle className="w-4 h-4" /> Reject
                 </button>
                 <button 
                   onClick={() => handleStatusChange(viewingRequest.id, 'Manager Approved', 'HR Admin')}
                   className="btn btn-success"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <CheckCircle className="w-4 h-4" /> Approve
                 </button>
               </div>
             )}
             {viewingRequest.status === 'Manager Approved' && (
-              <div className="btn btn-secondary">
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', padding: '16px 20px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
                 <button 
                   onClick={() => handleStatusChange(viewingRequest.id, 'Travel Booked')}
                   className="btn btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
                   <Plane className="w-4 h-4" /> Mark as Booked
                 </button>

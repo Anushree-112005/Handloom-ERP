@@ -26,6 +26,10 @@ export default function Departments() {
 
   useEffect(() => {
     loadDepartments();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('add') === 'true') {
+      setShowForm(true);
+    }
   }, []);
 
   const loadDepartments = async () => {
@@ -40,7 +44,7 @@ export default function Departments() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.code) {
+    if (!form.name) {
       alert('Please fill required fields');
       return;
     }
@@ -48,12 +52,9 @@ export default function Departments() {
     try {
       const payload = {
         name: form.name,
-        code: form.code,
         description: form.description || null,
         head_name: form.head_name || null,
-        headcount: form.headcount ? parseInt(form.headcount) : 0,
-        budget: form.budget ? parseInt(form.budget) : 0,
-        parent_department_id: form.parent_id ? parseInt(form.parent_id) : null
+        headcount: form.headcount ? parseInt(form.headcount) : 0
       };
       if (editingId) {
         await updateDepartment(editingId, payload);
@@ -73,11 +74,8 @@ export default function Departments() {
   const handleEdit = (dept) => {
     setForm({
       name: dept.name || '',
-      code: dept.code || '',
       head_name: dept.head_name || '',
       headcount: dept.headcount || '',
-      budget: dept.budget || '',
-      parent_id: dept.parent_id || dept.parent_department_id || '',
       description: dept.description || ''
     });
     setEditingId(dept.id);
@@ -102,8 +100,7 @@ export default function Departments() {
 
   const filteredDepartments = departments.filter(dept => {
     return !searchTerm ||
-      dept.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dept.code?.toLowerCase().includes(searchTerm.toLowerCase());
+      dept.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const parentDepartments = departments.filter(d => !d.parent_id);
@@ -111,8 +108,7 @@ export default function Departments() {
 
   const stats = {
     total: departments.length,
-    totalEmployees: departments.reduce((sum, d) => sum + (d.employee_count || 0), 0),
-    totalBudget: departments.reduce((sum, d) => sum + (d.budget || 0), 0)
+    totalEmployees: departments.reduce((sum, d) => sum + (d.employee_count || 0), 0)
   };
 
   if (loading) {
@@ -126,240 +122,145 @@ export default function Departments() {
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans text-slate-800 relative">
 
-      {/* HEADER */}
-      <div className="btn btn-secondary">
-        {/* LEFT: Title + badge */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">DEPARTMENTS</h1>
-          <span className="btn btn-primary">
-            {filteredDepartments.length} Records
-          </span>
-        </div>
-
-        {/* RIGHT: Filter dropdown + view toggle + Add button */}
-        <div className="flex items-center gap-2">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-xs font-bold transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-slate-200 hover:bg-slate-50'
-                }`}
-            >
-              <Filter className="w-4 h-4" /> Filter
-              {searchTerm && <span className="btn btn-primary" />}
-            </button>
-            {showFilters && (
-              <div className="btn btn-secondary">
-                <div className="card-header">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Filters</span>
-                  <button onClick={() => setSearchTerm('')} className="text-xs text-indigo-600 hover:underline">Reset</button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Search</label>
-                    <input
-                      type="text"
-                      placeholder="Search departments..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="form-control"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Parent Department</label>
-                    <select className="form-control">
-                      <option value="">All Departments</option>
-                      {parentDepartments.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* View Toggle */}
-          <div className="btn btn-secondary">
-            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutList size={16} />
-            </button>
-            <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
-          <button
-            onClick={() => { setShowForm(true); setEditingId(null); setForm(initialForm); }}
-            className="btn btn-primary"
-          >
-            <Plus className="w-4 h-4" /> Add Department
-          </button>
-        </div>
-      </div>
-
       {/* DATA AREA */}
-      <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+      {!showForm && !showViewModal && (
+        <div className="animate-fade" style={{ padding: 24 }}>
+          {/* HEADER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Building2 size={24} color="var(--primary)" /> Departments
+              </h2>
+              <p style={{ color: 'var(--text-muted)' }}>Manage organization structure, employees, and budgets.</p>
+            </div>
 
-        {/* Stats */}
-        <div className="form-row">
-          <div className="card">
-            <div className="flex items-center gap-3">
-              <div className="btn btn-primary">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+            {/* RIGHT: Search + Add button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <input
+                type="text"
+                placeholder="Search departments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ width: 200, margin: 0 }}
+              />
+              <button
+                onClick={() => { setForm(initialForm); setShowForm(true); setEditingId(null); }}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
+              >
+                <Plus size={16} /> Add Department
+              </button>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 300px))', gap: 24, marginBottom: 24 }}>
+            <div className="card stat-card" style={{ padding: 20 }}>
+              <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+                <Building2 size={24} />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-                <p className="text-xs text-slate-500">Departments</p>
+              <div className="stat-details">
+                <h3>Total Departments</h3>
+                <div className="value">{stats.total}</div>
               </div>
             </div>
           </div>
-          <div className="card">
-            <div className="flex items-center gap-3">
-              <div className="btn btn-success">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">{stats.totalEmployees}</p>
-                <p className="text-xs text-slate-500">Total Employees</p>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-center gap-3">
-              <div className="btn btn-primary">
-                <Building2 className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-800">₹{(stats.totalBudget / 10000000).toFixed(1)}Cr</p>
-                <p className="text-xs text-slate-500">Total Budget</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-
-
-        {/* LIST VIEW - Table */}
-        {viewMode === 'list' && (
-          <div className="card">
-            <table className="data-table">
-              <thead className="btn btn-secondary">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs uppercase font-bold text-slate-500">Department</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase font-bold text-slate-500">Code</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase font-bold text-slate-500">Head</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase font-bold text-slate-500">Employees</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase font-bold text-slate-500">Budget</th>
-                  <th className="px-6 py-4 text-left text-xs uppercase font-bold text-slate-500">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredDepartments.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No departments found</td></tr>
-                ) : filteredDepartments.map((dept) => (
-                  <tr key={dept.id} className="btn btn-secondary">
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-slate-900 group-hover:text-indigo-700">{dept.name}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="btn btn-primary">{dept.code}</span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-700">{dept.head_name || '—'}</td>
-                    <td className="px-6 py-4 text-slate-700">{dept.employee_count || 0}</td>
-                    <td className="px-6 py-4 text-slate-700">{dept.budget ? `₹${(dept.budget / 100000).toFixed(1)}L` : '—'}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handleView(dept)} className="btn btn-primary">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleEdit(dept)} className="btn btn-secondary">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(dept.id)} className="btn btn-danger">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+          {/* LIST VIEW - Table */}
+          {viewMode === 'list' && (
+            <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Department</th>
+                    <th>Head</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredDepartments.length === 0 ? (
+                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No departments found</td></tr>
+                  ) : filteredDepartments.map((dept) => (
+                    <tr key={dept.id}>
+                      <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{dept.name}</td>
+                      <td>{dept.head_name || '—'}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => handleView(dept)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="View">
+                            <Eye size={14} color="var(--primary)" />
+                          </button>
+                          <button onClick={() => handleEdit(dept)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="Edit">
+                            <Edit2 size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(dept.id)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="Delete">
+                            <Trash2 size={14} color="#ef4444" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-        {/* GRID VIEW - Cards */}
-        {viewMode === 'grid' && (
-          <div className="form-row">
-            {filteredDepartments.filter(d => !d.parent_id).map(dept => (
-              <div key={dept.id} className="card">
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
+          {/* GRID VIEW - Cards */}
+          {viewMode === 'grid' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
+              {filteredDepartments.map(dept => (
+                <div key={dept.id} className="card" style={{ padding: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                     <div>
-                      <span className="btn btn-primary">{dept.code}</span>
-                      <h3 className="font-semibold text-slate-800 mt-1">{dept.name}</h3>
+                      <h3 style={{ fontSize: 16, fontWeight: 700, margin: '8px 0 0', color: 'var(--text-primary)' }}>{dept.name}</h3>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleView(dept)} className="btn btn-primary">
-                        <Eye className="w-4 h-4 text-indigo-500" />
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button onClick={() => handleView(dept)} className="btn btn-secondary" style={{ padding: '4px 8px' }}>
+                        <Eye size={14} color="var(--primary)" />
                       </button>
-                      <button onClick={() => handleEdit(dept)} className="btn btn-secondary">
-                        <Edit2 className="w-4 h-4 text-slate-500" />
+                      <button onClick={() => handleEdit(dept)} className="btn btn-secondary" style={{ padding: '4px 8px' }}>
+                        <Edit2 size={14} />
                       </button>
-                      <button onClick={() => handleDelete(dept.id)} className="btn btn-danger">
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                      <button onClick={() => handleDelete(dept.id)} className="btn btn-secondary" style={{ padding: '4px 8px' }}>
+                        <Trash2 size={14} color="#ef4444" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="btn btn-secondary">
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
                     <div>
                       <p className="text-xs text-slate-500">Head</p>
                       <p className="text-sm font-medium text-slate-700">{dept.head_name || '—'}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Employees</p>
-                      <p className="text-sm font-medium text-slate-700">{dept.employee_count || 0}</p>
-                    </div>
                   </div>
-
-                  {/* Sub-departments */}
-                  {getSubDepartments(dept.id).length > 0 && (
-                    <div className="btn btn-secondary">
-                      <p className="text-xs text-slate-500 mb-2">Sub-departments</p>
-                      {getSubDepartments(dept.id).map(sub => (
-                        <div key={sub.id} className="flex items-center justify-between py-1.5 px-2 bg-slate-50 rounded mb-1">
-                          <div className="flex items-center gap-2">
-                            <ChevronRight className="w-3 h-3 text-slate-400" />
-                            <span className="text-sm text-slate-700">{sub.name}</span>
-                          </div>
-                          <span className="text-xs text-slate-500">{sub.employee_count || 0}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
             ))}
           </div>
         )}
 
-      </div>{/* END DATA AREA */}
+      </div>
+      )}
+      {/* END DATA AREA */}
 
-      {/* Form Modal */}
+      {/* Form Inline */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="btn btn-secondary">
-              <h2 className="text-lg font-semibold">{editingId ? 'Edit' : 'Add'} Department</h2>
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+          <div className="card animate-fade" style={{ padding: 0 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit' : 'Add'} Department</h2>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                  <X size={16} /> Close
+                </button>
+                <button className="btn btn-primary" onClick={handleSubmit}>
+                  <Save size={16} /> {editingId ? 'Update' : 'Save'}
+                </button>
+              </div>
             </div>
-            <div className="p-4 space-y-4">
+            <div style={{ padding: 24, background: '#fff' }}>
               <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Department Name *</label>
+                <div className="form-group">
+                  <label>Department Name *</label>
                   <input
                     type="text"
                     value={form.name}
@@ -368,21 +269,8 @@ export default function Departments() {
                     placeholder="Engineering"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Code *</label>
-                  <input
-                    type="text"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                    className="form-control"
-                    placeholder="ENG"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Department Head</label>
+                <div className="form-group">
+                  <label>Department Head</label>
                   <input
                     type="text"
                     value={form.head_name}
@@ -391,24 +279,11 @@ export default function Departments() {
                     placeholder="Name"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Parent Department</label>
-                  <select
-                    value={form.parent_id}
-                    onChange={(e) => setForm({ ...form, parent_id: e.target.value ? parseInt(e.target.value) : '' })}
-                    className="form-control"
-                  >
-                    <option value="">None (Top Level)</option>
-                    {parentDepartments.map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               <div className="form-row">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Headcount</label>
+                <div className="form-group">
+                  <label>Headcount</label>
                   <input
                     type="number"
                     value={form.headcount}
@@ -417,20 +292,10 @@ export default function Departments() {
                     placeholder="0"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Budget (₹)</label>
-                  <input
-                    type="number"
-                    value={form.budget}
-                    onChange={(e) => setForm({ ...form, budget: parseInt(e.target.value) || '' })}
-                    className="form-control"
-                    placeholder="0"
-                  />
-                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -440,74 +305,41 @@ export default function Departments() {
                 />
               </div>
             </div>
-            <div className="btn btn-secondary">
-              <button onClick={() => setShowForm(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button onClick={handleSubmit} className="btn btn-primary">
-                <Save className="w-4 h-4" /> {editingId ? 'Update' : 'Save'}
-              </button>
-            </div>
           </div>
         </div>
       )}
 
-      {/* View Modal */}
+      {/* View Inline */}
       {showViewModal && viewingDepartment && (
-        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-          <div className="card">
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl md:rounded-t-xl">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
-                      <Building2 className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">{viewingDepartment.name}</h2>
-                      <p className="text-white/80 text-sm">Department Details</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium">
-                      Code: {viewingDepartment.code}
-                    </span>
-                  </div>
+        <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
+          <div className="card animate-fade">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-indigo-600" />
                 </div>
-                <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-white/20 rounded-lg">
-                  <X className="w-5 h-5" />
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">{viewingDepartment.name}</h2>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setShowViewModal(false)} className="btn btn-secondary">
+                  <X size={16} /> Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    handleEdit(viewingDepartment);
+                  }}
+                  className="btn btn-primary"
+                >
+                  <Edit2 size={16} /> Edit Department
                 </button>
               </div>
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Stats Row */}
-              <div className="form-row">
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="btn btn-primary">
-                      <Users className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-indigo-900">{viewingDepartment.employee_count || 0}</p>
-                      <p className="text-xs text-indigo-600">Employees</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="btn btn-success">
-                      <DollarSign className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-green-900">
-                        {viewingDepartment.budget ? `₹${(viewingDepartment.budget / 100000).toFixed(1)}L` : '—'}
-                      </p>
-                      <p className="text-xs text-green-600">Budget</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
 
               {/* Details Grid */}
               <div className="form-row">
@@ -518,21 +350,11 @@ export default function Departments() {
                   </div>
                   <p className="text-slate-900 font-medium pl-6">{viewingDepartment.head_name || 'Not Assigned'}</p>
                 </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <Building2 className="w-4 h-4" />
-                    <span>Parent Department</span>
-                  </div>
-                  <p className="text-slate-900 font-medium pl-6">
-                    {parentDepartments.find(d => d.id === (viewingDepartment.parent_id || viewingDepartment.parent_department_id))?.name || 'Top Level'}
-                  </p>
-                </div>
               </div>
 
               {/* Description */}
               {viewingDepartment.description && (
-                <div className="btn btn-secondary">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-2 text-slate-500 text-xs mb-2">
                     <FileText className="w-4 h-4" />
                     <span>Description</span>
@@ -541,24 +363,6 @@ export default function Departments() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="btn btn-secondary">
-                <button
-                  onClick={() => {
-                    setShowViewModal(false);
-                    handleEdit(viewingDepartment);
-                  }}
-                  className="btn btn-primary"
-                >
-                  <Edit2 className="w-4 h-4" /> Edit Department
-                </button>
-                <button
-                  onClick={() => setShowViewModal(false)}
-                  className="btn btn-secondary"
-                >
-                  Close
-                </button>
-              </div>
             </div>
           </div>
         </div>

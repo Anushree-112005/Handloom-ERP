@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, Printer, Download, Filter } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+
+import { subMasterAPI } from '../../../services/api';
 
 export default function DowntimeHistory() {
   const [filters, setFilters] = useState({
@@ -13,20 +15,45 @@ export default function DowntimeHistory() {
     status: 'All'
   });
 
-  const data = Array.from({length: 8}).map((_, i) => ({
-    id: `BD-00${i+1}`,
-    date: '2026-06-13',
-    loom_id: `LM-00${Math.floor(Math.random()*5)+1}`,
-    order_id: 'ORD-2024-001',
-    category: ['Mechanical', 'Electrical', 'Yarn', 'Power'][i % 4],
-    reason: 'Issue details ' + i,
-    start: '10:30 AM',
-    end: '12:00 PM',
-    downtime: 1.5 + (i * 0.5),
-    lost_meters: 37.5 + (i * 10),
-    loss_value: 1687 + (i * 500),
-    status: i % 3 === 0 ? '🕐 Pending' : '✅ Resolved'
-  }));
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await subMasterAPI.list('ppc_breakdown_entry').catch(() => ({ data: [] }));
+      const records = res.data || [];
+      
+      const parsedData = records.map(r => {
+        const catStat = (r.extra_field_1 || 'Unknown - Unknown').split(' - ');
+        const dt = parseFloat(r.extra_field_2) || 0;
+        return {
+          id: r.name || `BD-${r.id}`,
+          date: r.created_at ? r.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+          loom_id: r.code || 'Unknown',
+          category: catStat[0] || 'Mechanical',
+          reason: r.description || 'No details provided',
+          start: '--', // Not stored in legacy system
+          end: '--',
+          downtime: dt,
+          lost_meters: dt * 25, // approx 25m/hr
+          loss_value: dt * 25 * 45, // approx 45Rs/m
+          status: (catStat[1] || '').includes('Open') ? '🕐 Pending' : '✅ Resolved'
+        };
+      });
+      
+      setData(parsedData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleExportPDF = () => {
     const doc = new jsPDF('landscape');
@@ -102,13 +129,17 @@ export default function DowntimeHistory() {
               <tr><th>ID</th><th>Date</th><th>Loom</th><th>Category</th><th>Reason</th><th>Start</th><th>End</th><th>Down (h)</th><th>Lost (m)</th><th>Loss (₹)</th><th>Status</th></tr>
             </thead>
             <tbody>
-              {data.map((row, i) => (
+              {loading ? (
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: 40 }}>Loading history...</td></tr>
+              ) : data.length === 0 ? (
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: 40 }}>No downtime recorded.</td></tr>
+              ) : data.map((row, i) => (
                 <tr key={i}>
                   <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{row.id}</td>
                   <td>{row.date}</td><td>{row.loom_id}</td><td>{row.category}</td><td>{row.reason}</td>
                   <td>{row.start}</td><td>{row.end}</td>
-                  <td style={{ fontWeight: 700, color: '#b91c1c' }}>{row.downtime}</td>
-                  <td>{row.lost_meters}</td><td style={{ color: '#b91c1c' }}>₹{row.loss_value.toLocaleString()}</td>
+                  <td style={{ fontWeight: 700, color: '#b91c1c' }}>{row.downtime.toFixed(2)}</td>
+                  <td>{row.lost_meters.toFixed(0)}</td><td style={{ color: '#b91c1c' }}>₹{row.loss_value.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                   <td style={{ fontWeight: 600 }}>{row.status}</td>
                 </tr>
               ))}

@@ -19,7 +19,7 @@ router = APIRouter(prefix="/sub-masters", tags=["Sub Masters"])
 # ──────────────── Schemas ────────────────
 
 class SubMasterCreate(BaseModel):
-    entity: str
+    entity: Optional[str] = None
     name: str
     code: Optional[str] = None
     description: Optional[str] = None

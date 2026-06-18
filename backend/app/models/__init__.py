@@ -1,6 +1,6 @@
 # Models package - imports all models for Alembic discovery
 from app.models.employee import Employee
-from app.models.party_master import PartyMaster
+from app.models.party_master import PartyMaster, PartyAddress
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
 from app.models.yarn_purchase import YarnPurchaseOrder, YarnPurchaseCountDetail, YarnPurchaseIndentDetail
 from app.models.yarn_inward import YarnInward, YarnInwardItem
@@ -23,4 +23,16 @@ from app.models.work_order import WorkOrderTransaction
 from app.models.textile_design import TextileDesign, WarpDesignItem, WeftDesignItem
 from app.models.chat_message import ChatMessage
 from app.models.report_job import ReportJob
+from app.modules.hr.models import HRItem
+from app.modules.vehicle_management.models import FleetItem
+from app.modules.stationary.models import StationaryItem, SwatchCard, FabricInspectionRoll, ReturnableDC
+
+from app.models.vehicle import Vehicle
+from app.models.driver import Driver
+from app.models.service_schedule import ServiceSchedule
+from app.models.maintenance_log import MaintenanceLog
+from app.models.breakdown_entry import BreakdownEntry
+from app.models.fuel_entry import FuelEntry
+from app.models.fleet_document import FleetDocument
+from app.models.route_trip import Route, Trip
 

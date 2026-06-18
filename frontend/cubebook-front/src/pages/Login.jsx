@@ -24,7 +24,7 @@ export default function Login() {
         full_name: data.full_name,
         role:      data.role,
       }));
-      navigate('/setup');
+      navigate('/cubebook/setup');
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid username or password');
     } finally {

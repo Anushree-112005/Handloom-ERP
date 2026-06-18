@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Save, PlusCircle, Trash2, Settings } from 'lucide-react';
+import { Save, PlusCircle, Trash2, Settings, ShoppingCart } from 'lucide-react';
 
 export default function PurchaseRequisition() {
   const [requisitions, setRequisitions] = useState([]);
@@ -8,13 +8,15 @@ export default function PurchaseRequisition() {
   const [gridItems, setGridItems] = useState([]);
   const [requisitioner, setRequisitioner] = useState('');
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
-    setItemsList(mockDb.get('consumables_items'));
+    setItemsList(mockDb.get('consumables_items') || []);
     setRequisitions(mockDb.get('consumables_requisitions') || []);
   }, []);
 
   const handleAutoReorder = () => {
-    // Filter items below min stock level
     const lowStock = itemsList.filter(i => (i.currentStock || 0) <= i.minStock);
     if (lowStock.length === 0) {
       alert('No items currently require auto-reorder.');
@@ -31,6 +33,7 @@ export default function PurchaseRequisition() {
   };
 
   const handleAddField = () => {
+    if (itemsList.length === 0) return;
     const defaultItem = itemsList[0];
     setGridItems([...gridItems, {
       itemId: defaultItem.id,
@@ -77,7 +80,7 @@ export default function PurchaseRequisition() {
       id: 'PRQ' + Math.floor(Math.random() * 10000),
       date: new Date().toISOString().split('T')[0],
       requestedBy: requisitioner || 'Store Manager',
-      status: 'Approved',
+      status: 'Pending',
       items: gridItems
     };
     const current = mockDb.get('consumables_requisitions') || [];
@@ -87,102 +90,176 @@ export default function PurchaseRequisition() {
     setGridItems([]);
     setRequisitioner('');
     setRequisitions(current);
+    setIsFormOpen(false);
   };
 
+  const filteredRecords = requisitions.filter(r => 
+    r.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.requestedBy?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="p-6 bg-slate-50 min-h-screen space-y-6">
-      <div className="card" style={{ padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700 }}>Purchase Requisition</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Request purchase of consumables manually or auto-generate from low stock</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShoppingCart style={{ color: '#6366f1' }} /> Purchase Requisitions
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage consumable requests and approvals</p>
         </div>
-        <button onClick={handleAutoReorder} className="btn btn-primary">
-          <Settings size={16} /> Auto-Load Low Stock
-        </button>
+        {!isFormOpen ? (
+          <button onClick={() => setIsFormOpen(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <PlusCircle size={16} /> New Requisition
+          </button>
+        ) : (
+          <button onClick={() => setIsFormOpen(false)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
       </div>
 
-      <div className="form-row">
-        <div className="lg:col-span-2 bg-white rounded-lg border p-6 shadow-sm space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 border-b pb-2">Requisition Form</h3>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label >Requisitioner Name / Store In-charge *</label>
+      {isFormOpen ? (
+        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
+                <PlusCircle size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>New Requisition Form</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Request items manually or auto-load low stock</p>
+              </div>
+            </div>
+            <button onClick={handleAutoReorder} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4f46e5', borderColor: '#c7d2fe', background: '#e0e7ff' }}>
+              <Settings size={16} /> Auto-Load Low Stock
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="form-group" style={{ maxWidth: 400 }}>
+              <label>Requisitioner Name / Store In-charge <span style={{ color: '#ef4444' }}>*</span></label>
               <input 
                 type="text" required value={requisitioner} 
                 onChange={(e) => setRequisitioner(e.target.value)} 
                 className="form-control" 
+                placeholder="Enter full name"
               />
             </div>
 
-            <div className="border-t pt-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <h4 className="text-sm font-bold text-slate-900">Items List</h4>
-                <button type="button" onClick={handleAddField} className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Items List</h4>
+                <button type="button" onClick={handleAddField} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
                   <PlusCircle size={14} /> Add Manual Item
                 </button>
               </div>
 
-              {gridItems.map((item, idx) => (
-                <div key={idx} className="flex gap-4 items-end bg-slate-50 p-3 rounded-lg border border-dashed text-xs">
-                  <div className="flex-1">
-                    <label className="block text-slate-500 mb-1">Select Item</label>
-                    <select 
-                      value={item.itemId} 
-                      onChange={(e) => handleItemChange(idx, e.target.value)} 
-                      className="form-control"
-                    >
-                      {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-slate-500 mb-1">Stock</label>
-                    <input type="text" readOnly value={item.currentStock} className="form-control" />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-slate-500 mb-1">Min Level</label>
-                    <input type="text" readOnly value={item.minStock} className="form-control" />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-slate-500 mb-1">Reorder Qty</label>
-                    <input 
-                      type="number" required min="1" value={item.qty} 
-                      onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
-                      className="form-control" 
-                    />
-                  </div>
-                  <button type="button" onClick={() => handleRemoveField(idx)} className="btn btn-danger">
-                    <Trash2 size={16} />
-                  </button>
+              {gridItems.length === 0 ? (
+                <div style={{ padding: 40, textAlign: 'center', border: '1px dashed var(--border)', borderRadius: 12, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                  No items added yet. Click 'Add Manual Item' or 'Auto-Load Low Stock'.
                 </div>
-              ))}
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {gridItems.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: 12, alignItems: 'flex-end', background: 'var(--bg-secondary)', padding: 16, borderRadius: 12, border: '1px solid var(--border)' }}>
+                      <div className="form-group" style={{ flex: 2, margin: 0 }}>
+                        <label>Select Item</label>
+                        <select 
+                          value={item.itemId} 
+                          onChange={(e) => handleItemChange(idx, e.target.value)} 
+                          className="form-control"
+                        >
+                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Stock</label>
+                        <input type="text" readOnly value={item.currentStock} className="form-control" style={{ background: '#f8fafc', fontWeight: 600 }} />
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Min Level</label>
+                        <input type="text" readOnly value={item.minStock} className="form-control" style={{ background: '#f8fafc' }} />
+                      </div>
+                      <div className="form-group" style={{ flex: 1, margin: 0 }}>
+                        <label>Qty to Order</label>
+                        <input 
+                          type="number" required min="1" value={item.qty} 
+                          onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
+                          className="form-control" 
+                          style={{ borderColor: '#6366f1' }}
+                        />
+                      </div>
+                      <button type="button" onClick={() => handleRemoveField(idx)} className="btn btn-secondary" style={{ padding: '10px 12px', color: '#ef4444', borderColor: '#fca5a5', background: '#fef2f2' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 20 }}>
-              <button type="submit" className="btn btn-success">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 16, borderTop: '1px solid var(--border)', marginTop: 8, gap: 12 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Save size={16} /> Save Requisition
               </button>
             </div>
           </form>
         </div>
-
-        <div className="card">
-          <h3 className="text-lg font-bold text-slate-900 border-b pb-2">Recent Requisitions</h3>
-          <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
-            {requisitions.map(req => (
-              <div key={req.id} className="p-3 bg-slate-50 rounded-lg border text-sm">
-                <div className="card-header">
-                  <span className="font-mono font-bold text-indigo-600">{req.id}</span>
-                  <span className="text-xs text-slate-500">{req.date}</span>
-                </div>
-                <p className="text-xs text-slate-600">By: {req.requestedBy}</p>
-                <div className="mt-2 text-xs font-semibold text-slate-700">
-                  Items: {req.items.length} items requested
-                </div>
-              </div>
-            ))}
+      ) : (
+        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Requisitions ({filteredRecords.length})</h3>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
+          </div>
+          
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Req. ID</th>
+                  <th>Date</th>
+                  <th>Requested By</th>
+                  <th>Total Items</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRecords.length === 0 ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                ) : filteredRecords.map((req, idx) => (
+                  <tr key={req.id || idx}>
+                    <td style={{ fontWeight: 600, color: '#4f46e5' }}>{req.id}</td>
+                    <td>{req.date}</td>
+                    <td>{req.requestedBy}</td>
+                    <td><span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600 }}>{req.items?.length || 0} items</span></td>
+                    <td>
+                      <span style={{ 
+                        color: req.status === 'Pending' ? '#d97706' : '#047857', 
+                        fontWeight: 600, 
+                        backgroundColor: req.status === 'Pending' ? '#fef3c7' : '#d1fae5', 
+                        padding: '4px 10px', borderRadius: 12, fontSize: 12 
+                      }}>
+                        {req.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

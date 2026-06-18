@@ -1,26 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Truck, AlertTriangle, ArrowLeft, Save, X, Eye, FileUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Truck, Search, Filter, Eye, Download, FilePlus, Save, X, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import { showConfirm } from '../../components/ConfirmDialog';
 
-const VehicleList = () => {
+const DetailRow = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
+    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+export default function VehicleList() {
+  const [view, setView] = useState('list'); // 'list' | 'form'
   const [vehicles, setVehicles] = useState([]);
-  const [mode, setMode] = useState('list'); // 'list' or 'form'
-  const [editingVehicle, setEditingVehicle] = useState(null);
-  const [viewingVehicle, setViewingVehicle] = useState(null); // For view modal
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [selectedVehicles, setSelectedVehicles] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [selectedViewVehicle, setSelectedViewVehicle] = useState(null);
+
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Status');
   const fileInputRef = useRef(null);
 
-  console.log('🔄 VehicleList rendering - mode:', mode, 'loading:', loading, 'vehicles:', vehicles.length);
-
-  const [formData, setFormData] = useState({
+  // Form state
+  const initialForm = {
     vehicle_number: '',
-    vehicle_type: 'TIPPER',
+    vehicle_type: 'YARN_CARRIER',
     make: '',
     model: '',
     year_of_manufacture: '',
@@ -35,10 +42,17 @@ const VehicleList = () => {
     pollution_expiry: '',
     current_mileage: '',
     status: 'ACTIVE'
-  });
+  };
+
+  const [formData, setFormData] = useState(initialForm);
 
   const vehicleTypes = [
-    { value: 'TIPPER', label: 'Tipper' }
+    { value: 'YARN_CARRIER', label: 'Yarn Carrier' },
+    { value: 'FABRIC_TRUCK', label: 'Fabric Roll Truck' },
+    { value: 'GARMENT_CONTAINER', label: 'Garment Container' },
+    { value: 'GENERAL_CARGO', label: 'General Cargo' },
+    { value: 'SUBCONTRACT_VAN', label: 'Subcontracting Van' },
+    { value: 'DELIVERY_VAN', label: 'Local Delivery Van' }
   ];
 
   const statusOptions = [
@@ -47,1065 +61,432 @@ const VehicleList = () => {
     { value: 'UNDER_MAINTENANCE', label: 'Under Maintenance' }
   ];
 
-  // ✅ Fetch vehicles from backend
   useEffect(() => {
     fetchVehicles();
   }, []);
 
   const fetchVehicles = async () => {
-    setLoading(true);
     try {
-      console.log('🔍 Fetching vehicles from API...');
+      setLoading(true);
       const response = await api.get('/fleet/vehicles');
-      console.log('✅ API Response received:', response.data);
-      const vehicleList = response.data || [];
-      console.log('📊 Vehicle count:', vehicleList.length);
-      setVehicles(vehicleList);
-      console.log('✅ Vehicles state updated successfully');
+      setVehicles(response.data || []);
     } catch (error) {
-      console.error('❌ Failed to fetch vehicles - Full error:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        fullError: error
-      });
+      console.error('Error fetching vehicles:', error);
       showError('Failed to load vehicles');
       setVehicles([]);
     } finally {
-      console.log('✅ Setting loading to false');
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
+  const handleOpenForm = (vehicle = null) => {
+    if (vehicle) {
+      setEditingId(vehicle.id);
+      setFormData(vehicle);
+    } else {
+      setEditingId(null);
+      setFormData(initialForm);
+    }
+    setView('form');
+  };
+
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const resetForm = () => {
-    setFormData({
-      vehicle_number: '',
-      vehicle_type: 'TIPPER',
-      make: '',
-      model: '',
-      year_of_manufacture: '',
-      chassis_number: '',
-      engine_number: '',
-      capacity_tons: '',
-      rc_number: '',
-      insurance_number: '',
-      insurance_expiry: '',
-      fitness_expiry: '',
-      permit_expiry: '',
-      pollution_expiry: '',
-      current_mileage: '',
-      status: 'ACTIVE'
-    });
-  };
-
-  const openAddForm = () => {
-    setEditingVehicle(null);
-    resetForm();
-    setMode('form');
-  };
-
-  const openEditForm = (vehicle) => {
-    setEditingVehicle(vehicle);
-    setFormData({
-      vehicle_number: vehicle.vehicle_number || '',
-      vehicle_type: vehicle.vehicle_type || 'TIPPER',
-      make: vehicle.make || '',
-      model: vehicle.model || '',
-      year_of_manufacture: vehicle.year_of_manufacture || '',
-      chassis_number: vehicle.chassis_number || '',
-      engine_number: vehicle.engine_number || '',
-      capacity_tons: vehicle.capacity_tons || '',
-      rc_number: vehicle.rc_number || '',
-      insurance_number: vehicle.insurance_number || '',
-      insurance_expiry: vehicle.insurance_expiry || '',
-      fitness_expiry: vehicle.fitness_expiry || '',
-      permit_expiry: vehicle.permit_expiry || '',
-      pollution_expiry: vehicle.pollution_expiry || '',
-      current_mileage: vehicle.current_mileage || '',
-      status: vehicle.status || 'Active'
-    });
-    setMode('form');
-  };
-
-  const handleCancel = async () => {
-    const isFormEmpty = !formData.vehicle_number && !formData.make && !formData.model;
-    if (!isFormEmpty) {
-      const confirmed = await showConfirm({
-        title: 'Cancel Changes',
-        description: 'Are you sure you want to cancel? Any unsaved changes will be lost.',
-        confirmText: 'Yes, Cancel',
-        cancelText: 'No, Stay',
-        variant: 'destructive'
-      });
-      if (!confirmed) return;
-    }
-    backToList();
-  };
-
-  const backToList = () => {
-    setMode('list');
-    setEditingVehicle(null);
-    resetForm();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.vehicle_number.trim() || !formData.make.trim() || !formData.model.trim()) {
-      showError('Please fill in required fields (Vehicle Number, Make & Model)');
+    
+    if (!formData.vehicle_number || !formData.make || !formData.model) {
+      showError('Please fill required fields: Vehicle Number, Make, Model');
       return;
     }
 
-    setIsSaving(true);
-
-    const payload = { ...formData };
-    // Convert empty strings to null for better API compatibility
-    const numericFields = ['year_of_manufacture', 'capacity_tons', 'current_mileage'];
-    numericFields.forEach(field => {
-      payload[field] = payload[field] === '' ? null : Number(payload[field]);
-    });
-    
-    const dateFields = ['insurance_expiry', 'fitness_expiry', 'permit_expiry', 'pollution_expiry'];
-    dateFields.forEach(field => {
-      payload[field] = payload[field] === '' ? null : payload[field];
-    });
+    const payload = {
+      vehicle_number: formData.vehicle_number,
+      vehicle_type: formData.vehicle_type,
+      make: formData.make,
+      model: formData.model,
+      year_of_manufacture: formData.year_of_manufacture ? Number(formData.year_of_manufacture) : null,
+      chassis_number: formData.chassis_number || null,
+      engine_number: formData.engine_number || null,
+      capacity_tons: formData.capacity_tons ? Number(formData.capacity_tons) : null,
+      rc_number: formData.rc_number || null,
+      insurance_number: formData.insurance_number || null,
+      insurance_expiry: formData.insurance_expiry || null,
+      fitness_expiry: formData.fitness_expiry || null,
+      permit_expiry: formData.permit_expiry || null,
+      pollution_expiry: formData.pollution_expiry || null,
+      current_mileage: formData.current_mileage ? Number(formData.current_mileage) : 0,
+      status: formData.status
+    };
 
     try {
-      if (editingVehicle) {
-        // Update existing vehicle
-        console.log('📝 Updating vehicle:', editingVehicle.id);
-        await api.put(`/fleet/vehicles/${editingVehicle.id}`, payload);
+      if (editingId) {
+        await api.put(`/fleet/vehicles/${editingId}`, payload);
         showSuccess('Vehicle updated successfully');
       } else {
-        // Create new vehicle
-        console.log('✅ Creating new vehicle:', payload.vehicle_number);
         await api.post('/fleet/vehicles', payload);
         showSuccess('Vehicle created successfully');
       }
-
-      // Step 1: Refresh vehicle list
-      console.log('🔄 Refreshing vehicle list...');
-      await fetchVehicles();
-      console.log('✅ Vehicle list refreshed');
-
-      // Step 2: Reset form data separately
-      console.log('🔄 Resetting form data...');
-      setFormData({
-        vehicle_number: '',
-        vehicle_type: 'TIPPER',
-        make: '',
-        model: '',
-        year_of_manufacture: '',
-        chassis_number: '',
-        engine_number: '',
-        capacity_tons: '',
-        rc_number: '',
-        insurance_number: '',
-        insurance_expiry: '',
-        fitness_expiry: '',
-        permit_expiry: '',
-        pollution_expiry: '',
-        current_mileage: '',
-        status: 'ACTIVE'
-      });
-      console.log('✅ Form data reset');
-
-      // Step 3: Clear editing state
-      console.log('🔄 Clearing editing state...');
-      setEditingVehicle(null);
-      console.log('✅ Editing state cleared');
-
-      // Step 4: Return to list view (LAST)
-      console.log('📋 Changing mode to list');
-      setMode('list');
-      console.log('✅ Mode changed, should now display list view');
+      setView('list');
+      setSelectedViewVehicle(null);
+      fetchVehicles();
     } catch (error) {
-      console.error('❌ Failed to save vehicle:', error);
-      const errorMsg = error.response?.data?.detail || 'Failed to save vehicle';
-      showError(errorMsg);
-    } finally {
-      setIsSaving(false);
+      console.error('Error saving vehicle:', error);
+      showError(error.response?.data?.detail || 'Failed to save vehicle');
     }
   };
 
-  const handleImportExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setImporting(true);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        // --- SMART HEADER DETECTION ---
-        let headerIndex = -1;
-        for (let i = 0; i < Math.min(json.length, 20); i++) {
-          const row = json[i];
-          if (row && row.some(cell => cell && typeof cell === 'string' && 
-            ['vehicle', 'registration', 'number', 'make', 'model'].some(k => cell.toLowerCase().includes(k))
-          )) {
-            headerIndex = i;
-            break;
-          }
-        }
-
-        let finalData = [];
-        if (headerIndex !== -1) {
-          const rawData = XLSX.utils.sheet_to_json(worksheet, { range: headerIndex });
-          finalData = rawData.map(row => {
-            const mapped = { ...row };
-            // Map common column names
-            const numKey = Object.keys(row).find(k => ['vehicle number', 'registration number', 'vehicle no', 'reg no', 'vehicle', 'number'].some(s => k.toLowerCase().trim().includes(s)));
-            if (numKey && !row.vehicle_number) mapped.vehicle_number = row[numKey];
-            
-            const makeKey = Object.keys(row).find(k => ['make', 'brand', 'company'].some(s => k.toLowerCase().trim().includes(s)));
-            if (makeKey && !row.make) mapped.make = row[makeKey];
-
-            const modelKey = Object.keys(row).find(k => ['model', 'variant'].some(s => k.toLowerCase().trim().includes(s)));
-            if (modelKey && !row.model) mapped.model = row[modelKey];
-            
-            // Clean up
-            if (!mapped.vehicle_number) return null;
-            return mapped;
-          }).filter(Boolean);
-        } else {
-          finalData = XLSX.utils.sheet_to_json(worksheet);
-        }
-
-        if (finalData.length === 0) {
-          showError("No valid vehicle data found. Please ensure there is a 'Vehicle Number' column.");
-          setImporting(false);
-          return;
-        }
-
-        const response = await api.post('/fleet/vehicles/bulk-import', { vehicles: finalData });
-        showSuccess(response.data.message || `Successfully imported ${finalData.length} vehicles!`);
-        fetchVehicles();
-      } catch (err) {
-        console.error("Import failed:", err);
-        showError("Import failed: " + (err.response?.data?.detail || err.message));
-      } finally {
-        setImporting(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleDelete = async (id) => {
-    console.log('🗑️ DELETE BUTTON CLICKED - Vehicle ID:', id);
-
-    // Show confirmation with fallback
-    let confirmed = false;
-    try {
-      console.log('📋 Showing confirmation dialog...');
-      confirmed = await showConfirm({
-        title: 'Delete Vehicle',
-        description: 'Are you sure you want to delete this vehicle? This action cannot be undone.',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        variant: 'destructive'
-      });
-    } catch (dialogError) {
-      console.warn('⚠️ ConfirmDialog failed, falling back to window.confirm:', dialogError);
-      confirmed = window.confirm('Are you sure you want to delete this vehicle? This action cannot be undone.');
-    }
-
-    console.log('✅ Confirmation result:', confirmed);
-    if (!confirmed) {
-      console.log('❌ Delete cancelled by user');
-      return;
-    }
-
-    try {
-      console.log('🚀 Sending DELETE request to /fleet/vehicles/' + id);
-      const response = await api.delete(`/fleet/vehicles/${id}`);
-      console.log('✅ DELETE request successful:', response.data);
-
-      showSuccess('Vehicle deleted successfully');
-      console.log('🔄 Refreshing vehicle list...');
-
-      await fetchVehicles();
-      console.log('✅ Vehicle list refreshed after deletion');
-    } catch (error) {
-      console.error('❌ ERROR IN DELETE:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        fullError: error
-      });
-      const errorMsg = error.response?.data?.detail || error.message || 'Failed to delete vehicle';
-      showError(errorMsg);
-    }
-  };
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedVehicles(vehicles.map(v => v.id));
-    } else {
-      setSelectedVehicles([]);
-    }
-  };
-
-  const handleSelectOne = (id) => {
-    setSelectedVehicles(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleBulkDelete = async () => {
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
     const confirmed = await showConfirm({
-      title: 'Bulk Delete Vehicles',
-      description: `Are you sure you want to delete ${selectedVehicles.length} vehicles? This action cannot be undone.`,
-      confirmText: 'Delete All',
+      title: 'Delete Vehicle',
+      description: 'Are you sure you want to delete this vehicle? This action cannot be undone.',
+      confirmText: 'Delete',
       cancelText: 'Cancel',
       variant: 'destructive'
     });
 
     if (!confirmed) return;
 
-    setLoading(true);
     try {
-      await api.post('/fleet/vehicles/bulk-delete', { ids: selectedVehicles });
-      showSuccess(`Successfully deleted ${selectedVehicles.length} vehicles`);
-      setSelectedVehicles([]);
+      await api.delete(`/fleet/vehicles/${id}`);
+      showSuccess('Vehicle deleted successfully');
+      if (selectedViewVehicle?.id === id) setSelectedViewVehicle(null);
       fetchVehicles();
-    } catch (err) {
-      showError('Bulk delete failed');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      showError('Failed to delete vehicle');
     }
   };
 
-  const openViewModal = (vehicle) => {
-    console.log('👁️ Opening view modal for vehicle:', vehicle.id);
-    setViewingVehicle(vehicle);
+  const handleExportExcel = () => {
+    const data = filteredVehicles.map(v => ({
+      'Vehicle Number': v.vehicle_number,
+      'Type': v.vehicle_type,
+      'Make': v.make,
+      'Model': v.model,
+      'Year': v.year_of_manufacture,
+      'Capacity': v.capacity_tons,
+      'Chassis No': v.chassis_number,
+      'Engine No': v.engine_number,
+      'RC No': v.rc_number,
+      'Insurance': v.insurance_number,
+      'Insurance Expiry': v.insurance_expiry,
+      'Fitness Expiry': v.fitness_expiry,
+      'Permit Expiry': v.permit_expiry,
+      'Pollution Expiry': v.pollution_expiry,
+      'Current Mileage': v.current_mileage,
+      'Status': v.status
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Vehicles');
+    XLSX.writeFile(workbook, `Vehicles_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const closeViewModal = () => {
-    console.log('👁️ Closing view modal');
-    setViewingVehicle(null);
-  };
+  const filteredVehicles = vehicles.filter(v => {
+    const matchesSearch = searchTerm === '' ||
+      v.vehicle_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.make?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.model?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All Status' || v.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  const getStatusColor = (status) => {
-    switch (String(status).toUpperCase()) {
-      case 'ACTIVE': return 'bg-green-100 text-green-800 border-green-200';
-      case 'INACTIVE': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'UNDER_MAINTENANCE': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const totalVehicles = vehicles.length;
+  const activeVehicles = vehicles.filter(v => v.status === 'ACTIVE').length;
+  const inactiveVehicles = vehicles.filter(v => v.status === 'INACTIVE').length;
+  const maintenanceVehicles = vehicles.filter(v => v.status === 'UNDER_MAINTENANCE').length;
+
+  const handleCardClick = (status) => {
+    if (status === 'Total') {
+      setStatusFilter('All Status');
+    } else {
+      setStatusFilter(status);
     }
   };
 
-  const getExpiryWarning = (expiryDate) => {
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-    if (daysUntilExpiry <= 0) return 'text-red-600 font-medium';
-    if (daysUntilExpiry <= 30) return 'text-orange-600 font-medium';
-    return 'text-gray-600';
-  };
-
-  // ────────────────────────────────────────────────
-  //                  VIEW MODAL (CHECK FIRST!)
-  // ────────────────────────────────────────────────
-  if (viewingVehicle) {
+  // ── FORM VIEW ──
+  if (view === 'form') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="form-control">
-          {/* Modal Header */}
-          <div className="btn btn-secondary">
-            <h2 className="text-xl font-bold text-slate-900">Vehicle Details</h2>
-            <button
-              onClick={closeViewModal}
-              className="text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              <X size={24} />
-            </button>
-          </div>
-
-          {/* Modal Body */}
-          <div className="p-6 space-y-6">
-            {/* Vehicle Identification */}
-            <div className="btn btn-secondary">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Vehicle Identification</h3>
-              <div className="form-row">
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Vehicle Number</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.vehicle_number}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Vehicle Type</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.vehicle_type}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Vehicle Specifications */}
-            <div className="btn btn-secondary">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Specifications</h3>
-              <div className="form-row">
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Make</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.make}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Model</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.model}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Year of Manufacture</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.year_of_manufacture}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Capacity (Units)</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.capacity_tons}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Status</p>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${
-                    (viewingVehicle.status === 'ACTIVE' || viewingVehicle.status === 'Active') ? 'bg-green-100 text-green-800 border-green-200' :
-                    (viewingVehicle.status === 'INACTIVE' || viewingVehicle.status === 'Inactive') ? 'bg-gray-100 text-gray-800 border-gray-200' :
-                    'bg-yellow-100 text-yellow-800 border-yellow-200'
-                  }`}>
-                    {viewingVehicle.status}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Engine & Chassis Details */}
-            <div className="btn btn-secondary">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Engine & Chassis</h3>
-              <div className="form-row">
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Chassis Number</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.chassis_number}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Engine Number</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.engine_number}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">RC Number</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.rc_number || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Insurance & Registration */}
-            <div className="btn btn-secondary">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Insurance & Compliance</h3>
-              <div className="form-row">
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Insurance Number</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.insurance_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Insurance Expiry</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {viewingVehicle.insurance_expiry ? new Date(viewingVehicle.insurance_expiry).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Fitness Expiry</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {viewingVehicle.fitness_expiry ? new Date(viewingVehicle.fitness_expiry).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Permit Expiry</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {viewingVehicle.permit_expiry ? new Date(viewingVehicle.permit_expiry).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Pollution Expiry</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {viewingVehicle.pollution_expiry ? new Date(viewingVehicle.pollution_expiry).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Mileage Information */}
-            <div className="btn btn-secondary">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Mileage</h3>
-              <div className="form-row">
-                <div>
-                  <p className="text-xs text-slate-600 uppercase">Current Mileage (km)</p>
-                  <p className="text-sm font-medium text-slate-900">{viewingVehicle.current_mileage || 0} km</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Timestamps */}
-            <div className="btn btn-secondary">
-              <p>Created: {viewingVehicle.created_at ? new Date(viewingVehicle.created_at).toLocaleString() : 'N/A'}</p>
-              <p>Last Updated: {viewingVehicle.updated_at ? new Date(viewingVehicle.updated_at).toLocaleString() : 'N/A'}</p>
+      <div className="animate-fade">
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Vehicle' : 'Add New Vehicle'}</h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
+              <button type="submit" form="vehicleForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Vehicle' : 'Save Vehicle'}</button>
             </div>
           </div>
 
-          {/* Modal Footer */}
-          <div className="btn btn-secondary">
-            <button
-              onClick={closeViewModal}
-              className="btn btn-secondary"
-            >
-              Close
-            </button>
-            <button
-              onClick={() => {
-                openEditForm(viewingVehicle);
-                closeViewModal();
-              }}
-              className="btn btn-primary"
-            >
-              Edit Vehicle
-            </button>
+          <div style={{ padding: 32, background: '#fff' }}>
+            <form id="vehicleForm" onSubmit={handleSubmit}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Vehicle Information</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <div className="form-group">
+                  <label>Vehicle Number *</label>
+                  <input className="form-control" name="vehicle_number" value={formData.vehicle_number} onChange={handleInputChange} placeholder="MH-02-AB-1234" required />
+                </div>
+                <div className="form-group">
+                  <label>Vehicle Type *</label>
+                  <select className="form-control" name="vehicle_type" value={formData.vehicle_type} onChange={handleInputChange} required>
+                    {vehicleTypes.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Status *</label>
+                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange} required>
+                    {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Make *</label>
+                  <input className="form-control" name="make" value={formData.make} onChange={handleInputChange} placeholder="Tata" required />
+                </div>
+                <div className="form-group">
+                  <label>Model *</label>
+                  <input className="form-control" name="model" value={formData.model} onChange={handleInputChange} placeholder="3118" required />
+                </div>
+                <div className="form-group">
+                  <label>Year of Manufacture</label>
+                  <input type="number" className="form-control" name="year_of_manufacture" value={formData.year_of_manufacture} onChange={handleInputChange} />
+                </div>
+
+                <div className="form-group">
+                  <label>Chassis Number</label>
+                  <input className="form-control" name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Engine Number</label>
+                  <input className="form-control" name="engine_number" value={formData.engine_number} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Capacity</label>
+                  <input type="number" className="form-control" name="capacity_tons" value={formData.capacity_tons} onChange={handleInputChange} step="0.1" />
+                </div>
+
+                <div className="form-group">
+                  <label>RC Number</label>
+                  <input className="form-control" name="rc_number" value={formData.rc_number} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Insurance Number</label>
+                  <input className="form-control" name="insurance_number" value={formData.insurance_number} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Insurance Expiry</label>
+                  <input type="date" className="form-control" name="insurance_expiry" value={formData.insurance_expiry} onChange={handleInputChange} />
+                </div>
+
+                <div className="form-group">
+                  <label>Fitness Expiry</label>
+                  <input type="date" className="form-control" name="fitness_expiry" value={formData.fitness_expiry} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Permit Expiry</label>
+                  <input type="date" className="form-control" name="permit_expiry" value={formData.permit_expiry} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Pollution Expiry</label>
+                  <input type="date" className="form-control" name="pollution_expiry" value={formData.pollution_expiry} onChange={handleInputChange} />
+                </div>
+
+                <div className="form-group">
+                  <label>Current Mileage (km)</label>
+                  <input type="number" className="form-control" name="current_mileage" value={formData.current_mileage} onChange={handleInputChange} step="0.1" />
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     );
   }
 
-  // ────────────────────────────────────────────────
-  //                  LIST VIEW
-  // ────────────────────────────────────────────────
-  if (mode === 'list') {
-    // Show loading spinner
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-full min-h-screen bg-white">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            <p className="mt-4 text-slate-600">Loading vehicles...</p>
-          </div>
+  // ── LIST VIEW ──
+  return (
+    <div className="animate-fade">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Truck size={24} color="var(--primary)" /> Vehicle Management
+          </h2>
+          <p style={{ color: 'var(--text-muted)' }}>Manage your vehicle fleet with comprehensive details and tracking</p>
         </div>
-      );
-    }
+        <button className="btn btn-primary" onClick={() => handleOpenForm()}>
+          <Plus size={18} /> Add New Vehicle
+        </button>
+      </div>
 
-    return (
-      <div className="flex flex-col h-full min-h-screen bg-white">
-        {/* Header */}
-        <div className="btn btn-secondary">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Truck className="h-6 w-6 text-blue-600" />
-              <h1 className="text-xl font-semibold text-gray-900">VEHICLE MANAGEMENT</h1>
-              <div className="flex items-center gap-2">
-                <span className="btn btn-primary">
-                  {vehicles.length} Records
-                </span>
-                {selectedVehicles.length > 0 && (
-                  <span className="btn btn-danger">
-                    {selectedVehicles.length} Selected
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 md:gap-3">
-              {selectedVehicles.length > 0 && (
-                <button
-                  onClick={handleBulkDelete}
-                  className="btn btn-danger"
-                >
-                  <Trash2 size={18} />
-                  Delete Selected ({selectedVehicles.length})
-                </button>
-              )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImportExcel}
-                accept=".xlsx, .xls"
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current.click()}
-                disabled={importing}
-                className={`inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm ${importing ? 'opacity-50 cursor-wait' : ''}`}
-              >
-                <FileUp size={18} />
-                {importing ? 'Importing...' : 'Import'}
-              </button>
-              <button
-                onClick={openAddForm}
-                className="btn btn-primary"
-              >
-                <Plus size={18} />
-                New Vehicle
-              </button>
-            </div>
+      {/* Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+            <Truck size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Vehicles</h3>
+            <div className="value">{totalVehicles}</div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="form-row">
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Vehicles</p>
-                <p className="text-2xl font-bold text-gray-900">{vehicles.length}</p>
-              </div>
-              <Truck className="h-8 w-8 text-blue-600" />
-            </div>
+        <div className="card stat-card" onClick={() => handleCardClick('ACTIVE')} style={{ cursor: 'pointer', border: statusFilter === 'ACTIVE' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+            <Truck size={24} />
           </div>
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {vehicles.filter(v => v.status === 'ACTIVE' || v.status === 'Active').length}
-                </p>
-              </div>
-              <div className="btn btn-success">
-                <div className="btn btn-success"></div>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Under Maintenance</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {vehicles.filter(v => v.status === 'UNDER_MAINTENANCE' || v.status === 'Under Maintenance').length}
-                </p>
-              </div>
-              <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <div className="h-4 w-4 bg-yellow-600 rounded-full"></div>
-              </div>
-            </div>
+          <div className="stat-details">
+            <h3>Active</h3>
+            <div className="value">{activeVehicles}</div>
           </div>
         </div>
 
+        <div className="card stat-card" onClick={() => handleCardClick('INACTIVE')} style={{ cursor: 'pointer', border: statusFilter === 'INACTIVE' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+            <Truck size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Inactive</h3>
+            <div className="value">{inactiveVehicles}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card" onClick={() => handleCardClick('UNDER_MAINTENANCE')} style={{ cursor: 'pointer', border: statusFilter === 'UNDER_MAINTENANCE' ? '2px solid #8b5cf6' : '1px solid transparent', transition: 'all 0.2s' }}>
+          <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
+            <Truck size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Maintenance</h3>
+            <div className="value">{maintenanceVehicles}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Row */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by vehicle number, make or model..."
+            style={{ paddingLeft: 38, width: '100%', margin: 0 }}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)' }}>
+            <Filter size={16} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Filter:</span>
+          </div>
+
+          <select className="form-control" style={{ width: 180, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All Status">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+          </select>
+
+          <button className="btn btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Download size={16} /> Export Excel
+          </button>
+        </div>
+      </div>
+
+      {/* Split Layout: Table & Details */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         {/* Table */}
-        <div className="flex-1 overflow-auto">
-          {vehicles.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center p-12">
-              <div className="mb-6 rounded-full bg-gray-100 p-8">
-                <Truck className="h-12 w-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">No vehicles found</h3>
-              <p className="mt-2 text-gray-600">Get started by adding your first vehicle to the fleet.</p>
-              <button
-                onClick={openAddForm}
-                className="btn btn-primary"
-              >
-                <Plus size={18} />
-                Add Your First Vehicle
-              </button>
-            </div>
-          ) : (
+        <div style={{ flex: 1, overflowX: 'auto' }}>
+          <div className="card" style={{ padding: 0 }}>
             <table className="data-table">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 backdrop-blur-sm bg-slate-50/90">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left w-10">
-                    <input 
-                      type="checkbox" 
-                      className="btn btn-secondary"
-                      onChange={handleSelectAll}
-                      checked={selectedVehicles.length > 0 && selectedVehicles.length === vehicles.length}
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Details</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specifications</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mileage</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Insurance Expiry</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th>Vehicle Number</th>
+                  <th>Make / Model</th>
+                  <th>Type</th>
+                  <th>Capacity</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {vehicles.map((vehicle) => (
-                  <tr key={vehicle.id} className={`hover:bg-purple-50/15 transition-colors align-top ${selectedVehicles.includes(vehicle.id) ? 'bg-blue-50/50' : ''}`}>
-                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                      <input 
-                        type="checkbox" 
-                        className="btn btn-secondary"
-                        checked={selectedVehicles.includes(vehicle.id)}
-                        onChange={() => handleSelectOne(vehicle.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="font-medium text-gray-900">{vehicle.vehicle_number}</div>
-                        <div className="text-sm text-gray-500">{vehicle.vehicle_type} • {vehicle.make}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{vehicle.model} ({vehicle.year_of_manufacture})</div>
-                      <div className="text-sm text-gray-500">Capacity: {vehicle.capacity_tons || 'N/A'} Units</div>
-                      <div className="text-xs text-gray-400">Engine: {vehicle.engine_number}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">Mileage: {vehicle.current_mileage || 'N/A'} km</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${getExpiryWarning(vehicle.insurance_expiry)}`}>
-                        {vehicle.insurance_expiry ? new Date(vehicle.insurance_expiry).toLocaleDateString() : 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        Fitness: {vehicle.fitness_expiry ? new Date(vehicle.fitness_expiry).toLocaleDateString() : 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(vehicle.status)}`}>
-                        {vehicle.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <button type="button" onClick={() => openViewModal(vehicle)} title="View Details" className="btn btn-primary">
-                          <Eye size={18} className="text-blue-600 hover:text-blue-800" />
-                        </button>
-                        <button type="button" onClick={() => openEditForm(vehicle)} title="Edit" className="btn btn-primary">
-                          <Edit2 size={18} className="text-indigo-600 hover:text-indigo-800" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>Loading vehicles...</td></tr>
+                ) : filteredVehicles.length === 0 ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>No vehicles found</td></tr>
+                ) : (
+                  filteredVehicles.map(v => (
+                    <tr key={v.id} onClick={() => setSelectedViewVehicle(v)} style={{ cursor: 'pointer', background: selectedViewVehicle?.id === v.id ? 'var(--bg-secondary)' : 'transparent', transition: 'background 0.2s' }}>
+                      <td style={{ fontWeight: 600 }}>{v.vehicle_number}</td>
+                      <td>{v.make} {v.model}</td>
+                      <td>{v.vehicle_type}</td>
+                      <td>{v.capacity_tons ? v.capacity_tons : '-'}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: v.status === 'ACTIVE' ? '#d1fae5' : v.status === 'INACTIVE' ? '#f3f4f6' : '#fef3c7', color: v.status === 'ACTIVE' ? '#065f46' : v.status === 'INACTIVE' ? '#374151' : '#92400e' }}>
+                          {v.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleOpenForm(v)} title="Edit">
+                            <Edit2 size={16} />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => handleDelete(v.id, e)} title="Delete">
+                            <Trash2 size={16} color="#ef4444" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ────────────────────────────────────────────────
-  //                  FORM VIEW
-  // ────────────────────────────────────────────────
-  if (mode === 'form') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        {/* Header */}
-        <div className="btn btn-secondary">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button onClick={backToList} className="text-slate-600 hover:text-slate-900">
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-slate-900">
-                    {editingVehicle ? 'Edit Vehicle' : 'New Vehicle'}
-                  </h1>
-                  <span className="btn btn-danger">
-                    Not Saved
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="btn btn-secondary"
-                >
-                  <div className="flex items-center gap-2">
-                    <X size={16} />
-                    Cancel
-                  </div>
-                </button>
-                <button
-                  type="submit"
-                  form="vehicle-form"
-                  disabled={isSaving}
-                  className="btn btn-primary"
-                >
-                  <div className="flex items-center gap-2">
-                    <Save size={16} />
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </div>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Form Content */}
-        <div className="p-6 w-full">
-          <form id="vehicle-form" onSubmit={handleSubmit} className="space-y-6">
-            <div className="btn btn-secondary">
-              <h2 className="mb-4 text-lg font-semibold text-slate-900">Vehicle Details</h2>
-
-              <div className="form-row">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Vehicle Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="vehicle_number"
-                    value={formData.vehicle_number}
-                    onChange={handleChange}
-                    placeholder="TN-33-AB-1234"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Vehicle Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="vehicle_type"
-                    value={formData.vehicle_type}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  >
-                    {vehicleTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    RC Number
-                  </label>
-                  <input
-                    type="text"
-                    name="rc_number"
-                    value={formData.rc_number}
-                    onChange={handleChange}
-                    placeholder="RC-12345678"
-                    className="form-control"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Make <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="make"
-                    value={formData.make}
-                    onChange={handleChange}
-                    placeholder="Hyundai"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Model <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleChange}
-                    placeholder="Shehzore"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Year of Manufacture <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="year_of_manufacture"
-                    value={formData.year_of_manufacture}
-                    onChange={handleChange}
-                    placeholder="2022"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Capacity (Units) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="capacity_tons"
-                    value={formData.capacity_tons}
-                    onChange={handleChange}
-                    placeholder="16"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Chassis Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="chassis_number"
-                    value={formData.chassis_number}
-                    onChange={handleChange}
-                    placeholder="CHASIS123"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Engine Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="engine_number"
-                    value={formData.engine_number}
-                    onChange={handleChange}
-                    placeholder="ENGINE123"
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Insurance Expiry <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="insurance_expiry"
-                    value={formData.insurance_expiry}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Insurance Number
-                  </label>
-                  <input
-                    type="text"
-                    name="insurance_number"
-                    value={formData.insurance_number}
-                    onChange={handleChange}
-                    placeholder="INS-12345678"
-                    className="form-control"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Fitness Expiry <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="fitness_expiry"
-                    value={formData.fitness_expiry}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Permit Expiry <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="permit_expiry"
-                    value={formData.permit_expiry}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Pollution Expiry <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="pollution_expiry"
-                    value={formData.pollution_expiry}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Current Mileage (km)
-                  </label>
-                  <input
-                    type="number"
-                    name="current_mileage"
-                    value={formData.current_mileage}
-                    onChange={handleChange}
-                    placeholder="0"
-                    className="form-control"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Status <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="form-control"
-                    required
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status.value} value={status.value}>{status.label}</option>
-                    ))}
-                  </select>
+        {/* Details Panel */}
+        {selectedViewVehicle && (
+          <div style={{ flex: '0 0 380px' }}>
+            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+                <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
+                  <Truck size={18} /> {selectedViewVehicle.vehicle_number}
+                </h3>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewVehicle)} title="Edit"><Edit2 size={14} /></button>
+                  <button onClick={() => setSelectedViewVehicle(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                 </div>
               </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
-  // Fallback if mode is something unexpected
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
-      <div className="text-center">
-        <p className="text-red-600 text-lg font-semibold">⚠️ Error: Unknown view mode</p>
-        <p className="text-gray-600 mt-2">Mode: "{mode}"</p>
-        <button
-          onClick={() => {
-            console.log('🔴 Emergency reset - changing mode to list');
-            setMode('list');
-          }}
-          className="btn btn-primary"
-        >
-          Reset to List View
-        </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
+                <DetailRow label="Vehicle Number" value={selectedViewVehicle.vehicle_number} />
+                <DetailRow label="Type" value={selectedViewVehicle.vehicle_type} />
+                <DetailRow label="Make" value={selectedViewVehicle.make} />
+                <DetailRow label="Model" value={selectedViewVehicle.model} />
+                <DetailRow label="Year" value={selectedViewVehicle.year_of_manufacture} />
+                <DetailRow label="Capacity" value={selectedViewVehicle.capacity_tons ? selectedViewVehicle.capacity_tons : '-'} />
+                <DetailRow label="Chassis No" value={selectedViewVehicle.chassis_number} />
+                <DetailRow label="Engine No" value={selectedViewVehicle.engine_number} />
+                <DetailRow label="RC No" value={selectedViewVehicle.rc_number} />
+                <DetailRow label="Insurance No" value={selectedViewVehicle.insurance_number} />
+                <DetailRow label="Insurance Expiry" value={selectedViewVehicle.insurance_expiry} />
+                <DetailRow label="Fitness Expiry" value={selectedViewVehicle.fitness_expiry} />
+                <DetailRow label="Permit Expiry" value={selectedViewVehicle.permit_expiry} />
+                <DetailRow label="Pollution Expiry" value={selectedViewVehicle.pollution_expiry} />
+                <DetailRow label="Current Mileage" value={selectedViewVehicle.current_mileage ? `${selectedViewVehicle.current_mileage} km` : '-'} />
+                <DetailRow label="Status" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>{selectedViewVehicle.status.replace('_', ' ')}</span>} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default VehicleList;
+}

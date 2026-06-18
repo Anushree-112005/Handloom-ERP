@@ -52,9 +52,9 @@ export default function Settings() {
 
   // State for tabs
   const handleTabChange = (tab) => {
-    if (tab === "users") navigate("/admin/users");
-    else if (tab === "roles") navigate("/admin/roles");
-    else navigate("/settings");
+    if (tab === "users") navigate("/cubebook/admin/users");
+    else if (tab === "roles") navigate("/cubebook/admin/roles");
+    else navigate("/cubebook/settings");
   };
 
   // ── Tab 1: Company Settings State & Logic ──
