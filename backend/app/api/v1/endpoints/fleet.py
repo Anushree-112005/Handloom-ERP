@@ -617,6 +617,11 @@ class FuelEntryResponse(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+    # Aliases for frontend compatibility
+    date: Optional[str] = None
+    quantity_liters: Optional[float] = None
+    total_amount: Optional[float] = None
+
     class Config:
         from_attributes = True
 
@@ -871,6 +876,18 @@ class RouteCreate(BaseModel):
     estimated_duration_hours: Optional[float] = None
     route_type: str = "Regular"
     status: str = "Active"
+    
+    # Fuel fields
+    fuel_cost_estimate: Optional[float] = 0.0
+    fuel_date: Optional[str] = None
+    fuel_station_id: Optional[int] = None
+    fuel_type: Optional[str] = None
+    fuel_quantity_liters: Optional[float] = 0.0
+    fuel_rate_per_liter: Optional[float] = 0.0
+    fuel_odometer_reading: Optional[float] = None
+    fuel_payment_mode: Optional[str] = None
+    fuel_vehicle_number: Optional[str] = None
+    fuel_station_name: Optional[str] = None
 
 
 class RouteResponse(BaseModel):
@@ -884,6 +901,18 @@ class RouteResponse(BaseModel):
     status: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    # Fuel fields
+    fuel_cost_estimate: Optional[float] = 0.0
+    fuel_date: Optional[str] = None
+    fuel_station_id: Optional[int] = None
+    fuel_type: Optional[str] = None
+    fuel_quantity_liters: Optional[float] = 0.0
+    fuel_rate_per_liter: Optional[float] = 0.0
+    fuel_odometer_reading: Optional[float] = None
+    fuel_payment_mode: Optional[str] = None
+    fuel_vehicle_number: Optional[str] = None
+    fuel_station_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -979,6 +1008,9 @@ class TripResponse(BaseModel):
     notes: Optional[str]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    # Alias for frontend compatibility
+    date: Optional[str] = None
 
     class Config:
         from_attributes = True

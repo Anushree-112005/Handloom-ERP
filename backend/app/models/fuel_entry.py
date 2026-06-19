@@ -17,3 +17,16 @@ class FuelEntry(Base):
     notes = Column(String(500))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    @property
+    def date(self):
+        return self.entry_date
+
+    @property
+    def quantity_liters(self):
+        return self.fuel_quantity
+
+    @property
+    def total_amount(self):
+        return self.fuel_cost
+

@@ -91,24 +91,24 @@ export default function VendorMaster() {
                 </tr>
               </thead>
               <tbody >
-                {vendors.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase())).map(v => (
-                  <tr key={v.id} >
-                    <td style={{ fontFamily: "monospace" }}>{v.code || v.id}</td>
-                    <td style={{ fontWeight: 600 }}>{v.name}</td>
-                    <td className="px-6 py-4 text-sm font-mono">{v.gst || '-'}</td>
-                    <td >{v.phone || '-'}</td>
-                    <td >{v.email || '-'}</td>
+                {vendors.filter(v => (v?.name || '').toLowerCase().includes(searchTerm.toLowerCase())).map(v => (
+                  <tr key={v?.id} >
+                    <td style={{ fontFamily: "monospace" }}>{v?.code || v?.id}</td>
+                    <td style={{ fontWeight: 600 }}>{v?.name || ''}</td>
+                    <td className="px-6 py-4 text-sm font-mono">{v?.gst || '-'}</td>
+                    <td >{v?.phone || '-'}</td>
+                    <td >{v?.email || '-'}</td>
                     <td style={{ textAlign: "center" }}>
-                      <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-bold">★ {v.rating}</span>
+                      <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded font-bold">★ {v?.rating || 4.0}</span>
                     </td>
                     <td style={{ textAlign: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         <button onClick={() => handleOpenForm(v)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(v.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
-                          <Trash2 size={16} />
-                        </button>
+                           <Edit2 size={16} />
+                         </button>
+                        <button onClick={() => handleDelete(v?.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
+                           <Trash2 size={16} />
+                         </button>
                       </div>
                     </td>
                   </tr>

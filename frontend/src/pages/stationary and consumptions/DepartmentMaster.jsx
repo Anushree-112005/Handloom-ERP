@@ -86,14 +86,14 @@ export default function DepartmentMaster() {
                 </tr>
               </thead>
               <tbody >
-                {departments.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).map(d => (
-                  <tr key={d.id} >
-                    <td style={{ fontFamily: "monospace" }}>{d.id}</td>
-                    <td style={{ fontWeight: 600 }}>{d.name}</td>
-                    <td className="px-6 py-4 text-sm font-mono">{d.code}</td>
+                {departments.filter(d => (d?.name || '').toLowerCase().includes(searchTerm.toLowerCase())).map(d => (
+                  <tr key={d?.id} >
+                    <td style={{ fontFamily: "monospace" }}>{d?.id}</td>
+                    <td style={{ fontWeight: 600 }}>{d?.name || ''}</td>
+                    <td className="px-6 py-4 text-sm font-mono">{d?.code || ''}</td>
                     <td >
-                      <span className={`badge ${(d.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
-                        {d.active}
+                      <span className={`badge ${(d?.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
+                        {d?.active || 'No'}
                       </span>
                     </td>
                     <td style={{ textAlign: "center" }}>
@@ -101,7 +101,7 @@ export default function DepartmentMaster() {
                         <button onClick={() => handleOpenForm(d)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDelete(d.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
+                        <button onClick={() => handleDelete(d?.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
                           <Trash2 size={16} />
                         </button>
                       </div>

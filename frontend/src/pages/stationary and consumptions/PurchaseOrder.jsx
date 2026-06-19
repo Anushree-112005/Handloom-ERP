@@ -147,7 +147,7 @@ export default function PurchaseOrder() {
           </div>
 
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
+            <table className="data-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
                   <th>PO No</th>

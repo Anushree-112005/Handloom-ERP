@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ModulePage from './components/ModulePage';
@@ -89,12 +90,7 @@ import PhysicalVerification from './pages/stationary and consumptions/PhysicalVe
 import RequestApproval from './pages/stationary and consumptions/RequestApproval';
 import POApproval from './pages/stationary and consumptions/POApproval';
 import IssueApproval from './pages/stationary and consumptions/IssueApproval';
-import StockReport from './pages/stationary and consumptions/StockReport';
-import StockLedger from './pages/stationary and consumptions/StockLedger';
-import ConsumptionReport from './pages/stationary and consumptions/ConsumptionReport';
-import PurchaseReport from './pages/stationary and consumptions/PurchaseReport';
-import ReorderReport from './pages/stationary and consumptions/ReorderReport';
-import AuditReport from './pages/stationary and consumptions/AuditReport';
+import StoresReport from './pages/stationary and consumptions/StoresReport';
 import SwatchCardManagement from './pages/stationary and consumptions/SwatchCardManagement';
 import ReturnableDCManagement from './pages/stationary and consumptions/ReturnableDCManagement';
 import FabricInspectionBook from './pages/stationary and consumptions/FabricInspectionBook';
@@ -122,6 +118,19 @@ import {
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   return token ? children : <Navigate to="/login" replace />;
+}
+
+function MockDbSyncWrapper({ children }) {
+  const [syncKey, setSyncKey] = useState(0);
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSyncKey(prev => prev + 1);
+    };
+    window.addEventListener('mockdb-update', handleUpdate);
+    return () => window.removeEventListener('mockdb-update', handleUpdate);
+  }, []);
+
+  return <div key={syncKey} style={{ height: '100%' }}>{children}</div>;
 }
 
 export default function App() {
@@ -287,34 +296,34 @@ export default function App() {
         <Route path="vehicle-management/dashboard" element={<FleetDashboard />} />
 
         {/* Stores & Consumables Routes */}
-        <Route path="stores-consumables/dashboard" element={<StationaryDashboard />} />
-        <Route path="stores-consumables/category" element={<CategoryMaster />} />
-        <Route path="stores-consumables/uom" element={<UOMMaster />} />
-        <Route path="stores-consumables/item" element={<ItemMaster />} />
-        <Route path="stores-consumables/vendor" element={<VendorMaster />} />
-        <Route path="stores-consumables/department" element={<DepartmentMaster />} />
-        <Route path="stores-consumables/request" element={<MaterialRequest />} />
-        <Route path="stores-consumables/requisition" element={<PurchaseRequisition />} />
-        <Route path="stores-consumables/po" element={<PurchaseOrder />} />
-        <Route path="stores-consumables/quotation" element={<QuotationEntry />} />
-        <Route path="stores-consumables/grn" element={<GRNStockInward />} />
-        <Route path="stores-consumables/issue" element={<IssueEntry />} />
-        <Route path="stores-consumables/return" element={<ReturnEntry />} />
-        <Route path="stores-consumables/transfer" element={<TransferEntry />} />
-        <Route path="stores-consumables/adjustment" element={<AdjustmentEntry />} />
-        <Route path="stores-consumables/physical" element={<PhysicalVerification />} />
-        <Route path="stores-consumables/approve-request" element={<RequestApproval />} />
-        <Route path="stores-consumables/approve-po" element={<POApproval />} />
-        <Route path="stores-consumables/approve-issue" element={<IssueApproval />} />
-        <Route path="stores-consumables/report-stock" element={<StockReport />} />
-        <Route path="stores-consumables/report-ledger" element={<StockLedger />} />
-        <Route path="stores-consumables/report-consumption" element={<ConsumptionReport />} />
-        <Route path="stores-consumables/report-purchase" element={<PurchaseReport />} />
-        <Route path="stores-consumables/report-reorder" element={<ReorderReport />} />
-        <Route path="stores-consumables/report-audit" element={<AuditReport />} />
-        <Route path="stores-consumables/swatch-cards" element={<SwatchCardManagement />} />
-        <Route path="stores-consumables/returnable-dc" element={<ReturnableDCManagement />} />
-        <Route path="stores-consumables/fabric-inspection" element={<FabricInspectionBook />} />
+        <Route path="stores-consumables/dashboard" element={<MockDbSyncWrapper><StationaryDashboard /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/category" element={<MockDbSyncWrapper><CategoryMaster /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/uom" element={<MockDbSyncWrapper><UOMMaster /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/item" element={<MockDbSyncWrapper><ItemMaster /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/vendor" element={<MockDbSyncWrapper><VendorMaster /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/department" element={<MockDbSyncWrapper><DepartmentMaster /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/request" element={<MockDbSyncWrapper><MaterialRequest /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/requisition" element={<MockDbSyncWrapper><PurchaseRequisition /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/po" element={<MockDbSyncWrapper><PurchaseOrder /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/quotation" element={<MockDbSyncWrapper><QuotationEntry /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/grn" element={<MockDbSyncWrapper><GRNStockInward /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/issue" element={<MockDbSyncWrapper><IssueEntry /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/return" element={<MockDbSyncWrapper><ReturnEntry /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/transfer" element={<MockDbSyncWrapper><TransferEntry /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/adjustment" element={<MockDbSyncWrapper><AdjustmentEntry /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/physical" element={<MockDbSyncWrapper><PhysicalVerification /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/approve-request" element={<MockDbSyncWrapper><RequestApproval /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/approve-po" element={<MockDbSyncWrapper><POApproval /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/approve-issue" element={<MockDbSyncWrapper><IssueApproval /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/report-stock" element={<MockDbSyncWrapper><StoresReport defaultTab="stock" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/report-ledger" element={<MockDbSyncWrapper><StoresReport defaultTab="ledger" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/report-consumption" element={<MockDbSyncWrapper><StoresReport defaultTab="consumption" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/report-purchase" element={<MockDbSyncWrapper><StoresReport defaultTab="purchase" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/report-reorder" element={<MockDbSyncWrapper><StoresReport defaultTab="reorder" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/report-audit" element={<MockDbSyncWrapper><StoresReport defaultTab="audit" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/swatch-cards" element={<MockDbSyncWrapper><SwatchCardManagement /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/returnable-dc" element={<MockDbSyncWrapper><ReturnableDCManagement /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/fabric-inspection" element={<MockDbSyncWrapper><FabricInspectionBook /></MockDbSyncWrapper>} />
 
         <Route path="about" element={
           <div className="card animate-fade" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'left' }}>

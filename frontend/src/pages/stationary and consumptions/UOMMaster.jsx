@@ -51,8 +51,8 @@ export default function UOMMaster() {
   };
 
   const filtered = uoms.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (u?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -95,13 +95,13 @@ export default function UOMMaster() {
               </thead>
               <tbody >
                 {filtered.map(uom => (
-                  <tr key={uom.id} >
-                    <td style={{ fontFamily: "monospace" }}>{uom.id}</td>
-                    <td style={{ fontWeight: 600 }}>{uom.name}</td>
-                    <td >{uom.description}</td>
+                  <tr key={uom?.id} >
+                    <td style={{ fontFamily: "monospace" }}>{uom?.id}</td>
+                    <td style={{ fontWeight: 600 }}>{uom?.name || ''}</td>
+                    <td >{uom?.description || ''}</td>
                     <td >
-                      <span className={`badge ${(uom.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
-                        {uom.active}
+                      <span className={`badge ${(uom?.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
+                        {uom?.active || 'No'}
                       </span>
                     </td>
                     <td style={{ textAlign: "center" }}>
@@ -109,7 +109,7 @@ export default function UOMMaster() {
                         <button onClick={() => handleOpenForm(uom)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDelete(uom.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
+                        <button onClick={() => handleDelete(uom?.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
                           <Trash2 size={16} />
                         </button>
                       </div>

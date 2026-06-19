@@ -118,14 +118,15 @@ export default function SwatchCardManagement() {
   };
 
   const filteredSwatches = swatches.filter(item => {
-    const matchesTab = activeTab === 'All' || item.swatch_type === activeTab;
+    const matchesTab = activeTab === 'All' || item?.swatch_type === activeTab;
     const matchesSearch = 
-      item.digital_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.party_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.design_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.count_spec.toLowerCase().includes(searchTerm.toLowerCase());
+      (item?.digital_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.party_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.design_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.count_spec || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
   });
+
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
@@ -193,7 +194,7 @@ export default function SwatchCardManagement() {
             </div>
 
             <div className="table-responsive" style={{ flex: 1 }}>
-              <table className="table" style={{ width: '100%' }}>
+              <table className="data-table" style={{ width: '100%' }}>
                 <thead>
                   <tr>
                     <th>Digital ID</th>
@@ -208,26 +209,26 @@ export default function SwatchCardManagement() {
                 </thead>
                 <tbody>
                   {filteredSwatches.map(card => (
-                    <tr key={card.id}>
-                      <td style={{ fontFamily: 'monospace', color: '#4f46e5', fontWeight: 600 }}>{card.digital_id}</td>
+                    <tr key={card?.id}>
+                      <td style={{ fontFamily: 'monospace', color: '#4f46e5', fontWeight: 600 }}>{card?.digital_id}</td>
                       <td>
                         <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '20px', background: '#6366f115', color: '#6366f1', textTransform: 'uppercase' }}>
-                          {card.swatch_type}
+                          {card?.swatch_type}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 600 }}>{card.count_spec}</td>
-                      <td>{card.construction_spec}</td>
+                      <td style={{ fontWeight: 600 }}>{card?.count_spec}</td>
+                      <td>{card?.construction_spec}</td>
                       <td>
                         <div style={{ fontSize: 13 }}>
-                          {card.design_no && <div><span style={{ color: 'var(--text-muted)' }}>Design:</span> {card.design_no}</div>}
-                          {card.color && <div><span style={{ color: 'var(--text-muted)' }}>Color:</span> {card.color}</div>}
-                          {!card.design_no && !card.color && '-'}
+                          {card?.design_no && <div><span style={{ color: 'var(--text-muted)' }}>Design:</span> {card?.design_no}</div>}
+                          {card?.color && <div><span style={{ color: 'var(--text-muted)' }}>Color:</span> {card?.color}</div>}
+                          {!card?.design_no && !card?.color && '-'}
                         </div>
                       </td>
-                      <td style={{ fontWeight: 600 }}>{card.party_name || '-'}</td>
+                      <td style={{ fontWeight: 600 }}>{card?.party_name || '-'}</td>
                       <td style={{ textAlign: 'center' }}>
-                        {card.attachment_path ? (
-                          <a href={`${api.defaults.baseURL || ''}${card.attachment_path}`} target="_blank" rel="noreferrer" className="btn btn-outline" style={{ padding: '4px 10px', fontSize: 12, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        {card?.attachment_path ? (
+                          <a href={`${api.defaults.baseURL || ''}${card?.attachment_path}`} target="_blank" rel="noreferrer" className="btn btn-outline" style={{ padding: '4px 10px', fontSize: 12, borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                             <Download size={12} /> View File
                           </a>
                         ) : '-'}
@@ -237,7 +238,7 @@ export default function SwatchCardManagement() {
                           <button onClick={() => handleEdit(card)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, borderRadius: '8px' }} title="Edit">
                             <FileText size={14} />
                           </button>
-                          <button onClick={() => handleDelete(card.id)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2', borderRadius: '8px' }} title="Delete">
+                          <button onClick={() => handleDelete(card?.id)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2', borderRadius: '8px' }} title="Delete">
                             <Trash2 size={14} />
                           </button>
                         </div>

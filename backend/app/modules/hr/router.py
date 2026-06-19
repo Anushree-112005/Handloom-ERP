@@ -25,7 +25,7 @@ async def get_hr_item(category: str, item_id: int, db: AsyncSession = Depends(ge
 
 @router.post("/{category}", status_code=201)
 async def create_hr_item(category: str, payload: Dict[str, Any] = Body(...), db: AsyncSession = Depends(get_db)):
-    emp_id = payload.get("employee_id") or payload.get("employee_code")
+    emp_id = payload.get("employee_id") or payload.get("employee_code") or payload.get("employee")
     db_item = HRItem(
         category=category,
         employee_id=str(emp_id) if emp_id is not None else None,
@@ -43,7 +43,7 @@ async def update_hr_item(category: str, item_id: int, payload: Dict[str, Any] = 
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
     
-    emp_id = payload.get("employee_id") or payload.get("employee_code")
+    emp_id = payload.get("employee_id") or payload.get("employee_code") or payload.get("employee")
     db_item.employee_id = str(emp_id) if emp_id is not None else db_item.employee_id
     merged_data = {**db_item.data, **payload}
     db_item.data = merged_data
