@@ -148,7 +148,50 @@ export default function QuotationEntry() {
       </div>
 
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <FileText size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{quotations.length}</h3>
+                <p>Total Quotations</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon amber">
+                <Clock size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{quotations.filter(q => q.status === 'Pending').length}</h3>
+                <p>Pending Quotations</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{quotations.filter(q => q.status === 'Approved').length}</h3>
+                <p>Approved Quotations</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon cyan">
+                <div style={{ fontSize: 20, fontWeight: '800' }}>₹</div>
+              </div>
+              <div className="stat-info">
+                <h3>₹{quotations.reduce((sum, q) => sum + q.items.reduce((acc, i) => acc + i.total, 0), 0).toLocaleString()}</h3>
+                <p>Total Value</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Quotations ({filteredQuotations.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -233,6 +276,7 @@ export default function QuotationEntry() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>

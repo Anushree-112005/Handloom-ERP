@@ -3,7 +3,7 @@ import {
   FileText, Search, Plus, Trash2, Printer, Check, CheckCircle,
   Clock, Truck, Edit, AlertCircle, UserCheck, X, Download
 } from 'lucide-react';
-import { dropdownAPI, subMasterAPI, partyAPI, employeeAPI } from '../../services/api';
+import api, { dropdownAPI, subMasterAPI, partyAPI, employeeAPI, buyerOrderAPI } from '../../services/api';
 
 export default function GatePass() {
   // Local Storage Database
@@ -14,6 +14,8 @@ export default function GatePass() {
   const [parties, setParties] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [options, setOptions] = useState({});
+  const [dbVehicles, setDbVehicles] = useState([]);
+  const [dbOrders, setDbOrders] = useState([]);
   const [isCustomPassType, setIsCustomPassType] = useState(false);
   const [customPassTypeVal, setCustomPassTypeVal] = useState('');
   const [isCustomStatus, setIsCustomStatus] = useState(false);
@@ -52,14 +54,61 @@ export default function GatePass() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [partRes, dropRes, empRes] = await Promise.all([
-          partyAPI.list(),
-          dropdownAPI.getAll(),
-          employeeAPI.list()
+        const [partRes, dropRes, empRes, vehRes, boRes] = await Promise.all([
+          partyAPI.list().catch(() => ({ data: [] })),
+          dropdownAPI.getAll().catch(() => ({ data: {} })),
+          employeeAPI.list().catch(() => ({ data: [] })),
+          api.get('/fleet/vehicles').catch(() => ({ data: [] })),
+          buyerOrderAPI.list().catch(() => ({ data: [] }))
         ]);
         setParties(partRes.data || []);
         setOptions(dropRes.data || {});
         setEmployees(empRes.data || []);
+        setDbVehicles(vehRes.data || []);
+        setDbOrders(boRes.data || []);
+
+        const fetchedVehicles = vehRes.data || [];
+        const fetchedBOs = boRes.data || [];
+        const fetchedParties = partRes.data || [];
+
+        // Check and seed local storage if empty
+        const savedPass = localStorage.getItem('gate_pass_data');
+        if (!savedPass || JSON.parse(savedPass).length === 0) {
+          const seedData = [];
+          for (let i = 0; i < 10; i++) {
+            const vehicle = fetchedVehicles[(i + 4) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
+            const bo = fetchedBOs[(i + 2) % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const party = fetchedParties[(i + 2) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
+            
+            seedData.push({
+              id: `GP-2026-00${i + 1}`,
+              passDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+              passType: i % 2 === 0 ? "Returnable" : "Non-Returnable",
+              partyName: party.company_name,
+              partyAddress: party.address || party.billing_address || "123 Textile Zone, Coimbatore",
+              contactPerson: party.contact_person || `Contact ${i + 1}`,
+              mobileNo: party.mobile || party.phone || `987654322${i}`,
+              vehicleNo: vehicle.vehicle_number,
+              items: [
+                {
+                  name: i % 2 === 0 ? "Warping Beam Shell" : "Cardboard Packing Cones",
+                  qty: 10 + i,
+                  unit: "Nos",
+                  returnable: i % 2 === 0 ? "Yes" : "No",
+                  expectedReturn: i % 2 === 0 ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10) : ""
+                }
+              ],
+              authorizedBy: "Manager A",
+              validTill: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+              purpose: i % 2 === 0 ? "Material Return" : "Sample Dispatch",
+              remarks: `Authorized gate pass for order ${bo.ibpo_number}`,
+              status: i % 3 === 0 ? "Open" : "Used",
+              printedBy: "Security Desk Admin"
+            });
+          }
+          localStorage.setItem('gate_pass_data', JSON.stringify(seedData));
+          setPasses(seedData);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
@@ -585,6 +634,7 @@ export default function GatePass() {
                     value={vehicleNo}
                     onChange={e => setVehicleNo(e.target.value.toUpperCase())}
                     required
+                    list="vehicles-list"
                   />
                 </div>
 
@@ -880,6 +930,12 @@ export default function GatePass() {
 
         </div>
       )}
+
+      <datalist id="vehicles-list">
+        {dbVehicles.map(v => (
+          <option key={v.id} value={v.vehicle_number}>{v.vehicle_number} ({v.make} {v.model})</option>
+        ))}
+      </datalist>
 
     </div>
   );

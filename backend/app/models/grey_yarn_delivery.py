@@ -46,7 +46,7 @@ class GreyYarnDeliveryItem(Base):
     count = Column(String(100))
     our_lot_no = Column(String(100))
     color = Column(String(100))
-    stock = Column(Float, default=0.0)
+    stock = Column(String(100))
     bags = Column(Integer, default=0)
     cones = Column(Integer, default=0)
     total_kgs = Column(Float, default=0.0)

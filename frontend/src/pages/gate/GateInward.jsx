@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
+import api, { partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI } from '../../services/api';
 
 export default function GateInward() {
   // Local Storage Database
@@ -15,6 +15,8 @@ export default function GateInward() {
   });
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
+  const [dbVehicles, setDbVehicles] = useState([]);
+  const [dbOrders, setDbOrders] = useState([]);
   const [isCustomPurpose, setIsCustomPurpose] = useState(false);
   const [customPurposeVal, setCustomPurposeVal] = useState('');
   const [isCustomUnit, setIsCustomUnit] = useState(false);
@@ -27,12 +29,55 @@ export default function GateInward() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [partRes, dropRes] = await Promise.all([
-          partyAPI.list(),
-          dropdownAPI.getAll()
+        const [partRes, dropRes, vehRes, boRes] = await Promise.all([
+          partyAPI.list().catch(() => ({ data: [] })),
+          dropdownAPI.getAll().catch(() => ({ data: {} })),
+          api.get('/fleet/vehicles').catch(() => ({ data: [] })),
+          buyerOrderAPI.list().catch(() => ({ data: [] }))
         ]);
         setParties(partRes.data || []);
         setOptions(dropRes.data || {});
+        setDbVehicles(vehRes.data || []);
+        setDbOrders(boRes.data || []);
+
+        const fetchedVehicles = vehRes.data || [];
+        const fetchedBOs = boRes.data || [];
+        const fetchedParties = partRes.data || [];
+
+        // Check and seed local storage if empty
+        const saved = localStorage.getItem('gate_inward_data');
+        if (!saved || JSON.parse(saved).length === 0) {
+          const seedData = [];
+          for (let i = 0; i < 10; i++) {
+            const vehicle = fetchedVehicles[i % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
+            const bo = fetchedBOs[i % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const party = fetchedParties[i % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
+            
+            seedData.push({
+              id: `GIN-2026-00${i + 1}`,
+              dateTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+              vehicleNo: vehicle.vehicle_number,
+              driverName: `Driver ${i + 1}`,
+              driverMobile: `987654300${i}`,
+              partyName: party.company_name,
+              materialType: i % 2 === 0 ? "Yarn" : "Fabric / Cloth",
+              purpose: "Material Delivery",
+              dcNo: `DC-IN-00${i + 1}`,
+              dcDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+              itemDesc: i % 2 === 0 ? "40s Cotton Weft Combed Cones" : "Finished Cotton Fabric Rolls",
+              qty: 1000 + i * 200,
+              unit: i % 2 === 0 ? "Kg" : "Meter",
+              weight: 1050 + i * 200,
+              packages: 20 + i * 2,
+              guardName: "S. Rajendran",
+              inTime: `09:${30 + i}`,
+              remarks: `Seeded entry for order ${bo.ibpo_number}`,
+              status: i % 3 === 0 ? "Open" : "Closed"
+            });
+          }
+          localStorage.setItem('gate_inward_data', JSON.stringify(seedData));
+          setInwards(seedData);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
@@ -526,6 +571,7 @@ export default function GateInward() {
                       value={vehicleNo}
                       onChange={e => setVehicleNo(e.target.value.toUpperCase())}
                       required
+                      list="vehicles-list"
                     />
                   </div>
 
@@ -866,6 +912,12 @@ export default function GateInward() {
 
         </div>
       )}
+
+      <datalist id="vehicles-list">
+        {dbVehicles.map(v => (
+          <option key={v.id} value={v.vehicle_number}>{v.vehicle_number} ({v.make} {v.model})</option>
+        ))}
+      </datalist>
 
     </div>
   );

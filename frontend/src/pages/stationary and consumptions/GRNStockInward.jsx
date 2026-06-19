@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Trash2, X, FileText } from 'lucide-react';
+import { Plus, Save, Trash2, X, FileText, CheckCircle, AlertTriangle, Layers } from 'lucide-react';
 
 export default function GRNStockInward() {
   const [view, setView] = useState('list');
@@ -124,7 +124,50 @@ export default function GRNStockInward() {
       </div>
 
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <FileText size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{grns.length}</h3>
+                <p>Total GRNs</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{grns.reduce((sum, g) => sum + g.items.reduce((acc, i) => acc + i.acceptedQty, 0), 0)}</h3>
+                <p>Items Accepted</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon rose">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{grns.reduce((sum, g) => sum + g.items.reduce((acc, i) => acc + (i.rejectedQty || 0), 0), 0)}</h3>
+                <p>Items Rejected</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon cyan">
+                <div style={{ fontSize: 20, fontWeight: '800' }}>₹</div>
+              </div>
+              <div className="stat-info">
+                <h3>₹{grns.reduce((sum, g) => sum + g.items.reduce((acc, i) => acc + (i.acceptedQty * i.rate), 0), 0).toLocaleString()}</h3>
+                <p>Total Inward Value</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All GRNs ({filteredGrns.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -184,6 +227,7 @@ export default function GRNStockInward() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
