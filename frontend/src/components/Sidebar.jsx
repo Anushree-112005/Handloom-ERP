@@ -196,10 +196,10 @@ const modules = [
   { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Warp Beam Delivery Entry', icon: Truck },
   { path: '/warp/transaction/reports?tab=sizing_report', label: 'Sizing Set Entry', icon: Plus },
   // { path: '/warp/transaction/reports?tab=sizing_report', label: 'Sizing Set Report Entry', icon: FileText },
-  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sized Beam Received', icon: Box },
+ // { path: '/warp/transaction/entries?tab=beam_received', label: 'Sized Beam Received', icon: Box },
 
   { section: 'WEAVING' },
-  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Beam Issue To Loom', icon: PlayCircle },
+  //{ path: '/warp/transaction/entries?tab=beam_delivery', label: 'Beam Issue To Loom', icon: PlayCircle },
   { path: '/ppc/execution/shift-entry', label: 'Weaving Production', icon: Activity },
   { path: '/cloth/inward', label: 'Fabric Inward', icon: ArrowDownLeft },
 
@@ -210,7 +210,7 @@ const modules = [
 
   { section: 'PROCESSING' },
   { path: '/cloth/delivery', label: 'Processing Delivery', icon: Truck },
-  { path: '/cloth/inward', label: 'Processing Inward', icon: ArrowDownLeft },
+  //{ path: '/cloth/inward', label: 'Processing Inward', icon: ArrowDownLeft },
 
   { section: 'FINISHED GOODS' },
   { path: '/finished-fabric', label: 'Finished Fabric Stock', icon: Box },
@@ -630,7 +630,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                         </div>
                       ) : (
                         <NavLink
-                          key={child.path}
+                          key={`${child.path}-${child.label}`}
                           to={child.path}
                           end={child.path === '/'}
                           className={({ isActive }) => {
@@ -651,7 +651,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
               </div>
             ) : (
             <NavLink
-              key={item.path}
+              key={`${item.path}-${item.label}`}
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) => {
