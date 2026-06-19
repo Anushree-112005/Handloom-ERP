@@ -29,7 +29,7 @@ class WorkOrderTransactionOut(WorkOrderTransactionBase):
         from_attributes = True
 
 @router.get("/", response_model=List[WorkOrderTransactionOut])
-async def list_transactions(module_type: Optional[str] = None, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def list_transactions(module_type: Optional[str] = None, skip: int = 0, limit: int = 1000, db: AsyncSession = Depends(get_db)):
     q = select(WorkOrderTransaction)
     if module_type:
         q = q.where(WorkOrderTransaction.module_type == module_type)

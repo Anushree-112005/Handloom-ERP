@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Trash2, X, FileText } from 'lucide-react';
+import { Plus, Save, Trash2, X, FileText, Layers, TrendingUp, TrendingDown, CheckCircle } from 'lucide-react';
 
 export default function AdjustmentEntry() {
   const [view, setView] = useState('list');
@@ -71,7 +71,50 @@ export default function AdjustmentEntry() {
       </div>
 
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <FileText size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{adjustments.length}</h3>
+                <p>Total Adjustments</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon rose">
+                <TrendingDown size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{adjustments.filter(a => ['Damage', 'Expired', 'Lost', 'Breakage'].includes(a.type)).reduce((sum, a) => sum + a.qty, 0)}</h3>
+                <p>Stock Deductions</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <TrendingUp size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{adjustments.filter(a => !['Damage', 'Expired', 'Lost', 'Breakage'].includes(a.type)).reduce((sum, a) => sum + a.qty, 0)}</h3>
+                <p>Stock Additions</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon cyan">
+                <Layers size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{adjustments.reduce((sum, a) => { const isNeg = ['Damage', 'Expired', 'Lost', 'Breakage'].includes(a.type); return sum + (isNeg ? -a.qty : a.qty); }, 0)}</h3>
+                <p>Net Adjustment Qty</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Adjustments ({filteredAdjustments.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -130,6 +173,7 @@ export default function AdjustmentEntry() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Scissors, Search, Plus, Trash2, Edit, Check, X, Download, 
   Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
@@ -12,20 +12,27 @@ import { workOrderTransactionAPI } from '../../services/api';
 
 export default function FabricTransaction({ defaultSection = 'Fabric Checking' }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [activeSection, setActiveSection] = useState(defaultSection);
   const [activePage, setActivePage] = useState(null);
 
   useEffect(() => {
     setActiveSection(defaultSection);
-    const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === defaultSection);
-    if (firstSubModule) {
-      setActivePage(firstSubModule.key);
+    const queryParams = new URLSearchParams(location.search);
+    const tabParam = queryParams.get('tab');
+    if (tabParam && PAGES_METADATA[tabParam] && PAGES_METADATA[tabParam].category === defaultSection) {
+      setActivePage(tabParam);
     } else {
-      setActivePage(null);
+      const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === defaultSection);
+      if (firstSubModule) {
+        setActivePage(firstSubModule.key);
+      } else {
+        setActivePage(null);
+      }
     }
     setIsFormOpen(false);
-  }, [defaultSection]);
+  }, [defaultSection, location.search]);
 
   // Search Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -2010,6 +2017,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
     } else {
       setActivePage(p.key);
       setIsFormOpen(false);
+      navigate(`?tab=${p.key}`, { replace: true });
     }
   };
 
@@ -3262,6 +3270,9 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
   };
 
   const activeColor = PAGES_METADATA[activePage]?.color || '#7c3aed';
+  const PageIcon = PAGES_METADATA[activePage]?.icon || Scissors;
+  const pageTitle = PAGES_METADATA[activePage]?.label || activeSection;
+  const pageDesc = PAGES_METADATA[activePage]?.desc || `Manage ${activeSection.toLowerCase()} operations, approvals, and records.`;
 
   return (
     <div className="animate-fade page-wrapper" style={{ paddingBottom: '60px' }}>
@@ -3271,61 +3282,12 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
             <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Scissors size={24} color="#7c3aed" /> {activeSection}
+              <PageIcon size={24} color={activeColor} /> {pageTitle}
             </h2>
             <p style={{ color: 'var(--text-muted)' }}>
-              Manage {activeSection.toLowerCase()} operations, approvals, and records.
+              {pageDesc}
             </p>
           </div>
-        </div>
-      )}
-
-      {/* STAT CARDS ACTING AS SUB-MODULE SWITCHERS */}
-      {!isFormOpen && (
-        <div className="hide-scrollbar" style={{ display: 'flex', overflowX: 'auto', flexWrap: 'nowrap', gap: 16, marginBottom: 24, paddingBottom: 8 }}>
-          {Object.values(PAGES_METADATA)
-            .filter(p => p.category === activeSection)
-            .map(p => {
-              const IconComp = p.icon;
-              const cardColor = p.color || '#3b82f6';
-              const r = parseInt(cardColor.slice(1, 3), 16);
-              const g = parseInt(cardColor.slice(3, 5), 16);
-              const b = parseInt(cardColor.slice(5, 7), 16);
-              const isSelected = activePage === p.key;
-
-              return (
-                <div 
-                  key={p.key}
-                  onClick={() => handleOpenPage(p)}
-                  className="card"
-                  style={{
-                    flex: '1 0 220px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12,
-                    padding: 16,
-                    cursor: 'pointer',
-                    border: isSelected ? `2px solid ${cardColor}` : '1px solid var(--border)',
-                    background: isSelected ? `rgba(${r},${g},${b}, 0.05)` : 'var(--bg-secondary)',
-                    transition: 'all 0.2s ease',
-                    transform: isSelected ? 'translateY(-2px)' : 'none',
-                    boxShadow: isSelected ? `0 10px 15px -3px rgba(0,0,0,0.1)` : '0 1px 3px rgba(0,0,0,0.05)'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ padding: 12, borderRadius: 10, background: cardColor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 12px rgba(0,0,0,0.15)` }}>
-                      <IconComp size={20} />
-                    </div>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</h3>
-                      <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                         <span style={{ fontWeight: 800, color: cardColor }}>{getSubModuleCount(p.key)}</span> Records
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
         </div>
       )}
 

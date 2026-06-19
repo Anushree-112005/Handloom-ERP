@@ -562,7 +562,7 @@ async def seed_all_data(session):
             await session.refresh(gd)
             item = GreyYarnDeliveryItem(
                 delivery_id=gd.id, cone_type="Paper Cone", count="40S CTN", our_lot_no=f"LOT-40CTN-{200+i}",
-                color="Off White", stock=5020.0, bags=50, cones=1000, total_kgs=2500.0, rate=50.0, amount=125000.0
+                color="Off White", stock="5020.0", bags=50, cones=1000, total_kgs=2500.0, rate=50.0, amount=125000.0
             )
             session.add(item)
         await session.commit()
@@ -1517,11 +1517,11 @@ async def seed_all_data(session):
         # Seed Items
         default_items = [
             { "id": "ITM001", "name": "A4 Paper", "code": "A4P", "category": "Office Stationery", "uom": "Ream", "minStock": 20, "maxStock": 200, "safetyStock": 10, "currentStock": 45, "rate": 280, "vendor": "Metro Stationery Hub" },
-            { "id": "ITM002", "name": "Ball Pen Blue", "code": "BPB", "category": "Office Stationery", "uom": "Box", "minStock": 10, "maxStock": 50, "safetyStock": 5, "currentStock": 15, "rate": 150, "vendor": "Metro Stationery Hub" },
-            { "id": "ITM003", "name": "HP Laser Toner", "code": "HPT", "category": "Printing Consumables", "uom": "Nos", "minStock": 2, "maxStock": 10, "safetyStock": 1, "currentStock": 3, "rate": 3200, "vendor": "Apex Supplies Ltd" },
+            { "id": "ITM002", "name": "Ball Pen Blue", "code": "BPB", "category": "Office Stationery", "uom": "Box", "minStock": 10, "maxStock": 50, "safetyStock": 5, "currentStock": 8, "rate": 150, "vendor": "Metro Stationery Hub" },
+            { "id": "ITM003", "name": "HP Laser Toner", "code": "HPT", "category": "Printing Consumables", "uom": "Nos", "minStock": 2, "maxStock": 10, "safetyStock": 1, "currentStock": 1, "rate": 3200, "vendor": "Apex Supplies Ltd" },
             { "id": "ITM004", "name": "Carton Box 5-Ply", "code": "CB5", "category": "Packing Materials", "uom": "Nos", "minStock": 500, "maxStock": 5000, "safetyStock": 100, "currentStock": 1200, "rate": 45, "vendor": "Prime Packers" },
             { "id": "ITM005", "name": "BOPP Packing Tape 2\"", "code": "BOP", "category": "Packing Materials", "uom": "Roll", "minStock": 50, "maxStock": 500, "safetyStock": 10, "currentStock": 80, "rate": 65, "vendor": "Prime Packers" },
-            { "id": "ITM006", "name": "Safety Gloves Latex", "code": "SGL", "category": "Safety Items", "uom": "Box", "minStock": 15, "maxStock": 100, "safetyStock": 5, "currentStock": 35, "rate": 450, "vendor": "SafeWork Safety Goods" },
+            { "id": "ITM006", "name": "Safety Gloves Latex", "code": "SGL", "category": "Safety Items", "uom": "Box", "minStock": 15, "maxStock": 100, "safetyStock": 5, "currentStock": 5, "rate": 450, "vendor": "SafeWork Safety Goods" },
             { "id": "ITM007", "name": "Floor Cleaner Phenyl", "code": "FCP", "category": "Housekeeping", "uom": "Litre", "minStock": 10, "maxStock": 50, "safetyStock": 2, "currentStock": 25, "rate": 85, "vendor": "Apex Supplies Ltd" }
         ]
         for item_data in default_items:
@@ -1530,43 +1530,95 @@ async def seed_all_data(session):
         # Seed Requests
         default_requests = [
             { "id": "REQ001", "date": "2026-06-10", "department": "HR & Admin", "requestedBy": "Dinesh Kumar", "priority": "Medium", "status": "Approved", "remarks": "For new joiners setup", "items": [{ "itemId": "ITM001", "qty": 5, "approvedQty": 5 }, { "itemId": "ITM002", "qty": 2, "approvedQty": 2 }] },
-            { "id": "REQ002", "date": "2026-06-12", "department": "Production", "requestedBy": "M. Selvam", "priority": "High", "status": "Pending", "remarks": "Urgent packing material replenishment", "items": [{ "itemId": "ITM004", "qty": 500, "approvedQty": 0 }] }
+            { "id": "REQ002", "date": "2026-06-12", "department": "Production", "requestedBy": "M. Selvam", "priority": "High", "status": "Pending", "remarks": "Urgent packing material replenishment", "items": [{ "itemId": "ITM004", "qty": 500, "approvedQty": 0 }] },
+            { "id": "REQ003", "date": "2026-06-13", "department": "Accounts & Finance", "requestedBy": "Priya Nair", "priority": "Low", "status": "Approved", "remarks": "Office desk accessories", "items": [{ "itemId": "ITM001", "qty": 10, "approvedQty": 10 }] },
+            { "id": "REQ004", "date": "2026-06-14", "department": "Quality Assurance", "requestedBy": "Vijay Prasad", "priority": "High", "status": "Approved", "remarks": "QA floor safety gear", "items": [{ "itemId": "ITM006", "qty": 15, "approvedQty": 15 }] },
+            { "id": "REQ005", "date": "2026-06-15", "department": "Stores & Warehouse", "requestedBy": "Karthik Raja", "priority": "Medium", "status": "Pending", "remarks": "BOPP Tape shortage", "items": [{ "itemId": "ITM005", "qty": 50, "approvedQty": 0 }] },
+            { "id": "REQ006", "date": "2026-06-16", "department": "HR & Admin", "requestedBy": "Amit Sharma", "priority": "Low", "status": "Approved", "remarks": "HR meeting stationery", "items": [{ "itemId": "ITM002", "qty": 5, "approvedQty": 5 }] },
+            { "id": "REQ007", "date": "2026-06-17", "department": "Production", "requestedBy": "Senthil Balan", "priority": "High", "status": "Approved", "remarks": "Phenyl for housekeeping team", "items": [{ "itemId": "ITM007", "qty": 8, "approvedQty": 8 }] },
+            { "id": "REQ008", "date": "2026-06-18", "department": "Quality Assurance", "requestedBy": "Manoj Patil", "priority": "Medium", "status": "Approved", "remarks": "Gloves for table checking staff", "items": [{ "itemId": "ITM006", "qty": 10, "approvedQty": 10 }] },
+            { "id": "REQ009", "date": "2026-06-19", "department": "Accounts & Finance", "requestedBy": "Dinesh Karthik", "priority": "High", "status": "Pending", "remarks": "Urgent toner replacement", "items": [{ "itemId": "ITM003", "qty": 1, "approvedQty": 0 }] },
+            { "id": "REQ010", "date": "2026-06-19", "department": "Stores & Warehouse", "requestedBy": "M. Selvam", "priority": "Medium", "status": "Approved", "remarks": "Carton boxes for shipment preparation", "items": [{ "itemId": "ITM004", "qty": 300, "approvedQty": 300 }] }
         ]
         for req_data in default_requests:
             session.add(StationaryItem(category="consumables_requests", data=req_data))
 
         # Seed POs
         default_pos = [
-            { "id": "PO001", "date": "2026-06-08", "vendor": "Prime Packers", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-15", "status": "Ordered", "items": [{ "itemId": "ITM004", "qty": 1000, "rate": 45, "total": 45000 }] }
+            { "id": "PO001", "date": "2026-06-08", "vendor": "Prime Packers", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-15", "status": "Ordered", "items": [{ "itemId": "ITM004", "qty": 1000, "rate": 45, "total": 45000 }] },
+            { "id": "PO002", "date": "2026-06-09", "vendor": "Apex Supplies Ltd", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-16", "status": "Completed", "items": [{ "itemId": "ITM001", "qty": 50, "rate": 280, "total": 14000 }] },
+            { "id": "PO003", "date": "2026-06-10", "vendor": "SafeWork Safety Goods", "paymentTerms": "15 Days Credit", "expectedDate": "2026-06-17", "status": "Completed", "items": [{ "itemId": "ITM006", "qty": 20, "rate": 450, "total": 9000 }] },
+            { "id": "PO004", "date": "2026-06-11", "vendor": "Metro Stationery Hub", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-18", "status": "Ordered", "items": [{ "itemId": "ITM002", "qty": 100, "rate": 150, "total": 15000 }] },
+            { "id": "PO005", "date": "2026-06-12", "vendor": "Apex Supplies Ltd", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-19", "status": "Ordered", "items": [{ "itemId": "ITM003", "qty": 5, "rate": 3200, "total": 16000 }] },
+            { "id": "PO006", "date": "2026-06-13", "vendor": "Prime Packers", "paymentTerms": "45 Days Credit", "expectedDate": "2026-06-20", "status": "Completed", "items": [{ "itemId": "ITM005", "qty": 150, "rate": 65, "total": 9750 }] },
+            { "id": "PO007", "date": "2026-06-14", "vendor": "SafeWork Safety Goods", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-21", "status": "Ordered", "items": [{ "itemId": "ITM006", "qty": 30, "rate": 450, "total": 13500 }] },
+            { "id": "PO008", "date": "2026-06-15", "vendor": "Metro Stationery Hub", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-22", "status": "Completed", "items": [{ "itemId": "ITM001", "qty": 80, "rate": 280, "total": 22400 }] },
+            { "id": "PO009", "date": "2026-06-16", "vendor": "Apex Supplies Ltd", "paymentTerms": "Cash", "expectedDate": "2026-06-23", "status": "Ordered", "items": [{ "itemId": "ITM007", "qty": 40, "rate": 85, "total": 3400 }] },
+            { "id": "PO010", "date": "2026-06-17", "vendor": "Prime Packers", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-24", "status": "Completed", "items": [{ "itemId": "ITM004", "qty": 2000, "rate": 45, "total": 90000 }] }
         ]
         for po_data in default_pos:
             session.add(StationaryItem(category="consumables_pos", data=po_data))
 
         # Seed GRNs
         default_grns = [
-            { "id": "GRN001", "date": "2026-06-09", "vendor": "Prime Packers", "poId": "PO001", "invoiceNo": "INV-9921", "status": "Accepted", "items": [{ "itemId": "ITM004", "orderedQty": 1000, "receivedQty": 1000, "acceptedQty": 1000, "rejectedQty": 0, "rate": 45 }] }
+            { "id": "GRN001", "date": "2026-06-09", "vendor": "Prime Packers", "poId": "PO001", "invoiceNo": "INV-9921", "status": "Accepted", "items": [{ "itemId": "ITM004", "orderedQty": 1000, "receivedQty": 1000, "acceptedQty": 1000, "rejectedQty": 0, "rate": 45 }] },
+            { "id": "GRN002", "date": "2026-06-10", "vendor": "Apex Supplies Ltd", "poId": "PO002", "invoiceNo": "INV-8812", "status": "Accepted", "items": [{ "itemId": "ITM001", "orderedQty": 50, "receivedQty": 50, "acceptedQty": 50, "rejectedQty": 0, "rate": 280 }] },
+            { "id": "GRN003", "date": "2026-06-11", "vendor": "SafeWork Safety Goods", "poId": "PO003", "invoiceNo": "INV-7711", "status": "Accepted", "items": [{ "itemId": "ITM006", "orderedQty": 20, "receivedQty": 20, "acceptedQty": 18, "rejectedQty": 2, "rate": 450 }] },
+            { "id": "GRN004", "date": "2026-06-12", "vendor": "Metro Stationery Hub", "poId": "PO004", "invoiceNo": "INV-6622", "status": "Accepted", "items": [{ "itemId": "ITM002", "orderedQty": 100, "receivedQty": 100, "acceptedQty": 100, "rejectedQty": 0, "rate": 150 }] },
+            { "id": "GRN005", "date": "2026-06-13", "vendor": "Apex Supplies Ltd", "poId": "PO005", "invoiceNo": "INV-5544", "status": "Accepted", "items": [{ "itemId": "ITM003", "orderedQty": 5, "receivedQty": 5, "acceptedQty": 5, "rejectedQty": 0, "rate": 3200 }] },
+            { "id": "GRN006", "date": "2026-06-14", "vendor": "Prime Packers", "poId": "PO006", "invoiceNo": "INV-4411", "status": "Accepted", "items": [{ "itemId": "ITM005", "orderedQty": 150, "receivedQty": 150, "acceptedQty": 150, "rejectedQty": 0, "rate": 65 }] },
+            { "id": "GRN007", "date": "2026-06-15", "vendor": "SafeWork Safety Goods", "poId": "PO007", "invoiceNo": "INV-3399", "status": "Accepted", "items": [{ "itemId": "ITM006", "orderedQty": 30, "receivedQty": 30, "acceptedQty": 28, "rejectedQty": 2, "rate": 450 }] },
+            { "id": "GRN008", "date": "2026-06-16", "vendor": "Metro Stationery Hub", "poId": "PO008", "invoiceNo": "INV-2211", "status": "Accepted", "items": [{ "itemId": "ITM001", "orderedQty": 80, "receivedQty": 80, "acceptedQty": 80, "rejectedQty": 0, "rate": 280 }] },
+            { "id": "GRN009", "date": "2026-06-17", "vendor": "Apex Supplies Ltd", "poId": "PO009", "invoiceNo": "INV-1188", "status": "Accepted", "items": [{ "itemId": "ITM007", "orderedQty": 40, "receivedQty": 40, "acceptedQty": 38, "rejectedQty": 2, "rate": 85 }] },
+            { "id": "GRN010", "date": "2026-06-18", "vendor": "Prime Packers", "poId": "PO010", "invoiceNo": "INV-0099", "status": "Accepted", "items": [{ "itemId": "ITM004", "orderedQty": 2000, "receivedQty": 2000, "acceptedQty": 2000, "rejectedQty": 0, "rate": 45 }] }
         ]
         for grn_data in default_grns:
             session.add(StationaryItem(category="consumables_grns", data=grn_data))
 
         # Seed Issues
         default_issues = [
-            { "id": "ISS001", "date": "2026-06-11", "department": "HR & Admin", "employee": "Dinesh Kumar", "purpose": "Office Stationery Setup", "items": [{ "itemId": "ITM001", "qty": 3, "rate": 280 }, { "itemId": "ITM002", "qty": 1, "rate": 150 }] }
+            { "id": "ISS001", "date": "2026-06-11", "department": "HR & Admin", "employee": "Dinesh Kumar", "purpose": "Office Stationery Setup", "items": [{ "itemId": "ITM001", "qty": 3, "rate": 280 }, { "itemId": "ITM002", "qty": 1, "rate": 150 }] },
+            { "id": "ISS002", "date": "2026-06-12", "department": "Production", "employee": "M. Selvam", "purpose": "Packing materials for loom 1-5", "items": [{ "itemId": "ITM004", "qty": 100, "rate": 45 }, { "itemId": "ITM005", "qty": 5, "rate": 65 }] },
+            { "id": "ISS003", "date": "2026-06-13", "department": "Accounts & Finance", "employee": "Priya Nair", "purpose": "Finance office setup", "items": [{ "itemId": "ITM001", "qty": 5, "rate": 280 }, { "itemId": "ITM002", "qty": 10, "rate": 150 }] },
+            { "id": "ISS004", "date": "2026-06-14", "department": "Quality Assurance", "employee": "Vijay Prasad", "purpose": "Safety kit distribution", "items": [{ "itemId": "ITM006", "qty": 10, "rate": 450 }] },
+            { "id": "ISS005", "date": "2026-06-15", "department": "HR & Admin", "employee": "Amit Sharma", "purpose": "GM office supplies", "items": [{ "itemId": "ITM001", "qty": 2, "rate": 280 }, { "itemId": "ITM003", "qty": 1, "rate": 3200 }] },
+            { "id": "ISS006", "date": "2026-06-16", "department": "Production", "employee": "Senthil Balan", "purpose": "Housekeeping stock", "items": [{ "itemId": "ITM007", "qty": 12, "rate": 85 }] },
+            { "id": "ISS007", "date": "2026-06-17", "department": "Stores & Warehouse", "employee": "Karthik Raja", "purpose": "Packing tape replacement", "items": [{ "itemId": "ITM005", "qty": 25, "rate": 65 }] },
+            { "id": "ISS008", "date": "2026-06-18", "department": "Quality Assurance", "employee": "Manoj Patil", "purpose": "Gloves for checking desk", "items": [{ "itemId": "ITM006", "qty": 12, "rate": 450 }] },
+            { "id": "ISS009", "date": "2026-06-19", "department": "Accounts & Finance", "employee": "Dinesh Karthik", "purpose": "Ledgers A4 paper print", "items": [{ "itemId": "ITM001", "qty": 8, "rate": 280 }, { "itemId": "ITM003", "qty": 1, "rate": 3200 }] },
+            { "id": "ISS010", "date": "2026-06-19", "department": "Stores & Warehouse", "employee": "M. Selvam", "purpose": "Carton packaging issue", "items": [{ "itemId": "ITM004", "qty": 250, "rate": 45 }] }
         ]
         for issue_data in default_issues:
             session.add(StationaryItem(category="consumables_issues", data=issue_data))
 
         # Seed Ledger
         default_ledger = [
-            { "id": "LED001", "date": "2026-06-01", "itemId": "ITM001", "refType": "Opening", "refId": "-", "inQty": 48, "outQty": 0, "balance": 48 },
-            { "id": "LED002", "date": "2026-06-11", "itemId": "ITM001", "refType": "Issue", "refId": "ISS001", "inQty": 0, "outQty": 3, "balance": 45 }
+            { "id": "LED001", "date": "2026-06-01", "itemId": "ITM001", "refType": "Opening", "refId": "-", "inQty": 100, "outQty": 0, "balance": 100 },
+            { "id": "LED002", "date": "2026-06-11", "itemId": "ITM001", "refType": "Issue", "refId": "ISS001", "inQty": 0, "outQty": 3, "balance": 97 },
+            { "id": "LED003", "date": "2026-06-12", "itemId": "ITM004", "refType": "Issue", "refId": "ISS002", "inQty": 0, "outQty": 100, "balance": 1100 },
+            { "id": "LED004", "date": "2026-06-13", "itemId": "ITM001", "refType": "Issue", "refId": "ISS003", "inQty": 0, "outQty": 5, "balance": 92 },
+            { "id": "LED005", "date": "2026-06-14", "itemId": "ITM006", "refType": "Issue", "refId": "ISS004", "inQty": 0, "outQty": 10, "balance": 25 },
+            { "id": "LED006", "date": "2026-06-15", "itemId": "ITM003", "refType": "Issue", "refId": "ISS005", "inQty": 0, "outQty": 1, "balance": 2 },
+            { "id": "LED007", "date": "2026-06-16", "itemId": "ITM007", "refType": "Issue", "refId": "ISS006", "inQty": 0, "outQty": 12, "balance": 13 },
+            { "id": "LED008", "date": "2026-06-17", "itemId": "ITM005", "refType": "Issue", "refId": "ISS007", "inQty": 0, "outQty": 25, "balance": 55 },
+            { "id": "LED009", "date": "2026-06-18", "itemId": "ITM006", "refType": "Issue", "refId": "ISS008", "inQty": 0, "outQty": 12, "balance": 13 },
+            { "id": "LED010", "date": "2026-06-19", "itemId": "ITM001", "refType": "Issue", "refId": "ISS009", "inQty": 0, "outQty": 8, "balance": 84 }
         ]
         for ledger_data in default_ledger:
             session.add(StationaryItem(category="consumables_ledger", data=ledger_data))
 
         # Seed Quotations
         default_quotations = [
-            { "id": "QTN001", "date": "2026-06-05", "vendor": "Apex Supplies Ltd", "validityDate": "2026-07-05", "paymentTerms": "30 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 10, "rate": 270, "total": 2700 }], "quotation_file_path": "" }
+            { "id": "QTN001", "date": "2026-06-05", "vendor": "Apex Supplies Ltd", "validityDate": "2026-07-05", "paymentTerms": "30 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 10, "rate": 270, "total": 2700 }], "quotation_file_path": "" },
+            { "id": "QTN002", "date": "2026-06-06", "vendor": "Prime Packers", "validityDate": "2026-07-06", "paymentTerms": "15 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM004", "qty": 500, "rate": 43, "total": 21500 }], "quotation_file_path": "" },
+            { "id": "QTN003", "date": "2026-06-07", "vendor": "SafeWork Safety Goods", "validityDate": "2026-07-07", "paymentTerms": "Cash", "status": "Pending", "items": [{ "itemId": "ITM006", "qty": 15, "rate": 440, "total": 6600 }], "quotation_file_path": "" },
+            { "id": "QTN004", "date": "2026-06-08", "vendor": "Metro Stationery Hub", "validityDate": "2026-07-08", "paymentTerms": "30 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM002", "qty": 40, "rate": 140, "total": 5600 }], "quotation_file_path": "" },
+            { "id": "QTN005", "date": "2026-06-09", "vendor": "Apex Supplies Ltd", "validityDate": "2026-07-09", "paymentTerms": "30 Days Credit", "status": "Pending", "items": [{ "itemId": "ITM003", "qty": 3, "rate": 3100, "total": 9300 }], "quotation_file_path": "" },
+            { "id": "QTN006", "date": "2026-06-10", "vendor": "Prime Packers", "validityDate": "2026-07-10", "paymentTerms": "30 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM005", "qty": 80, "rate": 60, "total": 4800 }], "quotation_file_path": "" },
+            { "id": "QTN007", "date": "2026-06-11", "vendor": "SafeWork Safety Goods", "validityDate": "2026-07-11", "paymentTerms": "45 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM006", "qty": 25, "rate": 430, "total": 10750 }], "quotation_file_path": "" },
+            { "id": "QTN008", "date": "2026-06-12", "vendor": "Metro Stationery Hub", "validityDate": "2026-07-12", "paymentTerms": "30 Days Credit", "status": "Pending", "items": [{ "itemId": "ITM001", "qty": 100, "rate": 265, "total": 26500 }], "quotation_file_path": "" },
+            { "id": "QTN009", "date": "2026-06-13", "vendor": "Apex Supplies Ltd", "validityDate": "2026-07-13", "paymentTerms": "Cash", "status": "Approved", "items": [{ "itemId": "ITM007", "qty": 20, "rate": 80, "total": 1600 }], "quotation_file_path": "" },
+            { "id": "QTN010", "date": "2026-06-14", "vendor": "Prime Packers", "validityDate": "2026-07-14", "paymentTerms": "30 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM004", "qty": 1000, "rate": 42, "total": 42000 }], "quotation_file_path": "" }
         ]
         for qtn_data in default_quotations:
             session.add(StationaryItem(category="consumables_quotations", data=qtn_data))
@@ -1574,7 +1626,15 @@ async def seed_all_data(session):
         # Seed Requisitions
         default_requisitions = [
             { "id": "PRQ001", "date": "2026-06-11", "requestedBy": "M. Selvam", "status": "Pending", "items": [{ "itemId": "ITM004", "qty": 200, "currentStock": 1200, "minStock": 500 }] },
-            { "id": "PRQ002", "date": "2026-06-12", "requestedBy": "Dinesh Kumar", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 50, "currentStock": 45, "minStock": 20 }] }
+            { "id": "PRQ002", "date": "2026-06-12", "requestedBy": "Dinesh Kumar", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 50, "currentStock": 45, "minStock": 20 }] },
+            { "id": "PRQ003", "date": "2026-06-13", "requestedBy": "Priya Nair", "status": "Approved", "items": [{ "itemId": "ITM003", "qty": 5, "currentStock": 3, "minStock": 2 }] },
+            { "id": "PRQ004", "date": "2026-06-14", "requestedBy": "Vijay Prasad", "status": "Pending", "items": [{ "itemId": "ITM006", "qty": 20, "currentStock": 35, "minStock": 15 }] },
+            { "id": "PRQ005", "date": "2026-06-15", "requestedBy": "Amit Sharma", "status": "Approved", "items": [{ "itemId": "ITM002", "qty": 30, "currentStock": 15, "minStock": 10 }] },
+            { "id": "PRQ006", "date": "2026-06-16", "requestedBy": "Senthil Balan", "status": "Pending", "items": [{ "itemId": "ITM007", "qty": 15, "currentStock": 25, "minStock": 10 }] },
+            { "id": "PRQ007", "date": "2026-06-17", "requestedBy": "Karthik Raja", "status": "Approved", "items": [{ "itemId": "ITM005", "qty": 100, "currentStock": 80, "minStock": 50 }] },
+            { "id": "PRQ008", "date": "2026-06-18", "requestedBy": "Dinesh Karthik", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 30, "currentStock": 45, "minStock": 20 }] },
+            { "id": "PRQ009", "date": "2026-06-19", "requestedBy": "Manoj Patil", "status": "Pending", "items": [{ "itemId": "ITM004", "qty": 400, "currentStock": 1200, "minStock": 500 }] },
+            { "id": "PRQ010", "date": "2026-06-19", "requestedBy": "Priya Nair", "status": "Approved", "items": [{ "itemId": "ITM003", "qty": 2, "currentStock": 3, "minStock": 2 }] }
         ]
         for req_data in default_requisitions:
             session.add(StationaryItem(category="consumables_requisitions", data=req_data))
@@ -1582,7 +1642,15 @@ async def seed_all_data(session):
         # Seed Returns
         default_returns = [
             { "id": "RET001", "date": "2026-06-12", "department": "Production", "employee": "K. Ramasamy", "itemId": "ITM006", "qty": 5, "reason": "Excess quantity returned from floor" },
-            { "id": "RET002", "date": "2026-06-13", "department": "HR & Admin", "employee": "P. Sudha", "itemId": "ITM002", "qty": 10, "reason": "Unused pens returned to store" }
+            { "id": "RET002", "date": "2026-06-13", "department": "HR & Admin", "employee": "P. Sudha", "itemId": "ITM002", "qty": 10, "reason": "Unused pens returned to store" },
+            { "id": "RET003", "date": "2026-06-14", "department": "Accounts & Finance", "employee": "Priya Nair", "itemId": "ITM001", "qty": 2, "reason": "Extra A4 sheets returned" },
+            { "id": "RET004", "date": "2026-06-15", "department": "Quality Assurance", "employee": "Vijay Prasad", "itemId": "ITM006", "qty": 3, "reason": "Defective size exchanged" },
+            { "id": "RET005", "date": "2026-06-16", "department": "Production", "employee": "Senthil Balan", "itemId": "ITM004", "qty": 50, "reason": "Leftover boxes returned" },
+            { "id": "RET006", "date": "2026-06-17", "department": "HR & Admin", "employee": "Amit Sharma", "itemId": "ITM001", "qty": 1, "reason": "Extra ream not needed" },
+            { "id": "RET007", "date": "2026-06-18", "department": "Stores & Warehouse", "employee": "Karthik Raja", "itemId": "ITM005", "qty": 5, "reason": "Rolls not used in shift" },
+            { "id": "RET008", "date": "2026-06-19", "department": "Quality Assurance", "employee": "Manoj Patil", "itemId": "ITM006", "qty": 4, "reason": "Surplus safety gear returned" },
+            { "id": "RET009", "date": "2026-06-19", "department": "Accounts & Finance", "employee": "Dinesh Karthik", "itemId": "ITM002", "qty": 5, "reason": "Extra pens returned" },
+            { "id": "RET010", "date": "2026-06-19", "department": "Production", "employee": "M. Selvam", "itemId": "ITM004", "qty": 30, "reason": "Excess boxes returned" }
         ]
         for ret_data in default_returns:
             session.add(StationaryItem(category="consumables_returns", data=ret_data))
@@ -1590,27 +1658,446 @@ async def seed_all_data(session):
         # Seed Transfers
         default_transfers = [
             { "id": "TRF001", "date": "2026-06-14", "fromStore": "Main Store", "toStore": "Weaving Section Store", "itemId": "ITM005", "qty": 20, "transferBy": "M. Selvam" },
-            { "id": "TRF002", "date": "2026-06-15", "fromStore": "Main Store", "toStore": "Garment Store", "itemId": "ITM004", "qty": 100, "transferBy": "Dinesh Kumar" }
+            { "id": "TRF002", "date": "2026-06-15", "fromStore": "Main Store", "toStore": "Garment Store", "itemId": "ITM004", "qty": 100, "transferBy": "Dinesh Kumar" },
+            { "id": "TRF003", "date": "2026-06-16", "fromStore": "Main Store", "toStore": "Admin Sub-Store", "itemId": "ITM001", "qty": 15, "transferBy": "Priya Nair" },
+            { "id": "TRF004", "date": "2026-06-17", "fromStore": "Main Store", "toStore": "Lab Store", "itemId": "ITM006", "qty": 8, "transferBy": "Vijay Prasad" },
+            { "id": "TRF005", "date": "2026-06-18", "fromStore": "Main Store", "toStore": "Weaving Section Store", "itemId": "ITM004", "qty": 250, "transferBy": "Manoj Patil" },
+            { "id": "TRF006", "date": "2026-06-18", "fromStore": "Main Store", "toStore": "Admin Sub-Store", "itemId": "ITM002", "qty": 40, "transferBy": "Amit Sharma" },
+            { "id": "TRF007", "date": "2026-06-19", "fromStore": "Main Store", "toStore": "Garment Store", "itemId": "ITM005", "qty": 30, "transferBy": "Karthik Raja" },
+            { "id": "TRF008", "date": "2026-06-19", "fromStore": "Main Store", "toStore": "Lab Store", "itemId": "ITM007", "qty": 10, "transferBy": "Senthil Balan" },
+            { "id": "TRF009", "date": "2026-06-19", "fromStore": "Main Store", "toStore": "Weaving Section Store", "itemId": "ITM005", "qty": 15, "transferBy": "M. Selvam" },
+            { "id": "TRF010", "date": "2026-06-19", "fromStore": "Main Store", "toStore": "Admin Sub-Store", "itemId": "ITM003", "qty": 2, "transferBy": "Dinesh Karthik" }
         ]
         for trf_data in default_transfers:
             session.add(StationaryItem(category="consumables_transfers", data=trf_data))
 
         # Seed Adjustments
         default_adjustments = [
-            { "id": "ADJ001", "date": "2026-06-15", "itemId": "ITM001", "qty": 2, "type": "Addition", "reason": "Found extra during pre-audit", "adjustedBy": "M. Selvam" },
-            { "id": "ADJ002", "date": "2026-06-16", "itemId": "ITM003", "qty": 1, "type": "Deduction", "reason": "Damaged in storage", "adjustedBy": "Dinesh Kumar" }
+            { "id": "ADJ001", "date": "2026-06-15", "itemId": "ITM001", "qty": 2, "type": "Physical Difference", "remarks": "Found extra during pre-audit", "adjustedBy": "M. Selvam" },
+            { "id": "ADJ002", "date": "2026-06-16", "itemId": "ITM003", "qty": 1, "type": "Damage", "remarks": "Damaged in storage", "adjustedBy": "Dinesh Kumar" },
+            { "id": "ADJ003", "date": "2026-06-17", "itemId": "ITM002", "qty": 5, "type": "Lost", "remarks": "Misplaced in sub-store", "adjustedBy": "Priya Nair" },
+            { "id": "ADJ004", "date": "2026-06-17", "itemId": "ITM004", "qty": 20, "type": "Physical Difference", "remarks": "Box count correction", "adjustedBy": "Vijay Prasad" },
+            { "id": "ADJ005", "date": "2026-06-18", "itemId": "ITM005", "qty": 2, "type": "Expired", "remarks": "Defective adhesive detected", "adjustedBy": "Karthik Raja" },
+            { "id": "ADJ006", "date": "2026-06-18", "itemId": "ITM006", "qty": 4, "type": "Breakage", "remarks": "Tear in transit inspection", "adjustedBy": "Manoj Patil" },
+            { "id": "ADJ007", "date": "2026-06-19", "itemId": "ITM007", "qty": 3, "type": "Physical Difference", "remarks": "Spillage in storage area", "adjustedBy": "Senthil Balan" },
+            { "id": "ADJ008", "date": "2026-06-19", "itemId": "ITM001", "qty": 5, "type": "Physical Difference", "remarks": "Recount correction", "adjustedBy": "Amit Sharma" },
+            { "id": "ADJ009", "date": "2026-06-19", "itemId": "ITM002", "qty": 10, "type": "Lost", "remarks": "Discrepancy during shift audit", "adjustedBy": "Dinesh Karthik" },
+            { "id": "ADJ010", "date": "2026-06-19", "itemId": "ITM004", "qty": 15, "type": "Damage", "remarks": "Water damage in storage roof leak", "adjustedBy": "M. Selvam" }
         ]
         for adj_data in default_adjustments:
             session.add(StationaryItem(category="consumables_adjustments", data=adj_data))
 
         # Seed Verifications
         default_verifications = [
-            { "id": "PV001", "date": "2026-06-17", "verifiedBy": "Audit Team A", "status": "Completed", "items": [{ "itemId": "ITM001", "name": "A4 Paper", "systemQty": 45, "physicalQty": 45, "variance": 0 }, { "itemId": "ITM002", "name": "Ball Pen Blue", "systemQty": 15, "physicalQty": 14, "variance": -1 }] }
+            { "id": "PV001", "date": "2026-06-17", "verifiedBy": "Audit Team A", "status": "Completed", "items": [{ "itemId": "ITM001", "name": "A4 Paper", "systemQty": 45, "physicalQty": 45, "variance": 0 }, { "itemId": "ITM002", "name": "Ball Pen Blue", "systemQty": 15, "physicalQty": 14, "variance": -1 }] },
+            { "id": "PV002", "date": "2026-06-17", "verifiedBy": "Audit Team A", "status": "Completed", "items": [{ "itemId": "ITM003", "name": "HP Laser Toner", "systemQty": 3, "physicalQty": 3, "variance": 0 }] },
+            { "id": "PV003", "date": "2026-06-17", "verifiedBy": "Audit Team A", "status": "Completed", "items": [{ "itemId": "ITM004", "name": "Carton Box 5-Ply", "systemQty": 1200, "physicalQty": 1220, "variance": 20 }] },
+            { "id": "PV004", "date": "2026-06-18", "verifiedBy": "Audit Team B", "status": "Completed", "items": [{ "itemId": "ITM005", "name": "BOPP Packing Tape", "systemQty": 80, "physicalQty": 78, "variance": -2 }] },
+            { "id": "PV005", "date": "2026-06-18", "verifiedBy": "Audit Team B", "status": "Completed", "items": [{ "itemId": "ITM006", "name": "Safety Gloves", "systemQty": 35, "physicalQty": 31, "variance": -4 }] },
+            { "id": "PV006", "date": "2026-06-18", "verifiedBy": "Audit Team B", "status": "Completed", "items": [{ "itemId": "ITM007", "name": "Floor Cleaner Phenyl", "systemQty": 25, "physicalQty": 25, "variance": 0 }] },
+            { "id": "PV007", "date": "2026-06-19", "verifiedBy": "Audit Team C", "status": "Completed", "items": [{ "itemId": "ITM001", "name": "A4 Paper", "systemQty": 45, "physicalQty": 50, "variance": 5 }] },
+            { "id": "PV008", "date": "2026-06-19", "verifiedBy": "Audit Team C", "status": "Completed", "items": [{ "itemId": "ITM002", "name": "Ball Pen Blue", "systemQty": 15, "physicalQty": 5, "variance": -10 }] },
+            { "id": "PV009", "date": "2026-06-19", "verifiedBy": "Audit Team C", "status": "Completed", "items": [{ "itemId": "ITM004", "name": "Carton Box 5-Ply", "systemQty": 1220, "physicalQty": 1205, "variance": -15 }] },
+            { "id": "PV010", "date": "2026-06-19", "verifiedBy": "Audit Team C", "status": "Completed", "items": [{ "itemId": "ITM006", "name": "Safety Gloves", "systemQty": 31, "physicalQty": 31, "variance": 0 }] }
         ]
         for ver_data in default_verifications:
             session.add(StationaryItem(category="consumables_verifications", data=ver_data))
 
+        # Seed WorkOrderTransaction for Warping & Weaving / Fabric Production Desk
+        logger.info("Seeding WorkOrderTransaction module records...")
+        design_nos = [d.design_no for d in design_objects] if design_objects else ["DES-2026-001"]
+        design_names = [d.design_name for d in design_objects] if design_objects else ["Standard Cotton Weave"]
+        employee_names = [e.name for e in emp_objects] if emp_objects else ["Amit Sharma", "Priya Nair"]
+        buyer_names = [bo.buyer_name or bo.party_name for bo in buyer_order_objects] if buyer_order_objects else ["Raymond Ltd"]
+        vehicle_nos = [v.vehicle_number for v in vehicle_objects] if vehicle_objects else ["TN-33-AA-1001"]
+        
+        modules = [
+            'beam_received', 'beam_delivery', 'empty_beam', 
+            'warping_report', 'sizing_report', 'ws_bills', 'set_amend',
+            'design_upload', 'cloth_checking', 'lot_completion',
+            'cloth_inward', 'cloth_purchase_bill',
+            'del_pcwise', 'm2m_delivery', 'bale_delivery',
+            'lot_approval', 'bale_amend', 'bale_packing', 'pl_checking',
+            'goods_release', 'gate_pass',
+            'vendor_bills', 'printing_bills', 'dl_development',
+            'surplus_opening', 'surplus_report', 'surplus_report_new', 'surplus_inward', 'surplus_delivery', 'customer_hanger'
+        ]
+        
+        for module in modules:
+            for idx in range(1, 11):
+                prefix_map = {
+                    'beam_received': 'WBR', 'beam_delivery': 'WBD', 'empty_beam': 'EBE',
+                    'warping_report': 'WSR', 'sizing_report': 'SSR', 'ws_bills': 'WSB', 'set_amend': 'SAM',
+                    'design_upload': 'DSN', 'cloth_checking': 'CKG', 'lot_completion': 'LCP',
+                    'cloth_inward': 'CIW', 'cloth_purchase_bill': 'CPB', 'del_pcwise': 'DPC',
+                    'm2m_delivery': 'M2D', 'bale_delivery': 'BDE', 'lot_approval': 'LAP',
+                    'bale_amend': 'BAM', 'bale_packing': 'BAP', 'pl_checking': 'PLC',
+                    'goods_release': 'GRL', 'gate_pass': 'GPB', 'vendor_bills': 'VNB',
+                    'printing_bills': 'PRB', 'dl_development': 'DLB', 'surplus_opening': 'SOP',
+                    'surplus_report': 'SRP', 'surplus_report_new': 'SRN', 'surplus_inward': 'SIW',
+                    'surplus_delivery': 'SDE', 'customer_hanger': 'HNG'
+                }
+                prefix = prefix_map.get(module, 'WOT')
+                txn_no = f"{prefix}-2026-{idx:03d}"
+                rec_date = date.today() - timedelta(days=idx * 2)
+                buyer_name = buyer_names[idx % len(buyer_names)]
+                
+                details = {
+                    "date": rec_date.isoformat(),
+                    "status": "Active"
+                }
+                
+                if module == 'beam_received':
+                    details.update({
+                        "voucherNo": txn_no,
+                        "voucherDate": rec_date.isoformat(),
+                        "financialYear": "2026-2027",
+                        "supplierName": buyer_name,
+                        "beamNo": f"BEAM-{100+idx}",
+                        "beamType": "Sized Beam" if idx % 2 == 0 else "Warp Beam",
+                        "beamLength": 1000 + (idx * 200),
+                        "netWeight": 200 + (idx * 30),
+                        "qcStatus": "Passed" if idx % 3 != 0 else "Pending",
+                        "status": "Received"
+                    })
+                elif module == 'beam_delivery':
+                    details.update({
+                        "deliveryVoucherNo": txn_no,
+                        "deliveryDate": rec_date.isoformat(),
+                        "loomNo": f"L-{idx}",
+                        "weaverName": employee_names[idx % len(employee_names)],
+                        "operatorName": employee_names[idx % len(employee_names)],
+                        "beamNo": f"BEAM-{100+idx}",
+                        "beamType": "Sized Beam",
+                        "issuedMeter": 1000 + (idx * 150),
+                        "expectedCompletionDate": (rec_date + timedelta(days=7)).isoformat(),
+                        "status": "Delivered"
+                    })
+                elif module == 'empty_beam':
+                    details.update({
+                        "emptyBeamVoucherNo": txn_no,
+                        "returnDate": rec_date.isoformat(),
+                        "loomNo": f"L-{idx}",
+                        "operatorName": employee_names[idx % len(employee_names)],
+                        "beamNo": f"BEAM-{100+idx}",
+                        "beamType": "Empty Beam",
+                        "reusableStatus": "Ready",
+                        "usedMeter": 950 + (idx * 150),
+                        "wasteMeter": idx * 2,
+                        "status": "Returned"
+                    })
+                elif module == 'warping_report':
+                    details.update({
+                        "setReportNo": txn_no,
+                        "reportDate": rec_date.isoformat(),
+                        "setNo": f"SET-{10+idx}",
+                        "shift": "Morning (6AM-2PM)" if idx % 2 == 0 else "Afternoon (2PM-10PM)",
+                        "machineName": f"WARP-M/C-{1 + (idx % 2)}",
+                        "operatorName": employee_names[idx % len(employee_names)],
+                        "totalEnds": 4000 + (idx * 100),
+                        "beamWidth": 1800,
+                        "beamLength": 1000 + (idx * 200),
+                        "warpMeter": 1000 + (idx * 200),
+                        "statusTracking": "Completed"
+                    })
+                elif module == 'sizing_report':
+                    details.update({
+                        "sizingReportNo": txn_no,
+                        "reportDate": rec_date.isoformat(),
+                        "setNo": f"SET-{10+idx}",
+                        "shift": "Morning (6AM-2PM)" if idx % 2 == 0 else "Afternoon (2PM-10PM)",
+                        "machineName": f"SIZING-M/C-{1 + (idx % 2)}",
+                        "operatorName": employee_names[idx % len(employee_names)],
+                        "beamWidth": 1800,
+                        "warpMeter": 1000 + (idx * 200),
+                        "statusTracking": "Completed"
+                    })
+                elif module == 'ws_bills':
+                    details.update({
+                        "billNo": txn_no,
+                        "billDate": rec_date.isoformat(),
+                        "billType": "Sizing Bill" if idx % 2 == 0 else "Warping Bill",
+                        "vendorName": buyer_name,
+                        "setReportNo": f"WSR-2026-{idx:03d}",
+                        "processQuantity": 2000 + (idx * 500),
+                        "processRate": 10,
+                        "netAmount": (2000 + (idx * 500)) * 10,
+                        "statusTracking": "Paid"
+                    })
+                elif module == 'set_amend':
+                    details.update({
+                        "amendmentNo": txn_no,
+                        "amendmentDate": rec_date.isoformat(),
+                        "amendmentType": "Quantity Correction",
+                        "setReportNo": f"WSR-2026-{idx:03d}",
+                        "amendmentReason": "Typo in length",
+                        "reworkRequired": False,
+                        "approvalStatus": "Approved",
+                        "statusTracking": "Released"
+                    })
+                elif module == 'design_upload':
+                    details.update({
+                        "designUploadNo": txn_no,
+                        "uploadDate": rec_date.isoformat(),
+                        "designName": design_names[idx % len(design_names)],
+                        "uploadType": "CAD Drawing",
+                        "buyerName": buyer_name,
+                        "fabricType": "Cotton",
+                        "composition": "100% Cotton",
+                        "width": 60,
+                        "gsm": 180 + (idx * 5)
+                    })
+                elif module == 'cloth_checking':
+                    details.update({
+                        "clothCheckingNo": txn_no,
+                        "checkingDate": rec_date.isoformat(),
+                        "buyerName": buyer_name,
+                        "supplierName": buyer_name,
+                        "checkerName": employee_names[idx % len(employee_names)],
+                        "lotNo": f"LOT-{200+idx}",
+                        "rollLength": 100,
+                        "passedQuantity": 98,
+                        "checkedBy": employee_names[idx % len(employee_names)]
+                    })
+                elif module == 'lot_completion':
+                    details.update({
+                        "lotCompletionNo": txn_no,
+                        "completionDate": rec_date.isoformat(),
+                        "lotNo": f"LOT-{200+idx}",
+                        "completionType": "Production Finish",
+                        "totalLotQuantity": 2000,
+                        "passedQuantity": 1980,
+                        "rejectedQuantity": 15,
+                        "balanceQuantity": 5,
+                        "completedBy": employee_names[idx % len(employee_names)],
+                        "status": "Completed"
+                    })
+                elif module == 'cloth_inward':
+                    details.update({
+                        "clothInwardNo": txn_no,
+                        "inwardDate": rec_date.isoformat(),
+                        "inwardType": "Production",
+                        "buyerName": buyer_name,
+                        "supplierName": buyer_name,
+                        "designNo": design_nos[idx % len(design_nos)],
+                        "receivedQuantity": 1000 + (idx * 100),
+                        "uom": "Meters",
+                        "qcStatus": "QC Approved",
+                        "status": "Completed"
+                    })
+                elif module == 'cloth_purchase_bill':
+                    details.update({
+                        "purchaseBillNo": txn_no,
+                        "billDate": rec_date.isoformat(),
+                        "billType": "Weaving Bill",
+                        "buyerName": buyer_name,
+                        "supplierName": buyer_name,
+                        "taxableAmount": 50000 + (idx * 5000),
+                        "netAmount": (50000 + (idx * 5000)) * 1.05,
+                        "status": "Approved"
+                    })
+                elif module == 'del_pcwise':
+                    details.update({
+                        "clothDeliveryNo": txn_no,
+                        "deliveryDate": rec_date.isoformat(),
+                        "deliveryType": "Domestic",
+                        "customerVendorName": buyer_name,
+                        "buyerName": buyer_name,
+                        "designNo": design_nos[idx % len(design_nos)],
+                        "deliveredQuantity": 500 + (idx * 50),
+                        "uom": "Meters",
+                        "status": "Delivered"
+                    })
+                elif module == 'm2m_delivery':
+                    details.update({
+                        "millTransferNo": txn_no,
+                        "transferDate": rec_date.isoformat(),
+                        "transferType": "Internal Transfer",
+                        "fromMillName": "Unit 1",
+                        "toMillName": "Unit 2",
+                        "transferQuantity": 1000 + (idx * 100),
+                        "uom": "Meters",
+                        "status": "Transferred"
+                    })
+                elif module == 'bale_delivery':
+                    details.update({
+                        "baleDeliveryNo": txn_no,
+                        "deliveryDate": rec_date.isoformat(),
+                        "dispatchType": "Bale Dispatch",
+                        "customerName": buyer_name,
+                        "buyerName": buyer_name,
+                        "deliveredQuantity": 1500,
+                        "pendingQuantity": 0,
+                        "uom": "Meters",
+                        "status": "Dispatched"
+                    })
+                elif module == 'lot_approval':
+                    details.update({
+                        "lotApprovalNo": txn_no,
+                        "approvalDate": rec_date.isoformat(),
+                        "approvalType": "Sales Release",
+                        "lotNo": f"LOT-{200+idx}",
+                        "totalLotQuantity": 2000,
+                        "passedQuantity": 1980,
+                        "uom": "Meters",
+                        "qcStatus": "Approved",
+                        "status": "Approved"
+                    })
+                elif module == 'bale_amend':
+                    details.update({
+                        "baleAmendmentNo": txn_no,
+                        "amendmentDate": rec_date.isoformat(),
+                        "amendmentType": "Correction",
+                        "baleNo": f"BALE-{300+idx}",
+                        "previousQuantity": 1000,
+                        "revisedQuantity": 1010,
+                        "differenceQuantity": 10,
+                        "uom": "Meters",
+                        "status": "Updated"
+                    })
+                elif module == 'bale_packing':
+                    details.update({
+                        "balePackingNo": txn_no,
+                        "packingDate": rec_date.isoformat(),
+                        "packingType": "Export Packing",
+                        "lotNo": f"LOT-{200+idx}",
+                        "baleNo": f"BALE-{300+idx}",
+                        "packedQuantity": 1000,
+                        "uom": "Meters",
+                        "packingQcStatus": "QC Approved",
+                        "status": "Packed"
+                    })
+                elif module == 'pl_checking':
+                    details.update({
+                        "packinglistCheckingNo": txn_no,
+                        "checkingDate": rec_date.isoformat(),
+                        "checkingType": "Pre-dispatch",
+                        "packingListNo": f"PL-{400+idx}",
+                        "customerName": buyer_name,
+                        "buyerName": buyer_name,
+                        "packedQuantity": 5000,
+                        "uom": "Meters",
+                        "qcStatus": "Approved",
+                        "status": "Checked"
+                    })
+                elif module == 'goods_release':
+                    details.update({
+                        "goodsReleaseAdviceNo": txn_no,
+                        "releaseDate": rec_date.isoformat(),
+                        "releaseType": "Regular",
+                        "customerVendorName": buyer_name,
+                        "buyerName": buyer_name,
+                        "designNo": design_nos[idx % len(design_nos)],
+                        "approvedQuantity": 2000,
+                        "releasedQuantity": 2000,
+                        "uom": "Meters",
+                        "status": "Released"
+                    })
+                elif module == 'gate_pass':
+                    details.update({
+                        "gatePassNo": txn_no,
+                        "gatePassDate": rec_date.isoformat(),
+                        "gatePassType": "Non-Returnable",
+                        "partyName": buyer_name,
+                        "vehicleNo": vehicle_nos[idx % len(vehicle_nos)],
+                        "driverName": "Ramesh Selvam",
+                        "status": "Issued"
+                    })
+                elif module == 'vendor_bills':
+                    details.update({
+                        "billNo": txn_no,
+                        "billDate": rec_date.isoformat(),
+                        "billType": "Weaving Bill",
+                        "vendorName": buyer_name,
+                        "taxableAmount": 20000,
+                        "netAmount": 23600,
+                        "status": "Approved"
+                    })
+                elif module == 'printing_bills':
+                    details.update({
+                        "billNo": txn_no,
+                        "billDate": rec_date.isoformat(),
+                        "vendorName": buyer_name,
+                        "taxableAmount": 15000,
+                        "netAmount": 17700,
+                        "status": "Approved"
+                    })
+                elif module == 'dl_development':
+                    details.update({
+                        "billNo": txn_no,
+                        "billDate": rec_date.isoformat(),
+                        "vendorName": buyer_name,
+                        "taxableAmount": 5000,
+                        "netAmount": 5900,
+                        "status": "Approved"
+                    })
+                elif module == 'surplus_opening':
+                    details.update({
+                        "openingNo": txn_no,
+                        "date": rec_date.isoformat(),
+                        "estimatedRate": 50,
+                        "openingQuantity": 10000,
+                        "stockValue": 500000,
+                        "status": "Active"
+                    })
+                elif module == 'surplus_report':
+                    details.update({
+                        "reportNo": txn_no,
+                        "date": rec_date.isoformat(),
+                        "estimatedRate": 50,
+                        "availableQuantity": 10000,
+                        "stockValue": 500000,
+                        "status": "Active"
+                    })
+                elif module == 'surplus_report_new':
+                    details.update({
+                        "reportNo": txn_no,
+                        "date": rec_date.isoformat(),
+                        "rate": 50,
+                        "availableQuantity": 10000,
+                        "stockValue": 500000,
+                        "status": "Active"
+                    })
+                elif module == 'surplus_inward':
+                    details.update({
+                        "inwardNo": txn_no,
+                        "date": rec_date.isoformat(),
+                        "buyerName": buyer_name,
+                        "receivedQuantity": 1000,
+                        "status": "Completed"
+                    })
+                elif module == 'surplus_delivery':
+                    details.update({
+                        "deliveryNo": txn_no,
+                        "date": rec_date.isoformat(),
+                        "buyerName": buyer_name,
+                        "deliveredQuantity": 1000,
+                        "saleRate": 60,
+                        "discount": 0,
+                        "netAmount": 60000,
+                        "status": "Delivered"
+                    })
+                elif module == 'customer_hanger':
+                    details.update({
+                        "hangerNo": txn_no,
+                        "date": rec_date.isoformat(),
+                        "buyerName": buyer_name,
+                        "requestedQuantity": 10,
+                        "status": "Dispatched"
+                    })
+                
+                txn = WorkOrderTransaction(
+                    module_type=module,
+                    date=rec_date,
+                    buyer_name=buyer_name,
+                    status="Active",
+                    details=details,
+                    transaction_no=txn_no
+                )
+                session.add(txn)
+        
         await session.commit()
+        logger.info("Successfully seeded all 300 WorkOrderTransaction records.")
 
         # ── 19. Seed Finance Module (Phase 9 Finance) ──
         # Seed company and vouchers to complete start-to-end workflow data add

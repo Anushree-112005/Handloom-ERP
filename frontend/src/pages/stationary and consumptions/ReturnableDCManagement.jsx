@@ -177,6 +177,48 @@ export default function ReturnableDCManagement() {
             </button>
           </div>
 
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <FileText size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{dcs.length}</h3>
+                <p>Total DCs Issued</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon amber">
+                <Clock size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{dcs.filter(dc => dc.status === 'Outward').length}</h3>
+                <p>Active Outward</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{dcs.filter(dc => dc.status === 'Returned').length}</h3>
+                <p>Returned / Closed</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon cyan">
+                <div style={{ fontSize: 20, fontWeight: '800' }}>₹</div>
+              </div>
+              <div className="stat-info">
+                <h3>₹{dcs.reduce((sum, dc) => sum + (Number(dc.quotation_amount) || 0), 0).toLocaleString()}</h3>
+                <p>Total Service Cost</p>
+              </div>
+            </div>
+          </div>
+
           <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>

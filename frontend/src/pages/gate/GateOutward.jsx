@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { dropdownAPI, subMasterAPI, partyAPI } from '../../services/api';
+import api, { partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI } from '../../services/api';
 
 export default function GateOutward() {
   // Local Storage Database
@@ -15,6 +15,8 @@ export default function GateOutward() {
   });
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
+  const [dbVehicles, setDbVehicles] = useState([]);
+  const [dbOrders, setDbOrders] = useState([]);
   const [isCustomPurpose, setIsCustomPurpose] = useState(false);
   const [customPurposeVal, setCustomPurposeVal] = useState('');
   const [isCustomMaterial, setIsCustomMaterial] = useState(false);
@@ -27,12 +29,57 @@ export default function GateOutward() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [partRes, dropRes] = await Promise.all([
-          partyAPI.list(),
-          dropdownAPI.getAll()
+        const [partRes, dropRes, vehRes, boRes] = await Promise.all([
+          partyAPI.list().catch(() => ({ data: [] })),
+          dropdownAPI.getAll().catch(() => ({ data: {} })),
+          api.get('/fleet/vehicles').catch(() => ({ data: [] })),
+          buyerOrderAPI.list().catch(() => ({ data: [] }))
         ]);
         setParties(partRes.data || []);
         setOptions(dropRes.data || {});
+        setDbVehicles(vehRes.data || []);
+        setDbOrders(boRes.data || []);
+
+        const fetchedVehicles = vehRes.data || [];
+        const fetchedBOs = boRes.data || [];
+        const fetchedParties = partRes.data || [];
+
+        // Check and seed local storage if empty
+        const savedOut = localStorage.getItem('gate_outward_data');
+        if (!savedOut || JSON.parse(savedOut).length === 0) {
+          const seedData = [];
+          for (let i = 0; i < 10; i++) {
+            const vehicle = fetchedVehicles[(i + 2) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
+            const bo = fetchedBOs[(i + 1) % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const party = fetchedParties[(i + 1) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
+            
+            seedData.push({
+              id: `GOT-2026-00${i + 1}`,
+              dateTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
+              inwardRef: `GIN-2026-00${i + 1}`,
+              vehicleNo: vehicle.vehicle_number,
+              driverName: `Driver ${i + 5}`,
+              driverMobile: `987654311${i}`,
+              partyName: party.company_name,
+              materialType: i % 2 === 0 ? "Fabric / Cloth" : "Yarn",
+              purpose: "Sales Delivery",
+              dcNo: `DC-OUT-00${i + 1}`,
+              invoiceNo: bo.ibpo_number, // Link directly to IBPO order number
+              itemDesc: i % 2 === 0 ? "Finished Cotton Fabric Rolls" : "40s Cotton Weft Combed Cones",
+              qty: 800 + i * 150,
+              unit: i % 2 === 0 ? "Meter" : "Kg",
+              weight: 850 + i * 150,
+              packages: 15 + i,
+              gatePassNo: `GP-2026-00${i + 1}`,
+              guardName: "K. Palanisamy",
+              outTime: `17:${10 + i}`,
+              remarks: `Sales delivery clearance for order ${bo.ibpo_number}`,
+              status: i % 4 === 0 ? "Open" : "Closed"
+            });
+          }
+          localStorage.setItem('gate_outward_data', JSON.stringify(seedData));
+          setOutwards(seedData);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
@@ -554,6 +601,7 @@ export default function GateOutward() {
                       placeholder="INV-xxxx link" 
                       value={invoiceNo}
                       onChange={e => setInvoiceNo(e.target.value.toUpperCase())}
+                      list="orders-list"
                     />
                   </div>
 
@@ -569,6 +617,7 @@ export default function GateOutward() {
                       value={vehicleNo}
                       onChange={e => setVehicleNo(e.target.value.toUpperCase())}
                       required
+                      list="vehicles-list"
                     />
                   </div>
 
@@ -896,6 +945,18 @@ export default function GateOutward() {
 
         </div>
       )}
+
+      <datalist id="vehicles-list">
+        {dbVehicles.map(v => (
+          <option key={v.id} value={v.vehicle_number}>{v.vehicle_number} ({v.make} {v.model})</option>
+        ))}
+      </datalist>
+
+      <datalist id="orders-list">
+        {dbOrders.map(o => (
+          <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.buyer_name})</option>
+        ))}
+      </datalist>
 
     </div>
   );

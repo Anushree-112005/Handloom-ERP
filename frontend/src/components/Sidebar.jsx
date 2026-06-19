@@ -24,136 +24,127 @@ const modules = [
   { section: 'Masters' },
   { path: '/party-master', label: 'Party Master', icon: Users },
 
-  { section: 'Sub Masters' },
-  {
-    label: 'Core System Basics',
-    icon: Package,
-    children: [
-      { path: '/sub-master/buyer', label: 'Buyer Master', icon: Users },
-      { path: '/sub-master/certified_type', label: 'Certified Type', icon: Shield },
-      { path: '/sub-master/color_master', label: 'Color Master', icon: Palette },
-      { path: '/sub-master/count_system', label: 'Count System', icon: Layers },
-      { path: '/sub-master/currency_master', label: 'Currency Master', icon: Receipt },
-      { path: '/sub-master/designer', label: 'Designer Master', icon: Palette },
-      { path: '/sub-master/district_city_master', label: 'District & City', icon: MapPin },
-      { path: '/sub-master/end_use_master', label: 'End Use Master', icon: Target },
-      { path: '/sub-master/gate_location_master', label: 'Gate Location', icon: MapPin },
-      { path: '/sub-master/godown_master', label: 'Godown Master', icon: Box },
-      { path: '/sub-master/group_count', label: 'Group Count', icon: Layers },
-      { path: '/sub-master/hsn_code_master', label: 'HSN Code Master', icon: FileText },
-      { path: '/sub-master/loom_master', label: 'Loom Master', icon: Factory },
-      { path: '/sub-master/loom_type_master', label: 'Loom Type Master', icon: Factory },
-      { path: '/sub-master/lr_terms', label: 'LR Terms', icon: FileText },
-      { path: '/sub-master/lr_type_master', label: 'LR Type Master', icon: Truck },
-      { path: '/sub-master/organization_name_master', label: 'Organization Name Master', icon: Building },
-      { path: '/sub-master/manager', label: 'Manager Master', icon: Users },
-      { path: '/sub-master/merchandiser', label: 'Merchandiser Master', icon: Users },
-      { path: '/sub-master/mill_name_master', label: 'Mill Name Master', icon: Factory },
-      { path: '/sub-master/order_type_master', label: 'Order Type Master', icon: ClipboardList },
-      { path: '/sub-master/packing_type_master', label: 'Packing Type Master', icon: Box },
-      { path: '/sub-master/party_group', label: 'Party Group', icon: Users },
-      { path: '/sub-master/party_type', label: 'Party Type', icon: Users },
-      { path: '/sub-master/party_type_group', label: 'Party Type / Group', icon: Users },
-      { path: '/sub-master/pattern_master', label: 'Pattern Master', icon: Layers },
-      { path: '/sub-master/payment_terms_master', label: 'Payment Terms', icon: Receipt },
-      { path: '/sub-master/payment_term_and_conditions', label: 'Payment Term & Conditions', icon: Receipt },
-      { path: '/sub-master/sales_region_master', label: 'Sales Region', icon: MapPin },
-      { path: '/sub-master/section_group', label: 'Section Group', icon: Layers },
-      { path: '/sub-master/sp_no', label: 'SP NO Master', icon: Layers },
-      { path: '/sub-master/uom_master', label: 'Unit Master', icon: Layers },
-      { path: '/sub-master/transport_mode_master', label: 'Transport Mode Master', icon: Truck },
-      { path: '/sub-master/transport_name_master', label: 'Transport Name Master', icon: Truck },
-      { path: '/sub-master/yarn_count_master', label: 'Yarn Count Master', icon: Layers },
-      { path: '/sub-master/yarn_type_master', label: 'Yarn Type Master', icon: Layers },
-    ],
-  },
-  {
-    label: 'Operations & Processing',
-    icon: Wrench,
-    children: [
-      { path: '/sub-master/ac_incharge', label: 'A/C Incharge', icon: Users },
-      { path: '/sub-master/against_reference_master', label: 'Against Reference Master', icon: ClipboardList },
-      { path: '/sub-master/category_master', label: 'Category Master', icon: Layers },
-      { path: '/sub-master/freight_type_master', label: 'Freight Type Master', icon: Truck },
-      { path: '/sub-master/checker_name_master', label: 'Checker Name', icon: CheckSquare },
-      { path: '/sub-master/checking_table_machine', label: 'Checking Table/Machine', icon: Settings },
-      { path: '/sub-master/chemical_group_master', label: 'Chemical Group', icon: Layers },
-      { path: '/sub-master/cloth_dyeing_order_process_type', label: 'Cloth Dyeing Order Process Type', icon: Settings },
-      { path: '/sub-master/damage_master', label: 'Damage Master', icon: Shield },
-      { path: '/sub-master/debit_credit_reason_master', label: 'Debit/Credit Reason', icon: FileText },
-      { path: '/sub-master/design_color_master', label: 'Design Color', icon: Palette },
-      { path: '/sub-master/dyeing_cly', label: 'Dyeing Cly', icon: Layers },
-      { path: '/sub-master/duty_master', label: 'Duty Master', icon: Receipt },
-      { path: '/sub-master/expenses_group', label: 'Expenses Group', icon: Receipt },
-      { path: '/sub-master/expenses_group_head', label: 'Expenses Group/Head', icon: Receipt },
-      { path: '/sub-master/expense_type_master', label: 'Expense Type Master', icon: Receipt },
-      { path: '/sub-master/payment_mode_master', label: 'Payment Mode Master', icon: CreditCard },
-      { path: '/sub-master/fabric_type_master', label: 'Fabric Master', icon: Scissors },
-      { path: '/sub-master/fibre_count_master', label: 'Fibre Count', icon: Layers },
-      { path: '/sub-master/finishing_type_master', label: 'Finishing Type', icon: Wrench },
-      { path: '/sub-master/grey_checker_name', label: 'Grey Checker Name', icon: CheckSquare },
-      { path: '/sub-master/grey_damage', label: 'Grey Damage Master', icon: Shield },
-      { path: '/sub-master/gry_mas_baletype', label: 'Gry Mas BaleType', icon: Box },
-      { path: '/sub-master/printing_technique_master', label: 'Printing Technique', icon: Palette },
-      { path: '/sub-master/process_sequence_master', label: 'Process Sequences', icon: ClipboardList },
-      { path: '/sub-master/process_type_master', label: 'Process Type Master', icon: Settings },
-      { path: '/sub-master/remarks_master', label: 'Remarks Master', icon: FileText },
-      { path: '/sub-master/sample', label: 'Sample Master', icon: ClipboardList },
-      { path: '/sub-master/shringage', label: 'Shringage (Shrinkage)', icon: Wrench },
-      { path: '/sub-master/sizing_chemical_master', label: 'Sizing Chemical', icon: Layers },
-      { path: '/sub-master/tds_bill_type_master', label: 'TDS Bill Type', icon: FileText },
-      { path: '/sub-master/test_parameter_master', label: 'Test Parameter', icon: Activity },
-      { path: '/sub-master/weaving_type_master', label: 'Weaving Master', icon: Layers },
-    ],
-  },
-  {
-    label: 'Complex Masters',
-    icon: Layers,
-    children: [
-      { path: '/sub-master/buyer_kyc_form', label: 'Buyer KYC Form', icon: Shield },
-      { path: '/sub-master/buyer_sub_master', label: 'Buyer Sub Master', icon: Users },
-      { path: '/sub-master/company_bank_master', label: 'Company Bank Master', icon: CreditCard },
-      { path: '/sub-master/fabric_costing_engine', label: 'Fabric Costing Engine', icon: DollarSign },
-      { path: '/sub-master/fabric_single_costing', label: 'Fabric Single Costing', icon: DollarSign },
-      { path: '/sub-master/lc_bank_master', label: 'LC Bank Master', icon: Factory },
-    ],
-  },
-  {
-    label: 'Amendment Masters',
-    icon: ClipboardList,
-    children: [
-      { path: '/sub-master/cloth_lot_no_amd', label: 'Cloth LOT No. AMD', icon: ClipboardList },
-      { path: '/sub-master/invoice_amd', label: 'Invoice AMD', icon: FileText },
-      { path: '/sub-master/despatch_request_amd', label: 'Despatch Request AMD', icon: Truck },
-      { path: '/sub-master/point_amd', label: 'Point AMD', icon: Target },
-      { path: '/sub-master/vendor_order_amd', label: 'Vendor Order AMD', icon: ShoppingCart },
-    ],
-  },
-  {
-    label: 'System Config & Utilities',
-    icon: Settings,
-    children: [
-      { path: '/sub-master/approval_settings', label: 'Approval Settings', icon: Settings },
-      { path: '/sub-master/direct_invoice_limits', label: 'Direct Invoice Limits', icon: Percent },
-      { path: '/sub-master/sub_menu_master', label: 'Sub Menu Master', icon: ClipboardList },
-      { path: '/sub-master/control_service', label: 'Control Service', icon: Shield },
-      { path: '/sub-master/log_report_util', label: 'Log Report', icon: FileText },
-      { path: '/sub-master/old_year_menu', label: 'Old Year Menu', icon: BookOpen },
-    ],
-  },
+  // { section: 'Sub Masters' },
+  // {
+  //   label: 'Core System Basics',
+  //   icon: Package,
+  //   children: [
+  //     { path: '/sub-master/buyer', label: 'Buyer Master', icon: Users },
+  //     { path: '/sub-master/certified_type', label: 'Certified Type', icon: Shield },
+  //     { path: '/sub-master/color_master', label: 'Color Master', icon: Palette },
+  //     { path: '/sub-master/count_system', label: 'Count System', icon: Layers },
+  //     { path: '/sub-master/currency_master', label: 'Currency Master', icon: Receipt },
+  //     { path: '/sub-master/designer', label: 'Designer Master', icon: Palette },
+  //     { path: '/sub-master/district_city_master', label: 'District & City', icon: MapPin },
+  //     { path: '/sub-master/end_use_master', label: 'End Use Master', icon: Target },
+  //     { path: '/sub-master/gate_location_master', label: 'Gate Location', icon: MapPin },
+  //     { path: '/sub-master/godown_master', label: 'Godown Master', icon: Box },
+  //     { path: '/sub-master/group_count', label: 'Group Count', icon: Layers },
+  //     { path: '/sub-master/hsn_code_master', label: 'HSN Code Master', icon: FileText },
+  //     { path: '/sub-master/loom_master', label: 'Loom Master', icon: Factory },
+  //     { path: '/sub-master/loom_type_master', label: 'Loom Type Master', icon: Factory },
+  //     { path: '/sub-master/lr_terms', label: 'LR Terms', icon: FileText },
+  //     { path: '/sub-master/lr_type_master', label: 'LR Type Master', icon: Truck },
+  //     { path: '/sub-master/organization_name_master', label: 'Organization Name Master', icon: Building },
+  //     { path: '/sub-master/manager', label: 'Manager Master', icon: Users },
+  //     { path: '/sub-master/merchandiser', label: 'Merchandiser Master', icon: Users },
+  //     { path: '/sub-master/mill_name_master', label: 'Mill Name Master', icon: Factory },
+  //     { path: '/sub-master/order_type_master', label: 'Order Type Master', icon: ClipboardList },
+  //     { path: '/sub-master/packing_type_master', label: 'Packing Type Master', icon: Box },
+  //     { path: '/sub-master/party_group', label: 'Party Group', icon: Users },
+  //     { path: '/sub-master/party_type', label: 'Party Type', icon: Users },
+  //     { path: '/sub-master/party_type_group', label: 'Party Type / Group', icon: Users },
+  //     { path: '/sub-master/pattern_master', label: 'Pattern Master', icon: Layers },
+  //     { path: '/sub-master/payment_terms_master', label: 'Payment Terms', icon: Receipt },
+  //     { path: '/sub-master/payment_term_and_conditions', label: 'Payment Term & Conditions', icon: Receipt },
+  //     { path: '/sub-master/sales_region_master', label: 'Sales Region', icon: MapPin },
+  //     { path: '/sub-master/section_group', label: 'Section Group', icon: Layers },
+  //     { path: '/sub-master/sp_no', label: 'SP NO Master', icon: Layers },
+  //     { path: '/sub-master/uom_master', label: 'Unit Master', icon: Layers },
+  //     { path: '/sub-master/transport_mode_master', label: 'Transport Mode Master', icon: Truck },
+  //     { path: '/sub-master/transport_name_master', label: 'Transport Name Master', icon: Truck },
+  //     { path: '/sub-master/yarn_count_master', label: 'Yarn Count Master', icon: Layers },
+  //     { path: '/sub-master/yarn_type_master', label: 'Yarn Type Master', icon: Layers },
+  //   ],
+  // },
+  // {
+  //   label: 'Operations & Processing',
+  //   icon: Wrench,
+  //   children: [
+  //     { path: '/sub-master/ac_incharge', label: 'A/C Incharge', icon: Users },
+  //     { path: '/sub-master/against_reference_master', label: 'Against Reference Master', icon: ClipboardList },
+  //     { path: '/sub-master/category_master', label: 'Category Master', icon: Layers },
+  //     { path: '/sub-master/freight_type_master', label: 'Freight Type Master', icon: Truck },
+  //     { path: '/sub-master/checker_name_master', label: 'Checker Name', icon: CheckSquare },
+  //     { path: '/sub-master/checking_table_machine', label: 'Checking Table/Machine', icon: Settings },
+  //     { path: '/sub-master/chemical_group_master', label: 'Chemical Group', icon: Layers },
+  //     { path: '/sub-master/cloth_dyeing_order_process_type', label: 'Cloth Dyeing Order Process Type', icon: Settings },
+  //     { path: '/sub-master/damage_master', label: 'Damage Master', icon: Shield },
+  //     { path: '/sub-master/debit_credit_reason_master', label: 'Debit/Credit Reason', icon: FileText },
+  //     { path: '/sub-master/design_color_master', label: 'Design Color', icon: Palette },
+  //     { path: '/sub-master/dyeing_cly', label: 'Dyeing Cly', icon: Layers },
+  //     { path: '/sub-master/duty_master', label: 'Duty Master', icon: Receipt },
+  //     { path: '/sub-master/expenses_group', label: 'Expenses Group', icon: Receipt },
+  //     { path: '/sub-master/expenses_group_head', label: 'Expenses Group/Head', icon: Receipt },
+  //     { path: '/sub-master/expense_type_master', label: 'Expense Type Master', icon: Receipt },
+  //     { path: '/sub-master/payment_mode_master', label: 'Payment Mode Master', icon: CreditCard },
+  //     { path: '/sub-master/fabric_type_master', label: 'Fabric Master', icon: Scissors },
+  //     { path: '/sub-master/fibre_count_master', label: 'Fibre Count', icon: Layers },
+  //     { path: '/sub-master/finishing_type_master', label: 'Finishing Type', icon: Wrench },
+  //     { path: '/sub-master/grey_checker_name', label: 'Grey Checker Name', icon: CheckSquare },
+  //     { path: '/sub-master/grey_damage', label: 'Grey Damage Master', icon: Shield },
+  //     { path: '/sub-master/gry_mas_baletype', label: 'Gry Mas BaleType', icon: Box },
+  //     { path: '/sub-master/printing_technique_master', label: 'Printing Technique', icon: Palette },
+  //     { path: '/sub-master/process_sequence_master', label: 'Process Sequences', icon: ClipboardList },
+  //     { path: '/sub-master/process_type_master', label: 'Process Type Master', icon: Settings },
+  //     { path: '/sub-master/remarks_master', label: 'Remarks Master', icon: FileText },
+  //     { path: '/sub-master/sample', label: 'Sample Master', icon: ClipboardList },
+  //     { path: '/sub-master/shringage', label: 'Shringage (Shrinkage)', icon: Wrench },
+  //     { path: '/sub-master/sizing_chemical_master', label: 'Sizing Chemical', icon: Layers },
+  //     { path: '/sub-master/tds_bill_type_master', label: 'TDS Bill Type', icon: FileText },
+  //     { path: '/sub-master/test_parameter_master', label: 'Test Parameter', icon: Activity },
+  //     { path: '/sub-master/weaving_type_master', label: 'Weaving Master', icon: Layers },
+  //   ],
+  // },
+  // {
+  //   label: 'Complex Masters',
+  //   icon: Layers,
+  //   children: [
+  //     { path: '/sub-master/buyer_kyc_form', label: 'Buyer KYC Form', icon: Shield },
+  //     { path: '/sub-master/buyer_sub_master', label: 'Buyer Sub Master', icon: Users },
+  //     { path: '/sub-master/company_bank_master', label: 'Company Bank Master', icon: CreditCard },
+  //     { path: '/sub-master/fabric_costing_engine', label: 'Fabric Costing Engine', icon: DollarSign },
+  //     { path: '/sub-master/fabric_single_costing', label: 'Fabric Single Costing', icon: DollarSign },
+  //     { path: '/sub-master/lc_bank_master', label: 'LC Bank Master', icon: Factory },
+  //   ],
+  // },
+  // {
+  //   label: 'Amendment Masters',
+  //   icon: ClipboardList,
+  //   children: [
+  //     { path: '/sub-master/cloth_lot_no_amd', label: 'Cloth LOT No. AMD', icon: ClipboardList },
+  //     { path: '/sub-master/invoice_amd', label: 'Invoice AMD', icon: FileText },
+  //     { path: '/sub-master/despatch_request_amd', label: 'Despatch Request AMD', icon: Truck },
+  //     { path: '/sub-master/point_amd', label: 'Point AMD', icon: Target },
+  //     { path: '/sub-master/vendor_order_amd', label: 'Vendor Order AMD', icon: ShoppingCart },
+  //   ],
+  // },
+  // {
+  //   label: 'System Config & Utilities',
+  //   icon: Settings,
+  //   children: [
+  //     { path: '/sub-master/approval_settings', label: 'Approval Settings', icon: Settings },
+  //     { path: '/sub-master/direct_invoice_limits', label: 'Direct Invoice Limits', icon: Percent },
+  //     { path: '/sub-master/sub_menu_master', label: 'Sub Menu Master', icon: ClipboardList },
+  //     { path: '/sub-master/control_service', label: 'Control Service', icon: Shield },
+  //     { path: '/sub-master/log_report_util', label: 'Log Report', icon: FileText },
+  //     { path: '/sub-master/old_year_menu', label: 'Old Year Menu', icon: BookOpen },
+  //   ],
+  // },
 
 
   { section: 'Order Management' },
-  {
-    label: 'Buyer Order',
-    icon: ShoppingCart,
-    children: [
-      { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
-      // { path: '/buyer-order/processing', label: 'Order Processing', icon: Layers },
-      // { path: '/buyer-order/dispatch-expense', label: 'Dispatch & Expense', icon: Truck },
-      // { path: '/ipo-invoice', label: 'IPO Invoice', icon: Receipt }
-    ]
-  },
+  { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
   // {
   //   label: 'Work Order Transaction',
   //   icon: Layers,
@@ -184,7 +175,7 @@ const modules = [
 
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
-  { path: '/design-ai', label: 'Design AI', icon: Sparkles },
+  // { path: '/design-ai', label: 'Design AI', icon: Sparkles },
 
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },
@@ -195,67 +186,39 @@ const modules = [
   { path: '/dyed-yarn/received', label: 'Dyed Yarn Received', icon: Palette },
   { path: '/dyed-yarn/delivery', label: 'Dyed Yarn Delivery', icon: Truck },
 
-  // { section: 'Warping & Weaving' },
-  // {
-  //   label: 'Warping/Sizing Transaction',
-  //   icon: Settings,
-  //   children: [
-  //     { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
-  //     { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
-  //   ]
-  // },
+  { section: 'WARPING' },
+  { path: '/ppc/planning/availability', label: 'Warping Planning', icon: Calendar },
+  { path: '/warp/transaction/reports?tab=warping_report', label: 'Warping Set Entry', icon: Plus },
+  // { path: '/warp/transaction/reports?tab=warping_report', label: 'Warping Set Report Entry', icon: FileText },
+  { path: '/warp/transaction/entries?tab=beam_received', label: 'Warp Beam Received Entry', icon: Factory },
 
-  // { section: 'Greige Transaction' },
-  // {
-  //   label: 'Greige Transactions',
-  //   icon: Layers,
-  //   children: [
-  //     { path: '/greige/transaction/operations', label: 'Greige Operations', icon: Factory },
-  //     { path: '/greige/transaction/administration', label: 'Greige Administration', icon: ClipboardList }
-  //   ]
-  // },
+  { section: 'SIZING' },
+  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Warp Beam Delivery Entry', icon: Truck },
+  { path: '/warp/transaction/reports?tab=sizing_report', label: 'Sizing Set Entry', icon: Plus },
+  // { path: '/warp/transaction/reports?tab=sizing_report', label: 'Sizing Set Report Entry', icon: FileText },
+  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sized Beam Received', icon: Box },
 
-  // { section: 'Processing / Production' },
-  // {
-  //   label: 'Fabric Production Desk',
-  //   icon: Scissors,
-  //   children: [
-  //     { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
-  //     { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
-  //     { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
-  //     { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
-  //     { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
-  //     { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
-  //     { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
-  //   ]
-  // },
+  { section: 'WEAVING' },
+  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Beam Issue To Loom', icon: PlayCircle },
+  { path: '/ppc/execution/shift-entry', label: 'Weaving Production', icon: Activity },
+  { path: '/cloth/inward', label: 'Fabric Inward', icon: ArrowDownLeft },
 
-  // Production Planning Modules
-  { section: 'Production Planning (PPC)' },
-  {
-    label: 'Production Management',
-    icon: Factory,
-    children: [
-      { section: 'OVERVIEW' },
-      { path: '/ppc/tracking/live-dashboard', label: 'Dashboard', icon: LayoutDashboard },
-     // { path: '/ppc/ai-insights', label: 'AI Insights', icon: Brain },
+  { section: 'QUALITY' },
+  { path: '/fabric/transaction/checking?tab=cloth_checking', label: 'Cloth Checking', icon: CheckSquare },
+  { path: '/cloth/checking', label: 'On Table Checking', icon: CheckSquare },
+  { path: '/fabric/transaction/checking?tab=lot_completion', label: 'Cloth Lot Completion', icon: Settings },
 
-      { section: 'MODULES' },
-      { path: '/ppc/master/loom-master', label: 'Master Setup', icon: Settings },
-      { path: '/ppc/planning/availability', label: 'Loom Planning', icon: ClipboardList },
-      { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
-      { path: '/ppc/execution/loom-start', label: 'Execution', icon: PlayCircle },
-      { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
-      { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
-      { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
-      { path: '/ppc/alerts/eta-calc', label: 'ETA Engine', icon: Clock },
-      { path: '/ppc/alerts/low-efficiency', label: 'Alerts', icon: Bell, badge: '3', badgeColor: '#e11d48' },
-      { path: '/ppc/reports/loom-wise', label: 'Reports', icon: FileText }
-    ]
-  },
+  { section: 'PROCESSING' },
+  { path: '/cloth/delivery', label: 'Processing Delivery', icon: Truck },
+  { path: '/cloth/inward', label: 'Processing Inward', icon: ArrowDownLeft },
 
-  { section: 'Quality Control' },
-  { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
+  { section: 'FINISHED GOODS' },
+  { path: '/finished-fabric', label: 'Finished Fabric Stock', icon: Box },
+
+  
+
+  // { section: 'Quality Control' },
+  // { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
 
   { section: 'Inventory & Warehouse' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
@@ -282,10 +245,16 @@ const modules = [
   { section: 'Sales & Dispatch' },
   { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
   { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
-  { path: '/despatch', label: 'Despatch Planning', icon: MapPin },
+    { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
 
-  { section: 'Export & Logistics' },
-  { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
+  { path: '/despatch', label: 'Despatch ', icon: MapPin },
+
+
+  { section: 'Reports & MIS' },
+  { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
+  { path: '/log-report', label: 'Log Report', icon: Activity },
+
+
 
   { section: 'Accounts & Finance' },
   {
@@ -350,6 +319,31 @@ const modules = [
       // { path: '/cubebook/audit/vouchers', label: 'Voucher History', icon: ClipboardList },
     ]
   },
+
+// Production Planning Modules
+  { section: 'Production Planning (PPC)' },
+  {
+    label: 'Production Management',
+    icon: Factory,
+    children: [
+      { section: 'OVERVIEW' },
+      { path: '/ppc/tracking/live-dashboard', label: 'Dashboard', icon: LayoutDashboard },
+     // { path: '/ppc/ai-insights', label: 'AI Insights', icon: Brain },
+
+      { section: 'MODULES' },
+      { path: '/ppc/master/loom-master', label: 'Master Setup', icon: Settings },
+      { path: '/ppc/planning/availability', label: 'Loom Planning', icon: ClipboardList },
+      { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
+      { path: '/ppc/execution/loom-start', label: 'Execution', icon: PlayCircle },
+      { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
+      { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
+      { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
+      { path: '/ppc/alerts/eta-calc', label: 'ETA Engine', icon: Clock },
+      { path: '/ppc/alerts/low-efficiency', label: 'Alerts', icon: Bell, badge: '3', badgeColor: '#e11d48' },
+      { path: '/ppc/reports/loom-wise', label: 'Reports', icon: FileText }
+    ]
+  },
+
   { section: 'Human Resources' },
   {
     label: 'HR Management',
@@ -461,9 +455,7 @@ const modules = [
   },
 
 
-  { section: 'Reports & MIS' },
-  { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
-  { path: '/log-report', label: 'Log Report', icon: Activity },
+
 
   { section: 'Administration & Security' },
   { path: '/user-management', label: 'User Management', icon: Users },
@@ -483,12 +475,26 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
     logo: ''
   });
 
-  // Sidebar menus will only toggle open/close when clicked.
-
-
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
+
+  useEffect(() => {
+    const activeMenuLabel = modules.find(item => 
+      item.children && item.children.some(child => {
+        if (!child.path) return false;
+        if (child.path.includes('?')) {
+          const [pathPart, queryPart] = child.path.split('?');
+          return location.pathname === pathPart && location.search.includes(queryPart);
+        }
+        return location.pathname === child.path;
+      })
+    )?.label;
+    
+    if (activeMenuLabel) {
+      setOpenMenus(prev => ({ ...prev, [activeMenuLabel]: true }));
+    }
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const loadCompany = async () => {
@@ -627,9 +633,12 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                           key={child.path}
                           to={child.path}
                           end={child.path === '/'}
-                          className={({ isActive }) =>
-                            `nav-item ${isActive ? 'active' : ''}`
-                          }
+                          className={({ isActive }) => {
+                            const isReallyActive = child.path.includes('?') 
+                              ? (location.pathname === child.path.split('?')[0] && location.search.includes(child.path.split('?')[1]))
+                              : (location.pathname === child.path);
+                            return `nav-item ${isReallyActive ? 'active' : ''}`;
+                          }}
                           style={{ padding: '10px 16px 10px 24px', fontSize: '13.5px', margin: '2px 8px' }}
                         >
                           <child.icon style={{ width: 16, height: 16 }} />
@@ -645,9 +654,12 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
               key={item.path}
               to={item.path}
               end={item.path === '/'}
-              className={({ isActive }) =>
-                `nav-item ${isActive ? 'active' : ''}`
-              }
+              className={({ isActive }) => {
+                const isReallyActive = item.path.includes('?') 
+                  ? (location.pathname === item.path.split('?')[0] && location.search.includes(item.path.split('?')[1]))
+                  : isActive;
+                return `nav-item ${isReallyActive ? 'active' : ''}`;
+              }}
             >
               <item.icon />
               <span style={{ flex: 1 }}>{item.label}</span>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Building2, Mail, Phone, MapPin, Upload, Save, CheckCircle, AlertCircle, Trash2, FileText } from 'lucide-react';
 import { companySettingAPI } from '../../services/api';
+import defaultLogo from '../../assets/logo.svg';
 
 export default function CompanySetting() {
   const [formData, setFormData] = useState({
@@ -236,7 +237,7 @@ export default function CompanySetting() {
             <div className="form-group">
               <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>Company Logo</label>
               <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                {formData.logo && (
+                {(formData.logo || defaultLogo) && (
                   <div style={{
                     width: 50,
                     height: 50,
@@ -249,7 +250,7 @@ export default function CompanySetting() {
                     overflow: 'hidden',
                     flexShrink: 0
                   }}>
-                    <img src={formData.logo} alt="Current Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    <img src={formData.logo || defaultLogo} alt="Current Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                 )}
                 <label
@@ -358,8 +359,8 @@ export default function CompanySetting() {
                   boxShadow: 'var(--shadow-sm)'
                 }}
               >
-                {formData.logo ? (
-                  <img src={formData.logo} alt="Company Logo" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+                {formData.logo || defaultLogo ? (
+                  <img src={formData.logo || defaultLogo} alt="Company Logo" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
                 ) : (
                   <Building2 size={26} style={{ color: 'var(--primary)' }} />
                 )}

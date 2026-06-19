@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Trash2, X, FileText } from 'lucide-react';
+import { Plus, Save, Trash2, X, PlusCircle, FileText, RotateCcw, Users, CheckCircle } from 'lucide-react';
 
 export default function ReturnEntry() {
   const [view, setView] = useState('list');
@@ -74,7 +74,50 @@ export default function ReturnEntry() {
       </div>
 
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <RotateCcw size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{returns.length}</h3>
+                <p>Total Returns</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{returns.reduce((sum, r) => sum + r.qty, 0)}</h3>
+                <p>Items Returned</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon cyan">
+                <PlusCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{new Set(returns.map(r => r.itemId)).size}</h3>
+                <p>Unique Items</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon amber">
+                <Users size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{new Set(returns.map(r => r.employee)).size}</h3>
+                <p>Employees Returned</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Returns ({filteredReturns.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -128,6 +171,7 @@ export default function ReturnEntry() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>

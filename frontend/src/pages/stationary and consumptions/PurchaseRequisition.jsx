@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Save, PlusCircle, Trash2, Settings, ShoppingCart } from 'lucide-react';
+import { Save, PlusCircle, Trash2, Settings, ShoppingCart, Clock, CheckCircle, FileText, Layers } from 'lucide-react';
 
 export default function PurchaseRequisition() {
   const [requisitions, setRequisitions] = useState([]);
@@ -207,7 +207,50 @@ export default function PurchaseRequisition() {
           </form>
         </div>
       ) : (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <FileText size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requisitions.length}</h3>
+                <p>Total Requisitions</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon amber">
+                <Clock size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requisitions.filter(r => r.status === 'Pending').length}</h3>
+                <p>Pending Requisitions</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requisitions.filter(r => r.status !== 'Pending').length}</h3>
+                <p>Approved / Completed</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon cyan">
+                <Layers size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requisitions.reduce((sum, r) => sum + (r.items?.length || 0), 0)}</h3>
+                <p>Total Items Requested</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Requisitions ({filteredRecords.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -259,6 +302,7 @@ export default function PurchaseRequisition() {
             </table>
           </div>
         </div>
+        </>
       )}
     </div>
   );

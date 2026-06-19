@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Plus, Save, Trash2, X, PlusCircle, FileText } from 'lucide-react';
+import { Plus, Save, Trash2, X, PlusCircle, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function MaterialRequest() {
   const [view, setView] = useState('list');
@@ -88,7 +88,50 @@ export default function MaterialRequest() {
       </div>
 
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <div className="stat-icon purple">
+                <FileText size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requests.length}</h3>
+                <p>Total Requests</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon amber">
+                <Clock size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requests.filter(r => r.status === 'Pending').length}</h3>
+                <p>Pending Requests</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon emerald">
+                <CheckCircle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requests.filter(r => r.status === 'Approved').length}</h3>
+                <p>Approved Requests</p>
+              </div>
+            </div>
+
+            <div className="card stat-card">
+              <div className="stat-icon rose">
+                <AlertTriangle size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>{requests.filter(r => r.priority === 'High').length}</h3>
+                <p>High Priority</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>All Requests ({filteredRequests.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -159,6 +202,7 @@ export default function MaterialRequest() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>

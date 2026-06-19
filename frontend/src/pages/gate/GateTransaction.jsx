@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Shield, Search, Plus, Filter, FileText, Printer, Check, 
   Clock, Truck, Key, Eye, Trash2, ArrowUpRight, ArrowDownLeft 
 } from 'lucide-react';
+import api, { partyAPI, buyerOrderAPI } from '../../services/api';
 
 export default function GateTransaction() {
   // Local Storage Database
@@ -10,6 +11,65 @@ export default function GateTransaction() {
     const saved = localStorage.getItem('gate_transaction_data');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const [dbVehicles, setDbVehicles] = useState([]);
+  const [dbOrders, setDbOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [partRes, vehRes, boRes] = await Promise.all([
+          partyAPI.list().catch(() => ({ data: [] })),
+          api.get('/fleet/vehicles').catch(() => ({ data: [] })),
+          buyerOrderAPI.list().catch(() => ({ data: [] }))
+        ]);
+        setDbVehicles(vehRes.data || []);
+        setDbOrders(boRes.data || []);
+
+        const fetchedVehicles = vehRes.data || [];
+        const fetchedBOs = boRes.data || [];
+        const fetchedParties = partRes.data || [];
+
+        // Check and seed local storage if empty
+        const savedTx = localStorage.getItem('gate_transaction_data');
+        if (!savedTx || JSON.parse(savedTx).length === 0) {
+          const seedData = [];
+          for (let i = 0; i < 10; i++) {
+            const vehicle = fetchedVehicles[(i + 6) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
+            const bo = fetchedBOs[(i + 3) % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const party = fetchedParties[(i + 3) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
+            const tare = 5000 + i * 100;
+            const gross = 8000 + i * 300;
+            seedData.push({
+              id: `GT-2026-00${i + 1}`,
+              passNo: `GP-2026-00${i + 1}`,
+              vehicleNo: vehicle.vehicle_number,
+              type: i % 2 === 0 ? "Inward" : "Outward",
+              party: party.company_name,
+              material: i % 2 === 0 ? "Cotton Yarn Cones" : "Finished Fabric Bales",
+              qty: `${50 + i} Packages`,
+              driverName: `Driver ${i + 10}`,
+              weightTare: tare,
+              weightGross: gross,
+              weightNet: gross - tare,
+              inTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 16),
+              outTime: i % 2 === 0 ? new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 16) : '',
+              status: i % 2 === 0 ? "Completed" : "Checked In",
+              remarks: `Verification pass for order ${bo.ibpo_number}`
+            });
+          }
+          localStorage.setItem('gate_transaction_data', JSON.stringify(seedData));
+          setTransactions(seedData);
+          if (seedData.length > 0) {
+            setSelectedId(seedData[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Form State
   const [selectedId, setSelectedId] = useState(null);
@@ -318,6 +378,7 @@ export default function GateTransaction() {
                     value={vehicleNo} 
                     onChange={e => setVehicleNo(e.target.value.toUpperCase())}
                     required 
+                    list="vehicles-list"
                   />
                 </div>
 
@@ -585,6 +646,12 @@ export default function GateTransaction() {
 
         </div>
       </div>
+
+      <datalist id="vehicles-list">
+        {dbVehicles.map(v => (
+          <option key={v.id} value={v.vehicle_number}>{v.vehicle_number} ({v.make} {v.model})</option>
+        ))}
+      </datalist>
 
     </div>
   );
