@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Settings2, Save, Search, Trash2, X, ArrowLeft, CheckCircle, AlertTriangle, Settings, Plus } from 'lucide-react';
+import { Settings2, Save, Search, Trash2, X, ArrowLeft, CheckCircle, AlertTriangle, Settings, Plus, Eye, Edit2 } from 'lucide-react';
 import { ppcAPI } from '../../services/api';
 
 export default function LoomRegistration() {
   const [looms, setLooms] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState({
+    id: null,
     loom_name: '',
     loom_type: 'Rapier',
     manufacturer: '',
@@ -45,7 +46,7 @@ export default function LoomRegistration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await ppcAPI.createLoom({
+      const payload = {
         ...formData,
         capacity_per_day: parseFloat(formData.capacity_per_day) || 0,
         running_speed_per_hr: parseFloat(formData.running_speed_per_hr) || 0,
@@ -55,10 +56,18 @@ export default function LoomRegistration() {
         installation_date: formData.installation_date ? new Date(formData.installation_date).toISOString() : null,
         last_service_date: formData.last_service_date ? new Date(formData.last_service_date).toISOString() : null,
         next_service_date: formData.next_service_date ? new Date(formData.next_service_date).toISOString() : null
-      });
-      alert('Loom successfully registered and configured!');
+      };
+
+      if (formData.id) {
+        await ppcAPI.updateLoom(formData.id, payload);
+        alert('Loom successfully updated!');
+      } else {
+        await ppcAPI.createLoom(payload);
+        alert('Loom successfully registered!');
+      }
+
       setFormData({
-        loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '',
+        id: null, loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '',
         installation_date: '', capacity_per_day: '', running_speed_per_hr: '',
         efficiency_pct: '80', reed_width: '', total_ends: '', status: 'Idle',
         location: '', last_service_date: '', next_service_date: '', remarks: ''
@@ -66,8 +75,41 @@ export default function LoomRegistration() {
       setIsFormOpen(false);
       fetchLooms();
     } catch (error) {
-      console.error("Failed to register loom", error);
-      alert('Error registering loom. Ensure the name is unique.');
+      console.error("Failed to save loom", error);
+      alert('Error saving loom. Ensure the name is unique.');
+    }
+  };
+
+  const handleEdit = (loom) => {
+    setFormData({
+      id: loom.id,
+      loom_name: loom.loom_name || '',
+      loom_type: loom.loom_type || 'Rapier',
+      manufacturer: loom.manufacturer || '',
+      model_number: loom.model_number || '',
+      installation_date: loom.installation_date ? loom.installation_date.split('T')[0] : '',
+      capacity_per_day: loom.capacity_per_day || '',
+      running_speed_per_hr: loom.running_speed_per_hr || '',
+      efficiency_pct: loom.efficiency_pct || '80',
+      reed_width: loom.reed_width || '',
+      total_ends: loom.total_ends || '',
+      status: loom.status || 'Idle',
+      location: loom.location || '',
+      last_service_date: loom.last_service_date ? loom.last_service_date.split('T')[0] : '',
+      next_service_date: loom.next_service_date ? loom.next_service_date.split('T')[0] : '',
+      remarks: loom.remarks || ''
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this loom?')) return;
+    try {
+      await ppcAPI.deleteLoom(id);
+      fetchLooms();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete loom');
     }
   };
 
@@ -241,7 +283,7 @@ export default function LoomRegistration() {
                 className="btn btn-primary"
                 onClick={() => {
                   setFormData({
-                    loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '',
+                    id: null, loom_name: '', loom_type: 'Rapier', manufacturer: '', model_number: '',
                     installation_date: '', capacity_per_day: '', running_speed_per_hr: '',
                     efficiency_pct: '80', reed_width: '', total_ends: '', status: 'Idle',
                     location: '', last_service_date: '', next_service_date: '', remarks: ''
@@ -286,7 +328,17 @@ export default function LoomRegistration() {
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                      <button className="btn" style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={16} /></button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(loom)} title="View">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(loom)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(loom.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

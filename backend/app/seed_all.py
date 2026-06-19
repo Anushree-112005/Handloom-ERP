@@ -1635,4 +1635,3 @@ async def seed_all_data(session):
         print(f"  [SEED FAILED] Error: {e}")
         logger.error(f"Error seeding workflow database: {e}")
         await session.rollback()
-        raise e

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart2, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { BarChart2, Search, Save, ArrowLeft, Plus, Activity, CheckCircle, Percent, Trash2, Edit2, Eye } from 'lucide-react';
 import { subMasterAPI, ppcAPI } from '../../services/api';
 
 export default function EfficiencyCalculation() {
@@ -167,6 +167,48 @@ export default function EfficiencyCalculation() {
     }
   };
 
+  const handleEdit = (record) => {
+    // This is a partial dummy implementation for edit, 
+    // real implementation would parse the string fields accurately if possible.
+    setFormData({
+      id: record.id,
+      efficiency_id: record.name,
+      date: new Date().toISOString().split('T')[0],
+      loom_id: record.code,
+      loom_name: record.code,
+      shift: record.extra_field_1?.replace(' Shift', '') || 'Day',
+      operator_name: '',
+      planned_meters: '',
+      actual_meters: '',
+      defect_meters: 0,
+      good_meters: '',
+      downtime_hrs: 0,
+      available_hours: 8,
+      working_hours: '',
+      speed_efficiency: '',
+      quality_efficiency: '',
+      overall_efficiency: '',
+      oee: record.extra_field_2?.match(/OEE: (.*)%/)?.[1] || '',
+      efficiency_status: '✅ Good',
+      loss_meters: '',
+      loss_reason: '',
+      remarks: '',
+      calculated_by: 'Login User',
+      calculated_at: new Date().toLocaleString()
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await subMasterAPI.delete('ppc_efficiency_calc', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredRecords = records.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -181,22 +223,7 @@ export default function EfficiencyCalculation() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Calculate Availability, Speed, Quality, and OEE metrics</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                ...formData,
-                efficiency_id: `EF-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                calculated_at: new Date().toLocaleString()
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#8b5cf6', borderColor: '#8b5cf6' }}
-          >
-            <Plus size={16} /> Calculate OEE
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -206,6 +233,48 @@ export default function EfficiencyCalculation() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Activity size={24} style={{ color: '#8b5cf6' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>High Performers (&gt;85% OEE)</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => {
+                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
+                  return match && parseFloat(match[1]) >= 85;
+                }).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Percent size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Average OEE</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.length ? (records.reduce((sum, r) => {
+                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
+                  return sum + (match ? parseFloat(match[1]) : 0);
+                }, 0) / records.length).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -352,30 +421,47 @@ export default function EfficiencyCalculation() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>OEE Records ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>OEE Records ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    efficiency_id: `EF-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                    calculated_at: new Date().toLocaleString()
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#8b5cf6', borderColor: '#8b5cf6', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> Calculate OEE
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Efficiency ID</th>
-                  <th>Loom ID</th>
-                  <th>Shift</th>
-                  <th>OEE %</th>
-                  <th>Status Details</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Efficiency ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Shift</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>OEE %</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status Details</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -384,12 +470,25 @@ export default function EfficiencyCalculation() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>{record.extra_field_1}</td>
-                    <td><span style={{ color: '#6d28d9', fontWeight: 800 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{record.code}</td>
+                    <td style={{ padding: '16px' }}>{record.extra_field_1}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#6d28d9', fontWeight: 800 }}>{record.extra_field_2}</span></td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

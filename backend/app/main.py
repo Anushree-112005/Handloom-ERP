@@ -24,174 +24,175 @@ RESET_DATABASE = False  # Change to True to clear all data from tables on restar
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        
-        def sync_database_schema(connection):
-            from sqlalchemy import inspect, text
-            try:
-                inspector = inspect(connection)
-                for table_name, table in Base.metadata.tables.items():
-                    if not inspector.has_table(table_name):
-                        continue
-                    db_columns = {col["name"].lower() for col in inspector.get_columns(table_name)}
-                    for col_name, column in table.columns.items():
-                        if col_name.lower() not in db_columns:
-                            type_str = str(column.type.compile(dialect=connection.dialect))
-                            default_val = "NULL"
-                            if column.default is not None and not callable(column.default.arg):
-                                val = column.default.arg
-                                if isinstance(val, str):
-                                    escaped_val = val.replace("'", "''")
-                                    default_val = f"'{escaped_val}'"
-                                elif isinstance(val, bool):
-                                    default_val = "TRUE" if val else "FALSE"
-                                else:
-                                    default_val = str(val)
-                            elif "float" in type_str.lower() or "numeric" in type_str.lower():
-                                default_val = "0.0"
-                            elif "integer" in type_str.lower():
-                                default_val = "0"
-                            elif "boolean" in type_str.lower():
-                                default_val = "FALSE"
-                            
-                            alter_query = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {type_str}"
-                            if default_val != "NULL":
-                                alter_query += f" DEFAULT {default_val}"
-                            
-                            try:
-                                connection.execute(text(alter_query))
-                                logger.info(f"Successfully added column {col_name} to table {table_name}.")
-                            except Exception as ex:
-                                logger.error(f"Failed to add column {col_name} to table {table_name}: {ex}")
-            except Exception as e:
-                logger.error(f"Error during schema synchronization: {e}")
+    try:
+        # Create tables on startup
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            
+            def sync_database_schema(connection):
+                from sqlalchemy import inspect, text
+                try:
+                    inspector = inspect(connection)
+                    for table_name, table in Base.metadata.tables.items():
+                        if not inspector.has_table(table_name):
+                            continue
+                        db_columns = {col["name"].lower() for col in inspector.get_columns(table_name)}
+                        for col_name, column in table.columns.items():
+                            if col_name.lower() not in db_columns:
+                                type_str = str(column.type.compile(dialect=connection.dialect))
+                                default_val = "NULL"
+                                if column.default is not None and not callable(column.default.arg):
+                                    val = column.default.arg
+                                    if isinstance(val, str):
+                                        escaped_val = val.replace("'", "''")
+                                        default_val = f"'{escaped_val}'"
+                                    elif isinstance(val, bool):
+                                        default_val = "TRUE" if val else "FALSE"
+                                    else:
+                                        default_val = str(val)
+                                elif "float" in type_str.lower() or "numeric" in type_str.lower():
+                                    default_val = "0.0"
+                                elif "integer" in type_str.lower():
+                                    default_val = "0"
+                                elif "boolean" in type_str.lower():
+                                    default_val = "FALSE"
+                                
+                                alter_query = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {type_str}"
+                                if default_val != "NULL":
+                                    alter_query += f" DEFAULT {default_val}"
+                                
+                                try:
+                                    connection.execute(text(alter_query))
+                                    logger.info(f"Successfully added column {col_name} to table {table_name}.")
+                                except Exception as ex:
+                                    logger.error(f"Failed to add column {col_name} to table {table_name}: {ex}")
+                except Exception as e:
+                    logger.error(f"Error during schema synchronization: {e}")
 
-        await conn.run_sync(sync_database_schema)
-        
-        if RESET_DATABASE:
-            logger.info("RESET_DATABASE is True. Deleting all data from tables (keeping structure)...")
-            # Delete data in reverse dependency order to prevent foreign key errors
-            for table in reversed(Base.metadata.sorted_tables):
-                await conn.execute(table.delete())
+            await conn.run_sync(sync_database_schema)
+            
+            if getattr(app, "RESET_DATABASE", False) or RESET_DATABASE:
+                logger.info("RESET_DATABASE is True. Deleting all data from tables (keeping structure)...")
+                for table in reversed(Base.metadata.sorted_tables):
+                    await conn.execute(table.delete())
 
-    # Seed default admin user
-    from app.models.employee import Employee
-    from sqlalchemy import select
+        # Seed default admin user
+        from app.models.employee import Employee
+        from sqlalchemy import select
 
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
-        if not result.scalar_one_or_none():
-            admin = Employee(
-                employee_code="admin",
-                name="Administrator",
-                user_type="Admin",
-                email="admin@dinesh-textile.com",
-                department="IT",
-                designation="System Admin",
-                status="Active",
-                web_access="Allow",
-                password_hash=get_password_hash("admin123"),
-                module_permissions={
-                    "master": True, "buyer_order": True, "work_order": True,
-                    "warping_sizing": True, "production": True, "processing": True,
-                    "fabric": True, "yarn": True, "account": True, "report": True,
-                },
-            )
-            session.add(admin)
-            await session.commit()
-
-        # Seed default departments and designations
-        from app.models.sub_master import SubMaster
-        
-        # Seed departments
-        dept_result = await session.execute(select(SubMaster).where(SubMaster.entity == "department"))
-        if not dept_result.scalars().first():
-            logger.info("Seeding default departments...")
-            default_departments = [
-                "Management", "Merchandising", "Design", "Purchase", "Stores", 
-                "Inventory", "Production", "Weaving", "Dyeing", "Quality", 
-                "Dispatch", "Export Documentation", "Logistics", "Accounts", 
-                "HR", "Payroll", "Maintenance", "IT", "Admin"
-            ]
-            for dept_name in default_departments:
-                code = "".join([w[0] for w in dept_name.split() if w]).upper()[:6]
-                if len(code) < 2:
-                    code = dept_name[:3].upper()
-                session.add(SubMaster(
-                    entity="department",
-                    name=dept_name,
-                    code=code,
-                    is_active=True
-                ))
-            await session.commit()
-
-        # Seed designations
-        desg_result = await session.execute(select(SubMaster).where(SubMaster.entity == "designation"))
-        if not desg_result.scalars().first():
-            logger.info("Seeding default designations...")
-            default_designations = [
-                "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
-                "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
-                "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
-                "Assistant", "Operator", "Technician", "Worker", "Trainee", "Driver"
-            ]
-            for desg_title in default_designations:
-                code = "".join([w[0] for w in desg_title.split() if w]).upper()[:6]
-                if len(code) < 2:
-                    code = desg_title[:3].upper()
-                session.add(SubMaster(
-                    entity="designation",
-                    name=desg_title,
-                    code=code,
-                    is_active=True
-                ))
-            await session.commit()
-        else:
-            # Ensure 'Driver' is present even if the database is already seeded
-            driver_check = await session.execute(
-                select(SubMaster).where(SubMaster.entity == "designation", SubMaster.name == "Driver")
-            )
-            if not driver_check.scalars().first():
-                logger.info("Adding missing 'Driver' designation to database...")
-                session.add(SubMaster(
-                    entity="designation",
-                    name="Driver",
-                    code="DRIVER",
-                    is_active=True
-                ))
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
+            if not result.scalar_one_or_none():
+                admin = Employee(
+                    employee_code="admin",
+                    name="Administrator",
+                    user_type="Admin",
+                    email="admin@dinesh-textile.com",
+                    department="IT",
+                    designation="System Admin",
+                    status="Active",
+                    web_access="Allow",
+                    password_hash=get_password_hash("admin123"),
+                    module_permissions={
+                        "master": True, "buyer_order": True, "work_order": True,
+                        "warping_sizing": True, "production": True, "processing": True,
+                        "fabric": True, "yarn": True, "account": True, "report": True,
+                    },
+                )
+                session.add(admin)
                 await session.commit()
 
-        # Seed default yarn counts
-        yc_result = await session.execute(select(SubMaster).where(SubMaster.entity == "yarn_count_master"))
-        if not yc_result.scalars().first():
-            logger.info("Seeding default yarn counts...")
-            default_counts = [
-                {"name": "10S CTN", "code": "10S CTN", "ply": "1 Ply"},
-                {"name": "20S CTN", "code": "20S CTN", "ply": "1 Ply"},
-                {"name": "30S CTN", "code": "30S CTN", "ply": "1 Ply"},
-                {"name": "40S CTN", "code": "40S CTN", "ply": "1 Ply"},
-                {"name": "60S CTN", "code": "60S CTN", "ply": "1 Ply"},
-                {"name": "80S CTN", "code": "80S CTN", "ply": "1 Ply"},
-                {"name": "2/20S CTN", "code": "2/20S CTN", "ply": "2 Ply"},
-                {"name": "2/40S CTN", "code": "2/40S CTN", "ply": "2 Ply"},
-                {"name": "2/60S CTN", "code": "2/60S CTN", "ply": "2 Ply"},
-                {"name": "2/80S CTN", "code": "2/80S CTN", "ply": "2 Ply"},
-            ]
-            for item in default_counts:
-                session.add(SubMaster(
-                    entity="yarn_count_master",
-                    name=item["name"],
-                    code=item["code"],
-                    extra_field_1=item["ply"],
-                    is_active=True
-                ))
-            await session.commit()
+            # Seed default departments and designations
+            from app.models.sub_master import SubMaster
+            
+            dept_result = await session.execute(select(SubMaster).where(SubMaster.entity == "department"))
+            if not dept_result.scalars().first():
+                logger.info("Seeding default departments...")
+                default_departments = [
+                    "Management", "Merchandising", "Design", "Purchase", "Stores", 
+                    "Inventory", "Production", "Weaving", "Dyeing", "Quality", 
+                    "Dispatch", "Export Documentation", "Logistics", "Accounts", 
+                    "HR", "Payroll", "Maintenance", "IT", "Admin"
+                ]
+                for dept_name in default_departments:
+                    code = "".join([w[0] for w in dept_name.split() if w]).upper()[:6]
+                    if len(code) < 2:
+                        code = dept_name[:3].upper()
+                    session.add(SubMaster(
+                        entity="department",
+                        name=dept_name,
+                        code=code,
+                        is_active=True
+                    ))
+                await session.commit()
 
-        # Seed Connected Workflow Data
-        from app.seed_all import seed_all_data
-        await seed_all_data(session)
+            desg_result = await session.execute(select(SubMaster).where(SubMaster.entity == "designation"))
+            if not desg_result.scalars().first():
+                logger.info("Seeding default designations...")
+                default_designations = [
+                    "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
+                    "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
+                    "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
+                    "Assistant", "Operator", "Technician", "Worker", "Trainee", "Driver"
+                ]
+                for desg_title in default_designations:
+                    code = "".join([w[0] for w in desg_title.split() if w]).upper()[:6]
+                    if len(code) < 2:
+                        code = desg_title[:3].upper()
+                    session.add(SubMaster(
+                        entity="designation",
+                        name=desg_title,
+                        code=code,
+                        is_active=True
+                    ))
+                await session.commit()
+            else:
+                driver_check = await session.execute(
+                    select(SubMaster).where(SubMaster.entity == "designation", SubMaster.name == "Driver")
+                )
+                if not driver_check.scalars().first():
+                    logger.info("Adding missing 'Driver' designation to database...")
+                    session.add(SubMaster(
+                        entity="designation",
+                        name="Driver",
+                        code="DRIVER",
+                        is_active=True
+                    ))
+                    await session.commit()
+
+            yc_result = await session.execute(select(SubMaster).where(SubMaster.entity == "yarn_count_master"))
+            if not yc_result.scalars().first():
+                logger.info("Seeding default yarn counts...")
+                default_counts = [
+                    {"name": "10S CTN", "code": "10S CTN", "ply": "1 Ply"},
+                    {"name": "20S CTN", "code": "20S CTN", "ply": "1 Ply"},
+                    {"name": "30S CTN", "code": "30S CTN", "ply": "1 Ply"},
+                    {"name": "40S CTN", "code": "40S CTN", "ply": "1 Ply"},
+                    {"name": "60S CTN", "code": "60S CTN", "ply": "1 Ply"},
+                    {"name": "80S CTN", "code": "80S CTN", "ply": "1 Ply"},
+                    {"name": "2/20S CTN", "code": "2/20S CTN", "ply": "2 Ply"},
+                    {"name": "2/40S CTN", "code": "2/40S CTN", "ply": "2 Ply"},
+                    {"name": "2/60S CTN", "code": "2/60S CTN", "ply": "2 Ply"},
+                    {"name": "2/80S CTN", "code": "2/80S CTN", "ply": "2 Ply"},
+                ]
+                for item in default_counts:
+                    session.add(SubMaster(
+                        entity="yarn_count_master",
+                        name=item["name"],
+                        code=item["code"],
+                        extra_field_1=item["ply"],
+                        is_active=True
+                    ))
+                await session.commit()
+
+            from app.seed_all import seed_all_data
+            await seed_all_data(session)
+    except Exception as e:
+        import traceback
+        with open("lifespan_error.log", "w") as f:
+            f.write(traceback.format_exc())
+            f.flush()
+        logger.error(f"LIFESPAN CRASH PREVENTED: {e}")
 
     yield
     await engine.dispose()

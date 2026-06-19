@@ -6,8 +6,7 @@ import numpy as np
 import traceback
 import os
 import io
-from xhtml2pdf import pisa
-from jinja2 import Environment, FileSystemLoader
+
 from app.design_ai.image_analyzer import extract_colors_and_pipeline, classify_weave
 
 router = APIRouter(prefix="/design-ai", tags=["Design AI"])
@@ -54,6 +53,8 @@ async def analyze_image(
 @router.post("/generate-pdf")
 async def generate_pdf(payload: dict):
     try:
+        from jinja2 import Environment, FileSystemLoader
+        from xhtml2pdf import pisa
         # Load template
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
         env = Environment(loader=FileSystemLoader(template_dir))

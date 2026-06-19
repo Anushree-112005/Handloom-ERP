@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { Wrench, Search, Save, ArrowLeft, Plus, Trash2, Edit2, Eye, Calendar, DollarSign } from 'lucide-react';
 import { subMasterAPI, ppcAPI } from '../../services/api';
 
 export default function MaintenanceLog() {
@@ -62,6 +62,32 @@ export default function MaintenanceLog() {
     }
   };
 
+  const handleEdit = (record) => {
+    // Mock parsing for edit
+    setFormData({
+      id: record.id,
+      log_id: record.name,
+      loom_id: looms.find(l => l.loom_name === record.code)?.id?.toString() || '',
+      service_type: record.extra_field_1?.split(' - ')[0] || 'Preventive',
+      service_date: new Date().toISOString().split('T')[0],
+      parts_replaced: record.description?.match(/Parts: (.*?) \|/)?.[1] || '',
+      service_done_by: record.description?.match(/By: (.*)/)?.[1] || '',
+      cost: parseFloat(record.extra_field_1?.match(/₹(\d+)/)?.[1] || 0),
+      next_service_date: record.extra_field_2?.replace('Next: ', '') || ''
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this log?')) return;
+    try {
+      await subMasterAPI.delete('ppc_maintenance_log', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredRecords = records.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,22 +102,7 @@ export default function MaintenanceLog() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Record machine servicing, replaced parts, and costs</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                log_id: `ML-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                loom_id: '', service_type: 'Preventive', service_date: new Date().toISOString().split('T')[0],
-                parts_replaced: '', service_done_by: '', cost: '', next_service_date: ''
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#14b8a6', borderColor: '#14b8a6' }}
-          >
-            <Plus size={16} /> New Log Entry
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -101,6 +112,42 @@ export default function MaintenanceLog() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ccfbf1', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Wrench size={24} style={{ color: '#14b8a6' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Service Logs</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0f2fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Calendar size={24} style={{ color: '#0ea5e9' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Preventive Count</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => r.extra_field_1?.includes('Preventive')).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <DollarSign size={24} style={{ color: '#d97706' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Maintenance Cost</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                ₹{records.reduce((sum, r) => sum + (parseFloat(r.extra_field_1?.match(/₹(\d+)/)?.[1]) || 0), 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -176,30 +223,47 @@ export default function MaintenanceLog() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Maintenance History ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search logs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Maintenance History ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search logs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    log_id: `ML-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                    loom_id: '', service_type: 'Preventive', service_date: new Date().toISOString().split('T')[0],
+                    parts_replaced: '', service_done_by: '', cost: '', next_service_date: ''
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#14b8a6', borderColor: '#14b8a6', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> New Log Entry
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Log ID</th>
-                  <th>Loom ID</th>
-                  <th>Service Details</th>
-                  <th>Next Service</th>
-                  <th>Notes</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Log ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Service Details</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Next Service</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Notes</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,10 +272,10 @@ export default function MaintenanceLog() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td><span style={{ fontWeight: 700 }}>{record.code}</span></td>
-                    <td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px' }}><span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{record.code}</span></td>
+                    <td style={{ padding: '16px' }}>
                       <span style={{ 
                         color: record.extra_field_1?.includes('Preventive') ? '#047857' : '#b45309', 
                         backgroundColor: record.extra_field_1?.includes('Preventive') ? '#10b98120' : '#f59e0b20', 
@@ -220,8 +284,21 @@ export default function MaintenanceLog() {
                         {record.extra_field_1}
                       </span>
                     </td>
-                    <td><span style={{ color: '#0369a1', fontWeight: 600 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#0369a1', fontWeight: 600 }}>{record.extra_field_2}</span></td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

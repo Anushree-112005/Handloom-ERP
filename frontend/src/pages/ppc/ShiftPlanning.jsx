@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
+import { UserCheck, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2, Clock, CheckCircle } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function ShiftPlanning() {
@@ -195,22 +195,7 @@ export default function ShiftPlanning() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Assign operators and calculate shift targets</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                id: null,
-                schedule_id: '', shift: '', shift_start: '', shift_end: '',
-                working_hours: '', target_meters: '', operator_name: '', loom_id: ''
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#f43f5e', borderColor: '#f43f5e' }}
-          >
-            <Plus size={16} /> New Shift Plan
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -220,6 +205,38 @@ export default function ShiftPlanning() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fecdd3', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <UserCheck size={24} style={{ color: '#f43f5e' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Plans</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#16a34a' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Assignments</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.is_active).length || records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Clock size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Shifts Covered</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{new Set(records.map(r => r.code)).size}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -304,30 +321,46 @@ export default function ShiftPlanning() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Active Shift Plans ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search plans..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Active Shift Plans ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search plans..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    id: null,
+                    schedule_id: '', shift: '', shift_start: '', shift_end: '',
+                    working_hours: '', target_meters: '', operator_name: '', loom_id: ''
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#f43f5e', borderColor: '#f43f5e', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> New Shift Plan
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Schedule ID</th>
-                  <th>Shift</th>
-                  <th>Operator</th>
-                  <th>Target / Details</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Schedule ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Shift</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Operator</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Target / Details</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -336,20 +369,20 @@ export default function ShiftPlanning() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>{record.extra_field_1}</td>
-                    <td><span style={{ color: '#be123c', fontWeight: 600 }}>{record.extra_field_2}</span> <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>({record.description})</span></td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{record.code}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{record.extra_field_1}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#be123c', fontWeight: 600 }}>{record.extra_field_2}</span> <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>({record.description})</span></td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
                           <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
                         </button>
-                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
                           <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
                         </button>
-                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
                           <Trash2 size={16} style={{ color: '#ef4444' }} />
                         </button>
                       </div>
