@@ -1,0 +1,797 @@
+INFO:     Will watch for changes in these directories: ['/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [361264] using WatchFiles
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/uvicorn/server.py", line 65, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/home/cubeai/.local/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+    await self._serve(sockets)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/uvicorn/server.py", line 76, in _serve
+    config.load()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/uvicorn/config.py", line 434, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 17, in <module>
+    from app.api.v1.router import api_router
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/router.py", line 51, in <module>
+    from app.api.v1.endpoints import chat
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/chat.py", line 11, in <module>
+    from app.modules.chatbot.service import handle_chat_message, get_chat_history
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/modules/chatbot/service.py", line 406
+    Please write a clear, accurate, and concise natural language answer to the user's question based on the database results.
+                                                                                   ^
+SyntaxError: unterminated string literal (detected at line 406)
+WARNING:  WatchFiles detected changes in 'app/modules/chatbot/service.py'. Reloading...
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+INFO:     Started server process [361612]
+INFO:     Waiting for application startup.
+INFO:app.seed_all:Database already seeded with workflow data. Skipping...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:44514 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44524 - "GET /api/v1/stationary/consumables_items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44530 - "GET /api/v1/stationary/consumables_ledger HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT data->>'currentStock' AS current_stock, data->>'rate' AS rate FROM stationary_items WHERE category = 'consumables_items' AND data->>'name' = 'A4 Paper'
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:44540 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43614 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+ERROR:app.modules.chatbot.service:Failed to generate LLM response: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n  "is_db_query": true,\n   "sql": "SELECT * FROM stationary_items WHERE category = \'consumables_ledger\' AND data @> \'{"itemId": (SELECT data->>\'id\' FROM stationary_items WHERE category = \'\'consumables_items\'\' AND data->>\'name\'\' = \'\'A4 Paper\'\')}\'",\n   "explanation": "Querying ledger transactions for A4 Paper by filtering the \'consumables_ledger\' category and matching the \'itemId\' with the \'id\' of \'A4 Paper\' from \'consumables_items\' category"\n}'}}
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/modules/chatbot/service.py", line 368, in _handle_general_query
+    chat_completion = client.chat.completions.create(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/groq/resources/chat/completions.py", line 461, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/groq/_base_client.py", line 1284, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/groq/_base_client.py", line 1071, in request
+    raise self._make_status_error_from_response(err.response) from None
+groq.BadRequestError: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\n  "is_db_query": true,\n   "sql": "SELECT * FROM stationary_items WHERE category = \'consumables_ledger\' AND data @> \'{"itemId": (SELECT data->>\'id\' FROM stationary_items WHERE category = \'\'consumables_items\'\' AND data->>\'name\'\' = \'\'A4 Paper\'\')}\'",\n   "explanation": "Querying ledger transactions for A4 Paper by filtering the \'consumables_ledger\' category and matching the \'itemId\' with the \'id\' of \'A4 Paper\' from \'consumables_items\' category"\n}'}}
+INFO:     127.0.0.1:43616 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60348 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data @> '{"itemId": "ITM001"}'
+ERROR:app.modules.chatbot.service:Failed executing Text-to-SQL query: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedFunctionError'>: operator does not exist: json @> unknown
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+[SQL: SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data @> '{"itemId": "ITM001"}']
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 514, in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 760, in _prepare
+    prepared_stmt = await self._connection.prepare(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 636, in prepare
+    return await self._prepare(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 654, in _prepare
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 433, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 166, in prepare
+asyncpg.exceptions.UndefinedFunctionError: operator does not exist: json @> unknown
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.UndefinedFunctionError'>: operator does not exist: json @> unknown
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/modules/chatbot/service.py", line 395, in _handle_general_query
+    db_res = await conn.execute(text(sql_query))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 657, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedFunctionError'>: operator does not exist: json @> unknown
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+[SQL: SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data @> '{"itemId": "ITM001"}']
+(Background on this error at: https://sqlalche.me/e/20/f405)
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:60362 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/modules/chatbot/service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [361612]
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+INFO:     Started server process [361853]
+INFO:     Waiting for application startup.
+INFO:app.seed_all:Database already seeded with workflow data. Skipping...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:49180 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data->>'itemId' = 'ITM001'
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:49184 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47974 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data->>'itemId' = (SELECT data->>'id' FROM stationary_items WHERE category = 'consumables_items' AND data->>'name' ILIKE '%A4 Paper%' LIMIT 1)
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:47984 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37876 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37888 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37898 - "GET /api/v1/stationary/consumables_categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37914 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37918 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37934 - "GET /api/v1/stationary/consumables_uoms HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37940 - "GET /api/v1/stationary/consumables_departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37952 - "GET /api/v1/stationary/consumables_vendors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37964 - "GET /api/v1/stationary/consumables_items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37970 - "GET /api/v1/stationary/consumables_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37986 - "GET /api/v1/stationary/consumables_pos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37988 - "GET /api/v1/stationary/consumables_grns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38004 - "GET /api/v1/stationary/consumables_issues HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38012 - "GET /api/v1/stationary/consumables_ledger HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38020 - "GET /api/v1/stationary/consumables_returns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38034 - "GET /api/v1/stationary/consumables_transfers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38050 - "GET /api/v1/stationary/consumables_adjustments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38056 - "GET /api/v1/stationary/consumables_verifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38066 - "GET /api/v1/stationary/consumables_quotations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38080 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38082 - "GET /api/v1/hr/requisitions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38122 - "GET /api/v1/hr/offboarding HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38134 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38092 - "GET /api/v1/hr/candidates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38098 - "GET /api/v1/hr/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38102 - "GET /api/v1/hr/offers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38114 - "GET /api/v1/hr/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38140 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38152 - "GET /api/v1/hr/requisitions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38162 - "GET /api/v1/hr/offboarding HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38168 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38170 - "GET /api/v1/hr/candidates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38172 - "GET /api/v1/hr/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38186 - "GET /api/v1/hr/offers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38196 - "GET /api/v1/hr/requisitions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38190 - "GET /api/v1/hr/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38202 - "GET /api/v1/hr/requisitions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38208 - "GET /api/v1/hr/candidates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38216 - "GET /api/v1/hr/candidates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38224 - "GET /api/v1/hr/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38230 - "GET /api/v1/hr/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38240 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38246 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38254 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38266 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38272 - "GET /api/v1/sub-masters/designation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38284 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38300 - "GET /api/v1/sub-masters/designation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38310 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38602 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38618 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38632 - "GET /api/v1/hr/holidays HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38642 - "GET /api/v1/hr/holidays HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38658 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38648 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38670 - "GET /api/v1/sub-masters/designation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38686 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38698 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38714 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38720 - "GET /api/v1/sub-masters/designation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38734 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38738 - "GET /api/v1/hr/holidays HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38748 - "GET /api/v1/hr/holidays HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38758 - "GET /api/v1/hr/attendance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38768 - "GET /api/v1/hr/leaves HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38796 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38782 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38800 - "GET /api/v1/hr/attendance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38822 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38812 - "GET /api/v1/hr/leaves HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38830 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45778 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45784 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45798 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45806 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45836 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45822 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45848 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45856 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45870 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45876 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45898 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45892 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44934 - "GET /api/v1/hr/benefits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44938 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44944 - "GET /api/v1/hr/benefits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44946 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44958 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44962 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44970 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44982 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44986 - "GET /api/v1/hr/expense_claims HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44988 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45000 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45016 - "GET /api/v1/hr/expense_claims HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45032 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45038 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45058 - "GET /api/v1/hr/leaves HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45054 - "GET /api/v1/hr/attendance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45072 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45044 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45084 - "GET /api/v1/hr/expense_claims HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45094 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45106 - "GET /api/v1/sub-masters/designation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45134 - "GET /api/v1/hr/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45116 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45124 - "GET /api/v1/hr/goals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45150 - "GET /api/v1/hr/certifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45160 - "GET /api/v1/hr/requisitions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45174 - "GET /api/v1/hr/candidates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45218 - "GET /api/v1/hr/leaves HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45202 - "GET /api/v1/hr/attendance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45186 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45230 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45234 - "GET /api/v1/hr/expense_claims HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45240 - "GET /api/v1/sub-masters/department HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45262 - "GET /api/v1/hr/goals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45256 - "GET /api/v1/sub-masters/designation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45288 - "GET /api/v1/hr/certifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45272 - "GET /api/v1/hr/performance HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45260 - "GET /api/v1/sub-masters/shift HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45304 - "GET /api/v1/hr/requisitions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45312 - "GET /api/v1/hr/candidates HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45328 - "GET /api/v1/hr/expense_claims HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45340 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45348 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45362 - "GET /api/v1/hr/expense_claims HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45384 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45374 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32850 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32852 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32858 - "GET /api/v1/hr/travel_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32874 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49420 - "GET /api/v1/hr/benefits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49434 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49440 - "GET /api/v1/hr/benefits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49450 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49466 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49472 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49486 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49500 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49508 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49514 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42678 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42684 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42696 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42712 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42716 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42728 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42738 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42746 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42748 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42758 - "GET /api/v1/stationary/consumables_categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42762 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42768 - "GET /api/v1/stationary/consumables_uoms HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42784 - "GET /api/v1/stationary/consumables_departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42792 - "GET /api/v1/stationary/consumables_vendors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42796 - "GET /api/v1/stationary/consumables_items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42812 - "GET /api/v1/stationary/consumables_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42820 - "GET /api/v1/stationary/consumables_pos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42830 - "GET /api/v1/stationary/consumables_grns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42842 - "GET /api/v1/stationary/consumables_issues HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42856 - "GET /api/v1/stationary/consumables_ledger HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42862 - "GET /api/v1/stationary/consumables_returns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42876 - "GET /api/v1/stationary/consumables_transfers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42882 - "GET /api/v1/stationary/consumables_adjustments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42890 - "GET /api/v1/stationary/consumables_verifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42892 - "GET /api/v1/stationary/consumables_quotations HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/modules/hr/router.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [361853]
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+INFO:     Started server process [362556]
+INFO:     Waiting for application startup.
+INFO:app.seed_all:Database already seeded with workflow data. Skipping...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:42054 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42088 - "GET /api/v1/stationary/consumables_categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42064 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42078 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42060 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42112 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42114 - "GET /api/v1/stationary/consumables_uoms HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42096 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42118 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42128 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42140 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42146 - "GET /api/v1/stationary/consumables_departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42160 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42164 - "GET /api/v1/stationary/consumables_vendors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42178 - "GET /api/v1/stationary/consumables_items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42182 - "GET /api/v1/stationary/consumables_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42196 - "GET /api/v1/stationary/consumables_pos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42200 - "GET /api/v1/stationary/consumables_grns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42204 - "GET /api/v1/stationary/consumables_issues HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42212 - "GET /api/v1/stationary/consumables_ledger HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42218 - "GET /api/v1/stationary/consumables_returns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42224 - "GET /api/v1/stationary/consumables_transfers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42240 - "GET /api/v1/stationary/consumables_adjustments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42252 - "GET /api/v1/stationary/consumables_verifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42264 - "GET /api/v1/stationary/consumables_quotations HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/seed_all.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [362556]
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+INFO:     Started server process [362782]
+INFO:     Waiting for application startup.
+INFO:app.seed_all:Database already seeded with workflow data. Skipping...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:48016 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48028 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56658 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48044 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48050 - "GET /api/v1/stationary/consumables_categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48038 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56666 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56670 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56682 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56680 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56690 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56694 - "GET /api/v1/stationary/consumables_uoms HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56706 - "GET /api/v1/stationary/consumables_departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56714 - "GET /api/v1/stationary/consumables_vendors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56716 - "GET /api/v1/stationary/consumables_items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56726 - "GET /api/v1/stationary/consumables_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56736 - "GET /api/v1/stationary/consumables_pos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56746 - "GET /api/v1/stationary/consumables_grns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56750 - "GET /api/v1/stationary/consumables_issues HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56754 - "GET /api/v1/stationary/consumables_ledger HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56760 - "GET /api/v1/stationary/consumables_returns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56768 - "GET /api/v1/stationary/consumables_transfers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56770 - "GET /api/v1/stationary/consumables_adjustments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56782 - "GET /api/v1/stationary/consumables_verifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56798 - "GET /api/v1/stationary/consumables_quotations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53764 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53778 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53794 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53786 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53808 - "GET /api/v1/stationary/consumables_categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53814 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53822 - "GET /api/v1/hr/loans HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53828 - "GET /api/v1/hr/payroll HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53816 - "GET /api/v1/employees/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53834 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53844 - "GET /api/v1/company-settings/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53850 - "GET /api/v1/stationary/consumables_uoms HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53866 - "GET /api/v1/stationary/consumables_departments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53878 - "GET /api/v1/stationary/consumables_vendors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53894 - "GET /api/v1/stationary/consumables_items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53900 - "GET /api/v1/stationary/consumables_requests HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53914 - "GET /api/v1/stationary/consumables_pos HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53924 - "GET /api/v1/stationary/consumables_grns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53938 - "GET /api/v1/stationary/consumables_issues HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53948 - "GET /api/v1/stationary/consumables_ledger HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53958 - "GET /api/v1/stationary/consumables_returns HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53964 - "GET /api/v1/stationary/consumables_transfers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53976 - "GET /api/v1/stationary/consumables_adjustments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53992 - "GET /api/v1/stationary/consumables_verifications HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53998 - "GET /api/v1/stationary/consumables_quotations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60810 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT SUM(net_amount) FROM sales_invoices WHERE status != 'Cancelled' AND EXTRACT(MONTH FROM invoice_date) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM invoice_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:60820 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT SUM(total_meters) FROM cloth_deliveries
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:44856 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT SUM(meters_produced) FROM production_logs
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:37014 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+ERROR:app.modules.chatbot.intent_parser:Failed parsing intent with Groq: name 'Groq' is not defined. Falling back to deterministic parser.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.modules.chatbot.service:Chatbot Text-to-SQL query: SELECT * FROM cloth_deliveries WHERE delivery_type = 'Customer Delivery' AND status = 'Delivered'
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:     127.0.0.1:33616 - "POST /api/v1/chat/messages HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'scratch/verify_seeded_hr.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [362782]
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+INFO:     Started server process [363217]
+INFO:     Waiting for application startup.
+INFO:app.seed_all:Database already seeded with workflow data. Skipping...
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/seed_all.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [363217]
+WARNING:dotenv.main:Python-dotenv could not parse statement starting at line 4
+INFO:     Started server process [363411]
+INFO:     Waiting for application startup.
+INFO:app.seed_all:Clearing existing workflow data for clean seeding...
+WARNING:app.seed_all:Error clearing table LoomAllocation: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.ForeignKeyViolationError'>: update or delete on table "loom_allocations" violates foreign key constraint "production_logs_allocation_id_fkey" on table "production_logs"
+DETAIL:  Key (id)=(264) is still referenced from table "production_logs".
+[SQL: DELETE FROM loom_allocations]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+WARNING:app.seed_all:Error clearing table LoomMaster: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.ForeignKeyViolationError'>: update or delete on table "loom_master" violates foreign key constraint "loom_allocations_loom_id_fkey" on table "loom_allocations"
+DETAIL:  Key (id)=(267) is still referenced from table "loom_allocations".
+[SQL: DELETE FROM loom_master]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+INFO:app.seed_all:Seeding new connected workflow data (10 records per table)...
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.UniqueViolationError: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2118, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/seed_all.py", line 507, in seed_all_data
+    await session.commit()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1143, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1844, in _execute_context
+    return self._exec_insertmany_context(dialect, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2126, in _exec_insertmany_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2118, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+[SQL: INSERT INTO loom_master (loom_name, loom_type, manufacturer, model_number, installation_date, capacity_per_day, running_speed_per_hr, efficiency_pct, reed_width, total_ends, status, location, last_service_date, next_service_date, remarks, current_war ... 3397 characters truncated ... , p14, p15, p16, sen_counter) ORDER BY sen_counter RETURNING loom_master.id, loom_master.id AS id__1]
+[parameters: ('LM-001', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 85.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-002', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 86.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-003', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 87.0, None, None, 'Running', 'Shed A', None, None, None, None ... 70 parameters truncated ... 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 92.0, None, None, 'Running', 'Shed B', None, None, None, None, None, 'LM-009', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 93.0, None, None, 'Idle', 'Shed B', None, None, None, None, None, 'LM-0010', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 94.0, None, None, 'Maintenance', 'Shed B', None, None, None, None, None)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+ERROR:app.seed_all:Error seeding workflow database: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+[SQL: INSERT INTO loom_master (loom_name, loom_type, manufacturer, model_number, installation_date, capacity_per_day, running_speed_per_hr, efficiency_pct, reed_width, total_ends, status, location, last_service_date, next_service_date, remarks, current_war ... 3397 characters truncated ... , p14, p15, p16, sen_counter) ORDER BY sen_counter RETURNING loom_master.id, loom_master.id AS id__1]
+[parameters: ('LM-001', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 85.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-002', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 86.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-003', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 87.0, None, None, 'Running', 'Shed A', None, None, None, None ... 70 parameters truncated ... 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 92.0, None, None, 'Running', 'Shed B', None, None, None, None, None, 'LM-009', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 93.0, None, None, 'Idle', 'Shed B', None, None, None, None, None, 'LM-0010', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 94.0, None, None, 'Maintenance', 'Shed B', None, None, None, None, None)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+ERROR:    Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = deque(await prepared_stmt.fetch(*parameters))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.UniqueViolationError: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2118, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+  File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+  File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 194, in lifespan
+    await seed_all_data(session)
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/seed_all.py", line 1521, in seed_all_data
+    raise e
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/seed_all.py", line 507, in seed_all_data
+    await session.commit()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1143, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1844, in _execute_context
+    return self._exec_insertmany_context(dialect, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2126, in _exec_insertmany_context
+    self._handle_dbapi_exception(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2118, in _exec_insertmany_context
+    dialect.do_execute(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 941, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 784, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+[SQL: INSERT INTO loom_master (loom_name, loom_type, manufacturer, model_number, installation_date, capacity_per_day, running_speed_per_hr, efficiency_pct, reed_width, total_ends, status, location, last_service_date, next_service_date, remarks, current_war ... 3397 characters truncated ... , p14, p15, p16, sen_counter) ORDER BY sen_counter RETURNING loom_master.id, loom_master.id AS id__1]
+[parameters: ('LM-001', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 85.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-002', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 86.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-003', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 87.0, None, None, 'Running', 'Shed A', None, None, None, None ... 70 parameters truncated ... 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 92.0, None, None, 'Running', 'Shed B', None, None, None, None, None, 'LM-009', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 93.0, None, None, 'Idle', 'Shed B', None, None, None, None, None, 'LM-0010', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 94.0, None, None, 'Maintenance', 'Shed B', None, None, None, None, None)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+ERROR:    Application startup failed. Exiting.
+  [CLEAR FAILED] Table LoomAllocation: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.ForeignKeyViolationError'>: update or delete on table "loom_allocations" violates foreign key constraint "production_logs_allocation_id_fkey" on table "production_logs"
+DETAIL:  Key (id)=(264) is still referenced from table "production_logs".
+[SQL: DELETE FROM loom_allocations]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+  [CLEAR FAILED] Table LoomMaster: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.ForeignKeyViolationError'>: update or delete on table "loom_master" violates foreign key constraint "loom_allocations_loom_id_fkey" on table "loom_allocations"
+DETAIL:  Key (id)=(267) is still referenced from table "loom_allocations".
+[SQL: DELETE FROM loom_master]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+  [SEED FAILED] Error: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: duplicate key value violates unique constraint "ix_loom_master_loom_name"
+DETAIL:  Key (loom_name)=(LM-001) already exists.
+[SQL: INSERT INTO loom_master (loom_name, loom_type, manufacturer, model_number, installation_date, capacity_per_day, running_speed_per_hr, efficiency_pct, reed_width, total_ends, status, location, last_service_date, next_service_date, remarks, current_war ... 3397 characters truncated ... , p14, p15, p16, sen_counter) ORDER BY sen_counter RETURNING loom_master.id, loom_master.id AS id__1]
+[parameters: ('LM-001', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 85.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-002', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 86.0, None, None, 'Running', 'Shed A', None, None, None, None, None, 'LM-003', 'Air Jet', 'Toyota', 'JAT810', None, 450.0, 20.0, 87.0, None, None, 'Running', 'Shed A', None, None, None, None ... 70 parameters truncated ... 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 92.0, None, None, 'Running', 'Shed B', None, None, None, None, None, 'LM-009', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 93.0, None, None, 'Idle', 'Shed B', None, None, None, None, None, 'LM-0010', 'Rapier', 'Picanol', 'OmniPlus-i', None, 450.0, 20.0, 94.0, None, None, 'Maintenance', 'Shed B', None, None, None, None, None)]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)

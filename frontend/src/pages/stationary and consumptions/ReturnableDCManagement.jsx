@@ -132,14 +132,15 @@ export default function ReturnableDCManagement() {
   };
 
   const filteredDcs = dcs.filter(item => {
-    const matchesStream = activeStream === 'All' || item.dc_stream === activeStream;
-    const matchesStatus = activeStatus === 'All' || item.status === activeStatus;
+    const matchesStream = activeStream === 'All' || item?.dc_stream === activeStream;
+    const matchesStatus = activeStatus === 'All' || item?.status === activeStatus;
     const matchesSearch = 
-      item.dc_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.asset_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.service_vendor.toLowerCase().includes(searchTerm.toLowerCase());
+      (item?.dc_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.asset_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item?.service_vendor || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStream && matchesStatus && matchesSearch;
   });
+
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
@@ -226,7 +227,7 @@ export default function ReturnableDCManagement() {
             </div>
 
             <div className="table-responsive" style={{ flex: 1 }}>
-              <table className="table" style={{ width: '100%' }}>
+              <table className="data-table" style={{ width: '100%' }}>
                 <thead>
                   <tr>
                     <th>DC No</th>
@@ -241,43 +242,43 @@ export default function ReturnableDCManagement() {
                 </thead>
                 <tbody>
                   {filteredDcs.map(dc => (
-                    <tr key={dc.id}>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{dc.dc_no}</td>
-                      <td>{dc.date}</td>
+                    <tr key={dc?.id}>
+                      <td style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14 }}>{dc?.dc_no}</td>
+                      <td>{dc?.date}</td>
                       <td>
-                        <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 8px', borderRadius: '6px', background: dc.dc_stream === 'Yarn Unit' ? '#fef3c7' : dc.dc_stream === 'Fabric Unit' ? '#dbeafe' : '#f1f5f9', color: dc.dc_stream === 'Yarn Unit' ? '#d97706' : dc.dc_stream === 'Fabric Unit' ? '#2563eb' : '#475569' }}>
-                          {dc.dc_stream}
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 8px', borderRadius: '6px', background: dc?.dc_stream === 'Yarn Unit' ? '#fef3c7' : dc?.dc_stream === 'Fabric Unit' ? '#dbeafe' : '#f1f5f9', color: dc?.dc_stream === 'Yarn Unit' ? '#d97706' : dc?.dc_stream === 'Fabric Unit' ? '#2563eb' : '#475569' }}>
+                          {dc?.dc_stream}
                         </span>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{dc.asset_name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Vendor: {dc.service_vendor}</div>
+                        <div style={{ fontWeight: 600 }}>{dc?.asset_name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Vendor: {dc?.service_vendor}</div>
                       </td>
                       <td>
-                        {dc.quotation_no ? (
+                        {dc?.quotation_no ? (
                           <>
-                            <div style={{ fontSize: 13, fontWeight: 600 }}>₹{dc.quotation_amount} ({dc.quotation_no})</div>
-                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PO: {dc.service_po_no || '-'}</div>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>₹{dc?.quotation_amount} ({dc?.quotation_no})</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PO: {dc?.service_po_no || '-'}</div>
                           </>
                         ) : '-'}
                       </td>
-                      <td style={{ fontWeight: 700 }}>₹{dc.advance_payment}</td>
+                      <td style={{ fontWeight: 700 }}>₹{dc?.advance_payment || 0}</td>
                       <td>
                         <span style={{ 
                           fontSize: 12, 
                           fontWeight: 700, 
                           padding: '4px 10px', 
                           borderRadius: '20px', 
-                          background: dc.status === 'Outward' ? '#fee2e2' : dc.status === 'Returned' ? '#dcfce7' : '#f8fafc', 
-                          color: dc.status === 'Outward' ? '#991b1b' : dc.status === 'Returned' ? '#166534' : 'var(--text-primary)' 
+                          background: dc?.status === 'Outward' ? '#fee2e2' : dc?.status === 'Returned' ? '#dcfce7' : '#f8fafc', 
+                          color: dc?.status === 'Outward' ? '#991b1b' : dc?.status === 'Returned' ? '#166534' : 'var(--text-primary)' 
                         }}>
-                          {dc.status}
+                          {dc?.status}
                         </span>
-                        {dc.return_date && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Ret: {dc.return_date}</div>}
+                        {dc?.return_date && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Ret: {dc?.return_date}</div>}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                          {dc.status === 'Outward' && (
+                          {dc?.status === 'Outward' && (
                             <button onClick={() => handleMarkReturned(dc)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#166534', borderColor: '#bbf7d0', borderRadius: '8px' }} title="Mark Returned">
                               <CheckCircle size={14} />
                             </button>
@@ -285,7 +286,7 @@ export default function ReturnableDCManagement() {
                           <button onClick={() => handleEdit(dc)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, borderRadius: '8px' }} title="Edit">
                             <FileText size={14} />
                           </button>
-                          <button onClick={() => handleDelete(dc.id)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2', borderRadius: '8px' }} title="Delete">
+                          <button onClick={() => handleDelete(dc?.id)} className="btn btn-outline" style={{ padding: '6px', minWidth: 0, color: '#dc2626', borderColor: '#fee2e2', borderRadius: '8px' }} title="Delete">
                             <Trash2 size={14} />
                           </button>
                         </div>

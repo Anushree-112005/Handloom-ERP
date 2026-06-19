@@ -72,6 +72,11 @@ const defaultQuotations = [
   { id: 'QTN001', date: '2026-06-05', vendor: 'Apex Supplies Ltd', validityDate: '2026-07-05', paymentTerms: '30 Days Credit', status: 'Approved', items: [{ itemId: 'ITM001', qty: 10, rate: 270, total: 2700 }], quotation_file_path: '' }
 ];
 
+const defaultRequisitions = [
+  { id: 'PRQ001', date: '2026-06-11', requestedBy: 'M. Selvam', status: 'Pending', items: [{ itemId: 'ITM004', qty: 200, currentStock: 1200, minStock: 500 }] },
+  { id: 'PRQ002', date: '2026-06-12', requestedBy: 'Dinesh Kumar', status: 'Approved', items: [{ itemId: 'ITM001', qty: 50, currentStock: 45, minStock: 20 }] }
+];
+
 const keys = [
   'consumables_categories',
   'consumables_uoms',
@@ -87,7 +92,8 @@ const keys = [
   'consumables_transfers',
   'consumables_adjustments',
   'consumables_verifications',
-  'consumables_quotations'
+  'consumables_quotations',
+  'consumables_requisitions'
 ];
 
 const initializeDb = () => {
@@ -111,6 +117,7 @@ const initializeDb = () => {
   getOrSet('consumables_issues', defaultIssues);
   getOrSet('consumables_ledger', defaultLedger);
   getOrSet('consumables_quotations', defaultQuotations);
+  getOrSet('consumables_requisitions', defaultRequisitions);
   getOrSet('consumables_returns', []);
   getOrSet('consumables_transfers', []);
   getOrSet('consumables_adjustments', []);
@@ -125,16 +132,25 @@ const syncFromBackend = async () => {
   if (now - lastSyncTime < 5000) return; // Limit background sync checks
   lastSyncTime = now;
   try {
+    let changed = false;
     for (const key of keys) {
       const res = await api.get(`/stationary/${key}`);
       if (res.data && res.data.length > 0) {
-        localStorage.setItem(key, JSON.stringify(res.data));
+        const localVal = localStorage.getItem(key);
+        const remoteVal = JSON.stringify(res.data);
+        if (localVal !== remoteVal) {
+          localStorage.setItem(key, remoteVal);
+          changed = true;
+        }
       } else {
         const localData = JSON.parse(localStorage.getItem(key) || '[]');
         if (localData.length > 0) {
           await api.post(`/stationary/${key}/bulk`, { items: localData });
         }
       }
+    }
+    if (changed) {
+      window.dispatchEvent(new Event('mockdb-update'));
     }
   } catch (err) {
     console.error("Failed to sync stationary from backend:", err);
@@ -152,6 +168,7 @@ export const mockDb = {
   
   set: (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
+    window.dispatchEvent(new Event('mockdb-update'));
     api.post(`/stationary/${key}/bulk`, { items: data }).catch(err => {
       console.error(`Failed to bulk save ${key}:`, err);
     });
@@ -161,6 +178,7 @@ export const mockDb = {
     const data = mockDb.get(key);
     data.push(item);
     localStorage.setItem(key, JSON.stringify(data));
+    window.dispatchEvent(new Event('mockdb-update'));
     api.post(`/stationary/${key}`, item).catch(err => {
       console.error(`Failed to add item to ${key}:`, err);
     });
@@ -173,6 +191,7 @@ export const mockDb = {
     if (index !== -1) {
       data[index] = { ...data[index], ...updatedItem };
       localStorage.setItem(key, JSON.stringify(data));
+      window.dispatchEvent(new Event('mockdb-update'));
       api.put(`/stationary/${key}/${id}`, data[index]).catch(err => {
         console.error(`Failed to update item ${id} in ${key}:`, err);
       });
@@ -183,6 +202,7 @@ export const mockDb = {
     const data = mockDb.get(key);
     const filtered = data.filter(x => x.id !== id);
     localStorage.setItem(key, JSON.stringify(filtered));
+    window.dispatchEvent(new Event('mockdb-update'));
     api.delete(`/stationary/${key}/${id}`).catch(err => {
       console.error(`Failed to delete item ${id} in ${key}:`, err);
     });
@@ -223,6 +243,7 @@ export const mockDb = {
       };
       ledger.push(newLedgerEntry);
       localStorage.setItem('consumables_ledger', JSON.stringify(ledger));
+      window.dispatchEvent(new Event('mockdb-update'));
       api.post('/stationary/consumables_ledger', newLedgerEntry).catch(err => console.error(err));
     }
   }

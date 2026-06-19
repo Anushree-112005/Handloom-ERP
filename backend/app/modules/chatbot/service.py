@@ -62,7 +62,7 @@ async def handle_chat_message(
                 "• **Browse reports** — \"List available reports\""
             )
             if settings.GROQ_API_KEY:
-                llm_reply = _handle_general_query(message)
+                llm_reply = await _handle_general_query(db, message)
                 reply = f"{llm_reply}{capabilities}"
             else:
                 reply = (
@@ -160,7 +160,7 @@ async def handle_chat_message(
                 suggestions = ["List available reports"]
 
         else:  # general_query
-            reply = _handle_general_query(message)
+            reply = await _handle_general_query(db, message)
             suggestions = [
                 "List available reports",
                 "Download buyer order report",
@@ -169,6 +169,7 @@ async def handle_chat_message(
 
     except Exception as e:
         logger.error(f"Chatbot error: {e}", exc_info=True)
+        await db.rollback()
         reply = "Sorry, I encountered an error while processing your request. Please try again or rephrase your query."
         suggestions = ["List available reports"]
 
@@ -235,13 +236,211 @@ def _describe_filters(filters: dict) -> str:
     return " | ".join(parts) if parts else "All records (no filters)"
 
 
-def _handle_general_query(message: str) -> str:
-    """Handle general/unclassified questions with helpful guidance, using Groq if available."""
+async def _handle_general_query(db: AsyncSession, message: str) -> str:
+    """Handle general/unclassified questions with helpful guidance, using Groq if available.
+    Supports natural language database queries (Text-to-SQL) for accurate business metrics."""
     from app.core.config import settings
     if settings.GROQ_API_KEY:
         try:
             from groq import Groq
+            import json
+            from sqlalchemy import text
+
             client = Groq(api_key=settings.GROQ_API_KEY)
+            
+            # Formulate the system prompt describing the schema
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            
+            schema_prompt = f"""You are a database expert for Dinesh Exports Textile ERP.
+Your task is to convert the user's natural language question into a valid, single, read-only PostgreSQL SELECT query.
+Do NOT modify database state. Only generate SELECT queries.
+
+Database Schema:
+1. sales_invoices (Holds invoicing and sales revenue/income details):
+   - id: integer
+   - invoice_no: character varying (e.g., 'TEST-123')
+   - invoice_date: date (invoice date)
+   - party_name: character varying (customer name)
+   - net_amount: numeric (final invoice value, sum this for monthly income/revenue)
+   - total_qty: numeric (quantity of fabric sold)
+   - status: character varying ('Draft', 'Dispatched', 'Cancelled' - 'Dispatched' represents completed/delivered sales)
+
+2. cloth_deliveries (Holds fabric delivery details, including Customer/Sales Delivery and process issues):
+   - id: integer
+   - dc_no: character varying (Delivery Challan No)
+   - dc_date: date (delivery date)
+   - party_name: character varying (buyer/process house name)
+   - total_meters: numeric (meters delivered, sum this for total delivery meters)
+   - total_pieces: integer (pieces delivered)
+   - net_amount: numeric (delivery value in INR)
+   - status: character varying ('Delivered', etc.)
+   - delivery_type: character varying ('Customer Delivery', 'Weaver Issue', 'Sizing Issue', etc. Filter by 'Customer Delivery' for sales/customer deliveries)
+
+3. cloth_inwards (Grey Fabric Inward, holds fabric receipts):
+   - id: integer
+   - ref_no: character varying
+   - inw_date: date (receipt date)
+   - party_name: character varying (supplier name)
+   - total_meters: numeric
+   - total_pieces: integer
+   - status: character varying
+
+4. production_logs (Daily production / weaving process records):
+   - id: integer
+   - meters_produced: double precision (meters woven/produced, sum this for total process/production)
+   - timestamp: timestamp without time zone
+   - downtime_minutes: integer
+
+5. loom_allocations (Loom scheduling and assignments):
+   - id: integer
+   - loom_id: integer
+   - fabric_type: character varying
+   - assigned_meters: double precision
+   - completed_meters: double precision
+   - allocation_status: character varying ('Running', 'Completed', etc.)
+
+6. employees (Employee details / master):
+   - id: integer
+   - employee_code: character varying
+   - name: character varying
+   - department: character varying (e.g., 'Production', 'Weaving', 'Merchandising', 'Design', 'Quality', 'Accounts', 'IT', 'Logistics', 'Management')
+   - designation: character varying
+   - status: character varying ('Active', etc.)
+
+7. buyer_orders (Customer sales orders / purchase orders received):
+   - id: integer
+   - ibpo_number: character varying
+   - order_date: date
+   - party_name: character varying (customer name)
+   - status: character varying ('Pending', 'Completed', etc.)
+
+8. yarn_purchase_orders (Orders to buy yarn from suppliers):
+   - id: integer
+   - po_number: character varying
+   - po_date: date
+   - supplier_name: character varying
+   - total_order_kgs: numeric
+   - status: character varying
+
+9. stationary_items (Holds all stationery & consumables management data like items, ledger, requests, etc.):
+   - id: integer
+   - category: character varying (e.g. 'consumables_items', 'consumables_ledger', 'consumables_requests', 'consumables_vendors', 'consumables_departments', 'consumables_requisitions', 'consumables_pos', 'consumables_grns', 'consumables_issues', 'consumables_returns', 'consumables_transfers', 'consumables_adjustments', 'consumables_verifications', 'consumables_quotations')
+   - data: json (contains properties of the record as JSON. NOTE: This is type json, not jsonb. DO NOT use the containment operator @>. Always use the ->> operator.)
+   * To query fields inside the 'data' JSON column, use PostgreSQL JSON operators like `data->>'field'`.
+   * For items (category = 'consumables_items'):
+     - `data->>'id'` (item ID, e.g. 'ITM001')
+     - `data->>'name'` (item name, e.g. 'A4 Paper')
+     - `data->>'code'` (item code, e.g. 'A4P')
+     - `data->>'category'` (item category, e.g. 'Office Stationery')
+     - `data->>'currentStock'` (numeric stock level)
+     - `data->>'rate'` (numeric price per unit)
+     - `data->>'vendor'` (vendor name)
+   * For ledger entries (category = 'consumables_ledger'):
+     - `data->>'itemId'` (item ID referencing item, e.g. 'ITM001')
+     - `data->>'refType'` (reference type, e.g. 'Opening', 'Issue', 'GRN', 'Adjustment', 'Return', 'Transfer')
+     - `data->>'refId'` (reference ID, e.g. 'ISS001')
+     - `data->>'inQty'` (quantity inward)
+     - `data->>'outQty'` (quantity outward)
+     - `data->>'balance'` (balance after transaction)
+   * For requisitions (category = 'consumables_requisitions'):
+     - `data->>'id'` (requisition ID, e.g. 'PRQ001')
+     - `data->>'date'` (date)
+     - `data->>'requestedBy'` (requisitioner name)
+     - `data->>'status'` (Pending, Approved, Rejected)
+   * For purchase orders (category = 'consumables_pos'):
+     - `data->>'id'` (PO ID, e.g. 'PO001')
+     - `data->>'date'` (date)
+     - `data->>'vendorId'` (vendor ID)
+     - `data->>'status'` (Pending, Approved, Completed)
+   * For GRNs (category = 'consumables_grns'):
+     - `data->>'id'` (GRN ID, e.g. 'GRN001')
+     - `data->>'date'` (date)
+     - `data->>'poId'` (PO ID)
+     - `data->>'status'` (Completed, etc.)
+   * For issues (category = 'consumables_issues'):
+     - `data->>'id'` (Issue ID, e.g. 'ISS001')
+     - `data->>'date'` (date)
+     - `data->>'department'` (department name)
+     - `data->>'status'` (Pending, Approved, Rejected)
+   * To query ledger for a specific item name (like 'A4 Paper'), resolve the name by subquerying category = 'consumables_items':
+     `SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data->>'itemId' = (SELECT data->>'id' FROM stationary_items WHERE category = 'consumables_items' AND data->>'name' ILIKE '%A4 Paper%' LIMIT 1)`
+
+Today's date is: {today_str}
+
+Return ONLY a JSON object with this format:
+{{
+  "is_db_query": true/false,
+  "sql": "the SQL query to execute" (null if is_db_query is false),
+  "explanation": "brief explanation of what you are querying"
+}}
+
+Rules:
+1. Ensure the SQL uses correct PostgreSQL syntax.
+2. Only write SELECT queries. Do not include semicolons at the end of the query.
+3. Be careful with date operations. For relative dates (e.g., 'this month', 'last month'), resolve them relative to today: {today_str}.
+4. For "monthly income", sum net_amount from sales_invoices where status != 'Cancelled' for the current month.
+5. For "total delivery", sum total_meters from cloth_deliveries.
+6. For "total process", sum meters_produced from production_logs or completed_meters from loom_allocations.
+7. For "sales delivered" or "customer delivery", query the cloth_deliveries table filtering by delivery_type = 'Customer Delivery'.
+8. Use only the actual status values present in the database: 'Dispatched' for sales invoices (NOT 'Paid' or 'Sent'), 'Delivered' for cloth deliveries, and 'Customer Delivery' for delivery_type.
+9. For queries about stationery, consumables, items, stock level, rate, ledger, or departments/vendors in stores, query the stationary_items table using JSON operators and correct category.
+10. Return ONLY the JSON object. No conversational text, no markdown block.
+"""
+
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": schema_prompt},
+                    {"role": "user", "content": message}
+                ],
+                model=settings.GROQ_MODEL,
+                response_format={"type": "json_object"},
+                temperature=0.0
+            )
+            
+            res_json = json.loads(chat_completion.choices[0].message.content)
+            
+            if res_json.get("is_db_query") and res_json.get("sql"):
+                sql_query = res_json["sql"]
+                
+                # Security sanity check
+                sql_lower = sql_query.lower().strip()
+                forbidden_keywords = ["insert", "update", "delete", "drop", "truncate", "alter", "create", "grant", "revoke", "replace"]
+                if not sql_lower.startswith("select") or any(kw in sql_lower for kw in forbidden_keywords):
+                    logger.warning(f"Blocked unsafe SQL query: {sql_query}")
+                    return "Sorry, for safety reasons I cannot execute write or schema operations on the database."
+                
+                logger.info(f"Chatbot Text-to-SQL query: {sql_query}")
+                try:
+                    # Execute read-only SELECT query on a separate connection to avoid aborting the session transaction
+                    from app.core.database import engine
+                    async with engine.connect() as conn:
+                        db_res = await conn.execute(text(sql_query))
+                        columns = list(db_res.keys())
+                        rows = [dict(zip(columns, row)) for row in db_res.fetchall()]
+                    
+                    # Format response using the LLM
+                    answer_prompt = f"""You are the Dinesh Exports ERP Assistant.
+The user asked: "{message}"
+We executed this SQL query: {sql_query}
+And got these results from the database: {json.dumps(rows, default=str)}
+
+Please write a clear, accurate, and concise natural language answer to the user's question based on the database results.
+If the result is null or empty, explain that no matching records were found.
+Format numbers nicely (e.g. currency as ₹XX,XXX, meters as XX,XXX mtrs). Use markdown for table or bullet points if needed.
+"""
+                    chat_completion2 = client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": answer_prompt}
+                        ],
+                        model=settings.GROQ_MODEL,
+                        temperature=0.3
+                    )
+                    return chat_completion2.choices[0].message.content
+                except Exception as db_err:
+                    logger.error(f"Failed executing Text-to-SQL query: {db_err}", exc_info=True)
+                    # Fallback to general LLM response below if SQL execution failed
+
+            # Fallback/General conversational prompt
             system_prompt = (
                 "You are an assistant for Dinesh Exports, a leading textile manufacturer. "
                 "Help the user with ERP-related questions, explain options, and converse professionally. "
@@ -257,8 +456,9 @@ def _handle_general_query(message: str) -> str:
                 temperature=0.7,
             )
             return chat_completion.choices[0].message.content
+
         except Exception as e:
-            logger.error(f"Failed to generate LLM response: {e}")
+            logger.error(f"Failed to generate LLM response: {e}", exc_info=True)
 
     msg = message.lower()
 

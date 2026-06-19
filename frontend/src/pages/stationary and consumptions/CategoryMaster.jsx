@@ -51,8 +51,8 @@ export default function CategoryMaster() {
   };
 
   const filtered = categories.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (c?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -95,13 +95,13 @@ export default function CategoryMaster() {
               </thead>
               <tbody >
                 {filtered.map(cat => (
-                  <tr key={cat.id} >
-                    <td style={{ fontFamily: "monospace" }}>{cat.id}</td>
-                    <td style={{ fontWeight: 600 }}>{cat.name}</td>
-                    <td >{cat.description}</td>
+                  <tr key={cat?.id || cat?.item_id} >
+                    <td style={{ fontFamily: "monospace" }}>{cat?.id || cat?.item_id}</td>
+                    <td style={{ fontWeight: 600 }}>{cat?.name || cat?.item_name}</td>
+                    <td >{cat?.description || ''}</td>
                     <td >
-                      <span className={`badge ${(cat.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
-                        {cat.active}
+                      <span className={`badge ${(cat?.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
+                        {cat?.active || 'No'}
                       </span>
                     </td>
                     <td style={{ textAlign: "center" }}>
@@ -109,7 +109,7 @@ export default function CategoryMaster() {
                         <button onClick={() => handleOpenForm(cat)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDelete(cat.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
+                        <button onClick={() => handleDelete(cat?.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
                           <Trash2 size={16} />
                         </button>
                       </div>

@@ -17,6 +17,18 @@ class Route(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
+    # Fuel and tracking fields for frontend compatibility
+    fuel_cost_estimate = Column(Float, default=0.0)
+    fuel_date = Column(String(50))
+    fuel_station_id = Column(Integer)
+    fuel_type = Column(String(50))
+    fuel_quantity_liters = Column(Float, default=0.0)
+    fuel_rate_per_liter = Column(Float, default=0.0)
+    fuel_odometer_reading = Column(Float)
+    fuel_payment_mode = Column(String(50))
+    fuel_vehicle_number = Column(String(50))
+    fuel_station_name = Column(String(255))
+
 
 class Trip(Base):
     __tablename__ = "trips"
@@ -39,3 +51,8 @@ class Trip(Base):
     notes = Column(String(500))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    @property
+    def date(self):
+        return self.trip_date
+

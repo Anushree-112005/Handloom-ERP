@@ -156,21 +156,26 @@ function AppRoutes() {
           }
         }
 
-        // Auto-select the ERP company if no company is currently selected in Finance.
-        if (targetComp && !companyId) {
-          localStorage.setItem('cb_company_id', targetComp.id);
-          localStorage.setItem('cb_company_name', targetComp.name);
-          setCompany(targetComp);
-          companyId = targetComp.id;
-        }
-
-        // If a company ID is stored but not in Zustand, we should load it
-        if (companyId && !activeCompany) {
+        // Validate and auto-select the target company. Clear/sync stale local storage.
+        const activeCompInList = comps?.find(c => c.id === Number(companyId));
+        if (!activeCompInList || (targetComp && Number(companyId) !== targetComp.id)) {
+          if (targetComp) {
+            localStorage.setItem('cb_company_id', targetComp.id);
+            localStorage.setItem('cb_company_name', targetComp.name);
+            setCompany(targetComp);
+            companyId = targetComp.id;
+          } else if (comps && comps.length > 0) {
+            localStorage.setItem('cb_company_id', comps[0].id);
+            localStorage.setItem('cb_company_name', comps[0].name);
+            setCompany(comps[0]);
+            companyId = comps[0].id;
+          }
+        } else if (companyId && (!activeCompany || activeCompany.id !== Number(companyId))) {
           try {
             const compData = await companies.get(companyId);
             setCompany(compData);
           } catch (e) {
-            // Company not found or invalid
+            // Fail-safe
           }
         }
       } catch (err) {

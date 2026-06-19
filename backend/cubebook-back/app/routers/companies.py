@@ -23,7 +23,7 @@ class CompanyCreate(BaseModel):
     phone:              Optional[str] = None
     email:              Optional[str] = None
     maintain_inventory: bool = False
-    fy_start:           date = date(2025, 4, 1)
+    fy_start:           date = date(2026, 4, 1)
 
 class CompanyUpdate(BaseModel):
     name:        Optional[str] = None
@@ -152,9 +152,9 @@ def seed_textile_company(db: Session = Depends(get_db)):
     # Create FY
     fy = FinancialYear(
         company_id=company.id,
-        label="FY 2025-26",
-        start_date=date(2025, 4, 1),
-        end_date=date(2026, 3, 31),
+        label="FY 2026-27",
+        start_date=date(2026, 4, 1),
+        end_date=date(2027, 3, 31),
         is_current=True,
     )
     db.add(fy)
@@ -414,9 +414,9 @@ def seed_company_vouchers(company_id: int, db: Session = Depends(get_db)):
     if not fy:
         fy = FinancialYear(
             company_id=company_id,
-            label="FY 2025-26",
-            start_date=date(2025, 4, 1),
-            end_date=date(2026, 3, 31),
+            label="FY 2026-27",
+            start_date=date(2026, 4, 1),
+            end_date=date(2027, 3, 31),
             is_current=True,
         )
         db.add(fy)

@@ -37,13 +37,27 @@ from app.modules.stationary.models import StationaryItem, SwatchCard, FabricInsp
 logger = logging.getLogger(__name__)
 
 async def seed_all_data(session):
-    """Seed the database with 10 records per page of connected real-time data across all workflow steps (excluding Finance)."""
+    """Seed the database with 10 records per page of connected real-time data across all workflow steps including Finance."""
     try:
         # Check if already seeded to avoid redundant operations on standard startups
         check_res = await session.execute(select(HRItem).where(HRItem.category == 'requisitions'))
-        if check_res.scalars().first():
-            logger.info("Database already seeded with workflow data. Skipping...")
-            return
+        
+        # Check if finance DB is also seeded
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.models.company import Company as FinanceCompany
+        finance_seeded = False
+        try:
+            finance_db = FinanceSessionLocal()
+            fc = finance_db.query(FinanceCompany).filter(FinanceCompany.name == "Dinesh Exports").first()
+            if fc:
+                finance_seeded = True
+            finance_db.close()
+        except Exception:
+            pass
+
+        # if check_res.scalars().first() and finance_seeded:
+        #     logger.info("Database already seeded with workflow data. Skipping...")
+        #     return
 
         logger.info("Clearing existing workflow data for clean seeding...")
         
@@ -66,7 +80,7 @@ async def seed_all_data(session):
             GreyYarnDeliveryItem, GreyYarnDelivery,
             YarnInwardItem, YarnInward,
             YarnPurchaseCountDetail, YarnPurchaseIndentDetail, YarnPurchaseOrder,
-            LoomAllocation, LoomMaster, ProductionLog, OperatorMaster,
+            ProductionLog, LoomAllocation, LoomMaster, OperatorMaster,
             WarpDesignItem, WeftDesignItem, TextileDesign, DesignEntry,
             WorkOrderTransaction,
             BuyerOrderItem, BuyerOrder, BuyerOrderSchedule, BuyerOrderSequence, BuyerOrderAmendment, BuyerOrderCompletion, BuyerOrderDispatch, BuyerOrderExpense,
@@ -503,6 +517,22 @@ async def seed_all_data(session):
         session.add_all(loom_allocations)
         await session.commit()
 
+        # Seed Production Logs (Phase 4 Daily Production Monitor)
+        production_logs = []
+        for i, la in enumerate(loom_allocations):
+            await session.refresh(la)
+            if la.allocation_status == "Active":
+                pl = ProductionLog(
+                    allocation_id=la.id,
+                    meters_produced=la.completed_meters,
+                    timestamp=datetime.utcnow() - timedelta(days=1),
+                    downtime_minutes=15 * i,
+                    remarks=f"Daily production on Loom {la.loom_id}"
+                )
+                production_logs.append(pl)
+        session.add_all(production_logs)
+        await session.commit()
+
         # Add Daily Production Monitor submasters for ppc_target_actual
         for i, lm in enumerate(loom_objects):
             t = SubMaster(
@@ -895,40 +925,55 @@ async def seed_all_data(session):
             
             # 1. Attendance
             hr_objects.append(HRItem(
-                category="attendance", employee_id=emp.employee_code,
+                category="attendance", employee_id=str(emp.id),
                 data={
                     "date": str(date.today() - timedelta(days=i)),
-                    "check_in": "09:00 AM",
-                    "check_out": "06:00 PM",
+                    "check_in": "09:00",
+                    "check_out": "18:00",
                     "status": "Present",
                     "total_hours": 9.0,
-                    "shift": emp.shift
+                    "hours": 9.0,
+                    "ot_hours": 1.0,
+                    "shift": emp.shift or "General",
+                    "employee": emp.employee_code,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id),
+                    "source": "Biometric"
                 }
             ))
 
             # 2. Claims / Expense Claims
             hr_objects.append(HRItem(
-                category="expense_claims", employee_id=emp.employee_code,
+                category="expense_claims", employee_id=str(emp.id),
                 data={
                     "claim_id": f"CLM-00{i+1}",
                     "date": str(date.today() - timedelta(days=2)),
+                    "expense_date": str(date.today() - timedelta(days=2)),
                     "expense_type": "Travel Expense" if i % 2 == 0 else "Medical Reimbursement",
+                    "category": "Travel" if i % 2 == 0 else "Medical",
+                    "description": f"Travel Expense {i+1}",
                     "amount": 2500.0 + (i * 500.0),
                     "status": "Approved" if i < 8 else "Pending",
                     "remarks": "Verified by Manager",
                     "title": f"Travel Expense {i+1}",
-                    "employee": emp.name
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
             hr_objects.append(HRItem(
-                category="claims", employee_id=emp.employee_code,
+                category="claims", employee_id=str(emp.id),
                 data={
                     "claim_id": f"CLM-00{i+1}",
                     "date": str(date.today() - timedelta(days=2)),
+                    "expense_date": str(date.today() - timedelta(days=2)),
                     "expense_type": "Travel Expense" if i % 2 == 0 else "Medical Reimbursement",
                     "amount": 2500.0 + (i * 500.0),
                     "status": "Approved" if i < 8 else "Pending",
-                    "remarks": "Verified by Manager"
+                    "remarks": "Verified by Manager",
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
 
@@ -971,14 +1016,19 @@ async def seed_all_data(session):
 
             # 5. Tasks (Onboarding tasks)
             hr_objects.append(HRItem(
-                category="tasks", employee_id=emp.employee_code,
+                category="tasks", employee_id=str(emp.id),
                 data={
                     "title": f"Complete Onboarding Checklist for Emp {i+1}",
                     "owner": "HR Dept",
                     "due_date": str(date.today() + timedelta(days=3)),
+                    "due": str(date.today() + timedelta(days=3)),
                     "status": "Pending" if i % 2 == 0 else "Completed",
                     "priority": "High",
-                    "comments": []
+                    "comments": [],
+                    "employeeName": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id),
+                    "category": "Documentation"
                 }
             ))
 
@@ -989,28 +1039,40 @@ async def seed_all_data(session):
                     "candidate_name": f"Candidate Offer {i+1}",
                     "position": designations_list[i],
                     "salary_offered": 35000 + (i * 3000),
+                    "gross": 35000 + (i * 3000),
+                    "allowances": 2000,
+                    "deductions": 1500,
                     "joining_date": str(date.today() + timedelta(days=15)),
+                    "joiningDate": str(date.today() + timedelta(days=15)),
                     "status": "Sent" if i % 2 == 0 else "Accepted"
                 }
             ))
 
             # 7. Performance
             hr_objects.append(HRItem(
-                category="performance", employee_id=emp.employee_code,
+                category="performance", employee_id=str(emp.id),
                 data={
                     "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id),
                     "final_score": 3.8 + (i * 0.1),
                     "status": "Completed" if i % 2 == 0 else "In Progress",
                     "review_period": "Q1 Performance Review",
-                    "reviewer": "Admin Supervisor"
+                    "reviewer": "Admin Supervisor",
+                    "goals": [
+                        {"title": "Improve Loom Efficiency", "weight": 0.5, "score": 4.0},
+                        {"title": "Minimize Yarn Waste", "weight": 0.5, "score": 3.6}
+                    ]
                 }
             ))
 
             # 8. Offboarding
             hr_objects.append(HRItem(
-                category="offboarding", employee_id=emp.employee_code,
+                category="offboarding", employee_id=str(emp.id),
                 data={
                     "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id),
                     "step": "Asset Return" if i % 2 == 0 else "Exit Interview",
                     "status": "Pending" if i % 2 == 0 else "Completed",
                     "notice_period": "30 Days",
@@ -1020,10 +1082,12 @@ async def seed_all_data(session):
 
             # 9. Payroll
             hr_objects.append(HRItem(
-                category="payroll", employee_id=emp.employee_code,
+                category="payroll", employee_id=str(emp.id),
                 data={
-                    "employee_id": emp.employee_code,
+                    "employee_id": str(emp.id),
+                    "employee_code": emp.employee_code,
                     "employee_name": emp.name,
+                    "employee": emp.name,
                     "basic": 18000.0 + (i * 2000),
                     "hra": 6000.0 + (i * 500),
                     "allowance": 4000.0 + (i * 500),
@@ -1037,21 +1101,26 @@ async def seed_all_data(session):
 
             # 10. Leaves
             hr_objects.append(HRItem(
-                category="leaves", employee_id=emp.employee_code,
+                category="leaves", employee_id=str(emp.id),
                 data={
                     "leave_type": "Casual Leave" if i % 2 == 0 else "Sick Leave",
                     "start_date": str(date.today() - timedelta(days=5)),
                     "end_date": str(date.today() - timedelta(days=4)),
+                    "from_date": str(date.today() - timedelta(days=5)),
+                    "to_date": str(date.today() - timedelta(days=4)),
                     "total_days": 1,
+                    "days": 1,
                     "status": "Approved" if i < 8 else "Pending",
                     "reason": "Family function" if i % 2 == 0 else "Fever",
-                    "employee": emp.name
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
 
             # 11. Loans
             hr_objects.append(HRItem(
-                category="loans", employee_id=emp.employee_code,
+                category="loans", employee_id=str(emp.id),
                 data={
                     "loan_type": "Personal Loan",
                     "amount": 50000.0 + (i * 10000.0),
@@ -1059,55 +1128,70 @@ async def seed_all_data(session):
                     "tenure_months": 12,
                     "status": "Approved" if i < 8 else "Pending",
                     "monthly_installment": 4500.0 + (i * 900.0),
-                    "employee": emp.name
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id),
+                    "applied_date": str(date.today() - timedelta(days=5)),
+                    "purpose": "Personal needs"
                 }
             ))
 
             # 12. Benefits
             hr_objects.append(HRItem(
-                category="benefits", employee_id=emp.employee_code,
+                category="benefits", employee_id=str(emp.id),
                 data={
                     "benefit_type": "Health Insurance",
                     "provider": "Star Health",
                     "coverage_amount": 300000.0,
                     "premium": 5000.0,
-                    "status": "Active"
+                    "status": "Active",
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
 
             # 13. Helpdesk
             hr_objects.append(HRItem(
-                category="helpdesk", employee_id=emp.employee_code,
+                category="helpdesk", employee_id=str(emp.id),
                 data={
                     "ticket_no": f"TKT-00{i+1}",
                     "subject": "System setup required" if i % 2 == 0 else "ID Card reprint",
                     "priority": "High" if i % 2 == 0 else "Medium",
                     "status": "Open" if i % 2 == 0 else "Resolved",
                     "assigned_to": "IT Support",
-                    "employee": emp.name
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
 
             # 14. Timesheets
             hr_objects.append(HRItem(
-                category="timesheets", employee_id=emp.employee_code,
+                category="timesheets", employee_id=str(emp.id),
                 data={
                     "date": str(date.today() - timedelta(days=i)),
                     "task_name": "Fabric Quality Inspection",
                     "hours_worked": 8,
-                    "status": "Approved"
+                    "status": "Approved",
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
 
             # 15. Documents
             hr_objects.append(HRItem(
-                category="documents", employee_id=emp.employee_code,
+                category="documents", employee_id=str(emp.id),
                 data={
                     "doc_name": f"Aadhaar_Card_Emp{i+1}.pdf",
                     "doc_type": "KYC Document",
                     "file_size": "1.2 MB",
                     "uploaded_by": emp.name,
-                    "upload_date": str(date.today() - timedelta(days=10))
+                    "upload_date": str(date.today() - timedelta(days=10)),
+                    "employee": emp.name,
+                    "employee_name": emp.name,
+                    "employee_id": str(emp.id)
                 }
             ))
 
@@ -1135,14 +1219,24 @@ async def seed_all_data(session):
 
             # 18. Travel Requests
             hr_objects.append(HRItem(
-                category="travel_requests",
+                category="travel_requests", employee_id=str(emp.id),
                 data={
+                    "request_id": f"TRV-00{i+1}",
+                    "employee_id": str(emp.id),
+                    "employee_name": emp.name,
+                    "employee": emp.name,
+                    "from_location": "Coimbatore",
+                    "to_location": "Chennai" if i % 2 == 0 else "Bangalore",
+                    "departure_date": str(date.today() + timedelta(days=5)),
+                    "return_date": str(date.today() + timedelta(days=7)),
                     "purpose": f"Client Meeting {i+1}",
-                    "destination": "Chennai",
-                    "start_date": str(date.today() + timedelta(days=5)),
-                    "end_date": str(date.today() + timedelta(days=7)),
+                    "transport_mode": "Train" if i % 2 == 0 else "Flight",
+                    "transport_class": "AC Tier 3" if i % 2 == 0 else "Economy",
+                    "hotel_required": True if i % 3 == 0 else False,
+                    "hotel_name": "Taj Connemara" if i % 3 == 0 else "",
                     "estimated_cost": 8000.0 + (i * 1000.0),
-                    "status": "Approved" if i < 8 else "Pending"
+                    "status": "Manager Approved" if i < 8 else "Pending",
+                    "co_travelers": []
                 }
             ))
 
@@ -1169,10 +1263,79 @@ async def seed_all_data(session):
                 }
             ))
 
+            # 21. Assets
+            hr_objects.append(HRItem(
+                category="assets", employee_id=str(emp.id),
+                data={
+                    "asset_id": f"AST-00{i+1}",
+                    "asset_name": "MacBook Pro" if i % 2 == 0 else "ThinkPad L14",
+                    "asset_type": "Laptop",
+                    "brand": "Apple" if i % 2 == 0 else "Lenovo",
+                    "model": "M3 Pro" if i % 2 == 0 else "Gen 4",
+                    "serial_number": f"SN-{1000+i}",
+                    "employee_id": str(emp.id),
+                    "employee_name": emp.name,
+                    "employee": emp.name,
+                    "assigned_date": str(date.today() - timedelta(days=100)),
+                    "purchase_date": str(date.today() - timedelta(days=365)),
+                    "purchase_value": 120000.0 if i % 2 == 0 else 75000.0,
+                    "purchase_cost": 120000.0 if i % 2 == 0 else 75000.0,
+                    "condition": "Excellent" if i % 2 == 0 else "Good",
+                    "status": "Assigned",
+                    "notes": "Company laptop"
+                }
+            ))
+
+            # 22. Goals
+            hr_objects.append(HRItem(
+                category="goals", employee_id=str(emp.id),
+                data={
+                    "title": f"Complete Phase 2 Weaving Target {i+1}",
+                    "description": "Achieve designated production efficiency.",
+                    "category": "Production",
+                    "target_value": 10000,
+                    "current_value": 8500,
+                    "unit": "Meters",
+                    "start_date": str(date.today() - timedelta(days=30)),
+                    "due_date": str(date.today() + timedelta(days=30)),
+                    "weight": 100,
+                    "status": "On Track",
+                    "employee_id": str(emp.id),
+                    "employee_name": emp.name,
+                    "employee": emp.name
+                }
+            ))
+
         session.add_all(hr_objects)
         await session.commit()
 
         # ── 17. Seed Vehicle logs & Trips (Phase 6 Logistics / Fleet) ──
+        # Seed 10 Routes
+        route_objects = []
+        for i in range(10):
+            r = Route(
+                route_name=f"Route Coimbatore to Mumbai {i+1}" if i < 5 else f"Route Coimbatore to Chennai {i+1}",
+                origin="Coimbatore",
+                destination="Mumbai" if i < 5 else "Chennai",
+                distance_km=450.0 + (i * 50.0),
+                estimated_duration_hours=9.0 + i,
+                route_type="Regular",
+                status="Active",
+                fuel_cost_estimate=11460.0,
+                fuel_date=str(date.today() - timedelta(days=1)),
+                fuel_station_id=1,
+                fuel_type="Diesel",
+                fuel_quantity_liters=120.0,
+                fuel_rate_per_liter=95.5,
+                fuel_odometer_reading=15000.0 + (i * 2000),
+                fuel_payment_mode="Cash",
+                fuel_vehicle_number=vehicle_nos[i],
+                fuel_station_name="HP Bunk Coimbatore"
+            )
+            route_objects.append(r)
+        session.add_all(route_objects)
+        await session.commit()
+
         fleet_objects = []
         for i in range(10):
             # Trip Logs
@@ -1191,6 +1354,52 @@ async def seed_all_data(session):
                 }
             )
             fleet_objects.append(ft)
+            
+            # Seed real SQL Trip
+            t = Trip(
+                vehicle_id=vehicle_objects[i].id,
+                driver_id=driver_objects[i].id,
+                route_id=route_objects[i].id,
+                trip_date=str(date.today()),
+                start_location="Coimbatore",
+                end_location="Mumbai" if i < 5 else "Chennai",
+                start_time="08:00",
+                end_time="17:00",
+                odometer_start=15000.0 + (i * 2000),
+                odometer_end=15000.0 + (i * 2000) + 450.0,
+                fuel_used=120.0,
+                status="Completed",
+                revenue=25000.0 + (i * 1000.0),
+                expenses=15000.0 + (i * 500.0),
+                notes=f"Yarn | Customer_{i+1} | Qty: {10.0 + i} Tons | Rate: {2500.0 + (i * 100)}"
+            )
+            session.add(t)
+            
+            # Service Schedule
+            schedule = ServiceSchedule(
+                vehicle_id=vehicle_objects[i].id,
+                scheduled_date=str(date.today() + timedelta(days=10 + i)),
+                service_type="Scheduled Maintenance" if i % 2 == 0 else "Major Overhaul",
+                status="Pending" if i % 2 == 0 else "Completed",
+                service_provider="Authorized Service Center" if i % 2 == 0 else "Local Garage",
+                estimated_cost=5000.0 + (i * 1000),
+                notes=f"Periodic check at {15000.0 + (i * 2000)} km"
+            )
+            session.add(schedule)
+            
+            # Fleet Document
+            doc = FleetDocument(
+                vehicle_id=vehicle_objects[i].id,
+                document_type="Insurance" if i % 3 == 0 else "Fitness Certificate" if i % 3 == 1 else "Permit",
+                document_name="Insurance Policy" if i % 3 == 0 else "Fitness Certificate" if i % 3 == 1 else "National Permit",
+                document_path=f"/uploads/docs/doc_{i+1}.pdf",
+                expiry_date=str(date.today() + timedelta(days=90 + i * 30)),
+                issued_date=str(date.today() - timedelta(days=270 - i * 30)),
+                authority="RTO Tamil Nadu",
+                reference_number=f"REF-DOC-2026-{1000+i}",
+                notes="Verified original uploaded"
+            )
+            session.add(doc)
             
             # Fuel entries
             fuel = FuelEntry(
@@ -1255,20 +1464,168 @@ async def seed_all_data(session):
             session.add(rdc)
             
             # Seed Stationary/Consumables items
-            item = StationaryItem(
-                category="consumables_categories",
-                data={
-                    "item_id": f"CONS-00{i+1}",
-                    "item_name": "Loom Lubricant Oil Grade 46" if i % 2 == 0 else "Safety Nose Masks",
-                    "available_qty": 50.0 + (i * 10),
-                    "reorder_level": 10.0,
-                    "unit": "Liters" if i % 2 == 0 else "Box",
-                    "rate": 350.0 if i % 2 == 0 else 120.0
-                }
-            )
-            session.add(item)
-            
+            pass
+
+        # ── 18b. Seed All Stationery & Consumables Datasets ──
+        # Seed UOMs
+        default_uoms = [
+            { "id": "UOM001", "name": "Nos", "description": "Number of units", "active": "Yes" },
+            { "id": "UOM002", "name": "Box", "description": "Box package", "active": "Yes" },
+            { "id": "UOM003", "name": "Packet", "description": "Packets", "active": "Yes" },
+            { "id": "UOM004", "name": "Roll", "description": "Rolls of tape or sticker", "active": "Yes" },
+            { "id": "UOM005", "name": "Kg", "description": "Kilograms", "active": "Yes" },
+            { "id": "UOM006", "name": "Litre", "description": "Litres", "active": "Yes" },
+            { "id": "UOM007", "name": "Ream", "description": "Reams of paper", "active": "Yes" }
+        ]
+        for uom_data in default_uoms:
+            session.add(StationaryItem(category="consumables_uoms", data=uom_data))
+
+        # Seed Departments
+        default_departments = [
+            { "id": "DEP001", "name": "HR & Admin", "code": "HRD", "active": "Yes" },
+            { "id": "DEP002", "name": "Accounts & Finance", "code": "ACF", "active": "Yes" },
+            { "id": "DEP003", "name": "Production", "code": "PRD", "active": "Yes" },
+            { "id": "DEP004", "name": "Quality Assurance", "code": "QAC", "active": "Yes" },
+            { "id": "DEP005", "name": "Stores & Warehouse", "code": "STW", "active": "Yes" }
+        ]
+        for dept_data in default_departments:
+            session.add(StationaryItem(category="consumables_departments", data=dept_data))
+
+        # Seed Vendors
+        default_vendors = [
+            { "id": "VEN001", "name": "Apex Supplies Ltd", "code": "APX", "gst": "33AAAAA1111A1Z1", "phone": "9876543210", "email": "sales@apex.com", "rating": 4.5 },
+            { "id": "VEN002", "name": "Prime Packers", "code": "PRM", "gst": "33BBBBB2222B2Z2", "phone": "9876543211", "email": "orders@primepack.com", "rating": 4.2 },
+            { "id": "VEN003", "name": "SafeWork Safety Goods", "code": "SFW", "gst": "33CCCCC3333C3Z3", "phone": "9876543212", "email": "info@safework.com", "rating": 4.8 },
+            { "id": "VEN004", "name": "Metro Stationery Hub", "code": "MTR", "gst": "33DDDDD4444D4Z4", "phone": "9876543213", "email": "contact@metrostationery.com", "rating": 4.0 }
+        ]
+        for vendor_data in default_vendors:
+            session.add(StationaryItem(category="consumables_vendors", data=vendor_data))
+
+        # Seed Categories
+        default_cats = [
+            { "id": "CAT001", "name": "Office Stationery", "description": "Pens, papers, folders, binders, office tools", "active": "Yes" },
+            { "id": "CAT002", "name": "Printing Consumables", "description": "Ink cartridges, toner, drum units", "active": "Yes" },
+            { "id": "CAT003", "name": "Computer Accessories", "description": "USB drives, keyboards, mouse, cables", "active": "Yes" },
+            { "id": "CAT004", "name": "Packing Materials", "description": "Cartons, tapes, bubble wrap, poly bags", "active": "Yes" },
+            { "id": "CAT005", "name": "Housekeeping", "description": "Phenyl, detergents, mops, cleaning clothes", "active": "Yes" },
+            { "id": "CAT006", "name": "Safety Items", "description": "Gloves, masks, helmets, ear plugs, jackets", "active": "Yes" },
+            { "id": "CAT007", "name": "Production Consumables", "description": "Shade cards, lot stickers, design sheets", "active": "Yes" }
+        ]
+        for cat_data in default_cats:
+            session.add(StationaryItem(category="consumables_categories", data=cat_data))
+
+        # Seed Items
+        default_items = [
+            { "id": "ITM001", "name": "A4 Paper", "code": "A4P", "category": "Office Stationery", "uom": "Ream", "minStock": 20, "maxStock": 200, "safetyStock": 10, "currentStock": 45, "rate": 280, "vendor": "Metro Stationery Hub" },
+            { "id": "ITM002", "name": "Ball Pen Blue", "code": "BPB", "category": "Office Stationery", "uom": "Box", "minStock": 10, "maxStock": 50, "safetyStock": 5, "currentStock": 15, "rate": 150, "vendor": "Metro Stationery Hub" },
+            { "id": "ITM003", "name": "HP Laser Toner", "code": "HPT", "category": "Printing Consumables", "uom": "Nos", "minStock": 2, "maxStock": 10, "safetyStock": 1, "currentStock": 3, "rate": 3200, "vendor": "Apex Supplies Ltd" },
+            { "id": "ITM004", "name": "Carton Box 5-Ply", "code": "CB5", "category": "Packing Materials", "uom": "Nos", "minStock": 500, "maxStock": 5000, "safetyStock": 100, "currentStock": 1200, "rate": 45, "vendor": "Prime Packers" },
+            { "id": "ITM005", "name": "BOPP Packing Tape 2\"", "code": "BOP", "category": "Packing Materials", "uom": "Roll", "minStock": 50, "maxStock": 500, "safetyStock": 10, "currentStock": 80, "rate": 65, "vendor": "Prime Packers" },
+            { "id": "ITM006", "name": "Safety Gloves Latex", "code": "SGL", "category": "Safety Items", "uom": "Box", "minStock": 15, "maxStock": 100, "safetyStock": 5, "currentStock": 35, "rate": 450, "vendor": "SafeWork Safety Goods" },
+            { "id": "ITM007", "name": "Floor Cleaner Phenyl", "code": "FCP", "category": "Housekeeping", "uom": "Litre", "minStock": 10, "maxStock": 50, "safetyStock": 2, "currentStock": 25, "rate": 85, "vendor": "Apex Supplies Ltd" }
+        ]
+        for item_data in default_items:
+            session.add(StationaryItem(category="consumables_items", data=item_data))
+
+        # Seed Requests
+        default_requests = [
+            { "id": "REQ001", "date": "2026-06-10", "department": "HR & Admin", "requestedBy": "Dinesh Kumar", "priority": "Medium", "status": "Approved", "remarks": "For new joiners setup", "items": [{ "itemId": "ITM001", "qty": 5, "approvedQty": 5 }, { "itemId": "ITM002", "qty": 2, "approvedQty": 2 }] },
+            { "id": "REQ002", "date": "2026-06-12", "department": "Production", "requestedBy": "M. Selvam", "priority": "High", "status": "Pending", "remarks": "Urgent packing material replenishment", "items": [{ "itemId": "ITM004", "qty": 500, "approvedQty": 0 }] }
+        ]
+        for req_data in default_requests:
+            session.add(StationaryItem(category="consumables_requests", data=req_data))
+
+        # Seed POs
+        default_pos = [
+            { "id": "PO001", "date": "2026-06-08", "vendor": "Prime Packers", "paymentTerms": "30 Days Credit", "expectedDate": "2026-06-15", "status": "Ordered", "items": [{ "itemId": "ITM004", "qty": 1000, "rate": 45, "total": 45000 }] }
+        ]
+        for po_data in default_pos:
+            session.add(StationaryItem(category="consumables_pos", data=po_data))
+
+        # Seed GRNs
+        default_grns = [
+            { "id": "GRN001", "date": "2026-06-09", "vendor": "Prime Packers", "poId": "PO001", "invoiceNo": "INV-9921", "status": "Accepted", "items": [{ "itemId": "ITM004", "orderedQty": 1000, "receivedQty": 1000, "acceptedQty": 1000, "rejectedQty": 0, "rate": 45 }] }
+        ]
+        for grn_data in default_grns:
+            session.add(StationaryItem(category="consumables_grns", data=grn_data))
+
+        # Seed Issues
+        default_issues = [
+            { "id": "ISS001", "date": "2026-06-11", "department": "HR & Admin", "employee": "Dinesh Kumar", "purpose": "Office Stationery Setup", "items": [{ "itemId": "ITM001", "qty": 3, "rate": 280 }, { "itemId": "ITM002", "qty": 1, "rate": 150 }] }
+        ]
+        for issue_data in default_issues:
+            session.add(StationaryItem(category="consumables_issues", data=issue_data))
+
+        # Seed Ledger
+        default_ledger = [
+            { "id": "LED001", "date": "2026-06-01", "itemId": "ITM001", "refType": "Opening", "refId": "-", "inQty": 48, "outQty": 0, "balance": 48 },
+            { "id": "LED002", "date": "2026-06-11", "itemId": "ITM001", "refType": "Issue", "refId": "ISS001", "inQty": 0, "outQty": 3, "balance": 45 }
+        ]
+        for ledger_data in default_ledger:
+            session.add(StationaryItem(category="consumables_ledger", data=ledger_data))
+
+        # Seed Quotations
+        default_quotations = [
+            { "id": "QTN001", "date": "2026-06-05", "vendor": "Apex Supplies Ltd", "validityDate": "2026-07-05", "paymentTerms": "30 Days Credit", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 10, "rate": 270, "total": 2700 }], "quotation_file_path": "" }
+        ]
+        for qtn_data in default_quotations:
+            session.add(StationaryItem(category="consumables_quotations", data=qtn_data))
+
+        # Seed Requisitions
+        default_requisitions = [
+            { "id": "PRQ001", "date": "2026-06-11", "requestedBy": "M. Selvam", "status": "Pending", "items": [{ "itemId": "ITM004", "qty": 200, "currentStock": 1200, "minStock": 500 }] },
+            { "id": "PRQ002", "date": "2026-06-12", "requestedBy": "Dinesh Kumar", "status": "Approved", "items": [{ "itemId": "ITM001", "qty": 50, "currentStock": 45, "minStock": 20 }] }
+        ]
+        for req_data in default_requisitions:
+            session.add(StationaryItem(category="consumables_requisitions", data=req_data))
+
+        # Seed Returns
+        default_returns = [
+            { "id": "RET001", "date": "2026-06-12", "department": "Production", "employee": "K. Ramasamy", "itemId": "ITM006", "qty": 5, "reason": "Excess quantity returned from floor" },
+            { "id": "RET002", "date": "2026-06-13", "department": "HR & Admin", "employee": "P. Sudha", "itemId": "ITM002", "qty": 10, "reason": "Unused pens returned to store" }
+        ]
+        for ret_data in default_returns:
+            session.add(StationaryItem(category="consumables_returns", data=ret_data))
+
+        # Seed Transfers
+        default_transfers = [
+            { "id": "TRF001", "date": "2026-06-14", "fromStore": "Main Store", "toStore": "Weaving Section Store", "itemId": "ITM005", "qty": 20, "transferBy": "M. Selvam" },
+            { "id": "TRF002", "date": "2026-06-15", "fromStore": "Main Store", "toStore": "Garment Store", "itemId": "ITM004", "qty": 100, "transferBy": "Dinesh Kumar" }
+        ]
+        for trf_data in default_transfers:
+            session.add(StationaryItem(category="consumables_transfers", data=trf_data))
+
+        # Seed Adjustments
+        default_adjustments = [
+            { "id": "ADJ001", "date": "2026-06-15", "itemId": "ITM001", "qty": 2, "type": "Addition", "reason": "Found extra during pre-audit", "adjustedBy": "M. Selvam" },
+            { "id": "ADJ002", "date": "2026-06-16", "itemId": "ITM003", "qty": 1, "type": "Deduction", "reason": "Damaged in storage", "adjustedBy": "Dinesh Kumar" }
+        ]
+        for adj_data in default_adjustments:
+            session.add(StationaryItem(category="consumables_adjustments", data=adj_data))
+
+        # Seed Verifications
+        default_verifications = [
+            { "id": "PV001", "date": "2026-06-17", "verifiedBy": "Audit Team A", "status": "Completed", "items": [{ "itemId": "ITM001", "name": "A4 Paper", "systemQty": 45, "physicalQty": 45, "variance": 0 }, { "itemId": "ITM002", "name": "Ball Pen Blue", "systemQty": 15, "physicalQty": 14, "variance": -1 }] }
+        ]
+        for ver_data in default_verifications:
+            session.add(StationaryItem(category="consumables_verifications", data=ver_data))
+
         await session.commit()
+
+        # ── 19. Seed Finance Module (Phase 9 Finance) ──
+        # Seed company and vouchers to complete start-to-end workflow data add
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.routers.companies import seed_textile_company
+        
+        finance_db = FinanceSessionLocal()
+        try:
+            logger.info("Seeding Finance Module...")
+            seed_textile_company(db=finance_db)
+            logger.info("Successfully seeded finance module with textile company and vouchers.")
+        except Exception as e:
+            logger.error(f"Error seeding finance module: {e}")
+        finally:
+            finance_db.close()
 
         logger.info("Successfully seeded all 10 connected records per ERP page workflow.")
 

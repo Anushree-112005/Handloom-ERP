@@ -317,37 +317,37 @@ const modules = [
       { path: '/cubebook/reports/purchase-register', label: 'Purchase Register', icon: ShoppingCart },
       { path: '/cubebook/reports/ratio-analysis', label: 'Ratio Analysis', icon: PieChart },
 
-      { section: 'GST' },
-      { path: '/cubebook/gst', label: 'GST Dashboard', icon: ClipboardList },
-      { path: '/cubebook/gst/gstr1', label: 'GSTR-1', icon: ClipboardList },
-      { path: '/cubebook/gst/gstr3b', label: 'GSTR-3B', icon: ClipboardList },
-      { path: '/cubebook/gst/itc', label: 'Input Tax Credit', icon: ClipboardList },
+      // { section: 'GST' },
+      // { path: '/cubebook/gst', label: 'GST Dashboard', icon: ClipboardList },
+      // { path: '/cubebook/gst/gstr1', label: 'GSTR-1', icon: ClipboardList },
+      // { path: '/cubebook/gst/gstr3b', label: 'GSTR-3B', icon: ClipboardList },
+      // { path: '/cubebook/gst/itc', label: 'Input Tax Credit', icon: ClipboardList },
 
-      { section: 'INVENTORY' },
-      { path: '/cubebook/inventory/stock-summary', label: 'Stock Summary', icon: Box },
-      { path: '/cubebook/inventory/movement', label: 'Stock Movement', icon: ArrowRightLeft },
-      { path: '/cubebook/inventory/godowns', label: 'Godown Summary', icon: MapPin },
+      // { section: 'INVENTORY' },
+      // { path: '/cubebook/inventory/stock-summary', label: 'Stock Summary', icon: Box },
+      // { path: '/cubebook/inventory/movement', label: 'Stock Movement', icon: ArrowRightLeft },
+      // { path: '/cubebook/inventory/godowns', label: 'Godown Summary', icon: MapPin },
 
-      { section: 'BANKING' },
-      { path: '/cubebook/banking', label: 'Banking Overview', icon: CreditCard },
-      { path: '/cubebook/banking/cheque-register', label: 'Cheque Register', icon: FileText },
-      { path: '/cubebook/banking/activities', label: 'Bank Reconcile', icon: CheckSquare },
+      // { section: 'BANKING' },
+      // { path: '/cubebook/banking', label: 'Banking Overview', icon: CreditCard },
+      // { path: '/cubebook/banking/cheque-register', label: 'Cheque Register', icon: FileText },
+      // { path: '/cubebook/banking/activities', label: 'Bank Reconcile', icon: CheckSquare },
 
-      { section: 'PAYROLL' },
-      { path: '/cubebook/payroll/employees', label: 'Employee Master', icon: Users },
-      { path: '/cubebook/payroll/processing', label: 'Salary Processing', icon: DollarSign },
-      { path: '/cubebook/payroll/reports', label: 'Payroll Reports', icon: FileText },
+      // { section: 'PAYROLL' },
+      // { path: '/cubebook/payroll/employees', label: 'Employee Master', icon: Users },
+      // { path: '/cubebook/payroll/processing', label: 'Salary Processing', icon: DollarSign },
+      // { path: '/cubebook/payroll/reports', label: 'Payroll Reports', icon: FileText },
 
-      { section: 'ADMINISTRATION' },
-      { path: '/cubebook/companies', label: 'Company Master', icon: Building },
-      { path: '/cubebook/company-setup', label: 'Company Settings', icon: Settings },
-      { path: '/cubebook/admin/users', label: 'User Management', icon: Users },
-      { path: '/cubebook/admin/roles', label: 'Roles & Permissions', icon: Shield },
-      { path: '/cubebook/currency', label: 'Currency Master', icon: Globe },
+      // { section: 'ADMINISTRATION' },
+      // { path: '/cubebook/companies', label: 'Company Master', icon: Building },
+      // { path: '/cubebook/company-setup', label: 'Company Settings', icon: Settings },
+      // { path: '/cubebook/admin/users', label: 'User Management', icon: Users },
+      // { path: '/cubebook/admin/roles', label: 'Roles & Permissions', icon: Shield },
+      // { path: '/cubebook/currency', label: 'Currency Master', icon: Globe },
 
-      { section: 'AUDIT' },
-      { path: '/cubebook/audit', label: 'Audit Log', icon: Activity },
-      { path: '/cubebook/audit/vouchers', label: 'Voucher History', icon: ClipboardList },
+      // { section: 'AUDIT' },
+      // { path: '/cubebook/audit', label: 'Audit Log', icon: Activity },
+      // { path: '/cubebook/audit/vouchers', label: 'Voucher History', icon: ClipboardList },
     ]
   },
   { section: 'Human Resources' },
@@ -400,16 +400,16 @@ const modules = [
     label: 'Vehicle Management',
     icon: LayoutGrid,
     children: [
-      { path: '/fleet/dashboard', label: 'Dashboard' },
-      { path: '/fleet/vehicles', label: 'Vehicles' },
-      { path: '/fleet/drivers', label: 'Vehicle Assignment' },
-      { path: '/fleet/service-schedule', label: 'Service Schedule' },
-      { path: '/fleet/breakdown-entry', label: 'Breakdown Entry' },
-      { path: '/fleet/maintenance-log', label: 'Maintenance Log' },
-      { path: '/fleet/documents', label: 'RC / Insurance / Permit' },
-      { path: '/fleet/expiry-alerts', label: 'Expiry Alerts' },
-      { path: '/fleet/fuel-consumption', label: 'Fuel Consumption Report' },
-      { path: '/fleet/driver-performance', label: 'Driver Report' }
+      { path: '/fleet/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/fleet/vehicles', label: 'Vehicles', icon: Truck },
+      { path: '/fleet/drivers', label: 'Vehicle Assignment', icon: Users },
+      { path: '/fleet/service-schedule', label: 'Service Schedule', icon: Calendar },
+      { path: '/fleet/breakdown-entry', label: 'Breakdown Entry', icon: AlertTriangle },
+      { path: '/fleet/maintenance-log', label: 'Maintenance Log', icon: Wrench },
+      { path: '/fleet/documents', label: 'RC / Insurance / Permit', icon: FileText },
+      { path: '/fleet/expiry-alerts', label: 'Expiry Alerts', icon: Bell },
+      { path: '/fleet/fuel-consumption', label: 'Fuel Consumption Report', icon: Activity },
+      { path: '/fleet/driver-performance', label: 'Driver Report', icon: Users }
     ]
   },
 
@@ -439,16 +439,16 @@ const modules = [
       { path: '/stores-consumables/return', label: 'Return to Store', icon: ArrowDownLeft },
       { path: '/stores-consumables/transfer', label: 'Store Transfer', icon: ArrowRightLeft },
       { path: '/stores-consumables/adjustment', label: 'Stock Adjustment', icon: AlertTriangle },
-      { path: '/stores-consumables/physical', label: 'Physical Verification', icon: CheckSquare },
+      // { path: '/stores-consumables/physical', label: 'Physical Verification', icon: CheckSquare },
       // { path: '/stores-consumables/swatch-cards', label: 'Swatch Cards', icon: Palette },
       // { path: '/stores-consumables/fabric-inspection', label: 'Fabric Inspection Book', icon: CheckSquare },
       { path: '/stores-consumables/returnable-dc', label: 'Returnable DC', icon: FileText },
 
 
-      { section: 'APPROVALS' },
-      { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
-      { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
-      { path: '/stores-consumables/approve-issue', label: 'Issue Approval', icon: Shield },
+      // { section: 'APPROVALS' },
+      // { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
+      // { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
+      // { path: '/stores-consumables/approve-issue', label: 'Issue Approval', icon: Shield },
 
       { section: 'REPORTS & ANALYTICS' },
       { path: '/stores-consumables/report-stock', label: 'Stock Inventory', icon: PieChart },
@@ -580,65 +580,6 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
           item.section ? (
             <div key={i} className="nav-section">{item.section}</div>
           ) : item.children ? (
-            item.label === 'Vehicle Management' ? (
-              <div key={item.label} className="nav-group">
-                <button
-                  className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
-                  onClick={() => {
-                    toggleMenu(item.label);
-                    navigate('/fleet/dashboard');
-                  }}
-                  style={{
-                    width: 'calc(100% - 16px)',
-                    margin: '4px 8px',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    fontWeight: '600',
-                    color: '#1E293B'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <item.icon style={{ width: 18, height: 18, color: '#7C3AED' }} />
-                    <span>{item.label}</span>
-                  </div>
-                  {openMenus[item.label] ? <ChevronDown size={16} style={{ color: '#64748b' }} /> : <ChevronRight size={16} style={{ color: '#64748b' }} />}
-                </button>
-                {openMenus[item.label] && (
-                  <div
-                    className="nav-children animate-fade"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                      marginLeft: '24px',
-                      borderLeft: '1.5px solid #E2E8F0',
-                      paddingLeft: '12px',
-                      marginTop: '6px',
-                      marginBottom: '10px',
-                      gap: '4px'
-                    }}
-                  >
-                    {item.children.map((child) => (
-                      <NavLink
-                        key={child.path}
-                        to={child.path}
-                        end={child.path === '/'}
-                        className={({ isActive }) =>
-                          `vehicle-sub-item ${isActive ? 'active' : ''}`
-                        }
-                      >
-                        <span>{child.label}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
               <div key={item.label} className="nav-group">
                 <button
                   className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
@@ -699,8 +640,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                   </div>
                 )}
               </div>
-            )
-          ) : (
+            ) : (
             <NavLink
               key={item.path}
               to={item.path}

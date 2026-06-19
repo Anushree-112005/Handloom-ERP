@@ -68,8 +68,8 @@ export default function ItemMaster() {
   };
 
   const filtered = items.filter(itm => 
-    itm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    itm.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (itm?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (itm?.category || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -110,7 +110,7 @@ export default function ItemMaster() {
           </div>
 
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
+            <table className="data-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
                   <th>Item Code</th>
@@ -126,21 +126,21 @@ export default function ItemMaster() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr><td colSpan="8" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
-                ) : filtered.map(itm => (
-                  <tr key={itm.id}>
-                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{itm.code || itm.id}</td>
-                    <td style={{ fontWeight: 600 }}>{itm.name}</td>
-                    <td>{itm.category}</td>
-                    <td>{itm.uom}</td>
-                    <td style={{ textAlign: "right", fontWeight: 700, color: (itm.currentStock || 0) <= itm.minStock ? '#ef4444' : 'var(--text-primary)' }}>{itm.currentStock || 0}</td>
-                    <td style={{ textAlign: "right" }}>{itm.minStock}</td>
-                    <td style={{ textAlign: "right" }}>₹{itm.rate}</td>
+                 ) : filtered.map(itm => (
+                  <tr key={itm?.id}>
+                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{itm?.code || itm?.id}</td>
+                    <td style={{ fontWeight: 600 }}>{itm?.name || ''}</td>
+                    <td>{itm?.category || ''}</td>
+                    <td>{itm?.uom || ''}</td>
+                    <td style={{ textAlign: "right", fontWeight: 700, color: (itm?.currentStock || 0) <= (itm?.minStock || 0) ? '#ef4444' : 'var(--text-primary)' }}>{itm?.currentStock || 0}</td>
+                    <td style={{ textAlign: "right" }}>{itm?.minStock || 0}</td>
+                    <td style={{ textAlign: "right" }}>₹{itm?.rate || 0}</td>
                     <td style={{ textAlign: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         <button onClick={() => handleOpenForm(itm)} style={{ padding: 6, borderRadius: 8, color: '#4f46e5', background: '#e0e7ff', cursor: "pointer", border: "none" }}>
                           <Edit2 size={14} />
                         </button>
-                        <button onClick={() => handleDelete(itm.id)} style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }}>
+                        <button onClick={() => handleDelete(itm?.id)} style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }}>
                           <Trash2 size={14} />
                         </button>
                       </div>

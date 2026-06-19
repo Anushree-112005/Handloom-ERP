@@ -46,17 +46,31 @@ export default function Dashboard() {
   const { data: salesReg }   = useQuery({ queryKey: ['dash-sales', companyId, from, today], queryFn: () => reports.salesRegister({ ...params }), enabled: !!companyId });
 
   const monthlyData = useMemo(() => {
-    if (!salesReg?.rows) return [];
-    const map = {};
-    salesReg.rows.forEach(r => {
-      const m = r.date?.slice(0, 7);
-      if (m) map[m] = (map[m] || 0) + (r.total || 0);
-    });
-    return Object.entries(map).sort().slice(-6).map(([m, v]) => ({
-      month: new Date(m + '-01').toLocaleString('en-IN', { month: 'short' }),
-      Sales: Math.round(v),
-    }));
-  }, [salesReg]);
+    const result = [];
+    const todayDate = new Date(today);
+    // Generate present month to previous 4 months (5 months total)
+    for (let i = 4; i >= 0; i--) {
+      const d = new Date(todayDate.getFullYear(), todayDate.getMonth() - i, 1);
+      const yearMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      const label = d.toLocaleString('en-IN', { month: 'short' });
+      result.push({
+        key: yearMonth,
+        month: label,
+        Sales: 0
+      });
+    }
+
+    if (salesReg?.rows) {
+      salesReg.rows.forEach(r => {
+        const m = r.date?.slice(0, 7);
+        const match = result.find(item => item.key === m);
+        if (match) {
+          match.Sales += Math.round(r.total || 0);
+        }
+      });
+    }
+    return result;
+  }, [salesReg, today]);
 
   const plPieData = pl ? [
     { name: 'Income',   value: pl.income?.total || 0 },
@@ -157,7 +171,7 @@ export default function Dashboard() {
         <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h4>
         {subtitle && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{subtitle}</span>}
       </div>
-      <div style={{ flex: 1, minHeight: 220 }}>
+      <div style={{ position: 'relative', width: '100%', height: 220 }}>
         {children}
       </div>
     </div>
@@ -224,88 +238,52 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Vouchers + Quick Links */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
-        {/* Recent Vouchers */}
-        <div style={{ gridColumn: 'span 2' }}>
-          <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Recent Transactions</h3>
-              <button onClick={() => navigate('/cubebook/day-book')} style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
-                View Day Book →
-              </button>
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Date</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Voucher</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Type</th>
-                  <th style={{ textAlign: 'right', padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(recent || []).slice(0, 8).map(v => {
-                  const actionData = VOUCHER_ACTIONS.find(a => a.type === v.voucher_type) || VOUCHER_ACTIONS[4];
-                  return (
-                    <tr key={v.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.2s' }} onClick={() => navigate('/cubebook/vouchers')} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '12px 20px', color: 'var(--text-muted)', fontSize: 12 }}>{v.date}</td>
-                      <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{v.voucher_number}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: '9999px',
-                          background: actionData.bg,
-                          color: actionData.color,
-                          border: `1px solid ${actionData.border}`
-                        }}>
-                          {v.voucher_type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 20px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                        ₹{fmt(v.total_amount)}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {!recent?.length && (
-                  <tr><td colSpan={4} style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No transactions yet</td></tr>
-                )}
-              </tbody>
-            </table>
+      {/* Recent Vouchers */}
+      <div style={{ marginBottom: 16 }}>
+        <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Recent Transactions</h3>
+            <button onClick={() => navigate('/cubebook/day-book')} style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
+              View Day Book →
+            </button>
           </div>
-        </div>
-
-        {/* Quick Links */}
-        <div>
-          <div className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', height: '100%' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Quick Reports</h3>
-            </div>
-            <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {[
-                { icon: Scale,      label: 'Trial Balance',     path: '/cubebook/reports/trial-balance',    color: '#6366f1' },
-                { icon: TrendingUp, label: 'Profit & Loss',     path: '/cubebook/reports/profit-loss',      color: '#22c55e' },
-                { icon: Package,    label: 'Balance Sheet',     path: '/cubebook/reports/balance-sheet',    color: '#3b82f6' },
-                { icon: BookOpen,   label: 'Day Book',          path: '/cubebook/day-book',                 color: '#f59e0b' },
-                { icon: DollarSign, label: 'Cash Book',         path: '/cubebook/reports/cash-book',        color: '#14b8a6' },
-                { icon: CreditCard, label: 'Bank Book',         path: '/cubebook/reports/bank-book',        color: '#8b5cf6' },
-                { icon: AlertTriangle,label:'Outstanding',      path: '/cubebook/reports/outstanding',      color: '#ef4444' },
-                { icon: FileText,   label: 'GST Summary',       path: '/cubebook/gst',                      color: '#f97316' },
-              ].map(({ icon: Icon, label, path, color }) => (
-                <button key={path} onClick={() => navigate(path)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ width: 28, height: 28, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: `${color}15`, color: color }}>
-                    <Icon size={14} strokeWidth={2.5} />
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', flex: 1 }}>{label}</span>
-                  <ArrowUpRight size={14} style={{ color: 'var(--text-muted)' }} />
-                </button>
-              ))}
-            </div>
-          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Date</th>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Voucher</th>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Type</th>
+                <th style={{ textAlign: 'right', padding: '12px 20px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: 11, textTransform: 'uppercase' }}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(recent || []).slice(0, 8).map(v => {
+                const actionData = VOUCHER_ACTIONS.find(a => a.type === v.voucher_type) || VOUCHER_ACTIONS[4];
+                return (
+                  <tr key={v.id} style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.2s' }} onClick={() => navigate('/cubebook/vouchers')} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '12px 20px', color: 'var(--text-muted)', fontSize: 12 }}>{v.date}</td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{v.voucher_number}</td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: '9999px',
+                        background: actionData.bg,
+                        color: actionData.color,
+                        border: `1px solid ${actionData.border}`
+                      }}>
+                        {v.voucher_type}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 20px', textAlign: 'right', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      ₹{fmt(v.total_amount)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!recent?.length && (
+                <tr><td colSpan={4} style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No transactions yet</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
