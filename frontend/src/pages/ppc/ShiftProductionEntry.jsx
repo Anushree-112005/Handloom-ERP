@@ -11,7 +11,7 @@ export default function ShiftProductionEntry() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [formData, setFormData] = useState({
     entry_id: '',
     entry_date: new Date().toISOString().split('T')[0],
@@ -57,22 +57,22 @@ export default function ShiftProductionEntry() {
 
   const handleLoomShiftChange = (name, value) => {
     const updated = { ...formData, [name]: value };
-    
+
     if (updated.loom_id && updated.shift) {
       // Find operator and target from shift_planning_v2
       const loom = looms.find(l => l.id.toString() === updated.loom_id);
       const lName = loom ? loom.loom_name : updated.loom_id;
-      
-      const assign = assignments.find(a => 
+
+      const assign = assignments.find(a =>
         a.description && a.description.includes(lName) && a.code === updated.shift
       );
 
       if (assign) {
-         updated.operator = assign.extra_field_1;
-         // Target meters is extra_field_2: e.g. "212 m"
-         if (assign.extra_field_2) {
-            updated.target_meters = parseFloat(assign.extra_field_2.replace(' m', '')) || 0;
-         }
+        updated.operator = assign.extra_field_1;
+        // Target meters is extra_field_2: e.g. "212 m"
+        if (assign.extra_field_2) {
+          updated.target_meters = parseFloat(assign.extra_field_2.replace(' m', '')) || 0;
+        }
       } else {
         // Fallback or empty if not assigned
         updated.operator = '';
@@ -83,8 +83,8 @@ export default function ShiftProductionEntry() {
       // Simulating opening meter by finding the loom start entry
       const startEntry = startEntries.find(s => s.code === updated.loom_id);
       if (startEntry && startEntry.description) {
-         const match = startEntry.description.match(/Start:\s*(\d+)m/);
-         if (match) updated.opening_meter = parseInt(match[1], 10);
+        const match = startEntry.description.match(/Start:\s*(\d+)m/);
+        if (match) updated.opening_meter = parseInt(match[1], 10);
       }
     }
 
@@ -97,7 +97,7 @@ export default function ShiftProductionEntry() {
     const produced = Math.max(0, close - open);
     const target = parseFloat(data.target_meters) || 1;
     const eff = (produced / target) * 100;
-    
+
     const defect = parseFloat(data.defect_meters) || 0;
     const good = Math.max(0, produced - defect);
 
@@ -133,7 +133,7 @@ export default function ShiftProductionEntry() {
     }
   };
 
-  const filteredRecords = records.filter(r => 
+  const filteredRecords = records.filter(r =>
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -148,8 +148,8 @@ export default function ShiftProductionEntry() {
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Log end-of-shift metrics and calculate true efficiency</p>
         </div>
         {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
+          <button
+            className="btn btn-primary"
             onClick={() => {
               setFormData({
                 entry_id: `SPE-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
@@ -165,8 +165,8 @@ export default function ShiftProductionEntry() {
             <Plus size={16} /> New Entry
           </button>
         ) : (
-          <button 
-            className="btn btn-secondary" 
+          <button
+            className="btn btn-secondary"
             onClick={() => setIsFormOpen(false)}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
           >
@@ -296,7 +296,7 @@ export default function ShiftProductionEntry() {
               />
             </div>
           </div>
-          
+
           <div className="table-responsive" style={{ flex: 1 }}>
             <table className="table" style={{ width: '100%' }}>
               <thead>

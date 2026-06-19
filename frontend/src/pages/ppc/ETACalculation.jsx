@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Search, Filter, AlertTriangle } from 'lucide-react';
+import { Clock, Search, Filter, AlertTriangle, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { ppcAPI, buyerOrderAPI } from '../../services/api';
 
 export default function ETACalculation() {
@@ -73,8 +73,8 @@ export default function ETACalculation() {
   };
 
   const filteredData = data.filter(d => 
-    d.loom_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.order_id?.toLowerCase().includes(searchTerm.toLowerCase())
+    String(d.loom_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(d.order_id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -90,41 +90,77 @@ export default function ETACalculation() {
         </div>
       </div>
 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <TrendingUp size={24} style={{ color: '#8b5cf6' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Orders</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{data.length}</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertCircle size={24} style={{ color: '#d97706' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Medium Risk</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              {data.filter(d => d.risk === 'Medium').length}
+            </div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>High Risk (Delayed)</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              {data.filter(d => d.risk === 'High').length}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <Filter size={18} style={{ color: 'var(--text-muted)' }} />
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Live Prediction Board</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Live Prediction Board</h3>
           </div>
-          <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
-              type="text"
-              placeholder="Search looms or orders..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="form-control"
-              style={{ paddingLeft: 36 }}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Search looms or orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
           </div>
         </div>
         
-        <div className="table-responsive" style={{ flex: 1 }}>
-          <table className="table" style={{ width: '100%', whiteSpace: 'nowrap' }}>
+        <div className="table-responsive" style={{ flex: 1, overflowX: 'auto' }}>
+          <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
             <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-              <tr>
-                <th>Loom ID</th>
-                <th>Order ID</th>
-                <th>Total (m)</th>
-                <th>Produced (m)</th>
-                <th>Remaining (m)</th>
-                <th>Speed (m/hr)</th>
-                <th>Daily Rate (m/d)</th>
-                <th>Eff %</th>
-                <th>ETA Date & Time</th>
-                <th>Delay Days</th>
-                <th>Delivery Date</th>
-                <th>Risk Level</th>
+              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Loom ID</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Order ID</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Total (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Produced (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Remaining (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Speed (m/hr)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Daily Rate (m/d)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Eff %</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>ETA Date & Time</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Delay Days</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Delivery Date</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Risk Level</th>
               </tr>
             </thead>
             <tbody>
@@ -133,19 +169,19 @@ export default function ETACalculation() {
               ) : filteredData.length === 0 ? (
                 <tr><td colSpan="12" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No active running orders found</td></tr>
               ) : filteredData.map((row, idx) => (
-                <tr key={idx}>
-                  <td style={{ fontWeight: 600 }}>{row.loom_id}</td>
-                  <td style={{ color: 'var(--primary)', fontWeight: 600 }}>{row.order_id}</td>
-                  <td>{row.total_meters.toLocaleString()}</td>
-                  <td style={{ color: '#047857', fontWeight: 500 }}>{row.produced_meters.toLocaleString()}</td>
-                  <td style={{ color: '#b45309', fontWeight: 600 }}>{row.remaining_meters.toLocaleString()}</td>
-                  <td>{row.current_speed}</td>
-                  <td>{row.daily_rate}</td>
-                  <td style={{ fontWeight: 700, color: row.efficiency < 90 ? '#b91c1c' : '#047857' }}>{row.efficiency}%</td>
-                  <td style={{ fontWeight: 700, color: '#6d28d9' }}>{row.eta_date}</td>
-                  <td style={{ fontWeight: 700, color: row.delay_days > 0 ? '#b91c1c' : '#047857' }}>{row.delay_days > 0 ? `+${row.delay_days}` : '0'}</td>
-                  <td>{row.delivery_date}</td>
-                  <td>
+                <tr key={idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                  <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{row.loom_id}</td>
+                  <td style={{ padding: '16px', color: 'var(--primary)', fontWeight: 600 }}>{row.order_id}</td>
+                  <td style={{ padding: '16px' }}>{row.total_meters.toLocaleString()}</td>
+                  <td style={{ padding: '16px', color: '#047857', fontWeight: 500 }}>{row.produced_meters.toLocaleString()}</td>
+                  <td style={{ padding: '16px', color: '#b45309', fontWeight: 600 }}>{row.remaining_meters.toLocaleString()}</td>
+                  <td style={{ padding: '16px' }}>{row.current_speed}</td>
+                  <td style={{ padding: '16px' }}>{row.daily_rate}</td>
+                  <td style={{ padding: '16px', fontWeight: 700, color: row.efficiency < 90 ? '#b91c1c' : '#047857' }}>{row.efficiency}%</td>
+                  <td style={{ padding: '16px', fontWeight: 700, color: '#6d28d9' }}>{row.eta_date}</td>
+                  <td style={{ padding: '16px', fontWeight: 700, color: row.delay_days > 0 ? '#b91c1c' : '#047857' }}>{row.delay_days > 0 ? `+${row.delay_days}` : '0'}</td>
+                  <td style={{ padding: '16px' }}>{row.delivery_date}</td>
+                  <td style={{ padding: '16px' }}>
                     <span style={{ 
                       padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
                       background: row.risk === 'High' ? '#fef2f2' : (row.risk === 'Medium' ? '#fef3c7' : '#ecfdf5'),

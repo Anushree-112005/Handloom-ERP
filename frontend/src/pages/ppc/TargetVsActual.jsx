@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Search, Save, ArrowLeft, Plus } from 'lucide-react';
+import { Target, Search, Save, ArrowLeft, Plus, Trash2, Edit2, Eye, Activity, CheckCircle, AlertTriangle } from 'lucide-react';
 import { subMasterAPI, ppcAPI } from '../../services/api';
 
 export default function TargetVsActual() {
@@ -100,7 +100,23 @@ export default function TargetVsActual() {
     }
   };
 
-  const filteredRecords = records.filter(r => 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this evaluation?')) return;
+    try {
+      await subMasterAPI.delete('ppc_target_actual', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete');
+    }
+  };
+
+  // Remove duplicates based on name (Date + Loom ID), keeping the latest entry
+  const uniqueRecords = Array.from(
+    records.reduce((map, record) => map.set(record.name, record), new Map()).values()
+  );
+
+  const filteredRecords = uniqueRecords.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -114,21 +130,7 @@ export default function TargetVsActual() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Compare planned metrics against real outputs</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                date: new Date().toISOString().split('T')[0],
-                loom_id: '', planned_meters: 0, actual_meters: 0, shortfall: 0, efficiency: 0, status: 'On Track'
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#ec4899', borderColor: '#ec4899' }}
-          >
-            <Plus size={16} /> Evaluate Performance
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -138,6 +140,38 @@ export default function TargetVsActual() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fce7f3', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Target size={24} style={{ color: '#ec4899' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Evaluations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>On Track</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.filter(r => r.extra_field_2 === 'On Track').length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Delayed</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.filter(r => r.extra_field_2 === 'Delayed').length}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -206,43 +240,61 @@ export default function TargetVsActual() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Performance Evaluations ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Performance Evaluations ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    date: new Date().toISOString().split('T')[0],
+                    loom_id: '', planned_meters: 0, actual_meters: 0, shortfall: 0, efficiency: 0, status: 'On Track'
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#ec4899', borderColor: '#ec4899', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> Evaluate Performance
+              </button>
             </div>
           </div>
           
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
-            ) : filteredRecords.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                {filteredRecords.map((record, idx) => {
+          <div className="table-responsive" style={{ flex: 1 }}>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Record ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Actual / Target</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Details</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
+                ) : filteredRecords.length === 0 ? (
+                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                ) : filteredRecords.map((record, idx) => {
                   const isDelayed = record.extra_field_2 === 'Delayed';
                   return (
-                    <div key={record.id || idx} style={{
-                      background: 'var(--bg-primary)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      padding: 20,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>{record.code}</span>
+                    <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                      <td style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{record.code}</td>
+                      <td style={{ padding: '16px', fontWeight: 600 }}>{record.extra_field_1}</td>
+                      <td style={{ padding: '16px' }}>
                         <span style={{ 
                           color: isDelayed ? '#b91c1c' : '#047857', 
                           fontWeight: 600, 
@@ -253,35 +305,20 @@ export default function TargetVsActual() {
                         }}>
                           {record.extra_field_2}
                         </span>
-                      </div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}>
-                        Record ID: <span style={{ color: 'var(--text-primary)' }}>{record.name}</span>
-                      </div>
-                      
-                      <div style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 8 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Actual / Target</span>
-                          <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>{record.extra_field_1}</span>
+                      </td>
+                      <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
+                            <Trash2 size={16} style={{ color: '#ef4444' }} />
+                          </button>
                         </div>
-                        <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                           {/* Parse actual and target to render a rough progress bar if possible, otherwise just a static bar based on status */}
-                           <div style={{ 
-                             width: isDelayed ? '75%' : '100%', 
-                             height: '100%', 
-                             background: isDelayed ? '#ef4444' : '#10b981', 
-                             borderRadius: 3 
-                           }} />
-                        </div>
-                      </div>
-
-                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', background: isDelayed ? '#fef2f2' : '#f0fdf4', padding: 10, borderRadius: 8, border: `1px solid ${isDelayed ? '#fecaca' : '#bbf7d0'}` }}>
-                        {record.description}
-                      </div>
-                    </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

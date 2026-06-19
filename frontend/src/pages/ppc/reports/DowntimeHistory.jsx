@@ -57,9 +57,33 @@ export default function DowntimeHistory() {
 
   const handleExportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text('Downtime History Report', 14, 15);
+    
+    // Company Header
+    doc.setFontSize(20);
+    doc.setTextColor(17, 24, 39);
+    doc.text('DINESH TEXTILES', 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text('123 Industrial Estate, Tiruppur, Tamil Nadu 641604', 14, 30);
+    doc.text('Phone: +91 98765 43210 | Email: info@dineshtextiles.com', 14, 36);
+    
+    // Horizontal Line
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 42, doc.internal.pageSize.width - 14, 42);
+    
+    // Report Info
+    doc.setFontSize(14);
+    doc.setTextColor(17, 24, 39);
+    doc.text('Downtime History Report', 14, 54);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Period: ${filters.fromDate} to ${filters.toDate}`, 14, 62);
+    doc.text(`Generated On: ${new Date().toLocaleString()}`, doc.internal.pageSize.width - 14, 62, { align: 'right' });
+    
     autoTable(doc, {
-      startY: 20,
+      startY: 68,
       head: [['ID', 'Date', 'Loom', 'Category', 'Reason', 'Down(hr)', 'Lost(m)', 'Loss(₹)', 'Status']],
       body: data.map(d => [d.id, d.date, d.loom_id, d.category, d.reason, d.downtime, d.lost_meters, d.loss_value, d.status]),
     });
@@ -124,23 +148,40 @@ export default function DowntimeHistory() {
 
       <div className="card" style={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div className="table-responsive" style={{ flex: 1, overflowY: 'auto' }}>
-          <table className="table" style={{ width: '100%', fontSize: 13, whiteSpace: 'nowrap' }}>
+          <table className="table" style={{ width: '100%', fontSize: 13, whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
             <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-              <tr><th>ID</th><th>Date</th><th>Loom</th><th>Category</th><th>Reason</th><th>Start</th><th>End</th><th>Down (h)</th><th>Lost (m)</th><th>Loss (₹)</th><th>Status</th></tr>
+              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>ID</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Date</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Loom</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Category</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Reason</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Start</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>End</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Down (h)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Lost (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Loss (₹)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Status</th>
+              </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="11" style={{ textAlign: 'center', padding: 40 }}>Loading history...</td></tr>
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading history...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan="11" style={{ textAlign: 'center', padding: 40 }}>No downtime recorded.</td></tr>
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No downtime recorded.</td></tr>
               ) : data.map((row, i) => (
-                <tr key={i}>
-                  <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{row.id}</td>
-                  <td>{row.date}</td><td>{row.loom_id}</td><td>{row.category}</td><td>{row.reason}</td>
-                  <td>{row.start}</td><td>{row.end}</td>
-                  <td style={{ fontWeight: 700, color: '#b91c1c' }}>{row.downtime.toFixed(2)}</td>
-                  <td>{row.lost_meters.toFixed(0)}</td><td style={{ color: '#b91c1c' }}>₹{row.loss_value.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                  <td style={{ fontWeight: 600 }}>{row.status}</td>
+                <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+                  <td style={{ padding: '16px', fontWeight: 600, color: 'var(--primary)' }}>{row.id}</td>
+                  <td style={{ padding: '16px' }}>{row.date}</td>
+                  <td style={{ padding: '16px' }}>{row.loom_id}</td>
+                  <td style={{ padding: '16px' }}>{row.category}</td>
+                  <td style={{ padding: '16px' }}>{row.reason}</td>
+                  <td style={{ padding: '16px' }}>{row.start}</td>
+                  <td style={{ padding: '16px' }}>{row.end}</td>
+                  <td style={{ padding: '16px', fontWeight: 700, color: '#b91c1c' }}>{row.downtime.toFixed(2)}</td>
+                  <td style={{ padding: '16px' }}>{row.lost_meters.toFixed(0)}</td>
+                  <td style={{ padding: '16px', color: '#b91c1c' }}>₹{row.loss_value.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{row.status}</td>
                 </tr>
               ))}
             </tbody>
