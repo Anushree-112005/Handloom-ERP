@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Search, Save, ArrowLeft, Activity } from 'lucide-react';
+import { AlertTriangle, Search, Save, ArrowLeft, Activity, Plus, FileText, Wrench } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function LoomStatusUpdate() {
@@ -98,21 +98,7 @@ export default function LoomStatusUpdate() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Record machine state changes and breakdowns</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                loom_id: '', previous_status: '', new_status: 'Running',
-                changed_at: new Date().toLocaleString(), changed_by: 'Login User', reason: ''
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#f97316', borderColor: '#f97316' }}
-          >
-            <AlertTriangle size={16} /> Update Status
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -122,6 +108,38 @@ export default function LoomStatusUpdate() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <FileText size={24} style={{ color: '#f97316' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Logs</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Breakdowns</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.code === 'Breakdown').length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Wrench size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Maintenance</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.code === 'Maintenance').length}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0, maxWidth: 800 }}>
@@ -191,29 +209,44 @@ export default function LoomStatusUpdate() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Status Change Log ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search logs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Status Change Log ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search logs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    loom_id: '', previous_status: '', new_status: 'Running',
+                    changed_at: new Date().toLocaleString(), changed_by: 'Login User', reason: ''
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#f97316', borderColor: '#f97316', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> Update Status
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Loom ID</th>
-                  <th>Status Change</th>
-                  <th>Timestamp</th>
-                  <th>Reason & Details</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status Change</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Timestamp</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Reason & Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,9 +257,9 @@ export default function LoomStatusUpdate() {
                 ) : filteredRecords.map((record, idx) => {
                   const isBad = record.code === 'Breakdown' || record.code === 'Maintenance';
                   return (
-                    <tr key={record.id || idx}>
-                      <td style={{ fontWeight: 600 }}>{record.name}</td>
-                      <td>
+                    <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                      <td style={{ padding: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{record.extra_field_1?.replace('Prev: ', '')}</span>
                           <span style={{ color: 'var(--text-muted)' }}>→</span>
@@ -240,8 +273,8 @@ export default function LoomStatusUpdate() {
                           </span>
                         </div>
                       </td>
-                      <td><span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.extra_field_2}</span></td>
-                      <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                      <td style={{ padding: '16px' }}><span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.extra_field_2}</span></td>
+                      <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
                     </tr>
                   )
                 })}

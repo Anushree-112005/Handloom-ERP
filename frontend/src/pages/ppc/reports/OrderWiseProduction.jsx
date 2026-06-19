@@ -82,12 +82,33 @@ export default function OrderWiseProduction() {
 
   const handleExportPDF = () => {
     const doc = new jsPDF('landscape');
-    doc.text('Order-wise Production Report', 14, 15);
+    
+    // Company Header
+    doc.setFontSize(20);
+    doc.setTextColor(17, 24, 39);
+    doc.text('DINESH TEXTILES', 14, 22);
+    
     doc.setFontSize(10);
-    doc.text(`Period: ${filters.fromDate} to ${filters.toDate}`, 14, 22);
+    doc.setTextColor(107, 114, 128);
+    doc.text('123 Industrial Estate, Tiruppur, Tamil Nadu 641604', 14, 30);
+    doc.text('Phone: +91 98765 43210 | Email: info@dineshtextiles.com', 14, 36);
+    
+    // Horizontal Line
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 42, doc.internal.pageSize.width - 14, 42);
+    
+    // Report Info
+    doc.setFontSize(14);
+    doc.setTextColor(17, 24, 39);
+    doc.text('Order-wise Production Report', 14, 54);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Period: ${filters.fromDate} to ${filters.toDate}`, 14, 62);
+    doc.text(`Generated On: ${new Date().toLocaleString()}`, doc.internal.pageSize.width - 14, 62, { align: 'right' });
     
     autoTable(doc, {
-      startY: 28,
+      startY: 68,
       head: [['Order ID', 'Buyer', 'Total(m)', 'Produced(m)', 'Rem(m)', 'Comp(%)', 'Looms', 'Down(hr)', 'Lost(m)', 'ETA', 'Status']],
       body: data.map(d => [
         d.order_id, d.buyer_name, d.total_ordered, d.total_produced, d.remaining_meters,
@@ -181,35 +202,35 @@ export default function OrderWiseProduction() {
 
       <div className="card" style={{ padding: 0, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div className="table-responsive" style={{ flex: 1, overflowY: 'auto' }}>
-          <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', fontSize: 13 }}>
+          <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', fontSize: 13, borderCollapse: 'collapse' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-secondary)' }}>
-              <tr>
-                <th>Order ID</th>
-                <th>Buyer</th>
-                <th>Fabric Type</th>
-                <th>Ordered (m)</th>
-                <th>Produced (m)</th>
-                <th>Rem. (m)</th>
-                <th>Comp. %</th>
-                <th>Looms</th>
-                <th>ETA Date</th>
-                <th>Status</th>
+              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Order ID</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Buyer</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Fabric Type</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Ordered (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Produced (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Rem. (m)</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Comp. %</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Looms</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>ETA Date</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Status</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="10" style={{ textAlign: 'center', padding: 40 }}>Loading data...</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading data...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan="10" style={{ textAlign: 'center', padding: 40 }}>No order data found.</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No order data found.</td></tr>
               ) : data.map((row, idx) => (
-                <tr key={idx}>
-                  <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{row.order_id}</td>
-                  <td>{row.buyer_name}</td>
-                  <td>{row.fabric_type}</td>
-                  <td style={{ fontWeight: 600 }}>{row.total_ordered.toLocaleString()}</td>
-                  <td style={{ color: '#047857', fontWeight: 600 }}>{row.total_produced.toLocaleString()}</td>
-                  <td style={{ color: '#b45309' }}>{row.remaining_meters.toLocaleString()}</td>
-                  <td style={{ fontWeight: 700 }}>
+                <tr key={idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                  <td style={{ padding: '16px', fontWeight: 600, color: 'var(--primary)' }}>{row.order_id}</td>
+                  <td style={{ padding: '16px' }}>{row.buyer_name}</td>
+                  <td style={{ padding: '16px' }}>{row.fabric_type}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{row.total_ordered.toLocaleString()}</td>
+                  <td style={{ padding: '16px', color: '#047857', fontWeight: 600 }}>{row.total_produced.toLocaleString()}</td>
+                  <td style={{ padding: '16px', color: '#b45309' }}>{row.remaining_meters.toLocaleString()}</td>
+                  <td style={{ padding: '16px', fontWeight: 700 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ flex: 1, height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{ width: `${row.completion}%`, height: '100%', background: 'var(--primary)' }}></div>
@@ -217,9 +238,9 @@ export default function OrderWiseProduction() {
                       <span style={{ width: 35, textAlign: 'right' }}>{row.completion.toFixed(1)}%</span>
                     </div>
                   </td>
-                  <td>{row.looms_assigned}</td>
-                  <td>{row.current_eta}</td>
-                  <td style={{ fontWeight: 600 }}>{row.status}</td>
+                  <td style={{ padding: '16px' }}>{row.looms_assigned}</td>
+                  <td style={{ padding: '16px' }}>{row.current_eta}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{row.status}</td>
                 </tr>
               ))}
             </tbody>

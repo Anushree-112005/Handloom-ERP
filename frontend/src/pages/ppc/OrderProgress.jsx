@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Search, Save, ArrowLeft, Clock } from 'lucide-react';
+import { TrendingUp, Search, Save, ArrowLeft, Clock, Activity, CheckCircle, Percent, Trash2, Edit2, Eye } from 'lucide-react';
 import { buyerOrderAPI, subMasterAPI } from '../../services/api';
 
 export default function OrderProgress() {
@@ -92,6 +92,32 @@ export default function OrderProgress() {
     }
   };
 
+  const handleEdit = (record) => {
+    // Partial mock implementation for editing
+    setFormData({
+      id: record.id,
+      order_id: record.name,
+      buyer_name: record.code,
+      total_ordered_meters: 30000,
+      total_produced: parseFloat(record.description?.match(/Produced: (.*?)m/)?.[1] || 0),
+      remaining_meters: parseFloat(record.extra_field_2) || 0,
+      completion_pct: parseFloat(record.extra_field_1) || 0,
+      days_elapsed: 5,
+      days_remaining: parseFloat(record.description?.match(/Days Remaining: (.*?) \|/)?.[1] || 0)
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await subMasterAPI.delete('ppc_order_progress', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredRecords = records.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -106,21 +132,7 @@ export default function OrderProgress() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Track live completion metrics for active buyer orders</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                order_id: '', buyer_name: '', total_ordered_meters: 0, total_produced: 0,
-                remaining_meters: 0, completion_pct: 0, days_elapsed: 0, days_remaining: 0
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#10b981', borderColor: '#10b981' }}
-          >
-            <Search size={16} /> Analyze Order
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -130,6 +142,42 @@ export default function OrderProgress() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Tracked Orders</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Percent size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Avg Completion %</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.length ? (records.reduce((sum, r) => sum + (parseFloat(r.extra_field_1) || 0), 0) / records.length).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Activity size={24} style={{ color: '#f97316' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Remaining (m)</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2) || 0), 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -214,30 +262,46 @@ export default function OrderProgress() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Tracked Orders ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search orders..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Tracked Orders ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    order_id: '', buyer_name: '', total_ordered_meters: 0, total_produced: 0,
+                    remaining_meters: 0, completion_pct: 0, days_elapsed: 0, days_remaining: 0
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#10b981', borderColor: '#10b981', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Search size={16} /> Analyze Order
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Buyer</th>
-                  <th>Completion %</th>
-                  <th>Remaining Meters</th>
-                  <th>Timeline</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Order ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Buyer</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Completion %</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Remaining Meters</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Timeline</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -246,10 +310,10 @@ export default function OrderProgress() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{record.code}</td>
+                    <td style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div style={{ width: 60, height: 6, background: 'var(--bg-secondary)', borderRadius: 3, overflow: 'hidden' }}>
                           <div style={{ width: record.extra_field_1, height: '100%', background: '#10b981' }}></div>
@@ -257,8 +321,21 @@ export default function OrderProgress() {
                         <span style={{ fontWeight: 600, color: '#047857', fontSize: 12 }}>{record.extra_field_1}</span>
                       </div>
                     </td>
-                    <td><span style={{ color: '#b45309', fontWeight: 600 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#b45309', fontWeight: 600 }}>{record.extra_field_2}</span></td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Search, Trash2, Edit2, X, Users, Briefcase, Calendar, Phone, ArrowLeft } from 'lucide-react';
+import { Save, Search, Trash2, Edit2, X, Users, Briefcase, Calendar, Phone, ArrowLeft, Activity, CheckCircle, Settings, AlertTriangle, Eye, Plus } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function OperatorMaster() {
@@ -112,6 +112,11 @@ export default function OperatorMaster() {
     }
   };
 
+  const totalOperators = operators.length;
+  const activeOperators = operators.filter(o => o.status).length;
+  const weavers = operators.filter(o => o.designation === 'Weaver').length;
+  const supervisors = operators.filter(o => o.designation === 'Supervisor').length;
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       
@@ -124,32 +129,49 @@ export default function OperatorMaster() {
           </h3>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Manage your workforce and shift assignments</p>
         </div>
-        {!isFormOpen && (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setEditingId(null);
-              setFormData({
-                operator_id: '', operator_name: '', department: 'Weaving', designation: 'Weaver',
-                skill_level: 'Junior', assigned_loom: '', assigned_shift: '', join_date: '',
-                contact_number: '', status: true
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <Users size={16} /> Add Operator
-          </button>
-        )}
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Activity size={24} style={{ color: '#4f46e5' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Operators</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalOperators}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <CheckCircle size={24} style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Staff</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{activeOperators}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertTriangle size={24} style={{ color: '#d97706' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Weavers</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{weavers}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Settings size={24} style={{ color: '#dc2626' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Supervisors</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{supervisors}</div>
+          </div>
+        </div>
       </div>
 
       {isFormOpen ? (
@@ -252,61 +274,85 @@ export default function OperatorMaster() {
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Operator List</h3>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Operator List</h3>
               <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Total Operators: {operators.length}</p>
             </div>
             
-            <div className="search-bar" style={{ position: 'relative' }}>
-              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input type="text" placeholder="Search operators..." className="form-control" style={{ paddingLeft: 36, width: 250 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Search operators..." className="form-control" style={{ paddingLeft: 36, width: 250 }} />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setEditingId(null);
+                  setFormData({
+                    operator_id: '', operator_name: '', department: 'Weaving', designation: 'Weaver',
+                    skill_level: 'Junior', assigned_loom: '', assigned_shift: '', join_date: '',
+                    contact_number: '', status: true
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--primary)', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> Add Operator
+              </button>
             </div>
           </div>
 
           <div className="table-responsive">
             <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
-              <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-                <tr>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Operator</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Role & Skill</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Assignment</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Contact & Date</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Operator</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Role & Skill</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Assignment</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Contact & Date</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {operators.map(op => (
-                  <tr key={op.id}>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ fontWeight: 600 }}>{op.operator_name}</div>
+                  <tr key={op.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 600, color: '#4f46e5' }}>{op.operator_name}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{op.operator_id}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                      <div>{op.designation}</div>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 500 }}>{op.designation}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{op.department} • {op.skill_level}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                      <div>{op.assigned_loom || '-'}</div>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 500 }}>{op.assigned_loom || '-'}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{op.assigned_shift || '-'}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                      <div>{op.contact_number || '-'}</div>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 500 }}>{op.contact_number || '-'}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                         {op.join_date ? new Date(op.join_date).toLocaleDateString() : '-'}
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px' }}>
                       <span className={`status-badge ${op.status ? 'status-active' : 'status-inactive'}`} style={{ 
-                        padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500,
-                        background: op.status ? '#dcfce7' : '#fee2e2', color: op.status ? '#166534' : '#991b1b'
+                        padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
+                        background: op.status ? '#10b98120' : '#ef444420', color: op.status ? '#10b981' : '#ef4444'
                       }}>
                         {op.status ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button className="btn btn-icon" onClick={() => handleEdit(op)}><Edit2 size={16} color="var(--primary)" /></button>
-                        <button className="btn btn-icon" onClick={() => handleDelete(op.id)}><Trash2 size={16} color="var(--danger)" /></button>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(op)} title="View">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(op)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(op.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
                       </div>
                     </td>
                   </tr>

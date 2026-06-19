@@ -165,55 +165,61 @@ export default function LoomContribution() {
             </div>
           </div>
 
-          {/* Grid of Looms */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 24 }}>
-            {allocations.map((row, idx) => {
-              const isCompleted = row.status === 'Completed';
-              const cardColor = isCompleted ? '#10b981' : '#f59e0b';
-              const bgFade = isCompleted ? '#10b98110' : '#f59e0b10';
+          {/* Loom Contribution Table */}
+          <div className="card" style={{ padding: 24 }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Loom Breakdown</h3>
+            <div className="table-responsive">
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: 'var(--bg-secondary)' }}>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                    <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Allocated</th>
+                    <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Produced</th>
+                    <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Remaining</th>
+                    <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Contribution %</th>
+                    <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allocations.map((row, idx) => {
+                    const isCompleted = row.status === 'Completed';
+                    const cardColor = isCompleted ? '#10b981' : '#f59e0b';
+                    const bgFade = isCompleted ? '#10b98115' : '#f59e0b15';
 
-              return (
-                <div key={idx} className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border)' }}>
-                  <div style={{ padding: '16px 24px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: cardColor, boxShadow: `0 0 10px ${cardColor}` }}></div>
-                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>{row.loom_id}</h3>
-                    </div>
-                    <div style={{ background: bgFade, color: cardColor, padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {isCompleted ? <CheckCircle2 size={14} /> : <RefreshCw size={14} className="animate-spin" />}
-                      {row.status}
-                    </div>
-                  </div>
-
-                  <div style={{ padding: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                      <div>
-                        <p style={{ margin: '0 0 4px 0', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Contribution</p>
-                        <h4 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: cardColor }}>
-                          {row.contribution}<span style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-muted)' }}>%</span>
-                        </h4>
-                      </div>
-                      <ContributionGauge percent={parseFloat(row.contribution)} color={cardColor} />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 16 }}>
-                      <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                        <p style={{ margin: '0 0 4px 0', fontSize: 11, color: 'var(--text-secondary)' }}>Allocated</p>
-                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{row.allocated.toLocaleString()}m</h4>
-                      </div>
-                      <div style={{ flex: 1, padding: 12, background: bgFade, borderRadius: 8, border: `1px solid ${cardColor}30` }}>
-                        <p style={{ margin: '0 0 4px 0', fontSize: 11, color: 'var(--text-secondary)' }}>Produced</p>
-                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: cardColor }}>{row.produced.toLocaleString()}m</h4>
-                      </div>
-                      <div style={{ flex: 1, padding: 12, background: 'var(--bg-secondary)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                        <p style={{ margin: '0 0 4px 0', fontSize: 11, color: 'var(--text-secondary)' }}>Remaining</p>
-                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{row.remaining.toLocaleString()}m</h4>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                        <td style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: cardColor, boxShadow: `0 0 8px ${cardColor}` }}></div>
+                            {row.loom_id}
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>{row.allocated.toLocaleString()} m</td>
+                        <td style={{ padding: '16px', fontWeight: 700, color: cardColor }}>{row.produced.toLocaleString()} m</td>
+                        <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>{row.remaining.toLocaleString()} m</td>
+                        <td style={{ padding: '16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontWeight: 800, color: cardColor }}>{row.contribution}%</span>
+                            <div style={{ width: 60, height: 6, background: 'var(--bg-secondary)', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ width: `${row.contribution}%`, height: '100%', background: cardColor }}></div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px' }}>
+                          <div style={{ background: bgFade, color: cardColor, padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {isCompleted ? <CheckCircle2 size={14} /> : <RefreshCw size={14} className="animate-spin" />}
+                            {row.status}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {allocations.length === 0 && (
+                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No allocations available for this order</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

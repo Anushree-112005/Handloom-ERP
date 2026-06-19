@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Search, Save, ArrowLeft, AlertOctagon } from 'lucide-react';
+import { Wrench, Search, Save, ArrowLeft, AlertOctagon, Settings, CheckCircle } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function AlertBreakdown() {
@@ -126,15 +126,7 @@ export default function AlertBreakdown() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Instant escalation for machine stoppages</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => setIsFormOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#b91c1c', borderColor: '#b91c1c' }}
-          >
-            <Wrench size={16} /> Simulate Breakdown
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -144,6 +136,44 @@ export default function AlertBreakdown() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fef2f2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertOctagon size={24} style={{ color: '#b91c1c' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Breakdowns</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => !r.extra_field_2?.includes('Resolved')).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Settings size={24} style={{ color: '#d97706' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>In Progress</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => r.extra_field_2?.includes('In Progress')).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#d1fae5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#059669' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Resolved Today</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => r.extra_field_2?.includes('Resolved')).length}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -254,23 +284,32 @@ export default function AlertBreakdown() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Breakdown Escalations ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="form-control" style={{ paddingLeft: 36 }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Breakdown Escalations ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="form-control" style={{ paddingLeft: 36 }} />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => setIsFormOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#b91c1c', borderColor: '#b91c1c', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Wrench size={16} /> Simulate Breakdown
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Alert ID</th>
-                  <th>Loom ID</th>
-                  <th>Category</th>
-                  <th>Status</th>
-                  <th>Message</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Alert ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Category</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Status</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'left' }}>Message</th>
                 </tr>
               </thead>
               <tbody>
@@ -279,12 +318,12 @@ export default function AlertBreakdown() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No breakdown alerts!</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td><span style={{ fontWeight: 700 }}>{record.code}</span></td>
-                    <td style={{ color: '#b91c1c', fontWeight: 600 }}>{record.extra_field_1}</td>
-                    <td style={{ fontWeight: 700 }}>{record.extra_field_2}</td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px' }}><span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>{record.code}</span></td>
+                    <td style={{ padding: '16px', color: '#b91c1c', fontWeight: 600 }}>{record.extra_field_1}</td>
+                    <td style={{ padding: '16px', fontWeight: 700 }}>{record.extra_field_2}</td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
                   </tr>
                 ))}
               </tbody>

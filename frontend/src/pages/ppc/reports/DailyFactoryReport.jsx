@@ -10,10 +10,32 @@ export default function DailyFactoryReport() {
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    doc.text('Daily Factory Report', 14, 15);
+    
+    // Company Header
+    doc.setFontSize(20);
+    doc.setTextColor(17, 24, 39);
+    doc.text('DINESH TEXTILES', 14, 22);
+    
     doc.setFontSize(10);
-    doc.text(`Date: ${filters.reportDate}`, 14, 22);
-    doc.text('This is a mock PDF for Daily Factory Report', 14, 30);
+    doc.setTextColor(107, 114, 128);
+    doc.text('123 Industrial Estate, Tiruppur, Tamil Nadu 641604', 14, 30);
+    doc.text('Phone: +91 98765 43210 | Email: info@dineshtextiles.com', 14, 36);
+    
+    // Horizontal Line
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 42, doc.internal.pageSize.width - 14, 42);
+    
+    // Report Info
+    doc.setFontSize(14);
+    doc.setTextColor(17, 24, 39);
+    doc.text('Daily Factory Report', 14, 54);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Date: ${filters.reportDate}`, 14, 62);
+    doc.text(`Generated On: ${new Date().toLocaleString()}`, doc.internal.pageSize.width - 14, 62, { align: 'right' });
+
+    doc.text('This is a mock PDF for Daily Factory Report', 14, 70);
     doc.save(`Daily_Factory_${filters.reportDate}.pdf`);
   };
 

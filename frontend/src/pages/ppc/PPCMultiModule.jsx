@@ -28,8 +28,8 @@ export default function PPCMultiModule() {
         { id: 'loom-master', label: 'Loom Master', component: <LoomRegistration /> },
         { id: 'shift-master', label: 'Shift Master' },
         { id: 'operator-master', label: 'Operator Master' },
-        { id: 'yarn-master', label: 'Yarn Master' },
-        { id: 'fabric-master', label: 'Fabric Master' },
+       // { id: 'yarn-master', label: 'Yarn Master' },
+        //{ id: 'fabric-master', label: 'Fabric Master' },
         { id: 'downtime-reason', label: 'Downtime Reasons' }
       ]
     },
