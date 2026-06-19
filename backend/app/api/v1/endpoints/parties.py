@@ -100,10 +100,40 @@ async def list_parties(skip: int = 0, limit: int = 100, party_type: Optional[str
 
 @router.post("/", response_model=PartyMasterOut, status_code=201)
 async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_db)):
-    # Auto-generate customer code
-    max_id_q = await db.execute(select(func.max(PartyMaster.id)))
-    max_id = max_id_q.scalar() or 0
-    customer_code = f"{max_id + 2401}"
+    # Auto-generate code prefix-wise based on party_type
+    party_type_lower = party.party_type.lower()
+    if "sales" in party_type_lower or "export" in party_type_lower:
+        prefix = "CUST"
+    elif "purchase" in party_type_lower or "vendor" in party_type_lower:
+        prefix = "VEND"
+    elif "logistics" in party_type_lower or "transport" in party_type_lower:
+        prefix = "TRANS"
+    elif "agent" in party_type_lower:
+        prefix = "AGT"
+    else:
+        # Fallback to a 4-letter uppercase prefix from the party type
+        cleaned = "".join([c for c in party.party_type if c.isalnum()]).upper()
+        prefix = cleaned[:4] if len(cleaned) >= 3 else "PART"
+
+    # Query existing codes starting with this prefix to find the max number
+    q = select(PartyMaster.customer_code).where(PartyMaster.customer_code.like(f"{prefix}%"))
+    res = await db.execute(q)
+    codes = res.scalars().all()
+    
+    max_num = 0
+    for code in codes:
+        if code and code.startswith(prefix):
+            digits = "".join([c for c in code[len(prefix):] if c.isdigit()])
+            if digits:
+                try:
+                    num = int(digits)
+                    if num > max_num:
+                        max_num = num
+                except ValueError:
+                    pass
+
+    next_num = max_num + 1
+    customer_code = f"{prefix}{next_num:03d}"
 
     party_data = party.model_dump()
     addresses_data = party_data.pop("addresses", []) or []

@@ -5,6 +5,7 @@ import {
   PlusCircle, FileText, CheckSquare, Receipt, Globe, Printer, BookOpen, MapPin, 
   HelpCircle, Sparkles, Database 
 } from 'lucide-react';
+import { partyAPI } from '../../services/api';
 
 export default function AccountsTransaction({ defaultSection = 'Creditors', defaultPage = null }) {
   // Main Category Tab: 'Creditors' | 'Sales' | 'LC'
@@ -12,6 +13,22 @@ export default function AccountsTransaction({ defaultSection = 'Creditors', defa
 
   // Currently open page: null means dashboard/list, else the specific page key
   const [activePage, setActivePage] = useState(defaultPage);
+
+  const [partiesList, setPartiesList] = useState([]);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const res = await partyAPI.list();
+        if (res.data && res.data.length > 0) {
+          setPartiesList(res.data.map(p => p.company_name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch parties in AccountsTransaction", err);
+      }
+    };
+    fetchParties();
+  }, []);
 
   useEffect(() => {
     setActiveSection(defaultSection);
@@ -27,7 +44,9 @@ export default function AccountsTransaction({ defaultSection = 'Creditors', defa
   const [activeFormTab, setActiveFormTab] = useState('General Info');
 
   // Static references
-  const PARTIES = ['Vardhman Spinning', 'Raymond Ltd', 'Reliance Retail', 'Chemical Traders', 'Standard Gears Ltd', 'Zenith Electricals'];
+  const PARTIES = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Vardhman Spinning', 'Raymond Ltd', 'Reliance Retail', 'Chemical Traders', 'Standard Gears Ltd', 'Zenith Electricals'];
+  }, [partiesList]);
   const EMPLOYEES = ['Senthil Kumar (General Manager)', 'Mani Bharathi (Store Head)', 'Dinesh Balasamy (MD)', 'Murugan Swamy (Maintenance In-charge)'];
 
   // =========================================================================

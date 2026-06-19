@@ -3,6 +3,7 @@ import {
   FileText, Search, Plus, Trash2, Printer, Check, 
   Clock, CreditCard, ChevronRight, X, Edit, Download, RefreshCw, PlusCircle
 } from 'lucide-react';
+import { partyAPI } from '../../services/api';
 
 export default function VoucherEntry() {
   // Active category tab: 'BillPassing' | 'PaymentAdvise' | 'DebitNoteRecv' | 'DebitNoteAppr' | 'ReceiptEntry'
@@ -13,10 +14,28 @@ export default function VoucherEntry() {
   const [currentFormId, setCurrentFormId] = useState('');
   const [activeFormTab, setActiveFormTab] = useState('Reference Info');
 
+  const [partiesList, setPartiesList] = useState([]);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const res = await partyAPI.list();
+        if (res.data && res.data.length > 0) {
+          setPartiesList(res.data.map(p => p.company_name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch parties in VoucherEntry", err);
+      }
+    };
+    fetchParties();
+  }, []);
+
   // ----------------------------------------------------
   // DATA MASTER DIRECTORIES & CONFIGS
   // ----------------------------------------------------
-  const PARTIES = ['Raymond Ltd', 'Reliance Retail', 'Vardhman Spinning', 'Chemical Traders', 'Sai Logistics', 'Sri Krishna Weaving'];
+  const PARTIES = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Raymond Ltd', 'Reliance Retail', 'Vardhman Spinning', 'Chemical Traders', 'Sai Logistics', 'Sri Krishna Weaving'];
+  }, [partiesList]);
   
   const EMPLOYEES = ['Senthil Kumar (General Manager)', 'Mani Bharathi (Store Head)', 'Dinesh Balasamy (MD)', 'Anjali Devi (Accounts Head)'];
 

@@ -8,7 +8,7 @@ import {
   Palette, Scale, ShieldCheck, Info, FileImage, Users
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { workOrderTransactionAPI } from '../../services/api';
+import { workOrderTransactionAPI, partyAPI } from '../../services/api';
 
 export default function FabricTransaction({ defaultSection = 'Fabric Checking' }) {
   const navigate = useNavigate();
@@ -42,9 +42,29 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
   const [currentFormId, setCurrentFormId] = useState('');
   const [activeFormTab, setActiveFormTab] = useState('General Info');
 
+  const [partiesList, setPartiesList] = useState([]);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const res = await partyAPI.list();
+        if (res.data && res.data.length > 0) {
+          setPartiesList(res.data.map(p => p.company_name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch parties in FabricTransaction", err);
+      }
+    };
+    fetchParties();
+  }, []);
+
   // Static lists for selections
-  const BUYERS = ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
-  const VENDORS = ['Sri Raja Rajeshwari Tex', 'Kalaignar Weaving Mills', 'Dinesh Processing Unit', 'Vignesh Warping & Sizing'];
+  const BUYERS = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
+  }, [partiesList]);
+  const VENDORS = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Sri Raja Rajeshwari Tex', 'Kalaignar Weaving Mills', 'Dinesh Processing Unit', 'Vignesh Warping & Sizing'];
+  }, [partiesList]);
   const EMPLOYEES = [
     'Senthil Kumar (General Manager)', 
     'Mani Bharathi (Store Head)', 

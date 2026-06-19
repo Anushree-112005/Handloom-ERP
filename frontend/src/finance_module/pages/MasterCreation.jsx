@@ -100,7 +100,7 @@ export default function MasterCreation() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }}>
         {masterSections.map((section) => (
           <div key={section.title} className="card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
             <div style={{ height: 3, width: '100%', background: section.gradient, position: 'absolute', top: 0, left: 0 }}></div>
@@ -112,7 +112,7 @@ export default function MasterCreation() {
               <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{section.title}</h2>
             </div>
             
-            <div style={{ padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-primary)', flex: 1 }}>
+            <div style={{ padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', flex: 1 }}>
               {section.items.map((item) => {
                 const isDisabled = item.route === '#';
                 return (
@@ -121,10 +121,35 @@ export default function MasterCreation() {
                     onClick={() => !isDisabled && navigate(item.route)}
                     disabled={isDisabled}
                     style={{
-                      textAlign: 'left', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 12, transition: 'all 0.2s', background: isDisabled ? 'var(--bg-secondary)' : 'transparent', cursor: isDisabled ? 'not-allowed' : 'pointer', opacity: isDisabled ? 0.6 : 1
+                      textAlign: 'left',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 12,
+                      transition: 'all 0.2s ease-in-out',
+                      background: isDisabled ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                      boxShadow: isDisabled ? 'none' : '0 2px 4px rgba(0, 0, 0, 0.04)',
+                      cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      opacity: isDisabled ? 0.6 : 1
                     }}
-                    onMouseEnter={(e) => { if (!isDisabled) { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.borderColor = `${item.color}40`; } }}
-                    onMouseLeave={(e) => { if (!isDisabled) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--border)'; } }}
+                    onMouseEnter={(e) => {
+                      if (!isDisabled) {
+                        e.currentTarget.style.background = 'var(--bg-primary)';
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                        e.currentTarget.style.boxShadow = `0 6px 16px ${item.color}15`;
+                        e.currentTarget.style.borderColor = item.color;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isDisabled) {
+                        e.currentTarget.style.background = 'var(--bg-primary)';
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.04)';
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                      }
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 8, background: `${item.color}15`, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

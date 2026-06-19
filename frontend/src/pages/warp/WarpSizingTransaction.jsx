@@ -8,7 +8,7 @@ import {
   FileImage, CreditCard, User, AlertCircle, ShieldCheck, Scale, Percent
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { workOrderTransactionAPI } from '../../services/api';
+import { workOrderTransactionAPI, partyAPI } from '../../services/api';
 
 export default function WarpSizingTransaction({ defaultSection = 'Beam & Transaction Entries' }) {
   const navigate = useNavigate();
@@ -39,6 +39,22 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
   const [currentFormId, setCurrentFormId] = useState('');
   const [activeFormTab, setActiveFormTab] = useState('General Info');
 
+  const [partiesList, setPartiesList] = useState([]);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const res = await partyAPI.list();
+        if (res.data && res.data.length > 0) {
+          setPartiesList(res.data.map(p => p.company_name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch parties in WarpSizingTransaction", err);
+      }
+    };
+    fetchParties();
+  }, []);
+
   // Static lists for selections
   const SHIFTS = ['Morning (6AM-2PM)', 'Afternoon (2PM-10PM)', 'Night (10PM-6AM)'];
   const EMPLOYEES = [
@@ -47,7 +63,9 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
     'Dinesh Balasamy (MD)', 
     'Murugan Swamy (Maintenance In-charge)'
   ];
-  const BUYERS = ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
+  const BUYERS = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
+  }, [partiesList]);
 
   // =========================================================================
   // STATE STORE FOR ALL 7 SUB-MODULES

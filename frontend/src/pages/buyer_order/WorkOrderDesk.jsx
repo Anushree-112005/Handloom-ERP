@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Layers, Search, Plus, Trash2, Edit, Check, X, Download, 
@@ -40,7 +40,6 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   // Static lists for selections
-  const BUYERS = ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
   const EMPLOYEES = ['Senthil Kumar (General Manager)', 'Mani Bharathi (Store Head)', 'Dinesh Balasamy (MD)', 'Murugan Swamy (Maintenance In-charge)'];
 
   // =========================================================================
@@ -48,6 +47,11 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   // =========================================================================
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
+
+  const BUYERS = useMemo(() => {
+    const list = parties.filter(p => p.party_type === 'Sales').map(p => p.company_name);
+    return list.length > 0 ? list : ['Raymond Ltd', 'Vardhman Spinning', 'Reliance Retail', 'Standard Gears Ltd'];
+  }, [parties]);
   const [isCustomSeason, setIsCustomSeason] = useState(false);
   const [customSeasonVal, setCustomSeasonVal] = useState('');
   const [isCustomFabricType, setIsCustomFabricType] = useState(false);
