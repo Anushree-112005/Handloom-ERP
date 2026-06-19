@@ -190,7 +190,7 @@ const modules = [
   { path: '/ppc/planning/availability', label: 'Warping Planning', icon: Calendar },
   { path: '/warp/transaction/reports?tab=warping_report', label: 'Warping Set Entry', icon: Plus },
   // { path: '/warp/transaction/reports?tab=warping_report', label: 'Warping Set Report Entry', icon: FileText },
-  { path: '/warp/transaction/entries?tab=beam_received', label: 'Warp Beam Received Entry', icon: Factory },
+  // { path: '/warp/transaction/entries?tab=beam_received', label: 'Warp Beam Received Entry', icon: Factory },
 
   { section: 'SIZING' },
   { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Warp Beam Delivery Entry', icon: Truck },
@@ -199,7 +199,7 @@ const modules = [
   { path: '/warp/transaction/entries?tab=beam_received', label: 'Sized Beam Received', icon: Box },
 
   { section: 'WEAVING' },
-  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Beam Issue To Loom', icon: PlayCircle },
+  // { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Beam Issue To Loom', icon: PlayCircle },
   { path: '/ppc/execution/shift-entry', label: 'Weaving Production', icon: Activity },
   { path: '/cloth/inward', label: 'Fabric Inward', icon: ArrowDownLeft },
 
@@ -210,12 +210,12 @@ const modules = [
 
   { section: 'PROCESSING' },
   { path: '/cloth/delivery', label: 'Processing Delivery', icon: Truck },
-  { path: '/cloth/inward', label: 'Processing Inward', icon: ArrowDownLeft },
+  // { path: '/cloth/inward', label: 'Processing Inward', icon: ArrowDownLeft },
 
   { section: 'FINISHED GOODS' },
   { path: '/finished-fabric', label: 'Finished Fabric Stock', icon: Box },
 
-  
+
 
   // { section: 'Quality Control' },
   // { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
@@ -236,18 +236,20 @@ const modules = [
   // },
   // { path: '/spares/report', label: 'Spares Report', icon: FileText },
 
+
+
+  { section: 'Sales & Dispatch' },
+  { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
+  { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
+  { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
+
+  { path: '/despatch', label: 'Despatch ', icon: MapPin },
+
   { section: 'Gate & Security' },
   { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
   { path: '/gate/outward', label: 'Gate Outward', icon: ArrowUpRight },
   { path: '/gate/pass', label: 'Gate Pass Creation', icon: FileText },
   { path: '/gate/reports', label: 'Gate Reports', icon: PieChart },
-
-  { section: 'Sales & Dispatch' },
-  { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
-  { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
-    { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
-
-  { path: '/despatch', label: 'Despatch ', icon: MapPin },
 
 
   { section: 'Reports & MIS' },
@@ -279,11 +281,11 @@ const modules = [
       { path: '/cubebook/reports/profit-loss', label: 'Profit & Loss', icon: DollarSign },
       { path: '/cubebook/reports/balance-sheet', label: 'Balance Sheet', icon: Layers },
       { path: '/cubebook/reports/ledger', label: 'Ledger Report', icon: FileText },
-      { path: '/cubebook/reports/cash-book', label: 'Cash Book', icon: DollarSign },
+      // { path: '/cubebook/reports/cash-book', label: 'Cash Book', icon: DollarSign },
       { path: '/cubebook/reports/bank-book', label: 'Bank Book', icon: Building },
       { path: '/cubebook/reports/outstanding', label: 'Outstanding', icon: Percent },
       { path: '/cubebook/reports/sales-register', label: 'Sales Register', icon: Receipt },
-      { path: '/cubebook/reports/purchase-register', label: 'Purchase Register', icon: ShoppingCart },
+      // { path: '/cubebook/reports/purchase-register', label: 'Purchase Register', icon: ShoppingCart },
       { path: '/cubebook/reports/ratio-analysis', label: 'Ratio Analysis', icon: PieChart },
 
       // { section: 'GST' },
@@ -320,7 +322,7 @@ const modules = [
     ]
   },
 
-// Production Planning Modules
+  // Production Planning Modules
   { section: 'Production Planning (PPC)' },
   {
     label: 'Production Management',
@@ -328,7 +330,7 @@ const modules = [
     children: [
       { section: 'OVERVIEW' },
       { path: '/ppc/tracking/live-dashboard', label: 'Dashboard', icon: LayoutDashboard },
-     // { path: '/ppc/ai-insights', label: 'AI Insights', icon: Brain },
+      // { path: '/ppc/ai-insights', label: 'AI Insights', icon: Brain },
 
       { section: 'MODULES' },
       { path: '/ppc/master/loom-master', label: 'Master Setup', icon: Settings },
@@ -479,6 +481,9 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
+  // Commented out to prevent the dropdowns (like Finance) from automatically opening on page refresh/load.
+  // The submenus will now only open or close when the user explicitly clicks on them.
+  /*
   useEffect(() => {
     const activeMenuLabel = modules.find(item => 
       item.children && item.children.some(child => {
@@ -495,6 +500,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
       setOpenMenus(prev => ({ ...prev, [activeMenuLabel]: true }));
     }
   }, [location.pathname, location.search]);
+  */
 
   useEffect(() => {
     const loadCompany = async () => {
@@ -526,12 +532,12 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {companyProfile.logo ? (
-                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
-                  <img src={companyProfile.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
+                  <img src={companyProfile.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
               ) : (
-                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 2 }}>
-                  <img src={defaultLogo} alt="Default Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
+                  <img src={defaultLogo} alt="Default Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
               )}
               <div>
@@ -562,7 +568,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         ) : (
           <button
             onClick={onToggleSidebar}
-            className="sidebar-toggle-btn"                            
+            className="sidebar-toggle-btn"
             style={{
               background: 'none',
               border: 'none',
@@ -586,76 +592,76 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
           item.section ? (
             <div key={i} className="nav-section">{item.section}</div>
           ) : item.children ? (
-              <div key={item.label} className="nav-group">
-                <button
-                  className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
-                  onClick={() => {
-                    toggleMenu(item.label);
-                    if (item.label === 'CubeBook Finance') {
-                      navigate('/cubebook/dashboard');
-                    } else if (item.label === 'HR Management') {
-                      navigate('/hr');
-                    } else if (item.label === 'Vehicle Management') {
-                      navigate('/fleet/dashboard');
-                    } else if (item.label === 'Stores & Consumables') {
-                      navigate('/stores-consumables/dashboard');
-                    } else if (item.label === 'Production Management') {
-                      navigate('/ppc/tracking/live-dashboard');
-                    }
-                  }}
-                  style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </div>
-                  {openMenus[item.label] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                </button>
-                {openMenus[item.label] && (
-                  <div className="nav-children animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
-                    {item.children.map((child, childIdx) =>
-                      child.section ? (
-                        <div
-                          key={`sec-${childIdx}`}
-                          style={{
-                            padding: '16px 16px 6px 32px',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            color: '#64748b',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em'
-                          }}
-                        >
-                          {child.section}
-                        </div>
-                      ) : (
-                        <NavLink
-                          key={child.path}
-                          to={child.path}
-                          end={child.path === '/'}
-                          className={({ isActive }) => {
-                            const isReallyActive = child.path.includes('?') 
-                              ? (location.pathname === child.path.split('?')[0] && location.search.includes(child.path.split('?')[1]))
-                              : (location.pathname === child.path);
-                            return `nav-item ${isReallyActive ? 'active' : ''}`;
-                          }}
-                          style={{ padding: '10px 16px 10px 24px', fontSize: '13.5px', margin: '2px 8px' }}
-                        >
-                          <child.icon style={{ width: 16, height: 16 }} />
-                          <span>{child.label}</span>
-                        </NavLink>
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
+            <div key={item.label} className="nav-group">
+              <button
+                className={`nav-item ${openMenus[item.label] ? 'open' : ''}`}
+                onClick={() => {
+                  toggleMenu(item.label);
+                  if (item.label === 'CubeBook Finance') {
+                    navigate('/cubebook/dashboard');
+                  } else if (item.label === 'HR Management') {
+                    navigate('/hr');
+                  } else if (item.label === 'Vehicle Management') {
+                    navigate('/fleet/dashboard');
+                  } else if (item.label === 'Stores & Consumables') {
+                    navigate('/stores-consumables/dashboard');
+                  } else if (item.label === 'Production Management') {
+                    navigate('/ppc/tracking/live-dashboard');
+                  }
+                }}
+                style={{ width: 'calc(100% - 16px)', justifyContent: 'space-between', cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </div>
+                {openMenus[item.label] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+              {openMenus[item.label] && (
+                <div className="nav-children animate-fade" style={{ display: 'flex', flexDirection: 'column' }}>
+                  {item.children.map((child, childIdx) =>
+                    child.section ? (
+                      <div
+                        key={`sec-${childIdx}`}
+                        style={{
+                          padding: '16px 16px 6px 32px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          color: '#64748b',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em'
+                        }}
+                      >
+                        {child.section}
+                      </div>
+                    ) : (
+                      <NavLink
+                        key={child.path}
+                        to={child.path}
+                        end={child.path === '/'}
+                        className={({ isActive }) => {
+                          const isReallyActive = child.path.includes('?')
+                            ? (location.pathname === child.path.split('?')[0] && location.search.includes(child.path.split('?')[1]))
+                            : (location.pathname === child.path);
+                          return `nav-item ${isReallyActive ? 'active' : ''}`;
+                        }}
+                        style={{ padding: '10px 16px 10px 24px', fontSize: '13.5px', margin: '2px 8px' }}
+                      >
+                        <child.icon style={{ width: 16, height: 16 }} />
+                        <span>{child.label}</span>
+                      </NavLink>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) => {
-                const isReallyActive = item.path.includes('?') 
+                const isReallyActive = item.path.includes('?')
                   ? (location.pathname === item.path.split('?')[0] && location.search.includes(item.path.split('?')[1]))
                   : isActive;
                 return `nav-item ${isReallyActive ? 'active' : ''}`;

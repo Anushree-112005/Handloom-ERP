@@ -11,7 +11,7 @@ router = APIRouter(prefix="/dropdowns", tags=["Dropdowns"])
 
 DEFAULT_MASTERS = {
     "party_type": [
-        "Sales Party", "Logistics", "Processor", "Yarn Dyeing", "Yarn Coverter",
+        "Sales", "Purchase", "Sales Party", "Logistics", "Processor", "Yarn Dyeing", "Yarn Coverter",
         "Exports party", "Own Shed", "Washing/Finishing", "Purchase Party",
         "Agent", "Weaving vendor", "Bit Loom Weaver", "Doubling", "Weaving Unit",
         "Testing Lab", "Spares Supplier", "Delivery Party"
@@ -47,13 +47,23 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     gm_req = await db.execute(select(GeneralMaster.category, GeneralMaster.value))
     gm_rows = gm_req.all()
     
-    # Auto-seed if empty
-    if not gm_rows:
-        for category, values in DEFAULT_MASTERS.items():
-            for val in values:
+    # Auto-seed if empty or check and seed missing defaults
+    existing_gm = {}
+    for row in gm_rows:
+        if row.category not in existing_gm:
+            existing_gm[row.category] = set()
+        existing_gm[row.category].add(row.value)
+
+    added_any = False
+    for category, values in DEFAULT_MASTERS.items():
+        existing_vals = existing_gm.get(category, set())
+        for val in values:
+            if val not in existing_vals:
                 db.add(GeneralMaster(category=category, value=val))
+                added_any = True
+                
+    if added_any:
         await db.commit()
-        
         gm_req = await db.execute(select(GeneralMaster.category, GeneralMaster.value))
         gm_rows = gm_req.all()
 

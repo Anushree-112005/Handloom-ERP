@@ -182,89 +182,106 @@ async def seed_all_data(session):
         await session.commit()
 
         # ── 2. Seed Party Master (Buyers, Vendors, Transporters) ──
-        # 10 Buyers
+        # 10 Buyers: (company_name, customer_code, status, buyer_name, agent_name, contact_person, phone, mobile, city, gst_no, pan_no)
+        buyers_data = [
+            ("Dinesh Exports", "CUST001", "Active", "Karthikeyan", "Senthil Kumar", "K. Rajesh", "0424-2256781", "9842712345", "Erode", "33AAACD1101A1Z1", "AAACD1101A"),
+            ("Sri Ranga Textiles", "CUST002", "Active", "Ranganathan", "Venkatesh", "R. Murugan", "0422-2578902", "9443212345", "Coimbatore", "33AABCS2202B1Z2", "AABCS2202B"),
+            ("KG Denim Ltd", "CUST003", "Active", "Ganesh Kumar", "Shanmugam", "S. Palanisamy", "04254-223456", "9894012345", "Mettupalayam", "33AAACK3303C1Z3", "AAACK3303C"),
+            ("Appachi Cottons", "CUST004", "Active", "Appachi Mylsamy", "Ponnusamy", "M. Selvaraj", "04259-245678", "9789012345", "Pollachi", "33AACCA4404D1Z4", "AACCA4404D"),
+            ("Nalli Silks", "CUST005", "Active", "Nalli Kuppusami", "Ramanathan", "K. Srinivasan", "044-24345678", "9840012345", "Chennai", "33AABCN5505E1Z5", "AABCN5505E"),
+            ("Pothys Textiles", "CUST006", "Active", "Pothy Moorthy", "Chinnasamy", "P. Ramesh", "0452-2345678", "9865012345", "Madurai", "33AABCP6606F1Z6", "AABCP6606F"),
+            ("Karur Tex", "CUST007", "Active", "Muthusamy", "Kathirvel", "M. Vignesh", "04324-234890", "9486012345", "Karur", "33AAACK7707G1Z7", "AAACK7707G"),
+            ("Tiruppur Garments", "CUST008", "Active", "Palanisamy", "Ganeshan", "P. Velusamy", "0421-2245678", "9894412345", "Tiruppur", "33AABCT8808H1Z8", "AABCT8808H"),
+            ("Kalyan Silks TN", "CUST009", "Active", "Kalyanasundaram", "Subramanian", "S. Arun", "0427-2445678", "9444012345", "Salem", "33AABCK9909I1Z9", "AABCK9909I"),
+            ("Kumar Silks", "CUST010", "Active", "Kumarasamy", "Dhandapani", "K. Saravanan", "044-27245678", "9841012345", "Kanchipuram", "33AABCK1010J1Z0", "AABCK1010J")
+        ]
+        
         buyers = [
-            ("HM Sweden", "CUST001", "Active", "HM-01"),
-            ("Zara Spain", "CUST002", "Active", "ZR-02"),
-            ("IKEA Netherlands", "CUST003", "Active", "IK-03"),
-            ("Target US", "CUST004", "Active", "TG-04"),
-            ("Gap Inc", "CUST005", "Active", "GP-05"),
-            ("Levi Strauss", "CUST006", "Active", "LV-06"),
-            ("Adidas AG", "CUST007", "Active", "AD-07"),
-            ("Nike Inc", "CUST008", "Active", "NK-08"),
-            ("Uniqlo Japan", "CUST009", "Active", "UQ-09"),
-            ("Marks & Spencer", "CUST010", "Active", "MS-10")
+            (b[0], b[1], "33", b[8])  # (company_name, customer_code, state_code, city)
+            for b in buyers_data
         ]
         
-        # 10 Vendors/Suppliers
-        vendors = [
-            ("Vardhman Yarns Ltd", "VEND001", "Active"),
-            ("Arvind Mills Ltd", "VEND002", "Active"),
-            ("Trident Group", "VEND003", "Active"),
-            ("Welspun India", "VEND004", "Active"),
-            ("Sutlej Textiles", "VEND005", "Active"),
-            ("Raymond Cotton", "VEND006", "Active"),
-            ("Siyaram Silks", "VEND007", "Active"),
-            ("Sangam India", "VEND008", "Active"),
-            ("Nahar Spinning", "VEND009", "Active"),
-            ("Banswara Syntex", "VEND010", "Active")
+        # 10 Vendors: (company_name, customer_code, status, buyer_name, agent_name, contact_person, phone, mobile, city, gst_no, pan_no)
+        vendors_data = [
+            ("Vardhman Yarns TN", "VEND001", "Active", "K. Ramasamy", "R. Krishnan", "K. Ramasamy", "0422-2345611", "9842211111", "Coimbatore", "33VNDAA001F1Z1", "VNDAA001F"),
+            ("Arvind Mills TN", "VEND002", "Active", "S. Kumar", "P. Mani", "S. Kumar", "044-2567822", "9840022222", "Chennai", "33VNDAA002F1Z2", "VNDAA002F"),
+            ("Trident Group TN", "VEND003", "Active", "M. Selvam", "K. Prabhu", "M. Selvam", "0421-2244333", "9894433333", "Tiruppur", "33VNDAA003F1Z3", "VNDAA003F"),
+            ("Welspun India TN", "VEND004", "Active", "P. Murugan", "A. Raja", "P. Murugan", "0452-2345444", "9865044444", "Madurai", "33VNDAA004F1Z4", "VNDAA004F"),
+            ("Sutlej Textiles TN", "VEND005", "Active", "V. Karthik", "S. Prakash", "V. Karthik", "0424-2256555", "9842755555", "Erode", "33VNDAA005F1Z5", "VNDAA005F"),
+            ("Raymond Cotton TN", "VEND006", "Active", "T. Vignesh", "M. Balaji", "T. Vignesh", "0427-2445666", "9443066666", "Salem", "33VNDAA006F1Z6", "VNDAA006F"),
+            ("Siyaram Silks TN", "VEND007", "Active", "A. Anbarasan", "P. Mohan", "A. Anbarasan", "04324-234777", "9486077777", "Karur", "33VNDAA007F1Z7", "VNDAA007F"),
+            ("Sangam India TN", "VEND008", "Active", "S. Vijay", "G. Anand", "S. Vijay", "04286-223888", "9789088888", "Namakkal", "33VNDAA008F1Z8", "VNDAA008F"),
+            ("Nahar Spinning TN", "VEND009", "Active", "K. Saravanan", "R. Hari", "K. Saravanan", "04288-256999", "9842999999", "Tiruchengodu", "33VNDAA009F1Z9", "VNDAA009F"),
+            ("Banswara Syntex TN", "VEND010", "Active", "P. Ramu", "S. Siva", "P. Ramu", "04255-256000", "9894000000", "Palladam", "33VNDAA010F1Z0", "VNDAA010F")
         ]
         
-        # 10 Transporters
-        transporters = [
-            ("SafeExpress Logistics", "TRANS001", "Active"),
-            ("DHL Global Forwarding", "TRANS002", "Active"),
-            ("VRL Logistics", "TRANS003", "Active"),
-            ("TCI Freight", "TRANS004", "Active"),
-            ("BlueDart Express", "TRANS005", "Active"),
-            ("Gati KWE", "TRANS006", "Active"),
-            ("ARC Carriers", "TRANS007", "Active"),
-            ("Patel Roadways", "TRANS008", "Active"),
-            ("Southern Roadways", "TRANS009", "Active"),
-            ("Om Logistics", "TRANS010", "Active")
+        # 10 Transporters: (company_name, customer_code, status, buyer_name, agent_name, contact_person, phone, mobile, city, gst_no, pan_no)
+        transporters_data = [
+            ("SafeExpress Logistics TN", "TRANS001", "Active", "N/A", "N/A", "K. Rajan", "044-2456701", "9840090001", "Chennai", "33TRAAA001K1Z1", "TRAAA001K"),
+            ("DHL Global Forwarding TN", "TRANS002", "Active", "N/A", "N/A", "M. Sundar", "0422-2567802", "9842290002", "Coimbatore", "33TRAAA002K1Z2", "TRAAA002K"),
+            ("VRL Logistics TN", "TRANS003", "Active", "N/A", "N/A", "P. Mani", "0424-2256703", "9842790003", "Erode", "33TRAAA003K1Z3", "TRAAA003K"),
+            ("TCI Freight TN", "TRANS004", "Active", "N/A", "N/A", "S. Balu", "0421-2245604", "9894490004", "Tiruppur", "33TRAAA004K1Z4", "TRAAA004K"),
+            ("BlueDart Express TN", "TRANS005", "Active", "N/A", "N/A", "V. Siva", "0427-2445605", "9443090005", "Salem", "33TRAAA005K1Z5", "TRAAA005K"),
+            ("Gati KWE TN", "TRANS006", "Active", "N/A", "N/A", "R. Sekar", "0452-2345606", "9865090006", "Madurai", "33TRAAA006K1Z6", "TRAAA006K"),
+            ("ARC Carriers TN", "TRANS007", "Active", "N/A", "N/A", "A. Velu", "04324-234507", "9486090007", "Karur", "33TRAAA007K1Z7", "TRAAA007K"),
+            ("Patel Roadways TN", "TRANS008", "Active", "N/A", "N/A", "N. Ramu", "04286-223408", "9789090008", "Namakkal", "33TRAAA008K1Z8", "TRAAA008K"),
+            ("Southern Roadways TN", "TRANS009", "Active", "N/A", "N/A", "S. Dev", "04288-256709", "9842990009", "Tiruchengodu", "33TRAAA009K1Z9", "TRAAA009K"),
+            ("Om Logistics TN", "TRANS010", "Active", "N/A", "N/A", "M. Babu", "04255-256710", "9894090010", "Palladam", "33TRAAA010K1Z0", "TRAAA010K")
         ]
 
         party_objects = []
-        for name, code, status, *extra in buyers:
+        for name, code, status, buyer_name, agent_name, contact, phone, mobile, city, gst, pan in buyers_data:
             p = PartyMaster(
                 customer_code=code, party_type="Sales", company_name=name, party_group="Retail Buyers",
-                customer_grade="A", status=status, address=f"101 Fashion Blvd, Block {code[-1]}", city="Mumbai",
-                state="Maharashtra", state_code="27", pin_code="400001", currency="USD", phone="022-245678",
-                mobile="9876543210", email=f"info@{name.lower().replace(' ', '')}.com", contact_person="John Doe",
-                gst_no=f"27AAAAB{code[-3:]}C1Z0", pan_no=f"AAAAB{code[-3:]}C", credit_days=60, credit_limit=50000.0,
-                payment_terms="Net 60 Days", transport_name="SafeExpress Logistics"
+                customer_grade="A", status=status, address=f"101 Fashion Blvd, Block {code[-1]}", city=city,
+                state="Tamil Nadu", state_code="33", pin_code="600001", currency="INR", phone=phone,
+                mobile=mobile, email=f"info@{name.lower().replace(' ', '').replace('/', '')}.com", contact_person=contact,
+                gst_no=gst, pan_no=pan, credit_days=60, credit_limit=50000.0,
+                payment_terms="Net 60 Days", transport_name="SafeExpress Logistics TN",
+                buyer_name=buyer_name if buyer_name != "N/A" else None,
+                agent_name=agent_name if agent_name != "N/A" else None
             )
             party_objects.append(p)
             
-        for name, code, status in vendors:
+        for name, code, status, buyer_name, agent_name, contact, phone, mobile, city, gst, pan in vendors_data:
             p = PartyMaster(
                 customer_code=code, party_type="Purchase", company_name=name, party_group="Yarn Suppliers",
-                status=status, address=f"Yarn Plaza, Industrial Sector {code[-1]}", city="Coimbatore",
-                state="Tamil Nadu", state_code="33", pin_code="641001", currency="INR", phone="0422-234567",
-                mobile="9876501234", email=f"sales@{name.lower().replace(' ', '')}.com", contact_person="K. Ramasamy",
-                gst_no=f"33VNDAA{code[-3:]}F1Z5", pan_no=f"VNDAA{code[-3:]}F", credit_days=45, credit_limit=100000.0,
-                payment_terms="Net 45 Days"
+                status=status, address=f"Yarn Plaza, Industrial Sector {code[-1]}", city=city,
+                state="Tamil Nadu", state_code="33", pin_code="641001", currency="INR", phone=phone,
+                mobile=mobile, email=f"sales@{name.lower().replace(' ', '').replace('/', '')}.com", contact_person=contact,
+                gst_no=gst, pan_no=pan, credit_days=45, credit_limit=100000.0,
+                payment_terms="Net 45 Days",
+                buyer_name=buyer_name if buyer_name != "N/A" else None,
+                agent_name=agent_name if agent_name != "N/A" else None
             )
             party_objects.append(p)
             
-        for name, code, status in transporters:
+        for name, code, status, buyer_name, agent_name, contact, phone, mobile, city, gst, pan in transporters_data:
             p = PartyMaster(
                 customer_code=code, party_type="Logistics", company_name=name, party_group="Logistics Partners",
-                status=status, address=f"Terminal Hub {code[-1]}", city="Chennai",
-                state="Tamil Nadu", state_code="33", pin_code="600001", currency="INR", phone="044-256789",
-                mobile="9876598765", email=f"logistics@{name.lower().replace(' ', '')}.com", contact_person="S. Kumar",
-                gst_no=f"33TRAAA{code[-3:]}K1Z9", pan_no=f"TRAAA{code[-3:]}K"
+                status=status, address=f"Terminal Hub {code[-1]}", city=city,
+                state="Tamil Nadu", state_code="33", pin_code="600001", currency="INR", phone=phone,
+                mobile=mobile, email=f"logistics@{name.lower().replace(' ', '').replace('/', '')}.com", contact_person=contact,
+                gst_no=gst, pan_no=pan,
+                buyer_name=buyer_name if buyer_name != "N/A" else None,
+                agent_name=agent_name if agent_name != "N/A" else None
             )
             party_objects.append(p)
             
         session.add_all(party_objects)
-        await session.commit()
+        await session.flush()
         
-        # Refresh to get IDs
+        # Add a billing address for each party
         for p in party_objects:
-            await session.refresh(p)
-            # Add a billing address
-            addr = PartyAddress(party_id=p.id, address=p.address, city=p.city, state=p.state, state_code=p.state_code, pin_code=p.pin_code, address_type="Bill")
+            addr = PartyAddress(
+                party_id=p.id,
+                address=p.address,
+                city=p.city,
+                state=p.state,
+                state_code=p.state_code,
+                pin_code=p.pin_code,
+                address_type="Bill"
+            )
             session.add(addr)
         await session.commit()
 
@@ -533,6 +550,11 @@ async def seed_all_data(session):
         session.add_all(production_logs)
         await session.commit()
 
+        # Delete existing PPC submasters to prevent duplicates
+        from sqlalchemy import delete
+        await session.execute(delete(SubMaster).where(SubMaster.entity.like("ppc_%")))
+        await session.commit()
+
         # Add Daily Production Monitor submasters for ppc_target_actual
         for i, lm in enumerate(loom_objects):
             t = SubMaster(
@@ -541,6 +563,141 @@ async def seed_all_data(session):
                 description=f"Shortfall: {-20 + (i * 10)}.0 m | Eff: {85 + i}%", is_active=True
             )
             session.add(t)
+        await session.commit()
+
+        # Seed all 30 submaster entities for PPC module
+        ppc_submasters = []
+
+        # 1. ppc_shift_master
+        shifts_data = [
+            ("Day Shift A", "Day", "06:00", "14:00", "30"),
+            ("Evening Shift B", "Day", "14:00", "22:00", "30"),
+            ("Night Shift C", "Night", "22:00", "06:00", "30"),
+            ("General Shift", "General", "09:00", "17:00", "60"),
+            ("Special Day Shift", "Day", "08:00", "16:00", "30"),
+            ("Overtime Shift", "General", "17:00", "21:00", "15"),
+            ("Morning Part-time", "Day", "06:00", "10:00", "0"),
+            ("Afternoon Part-time", "Day", "10:00", "14:00", "0"),
+            ("Night Part-time", "Night", "22:00", "02:00", "0"),
+            ("Midnight Part-time", "Night", "02:00", "06:00", "0")
+        ]
+        for name, code, f1, f2, f3 in shifts_data:
+            ppc_submasters.append(SubMaster(entity="ppc_shift_master", name=name, code=code, extra_field_1=f1, extra_field_2=f2, extra_field_3=f3, is_active=True))
+
+        # 2. ppc_downtime_reason
+        downtime_reasons = [
+            ("Shuttle fly / Reed damage", "DR-001", "Mechanical", "Maintenance", "45"),
+            ("Motor failure / Inverter error", "DR-002", "Electrical", "Electrical", "60"),
+            ("Frequent Warp/Weft breaks", "DR-003", "Yarn", "Production", "15"),
+            ("Grid power failure", "DR-004", "Power", "Utility", "30"),
+            ("Operator shift handover / Rest", "DR-005", "Operator", "Production", "15"),
+            ("Temple pin wear out", "DR-006", "Mechanical", "Maintenance", "20"),
+            ("Sensor malfunction", "DR-007", "Electrical", "Electrical", "15"),
+            ("Knotting machine failure", "DR-008", "Yarn", "Production", "45"),
+            ("Gear box oil leakage", "DR-009", "Mechanical", "Maintenance", "120"),
+            ("Supervisor inspection", "DR-010", "Operator", "Production", "10")
+        ]
+        for name, code, f1, f2, f3 in downtime_reasons:
+            ppc_submasters.append(SubMaster(entity="ppc_downtime_reason", name=name, code=code, extra_field_1=f1, extra_field_2=f2, description=f3, is_active=True))
+
+        # Helper arrays for loop-based seeding
+        loom_names = [f"LM-00{k}" for k in range(1, 10)] + ["LM-010"]
+        order_ids = [f"IBPO-26-00{k}" for k in range(1, 10)] + ["IBPO-26-010"]
+        operator_names = ["Senthil Kumar", "Manoj Kumar", "Vijay Antony", "Ramesh Kumar", "Siva Kumar", "Karthik", "Arun Kumar", "Ramesh", "Siva", "Vijay"]
+        buyer_names = [b[0] for b in buyers] if len(buyers) >= 10 else ["Dinesh Exports", "Sri Ranga Textiles", "Annamar Textiles", "Karthik Textile Mills", "Manoj Fabrics", "Vijay Textile Hub", "Senthil Handlooms", "Arun Mills", "Ranga Fabrics", "Karthik Mills"]
+
+        # Seed other PPC submasters in loops (10 records each)
+        for k in range(10):
+            lm = loom_names[k]
+            ord_id = order_ids[k]
+            op_name = operator_names[k]
+            buyer = buyer_names[k]
+            
+            # 3. ppc_availability_check
+            ppc_submasters.append(SubMaster(entity="ppc_availability_check", name=lm, code=ord_id, extra_field_1=ord_id, extra_field_2=f"2026-06-2{k}", description=f"{1500 + k * 500} m", is_active=True))
+            
+            # 4. ppc_capacity_calc
+            ppc_submasters.append(SubMaster(entity="ppc_capacity_calc", name=lm, code=f"{450 + k * 10} m/day", extra_field_1=f"{85 + k}%", extra_field_2=f"{210 + k * 5} rpm", description="Available Hours: 24 | Standard Weft Density: 60 PPI", is_active=True))
+            
+            # 5. ppc_order_breakdown
+            ppc_submasters.append(SubMaster(entity="ppc_order_breakdown", name=ord_id, extra_field_1=f"{10000 + k * 1000} m", extra_field_2="Equal Split" if k % 2 == 0 else "Capacity-based", description=f"Allocated Looms: {lm}, {loom_names[(k+1)%10]}", is_active=True))
+            
+            # 6. ppc_start_end_plan
+            ppc_submasters.append(SubMaster(entity="ppc_start_end_plan", name=f"SC-00{k+1}" if k < 9 else "SC-010", code=ord_id, extra_field_1=f"2026-06-18 to 2026-06-2{5+k%5}", extra_field_2=f"Buffer: {3+k%5} days", description=f"Loom: {lm} | Runtime: {7.0 + k*0.5} days", is_active=True))
+            
+            # 7. ppc_shift_planning_v2
+            ppc_submasters.append(SubMaster(entity="ppc_shift_planning_v2", name=f"SC-00{k+1}" if k < 9 else "SC-010", code="Day Shift A" if k % 2 == 0 else "Evening Shift B", extra_field_1=op_name, extra_field_2=f"{150 + k * 5} m", description=f"Loom: {lm} | {7.0 + (k%2)*0.5} hrs", is_active=True))
+            
+            # 8. ppc_operator_assignment
+            ppc_submasters.append(SubMaster(entity="ppc_operator_assignment", name=f"OA-00{k+1}" if k < 9 else "OA-010", code=op_name, extra_field_1=f"{lm} | Day Shift A" if k % 2 == 0 else f"{lm} | Evening Shift B", extra_field_2="Active", description=f"Order: {ord_id} | Backup: {operator_names[(k+1)%10]}", is_active=True))
+            
+            # 9. ppc_priority_schedule
+            ppc_submasters.append(SubMaster(entity="ppc_priority_schedule", name=ord_id, code="High Priority" if k % 3 == 0 else ("Urgent Priority" if k % 3 == 1 else "Normal Priority"), extra_field_1=lm, extra_field_2=f"June 2{5+k%5} Delivery", description=f"Customer Request | Rank: {k+1}", is_active=True))
+            
+            # 10. ppc_loom_start
+            ppc_submasters.append(SubMaster(entity="ppc_loom_start", name=f"PE-00{k+1}" if k < 9 else "PE-010", code=lm, extra_field_1=ord_id, extra_field_2=f"Day Shift A - {op_name}" if k % 2 == 0 else f"Evening Shift B - {op_name}", description=f"Beam: WB-04{k} | Start: 0m", is_active=True))
+            
+            # 11. ppc_status_update
+            ppc_submasters.append(SubMaster(entity="ppc_status_update", name=lm, code="Running" if k < 8 else ("Idle" if k == 8 else "Maintenance"), extra_field_1=f"{60 + k} m/hr", extra_field_2="Active weaving" if k < 8 else "Pending shift", description=f"Warp Tension: Normal | Temp: {25 + k}C", is_active=True))
+            
+            # 12. ppc_efficiency_calc
+            ppc_submasters.append(SubMaster(entity="ppc_efficiency_calc", name=f"EF-00{k+1}" if k < 9 else "EF-010", code=lm, extra_field_1="Day Shift A" if k % 2 == 0 else "Evening Shift B", extra_field_2=f"OEE: {80.0 + k*1.5}%", description=f"Overall: {85.0 + k}% | Loss: {15.0 - k}m", is_active=True))
+            
+            # 13. ppc_loss_analysis
+            ppc_submasters.append(SubMaster(entity="ppc_loss_analysis", name=lm, code="Yarn Breakage" if k % 2 == 0 else "Mechanical Jam", extra_field_1=f"{2.5 - k*0.2} hrs downtime", extra_field_2=f"Meters Lost: {50 - k*3}m", description=f"Cost impact: ₹{2000 + k*100} | Dept: Production", is_active=True))
+            
+            # 14. ppc_shift_summary
+            ppc_submasters.append(SubMaster(entity="ppc_shift_summary", name=f"SS-00{k+1}" if k < 9 else "SS-010", code="Day Shift A" if k % 2 == 0 else "Evening Shift B", extra_field_1=f"2026-06-{10+k}", extra_field_2=f"Total: {3000 + k*100}m", description=f"Avg Efficiency: {80 + k}% | Active Looms: {8 + k%3}/10", is_active=True))
+            
+            # 15. ppc_order_progress
+            ppc_submasters.append(SubMaster(entity="ppc_order_progress", name=ord_id, code=buyer, extra_field_1=f"{45.0 + k*5}%", extra_field_2=f"{3000 + k*500} m", description=f"Days Remaining: {12-k} | Produced: {4000 + k*1000}m", is_active=True))
+            
+            # 16. ppc_breakdown_entry
+            ppc_submasters.append(SubMaster(entity="ppc_breakdown_entry", name=f"BD-00{k+1}" if k < 9 else "BD-010", code=lm, extra_field_1="Mechanical - Resolved" if k % 2 == 0 else "Electrical - Open", extra_field_2=f"{1.5 + k*0.2} hrs", description=f"Action: Replaced sensor | Attended: Team {chr(65+k%3)}", is_active=True))
+            
+            # 17. ppc_downtime_calc
+            ppc_submasters.append(SubMaster(entity="ppc_downtime_calc", name=f"DT-00{k+1}" if k < 9 else "DT-010", code=lm, extra_field_1=f"{1.5 + k*0.2} hrs", extra_field_2="Warp End Breakage" if k % 2 == 0 else "Weft Jamming", description=f"Total Stops: {5+k} | Avg Duration: {10+k%5} mins", is_active=True))
+            
+            # 18. ppc_lost_meters
+            ppc_submasters.append(SubMaster(entity="ppc_lost_meters", name=lm, code=f"DR-00{1+k%5}", extra_field_1=f"{20.0 + k*5} m", extra_field_2="Weave Stop", description=f"Downtime: {1.0 + k*0.2} hrs | Rate: ₹45.0/m | Loss: ₹{900+k*225}", is_active=True))
+            
+            # 19. ppc_maintenance_log
+            ppc_submasters.append(SubMaster(entity="ppc_maintenance_log", name=lm, extra_field_1="Preventive" if k % 2 == 0 else "Corrective", extra_field_2="Reed, Shuttle replaced" if k % 2 == 0 else "Drive belt replaced", code=f"₹{5000+k*1500}", description=f"2026-07-2{k%10}", is_active=True))
+            
+            # 20. ppc_alert_low_eff
+            ppc_submasters.append(SubMaster(entity="ppc_alert_low_eff", name=f"LEA-00{k+1}" if k < 9 else "LEA-010", code=lm, extra_field_1=f"{70.0 + k*1.2}%", extra_field_2="Pending" if k % 2 == 0 else "Resolved", description=f"{lm} efficiency dropped to {70.0 + k*1.2}% in Day Shift A. Target: 85%. Loss: {40+k*3} m", is_active=True))
+            
+            # 21. ppc_alert_breakdown
+            ppc_submasters.append(SubMaster(entity="ppc_alert_breakdown", name=f"BA-00{k+1}" if k < 9 else "BA-010", code=lm, extra_field_1="Critical" if k % 3 == 0 else "Warning", extra_field_2="Open" if k % 2 == 0 else "Resolved", description=f"{lm} breakdown: Mechanical Jam reported at 10:{10+k*3} AM", is_active=True))
+            
+            # 22. ppc_alert_delay_risk
+            ppc_submasters.append(SubMaster(entity="ppc_alert_delay_risk", name=ord_id, code=lm, extra_field_1="High Risk" if k % 3 == 0 else "Low Risk", extra_field_2="Active", description=f"Order {ord_id} on {lm} is running {2.5 + k*0.5} days behind schedule", is_active=True))
+            
+            # 23. ppc_alert_next_order
+            ppc_submasters.append(SubMaster(entity="ppc_alert_next_order", name=lm, code=f"Next: {order_ids[(k+1)%10]}", extra_field_1="Beam ready" if k % 2 == 0 else "Beam winding", extra_field_2=f"Expected start: 2026-06-2{k}", description=f"Loom {lm} is at {80 + k}% completion. Prepare next warp beam.", is_active=True))
+            
+            # 24. ppc_finish_alert_log
+            ppc_submasters.append(SubMaster(entity="ppc_finish_alert_log", name=ord_id, code=lm, extra_field_1=f"{95.0 + k*0.5}%" if k < 9 else "100.0%", extra_field_2="Triggered" if k < 9 else "Completed", description=f"Order {ord_id} finishing soon on {lm}. Expected: 2.5 hrs", is_active=True))
+            
+            # 25. ppc_daily_report
+            ppc_submasters.append(SubMaster(entity="ppc_daily_report", name=f"2026-06-{10+k}", code="Dinesh Exports", extra_field_1=f"Produced: {4500 + k*200} m", extra_field_2="Active looms: 10/10", description=f"Total downtime: {5.5 + k*0.5} hrs | Quality rating: 98.{5+k%5}%", is_active=True))
+            
+            # 26. ppc_shift_production
+            ppc_submasters.append(SubMaster(entity="ppc_shift_production", name=lm, code=ord_id, extra_field_1=f"Shift: Day | Op: {op_name}", extra_field_2=f"{350 + k*15}", description=f"Defects: {k}m | Avg Speed: 215 rpm", is_active=True))
+            
+            # 27. ppc_dynamic_eta
+            ppc_submasters.append(SubMaster(entity="ppc_dynamic_eta", name=ord_id, code=lm, extra_field_1=f"2026-06-2{k}", extra_field_2="On Time" if k % 2 == 0 else "Delayed", description=f"Updated ETA based on current speed {60 + k} m/hr", is_active=True))
+            
+            # 28. ppc_delay_risk
+            ppc_submasters.append(SubMaster(entity="ppc_delay_risk", name=ord_id, code=lm, extra_field_1="Medium Risk" if k % 2 == 0 else "No Risk", extra_field_2=f"Delay: {1.5 + k*0.2} days", description=f"Slight yarn quality issue causing minor speed drop on {lm}", is_active=True))
+            
+            # 29. ppc_load_balancing
+            ppc_submasters.append(SubMaster(entity="ppc_load_balancing", name=lm, code=ord_id, extra_field_1=f"{80.0 + k}% load", extra_field_2="Balanced" if k % 2 == 0 else "Overloaded", description=f"Optimized allocation plan for loom {lm}", is_active=True))
+            
+            # 30. ppc_reallocation
+            ppc_submasters.append(SubMaster(entity="ppc_reallocation", name=lm, code=loom_names[(k+1)%10], extra_field_1="Breakdown" if k % 2 == 0 else "Urgent Priority", extra_field_2=f"Reallocated: {1000 + k*200} m", description="Reallocation executed successfully", is_active=True))
+
+        session.add_all(ppc_submasters)
         await session.commit()
 
         # ── 10. Seed Yarn Deliveries to Looms (Phase 4 In-Process Yarn) ──

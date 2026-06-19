@@ -848,7 +848,12 @@ export default function PartyMaster() {
       p.customer_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.phone?.includes(searchTerm);
 
-    const matchesType = typeFilter === 'All Types' || p.party_type === typeFilter;
+    const matchesType = typeFilter === 'All Types' || 
+      p.party_type === typeFilter || 
+      (typeFilter === 'Sales Party' && p.party_type === 'Sales') ||
+      (typeFilter === 'Sales' && p.party_type === 'Sales Party') ||
+      (typeFilter === 'Purchase Party' && p.party_type === 'Purchase') ||
+      (typeFilter === 'Purchase' && p.party_type === 'Purchase Party');
     const matchesStatus = statusFilter === 'All Status' || p.status === statusFilter;
 
     let matchesDate = true;
@@ -930,8 +935,8 @@ export default function PartyMaster() {
   };
 
   const totalParties = parties.length;
-  const totalSales = parties.filter(p => p.party_type === 'Sales Party').length;
-  const totalPurchase = parties.filter(p => p.party_type === 'Purchase Party').length;
+  const totalSales = parties.filter(p => p.party_type === 'Sales' || p.party_type === 'Sales Party').length;
+  const totalPurchase = parties.filter(p => p.party_type === 'Purchase' || p.party_type === 'Purchase Party').length;
   const activeParties = parties.filter(p => p.status === 'Active').length;
 
   const handleCardClick = (type) => {

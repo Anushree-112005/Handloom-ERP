@@ -191,14 +191,50 @@ const DayBook = () => {
                           {v.voucher_type}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>
-                        {v.particulars || '-'}
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {(v.entries || []).map((e, idx) => (
+                            <div key={idx} style={{ 
+                              fontWeight: e.dr_amount > 0 ? 600 : 400,
+                              color: e.dr_amount > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
+                              paddingLeft: e.dr_amount > 0 ? '0' : '16px'
+                            }}>
+                              {e.dr_amount > 0 ? 'By ' : 'To '}{e.ledger_name}
+                            </div>
+                          ))}
+                        </div>
+                        {v.narration && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            fontSize: '11px', 
+                            color: 'var(--text-muted)', 
+                            fontStyle: 'italic', 
+                            backgroundColor: '#f1f5f9', 
+                            padding: '6px 10px', 
+                            borderRadius: '4px',
+                            maxWidth: '480px'
+                          }}>
+                            {v.narration}
+                          </div>
+                        )}
                       </td>
-                      <td style={{ padding: '14px 16px', fontSize: 13, fontFamily: 'monospace', textAlign: 'right', color: v.debit > 0 ? '#ef4444' : 'var(--text-muted)', fontWeight: v.debit > 0 ? 600 : 400 }}>
-                        {v.debit > 0 ? fmt(v.debit) : '-'}
+                      <td style={{ padding: '14px 16px', fontSize: 13, fontFamily: 'monospace', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {(v.entries || []).map((e, idx) => (
+                            <div key={idx} style={{ height: '19px', visibility: e.dr_amount > 0 ? 'visible' : 'hidden' }}>
+                              {e.dr_amount > 0 ? fmt(e.dr_amount) : '-'}
+                            </div>
+                          ))}
+                        </div>
                       </td>
-                      <td style={{ padding: '14px 20px', fontSize: 13, fontFamily: 'monospace', textAlign: 'right', color: v.credit > 0 ? '#22c55e' : 'var(--text-muted)', fontWeight: v.credit > 0 ? 600 : 400 }}>
-                        {v.credit > 0 ? fmt(v.credit) : '-'}
+                      <td style={{ padding: '14px 20px', fontSize: 13, fontFamily: 'monospace', textAlign: 'right', color: '#22c55e', fontWeight: 600 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {(v.entries || []).map((e, idx) => (
+                            <div key={idx} style={{ height: '19px', visibility: e.cr_amount > 0 ? 'visible' : 'hidden' }}>
+                              {e.cr_amount > 0 ? fmt(e.cr_amount) : '-'}
+                            </div>
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -214,8 +250,8 @@ const DayBook = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Period Totals:</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontFamily: 'monospace', fontSize: 14, fontWeight: 700 }}>
-                <div style={{ color: '#ef4444', width: 100, textAlign: 'right' }}>₹{fmt(report.total_debit)}</div>
-                <div style={{ color: '#22c55e', width: 100, textAlign: 'right' }}>₹{fmt(report.total_credit)}</div>
+                <div style={{ color: '#ef4444', width: 100, textAlign: 'right' }}>₹{fmt(report.grand_total_dr)}</div>
+                <div style={{ color: '#22c55e', width: 100, textAlign: 'right' }}>₹{fmt(report.grand_total_cr)}</div>
               </div>
             </div>
           </div>

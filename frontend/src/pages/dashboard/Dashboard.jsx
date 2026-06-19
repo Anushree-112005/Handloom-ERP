@@ -414,9 +414,9 @@ export default function Dashboard() {
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
               <Tooltip cursor={{fill: 'transparent'}} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Vendor" name="Vendor Inward (Rolls)" fill="#10b981" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Checking" name="QC Checking (Lots)" fill="#eab308" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="GreyDelivery" name="Grey Delivery (Batches)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Vendor" name="Vendor Inward (Rolls)" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Checking" name="QC Checking (Lots)" fill="#0284c7" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="GreyDelivery" name="Grey Delivery (Batches)" fill="#94a3b8" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>

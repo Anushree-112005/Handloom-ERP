@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Search, Trash2, Edit, Check, X,
   Settings, Wrench, Layers, Users, ShieldAlert, Download
 } from 'lucide-react';
+import { partyAPI } from '../../services/api';
 
 export default function SparesMaster() {
   // Master Category tab: 'Sections' | 'Spares'
@@ -16,8 +17,26 @@ export default function SparesMaster() {
   const [currentFormId, setCurrentFormId] = useState('');
   const [activeFormTab, setActiveFormTab] = useState('General Info');
 
+  const [partiesList, setPartiesList] = useState([]);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const res = await partyAPI.list();
+        if (res.data && res.data.length > 0) {
+          setPartiesList(res.data.map(p => p.company_name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch parties in SparesMaster", err);
+      }
+    };
+    fetchParties();
+  }, []);
+
   // Static masters for references
-  const PARTIES = ['Vardhman Spinning', 'Raymond Ltd', 'Reliance Retail', 'Chemical Traders', 'Standard Gears Ltd', 'Zenith Electricals'];
+  const PARTIES = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Vardhman Spinning', 'Raymond Ltd', 'Reliance Retail', 'Chemical Traders', 'Standard Gears Ltd', 'Zenith Electricals'];
+  }, [partiesList]);
   const EMPLOYEES = ['Senthil Kumar (General Manager)', 'Mani Bharathi (Store Head)', 'Dinesh Balasamy (MD)', 'Murugan Swamy (Maintenance In-charge)'];
 
   // ----------------------------------------------------

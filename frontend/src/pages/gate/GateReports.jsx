@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   FileText, Search, Download, Printer, Filter, ChevronRight, 
   Calendar, RefreshCw, BarChart2, Shield, AlertTriangle 
@@ -6,6 +6,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { partyAPI } from '../../services/api';
 
 export default function GateReports() {
   // KPI summary state
@@ -15,6 +16,22 @@ export default function GateReports() {
     { label: "Open Gate Passes", value: "14 Passes", change: "9 Returnable pending", color: "#4f46e5" },
     { label: "Overdue Returnables", value: "2 Material Items", change: "Action required", color: "#ef4444" }
   ];
+
+  const [partiesList, setPartiesList] = useState([]);
+
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const res = await partyAPI.list();
+        if (res.data && res.data.length > 0) {
+          setPartiesList(res.data.map(p => p.company_name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch parties in GateReports", err);
+      }
+    };
+    fetchParties();
+  }, []);
 
   // Combined master report dataset
   const [masterLogs, setMasterLogs] = useState(() => {
@@ -80,7 +97,9 @@ export default function GateReports() {
   const [vehicleQuery, setVehicleQuery] = useState('');
 
   // Dropdown list generation
-  const parties = ['Raymond Ltd', 'Reliance Retail', 'Vardhman Spinning', 'Chemical Traders'];
+  const parties = useMemo(() => {
+    return partiesList.length > 0 ? partiesList : ['Raymond Ltd', 'Reliance Retail', 'Vardhman Spinning', 'Chemical Traders'];
+  }, [partiesList]);
   const materialTypes = ['Yarn', 'Fabric / Cloth', 'Dyes & Chemicals', 'Spare Parts', 'Machinery', 'Others'];
   const purposes = ['Sales Delivery', 'Job Work Out', 'Material Return', 'Sample Dispatch', 'Machinery Out', 'Others'];
 
