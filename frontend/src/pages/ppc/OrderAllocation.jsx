@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2 } from 'lucide-react';
+import { Layers, Search, Save, ArrowLeft, Plus, Trash2, Eye, Edit2, Activity, CheckCircle, Settings, AlertTriangle } from 'lucide-react';
 import { ppcAPI, buyerOrderAPI } from '../../services/api';
 
 export default function OrderAllocation() {
@@ -125,9 +125,15 @@ export default function OrderAllocation() {
     r.fabric_type?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalAllocations = records.length;
+  const pendingAllocations = records.filter(r => r.allocation_status === 'Pending').length;
+  const inProgressAllocations = records.filter(r => r.allocation_status === 'In Progress').length;
+  const completedAllocations = records.filter(r => r.allocation_status === 'Completed').length;
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       
+      {/* Header (Title Only) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -135,32 +141,49 @@ export default function OrderAllocation() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Assign verified orders directly to specific looms</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                id: null,
-                allocation_id: `LA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                order_id: '', loom_id: '', fabric_type: '', allocated_meters: '',
-                priority: 'Normal', allocation_date: new Date().toISOString().split('T')[0],
-                allocated_by: 'Login User', status: 'Pending'
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#10b981', borderColor: '#10b981' }}
-          >
-            <Plus size={16} /> New Allocation
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Activity size={24} style={{ color: '#4f46e5' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Allocations</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalAllocations}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertTriangle size={24} style={{ color: '#d97706' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Pending</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{pendingAllocations}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0f2fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Settings size={24} style={{ color: '#0284c7' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>In Progress</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{inProgressAllocations}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <CheckCircle size={24} style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Completed</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{completedAllocations}</div>
+          </div>
+        </div>
       </div>
 
       {isFormOpen ? (
@@ -248,31 +271,49 @@ export default function OrderAllocation() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Active Allocations ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search allocations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Active Allocations ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search allocations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    id: null,
+                    allocation_id: `LA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                    order_id: '', loom_id: '', fabric_type: '', allocated_meters: '',
+                    priority: 'Normal', allocation_date: new Date().toISOString().split('T')[0],
+                    allocated_by: 'Login User', status: 'Pending'
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#4f46e5', borderColor: '#4f46e5', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> New Allocation
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Fabric Type</th>
-                  <th>Assigned Meters</th>
-                  <th>Loom ID</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Order ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Fabric Type</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Assigned Meters</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -281,29 +322,29 @@ export default function OrderAllocation() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.order_id}</td>
-                    <td>{record.fabric_type}</td>
-                    <td><span style={{ color: '#10b981', fontWeight: 600 }}>{record.assigned_meters} m</span></td>
-                    <td><span style={{ backgroundColor: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 4, fontSize: 12 }}>{record.loom_id}</span></td>
-                    <td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: '#4f46e5' }}>{record.order_id}</td>
+                    <td style={{ padding: '16px' }}>{record.fabric_type}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#10b981', fontWeight: 600 }}>{record.assigned_meters} m</span></td>
+                    <td style={{ padding: '16px' }}><span style={{ backgroundColor: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 4, fontSize: 12 }}>{record.loom_id}</span></td>
+                    <td style={{ padding: '16px' }}>
                        <span style={{ 
                         padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
                         backgroundColor: record.allocation_status === 'Completed' ? '#10b98120' : '#f59e0b20',
                         color: record.allocation_status === 'Completed' ? '#10b981' : '#b45309'
                       }}>
-                        {record.allocation_status}
+                        {record.allocation_status || 'Pending'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button className="btn-icon" onClick={() => handleEdit(record)} title="View/Edit">
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View">
                           <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
                         </button>
-                        <button className="btn-icon" onClick={() => handleEdit(record)} title="Edit">
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
                           <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
                         </button>
-                        <button className="btn-icon" onClick={() => handleDelete(record.id)} title="Delete">
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
                           <Trash2 size={16} style={{ color: '#ef4444' }} />
                         </button>
                       </div>

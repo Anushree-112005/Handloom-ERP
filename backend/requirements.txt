@@ -19,10 +19,7 @@ aiosqlite==0.22.1
 opencv-python-headless
 Jinja2
 bcrypt==4.0.1
-<<<<<<< HEAD
 weasyprint
 groq
 openpyxl
-=======
 xhtml2pdf
->>>>>>> dc3cf214c35a8b7766b144d0cea70b474f12717d

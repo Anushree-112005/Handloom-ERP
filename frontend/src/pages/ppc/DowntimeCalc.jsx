@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Search, Save, ArrowLeft, BarChart2, AlertTriangle, FileText, Plus } from 'lucide-react';
+import { Clock, Search, Save, ArrowLeft, BarChart2, AlertTriangle, FileText, Plus, Activity, CheckCircle, Trash2, Edit2, Eye, DollarSign } from 'lucide-react';
 import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function DowntimeCalc() {
@@ -184,6 +184,65 @@ export default function DowntimeCalc() {
     }
   };
 
+  const handleEdit = (record) => {
+    // Mock parsing for edit
+    setFormData({
+      id: record.id,
+      calc_id: record.name,
+      loom_name: record.code,
+      loom_id: looms.find(l => l.loom_name === record.code)?.id?.toString() || '',
+      date: new Date().toISOString().split('T')[0],
+      order_id: 'ORD-2024-001',
+      shift: 'Both',
+      operator_name: 'Ramesh Kumar',
+      breakdown_id: '',
+      breakdown_start: '',
+      breakdown_end: '',
+      breakdown_duration: 0,
+      breakdown_category: '',
+      breakdown_details: '',
+      num_breakdowns: 0,
+      total_breakdown_time: 0,
+      idle_time: 0,
+      planned_maint_time: 0,
+      total_downtime: 0,
+      total_shift_hours: 16,
+      planned_working_hours: 15.5,
+      actual_downtime: 0,
+      actual_running_hours: 0,
+      downtime_pct: parseFloat(record.extra_field_1) || 0,
+      availability_pct: 0,
+      downtime_status: record.description?.match(/Status: (.*)/)?.[1] || 'Normal',
+      loom_speed: 25,
+      lost_meters: parseFloat(record.description?.match(/Loss: (.*?)m/)?.[1] || 0),
+      fabric_rate: 45,
+      loss_value: parseFloat(record.extra_field_2?.replace('₹', '')) || 0,
+      impact_delivery: 0,
+      cumulative_lost: 210,
+      cumulative_value: 9450,
+      mech_downtime: 0,
+      elec_downtime: 0,
+      yarn_downtime: 0,
+      power_downtime: 0,
+      abs_downtime: 0,
+      other_downtime: 0,
+      highest_reason: '',
+      calculated_by: 'Login User',
+      calculated_at: new Date().toLocaleString()
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this calculation?')) return;
+    try {
+      await subMasterAPI.delete('ppc_downtime_calc', id);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const filteredRecords = records.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -198,24 +257,7 @@ export default function DowntimeCalc() {
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Comprehensive downtime analytics, loss tracking, and categorization</p>
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                ...formData,
-                calc_id: `DT-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                loom_id: '', loom_name: '', order_id: '', breakdown_id: '', breakdown_duration: 0,
-                num_breakdowns: 0, total_breakdown_time: 0, idle_time: 0, planned_maint_time: 0,
-                mech_downtime: 0, elec_downtime: 0, yarn_downtime: 0, power_downtime: 0, abs_downtime: 0, other_downtime: 0
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#ec4899', borderColor: '#ec4899' }}
-          >
-            <Plus size={16} /> Run Calculation
-          </button>
-        ) : (
+        {isFormOpen && (
           <button 
             className="btn btn-secondary" 
             onClick={() => setIsFormOpen(false)}
@@ -225,6 +267,42 @@ export default function DowntimeCalc() {
           </button>
         )}
       </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fbcfe8', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <BarChart2 size={24} style={{ color: '#ec4899' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Analytics Run</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Critical Status</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => r.description?.includes('Critical')).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <DollarSign size={24} style={{ color: '#f97316' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Value Lost</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                ₹{records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2?.replace('₹', '')) || 0), 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isFormOpen ? (
         <div className="card animate-fade" style={{ padding: 0 }}>
@@ -393,30 +471,49 @@ export default function DowntimeCalc() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Downtime Analytics Archive ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search analytics..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Downtime Analytics Archive ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search analytics..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    calc_id: `DT-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                    loom_id: '', loom_name: '', order_id: '', breakdown_id: '', breakdown_duration: 0,
+                    num_breakdowns: 0, total_breakdown_time: 0, idle_time: 0, planned_maint_time: 0,
+                    mech_downtime: 0, elec_downtime: 0, yarn_downtime: 0, power_downtime: 0, abs_downtime: 0, other_downtime: 0
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#ec4899', borderColor: '#ec4899', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> Run Calculation
+              </button>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Calc ID</th>
-                  <th>Loom ID</th>
-                  <th>Status & %</th>
-                  <th>Loss Value</th>
-                  <th>Loss Summary</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Calc ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status & %</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loss Value</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Loss Summary</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -425,10 +522,10 @@ export default function DowntimeCalc() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{record.code}</td>
+                    <td style={{ padding: '16px' }}>
                       <span style={{ 
                         color: record.description?.includes('Critical') ? '#b91c1c' : record.description?.includes('High') ? '#b45309' : '#047857', 
                         fontWeight: 800 
@@ -436,8 +533,21 @@ export default function DowntimeCalc() {
                         {record.extra_field_1}
                       </span>
                     </td>
-                    <td><span style={{ color: '#b91c1c', fontWeight: 600 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#b91c1c', fontWeight: 600 }}>{record.extra_field_2}</span></td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
+                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
+                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                        </button>
+                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
+                          <Trash2 size={16} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

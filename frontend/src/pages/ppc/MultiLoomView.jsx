@@ -282,15 +282,15 @@ export default function MultiLoomView() {
                 </div>
 
                 <div className="table-responsive">
-                  <table className="table" style={{ width: '100%', fontSize: 14 }}>
-                    <thead style={{ background: 'var(--bg-primary)' }}>
-                      <tr>
-                        <th style={{ padding: '16px 24px' }}>Loom & Operator</th>
-                        <th>Progress Tracker</th>
-                        <th>Today's Shift</th>
-                        <th>Live Eff.</th>
-                        <th>Status</th>
-                        <th>Est. Finish</th>
+                  <table className="table" style={{ width: '100%', fontSize: 14, borderCollapse: 'collapse' }}>
+                    <thead style={{ background: 'var(--bg-secondary)' }}>
+                      <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '16px 24px', fontWeight: 700, color: 'var(--text-primary)' }}>Loom & Operator</th>
+                        <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Progress Tracker</th>
+                        <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Today's Shift</th>
+                        <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Live Eff.</th>
+                        <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                        <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Est. Finish</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -302,7 +302,7 @@ export default function MultiLoomView() {
                               <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>{row.operator}</span>
                             </div>
                           </td>
-                          <td style={{ width: 220 }}>
+                          <td style={{ width: 220, padding: '16px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600 }}>
                                 <span style={{ color: '#10b981' }}>{row.produced.toLocaleString()}m</span>
@@ -313,13 +313,13 @@ export default function MultiLoomView() {
                               </div>
                             </div>
                           </td>
-                          <td>
+                          <td style={{ padding: '16px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                               <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{row.actual_today} m <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-muted)' }}>produced</span></span>
                               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Target: {row.target_today} m</span>
                             </div>
                           </td>
-                          <td>
+                          <td style={{ padding: '16px' }}>
                             <span style={{ 
                               padding: '4px 10px', borderRadius: 12, fontWeight: 800, fontSize: 13,
                               color: row.efficiency_today >= 90 ? '#047857' : row.efficiency_today >= 75 ? '#b45309' : '#b91c1c',
@@ -328,13 +328,13 @@ export default function MultiLoomView() {
                               {row.efficiency_today.toFixed(1)}%
                             </span>
                           </td>
-                          <td>
+                          <td style={{ padding: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 13, color: row.status === 'Running' ? '#10b981' : row.status === 'Idle' ? '#f59e0b' : '#ef4444' }}>
                               <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor' }}></span>
                               {row.status}
                             </div>
                           </td>
-                          <td>
+                          <td style={{ padding: '16px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                               <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{row.eta}</span>
                               <span style={{ 

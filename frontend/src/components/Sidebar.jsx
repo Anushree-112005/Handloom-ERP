@@ -195,40 +195,40 @@ const modules = [
   { path: '/dyed-yarn/received', label: 'Dyed Yarn Received', icon: Palette },
   { path: '/dyed-yarn/delivery', label: 'Dyed Yarn Delivery', icon: Truck },
 
-  // { section: 'Warping & Weaving' },
-  // {
-  //   label: 'Warping/Sizing Transaction',
-  //   icon: Settings,
-  //   children: [
-  //     { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
-  //     { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
-  //   ]
-  // },
+  { section: 'Warping & Weaving' },
+  {
+    label: 'Warping/Sizing Transaction',
+    icon: Settings,
+    children: [
+      { path: '/warp/transaction/entries', label: 'Beam & Transaction Entries', icon: Layers },
+      { path: '/warp/transaction/reports', label: 'Reports, Bills & Amendments', icon: ClipboardList }
+    ]
+  },
 
-  // { section: 'Greige Transaction' },
-  // {
-  //   label: 'Greige Transactions',
-  //   icon: Layers,
-  //   children: [
-  //     { path: '/greige/transaction/operations', label: 'Greige Operations', icon: Factory },
-  //     { path: '/greige/transaction/administration', label: 'Greige Administration', icon: ClipboardList }
-  //   ]
-  // },
+  { section: 'Greige Transaction' },
+  {
+    label: 'Greige Transactions',
+    icon: Layers,
+    children: [
+      { path: '/greige/transaction/operations', label: 'Greige Operations', icon: Factory },
+      { path: '/greige/transaction/administration', label: 'Greige Administration', icon: ClipboardList }
+    ]
+  },
 
-  // { section: 'Processing / Production' },
-  // {
-  //   label: 'Fabric Production Desk',
-  //   icon: Scissors,
-  //   children: [
-  //     { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
-  //     { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
-  //     { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
-  //     { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
-  //     { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
-  //     { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
-  //     { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
-  //   ]
-  // },
+  { section: 'Processing / Production' },
+  {
+    label: 'Fabric Production Desk',
+    icon: Scissors,
+    children: [
+      { path: '/fabric/transaction/checking', label: 'Fabric Checking', icon: CheckSquare },
+      { path: '/fabric/transaction/inward', label: 'Fabric Inward', icon: Factory },
+      { path: '/fabric/transaction/delivery', label: 'Fabric Delivery', icon: Truck },
+      { path: '/fabric/transaction/lotbale', label: 'Lot & Bale', icon: ShoppingBag },
+      { path: '/fabric/transaction/gate', label: 'Gate & Dispatch', icon: Globe },
+      { path: '/fabric/transaction/bills', label: 'Vendor Bills', icon: FileText },
+      { path: '/fabric/transaction/surplus', label: 'Surplus Stock', icon: Database }
+    ]
+  },
 
   // Production Planning Modules
   { section: 'Production Planning (PPC)' },

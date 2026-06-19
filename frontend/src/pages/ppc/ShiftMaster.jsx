@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Save, Search, Settings2, Trash2, Clock, Database, ToggleRight, ToggleLeft, Edit2, X, ArrowLeft } from 'lucide-react';
+import { Settings, Save, Search, Settings2, Trash2, Clock, Database, ToggleRight, ToggleLeft, Edit2, X, ArrowLeft, Eye, Plus } from 'lucide-react';
 import { subMasterAPI } from '../../services/api';
 
 export default function ShiftMaster() {
@@ -135,30 +135,6 @@ export default function ShiftMaster() {
           </h3>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Manage your factory shifts</p>
         </div>
-        {!isFormOpen && (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setEditingId(null);
-              setFormData({
-                name: '', start_time: '', end_time: '', break_duration: '30', shift_type: 'Day', is_active: true
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <Clock size={16} /> Add Shift
-          </button>
-        )}
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
       </div>
 
       {!isFormOpen && (
@@ -255,46 +231,65 @@ export default function ShiftMaster() {
         </div>
       ) : (
         <div className="card" style={{ padding: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Configured Shifts</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Configured Shifts</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Search shifts..." className="form-control" style={{ paddingLeft: 36, width: 250 }} />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setEditingId(null);
+                  setFormData({
+                    name: '', start_time: '', end_time: '', break_duration: '30', shift_type: 'Day', is_active: true
+                  });
+                  setIsFormOpen(true);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--primary)', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+              >
+                <Plus size={16} /> Add Shift
+              </button>
+            </div>
           </div>
           
           <div className="table-responsive">
             <table className="table" style={{ width: '100%', whiteSpace: 'nowrap', textAlign: 'left', borderCollapse: 'collapse' }}>
-              <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-                <tr>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Shift Name</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Type</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Timings</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Break</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Total / Work Hrs</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>Status</th>
-                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Shift Name</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Type</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Timings</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Break</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Total / Work Hrs</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {shifts.map((shift, i) => {
                   const { total, working } = calculateHours(shift.extra_field_1, shift.extra_field_2, shift.extra_field_3);
                   return (
-                    <tr key={i}>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{shift.name}</span></td>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                    <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <td style={{ padding: '16px' }}><span style={{ fontWeight: 600, color: '#4f46e5' }}>{shift.name}</span></td>
+                      <td style={{ padding: '16px' }}>
                         <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 12, background: shift.code === 'Night' ? '#312e81' : '#e0f2fe', color: shift.code === 'Night' ? '#a5b4fc' : '#0369a1', fontWeight: 600 }}>
                           {shift.code || 'Day'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                        <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                      <td style={{ padding: '16px' }}>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
                           {shift.extra_field_1} - {shift.extra_field_2}
                         </div>
                       </td>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>{shift.extra_field_3 || 0} min</td>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '16px', fontWeight: 500 }}>{shift.extra_field_3 || 0} min</td>
+                      <td style={{ padding: '16px' }}>
                         <div style={{ fontSize: 13 }}>
                           <span>{total}h</span> / <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{working}h</span>
                         </div>
                       </td>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '16px' }}>
                         <span style={{
                           padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
                           backgroundColor: shift.is_active ? '#10b98120' : '#ef444420',
@@ -303,9 +298,18 @@ export default function ShiftMaster() {
                           {shift.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>
-                        <button className="btn" onClick={() => handleEdit(shift)} style={{ padding: '4px 8px', color: '#3b82f6', marginRight: 8 }}><Edit2 size={16}/></button>
-                        <button className="btn" onClick={() => handleDelete(shift.id)} style={{ padding: '4px 8px', color: '#ef4444' }}><Trash2 size={16}/></button>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(shift)} title="View">
+                            <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                          </button>
+                          <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(shift)} title="Edit">
+                            <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                          </button>
+                          <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(shift.id)} title="Delete">
+                            <Trash2 size={16} style={{ color: '#ef4444' }} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

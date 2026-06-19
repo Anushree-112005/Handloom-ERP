@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Database, Plus, Search, Trash2, Edit2, ToggleRight, ToggleLeft, X, Save, ArrowLeft } from 'lucide-react';
+import { Database, Plus, Search, Trash2, Edit2, ToggleRight, ToggleLeft, X, Save, ArrowLeft, Eye } from 'lucide-react';
 import { subMasterAPI } from '../services/api';
 
 export default function GenericMasterForm({ config }) {
@@ -145,23 +145,6 @@ export default function GenericMasterForm({ config }) {
           </h2>
           {description && <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>{description}</p>}
         </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={openForm}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: color, borderColor: color }}
-          >
-            <Plus size={16} /> New Entry
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
       </div>
 
       {!isFormOpen && (
@@ -298,31 +281,40 @@ export default function GenericMasterForm({ config }) {
         </div>
       ) : (
       <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Records ({filteredRecords.length})</h3>
-          <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
-              type="text"
-              placeholder="Search records..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="form-control"
-              style={{ paddingLeft: 36 }}
-            />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Records ({filteredRecords.length})</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Search records..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-control"
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
+            <button 
+              className="btn btn-primary" 
+              onClick={openForm}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: color, borderColor: color, color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+            >
+              <Plus size={16} /> New Entry
+            </button>
           </div>
         </div>
         
         <div className="table-responsive" style={{ flex: 1 }}>
-          <table className="table" style={{ width: '100%' }}>
-            <thead>
-              <tr>
-                <th style={{ width: 50 }}>#</th>
+          <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ background: 'var(--bg-secondary)' }}>
+              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', width: 50 }}>#</th>
                 {displayFields.filter(f => f.type !== 'textarea').map(f => (
-                  <th key={f.name}>{f.label}</th>
+                  <th key={f.name} style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{f.label}</th>
                 ))}
-                <th style={{ width: 100 }}>Status</th>
-                <th style={{ textAlign: 'right', width: 100 }}>Actions</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', width: 100 }}>Status</th>
+                <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right', width: 100 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -339,10 +331,10 @@ export default function GenericMasterForm({ config }) {
                   </td>
                 </tr>
               ) : filteredRecords.map((record, idx) => (
-                <tr key={record.id}>
-                  <td>{idx + 1}</td>
+                <tr key={record.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                  <td style={{ padding: '16px' }}>{idx + 1}</td>
                   {displayFields.filter(f => f.type !== 'textarea').map(f => (
-                    <td key={f.name}>
+                    <td key={f.name} style={{ padding: '16px' }}>
                       {f.type === 'color' ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span
@@ -365,13 +357,13 @@ export default function GenericMasterForm({ config }) {
                           </span>
                         </div>
                       ) : (
-                        <span style={{ fontWeight: f.name === 'name' ? 600 : 400 }}>
+                        <span style={{ fontWeight: f.name === 'name' ? 600 : 400, color: f.name === 'name' ? '#4f46e5' : 'inherit' }}>
                           {getRecordValue(record, f.name) || '-'}
                         </span>
                       )}
                     </td>
                   ))}
-                  <td>
+                  <td style={{ padding: '16px' }}>
                     <span style={{
                       padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
                       backgroundColor: record.is_active ? '#10b98120' : '#ef444420',
@@ -380,9 +372,18 @@ export default function GenericMasterForm({ config }) {
                       {record.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button className="btn btn-icon" onClick={() => handleEdit(record)} style={{ color: '#3b82f6', marginRight: 8 }}><Edit2 size={16} /></button>
-                    <button className="btn btn-icon" onClick={() => handleDeleteClick(record.id, record.name)} style={{ color: '#ef4444' }}><Trash2 size={16} /></button>
+                  <td style={{ padding: '16px', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                      <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View">
+                        <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                      </button>
+                      <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
+                        <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
+                      </button>
+                      <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDeleteClick(record.id, record.name)} title="Delete">
+                        <Trash2 size={16} style={{ color: '#ef4444' }} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
