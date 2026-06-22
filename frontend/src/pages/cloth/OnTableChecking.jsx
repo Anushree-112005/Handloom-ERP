@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, Barcode, HelpCircle, Check, AlertTriangle } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { onTableCheckingAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -549,7 +550,7 @@ export default function OnTableChecking() {
                               <button
                                 className="btn btn-secondary"
                                 style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                onClick={() => handleOpenForm(e, true)}
+                                onClick={() => setSelectedEntry(e)}
                                 title="View Details"
                               >
                                 <Eye size={16} color="var(--primary)" />
@@ -580,54 +581,61 @@ export default function OnTableChecking() {
               </div>
             </div>
 
-            {/* SPLIT VIEW DETAILS PANEL */}
+            {/* A4 Modal View Preview */}
             {selectedEntry && (
-              <div style={{ flex: '0 0 360px' }}>
-                <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
-                      <CheckSquare size={18} /> QC Record: {selectedEntry.ref_no}
-                    </h3>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedEntry, false)} title="Edit"><Edit2 size={14} /></button>
-                      <button onClick={() => setSelectedEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <DetailRow label="Inspection Ref" value={selectedEntry.ref_no} />
-                    <DetailRow label="Date Checked" value={selectedEntry.checking_date?.split('T')[0]} />
-                    <DetailRow label="Table No" value={selectedEntry.table_no} />
-                    <DetailRow label="Design No" value={selectedEntry.design_no} />
-                    <DetailRow label="Order No" value={selectedEntry.order_no} />
-                    <DetailRow label="Lot Number" value={selectedEntry.lot_no} />
-                    <DetailRow label="Buyer Name" value={selectedEntry.party_name} />
-
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Metrics Summary</h4>
-                    <DetailRow label="Total Pieces" value={`${selectedEntry.total_pieces} Pcs`} />
-                    <DetailRow label="Total Volume" value={`${selectedEntry.total_meters} Mtr`} />
-                    <DetailRow label="QC Pass meters" value={<span style={{ color: '#10b981', fontWeight: 600 }}>{selectedEntry.pass_meters} Mtr</span>} />
-                    <DetailRow label="QC Fail/Reject meters" value={<span style={{ color: '#ef4444', fontWeight: 600 }}>{selectedEntry.reject_meters} Mtr</span>} />
-                    
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Inspected Rolls ({selectedEntry.items?.length || 0})</h4>
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 6, maxHeight: 150, overflowY: 'auto', background: 'var(--bg-primary)', padding: '4px 8px' }}>
-                      {(selectedEntry.items || []).map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12, borderBottom: idx < selectedEntry.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                          <span>{item.piece_no} ({item.meters}M)</span>
-                          <span style={{ fontWeight: 600, color: item.pc_type === 'Pass' ? '#10b981' : '#ef4444' }}>
-                            {item.grade} [{item.pc_type}]
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Remarks</h4>
-                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', padding: 8, background: 'var(--bg-primary)', borderRadius: 6, borderLeft: '3px solid #eab308' }}>
-                      {selectedEntry.remarks || 'No remarks recorded.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <A4DocumentPreview
+                isOpen={!!selectedEntry}
+                onClose={() => setSelectedEntry(null)}
+                title="QC Inspection Record"
+                documentNumber={selectedEntry.ref_no}
+                status={selectedEntry.status}
+                sections={[
+                  {
+                    title: 'General Info',
+                    type: 'grid',
+                    icon: 'FileText',
+                    data: [
+                      { label: 'Date Checked', value: selectedEntry.checking_date?.split('T')[0] },
+                      { label: 'Table No', value: selectedEntry.table_no },
+                      { label: 'Design No', value: selectedEntry.design_no || '-' },
+                      { label: 'Order No', value: selectedEntry.order_no || '-' },
+                      { label: 'Lot Number', value: selectedEntry.lot_no || '-' },
+                      { label: 'Buyer Name', value: selectedEntry.party_name || '-' }
+                    ]
+                  },
+                  {
+                    title: 'Metrics Summary',
+                    type: 'grid',
+                    icon: 'Activity',
+                    data: [
+                      { label: 'Total Pieces', value: `${selectedEntry.total_pieces || 0} Pcs` },
+                      { label: 'Total Volume', value: `${selectedEntry.total_meters || 0} Mtr` },
+                      { label: 'QC Pass meters', value: `${selectedEntry.pass_meters || 0} Mtr` },
+                      { label: 'QC Fail meters', value: `${selectedEntry.reject_meters || 0} Mtr` }
+                    ]
+                  },
+                  {
+                    title: 'Inspected Rolls',
+                    type: 'table',
+                    icon: 'Box',
+                    headers: ['Piece No', 'Meters', 'Grade', 'QC Type'],
+                    rows: (selectedEntry.items || []).map(item => [
+                      item.piece_no,
+                      item.meters,
+                      item.grade,
+                      item.pc_type
+                    ])
+                  },
+                  {
+                    title: 'Remarks',
+                    type: 'list',
+                    icon: 'Briefcase',
+                    data: [
+                      { label: 'General Remarks', value: selectedEntry.remarks || 'No remarks recorded.' }
+                    ]
+                  }
+                ]}
+              />
             )}
           </div>
         </>

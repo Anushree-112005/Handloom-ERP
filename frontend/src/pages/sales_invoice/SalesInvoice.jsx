@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Receipt, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -20,8 +21,7 @@ export default function SalesInvoice() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  // Split view state
-  const [selectedViewInvoice, setSelectedViewInvoice] = useState(null);
+  // Single view mode using viewModalInvoice
   const [activeTab, setActiveTab] = useState('general');
 
   // Filters
@@ -29,6 +29,8 @@ export default function SalesInvoice() {
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  
+  const [viewModalInvoice, setViewModalInvoice] = useState(null);
 
   // Dynamic Options
   const [options, setOptions] = useState({
@@ -401,7 +403,7 @@ export default function SalesInvoice() {
     if (window.confirm(`Are you sure you want to delete invoice ${invNo}?`)) {
       try {
         await salesInvoiceAPI.delete(id);
-        if (selectedViewInvoice?.id === id) setSelectedViewInvoice(null);
+        if (viewModalInvoice?.id === id) setViewModalInvoice(null);
         fetchInvoices();
       } catch (err) {
         console.error(err);
@@ -1812,10 +1814,10 @@ export default function SalesInvoice() {
                   filteredInvoices.map(inv => (
                     <tr
                       key={inv.id}
-                      onClick={() => setSelectedViewInvoice(inv)}
+                      onClick={() => setViewModalInvoice(inv)}
                       style={{
                         cursor: 'pointer',
-                        background: selectedViewInvoice?.id === inv.id ? 'var(--bg-secondary)' : 'transparent',
+                        background: viewModalInvoice?.id === inv.id ? 'var(--bg-secondary)' : 'transparent',
                         transition: 'background 0.2s'
                       }}
                     >
@@ -1841,8 +1843,8 @@ export default function SalesInvoice() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => handleOpenForm(inv, true)}
-                            title="Full View"
+                            onClick={(e) => { e.stopPropagation(); setViewModalInvoice(inv); }}
+                            title="Preview Invoice"
                           >
                             <Eye size={16} color="var(--primary)" />
                           </button>
@@ -1872,68 +1874,57 @@ export default function SalesInvoice() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: DETAILS PANE */}
-        {selectedViewInvoice && (
-          <div style={{ flex: '0 0 380px' }}>
-            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                  <Receipt size={18} /> Invoice {selectedViewInvoice.invoice_no}
-                </h3>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewInvoice, false)} title="Edit"><Edit2 size={14} /></button>
-                  <button onClick={() => setSelectedViewInvoice(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                <DetailRow label="Invoice No" value={selectedViewInvoice.invoice_no} />
-                <DetailRow label="Invoice Date" value={selectedViewInvoice.invoice_date} />
-                <DetailRow label="Party Name" value={selectedViewInvoice.party_name} />
-                <DetailRow label="Billing Address" value={selectedViewInvoice.billing_address} />
-                <DetailRow label="Delivery Address" value={selectedViewInvoice.delivery_address} />
-                <DetailRow label="State Code" value={selectedViewInvoice.state_code} />
-                <DetailRow label="GST No" value={selectedViewInvoice.gst_no} />
-                <DetailRow label="Total Quantity" value={selectedViewInvoice.total_qty} />
-                <DetailRow label="Gross Weight" value={selectedViewInvoice.gross_weight} />
-                <DetailRow label="Gross Amount" value={`₹${Number(selectedViewInvoice.gross_amount).toFixed(2)}`} />
-                <DetailRow label="Discount" value={`₹${Number(selectedViewInvoice.discount_amount).toFixed(2)} (${selectedViewInvoice.discount_pct}%)`} />
-                <DetailRow label="Taxable Amount" value={`₹${Number(selectedViewInvoice.taxable_amount).toFixed(2)}`} />
-                {Number(selectedViewInvoice.cgst) > 0 && <DetailRow label="CGST (2.5%)" value={`₹${Number(selectedViewInvoice.cgst).toFixed(2)}`} />}
-                {Number(selectedViewInvoice.sgst) > 0 && <DetailRow label="SGST (2.5%)" value={`₹${Number(selectedViewInvoice.sgst).toFixed(2)}`} />}
-                {Number(selectedViewInvoice.igst) > 0 && <DetailRow label="IGST (5%)" value={`₹${Number(selectedViewInvoice.igst).toFixed(2)}`} />}
-                <DetailRow label="Other Charges" value={`₹${Number(selectedViewInvoice.other_charges).toFixed(2)}`} />
-                <DetailRow label="Round Off" value={`₹${Number(selectedViewInvoice.round_off).toFixed(2)}`} />
-                <DetailRow label="Net Amount" value={<span style={{ fontWeight: 800, color: 'var(--primary)' }}>₹{Number(selectedViewInvoice.net_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>} />
-                
-                <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items Summary</h4>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-                  <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse', background: 'var(--bg-secondary)' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                        <th style={{ padding: 4, textAlign: 'left' }}>Design</th>
-                        <th style={{ padding: 4, textAlign: 'right' }}>Qty</th>
-                        <th style={{ padding: 4, textAlign: 'right' }}>Rate</th>
-                        <th style={{ padding: 4, textAlign: 'right' }}>Amt</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedViewInvoice.items?.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px dashed var(--border)' }}>
-                          <td style={{ padding: 4 }}>{item.design_no}</td>
-                          <td style={{ padding: 4, textAlign: 'right' }}>{item.qty}</td>
-                          <td style={{ padding: 4, textAlign: 'right' }}>{item.rate}</td>
-                          <td style={{ padding: 4, textAlign: 'right' }}>₹{Number(item.amount).toFixed(0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* SPLIT VIEW REMOVED - using A4DocumentPreview instead */}
       </div>
+
+      <A4DocumentPreview
+        isOpen={!!viewModalInvoice}
+        onClose={() => setViewModalInvoice(null)}
+        title="SALES INVOICE"
+        documentNumber={viewModalInvoice?.invoice_no}
+        status={viewModalInvoice?.status}
+        onDownloadPdf={() => alert('PDF Download for Sales Invoice triggered')}
+        sections={viewModalInvoice ? [
+          {
+            title: "BILLING & LOGISTICS",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "Party Name", value: viewModalInvoice.party_name },
+              { label: "Invoice Date", value: viewModalInvoice.invoice_date },
+              { label: "State Code", value: viewModalInvoice.state_code || '-' },
+              { label: "Total Quantity", value: viewModalInvoice.total_qty || '0' },
+              { label: "Gross Weight", value: `${viewModalInvoice.gross_weight || '0'} Kg` }
+            ]
+          },
+          {
+            title: "FINANCIAL SUMMARY",
+            icon: "IndianRupee",
+            type: "grid",
+            data: [
+              { label: "Gross Amount", value: `₹ ${Number(viewModalInvoice.gross_amount).toFixed(2)}` },
+              { label: "Discount", value: `₹ ${Number(viewModalInvoice.discount_amount).toFixed(2)}` },
+              { label: "Taxable Amount", value: `₹ ${Number(viewModalInvoice.taxable_amount).toFixed(2)}` },
+              { label: "CGST", value: `₹ ${Number(viewModalInvoice.cgst).toFixed(2)}` },
+              { label: "SGST", value: `₹ ${Number(viewModalInvoice.sgst).toFixed(2)}` },
+              { label: "Net Amount", value: `₹ ${Number(viewModalInvoice.net_amount).toFixed(2)}` }
+            ]
+          },
+          {
+            title: "INVOICE ITEMS",
+            icon: "Box",
+            type: "table",
+            headers: ["S.No", "Design No", "Qty", "Rate", "Amount"],
+            rows: (viewModalInvoice.items || []).map((item, idx) => [
+              idx + 1,
+              item.design_no,
+              item.qty,
+              `₹ ${item.rate}`,
+              `₹ ${Number(item.amount).toFixed(2)}`
+            ])
+          }
+        ] : []}
+      />
 
     </div>
   );

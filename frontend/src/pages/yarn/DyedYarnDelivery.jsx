@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, PackageCheck, Send, Download, ChevronDown, FileText, CheckCircle } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { dyedYarnDeliveryAPI, partyAPI, dropdownAPI, subMasterAPI, dyedYarnReceiptAPI, buyerOrderAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -24,6 +25,7 @@ export default function DyedYarnDelivery() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [viewModalDelivery, setViewModalDelivery] = useState(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -443,7 +445,14 @@ export default function DyedYarnDelivery() {
                         <td>₹{parseFloat(r.net_amount || 0).toFixed(2)}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={(evt) => { evt.stopPropagation(); setViewModalDelivery(r); }}
+                              title="Preview Delivery"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(r.id, r.dc_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -463,7 +472,14 @@ export default function DyedYarnDelivery() {
                       <Send size={18} /> {selectedViewEntry.dc_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => setViewModalDelivery(selectedViewEntry)}
+                        title="Preview Delivery"
+                      >
+                        <Eye size={16} color="var(--primary)" />
+                      </button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -780,6 +796,43 @@ export default function DyedYarnDelivery() {
           </div>
         </div>
       )}
+
+      <A4DocumentPreview
+        isOpen={!!viewModalDelivery}
+        onClose={() => setViewModalDelivery(null)}
+        title="YARN DYEING DELIVERY"
+        documentNumber={viewModalDelivery?.dc_no}
+        status="DISPATCHED"
+        onDownloadPdf={() => alert('PDF Download for Yarn Dyeing Delivery triggered')}
+        sections={viewModalDelivery ? [
+          {
+            title: "DISPATCH LOGISTICS",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "DC Number", value: viewModalDelivery.dc_no },
+              { label: "Delivery Date", value: viewModalDelivery.dc_date },
+              { label: "Dyer Name", value: viewModalDelivery.dyer_name },
+              { label: "Vehicle Number", value: viewModalDelivery.vehicle_no || '-' },
+              { label: "Driver Name", value: viewModalDelivery.driver_name || '-' }
+            ]
+          },
+          {
+            title: "YARN CONSIGNMENT",
+            icon: "Box",
+            type: "grid",
+            data: [
+              { label: "Mill Name", value: viewModalDelivery.mill_name || '-' },
+              { label: "Yarn Count", value: viewModalDelivery.yarn_count },
+              { label: "Current Color", value: viewModalDelivery.curr_color || 'Grey' },
+              { label: "Target Color", value: viewModalDelivery.target_color },
+              { label: "Total Bags", value: viewModalDelivery.total_bags || 0 },
+              { label: "Total Kgs", value: `${viewModalDelivery.total_kgs || 0} Kg` }
+            ]
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

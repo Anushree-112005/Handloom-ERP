@@ -17,7 +17,7 @@ class GreyYarnDeliveryItemIn(BaseModel):
     count: Optional[str] = None
     our_lot_no: Optional[str] = None
     color: Optional[str] = None
-    stock: Optional[str] = "0.0"
+    stock: Optional[float] = 0.0
     bags: Optional[int] = 0
     cones: Optional[int] = 0
     total_kgs: Optional[float] = 0.0

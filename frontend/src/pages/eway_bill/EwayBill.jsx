@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, Plus, Trash2, Search, Download, ShieldCheck, MapPin, Calculator, RefreshCw, Send, X, CheckCircle, Eye, Edit2 } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { ewayBillAPI, partyAPI, salesInvoiceAPI, companySettingAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -13,6 +14,7 @@ export default function EwayBill() {
   const [loading, setLoading] = useState(true);
   const [isNew, setIsNew] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [viewModalBill, setViewModalBill] = useState(null);
 
   const isReadOnly = !(isNew || isEditMode);
 
@@ -30,7 +32,7 @@ export default function EwayBill() {
 
   // Dropdown options
   const [options, setOptions] = useState({ masters: {} });
-  
+
   // Custom States
   const [isCustomSupplyType, setIsCustomSupplyType] = useState(false);
   const [customSupplyTypeVal, setCustomSupplyTypeVal] = useState('');
@@ -143,7 +145,7 @@ export default function EwayBill() {
       alert('Error saving custom Supply Type');
     }
   };
-  
+
   const handleSaveCustomSubType = async () => {
     if (!customSubTypeVal.trim()) return;
     try {
@@ -195,9 +197,9 @@ export default function EwayBill() {
       await subMasterAPI.create('unit_master', { entity: 'unit_master', name: customUnitVal.trim(), is_active: true });
       const { data } = await dropdownAPI.getAll();
       setOptions(data);
-      
+
       if (customUnitRowIndex !== null) {
-         handleItemChange(customUnitRowIndex, 'unit', customUnitVal.trim());
+        handleItemChange(customUnitRowIndex, 'unit', customUnitVal.trim());
       }
       setCustomUnitRowIndex(null);
       setCustomUnitVal('');
@@ -220,7 +222,7 @@ export default function EwayBill() {
         setBillToName(invoice.party_name || '');
         setDispatchToName(invoice.party_name || '');
       }
-      
+
       // Load items from invoice
       if (invoice.items && invoice.items.length > 0) {
         setItems(invoice.items.map(item => ({
@@ -266,15 +268,15 @@ export default function EwayBill() {
     const today = new Date();
     const expiry = new Date();
     expiry.setDate(today.getDate() + 3); // 3 days validity
-    
+
     const formattedExpiry = expiry.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     }) + " 12:00 PM";
-    
+
     setTokenExDate(formattedExpiry);
-    
+
     // Generate base64 mock jwt string
     const mockToken = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." + btoa(JSON.stringify({
       iss: "GSTIN_EWAY_SYSTEM",
@@ -282,7 +284,7 @@ export default function EwayBill() {
       created: today.toISOString(),
       expires: expiry.toISOString()
     })) + ".iJjPF9FX0FQSV9FS";
-    
+
     setTokenNo(mockToken);
     setResult("Token Generated Successfully!");
     setErrorText("None");
@@ -472,8 +474,8 @@ export default function EwayBill() {
               <button className="btn btn-secondary" onClick={exportExcel}>
                 <Download size={16} /> Export Master Excel
               </button>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 onClick={() => {
                   setSelectedBill(null);
                   setIsNew(true);
@@ -532,8 +534,8 @@ export default function EwayBill() {
                     <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No E-Way bills generated yet.</td></tr>
                   ) : (
                     bills.map(b => (
-                      <tr 
-                        key={b.id} 
+                      <tr
+                        key={b.id}
                         onClick={() => { setSelectedBill(b); setIsNew(false); setIsEditMode(false); }}
                         style={{ cursor: 'pointer', background: selectedBill?.id === b.id ? 'rgba(34,197,94,0.05)' : 'transparent' }}
                       >
@@ -552,7 +554,7 @@ export default function EwayBill() {
                             <button
                               className="btn btn-secondary"
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              onClick={() => { setSelectedBill(b); setIsNew(false); setIsEditMode(false); }}
+                              onClick={() => { setViewModalBill(b); }}
                               title="Full View"
                             >
                               <Eye size={16} color="var(--primary)" />
@@ -565,8 +567,8 @@ export default function EwayBill() {
                             >
                               <Edit2 size={16} />
                             </button>
-                            <button 
-                              className="btn btn-secondary" 
+                            <button
+                              className="btn btn-secondary"
                               onClick={() => handleDelete(b.id)}
                               style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}
                               title="Delete"
@@ -591,19 +593,19 @@ export default function EwayBill() {
               {isNew ? "New E-Way Bill Generation Form" : isEditMode ? `Edit E-Way Bill: ${selectedBill?.eway_bill_no || '-'}` : `View E-Way Bill: ${selectedBill?.eway_bill_no || '-'}`}
             </h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={() => { setIsNew(false); setSelectedBill(null); }}
                 style={{ display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <X size={16} /> Close
               </button>
               {(isNew || isEditMode) && (
-                <button 
-                  type="submit" 
-                  form="ewayForm" 
-                  className="btn btn-primary" 
+                <button
+                  type="submit"
+                  form="ewayForm"
+                  className="btn btn-primary"
                   style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#16a34a' }}
                 >
                   <Send size={16} /> {isEditMode ? 'Update E-Way Bill' : 'Save & Generate E-Way Bill'}
@@ -730,9 +732,9 @@ export default function EwayBill() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-end', height: '100%', paddingBottom: 16 }}>
-                  <button 
-                    type="button" 
-                    className="btn" 
+                  <button
+                    type="button"
+                    className="btn"
                     style={{ width: '100%', background: '#b91c1c', color: '#ffffff', fontWeight: 600 }}
                     onClick={handleGetToken}
                     disabled={isReadOnly}
@@ -745,11 +747,11 @@ export default function EwayBill() {
               {/* JWT TOKEN AREA & STATUS BOXES */}
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label>Token No</label>
-                <textarea 
-                  className="form-control" 
-                  rows="2" 
-                  style={{ fontFamily: 'monospace', fontSize: 12, padding: 10, background: '#f8fafc' }} 
-                  value={tokenNo} 
+                <textarea
+                  className="form-control"
+                  rows="2"
+                  style={{ fontFamily: 'monospace', fontSize: 12, padding: 10, background: '#f8fafc' }}
+                  value={tokenNo}
                   readOnly
                 />
               </div>
@@ -767,16 +769,16 @@ export default function EwayBill() {
 
               {/* BILLING AND DISPATCH DETAILS (4-QUADRANT GRID SYSTEM) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
-                
+
                 {/* BILLING FROM */}
                 <div className="card" style={{ background: '#f8fafc', border: '1px solid var(--border)' }}>
                   <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Billing From</h4>
-                  
+
                   <div className="form-group">
                     <label>Bill From</label>
                     <input className="form-control" type="text" value={billFromName} onChange={e => setBillFromName(e.target.value)} />
                   </div>
-                  
+
                   <div className="form-group">
                     <label>Address</label>
                     <textarea className="form-control" rows="2" value={billFromAddress} onChange={e => setBillFromAddress(e.target.value)} />
@@ -808,12 +810,12 @@ export default function EwayBill() {
                 {/* DISPATCH FROM */}
                 <div className="card" style={{ background: '#f8fafc', border: '1px solid var(--border)' }}>
                   <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Dispatch From</h4>
-                  
+
                   <div className="form-group">
                     <label>Goods From</label>
                     <input className="form-control" type="text" value={dispatchFromName} onChange={e => setDispatchFromName(e.target.value)} />
                   </div>
-                  
+
                   <div className="form-group">
                     <label>Good From Address</label>
                     <textarea className="form-control" rows="2" value={dispatchFromAddress} onChange={e => setDispatchFromAddress(e.target.value)} />
@@ -845,12 +847,12 @@ export default function EwayBill() {
                 {/* BILLING TO */}
                 <div className="card" style={{ border: '1px solid var(--border)' }}>
                   <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Billing To</h4>
-                  
+
                   <div className="form-group">
                     <label>Bill To Party</label>
-                    <select 
-                      className="form-control" 
-                      value={billToPartyId} 
+                    <select
+                      className="form-control"
+                      value={billToPartyId}
                       onChange={e => handleBillToChange(e.target.value)}
                       disabled={isReadOnly}
                     >
@@ -860,13 +862,13 @@ export default function EwayBill() {
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="form-group">
                     <label>Bill Address</label>
-                    <textarea 
-                      className="form-control" 
-                      rows="2" 
-                      value={billToAddress} 
+                    <textarea
+                      className="form-control"
+                      rows="2"
+                      value={billToAddress}
                       onChange={e => setBillToAddress(e.target.value)}
                       disabled={isReadOnly}
                     />
@@ -875,20 +877,20 @@ export default function EwayBill() {
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>GSTNO</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={billToGstin} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={billToGstin}
                         onChange={e => setBillToGstin(e.target.value)}
                         disabled={isReadOnly}
                       />
                     </div>
                     <div className="form-group">
                       <label>PIN Code</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={billToPin} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={billToPin}
                         onChange={e => setBillToPin(e.target.value)}
                         disabled={isReadOnly}
                       />
@@ -898,20 +900,20 @@ export default function EwayBill() {
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>Bill State</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={billToState} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={billToState}
                         onChange={e => setBillToState(e.target.value)}
                         disabled={isReadOnly}
                       />
                     </div>
                     <div className="form-group">
                       <label>Code</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={billToStateCode} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={billToStateCode}
                         onChange={e => setBillToStateCode(e.target.value)}
                         disabled={isReadOnly}
                       />
@@ -922,12 +924,12 @@ export default function EwayBill() {
                 {/* DISPATCH TO */}
                 <div className="card" style={{ border: '1px solid var(--border)' }}>
                   <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', marginBottom: 14, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Dispatch To</h4>
-                  
+
                   <div className="form-group">
                     <label>Goods To Party</label>
-                    <select 
-                      className="form-control" 
-                      value={dispatchToPartyId} 
+                    <select
+                      className="form-control"
+                      value={dispatchToPartyId}
                       onChange={e => handleDispatchToChange(e.target.value)}
                       disabled={isReadOnly}
                     >
@@ -937,13 +939,13 @@ export default function EwayBill() {
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="form-group">
                     <label>Good To Address</label>
-                    <textarea 
-                      className="form-control" 
-                      rows="2" 
-                      value={dispatchToAddress} 
+                    <textarea
+                      className="form-control"
+                      rows="2"
+                      value={dispatchToAddress}
                       onChange={e => setDispatchToAddress(e.target.value)}
                       disabled={isReadOnly}
                     />
@@ -952,20 +954,20 @@ export default function EwayBill() {
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
                     <div className="form-group">
                       <label>To Place</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={dispatchToPlace} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={dispatchToPlace}
                         onChange={e => setDispatchToPlace(e.target.value)}
                         disabled={isReadOnly}
                       />
                     </div>
                     <div className="form-group">
                       <label>Good to Pin</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={dispatchToPin} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={dispatchToPin}
                         onChange={e => setDispatchToPin(e.target.value)}
                         disabled={isReadOnly}
                       />
@@ -975,28 +977,28 @@ export default function EwayBill() {
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 0.8fr', gap: 12 }}>
                     <div className="form-group">
                       <label>State</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={dispatchToState} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={dispatchToState}
                         onChange={e => setDispatchToState(e.target.value)}
                         disabled={isReadOnly}
                       />
                     </div>
-                    
+
                     <div className="form-group">
                       <label>Distance</label>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <input 
-                          className="form-control" 
-                          type="number" 
-                          value={distance} 
+                        <input
+                          className="form-control"
+                          type="number"
+                          value={distance}
                           onChange={e => setDistance(Number(e.target.value))}
                           disabled={isReadOnly}
                         />
-                        <button 
-                          type="button" 
-                          className="btn btn-secondary" 
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
                           style={{ padding: 4, display: 'flex', alignItems: 'center' }}
                           onClick={handleCalculateDistance}
                           disabled={isReadOnly}
@@ -1008,10 +1010,10 @@ export default function EwayBill() {
 
                     <div className="form-group">
                       <label>Code</label>
-                      <input 
-                        className="form-control" 
-                        type="text" 
-                        value={dispatchToStateCode} 
+                      <input
+                        className="form-control"
+                        type="text"
+                        value={dispatchToStateCode}
                         onChange={e => setDispatchToStateCode(e.target.value)}
                         disabled={isReadOnly}
                       />
@@ -1049,19 +1051,19 @@ export default function EwayBill() {
                       {items.map((item, idx) => (
                         <tr key={idx}>
                           <td>
-                            <input 
-                              className="form-control" 
+                            <input
+                              className="form-control"
                               style={{ margin: 0 }}
-                              value={item.product_name} 
+                              value={item.product_name}
                               onChange={e => handleItemChange(idx, 'product_name', e.target.value)}
                               disabled={isReadOnly}
                             />
                           </td>
                           <td>
-                            <input 
-                              className="form-control" 
+                            <input
+                              className="form-control"
                               style={{ margin: 0 }}
-                              value={item.hsn_code} 
+                              value={item.hsn_code}
                               onChange={e => handleItemChange(idx, 'hsn_code', e.target.value)}
                               disabled={isReadOnly}
                             />
@@ -1074,10 +1076,10 @@ export default function EwayBill() {
                                 <button type="button" className="btn btn-secondary" style={{ padding: '4px' }} onClick={() => { setCustomUnitRowIndex(null); setCustomUnitVal(''); }}><X size={14} /></button>
                               </div>
                             ) : (
-                              <select 
-                                className="form-control" 
+                              <select
+                                className="form-control"
                                 style={{ margin: 0 }}
-                                value={item.unit} 
+                                value={item.unit}
                                 onChange={e => {
                                   if (e.target.value === 'custom') setCustomUnitRowIndex(idx);
                                   else handleItemChange(idx, 'unit', e.target.value);
@@ -1094,30 +1096,30 @@ export default function EwayBill() {
                             )}
                           </td>
                           <td>
-                            <input 
-                              className="form-control" 
+                            <input
+                              className="form-control"
                               type="number"
                               style={{ margin: 0 }}
-                              value={item.qty} 
+                              value={item.qty}
                               onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))}
                               disabled={isReadOnly}
                             />
                           </td>
                           <td>
-                            <input 
-                              className="form-control" 
+                            <input
+                              className="form-control"
                               type="number"
                               style={{ margin: 0 }}
-                              value={item.taxable_value} 
+                              value={item.taxable_value}
                               onChange={e => handleItemChange(idx, 'taxable_value', Number(e.target.value))}
                               disabled={isReadOnly}
                             />
                           </td>
                           <td>
-                            <select 
-                              className="form-control" 
+                            <select
+                              className="form-control"
                               style={{ margin: 0 }}
-                              value={item.tax_rate} 
+                              value={item.tax_rate}
                               onChange={e => handleItemChange(idx, 'tax_rate', Number(e.target.value))}
                               disabled={isReadOnly}
                             >
@@ -1145,10 +1147,10 @@ export default function EwayBill() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 24, alignItems: 'flex-start' }}>
                 <div className="form-group">
                   <label>Remarks / Notes</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="4" 
-                    value={remarks} 
+                  <textarea
+                    className="form-control"
+                    rows="4"
+                    value={remarks}
                     onChange={e => setRemarks(e.target.value)}
                     disabled={isReadOnly}
                   />
@@ -1156,7 +1158,7 @@ export default function EwayBill() {
 
                 <div className="card" style={{ background: '#f8fafc', padding: 20 }}>
                   <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Tax Summary Table</h4>
-                  
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
                     <span style={{ color: 'var(--text-muted)' }}>Total Taxable Value:</span>
                     <span style={{ fontWeight: 600 }}>₹{totals.subtotal.toLocaleString()}</span>
@@ -1199,6 +1201,115 @@ export default function EwayBill() {
           </div>
         </div>
       )}
-    </div>
-  );
+
+          {/* A4 Modal View Preview */}
+          {viewModalBill && (
+            <A4DocumentPreview
+              isOpen={!!viewModalBill}
+              onClose={() => setViewModalBill(null)}
+              title="E-Way Bill Details"
+              documentNumber={viewModalBill.eway_bill_no}
+              status={viewModalBill.status}
+              sections={[
+                {
+                  title: 'General Details',
+                  type: 'grid',
+                  icon: 'FileText',
+                  data: [
+                    { label: 'Supply Type', value: viewModalBill.supply_type },
+                    { label: 'Sub Type', value: viewModalBill.sub_type },
+                    { label: 'Document Type', value: viewModalBill.document_type },
+                    { label: 'Invoice Type', value: viewModalBill.invoice_type },
+                    { label: 'Org Name', value: viewModalBill.org_name },
+                    { label: 'DC No / Date', value: viewModalBill.dc_no_date }
+                  ]
+                },
+                {
+                  title: 'Token & Auth',
+                  type: 'grid',
+                  icon: 'ShieldCheck',
+                  data: [
+                    { label: 'Token No', value: viewModalBill.token_no },
+                    { label: 'Token Exp', value: viewModalBill.token_ex_date }
+                  ]
+                },
+                {
+                  title: 'Bill From',
+                  type: 'grid',
+                  icon: 'MapPin',
+                  data: [
+                    { label: 'Name', value: viewModalBill.bill_from_name },
+                    { label: 'Address', value: viewModalBill.bill_from_address },
+                    { label: 'GSTIN', value: viewModalBill.bill_from_gstin },
+                    { label: 'State', value: viewModalBill.bill_from_state },
+                    { label: 'PIN', value: viewModalBill.bill_from_pin }
+                  ]
+                },
+                {
+                  title: 'Dispatch From',
+                  type: 'grid',
+                  icon: 'MapPin',
+                  data: [
+                    { label: 'Name', value: viewModalBill.dispatch_from_name },
+                    { label: 'Address', value: viewModalBill.dispatch_from_address },
+                    { label: 'Place', value: viewModalBill.dispatch_from_place },
+                    { label: 'State', value: viewModalBill.dispatch_from_state },
+                    { label: 'PIN', value: viewModalBill.dispatch_from_pin }
+                  ]
+                },
+                {
+                  title: 'Bill To',
+                  type: 'grid',
+                  icon: 'MapPin',
+                  data: [
+                    { label: 'Name', value: viewModalBill.bill_to_name },
+                    { label: 'Address', value: viewModalBill.bill_to_address },
+                    { label: 'GSTIN', value: viewModalBill.bill_to_gstin },
+                    { label: 'State', value: viewModalBill.bill_to_state },
+                    { label: 'PIN', value: viewModalBill.bill_to_pin }
+                  ]
+                },
+                {
+                  title: 'Dispatch To',
+                  type: 'grid',
+                  icon: 'MapPin',
+                  data: [
+                    { label: 'Name', value: viewModalBill.dispatch_to_name },
+                    { label: 'Address', value: viewModalBill.dispatch_to_address },
+                    { label: 'Place', value: viewModalBill.dispatch_to_place },
+                    { label: 'State', value: viewModalBill.dispatch_to_state },
+                    { label: 'PIN', value: viewModalBill.dispatch_to_pin },
+                    { label: 'Distance', value: `${viewModalBill.distance} KM` }
+                  ]
+                },
+                {
+                  title: 'Item Details',
+                  type: 'table',
+                  icon: 'Box',
+                  headers: ['Product Name', 'HSN Code', 'Qty', 'Unit', 'Taxable Val', 'Rate %'],
+                  rows: (viewModalBill.items || []).map(item => [
+                    item.product_name,
+                    item.hsn_code,
+                    item.qty,
+                    item.unit,
+                    `₹ ${Number(item.taxable_value).toLocaleString()}`,
+                    `${item.tax_rate}%`
+                  ])
+                },
+                {
+                  title: 'Tax & Totals',
+                  type: 'grid',
+                  icon: 'Calculator',
+                  data: [
+                    { label: 'CGST', value: `₹ ${Number(viewModalBill.cgst).toLocaleString()}` },
+                    { label: 'SGST', value: `₹ ${Number(viewModalBill.sgst).toLocaleString()}` },
+                    { label: 'IGST', value: `₹ ${Number(viewModalBill.igst).toLocaleString()}` },
+                    { label: 'Grand Total', value: `₹ ${Number(viewModalBill.total_value).toLocaleString()}` }
+                  ]
+                }
+              ]}
+            />
+          )}
+        </div>
+      );
 }

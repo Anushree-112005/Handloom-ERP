@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Truck, Plus, Search, Eye, Trash2, Save, X, Edit, FileText, Database, Settings } from 'lucide-react';
+import { Truck, Plus, Search, Eye, Trash2, Save, X, Edit2, FileText, Database, Settings } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 export default function WeavingDelivery() {
   const [records, setRecords] = useState([
@@ -14,6 +15,7 @@ export default function WeavingDelivery() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [viewModalDelivery, setViewModalDelivery] = useState(null);
 
   const initialForm = {
     id: '',
@@ -139,8 +141,16 @@ export default function WeavingDelivery() {
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'inline-flex', gap: 6 }}>
-                        <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(r)}><Edit size={12} /> Edit</button>
-                        <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(r.id)}><Trash2 size={12} /></button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          onClick={() => setViewModalDelivery(r)}
+                          title="Preview Delivery"
+                        >
+                          <Eye size={16} color="var(--primary)" />
+                        </button>
+                        <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(r)} title="Edit"><Edit2 size={12} /></button>
+                        <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(r.id)} title="Delete"><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>
@@ -211,6 +221,47 @@ export default function WeavingDelivery() {
           </div>
         </form>
       )}
+
+      <A4DocumentPreview
+        isOpen={!!viewModalDelivery}
+        onClose={() => setViewModalDelivery(null)}
+        title="WEAVING DELIVERY (BEAM ISSUE)"
+        documentNumber={viewModalDelivery?.id}
+        status={viewModalDelivery?.status}
+        onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
+        sections={viewModalDelivery ? [
+          {
+            title: "VOUCHER DETAILS",
+            icon: "FileText",
+            type: "grid",
+            data: [
+              { label: "Voucher ID", value: viewModalDelivery.id },
+              { label: "Date", value: viewModalDelivery.date },
+              { label: "Loom Allocation", value: viewModalDelivery.loomNo },
+              { label: "Loom Operator", value: viewModalDelivery.operator }
+            ]
+          },
+          {
+            title: "BEAM & WARP SPECIFICATIONS",
+            icon: "Settings",
+            type: "grid",
+            data: [
+              { label: "Beam Number", value: viewModalDelivery.beamNo },
+              { label: "Beam Width", value: viewModalDelivery.width },
+              { label: "Warp Length", value: `${viewModalDelivery.length} Mtr` },
+              { label: "Gross Weight", value: `${viewModalDelivery.weight} Kg` }
+            ]
+          },
+          {
+            title: "ADDITIONAL INFO",
+            icon: "Database",
+            type: "grid",
+            data: [
+              { label: "Remarks", value: viewModalDelivery.remarks || '-' }
+            ]
+          }
+        ] : []}
+      />
     </div>
   );
 }
