@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText } from 'lucide-react';
+import { yarnInwardAPI } from '../../services/api';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -8,28 +9,62 @@ export default function YarnStock() {
   const [searchTerm, setSearchTerm] = useState('');
   const [countFilter, setCountFilter] = useState('All Counts');
   const [godownFilter, setGodownFilter] = useState('All Godowns');
+  const [stock, setStock] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Premium Curated Mock Data for Yarn Stock
-  const MOCK_STOCK = [
-    { id: 1, count: '40s Karded Cotton', mill: 'Vardhman Mills', lotNo: 'LOT-40K-902', bags: 120, netWeight: 5400, rate: 265, godown: 'Main Warehouse', status: 'Available' },
-    { id: 2, count: '60s Combed Cotton', mill: 'Super Spinning Mills', lotNo: 'LOT-60C-811', bags: 85, netWeight: 3825, rate: 310, godown: 'Main Warehouse', status: 'Available' },
-    { id: 3, count: '80s Giza Cotton', mill: 'Nahar Spinning', lotNo: 'LOT-80G-102', bags: 45, netWeight: 2025, rate: 420, godown: 'Dyeing Godown', status: 'Reserved' },
-    { id: 4, count: '2/40s Dyed Yarn', mill: 'Dinesh Dyeing Unit', lotNo: 'LOT-240D-55', bags: 60, netWeight: 2700, rate: 295, godown: 'Warping Godown', status: 'Available' },
-    { id: 5, count: '30s Melange', mill: 'Soma Textiles', lotNo: 'LOT-30M-419', bags: 90, netWeight: 4050, rate: 245, godown: 'Main Warehouse', status: 'Available' },
-    { id: 6, count: '50s Lycra Yarn', mill: 'Vardhman Mills', lotNo: 'LOT-50L-703', bags: 30, netWeight: 1350, rate: 380, godown: 'Warping Godown', status: 'Reserved' },
-    { id: 7, count: '2/80s Mercerized', mill: 'Dinesh Dyeing Unit', lotNo: 'LOT-280M-12', bags: 50, netWeight: 2250, rate: 485, godown: 'Dyeing Godown', status: 'Available' }
-  ];
+  useEffect(() => {
+    const fetchStockData = async () => {
+      try {
+        const { data: inwards } = await yarnInwardAPI.list();
+        const aggregatedStock = [];
+        const lotMap = {};
+
+        inwards.forEach(inward => {
+          if (inward.items && Array.isArray(inward.items)) {
+            inward.items.forEach(item => {
+              const key = `${item.lot_no}-${item.yarn_count}`;
+              if (!lotMap[key]) {
+                lotMap[key] = {
+                  id: item.id,
+                  count: item.yarn_count || 'N/A',
+                  mill: item.mill_name || 'N/A',
+                  lotNo: item.lot_no || 'N/A',
+                  bags: 0,
+                  netWeight: 0,
+                  rate: item.rate || 0,
+                  godown: inward.stock_godown || 'Main Warehouse',
+                  status: inward.status === 'Received' ? 'Available' : 'Reserved',
+                  colour: item.colour || ''
+                };
+              }
+              lotMap[key].bags += item.bags || 0;
+              lotMap[key].netWeight += item.kgs || 0;
+            });
+          }
+        });
+
+        setStock(Object.values(lotMap));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching stock data:', error);
+        setStock([]);
+        setLoading(false);
+      }
+    };
+
+    fetchStockData();
+  }, []);
 
   const countsList = useMemo(() => {
-    return ['All Counts', ...new Set(MOCK_STOCK.map(item => item.count))];
-  }, []);
+    return ['All Counts', ...new Set(stock.map(item => item.count))];
+  }, [stock]);
 
   const godownsList = useMemo(() => {
-    return ['All Godowns', ...new Set(MOCK_STOCK.map(item => item.godown))];
-  }, []);
+    return ['All Godowns', ...new Set(stock.map(item => item.godown))];
+  }, [stock]);
 
   const filteredStock = useMemo(() => {
-    return MOCK_STOCK.filter(item => {
+    return stock.filter(item => {
       const matchesSearch = item.mill.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             item.lotNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             item.count.toLowerCase().includes(searchTerm.toLowerCase());
@@ -37,7 +72,7 @@ export default function YarnStock() {
       const matchesGodown = godownFilter === 'All Godowns' || item.godown === godownFilter;
       return matchesSearch && matchesCount && matchesGodown;
     });
-  }, [searchTerm, countFilter, godownFilter]);
+  }, [stock, searchTerm, countFilter, godownFilter]);
 
   const stats = useMemo(() => {
     const totalBags = filteredStock.reduce((acc, item) => acc + item.bags, 0);
@@ -100,6 +135,15 @@ export default function YarnStock() {
       </div>
 
       {/* Stats Cards */}
+      {loading ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          <p>Loading yarn stock data...</p>
+        </div>
+      ) : stock.length === 0 ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          <p>No stock data available. Record yarn inward receipts first.</p>
+        </div>
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
         <div className="card stat-card">
           <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
@@ -129,7 +173,10 @@ export default function YarnStock() {
           </div>
         </div>
       </div>
+      )}
 
+      {!loading && stock.length > 0 && (
+      <>
       {/* Filters & Controls */}
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
         <div style={{ position: 'relative', flex: 1 }}>
@@ -195,6 +242,8 @@ export default function YarnStock() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </div>
   );
 }
