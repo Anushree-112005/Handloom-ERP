@@ -36,13 +36,13 @@ export default function GateTransaction() {
           const seedData = [];
           for (let i = 0; i < 10; i++) {
             const vehicle = fetchedVehicles[(i + 6) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[(i + 3) % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const bo = fetchedBOs[(i + 3) % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
             const party = fetchedParties[(i + 3) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
             const tare = 5000 + i * 100;
             const gross = 8000 + i * 300;
             seedData.push({
-              id: `GT-2026-00${i + 1}`,
-              passNo: `GP-2026-00${i + 1}`,
+              id: `GT-${String(i + 1).padStart(5, '0')}`,
+              passNo: `GP-${String(i + 1).padStart(5, '0')}`,
               vehicleNo: vehicle.vehicle_number,
               type: i % 2 === 0 ? "Inward" : "Outward",
               party: party.company_name,
@@ -117,7 +117,7 @@ export default function GateTransaction() {
   };
 
   const handleCreateNew = () => {
-    const nextId = `GT-2026-00${transactions.length + 1}`;
+    const nextId = `GT-${String(transactions.length + 1).padStart(5, '0')}`;
     const nextPass = `GP-${9011 + transactions.length}`;
     setSelectedId(nextId);
     setIsEditing(true);

@@ -98,8 +98,8 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 .sidebar-brand .logo-icon {
   width: 52px;
   height: 52px;
-  background: #ffffff;
-  border: 1px solid var(--border);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -108,7 +108,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
   font-size: 20px;
   color: white;
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .sidebar-brand h1 {

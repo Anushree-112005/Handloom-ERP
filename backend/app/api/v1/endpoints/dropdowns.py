@@ -11,12 +11,19 @@ router = APIRouter(prefix="/dropdowns", tags=["Dropdowns"])
 
 DEFAULT_MASTERS = {
     "party_type": [
-        "Sales", "Purchase", "Sales Party", "Logistics", "Processor", "Yarn Dyeing", "Yarn Coverter",
-        "Exports party", "Own Shed", "Washing/Finishing", "Purchase Party",
-        "Agent", "Weaving vendor", "Bit Loom Weaver", "Doubling", "Weaving Unit",
-        "Testing Lab", "Spares Supplier", "Delivery Party"
+        "Sales", "Purchase", "Sales Party", "Purchase Party", "Delivery Party",
+        "Logistics", "Agent", "Postage/Courier",
+        "Processor", "Weaving vendor", "Warping/Sizing",
+        "Yarn Dyeing", "Bit Loom Weaver", "General",
+        "Yarn Coverter", "Doubling", "Chemical Supplier",
+        "Exports party", "Weaving Unit", "Printing",
+        "Own Shed", "Testing Lab", "Fabric Dyeing",
+        "Washing/Finishing", "Spares Supplier", "JobWorker"
     ],
     "customer_grade": ["A", "B", "C"],
+    "party_group": [
+        "Domestic Customer", "Export Customer", "Yarn Supplier", "Chemical Supplier"
+    ],
     "state": ["Tamil Nadu", "Maharashtra", "Karnataka", "Gujarat", "Kerala", "Delhi"],
     "district": ["Erode", "Namakkal", "Coimbatore", "Tiruppur", "Salem"],
     "city": ["Tiruchengodu", "Erode", "Coimbatore", "Mumbai", "Surat", "Ahmedabad"],
@@ -143,10 +150,10 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
         masters["city"] = district_cities
         masters["district"] = district_cities
         
-    # Force Party Group to be strictly fetched from SubMaster only
-    masters["party_group"] = party_groups
+    # Combine default Party Groups with those fetched from SubMaster
+    masters["party_group"] = list(dict.fromkeys(masters.get("party_group", []) + party_groups))
     
-    masters["party_type"] = list(dict.fromkeys(custom_party_types))
+    masters["party_type"] = list(dict.fromkeys(masters.get("party_type", []) + custom_party_types))
     
     if custom_customer_grades:
         combined_grades = masters.get("customer_grade", []) + custom_customer_grades

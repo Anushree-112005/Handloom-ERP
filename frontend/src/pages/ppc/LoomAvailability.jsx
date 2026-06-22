@@ -77,7 +77,7 @@ export default function LoomAvailability() {
             <Calendar style={{ color: '#10b981' }} /> Loom Availability Check
           </h2>
           <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', maxWidth: 800 }}>
-            Checks whether a loom is available for allocation before planning. Displays current workload, assigned order, planned finish date, and available capacity to help planners decide where to allocate new orders.
+            Check loom status and availability details before allocating orders.
           </p>
         </div>
       </div>

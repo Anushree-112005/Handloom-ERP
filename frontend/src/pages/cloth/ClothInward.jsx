@@ -487,7 +487,7 @@ export default function ClothInward() {
                             transition: 'background 0.2s'
                           }}
                         >
-                          <td style={{ fontWeight: 600, color: '#10b981' }}>{e.ref_no}</td>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{e.ref_no}</td>
                           <td>{e.inw_date ? e.inw_date.split('T')[0] : '-'}</td>
                           <td style={{ fontWeight: 500 }}>{e.party_name}</td>
                           <td>
@@ -543,7 +543,7 @@ export default function ClothInward() {
               <div style={{ flex: '0 0 360px' }}>
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 700 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
                       <Factory size={18} /> Inward Details: {selectedInward.ref_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>

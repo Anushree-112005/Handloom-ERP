@@ -102,12 +102,23 @@ import DesignEntry from './pages/design_management/DesignEntry';
 import DesignAI from './pages/design_management/DesignAI';
 import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
 import YarnInward from './pages/yarn/YarnInward';
+import YarnStock from './pages/yarn/YarnStock';
 import GreyYarnDelivery from './pages/yarn/GreyYarnDelivery';
 import DyedYarnReceived from './pages/yarn/DyedYarnReceived';
 import DyedYarnDelivery from './pages/yarn/DyedYarnDelivery';
 import WarpBeamReceipt from './pages/warp/WarpBeamReceipt';
 import WarpDelivery from './pages/warp/WarpDelivery';
 import WarpSizingTransaction from './pages/warp/WarpSizingTransaction';
+import WeavingDelivery from './pages/cloth/WeavingDelivery';
+import JobWorkStatus from './pages/jobwork/JobWorkStatus';
+import StockSummary from './pages/inventory/StockSummary';
+import StockLedger from './pages/inventory/StockLedger';
+import FabricDyeingDelivery from './pages/jobwork/FabricDyeingDelivery';
+import DyedFabricReceipt from './pages/jobwork/DyedFabricReceipt';
+import PrintingDelivery from './pages/jobwork/PrintingDelivery';
+import PrintedFabricReceipt from './pages/jobwork/PrintedFabricReceipt';
+import FinishingDelivery from './pages/jobwork/FinishingDelivery';
+import FinishedFabricReceipt from './pages/jobwork/FinishedFabricReceipt';
 
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
@@ -134,6 +145,48 @@ function MockDbSyncWrapper({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    const keysToMigrate = ['gate_pass_data', 'gate_inward_data', 'gate_outward_data', 'gate_transaction_data'];
+    
+    function migrateGateId(val) {
+      if (typeof val !== 'string') return val;
+      const repl = (match, prefix, num) => `${prefix}-${String(num).padStart(5, '0')}`;
+      return val.replace(/\b([A-Za-z0-9\-]+)-2026-(\d+)\b/g, repl)
+                .replace(/\b([A-Za-z0-9\-]+)-26-(\d+)\b/g, repl);
+    }
+
+    function migrateGateObject(obj) {
+      if (Array.isArray(obj)) {
+        return obj.map(migrateGateObject);
+      } else if (obj && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+          newObj[key] = migrateGateObject(obj[key]);
+        }
+        return newObj;
+      } else if (typeof obj === 'string') {
+        return migrateGateId(obj);
+      }
+      return obj;
+    }
+
+    keysToMigrate.forEach(key => {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const migrated = migrateGateObject(parsed);
+          const migratedStr = JSON.stringify(migrated);
+          if (migratedStr !== saved) {
+            localStorage.setItem(key, migratedStr);
+          }
+        } catch (e) {
+          console.error(`Failed to migrate localStorage key ${key}:`, e);
+        }
+      }
+    });
+  }, []);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -173,6 +226,7 @@ export default function App() {
         <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
 
         <Route path="yarn/inward" element={<YarnInward />} />
+        <Route path="yarn/stock" element={<YarnStock />} />
 
         <Route path="yarn/grey-delivery" element={<GreyYarnDelivery />} />
 
@@ -187,10 +241,23 @@ export default function App() {
         <Route path="warp/transaction/entries" element={<WarpSizingTransaction defaultSection="Beam & Transaction Entries" />} />
         <Route path="warp/transaction/reports" element={<WarpSizingTransaction defaultSection="Reports, Bills & Amendments" />} />
 
+        <Route path="weaving/delivery" element={<WeavingDelivery />} />
+        <Route path="jobwork/status" element={<JobWorkStatus />} />
+        <Route path="inventory/stock-summary" element={<StockSummary />} />
+        <Route path="inventory/stock-ledger" element={<StockLedger />} />
+
         <Route path="cloth/inward" element={<ClothInward />} />
         <Route path="cloth/checking" element={<OnTableChecking />} />
         <Route path="cloth/delivery" element={<ClothDelivery />} />
         <Route path="finished-fabric" element={<FinishedFabricInward />} />
+
+        {/* Job Work Fabric Process Routes */}
+        <Route path="jobwork/fabric-dyeing-delivery" element={<FabricDyeingDelivery />} />
+        <Route path="jobwork/dyed-fabric-receipt" element={<DyedFabricReceipt />} />
+        <Route path="jobwork/printing-delivery" element={<PrintingDelivery />} />
+        <Route path="jobwork/printed-fabric-receipt" element={<PrintedFabricReceipt />} />
+        <Route path="jobwork/finishing-delivery" element={<FinishingDelivery />} />
+        <Route path="jobwork/finished-fabric-receipt" element={<FinishedFabricReceipt />} />
 
         <Route path="fabric/transaction" element={<Navigate to="/fabric/transaction/checking" replace />} />
         <Route path="fabric/transaction/checking" element={<FabricTransaction defaultSection="Fabric Checking" />} />

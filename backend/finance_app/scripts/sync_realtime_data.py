@@ -31,7 +31,11 @@ def sync_data():
     db = SessionLocal()
 
     # 2. Establish PostgreSQL Connection
-    pg_url = "postgresql://postgres:bala2021@localhost:5432/dinesh_textile_erp"
+    from dotenv import load_dotenv
+    load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env")))
+    pg_url = os.getenv("DATABASE_URL", "postgresql://postgres:bala2021@localhost:5432/dinesh_textile_erp")
+    if "postgresql+asyncpg" in pg_url:
+        pg_url = pg_url.replace("postgresql+asyncpg", "postgresql")
     try:
         pg_engine = sa.create_engine(pg_url)
         pg_conn = pg_engine.connect()

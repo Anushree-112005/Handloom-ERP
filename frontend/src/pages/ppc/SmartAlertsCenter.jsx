@@ -3,7 +3,7 @@ import { AlertTriangle, Bell, Clock, AlertCircle } from 'lucide-react';
 
 export default function SmartAlertsCenter() {
   const alerts = [
-    { type: 'warning', title: 'Loom L1 Finishing Soon', message: 'Order PO-2026-099 on Loom L1 will finish in approximately 8 hours. Prepare next warp.', time: '10 mins ago' },
+    { type: 'warning', title: 'Loom L1 Finishing Soon', message: 'Order PO-00099 on Loom L1 will finish in approximately 8 hours. Prepare next warp.', time: '10 mins ago' },
     { type: 'danger', title: 'Low Efficiency Detected', message: 'Loom L2 has dropped below 60% efficiency in the last 4 hours.', time: '1 hour ago' },
     { type: 'info', title: 'Idle Loom', message: 'Loom L4 is currently idle. No orders are queued.', time: '3 hours ago' },
     { type: 'warning', title: 'Maintenance Due', message: 'Loom L3 has crossed 500 hours of runtime. Schedule preventive maintenance.', time: '1 day ago' },

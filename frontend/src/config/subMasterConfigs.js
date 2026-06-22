@@ -529,7 +529,7 @@ export const BUYER_KYC_FORM = {
   description: 'Manage Buyer Know-Your-Customer (KYC) documentation and compliance status.',
   fields: [
     { name: 'name', label: 'Buyer Name', type: 'text', required: true, placeholder: 'e.g. Global Exim Corp' },
-    { name: 'code', label: 'KYC Number', type: 'text', required: true, placeholder: 'e.g. KYC-2026-001' },
+    { name: 'code', label: 'KYC Number', type: 'text', required: true, placeholder: 'e.g. KYC-00001' },
     { name: 'extra_field_1', label: 'GSTIN / Tax ID', type: 'text', placeholder: 'e.g. 33AABCC1234D1Z5' },
     { name: 'extra_field_2', label: 'PAN / Business Reg No', type: 'text', placeholder: 'e.g. ABCDE1234F' },
     { name: 'description', label: 'Verification Notes / Address', type: 'textarea' },
@@ -603,7 +603,7 @@ export const CLOTH_LOT_NO_AMD = {
   color: '#ea580c',
   description: 'Track and document amendments made to Cloth LOT Numbers.',
   fields: [
-    { name: 'name', label: 'LOT Number', type: 'text', required: true, placeholder: 'e.g. LOT-2026-99' },
+    { name: 'name', label: 'LOT Number', type: 'text', required: true, placeholder: 'e.g. LOT-00099' },
     { name: 'code', label: 'Amendment Ref No', type: 'text', placeholder: 'e.g. AMD-LOT-01' },
     { name: 'description', label: 'Reason for Lot Amendment', type: 'textarea', required: true },
   ],
@@ -616,7 +616,7 @@ export const INVOICE_AMD = {
   color: '#84cc16',
   description: 'Log and authorize post-submission commercial invoice corrections.',
   fields: [
-    { name: 'name', label: 'Invoice No', type: 'text', required: true, placeholder: 'e.g. DINV-26-0045' },
+    { name: 'name', label: 'Invoice No', type: 'text', required: true, placeholder: 'e.g. DINV-00045' },
     { name: 'code', label: 'Amendment ID', type: 'text', placeholder: 'e.g. AMD-INV-02' },
     { name: 'description', label: 'Amendment Description', type: 'textarea', required: true },
   ],
@@ -655,7 +655,7 @@ export const VENDOR_ORDER_AMD = {
   color: '#ec4899',
   description: 'Amendments to outside supplier purchase orders and terms.',
   fields: [
-    { name: 'name', label: 'Vendor Order No', type: 'text', required: true, placeholder: 'e.g. VPO-2026-11' },
+    { name: 'name', label: 'Vendor Order No', type: 'text', required: true, placeholder: 'e.g. VPO-00011' },
     { name: 'code', label: 'Amendment Ref', type: 'text', placeholder: 'e.g. AMD-VPO-02' },
     { name: 'description', label: 'Reason for PO Amendment', type: 'textarea', required: true },
   ],

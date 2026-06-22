@@ -119,7 +119,7 @@ async def create_transaction(data: WorkOrderTransactionCreate, db: AsyncSession 
         prefix = prefix_map.get(data.module_type, 'WOT-')
         max_id_q = await db.execute(select(func.max(WorkOrderTransaction.id)))
         max_id = max_id_q.scalar() or 0
-        txn_no = f"{prefix}{(max_id + 1):03d}"
+        txn_no = f"{prefix}{(max_id + 1):05d}"
     
     # Check if unique transaction number exists
     existing_txn_q = await db.execute(select(WorkOrderTransaction).where(WorkOrderTransaction.transaction_no == txn_no))

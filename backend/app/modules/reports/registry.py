@@ -28,7 +28,7 @@ REPORT_REGISTRY = {
             {"key": "status", "label": "Status"},
         ],
         "permission": "buyer_order",
-        "synonyms": ["buyer order", "buyer orders", "purchase order report", "ibpo report", "order report"],
+        "synonyms": ["buyer order", "buyer orders", "sales order", "sales orders", "purchase order report", "ibpo report", "order report"],
     },
     "invoice": {
         "title": "Sales Invoice Report",

@@ -436,7 +436,7 @@ export default function DyedYarnDelivery() {
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No deliveries found.</td></tr>
                     ) : filteredDeliveries.map(r => (
                       <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{r.dc_no}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.dc_no}</td>
                         <td>{r.dc_date}</td>
                         <td style={{ fontWeight: 500 }}>{r.party_name || '-'}</td>
                         <td><span className={`badge ${r.delivery_type === 'Direct' ? 'badge-completed' : 'badge-active'}`}>{r.delivery_type}</span></td>
@@ -459,7 +459,7 @@ export default function DyedYarnDelivery() {
               <div style={{ flex: '0 0 350px' }}>
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
                       <Send size={18} /> {selectedViewEntry.dc_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>

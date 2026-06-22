@@ -80,7 +80,7 @@ export default function Header() {
     {
       id: 2,
       title: 'Pending PR Approval',
-      message: 'Purchase Requisition PR-2026-004 requires your approval.',
+      message: 'Purchase Requisition PR-00004 requires your approval.',
       time: '20 mins ago',
       unread: true,
       category: 'approval',
@@ -107,7 +107,7 @@ export default function Header() {
     {
       id: 5,
       title: 'New Sales Order Created',
-      message: 'Vardhman Yarns placed a new order SO-2026-089.',
+      message: 'Vardhman Yarns placed a new order SO-00089.',
       time: '1 day ago',
       unread: true,
       category: 'sales',

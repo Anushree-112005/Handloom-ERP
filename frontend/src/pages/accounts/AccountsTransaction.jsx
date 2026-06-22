@@ -153,64 +153,64 @@ export default function AccountsTransaction({ defaultSection = 'Creditors', defa
     
     // Populate form states based on activePage
     if (activePage === 'cbr') {
-      nextId = `CBR-2026-00${billsReceived.length + 1}`;
+      nextId = `CBR-${String(billsReceived.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, creditorName: 'Vardhman Spinning', creditorType: 'Yarn Supplier', supplierBillNo: '', supplierBillDate: dateToday, billType: 'Yarn Purchase Bill', againstPoNo: '', againstGrnNo: '', totalAmount: '', dueDate: '', narration: '', status: 'Received', items: [{ desc: '', hsn: '', qty: '', unit: 'Kg', rate: '', amount: 0 }] });
     }
     if (activePage === 'gen') {
-      nextId = `GEN-2026-00${generalBills.length + 1}`;
+      nextId = `GEN-${String(generalBills.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, category: 'Electricity Bill', partyName: 'State Electricity Board', billNo: '', billDate: dateToday, expenseHead: 'Power & Fuel', department: 'Production', billAmount: '', gstApplicable: true, gstPercent: 18, gstAmount: 0, tdsApplicable: false, tdsPercent: 0, tdsAmount: 0, netPayable: 0, dueDate: '', costCenter: 'Weaving Floor A', narration: '', status: 'Approved' });
     }
     if (activePage === 'cba') {
-      nextId = `CBA-2026-00${billsApproved.length + 1}`;
-      setFields({ id: nextId, date: dateToday, billReceiptRef: 'CBR-2026-001', creditorName: 'Vardhman Spinning', supplierBillNo: 'SUP-4491', billAmount: 185000, gstAmount: 9250, tdsAmount: 1850, netPayable: 192400, poVerified: true, grnVerified: true, rateMatched: true, qtyMatched: true, approvedAmount: 192400, diffAmount: 0, diffReason: '', approvalStatus: 'Approved', approvedBy: 'Mani Bharathi (Store Head)', remarks: '' });
+      nextId = `CBA-${String(billsApproved.length + 1).padStart(5, '0')}`;
+      setFields({ id: nextId, date: dateToday, billReceiptRef: 'CBR-00001', creditorName: 'Vardhman Spinning', supplierBillNo: 'SUP-4491', billAmount: 185000, gstAmount: 9250, tdsAmount: 1850, netPayable: 192400, poVerified: true, grnVerified: true, rateMatched: true, qtyMatched: true, approvedAmount: 192400, diffAmount: 0, diffReason: '', approvalStatus: 'Approved', approvedBy: 'Mani Bharathi (Store Head)', remarks: '' });
     }
     if (activePage === 'cdn') {
-      nextId = `CDN-2026-00${creditorsDebitNotes.length + 1}`;
-      setFields({ id: nextId, date: dateToday, creditorName: 'Vardhman Spinning', againstBillNo: 'CBR-2026-001', againstPoNo: 'PO-2026-90', debitNoteType: 'Material Return', totalDebitAmount: '', reason: '', adjustmentType: 'Bill Adjustment', narration: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved', items: [{ name: '', returnQty: '', unit: 'Kg', rate: '', amount: 0 }] });
+      nextId = `CDN-${String(creditorsDebitNotes.length + 1).padStart(5, '0')}`;
+      setFields({ id: nextId, date: dateToday, creditorName: 'Vardhman Spinning', againstBillNo: 'CBR-00001', againstPoNo: 'PO-00090', debitNoteType: 'Material Return', totalDebitAmount: '', reason: '', adjustmentType: 'Bill Adjustment', narration: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved', items: [{ name: '', returnQty: '', unit: 'Kg', rate: '', amount: 0 }] });
     }
     if (activePage === 'exp') {
-      nextId = `EXP-2026-00${exportInvoices.length + 1}`;
+      nextId = `EXP-${String(exportInvoices.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, buyerName: 'Reliance Retail', buyerAddress: 'Mumbai HQ', country: 'United Kingdom', portLoading: '', portDischarge: '', shippingBillNo: '', shippingBillDate: dateToday, lcNo: '', currency: 'USD', exchangeRate: 83, foreignTotal: '', inrTotal: 0, freight: '', insurance: '', paymentTerms: '60 Days LC', incoterms: 'FOB', bankDetails: '', status: 'Shipped', items: [{ designNo: '', desc: '', qty: '', rateForeign: '', rateInr: 0, amountForeign: 0, amountInr: 0 }] });
     }
     if (activePage === 'sam') {
-      nextId = `SAM-2026-00${salesAmendments.length + 1}`;
+      nextId = `SAM-${String(salesAmendments.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, originalInvoiceNo: '', originalInvoiceDate: dateToday, buyerName: 'Raymond Ltd', amendmentType: 'Rate Change', reason: '', authorizedBy: 'Dinesh Balasamy (MD)', status: 'Approved', items: [{ name: '', qty: '', originalRate: '', amendedRate: '', diffAmount: 0, gstImpact: 0 }] });
     }
     if (activePage === 'gsm') {
-      nextId = `GSM-2026-00${greyAmendments.length + 1}`;
+      nextId = `GSM-${String(greyAmendments.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, originalInvoiceNo: '', buyerName: 'Raymond Ltd', fabricType: 'Grey Cotton Drill', originalQty: '', amendedQty: '', originalRate: '', amendedRate: '', originalAmount: '', amendedAmount: 0, weightDiff: '', qualityRemarks: '', reason: '', authorizedBy: 'Mani Bharathi (Store Head)', status: 'Approved' });
     }
     if (activePage === 'dsi') {
-      nextId = `DSI-2026-00${directInvoices.length + 1}`;
+      nextId = `DSI-${String(directInvoices.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, buyerName: 'Raymond Ltd', buyerAddress: 'Bangalore Complex', gstin: '29AAAER4402Q1ZX', placeOfSupply: 'Karnataka', invoiceType: 'Tax Invoice', totalTaxable: 0, totalGst: 0, grandTotal: 0, paymentTerms: 'Direct Pay', bankDetails: '', status: 'Completed', items: [{ itemNo: '', hsn: '', qty: '', rate: '', amount: 0, gstPercent: 18, gstAmount: 0, total: 0 }] });
     }
     if (activePage === 'ein') {
-      nextId = `EIN-2026-00${eInvoices.length + 1}`;
-      setFields({ id: nextId, irnNo: 'Automatic IRN...', ackNo: '', ackDate: dateToday, invoiceRef: 'DSI-2026-001', buyerGstin: '29AAAER4402Q1ZX', supplyType: 'B2B', status: 'Active' });
+      nextId = `EIN-${String(eInvoices.length + 1).padStart(5, '0')}`;
+      setFields({ id: nextId, irnNo: 'Automatic IRN...', ackNo: '', ackDate: dateToday, invoiceRef: 'DSI-00001', buyerGstin: '29AAAER4402Q1ZX', supplyType: 'B2B', status: 'Active' });
     }
     if (activePage === 'tly') {
-      nextId = `TLY-2026-00${tallyExports.length + 1}`;
+      nextId = `TLY-${String(tallyExports.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, dateRangeFrom: dateToday, dateRangeTo: dateToday, exportType: 'Sales Vouchers', format: 'XML Format', includeGst: true, includeTds: true, filePath: 'C:/TallyData/Sales_Export.xml', lastExportDate: dateToday, status: 'Exported' });
     }
     if (activePage === 'cnl') {
-      nextId = `CNL-2026-00${cancelledInvoices.length + 1}`;
+      nextId = `CNL-${String(cancelledInvoices.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, date: dateToday, invoiceNo: '', invoiceDate: dateToday, buyerName: 'Reliance Retail', invoiceAmount: '', gstAmount: '', irnNo: '', reason: 'Data Entry Error', detailedReason: '', authorizedBy: 'Dinesh Balasamy (MD)', cancellationDate: dateToday, status: 'Cancelled' });
     }
     if (activePage === 'prt') {
-      nextId = `PRT-2026-00${bulkPrints.length + 1}`;
+      nextId = `PRT-${String(bulkPrints.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, dateRangeFrom: dateToday, dateRangeTo: dateToday, printFormat: 'Standard GST Format', copies: 1, status: 'Success' });
     }
     if (activePage === 'lcd') {
-      nextId = `LCD-2026-00${lcDetails.length + 1}`;
+      nextId = `LCD-${String(lcDetails.length + 1).padStart(5, '0')}`;
       setFields({ id: nextId, lcNoBank: '', lcDate: dateToday, buyerName: 'Reliance Retail', buyerCountry: 'United Kingdom', issuingBank: '', advisingBank: '', lcType: 'Sight LC', lcCurrency: 'USD', lcAmountForeign: '', exchangeRate: 83, lcAmountInr: 0, expiryDate: '', shipmentDate: '', loadingPort: '', dischargePort: '', tolerancePercent: 5, status: 'Active' });
     }
     if (activePage === 'hnd') {
-      nextId = `HND-2026-00${lcHundis.length + 1}`;
-      setFields({ id: nextId, date: dateToday, lcRefNo: 'LCD-2026-001', buyerName: 'Reliance Retail', exportInvoiceNo: 'EXP-2026-001', hundiType: 'Sight Hundi', hundiAmountForeign: '', exchangeRate: 83, hundiAmountInr: 0, usanceDays: 0, dueDate: dateToday, presentingBank: '', negotiatingBank: '', documentLadingNo: '', documentLadingDate: dateToday, discountCharges: '', bankCharges: '', netRealization: 0, status: 'Realized' });
+      nextId = `HND-${String(lcHundis.length + 1).padStart(5, '0')}`;
+      setFields({ id: nextId, date: dateToday, lcRefNo: 'LCD-00001', buyerName: 'Reliance Retail', exportInvoiceNo: 'EXP-00001', hundiType: 'Sight Hundi', hundiAmountForeign: '', exchangeRate: 83, hundiAmountInr: 0, usanceDays: 0, dueDate: dateToday, presentingBank: '', negotiatingBank: '', documentLadingNo: '', documentLadingDate: dateToday, discountCharges: '', bankCharges: '', netRealization: 0, status: 'Realized' });
     }
     if (activePage === 'lcc') {
-      nextId = `LCC-2026-00${lcCompletions.length + 1}`;
-      setFields({ id: nextId, date: dateToday, lcRefNo: 'LCD-2026-001', buyerName: 'Reliance Retail', lcAmount: 12450000, totalShippedValue: 12450000, totalReceivedAmount: 12450000, balanceAmount: 0, forexGainLoss: 0, bankChargesTotal: 0, remarks: '', closedBy: 'Dinesh Balasamy (MD)', status: 'Completed' });
+      nextId = `LCC-${String(lcCompletions.length + 1).padStart(5, '0')}`;
+      setFields({ id: nextId, date: dateToday, lcRefNo: 'LCD-00001', buyerName: 'Reliance Retail', lcAmount: 12450000, totalShippedValue: 12450000, totalReceivedAmount: 12450000, balanceAmount: 0, forexGainLoss: 0, bankChargesTotal: 0, remarks: '', closedBy: 'Dinesh Balasamy (MD)', status: 'Completed' });
     }
 
     setCurrentFormId(nextId);

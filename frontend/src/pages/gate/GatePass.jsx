@@ -77,11 +77,11 @@ export default function GatePass() {
           const seedData = [];
           for (let i = 0; i < 10; i++) {
             const vehicle = fetchedVehicles[(i + 4) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[(i + 2) % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const bo = fetchedBOs[(i + 2) % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
             const party = fetchedParties[(i + 2) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
             
             seedData.push({
-              id: `GP-2026-00${i + 1}`,
+              id: `GP-${String(i + 1).padStart(5, '0')}`,
               passDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
               passType: i % 2 === 0 ? "Returnable" : "Non-Returnable",
               partyName: party.company_name,
@@ -240,7 +240,7 @@ export default function GatePass() {
   };
 
   const handleCreateNew = () => {
-    const nextId = `GP-2026-00${passes.length + 1}`;
+    const nextId = `GP-${String(passes.length + 1).padStart(5, '0')}`;
     setCurrentFormId(nextId);
 
     // Reset Form Fields

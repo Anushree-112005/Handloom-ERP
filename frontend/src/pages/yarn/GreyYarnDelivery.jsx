@@ -398,7 +398,7 @@ export default function GreyYarnDelivery() {
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No deliveries found.</td></tr>
                     ) : filteredDeliveries.map(d => (
                       <tr key={d.id} onClick={() => handleRowClick(d)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === d.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{d.dc_no}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{d.dc_no}</td>
                         <td>{d.dc_date}</td>
                         <td style={{ fontWeight: 500 }}>{d.party_name || '-'}</td>
                         <td><span className={`badge ${d.delivery_type === 'Direct' ? 'badge-draft' : 'badge-active'}`}>{d.delivery_type}</span></td>
@@ -421,7 +421,7 @@ export default function GreyYarnDelivery() {
               <div style={{ flex: '0 0 350px' }}>
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
                       <Truck size={18} /> {selectedViewEntry.dc_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>

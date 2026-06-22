@@ -528,7 +528,7 @@ export default function LiveDashboard() {
             <div style={{ border: '1px solid #fef3c7', background: '#fffbeb', borderRadius: 8, padding: '12px 16px', borderLeft: '4px solid #f59e0b', display: 'flex', gap: 12 }}>
               <AlertTriangle size={16} color="#f59e0b" style={{ marginTop: 2 }} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}><span style={{ color: '#475569' }}>LM-007 —</span> ETA delay risk: ORD-2026-003 (IKEA)</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}><span style={{ color: '#475569' }}>LM-007 —</span> ETA delay risk: ORD-00003 (IKEA)</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>15 min ago</div>
               </div>
             </div>

@@ -530,7 +530,7 @@ export default function OnTableChecking() {
                             transition: 'background 0.2s'
                           }}
                         >
-                          <td style={{ fontWeight: 600, color: '#eab308' }}>{e.ref_no}</td>
+                          <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{e.ref_no}</td>
                           <td>{e.checking_date ? e.checking_date.split('T')[0] : '-'}</td>
                           <td>
                             <span className="badge badge-active">{e.table_no}</span>
@@ -585,7 +585,7 @@ export default function OnTableChecking() {
               <div style={{ flex: '0 0 360px' }}>
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#eab308', fontWeight: 700 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
                       <CheckSquare size={18} /> QC Record: {selectedEntry.ref_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
@@ -660,7 +660,7 @@ export default function OnTableChecking() {
                 
                 <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
                   {/* SECTION 1: HEADER GENERAL INFO */}
-                  <h4 style={{ color: '#eab308', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                  <h4 style={{ color: 'var(--text-primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
                     General Inspection Info
                   </h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -751,7 +751,7 @@ export default function OnTableChecking() {
                 <div id="items-section" className="animate-fade" style={{ marginBottom: 32, width: '100%' }}>
                   {/* SECTION 2: GRID ITEMS TABLE */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
-                    <h4 style={{ color: '#eab308', margin: 0, fontSize: 16, fontWeight: 700 }}>
+                    <h4 style={{ color: 'var(--text-primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
                       Inspected Pieces / Rolls Grid
                     </h4>
                     {!isReadOnly && (

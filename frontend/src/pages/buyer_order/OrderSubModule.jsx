@@ -320,8 +320,7 @@ export default function OrderSubModule() {
 
   const handleSeqSave = async () => {
     try {
-      const yearStr = seqForm.fin_year.substring(0, 4);
-      const generated = `${seqForm.prefix}-${yearStr}-${String(seqForm.running_no).padStart(3, '0')}`;
+      const generated = `${seqForm.prefix}-${String(seqForm.running_no).padStart(5, '0')}`;
       const payload = { ...seqForm, generated_order_no: generated };
       
       if (payload.id) {

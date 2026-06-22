@@ -55,9 +55,9 @@ async def seed_all_data(session):
         except Exception:
             pass
 
-        # if check_res.scalars().first() and finance_seeded:
-        #     logger.info("Database already seeded with workflow data. Skipping...")
-        #     return
+        if check_res.scalars().first() and finance_seeded:
+            logger.info("Database already seeded with workflow data. Skipping...")
+            return
 
         logger.info("Clearing existing workflow data for clean seeding...")
         
@@ -349,7 +349,7 @@ async def seed_all_data(session):
         await session.commit()
 
         # ── 5. Seed Textile Designs & Design Entries ──
-        design_nos = [f"DES-2026-00{i}" for i in range(1, 11)]
+        design_nos = [f"DES-{i+99:05d}" for i in range(1, 11)]
         design_objects = []
         design_entries = []
         for i, d_no in enumerate(design_nos):
@@ -364,10 +364,10 @@ async def seed_all_data(session):
             
             # DesignEntry (Phase 2 Specifications)
             de = DesignEntry(
-                ds_ref_no=f"REF-DE-2026-{100+i}", ds_date=date.today() - timedelta(days=20), design_no=d_no,
+                ds_ref_no=f"REF-DE-{i+100:05d}", ds_date=date.today() - timedelta(days=20), design_no=d_no,
                 color="Navy Blue" if i % 3 == 0 else ("Scarlet Red" if i % 3 == 1 else "Charcoal Grey"), created_by="EMP003",
                 gry_const="40S Cotton x 40S Cotton / 68 x 60", count_rxpxw="40/40/68/60", buyer_name=buyers[i][0],
-                ibpo_no=f"IBPO-26-00{i+1}", order_mtr=10000.0, total_mtr=10500.0, crimp_pct=5.0, skg_pct=2.0,
+                ibpo_no=f"IBPO-{i+1:05d}", order_mtr=10000.0, total_mtr=10500.0, crimp_pct=5.0, skg_pct=2.0,
                 warp_mtr=10500.0, gray_width=165.0, finish_width=147.0, reed=68.0, pick_ot=60.0, fabric="Cotton",
                 weaving="Loom A", design_type="Solid Piece Dye"
             )
@@ -389,7 +389,7 @@ async def seed_all_data(session):
         for i in range(10):
             buyer_party = party_objects[i] # First 10 are Buyers
             bo = BuyerOrder(
-                ibpo_number=f"IBPO-26-00{i+1}", order_date=date.today() - timedelta(days=15),
+                ibpo_number=f"IBPO-{i+1:05d}", order_date=date.today() - timedelta(days=15),
                 party_name=buyer_party.company_name, party_id=buyer_party.id, agent_name="Standard Agent Ltd",
                 order_type="Regular" if i % 2 == 0 else "Export", certified_type="BCI Cotton", buyer_name=buyer_party.company_name,
                 billing_address=buyer_party.address, delivery_address=buyer_party.address, state=buyer_party.state,
@@ -452,13 +452,21 @@ async def seed_all_data(session):
         yarn_po_objects = []
         for i in range(10):
             vendor_party = party_objects[10 + i] # Next 10 are vendors
+            order_qty = 3000.0 + i * 500.0
+            rate = 40.0 + i * 5.0
+            taxable_amount = order_qty * rate
+            freight = 1000.0 + i * 200.0
+            insurance = 300.0 + i * 50.0
+            base_amount = taxable_amount + freight + insurance
+            net_amount = base_amount * 1.05 # adding 5% GST
+            
             ypo = YarnPurchaseOrder(
-                po_number=f"YPO-26-00{i+1}", po_date=date.today() - timedelta(days=12), org_name="Dinesh Exports",
-                internal_po_no=f"IPO-26-00{i+1}", used_for="Warp & Weft Yarn", against_ref=f"IBPO-26-00{i+1}",
+                po_number=f"YPO-{i+1:05d}", po_date=date.today() - timedelta(days=12), org_name="Dinesh Exports",
+                internal_po_no=f"IPO-{i+1:05d}", used_for="Warp & Weft Yarn", against_ref=f"IBPO-{i+1:05d}",
                 agent_name="Yarn Broker Agent", supplier_name=vendor_party.company_name, delivery_at="Unit 1 Godown A",
-                freight_type="Paid", freight_chg=1500.0, insurance_chg=500.0, total_order_kgs=5000.0,
-                transport="VRL Logistics", tax_type="GST 5%", taxable_amount=250000.0, dispatch_date=date.today() - timedelta(days=8),
-                packing_type="Bags", sgst_pct=2.5, cgst_pct=2.5, net_amount=262500.0, due_days=45, status="Open"
+                freight_type="Paid", freight_chg=freight, insurance_chg=insurance, total_order_kgs=order_qty,
+                transport="VRL Logistics", tax_type="GST 5%", taxable_amount=taxable_amount, dispatch_date=date.today() - timedelta(days=8),
+                packing_type="Bags", sgst_pct=2.5, cgst_pct=2.5, net_amount=net_amount, due_days=45, status="Open"
             )
             yarn_po_objects.append(ypo)
         session.add_all(yarn_po_objects)
@@ -467,18 +475,23 @@ async def seed_all_data(session):
         # Seed Yarn PO details
         for i, ypo in enumerate(yarn_po_objects):
             await session.refresh(ypo)
+            order_qty = 3000.0 + i * 500.0
+            rate = 40.0 + i * 5.0
+            taxable_amount = order_qty * rate
+            
             # Count Detail
             cnt_det = YarnPurchaseCountDetail(
                 po_id=ypo.id, supplier_name=ypo.supplier_name, fibre_group="Cotton", yarn_count="40S CTN",
-                yarn_csp=2800.0, min_cone_wgt=1.89, order_kgs=5000.0, mill_name="Nahar Spinning Mills", tolerance_pct=5.0
+                yarn_csp=2800.0, min_cone_wgt=1.89, order_kgs=order_qty, mill_name="Nahar Spinning Mills", tolerance_pct=5.0
             )
             session.add(cnt_det)
             
             # Indent Detail
             ind_det = YarnPurchaseIndentDetail(
-                po_id=ypo.id, req_ind_no=f"IND-26-00{i+1}", design_no=design_nos[i], ibpo_no=f"IBPO-26-00{i+1}",
+                po_id=ypo.id, req_ind_no=f"IND-{i+1:05d}", design_no=design_nos[i], ibpo_no=f"IBPO-{i+1:05d}",
                 party_name=buyer_order_objects[i].party_name, fabric_name="Cotton Poplin", yarn_count="40S CTN",
-                order_mtrs=10000.0, warp_qty=2500.0, weft_qty=2500.0, tot_reqd_qty=5000.0, appd_qty=5000.0, order_qty=5000.0
+                order_mtrs=8000.0 + i * 1000.0, warp_qty=order_qty/2.0, weft_qty=order_qty/2.0, tot_reqd_qty=order_qty, appd_qty=order_qty, order_qty=order_qty,
+                rate=rate, amount=taxable_amount
             )
             session.add(ind_det)
         await session.commit()
@@ -487,14 +500,30 @@ async def seed_all_data(session):
         yarn_inward_objects = []
         for i in range(10):
             vendor_party = party_objects[10 + i]
+            order_qty = 3000.0 + i * 500.0
+            rate = 40.0 + i * 5.0
+            taxable_amount = order_qty * rate
+            freight = 1000.0 + i * 200.0
+            insurance = 300.0 + i * 50.0
+            base_amount = taxable_amount + freight + insurance
+            net_amount = base_amount * 1.05
+            
+            received_qty = order_qty + (20.0 if i % 2 == 0 else -10.0)
+            balance_qty = max(0.0, order_qty - received_qty)
+            gross_kgs = received_qty + 80.0
+            
+            # Distribute dates across the last 5 months (Feb, Mar, Apr, May, June)
+            months_back = 4 - (i // 2)
+            inw_date = date.today() - timedelta(days=months_back * 30 + 7)
+            
             yi = YarnInward(
-                ref_no=f"GRN-Y-00{i+1}", entry_date=date.today() - timedelta(days=7), inward_date=date.today() - timedelta(days=7),
-                status="Received", received_type="Purchase Inward", received_from=vendor_party.company_name, po_no_dt=f"YPO-26-00{i+1}",
+                ref_no=f"GRN-Y-00{i+1}", entry_date=inw_date, inward_date=inw_date,
+                status="Received", received_type="Purchase Inward", received_from=vendor_party.company_name, po_no_dt=f"YPO-{i+1:05d}",
                 agent_name="Yarn Broker Agent", stock_godown="Yarn Godown A", godown_id=2, cone_type="Paper Cone",
-                order_kgs=5000.0, received_kgs=5020.0, balance_kgs=0.0, bill_no=f"BILL-{1000+i}", bill_amount=262500.0,
-                gross_kgs=5100.0, net_kgs=5020.0, due_days=45, transport="VRL Logistics", veh_no=vehicle_nos[i],
-                total_bags=100, eway_bill=f"EWB-{8000+i}", gate_no=f"GATE-{i+1}", wbridge_no=f"WB-{i+1}", w_weight=5100.0,
-                gross_amount=250000.0, tax_type="GST 5%", cgst_pct=2.5, sgst_pct=2.5, tax_value=12500.0, net_amount=262500.0
+                order_kgs=order_qty, received_kgs=received_qty, balance_kgs=balance_qty, bill_no=f"BILL-{1000+i}", bill_amount=net_amount,
+                gross_kgs=gross_kgs, net_kgs=received_qty, due_days=45, transport="VRL Logistics", veh_no=vehicle_nos[i],
+                total_bags=100, eway_bill=f"EWB-{8000+i}", gate_no=f"GATE-{i+1}", wbridge_no=f"WB-{i+1}", w_weight=gross_kgs,
+                gross_amount=taxable_amount, tax_type="GST 5%", cgst_pct=2.5, sgst_pct=2.5, tax_value=base_amount * 0.05, net_amount=net_amount
             )
             yarn_inward_objects.append(yi)
         session.add_all(yarn_inward_objects)
@@ -503,9 +532,12 @@ async def seed_all_data(session):
         # Seed Yarn Inward Items
         for i, yi in enumerate(yarn_inward_objects):
             await session.refresh(yi)
+            order_qty = 3000.0 + i * 500.0
+            rate = 40.0 + i * 5.0
+            received_qty = order_qty + (20.0 if i % 2 == 0 else -10.0)
             item = YarnInwardItem(
                 inward_id=yi.id, yarn_count="40S CTN", mill_name="Nahar Spinning Mills", colour="Off White",
-                lot_no=f"LOT-40CTN-{200+i}", our_id=f"YID-{100+i}", bags=100, kgs=5020.0, rate=50.0, amount=250000.0
+                lot_no=f"LOT-40CTN-{200+i}", our_id=f"YID-{100+i}", bags=100, kgs=received_qty, rate=rate, amount=received_qty * rate
             )
             session.add(item)
         await session.commit()
@@ -527,7 +559,7 @@ async def seed_all_data(session):
         for i, lm in enumerate(loom_objects):
             await session.refresh(lm)
             la = LoomAllocation(
-                loom_id=lm.id, order_id=f"IBPO-26-00{i+1}", warp_ends=4400, weft_density=60, fabric_type="Cotton Poplin",
+                loom_id=lm.id, order_id=f"IBPO-{i+1:05d}", warp_ends=4400, weft_density=60, fabric_type="Cotton Poplin",
                 assigned_meters=10000.0, completed_meters=2000.0 + (i * 500.0), allocation_status="Active" if i < 8 else "Pending"
             )
             loom_allocations.append(la)
@@ -602,7 +634,7 @@ async def seed_all_data(session):
 
         # Helper arrays for loop-based seeding
         loom_names = [f"LM-00{k}" for k in range(1, 10)] + ["LM-010"]
-        order_ids = [f"IBPO-26-00{k}" for k in range(1, 10)] + ["IBPO-26-010"]
+        order_ids = [f"IBPO-{k:05d}" for k in range(1, 10)] + ["IBPO-00010"]
         operator_names = ["Senthil Kumar", "Manoj Kumar", "Vijay Antony", "Ramesh Kumar", "Siva Kumar", "Karthik", "Arun Kumar", "Ramesh", "Siva", "Vijay"]
         buyer_names = [b[0] for b in buyers] if len(buyers) >= 10 else ["Dinesh Exports", "Sri Ranga Textiles", "Annamar Textiles", "Karthik Textile Mills", "Manoj Fabrics", "Vijay Textile Hub", "Senthil Handlooms", "Arun Mills", "Ranga Fabrics", "Karthik Mills"]
 
@@ -707,7 +739,7 @@ async def seed_all_data(session):
             gd = GreyYarnDelivery(
                 dc_no=f"GYD-DC-00{i+1}", dc_date=date.today() - timedelta(days=6), ref_date=date.today() - timedelta(days=6),
                 stock_godown="Yarn Godown A", delivery_type="Weaver Issue", party_name=buyers[i][0], delivery_mode="Internal Lorry",
-                delivery_address="Weaving Unit 1", design_no=design_nos[i], order_no=f"IBPO-26-00{i+1}",
+                delivery_address="Weaving Unit 1", design_no=design_nos[i], order_no=f"IBPO-{i+1:05d}",
                 transport="SafeExpress Logistics", vehicle_no=vehicle_nos[i], delivery_name="EMP004", delivery_time="10:00 AM",
                 certificate_type="BCI Cotton", design_count="40S CTN", order_kgs=2500.0, total_dely_kgs=2500.0, balance_kgs=0.0, status="Delivered"
             )
@@ -732,7 +764,7 @@ async def seed_all_data(session):
             dyr = DyedYarnReceived(
                 inv_no=f"DYR-INV-00{i+1}", inv_date=date.today() - timedelta(days=4), received_type="Dyed Receipt",
                 receive_mode="Vehicle", party_name=party_objects[10+i].company_name, design_no=design_nos[i],
-                design_count="40S CTN", order_no=f"IBPO-26-00{i+1}", our_dc_no=f"DYD-DC-00{i+1}", party_dc_no=f"PDC-00{i+1}",
+                design_count="40S CTN", order_no=f"IBPO-{i+1:05d}", our_dc_no=f"DYD-DC-00{i+1}", party_dc_no=f"PDC-00{i+1}",
                 dc_date=date.today() - timedelta(days=4), remarks="Received in good condition", status="Received"
             )
             dyed_received_objects.append(dyr)
@@ -741,7 +773,7 @@ async def seed_all_data(session):
             dyd = DyedYarnDelivery(
                 dc_no=f"DYD-DC-00{i+1}", dc_date=date.today() - timedelta(days=4), add_date=date.today() - timedelta(days=4),
                 delivery_type="Weaver Issue", delivery_mode="Internal Lorry", party_name=buyers[i][0], delivery_address="Weaving Unit 1",
-                design_no=design_nos[i], order_no=f"IBPO-26-00{i+1}", design_type="Checks", transport="SafeExpress Logistics",
+                design_no=design_nos[i], order_no=f"IBPO-{i+1:05d}", design_type="Checks", transport="SafeExpress Logistics",
                 certificate_type="BCI Cotton", driver_name=driver_names[i], delivery_time="02:00 PM",
                 total_delv_kgs=Decimal("2500.00"), total_rin_kgs=Decimal("0.00"), balance_kgs=Decimal("0.00"),
                 cost=Decimal("130000.00"), gross_amount=Decimal("130000.00"), sgst=Decimal("3250.00"), total_gst=Decimal("6500.00"),
@@ -780,8 +812,8 @@ async def seed_all_data(session):
             wbr = WarpBeamReceipt(
                 ref_no=f"WBR-SET-00{i+1}", rcvd_date=date.today() - timedelta(days=5), rcvd_type="Sizing Receipt",
                 beam_type="Weaver Beam", party_name=party_objects[10+i].company_name, design_no=design_nos[i],
-                order_no=f"IBPO-26-00{i+1}", color="Off White", warp_count="40S CTN", warp_ends=4400,
-                warp_meters=Decimal("10500.00"), set_no=f"SET-26-{400+i}", siz_dc_no=f"SIZ-DC-00{i+1}",
+                order_no=f"IBPO-{i+1:05d}", color="Off White", warp_count="40S CTN", warp_ends=4400,
+                warp_meters=Decimal("10500.00"), set_no=f"SET-{400+i:05d}", siz_dc_no=f"SIZ-DC-00{i+1}",
                 siz_dc_date=date.today() - timedelta(days=5), status="Received"
             )
             warp_receipt_objects.append(wbr)
@@ -790,9 +822,9 @@ async def seed_all_data(session):
             wd = WarpDelivery(
                 dc_no=f"WD-DC-00{i+1}", ref_no=f"REF-WD-00{i+1}", dc_date=date.today() - timedelta(days=10),
                 delivery_type="Sizing Issue", sizing_name=party_objects[10+i].company_name, party_name=party_objects[10+i].company_name,
-                entry_type="Warp Issue", bpo_no=f"BPO-26-00{i+1}", design_no=design_nos[i], order_no=f"IBPO-26-00{i+1}",
-                address="Sizing Block B", set_id=f"SET-26-{400+i}", warp_ends=4400, yarn_count="40S CTN",
-                vendor_po_no=f"VPO-26-00{i+1}", po_date=date.today() - timedelta(days=12), order_mtrs=Decimal("10000.00"),
+                entry_type="Warp Issue", bpo_no=f"BPO-{i+1:05d}", design_no=design_nos[i], order_no=f"IBPO-{i+1:05d}",
+                address="Sizing Block B", set_id=f"SET-{400+i:05d}", warp_ends=4400, yarn_count="40S CTN",
+                vendor_po_no=f"VPO-{i+1:05d}", po_date=date.today() - timedelta(days=12), order_mtrs=Decimal("10000.00"),
                 with_crimp="Yes", delivered_mtrs=Decimal("10500.00"), transport="SafeExpress Logistics", vehicle_no=vehicle_nos[i],
                 total_beams=2, total_meters=Decimal("10500.00"), total_exptd_mtrs=Decimal("10000.00"), balance_meters=Decimal("0.00"),
                 remarks="Sent for sizing & warping", status="Delivered"
@@ -835,12 +867,12 @@ async def seed_all_data(session):
             # Cloth Inward from weaving
             ci = ClothInward(
                 ref_no=f"CI-REF-00{i+1}", inward_type="Weaving Inward", inw_date=date.today() - timedelta(days=3),
-                vendor_order=f"VORD-26-00{i+1}", party_name="Internal Weaving Unit 1", dc_no=f"WDC-00{i+1}",
+                vendor_order=f"VORD-{i+1:05d}", party_name="Internal Weaving Unit 1", dc_no=f"WDC-00{i+1}",
                 dc_date=date.today() - timedelta(days=3), vendor_order_mtr=Decimal("10000.00"), order_mtr_plus_10=Decimal("11000.00"),
-                received_mtr=Decimal("10100.00"), balance_mtr=Decimal("0.00"), ibpo=f"IBPO-26-00{i+1}", design_no=design_nos[i],
+                received_mtr=Decimal("10100.00"), balance_mtr=Decimal("0.00"), ibpo=f"IBPO-{i+1:05d}", design_no=design_nos[i],
                 const_fabric_type="Cotton Poplin", reed="68", pick="60", width="147", order_mtr=Decimal("10000.00"),
                 warp_mtr=Decimal("10500.00"), inward_mtr=Decimal("10100.00"), shed_no="Shed A", loom_no=f"LM-00{i+1}",
-                attn_no="EMP004", beam_no=f"BM-00{i+1}A", szt_no=f"SET-26-{400+i}", total_pieces=10, total_meters=Decimal("10100.00"),
+                attn_no="EMP004", beam_no=f"BM-00{i+1}A", szt_no=f"SET-{400+i:05d}", total_pieces=10, total_meters=Decimal("10100.00"),
                 inspection_type="Table Inspection", inv_pin="PIN-123", remarks="Cloth inward completed", process_type="Solid Dyeing"
             )
             cloth_inward_objects.append(ci)
@@ -848,7 +880,7 @@ async def seed_all_data(session):
             # On Table Checking
             otc = OnTableChecking(
                 ref_no=f"OTC-REF-00{i+1}", checking_date=date.today() - timedelta(days=2), table_no=f"TBL-0{i+1}",
-                design_no=design_nos[i], order_no=f"IBPO-26-00{i+1}", party_name=buyers[i][0], lot_no=f"LOT-{i+1}",
+                design_no=design_nos[i], order_no=f"IBPO-{i+1:05d}", party_name=buyers[i][0], lot_no=f"LOT-{i+1}",
                 total_meters=Decimal("10100.00"), total_pieces=10, pass_meters=Decimal("10050.00"), reject_meters=Decimal("50.00"),
                 remarks="Grade A fabric verified", status="Checked"
             )
@@ -889,15 +921,15 @@ async def seed_all_data(session):
             ffi = FinishedFabricInward(
                 ref_no=f"FFI-REF-00{i+1}", inv_no=f"FF-INV-00{i+1}", inv_date=date.today() - timedelta(days=2),
                 received_type="Finished Fabric Inward", party_name="Associated Dyehouse Ltd", design_no=design_nos[i],
-                order_no=f"IBPO-26-00{i+1}", dc_no=f"DDC-00{i+1}", dc_date=date.today() - timedelta(days=2),
+                order_no=f"IBPO-{i+1:05d}", dc_no=f"DDC-00{i+1}", dc_date=date.today() - timedelta(days=2),
                 process_type="Dyed", total_meters=Decimal("10000.00"), total_pieces=10, remarks="Dyeing finish verified", status="Received"
             )
             finished_inward_objects.append(ffi)
 
             # Packing Slip (Bale packaging)
             ps = PackingSlip(
-                slip_no=f"PS-26-00{i+1}", slip_date=date.today() - timedelta(days=1), party_name=buyers[i][0],
-                design_no=design_nos[i], order_no=f"IBPO-26-00{i+1}", ibpo=f"IBPO-26-00{i+1}", godown="Finished Fabric Godown",
+                slip_no=f"PS-{i+1:05d}", slip_date=date.today() - timedelta(days=1), party_name=buyers[i][0],
+                design_no=design_nos[i], order_no=f"IBPO-{i+1:05d}", ibpo=f"IBPO-{i+1:05d}", godown="Finished Fabric Godown",
                 total_meters=Decimal("10000.00"), total_pieces=10, total_bales=2, gross_weight=Decimal("2100.0"),
                 net_weight=Decimal("2000.0"), remarks="Standard exports packing", status="Packed"
             )
@@ -936,12 +968,16 @@ async def seed_all_data(session):
         eway_objects = []
         for i in range(10):
             transporter_party = party_objects[20 + i] # Logistics partners
+            # Distribute dates across the last 5 months (Feb, Mar, Apr, May, June)
+            months_back = 4 - (i // 2)
+            inv_date = date.today() - timedelta(days=months_back * 30)
+            
             # Goods Release Advice (GRA)
             gra = GoodsRelease(
-                gra_no=f"GRA-26-00{i+1}", gra_date=date.today() - timedelta(days=1), party_name=buyers[i][0],
-                ibpo=f"IBPO-26-00{i+1}", design_no=design_nos[i], order_no=f"IBPO-26-00{i+1}", transport_mode="Road",
+                gra_no=f"GRA-{i+1:05d}", gra_date=inv_date - timedelta(days=1), party_name=buyers[i][0],
+                ibpo=f"IBPO-{i+1:05d}", design_no=design_nos[i], order_no=f"IBPO-{i+1:05d}", transport_mode="Road",
                 transport_name=transporter_party.company_name, vehicle_no=vehicle_nos[i], lr_no=f"LR-{7000+i}",
-                lr_date=date.today() - timedelta(days=1), delivery_address=buyers[i][0] + " Warehouse",
+                lr_date=inv_date - timedelta(days=1), delivery_address=buyers[i][0] + " Warehouse",
                 total_meters=Decimal("10000.00"), total_bales=2, gross_weight=Decimal("2100.00"), net_weight=Decimal("2000.00"),
                 approval_status="Approved", approved_by="EMP001", status="Released"
             )
@@ -949,16 +985,16 @@ async def seed_all_data(session):
 
             # Despatch Planning
             dp = DespatchPlanning(
-                ibpo=f"IBPO-26-00{i+1}", po_date=date.today() - timedelta(days=15), ref_no=f"DP-REF-00{i+1}",
-                planning_date=date.today() - timedelta(days=2), billing_party=buyers[i][0], delivery_party=buyers[i][0],
+                ibpo=f"IBPO-{i+1:05d}", po_date=inv_date - timedelta(days=15), ref_no=f"DP-REF-00{i+1}",
+                planning_date=inv_date - timedelta(days=2), billing_party=buyers[i][0], delivery_party=buyers[i][0],
                 billing_address=buyers[i][0] + " Main Office", delivery_address=buyers[i][0] + " Delivery Docks",
                 state_code=buyers[i][2], design_no=design_nos[i], pino=f"PI-{3000+i}", order_qty=Decimal("10000.00"),
-                amd_foc_mtr=Decimal("0.0"), total_qty=Decimal("10000.00"), uom="MTR", delivery_start=date.today() + timedelta(days=20),
-                party_comp_date=date.today() + timedelta(days=30), comp_date=date.today() + timedelta(days=25),
-                lc_no=f"LC-{9000+i}", lc_date=date.today() - timedelta(days=10), ibpo_rate=Decimal("120.00"),
+                amd_foc_mtr=Decimal("0.0"), total_qty=Decimal("10000.00"), uom="MTR", delivery_start=inv_date + timedelta(days=20),
+                party_comp_date=inv_date + timedelta(days=30), comp_date=inv_date + timedelta(days=25),
+                lc_no=f"LC-{9000+i}", lc_date=inv_date - timedelta(days=10), ibpo_rate=Decimal("120.00"),
                 currency="USD", certificate_type="BCI Cotton", fabric_type="Cotton Poplin", planned_mtrs=Decimal("10000.00"),
                 tolerance_pct=Decimal("5.0"), max_dispatch_qty=Decimal("10500.00"), stock=Decimal("10000.00"),
-                tot_desp_mtrs=Decimal("10000.00"), balance_mtrs=Decimal("0.00"), last_desp_date=date.today(),
+                tot_desp_mtrs=Decimal("10000.00"), balance_mtrs=Decimal("0.00"), last_desp_date=inv_date,
                 hsn_code="5208", merchant="EMP002", city=buyers[i][3], point_of_contact="Buyer Logistics Contact",
                 status="Planned"
             )
@@ -966,9 +1002,9 @@ async def seed_all_data(session):
 
             # E-Way Bill
             ewb = EwayBill(
-                eway_bill_no=f"EWB-26-00{i+1}", eway_date=date.today(), supply_type="Outward", sub_type="Supply",
-                document_type="Tax Invoice", document_no=f"SI-26-00{i+1}", document_date=date.today(),
-                invoice_type="Regular", token_ex_date="2026-06-25", org_name="Dinesh Exports", dc_no_date=f"GRA-26-00{i+1}",
+                eway_bill_no=f"EWB-{i+1:05d}", eway_date=inv_date, supply_type="Outward", sub_type="Supply",
+                document_type="Tax Invoice", document_no=f"SI-{i+1:05d}", document_date=inv_date,
+                invoice_type="Regular", token_ex_date="2026-06-25", org_name="Dinesh Exports", dc_no_date=f"GRA-{i+1:05d}",
                 bill_from_name="Dinesh Exports", bill_from_address="1 Textile Park, Erode", bill_from_gstin="33DEXPA1234F1Z0",
                 bill_from_pin="638001", bill_from_state="Tamil Nadu", bill_from_state_code="33",
                 dispatch_from_name="Dinesh Exports Unit 1", dispatch_from_address="1 Textile Park, Erode", dispatch_from_pin="638001",
@@ -993,13 +1029,16 @@ async def seed_all_data(session):
             await session.refresh(gra)
             await session.refresh(ewb)
 
+            months_back = 4 - (i // 2)
+            inv_date = date.today() - timedelta(days=months_back * 30)
+
             session.add(GoodsReleaseItem(
-                release_id=gra.id, packing_slip_no=f"PS-26-00{i+1}", bale_no=f"BALE-PS-26-00{i+1}-01",
+                release_id=gra.id, packing_slip_no=f"PS-{i+1:05d}", bale_no=f"BALE-PS-{i+1:05d}-01",
                 design_no=gra.design_no, color="Navy Blue" if i % 2 == 0 else "Scarlet Red",
                 meters=Decimal("5000.00"), pieces=5, weight=Decimal("1000.00"), rate=Decimal("120.00"), amount=Decimal("600000.00")
             ))
             session.add(GoodsReleaseItem(
-                release_id=gra.id, packing_slip_no=f"PS-26-00{i+1}", bale_no=f"BALE-PS-26-00{i+1}-02",
+                release_id=gra.id, packing_slip_no=f"PS-{i+1:05d}", bale_no=f"BALE-PS-{i+1:05d}-02",
                 design_no=gra.design_no, color="Navy Blue" if i % 2 == 0 else "Scarlet Red",
                 meters=Decimal("5000.00"), pieces=5, weight=Decimal("1000.00"), rate=Decimal("120.00"), amount=Decimal("600000.00")
             ))
@@ -1011,7 +1050,7 @@ async def seed_all_data(session):
             
             # Seed dispatch completion info
             comp = BuyerOrderCompletion(
-                cmp_id=f"CMP-{i+1}", order_id_ref=f"IBPO-26-00{i+1}", completion_date=date.today(), status="Closed",
+                cmp_id=f"CMP-{i+1}", order_id_ref=f"IBPO-{i+1:05d}", completion_date=inv_date, status="Closed",
                 final_dispatch_qty="10000 MTR", balance_qty="0 MTR", fabric_type="Cotton Poplin", shade="Standard",
                 lot_no=f"LOT-{i+1}", packing_type="Bales", delivery_place=buyers[i][0] + " docks",
                 transporter_name=gra.transport_name, buyer_ref=f"REF-{i+1}", remarks="Completed"
@@ -1019,9 +1058,9 @@ async def seed_all_data(session):
             session.add(comp)
             
             disp = BuyerOrderDispatch(
-                indent_id=f"IND-DISP-{i+1}", order_id_ref=f"IBPO-26-00{i+1}", transporter_name=gra.transport_name,
+                indent_id=f"IND-DISP-{i+1}", order_id_ref=f"IBPO-{i+1:05d}", transporter_name=gra.transport_name,
                 lr_no=gra.lr_no, vehicle_no=gra.vehicle_no, delivery_place=gra.delivery_address, packing_type="Bales",
-                dispatch_date=date.today(), shade="Standard", lot_no=f"LOT-{i+1}", quantity="10000 MTR", remarks="Dispatched successfully"
+                dispatch_date=inv_date, shade="Standard", lot_no=f"LOT-{i+1}", quantity="10000 MTR", remarks="Dispatched successfully"
             )
             session.add(disp)
 
@@ -1031,16 +1070,28 @@ async def seed_all_data(session):
         invoice_objects = []
         for i in range(10):
             buyer_party = party_objects[i]
+            # Distribute dates across the last 5 months (Feb, Mar, Apr, May, June)
+            months_back = 4 - (i // 2)
+            inv_date = date.today() - timedelta(days=months_back * 30)
+            
+            # Dynamically calculate varying quantities and rates to ensure different values
+            qty = Decimal(f"{8000 + i * 500}.00")
+            rate = Decimal(f"{110 + i * 5}.00")
+            gross_amount = round(qty * rate, 2)
+            cgst = round(gross_amount * Decimal("0.025"), 2)
+            sgst = round(gross_amount * Decimal("0.025"), 2)
+            net_amount = round(gross_amount + cgst + sgst, 2)
+            
             si = SalesInvoice(
-                invoice_no=f"SI-26-00{i+1}", invoice_date=date.today(), invoice_type="Regular Commercial Invoice",
-                party_name=buyer_party.company_name, party_id=buyer_party.id, ibpo=f"IBPO-26-00{i+1}", design_no=design_nos[i],
+                invoice_no=f"SI-{i+1:05d}", invoice_date=inv_date, invoice_type="Regular Commercial Invoice",
+                party_name=buyer_party.company_name, party_id=buyer_party.id, ibpo=f"IBPO-{i+1:05d}", design_no=design_nos[i],
                 billing_address=buyer_party.address, delivery_address=buyer_party.address, state=buyer_party.state,
-                state_code=buyer_party.state_code, gst_no=buyer_party.gst_no, hsn_code="5208", total_qty=Decimal("10000.00"),
-                gross_weight=Decimal("2100.00"), gross_amount=Decimal("1200000.00"), discount_pct=Decimal("0.00"),
-                discount_amount=Decimal("0.00"), taxable_amount=Decimal("1200000.00"), sgst=Decimal("30000.00"),
-                cgst=Decimal("30000.00"), igst=Decimal("0.00"), other_charges=Decimal("0.00"), round_off=Decimal("0.00"),
-                net_amount=Decimal("1260000.00"), remarks="Bill cleared and sent to buyer", status="Dispatched",
-                currency="INR", exchange_rate=Decimal("1.0"), buyer_po_no=f"PO-IBPO-26-00{i+1}", dispatch_date=str(date.today()),
+                state_code=buyer_party.state_code, gst_no=buyer_party.gst_no, hsn_code="5208", total_qty=qty,
+                gross_weight=Decimal(f"{2000 + i * 100}.00"), gross_amount=gross_amount, discount_pct=Decimal("0.00"),
+                discount_amount=Decimal("0.00"), taxable_amount=gross_amount, sgst=sgst,
+                cgst=cgst, igst=Decimal("0.00"), other_charges=Decimal("0.00"), round_off=Decimal("0.00"),
+                net_amount=net_amount, remarks="Bill cleared and sent to buyer", status="Dispatched",
+                currency="INR", exchange_rate=Decimal("1.0"), buyer_po_no=f"PO-IBPO-{i+1:05d}", dispatch_date=str(inv_date),
                 transporter_name=gra_objects[i].transport_name, lr_no=gra_objects[i].lr_no, vehicle_no=gra_objects[i].vehicle_no,
                 payment_terms=buyer_party.payment_terms
             )
@@ -1050,9 +1101,17 @@ async def seed_all_data(session):
 
         for i, si in enumerate(invoice_objects):
             await session.refresh(si)
+            # Fetch same dynamic values for the item and cloth delivery
+            qty = Decimal(f"{8000 + i * 500}.00")
+            rate = Decimal(f"{110 + i * 5}.00")
+            gross_amount = round(qty * rate, 2)
+            cgst = round(gross_amount * Decimal("0.025"), 2)
+            sgst = round(gross_amount * Decimal("0.025"), 2)
+            net_amount = round(gross_amount + cgst + sgst, 2)
+
             session.add(SalesInvoiceItem(
                 invoice_id=si.id, design_no=si.design_no, color="Navy Blue" if i % 2 == 0 else "Scarlet Red",
-                uom="MTR", qty=Decimal("10000.00"), rate=Decimal("120.00"), amount=Decimal("1200000.00"),
+                uom="MTR", qty=qty, rate=rate, amount=gross_amount,
                 description="Woven Finished Cotton Poplin Fabric", total_bale=2
             ))
             
@@ -1060,15 +1119,350 @@ async def seed_all_data(session):
             cd = ClothDelivery(
                 dc_no=f"CD-DC-00{i+1}", dc_date=date.today(), delivery_type="Customer Delivery", delivery_mode="Road Lorry",
                 party_name=si.party_name, design_no=si.design_no, order_no=si.ibpo, transport=si.transporter_name,
-                total_meters=Decimal("10000.00"), total_pieces=10, gross_amount=Decimal("1200000.00"),
-                sgst=Decimal("30000.00"), igst=Decimal("0.00"), net_amount=Decimal("1260000.00"), remarks="Customer delivery",
+                total_meters=qty, total_pieces=10, gross_amount=gross_amount,
+                sgst=sgst, igst=Decimal("0.00"), net_amount=net_amount, remarks="Customer delivery",
                 po_no=si.buyer_po_no, process_type="Finished", ibpo=si.ibpo, fabric_detail="Cotton Poplin 40x40",
-                ibpo_order_mtr=Decimal("10000.00"), delivery_mtr=Decimal("10000.00"), balance=Decimal("0.00"),
+                ibpo_order_mtr=qty, delivery_mtr=qty, balance=Decimal("0.00"),
                 buyer_name=si.party_name, lot_no=f"LOT-{i+1}", transport_name=si.transporter_name, vehicle_no=si.vehicle_no,
                 driver_name=driver_names[i], mobile_no="9876543210"
             )
             session.add(cd)
             
+        await session.commit()
+
+        # ── 15b. Seed Job Work Fabric Delivery & Receipts Workflow ──
+        import json
+        for i in range(10):
+            des_no = design_nos[i]
+            ord_no = f"IBPO-{i+1:05d}" if i < 9 else "IBPO-00010"
+            
+            # --- 1. Fabric Dyeing Delivery ---
+            fdd_qty = Decimal(1000.00 + i * 100)
+            fdd_rate = Decimal(15.00)
+            fdd_gross = fdd_qty * fdd_rate
+            fdd_sgst = fdd_gross * Decimal(0.025)
+            fdd_net = fdd_gross + (fdd_sgst * 2)
+            
+            fdd = ClothDelivery(
+                dc_no=f"FDD-DC-00{i+1}",
+                dc_date=date.today() - timedelta(days=12),
+                delivery_type="Job Work",
+                delivery_mode="Road",
+                party_name="Associated Dyehouse Ltd",
+                design_no=des_no,
+                order_no=ord_no,
+                transport="VRL Logistics TN",
+                total_meters=fdd_qty,
+                total_pieces=5,
+                gross_amount=fdd_gross,
+                sgst=fdd_sgst,
+                igst=Decimal("0.00"),
+                net_amount=fdd_net,
+                remarks="Sent for dyeing",
+                status="Delivered",
+                po_no=f"PO-{ord_no}",
+                process_type="Dyeing",
+                ibpo=ord_no,
+                fabric_detail="Cotton Poplin 40x40",
+                pc_type="Grey",
+                ibpo_order_mtr=fdd_qty,
+                delivery_mtr=fdd_qty,
+                balance=Decimal("0.00"),
+                fresh_width=Decimal(147.00),
+                finish_fold="Standard",
+                buyer_name="Dinesh Exports",
+                lot_no=f"LOT-DY-{100+i}",
+                transport_name="VRL Logistics TN",
+                vehicle_no=vehicle_nos[i],
+                driver_name=driver_names[i],
+                mobile_no="9876543210"
+            )
+            session.add(fdd)
+            await session.flush()
+            
+            for j in range(1, 6):
+                session.add(ClothDeliveryItem(
+                    delivery_id=fdd.id,
+                    design_no=des_no,
+                    color="Off White",
+                    lot_no=f"LOT-DY-{100+i}",
+                    meters=fdd_qty / 5,
+                    pieces=1,
+                    rate=fdd_rate,
+                    amount=(fdd_qty / 5) * fdd_rate,
+                    piece_no=f"PC-FDD-{i+1}-{j}",
+                    ok_mtr=fdd_qty / 5,
+                    fold_mtr=fdd_qty / 5
+                ))
+            
+            # --- 2. Dyed Fabric Receipt ---
+            fdr_qty = fdd_qty * Decimal(0.98) # 2% shrinkage
+            fdr_extra = {
+                "receipt_process": "Dyeing",
+                "vendor_order": f"VORD-DY-00{i+1}",
+                "gry_dc_no": f"FDD-DC-00{i+1}",
+                "gry_delivery_mtr": float(fdd_qty),
+                "received_mtr": float(fdr_qty),
+                "balance_mtr": float(fdd_qty - fdr_qty),
+                "fabric_type": "Cotton Poplin",
+                "width": "147",
+                "order_mtr": float(fdd_qty),
+                "lot_no": f"LOT-DY-{100+i}"
+            }
+            
+            fdr = FinishedFabricInward(
+                ref_no=f"FDR-REF-00{i+1}",
+                inv_no=f"FDR-INV-00{i+1}",
+                inv_date=date.today() - timedelta(days=10),
+                received_type="Finished Fabric Inward",
+                party_name="Associated Dyehouse Ltd",
+                design_no=des_no,
+                order_no=ord_no,
+                dc_no=f"FDD-DC-00{i+1}",
+                dc_date=date.today() - timedelta(days=12),
+                process_type="Dyeing",
+                total_meters=fdr_qty,
+                total_pieces=5,
+                remarks=json.dumps(fdr_extra),
+                status="Received"
+            )
+            session.add(fdr)
+            await session.flush()
+            
+            for j in range(1, 6):
+                session.add(FinishedFabricItem(
+                    inward_id=fdr.id,
+                    design_no=des_no,
+                    color="Navy Blue" if i % 2 == 0 else "Scarlet Red",
+                    lot_no=f"LOT-DY-{100+i}",
+                    meters=fdr_qty / 5,
+                    pieces=1,
+                    width=Decimal("147.00"),
+                    weight=(fdr_qty / 5) * Decimal(0.20),
+                    grade="A",
+                    v_loom=f"LM-00{i+1}",
+                    v_pc_no=f"VPC-FDR-{i+1}-{j}",
+                    piece_no=f"PC-FDR-{i+1}-{j}"
+                ))
+
+            # --- 3. Printing Delivery ---
+            prd_qty = fdr_qty
+            prd_rate = Decimal(18.00)
+            prd_gross = prd_qty * prd_rate
+            prd_sgst = prd_gross * Decimal(0.025)
+            prd_net = prd_gross + (prd_sgst * 2)
+            
+            prd = ClothDelivery(
+                dc_no=f"PRD-DC-00{i+1}",
+                dc_date=date.today() - timedelta(days=8),
+                delivery_type="Job Work",
+                delivery_mode="Road",
+                party_name="Associated Printers Ltd",
+                design_no=des_no,
+                order_no=ord_no,
+                transport="VRL Logistics TN",
+                total_meters=prd_qty,
+                total_pieces=5,
+                gross_amount=prd_gross,
+                sgst=prd_sgst,
+                igst=Decimal("0.00"),
+                net_amount=prd_net,
+                remarks="Sent for printing",
+                status="Delivered",
+                po_no=f"PO-{ord_no}",
+                process_type="Printing",
+                ibpo=ord_no,
+                fabric_detail="Cotton Poplin 40x40 dyed",
+                pc_type="Pass",
+                ibpo_order_mtr=prd_qty,
+                delivery_mtr=prd_qty,
+                balance=Decimal("0.00"),
+                fresh_width=Decimal(147.00),
+                finish_fold="Standard",
+                buyer_name="Dinesh Exports",
+                lot_no=f"LOT-PR-{100+i}",
+                transport_name="VRL Logistics TN",
+                vehicle_no=vehicle_nos[i],
+                driver_name=driver_names[i],
+                mobile_no="9876543210"
+            )
+            session.add(prd)
+            await session.flush()
+            
+            for j in range(1, 6):
+                session.add(ClothDeliveryItem(
+                    delivery_id=prd.id,
+                    design_no=des_no,
+                    color="Navy Blue" if i % 2 == 0 else "Scarlet Red",
+                    lot_no=f"LOT-PR-{100+i}",
+                    meters=prd_qty / 5,
+                    pieces=1,
+                    rate=prd_rate,
+                    amount=(prd_qty / 5) * prd_rate,
+                    piece_no=f"PC-PRD-{i+1}-{j}",
+                    ok_mtr=prd_qty / 5,
+                    fold_mtr=prd_qty / 5
+                ))
+
+            # --- 4. Printed Fabric Receipt ---
+            pfr_qty = prd_qty * Decimal(0.99) # 1% shrinkage
+            pfr_extra = {
+                "receipt_process": "Printing",
+                "vendor_order": f"VORD-PR-00{i+1}",
+                "gry_dc_no": f"PRD-DC-00{i+1}",
+                "gry_delivery_mtr": float(prd_qty),
+                "received_mtr": float(pfr_qty),
+                "balance_mtr": float(prd_qty - pfr_qty),
+                "fabric_type": "Cotton Poplin",
+                "width": "147",
+                "order_mtr": float(fdd_qty),
+                "lot_no": f"LOT-PR-{100+i}"
+            }
+            
+            pfr = FinishedFabricInward(
+                ref_no=f"PFR-REF-00{i+1}",
+                inv_no=f"PFR-INV-00{i+1}",
+                inv_date=date.today() - timedelta(days=6),
+                received_type="Finished Fabric Inward",
+                party_name="Associated Printers Ltd",
+                design_no=des_no,
+                order_no=ord_no,
+                dc_no=f"PRD-DC-00{i+1}",
+                dc_date=date.today() - timedelta(days=8),
+                process_type="Printing",
+                total_meters=pfr_qty,
+                total_pieces=5,
+                remarks=json.dumps(pfr_extra),
+                status="Received"
+            )
+            session.add(pfr)
+            await session.flush()
+            
+            for j in range(1, 6):
+                session.add(FinishedFabricItem(
+                    inward_id=pfr.id,
+                    design_no=des_no,
+                    color="Printed Navy" if i % 2 == 0 else "Printed Red",
+                    lot_no=f"LOT-PR-{100+i}",
+                    meters=pfr_qty / 5,
+                    pieces=1,
+                    width=Decimal("147.00"),
+                    weight=(pfr_qty / 5) * Decimal(0.22),
+                    grade="A",
+                    v_loom=f"LM-00{i+1}",
+                    v_pc_no=f"VPC-PFR-{i+1}-{j}",
+                    piece_no=f"PC-PFR-{i+1}-{j}"
+                ))
+
+            # --- 5. Finishing Delivery ---
+            fnd_qty = pfr_qty
+            fnd_rate = Decimal(12.00)
+            fnd_gross = fnd_qty * fnd_rate
+            fnd_sgst = fnd_gross * Decimal(0.025)
+            fnd_net = fnd_gross + (fnd_sgst * 2)
+            
+            fnd = ClothDelivery(
+                dc_no=f"FND-DC-00{i+1}",
+                dc_date=date.today() - timedelta(days=4),
+                delivery_type="Job Work",
+                delivery_mode="Road",
+                party_name="Associated Finishers Ltd",
+                design_no=des_no,
+                order_no=ord_no,
+                transport="VRL Logistics TN",
+                total_meters=fnd_qty,
+                total_pieces=5,
+                gross_amount=fnd_gross,
+                sgst=fnd_sgst,
+                igst=Decimal("0.00"),
+                net_amount=fnd_net,
+                remarks="Sent for finishing",
+                status="Delivered",
+                po_no=f"PO-{ord_no}",
+                process_type="Finishing",
+                ibpo=ord_no,
+                fabric_detail="Cotton Poplin 40x40 printed",
+                pc_type="Pass",
+                ibpo_order_mtr=fnd_qty,
+                delivery_mtr=fnd_qty,
+                balance=Decimal("0.00"),
+                fresh_width=Decimal(147.00),
+                finish_fold="Standard",
+                buyer_name="Dinesh Exports",
+                lot_no=f"LOT-FN-{100+i}",
+                transport_name="VRL Logistics TN",
+                vehicle_no=vehicle_nos[i],
+                driver_name=driver_names[i],
+                mobile_no="9876543210"
+            )
+            session.add(fnd)
+            await session.flush()
+            
+            for j in range(1, 6):
+                session.add(ClothDeliveryItem(
+                    delivery_id=fnd.id,
+                    design_no=des_no,
+                    color="Printed Navy" if i % 2 == 0 else "Printed Red",
+                    lot_no=f"LOT-FN-{100+i}",
+                    meters=fnd_qty / 5,
+                    pieces=1,
+                    rate=fnd_rate,
+                    amount=(fnd_qty / 5) * fnd_rate,
+                    piece_no=f"PC-FND-{i+1}-{j}",
+                    ok_mtr=fnd_qty / 5,
+                    fold_mtr=fnd_qty / 5
+                ))
+
+            # --- 6. Finished Fabric Receipt ---
+            ffr_qty = fnd_qty * Decimal(0.995) # 0.5% shrinkage
+            ffr_extra = {
+                "receipt_process": "Finishing",
+                "vendor_order": f"VORD-FN-00{i+1}",
+                "gry_dc_no": f"FND-DC-00{i+1}",
+                "gry_delivery_mtr": float(fnd_qty),
+                "received_mtr": float(ffr_qty),
+                "balance_mtr": float(fnd_qty - ffr_qty),
+                "fabric_type": "Cotton Poplin",
+                "width": "147",
+                "order_mtr": float(fdd_qty),
+                "lot_no": f"LOT-FN-{100+i}"
+            }
+            
+            ffr = FinishedFabricInward(
+                ref_no=f"FFR-REF-00{i+1}",
+                inv_no=f"FFR-INV-00{i+1}",
+                inv_date=date.today() - timedelta(days=2),
+                received_type="Finished Fabric Inward",
+                party_name="Associated Finishers Ltd",
+                design_no=des_no,
+                order_no=ord_no,
+                dc_no=f"FND-DC-00{i+1}",
+                dc_date=date.today() - timedelta(days=4),
+                process_type="Finishing",
+                total_meters=ffr_qty,
+                total_pieces=5,
+                remarks=json.dumps(ffr_extra),
+                status="Received"
+            )
+            session.add(ffr)
+            await session.flush()
+            
+            for j in range(1, 6):
+                session.add(FinishedFabricItem(
+                    inward_id=ffr.id,
+                    design_no=des_no,
+                    color="Finished Navy" if i % 2 == 0 else "Finished Red",
+                    lot_no=f"LOT-FN-{100+i}",
+                    meters=ffr_qty / 5,
+                    pieces=1,
+                    width=Decimal("147.00"),
+                    weight=(ffr_qty / 5) * Decimal(0.21),
+                    grade="A",
+                    v_loom=f"LM-00{i+1}",
+                    v_pc_no=f"VPC-FFR-{i+1}-{j}",
+                    piece_no=f"PC-FFR-{i+1}-{j}"
+                ))
+        
         await session.commit()
 
         # ── 16. Seed HR Module Items (Phase 8 HR Module) ──
@@ -1553,7 +1947,7 @@ async def seed_all_data(session):
                 expiry_date=str(date.today() + timedelta(days=90 + i * 30)),
                 issued_date=str(date.today() - timedelta(days=270 - i * 30)),
                 authority="RTO Tamil Nadu",
-                reference_number=f"REF-DOC-2026-{1000+i}",
+                reference_number=f"REF-DOC-{1000+i:05d}",
                 notes="Verified original uploaded"
             )
             session.add(doc)
@@ -1603,7 +1997,7 @@ async def seed_all_data(session):
         for i in range(10):
             # Swatch Card
             sc = SwatchCard(
-                swatch_type="Fabric", digital_id=f"SW-26-00{i+1}", count_spec="40S Cotton Warp",
+                swatch_type="Fabric", digital_id=f"SW-{i+1:05d}", count_spec="40S Cotton Warp",
                 construction_spec="40S Cotton Weft / 68x60", design_no=design_nos[i],
                 color="Navy Blue" if i % 2 == 0 else "Scarlet Red", party_name=buyers[i][0],
                 buyer_comments="Shade approved, hand-feel is good"
@@ -1612,7 +2006,7 @@ async def seed_all_data(session):
 
             # Returnable DC for machine repairs
             rdc = ReturnableDC(
-                dc_no=f"RDC-26-00{i+1}", dc_stream="Fabric Unit", date=date.today() - timedelta(days=15),
+                dc_no=f"RDC-{i+1:05d}", dc_stream="Fabric Unit", date=date.today() - timedelta(days=15),
                 asset_name="Weft Yarn Selector Motor" if i % 2 == 0 else "Air Jet Compressor Valve",
                 serial_no=f"SN-9988{i}", fault_description="Winding burnt out" if i % 2 == 0 else "Pressure drop detected",
                 service_vendor="Loom Spares Service Corp", quotation_no=f"QUO-{500+i}", quotation_amount=8500.0 + (i * 500.0),
@@ -1895,7 +2289,7 @@ async def seed_all_data(session):
                     'surplus_delivery': 'SDE', 'customer_hanger': 'HNG'
                 }
                 prefix = prefix_map.get(module, 'WOT')
-                txn_no = f"{prefix}-2026-{idx:03d}"
+                txn_no = f"{prefix}-{idx:05d}"
                 rec_date = date.today() - timedelta(days=idx * 2)
                 buyer_name = buyer_names[idx % len(buyer_names)]
                 
@@ -1975,7 +2369,7 @@ async def seed_all_data(session):
                         "billDate": rec_date.isoformat(),
                         "billType": "Sizing Bill" if idx % 2 == 0 else "Warping Bill",
                         "vendorName": buyer_name,
-                        "setReportNo": f"WSR-2026-{idx:03d}",
+                        "setReportNo": f"WSR-{idx:05d}",
                         "processQuantity": 2000 + (idx * 500),
                         "processRate": 10,
                         "netAmount": (2000 + (idx * 500)) * 10,
@@ -1986,7 +2380,7 @@ async def seed_all_data(session):
                         "amendmentNo": txn_no,
                         "amendmentDate": rec_date.isoformat(),
                         "amendmentType": "Quantity Correction",
-                        "setReportNo": f"WSR-2026-{idx:03d}",
+                        "setReportNo": f"WSR-{idx:05d}",
                         "amendmentReason": "Typo in length",
                         "reworkRequired": False,
                         "approvalStatus": "Approved",

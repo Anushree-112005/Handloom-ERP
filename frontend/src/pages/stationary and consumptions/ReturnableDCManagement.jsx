@@ -487,7 +487,7 @@ export default function ReturnableDCManagement() {
                   <label>Service PO No.</label>
                   <input 
                     type="text" 
-                    placeholder="e.g. SPO-2026-004" 
+                    placeholder="e.g. SPO-00004" 
                     value={formData.service_po_no}
                     onChange={(e) => setFormData({ ...formData, service_po_no: e.target.value })}
                     className="form-control"

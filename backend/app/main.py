@@ -187,6 +187,13 @@ async def lifespan(app: FastAPI):
 
             from app.seed_all import seed_all_data
             await seed_all_data(session)
+
+            try:
+                from finance_app.scripts.sync_realtime_data import sync_data
+                sync_data()
+                logger.info("Successfully completed initial Cubebook sync on startup.")
+            except Exception as e:
+                logger.error(f"Failed to run Cubebook sync on startup: {e}")
     except Exception as e:
         import traceback
         with open("lifespan_error.log", "w") as f:

@@ -357,7 +357,7 @@ export default function GenericMasterForm({ config }) {
                           </span>
                         </div>
                       ) : (
-                        <span style={{ fontWeight: f.name === 'name' ? 600 : 400, color: f.name === 'name' ? '#4f46e5' : 'inherit' }}>
+                        <span style={{ fontWeight: f.name === 'name' ? 600 : 400, color: f.name === 'name' ? 'var(--text-primary)' : 'inherit' }}>
                           {getRecordValue(record, f.name) || '-'}
                         </span>
                       )}

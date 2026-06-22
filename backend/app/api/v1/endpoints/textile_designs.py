@@ -135,10 +135,9 @@ async def list_textile_designs(skip: int = 0, limit: int = 200, db: AsyncSession
 
 @router.post("/", response_model=TextileDesignOut, status_code=201)
 async def create_textile_design(data: TextileDesignCreate, db: AsyncSession = Depends(get_db)):
-    # Auto-generate design number
     max_id_q = await db.execute(select(func.max(TextileDesign.id)))
     max_id = max_id_q.scalar() or 0
-    design_no = f"DEPL{max_id + 1:04d}"
+    design_no = f"DEPL-{max_id + 1:05d}"
 
     payload = data.model_dump(exclude={"warp_items", "weft_items"})
     design = TextileDesign(**payload, design_no=design_no)

@@ -25,6 +25,7 @@ class BuyerOrder(Base):
     commission_type = Column(String(50))
     commission_pct = Column(Numeric(5, 2), default=0)
     order_taken_by = Column(String(150))
+    merchandiser = Column(String(150))
     nomination_type = Column(String(50))
     regular_special = Column(String(50))
 

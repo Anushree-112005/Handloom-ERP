@@ -43,6 +43,8 @@ export default function YarnPurchaseOrder() {
   const [customFabricNameVal, setCustomFabricNameVal] = useState('');
   const [customYarnCountIdx, setCustomYarnCountIdx] = useState(null);
   const [customYarnCountVal, setCustomYarnCountVal] = useState('');
+  const [customTableColourIdx, setCustomTableColourIdx] = useState(null);
+  const [customTableColourVal, setCustomTableColourVal] = useState('');
 
   // Custom Inline Fields for Supplier
   const [isCustomMainSupplier, setIsCustomMainSupplier] = useState(false);
@@ -96,13 +98,48 @@ export default function YarnPurchaseOrder() {
     
     count_details: [],
     indent_details: [{
-      req_ind_no: '', design_no: '', ibpo_no: '', party_name: '', fabric_name: '',
-      yarn_count: '', order_mtrs: 0, warp_qty: 0, weft_qty: 0, tot_reqd_qty: 0,
-      appd_qty: 0, order_qty: 0
+      yarn_count: '', colour: '', order_qty: 0, delivery_date: '', rate: 0, amount: 0
     }]
   };
 
   const [form, setForm] = useState(initialForm);
+
+  const recalculate = (updatedForm) => {
+    const updatedIndentDetails = (updatedForm.indent_details || []).map(item => {
+      const orderQty = parseFloat(item.order_qty) || 0;
+      const rate = parseFloat(item.rate) || 0;
+      const amount = orderQty * rate;
+      return {
+        ...item,
+        amount: parseFloat(amount.toFixed(2))
+      };
+    });
+
+    const taxableAmount = updatedIndentDetails.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+    const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
+    const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
+    const igstPct = parseFloat(updatedForm.igst_pct) || 0;
+    const taxType = updatedForm.tax_type || 'GST';
+    const freightChg = parseFloat(updatedForm.freight_chg) || 0;
+    const insuranceChg = parseFloat(updatedForm.insurance_chg) || 0;
+
+    let taxAmount = 0;
+    if (taxType === 'GST') {
+      taxAmount = ((cgstPct + sgstPct) / 100) * taxableAmount;
+    } else if (taxType === 'IGST') {
+      taxAmount = (igstPct / 100) * taxableAmount;
+    }
+
+    const netAmount = taxableAmount + freightChg + insuranceChg + taxAmount;
+
+    return {
+      ...updatedForm,
+      indent_details: updatedIndentDetails,
+      taxable_amount: parseFloat(taxableAmount.toFixed(2)),
+      net_amount: parseFloat(netAmount.toFixed(2))
+    };
+  };
 
   const loadData = async () => {
     try {
@@ -253,6 +290,20 @@ export default function YarnPurchaseOrder() {
     }
   };
 
+  const handleSaveCustomTableColour = async () => {
+    if (!customTableColourVal.trim() || customTableColourIdx === null) return;
+    try {
+      await subMasterAPI.create('color_master', { entity: 'color_master', name: customTableColourVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateIndentDetail(customTableColourIdx, 'colour', customTableColourVal.trim());
+      setCustomTableColourIdx(null);
+      setCustomTableColourVal('');
+    } catch (err) {
+      alert('Error saving custom color');
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -365,55 +416,43 @@ export default function YarnPurchaseOrder() {
               console.error("Failed to parse design entry yarn details", e);
             }
             return {
-              req_ind_no: '',
-              design_no: de.design_no || '',
-              ibpo_no: de.ibpo_no || value,
-              party_name: de.buyer_name || selectedOrder?.party_name || '',
-              fabric_name: de.fabric || '',
               yarn_count: yCount,
-              order_mtrs: parseFloat(de.order_mtr) || 0,
-              warp_qty: parseFloat(de.warp_mtr) || 0,
-              weft_qty: parseFloat(de.weft_pro_mtr) || 0,
-              tot_reqd_qty: 0,
-              appd_qty: 0,
-              order_qty: 0
+              colour: de.color || '',
+              order_qty: parseFloat(de.order_mtr) || 0,
+              delivery_date: de.ds_date ? de.ds_date.substring(0, 10) : '',
+              rate: 0,
+              amount: 0
             };
           });
 
-          setForm(prev => ({
-            ...prev,
+          setForm(recalculate({
+            ...form,
             against_ref: value,
-            agent_name: selectedOrder?.agent_name || prev.agent_name || '',
-            supplier_name: selectedOrder?.party_name || prev.supplier_name || '',
-            delivery_at: selectedOrder?.delivery_at || prev.delivery_at || '',
+            agent_name: selectedOrder?.agent_name || form.agent_name || '',
+            supplier_name: selectedOrder?.party_name || form.supplier_name || '',
+            delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
             indent_details: newIndentDetails
           }));
           return;
         } else if (selectedOrder) {
           const newIndentDetails = (selectedOrder.items || []).map(item => {
             return {
-              req_ind_no: '',
-              design_no: item.design_no || '',
-              ibpo_no: selectedOrder.ibpo_number,
-              party_name: selectedOrder.party_name || '',
-              fabric_name: item.fabric_type || '',
               yarn_count: item.yarn_count || '',
-              order_mtrs: parseFloat(item.order_mtrs) || 0,
-              warp_qty: 0,
-              weft_qty: 0,
-              tot_reqd_qty: 0,
-              appd_qty: 0,
-              order_qty: 0
+              colour: item.color || '',
+              order_qty: parseFloat(item.order_mtrs) || 0,
+              delivery_date: item.po_date ? item.po_date.substring(0, 10) : '',
+              rate: parseFloat(item.rate) || 0,
+              amount: parseFloat(item.amount) || 0
             };
           });
 
-          setForm(prev => ({
-            ...prev,
+          setForm(recalculate({
+            ...form,
             against_ref: value,
-            agent_name: selectedOrder.agent_name || prev.agent_name || '',
-            supplier_name: selectedOrder.party_name || prev.supplier_name || '',
-            delivery_at: selectedOrder.delivery_at || prev.delivery_at || '',
-            indent_details: newIndentDetails.length > 0 ? newIndentDetails : prev.indent_details
+            agent_name: selectedOrder.agent_name || form.agent_name || '',
+            supplier_name: selectedOrder.party_name || form.supplier_name || '',
+            delivery_at: selectedOrder.delivery_at || form.delivery_at || '',
+            indent_details: newIndentDetails.length > 0 ? newIndentDetails : form.indent_details
           }));
           return;
         }
@@ -456,7 +495,7 @@ export default function YarnPurchaseOrder() {
       return;
     }
 
-    setForm({ ...form, [name]: value });
+    setForm(recalculate({ ...form, [name]: value }));
   };
 
   // Dynamic Item Handlers
@@ -470,14 +509,28 @@ export default function YarnPurchaseOrder() {
     setForm({ ...form, count_details: newItems });
   };
 
-  const addIndentDetail = () => setForm({ ...form, indent_details: [...form.indent_details, initialForm.indent_details[0]] });
-  const removeIndentDetail = (index) => setForm({ ...form, indent_details: form.indent_details.filter((_, i) => i !== index) });
+  const addIndentDetail = () => {
+    const newRow = {
+      yarn_count: '', colour: '', order_qty: 0, delivery_date: '', rate: 0, amount: 0
+    };
+    setForm(recalculate({ ...form, indent_details: [...form.indent_details, newRow] }));
+  };
+  const removeIndentDetail = (index) => {
+    const nextForm = { ...form, indent_details: form.indent_details.filter((_, i) => i !== index) };
+    setForm(recalculate(nextForm));
+  };
   const updateIndentDetail = (index, field, value) => {
     const newItems = [...form.indent_details];
     let val = value;
-    if (['order_mtrs', 'warp_qty', 'weft_qty', 'tot_reqd_qty', 'appd_qty', 'order_qty'].includes(field)) val = parseFloat(value) || 0;
+    if (['order_qty', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
     newItems[index][field] = val;
-    setForm({ ...form, indent_details: newItems });
+    
+    if (field === 'order_qty' || field === 'rate') {
+      newItems[index].amount = parseFloat(((newItems[index].order_qty || 0) * (newItems[index].rate || 0)).toFixed(2));
+    }
+    
+    const nextForm = { ...form, indent_details: newItems };
+    setForm(recalculate(nextForm));
   };
 
   const filteredOrders = orders.filter(o => {
@@ -825,44 +878,16 @@ export default function YarnPurchaseOrder() {
                     <button type="button" className="btn btn-secondary" onClick={addIndentDetail}><Plus size={16} /> Add Indent Row</button>
                   </div>
                   <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
-                    <table className="data-table" style={{ minWidth: '1800px' }}>
+                    <table className="data-table" style={{ minWidth: '1000px' }}>
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Req Ind No</th><th>Design No</th><th>IBPO No</th><th>Party Name</th><th>Fabric Name</th><th>Yarn Count</th>
-                          <th>Order Mtrs</th><th>Warp Qty</th><th>Weft Qty</th><th>Reqd Qty</th><th>Appd Qty</th><th>Order Qty</th><th>X</th>
+                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
                         {form.indent_details.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
-                            <td><input className="form-control" name="req_ind_no" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.design_no} onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.ibpo_no} onChange={e => updateIndentDetail(idx, 'ibpo_no', e.target.value)} /></td>
-                            <td>
-                              <select className="form-control" style={{ width: 140 }} value={item.party_name || ''} onChange={e => updateIndentDetail(idx, 'party_name', e.target.value)}>
-                                <option value="">Select Party...</option>
-                                {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                              </select>
-                            </td>
-                            <td>
-                              {customFabricNameIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customFabricNameVal} onChange={e => setCustomFabricNameVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomFabricName}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomFabricNameIdx(null); setCustomFabricNameVal(''); }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 130 }} value={item.fabric_name || ''} onChange={e => {
-                                  if (e.target.value === 'custom') setCustomFabricNameIdx(idx);
-                                  else updateIndentDetail(idx, 'fabric_name', e.target.value);
-                                }}>
-                                  <option value="">Select Fabric...</option>
-                                  {options.masters?.fabric_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
                             <td>
                               {customYarnCountIdx === idx ? (
                                 <div style={{ display: 'flex', gap: 4 }}>
@@ -881,12 +906,32 @@ export default function YarnPurchaseOrder() {
                                 </select>
                               )}
                             </td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.order_mtrs} onChange={e => updateIndentDetail(idx, 'order_mtrs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.warp_qty} onChange={e => updateIndentDetail(idx, 'warp_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.weft_qty} onChange={e => updateIndentDetail(idx, 'weft_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.tot_reqd_qty} onChange={e => updateIndentDetail(idx, 'tot_reqd_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.appd_qty} onChange={e => updateIndentDetail(idx, 'appd_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
+                            <td>
+                              {customTableColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customTableColourVal} onChange={e => setCustomTableColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomTableColour}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomTableColourIdx(null); setCustomTableColourVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
+                                  if (e.target.value === 'custom') {
+                                    setCustomTableColourIdx(idx);
+                                    setCustomTableColourVal('');
+                                  } else {
+                                    updateIndentDetail(idx, 'colour', e.target.value);
+                                  }
+                                }}>
+                                  <option value="">Select Color...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
+                            <td><input type="date" className="form-control" style={{ width: 130 }} value={item.delivery_date || ''} onChange={e => updateIndentDetail(idx, 'delivery_date', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} placeholder="Rate" value={item.rate || 0} onChange={e => updateIndentDetail(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 120, fontWeight: 'bold', background: '#f1f5f9' }} value={item.amount || 0} readOnly /></td>
                             <td><button type="button" onClick={() => removeIndentDetail(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
                           </tr>
                         ))}
@@ -1006,41 +1051,13 @@ export default function YarnPurchaseOrder() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Req Ind No</th><th>Design No</th><th>IBPO No</th><th>Party Name</th><th>Fabric Name</th><th>Yarn Count</th>
-                          <th>Order Mtrs</th><th>Warp Qty</th><th>Weft Qty</th><th>Reqd Qty</th><th>Appd Qty</th><th>Order Qty</th><th>X</th>
+                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
                         {form.indent_details.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
-                            <td><input className="form-control" name="req_ind_no" style={{ width: 100 }} value={item.req_ind_no} onChange={e => updateIndentDetail(idx, 'req_ind_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.design_no} onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.ibpo_no} onChange={e => updateIndentDetail(idx, 'ibpo_no', e.target.value)} /></td>
-                            <td>
-                              <select className="form-control" style={{ width: 140 }} value={item.party_name || ''} onChange={e => updateIndentDetail(idx, 'party_name', e.target.value)}>
-                                <option value="">Select Party...</option>
-                                {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                              </select>
-                            </td>
-                            <td>
-                              {customFabricNameIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customFabricNameVal} onChange={e => setCustomFabricNameVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomFabricName}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomFabricNameIdx(null); setCustomFabricNameVal(''); }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 130 }} value={item.fabric_name || ''} onChange={e => {
-                                  if (e.target.value === 'custom') setCustomFabricNameIdx(idx);
-                                  else updateIndentDetail(idx, 'fabric_name', e.target.value);
-                                }}>
-                                  <option value="">Select Fabric...</option>
-                                  {options.masters?.fabric_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
                             <td>
                               {customYarnCountIdx === idx ? (
                                 <div style={{ display: 'flex', gap: 4 }}>
@@ -1059,12 +1076,32 @@ export default function YarnPurchaseOrder() {
                                 </select>
                               )}
                             </td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.order_mtrs} onChange={e => updateIndentDetail(idx, 'order_mtrs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.warp_qty} onChange={e => updateIndentDetail(idx, 'warp_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.weft_qty} onChange={e => updateIndentDetail(idx, 'weft_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.tot_reqd_qty} onChange={e => updateIndentDetail(idx, 'tot_reqd_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.appd_qty} onChange={e => updateIndentDetail(idx, 'appd_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
+                            <td>
+                              {customTableColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customTableColourVal} onChange={e => setCustomTableColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomTableColour}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomTableColourIdx(null); setCustomTableColourVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
+                                  if (e.target.value === 'custom') {
+                                    setCustomTableColourIdx(idx);
+                                    setCustomTableColourVal('');
+                                  } else {
+                                    updateIndentDetail(idx, 'colour', e.target.value);
+                                  }
+                                }}>
+                                  <option value="">Select Color...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
+                            <td><input type="date" className="form-control" style={{ width: 130 }} value={item.delivery_date || ''} onChange={e => updateIndentDetail(idx, 'delivery_date', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} placeholder="Rate" value={item.rate || 0} onChange={e => updateIndentDetail(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 120, fontWeight: 'bold', background: '#f1f5f9' }} value={item.amount || 0} readOnly /></td>
                             <td><button type="button" onClick={() => removeIndentDetail(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
                           </tr>
                         ))}

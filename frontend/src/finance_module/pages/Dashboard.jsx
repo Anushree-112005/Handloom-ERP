@@ -34,16 +34,24 @@ export default function Dashboard() {
   const { activeCompany, activeFy } = useCompanyStore();
   const navigate = useNavigate();
   const companyId = activeCompany?.id;
+  const fiveMonthsAgo = useMemo(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 5);
+    d.setDate(1);
+    return d.toISOString().split('T')[0];
+  }, []);
+
   const from = activeFy?.start_date || fyStart;
 
   const params = { company_id: companyId, from_date: from, to_date: today };
+  const salesParams = { company_id: companyId, from_date: fiveMonthsAgo, to_date: today };
 
   const { data: pl }         = useQuery({ queryKey: ['dash-pl', companyId, from, today], queryFn: () => reports.profitLoss({ ...params }), enabled: !!companyId });
   const { data: bs }         = useQuery({ queryKey: ['dash-bs', companyId], queryFn: () => reports.balanceSheet({ company_id: companyId, as_of: today }), enabled: !!companyId });
   const { data: outstanding }= useQuery({ queryKey: ['dash-out', companyId], queryFn: () => reports.outstanding({ company_id: companyId, as_of: today }), enabled: !!companyId });
   const { data: cashBook }   = useQuery({ queryKey: ['dash-cash', companyId, from, today], queryFn: () => reports.cashBook({ ...params }), enabled: !!companyId });
   const { data: recent }     = useQuery({ queryKey: ['dash-recent', companyId], queryFn: () => vouchersApi.list({ company_id: companyId, limit: 8 }), enabled: !!companyId });
-  const { data: salesReg }   = useQuery({ queryKey: ['dash-sales', companyId, from, today], queryFn: () => reports.salesRegister({ ...params }), enabled: !!companyId });
+  const { data: salesReg }   = useQuery({ queryKey: ['dash-sales', companyId, fiveMonthsAgo, today], queryFn: () => reports.salesRegister(salesParams), enabled: !!companyId });
 
   const monthlyData = useMemo(() => {
     const result = [];
