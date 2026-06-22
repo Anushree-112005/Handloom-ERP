@@ -882,7 +882,7 @@ export default function YarnInward() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th>
+                          <th>SNo</th><th>Count</th><th>Color</th><th>Color Code</th><th>Lot No</th><th>Our ID</th>
                           <th>Bags</th><th>Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
@@ -936,6 +936,9 @@ export default function YarnInward() {
                                 </select>
                               )}
                             </td>
+                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Color Code" value={item.color_code || ''} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
+                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Lot No" value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Our ID" value={item.our_id || ''} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 90 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
@@ -1137,6 +1140,9 @@ export default function YarnInward() {
                                 </select>
                               )}
                             </td>
+                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Color Code" value={item.color_code || ''} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
+                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Lot No" value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Our ID" value={item.our_id || ''} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 90 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
