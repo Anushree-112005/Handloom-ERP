@@ -40,8 +40,11 @@ class YarnPurchaseIndentDetailIn(BaseModel):
     amount: Optional[float] = 0.0
     colour: Optional[str] = None
     delivery_date: Optional[str] = None
+    packing_type: Optional[str] = None
+    labeling: Optional[str] = None
+    uom: Optional[str] = "KGS"
 
-class YarnPurchaseOrderCreate(BaseModel):
+class YarnPurchaseOrderBase(BaseModel):
     po_date: date
     org_name: Optional[str] = None
     internal_po_no: Optional[str] = None
@@ -69,9 +72,11 @@ class YarnPurchaseOrderCreate(BaseModel):
     due_days: Optional[int] = 0
     remarks: Optional[str] = None
     status: Optional[str] = "Active"
-    
-    count_details: Optional[List[YarnPurchaseCountDetailIn]] = []
-    indent_details: Optional[List[YarnPurchaseIndentDetailIn]] = []
+    terms_conditions: Optional[List[str]] = []
+
+class YarnPurchaseOrderCreate(YarnPurchaseOrderBase):
+    count_details: List[YarnPurchaseCountDetailIn] = []
+    indent_details: List[YarnPurchaseIndentDetailIn] = []
 
 class YarnPurchaseCountDetailOut(YarnPurchaseCountDetailIn):
     id: int
@@ -83,7 +88,7 @@ class YarnPurchaseIndentDetailOut(YarnPurchaseIndentDetailIn):
     class Config:
         from_attributes = True
 
-class YarnPurchaseOrderOut(YarnPurchaseOrderCreate):
+class YarnPurchaseOrderOut(YarnPurchaseOrderBase):
     id: int
     po_number: str
     count_details: List[YarnPurchaseCountDetailOut] = []

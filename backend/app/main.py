@@ -199,8 +199,8 @@ async def lifespan(app: FastAPI):
                     ))
                 await session.commit()
 
-            from app.seed_all import seed_all_data
-            await seed_all_data(session)
+            from app.seed_ppc import seed_ppc_data
+            await seed_ppc_data(session)
 
             try:
                 from finance_app.scripts.sync_realtime_data import sync_data

@@ -174,7 +174,7 @@ export default function YarnInward() {
   const loadData = async () => {
     try {
       const [inwRes, partRes, poRes, dropRes, colorRes] = await Promise.all([
-        yarnInwardAPI.list(), partyAPI.list(), yarnPurchaseOrderAPI.list(), dropdownAPI.getAll(), subMasterAPI.list('color_master')
+        yarnInwardAPI.list(), partyAPI.list(), yarnPurchaseOrderAPI.list({ limit: 10000 }), dropdownAPI.getAll(), subMasterAPI.list('color_master')
       ]);
       setInwards(inwRes.data);
       setParties(partRes.data);
@@ -340,6 +340,7 @@ export default function YarnInward() {
       if (!value) {
         newForm = {
           ...newForm,
+          received_type: 'Direct',
           received_from: '',
           agent_name: '',
           transport: '',
@@ -366,23 +367,29 @@ export default function YarnInward() {
           return matchStr === value || po.po_number === value || po.po_number === value.split(' / ')[0];
         });
         if (selectedPo) {
-          const sourceDetails = (selectedPo.count_details && selectedPo.count_details.length > 0)
-            ? selectedPo.count_details
-            : (selectedPo.indent_details || []);
+          const sourceDetails = (selectedPo.indent_details && selectedPo.indent_details.length > 0)
+            ? selectedPo.indent_details
+            : (selectedPo.count_details || []);
 
-          const mappedItems = sourceDetails.map(item => {
-            const selectedColor = colorMasters.find(c => c.name === selectedPo.colour);
+          const mappedItems = sourceDetails.map((item, idx) => {
+            const itemColour = item.colour || selectedPo.colour || '';
+            const selectedColor = colorMasters.find(c => c.name === itemColour);
+            const countDetail = (selectedPo.indent_details && selectedPo.indent_details.length > 0)
+              ? (selectedPo.count_details?.[idx] || {})
+              : {};
+            const millName = item.mill_name || countDetail.mill_name || '';
+
             return {
               yarn_count: item.yarn_count || '',
-              mill_name: item.mill_name || '',
-              colour: selectedPo.colour || '',
+              mill_name: millName,
+              colour: itemColour,
               color_code: selectedColor ? (selectedColor.code || '') : '',
               lot_no: '',
               our_id: '',
               bags: 0,
-              kgs: item.order_kgs || item.order_qty || 0,
+              kgs: item.order_qty || item.order_kgs || 0,
               rate: item.rate || 0,
-              amount: item.amount || 0
+              amount: item.amount || (parseFloat(item.order_qty || 0) * parseFloat(item.rate || 0)) || 0
             };
           });
 
@@ -392,9 +399,11 @@ export default function YarnInward() {
           }];
 
           const totalKgs = finalItems.reduce((sum, item) => sum + (parseFloat(item.kgs) || 0), 0);
+          const totalGross = finalItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
           newForm = {
             ...newForm,
+            received_type: 'Against PO',
             received_from: selectedPo.supplier_name || '',
             agent_name: selectedPo.agent_name || '',
             transport: selectedPo.transport || '',
@@ -410,7 +419,7 @@ export default function YarnInward() {
             igst_pct: selectedPo.igst_pct || 0,
             packing: selectedPo.packing_type || '',
             freight: selectedPo.freight_chg || 0,
-            remarks: selectedPo.remarks || '',
+            gross_amount: totalGross,
             items: finalItems
           };
         }
@@ -794,7 +803,7 @@ export default function YarnInward() {
                       )}
                     </div>
                     <div className="form-group"><label>PO No / Dt</label>
-                      <select className="form-control" name="po_no_dt" value={form.po_no_dt} onChange={handleChange} disabled={form.received_type === 'Direct'}>
+                      <select className="form-control" name="po_no_dt" value={form.po_no_dt} onChange={handleChange}>
                         <option value="">Select PO...</option>
                         {pos.map(po => <option key={po.id} value={`${po.po_number} / ${po.po_date}`}>{po.po_number} / {po.po_date}</option>)}
                         {form.po_no_dt && !pos.some(po => `${po.po_number} / ${po.po_date}` === form.po_no_dt) && (
@@ -873,7 +882,7 @@ export default function YarnInward() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Yarn Count</th><th>Mill</th><th>Colour</th><th>Color Code</th><th>Lot No</th><th>Our Id</th>
+                          <th>SNo</th><th>Count</th><th>Color</th>
                           <th>Bags</th><th>Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
@@ -889,29 +898,14 @@ export default function YarnInward() {
                                   <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <select className="form-control" name="yarn_count" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
-                                  <option value="">Select...</option>
+                                <select className="form-control" name="yarn_count" style={{ width: 130 }} value={item.yarn_count || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
+                                  else updateItem(idx, 'yarn_count', e.target.value);
+                                }}>
+                                  <option value="">Select Count...</option>
                                   {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
                                   {item.yarn_count && !options.masters?.yarn_count_master?.includes(item.yarn_count) && (
                                     <option value={item.yarn_count}>{item.yarn_count}</option>
-                                  )}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td>
-                              {customMillNameIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Mill" value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomMillName} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomMillNameIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 120 }} value={item.mill_name || ''} onChange={e => updateItem(idx, 'mill_name', e.target.value)}>
-                                  <option value="">Select...</option>
-                                  {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  {item.mill_name && !options.masters?.mill_name_master?.includes(item.mill_name) && (
-                                    <option value={item.mill_name}>{item.mill_name}</option>
                                   )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
@@ -925,8 +919,15 @@ export default function YarnInward() {
                                   <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <select className="form-control" style={{ width: 100 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
-                                  <option value="">Select...</option>
+                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
+                                  if (e.target.value === 'custom') {
+                                    setCustomColourIdx(idx);
+                                    setCustomColourVal('');
+                                  } else {
+                                    updateItem(idx, 'colour', e.target.value);
+                                  }
+                                }}>
+                                  <option value="">Select Color...</option>
                                   {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
                                   {item.colour && !options.masters?.color_master?.includes(item.colour) && (
                                     <option value={item.colour}>{item.colour}</option>
@@ -935,14 +936,11 @@ export default function YarnInward() {
                                 </select>
                               )}
                             </td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.color_code} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.our_id} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.amount} onChange={e => updateItem(idx, 'amount', e.target.value)} disabled /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
+                            <td><input type="number" className="form-control" style={{ width: 90 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 110 }} value={item.amount} disabled /></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -951,46 +949,126 @@ export default function YarnInward() {
 
                   {/* Section 3: Tax & Logistics */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group"><label>Packing</label>
-                      {isCustomPacking ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                      
+                      {/* ── Logistics & Packing ── */}
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Logistics & Packing</span>
                         </div>
-                      ) : (
-                        <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
-                          <option value="">Select...</option>
-                          {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
-                            <option value={form.packing}>{form.packing}</option>
-                          )}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                        </select>
-                      )}
+                        <div style={{ padding: '16px 18px' }}>
+                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
+                            <div className="form-group"><label>Packing</label>
+                              {isCustomPacking ? (
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                  <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
+                                  <option value="">Select...</option>
+                                  {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
+                                    <option value={form.packing}>{form.packing}</option>
+                                  )}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </div>
+                            <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Tax & TDS/TCS Details ── */}
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Tax & TDS/TCS Details</span>
+                        </div>
+                        <div style={{ padding: '16px 18px' }}>
+                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
+                            <div className="form-group"><label>TAX Type</label>
+                              <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
+                                <option>GST</option><option>IGST</option><option>Exempt</option>
+                              </select>
+                            </div>
+                            <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} readOnly /></div>
+                            <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
+                            <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} readOnly /></div>
+                            <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
-                    <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
-                    <div className="form-group"><label>TAX Type</label>
-                      <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                        <option>GST</option><option>IGST</option><option>Exempt</option>
-                      </select>
+
+                    {/* RIGHT SIDE — Order Summary */}
+                    <div style={{ flex: '0 0 300px', position: 'sticky', top: 24 }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Order Summary</span>
+                        </div>
+                        <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.gross_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>TCS Value</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.tcs_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.round_off || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Bags</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.total_bags || 0}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Received Kgs</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.received_kgs || 0).toLocaleString('en-IN')}</span>
+                          </div>
+
+                          <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Grand Total</span>
+                            <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                    <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                    <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} /></div>
-                    
-                    <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
-                    <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
-                    
-                    <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Other Remarks</label><input className="form-control" name="other_remarks" value={form.other_remarks} onChange={handleChange} /></div>
+
                   </div>
                 </div>
               )}
@@ -1005,7 +1083,7 @@ export default function YarnInward() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Yarn Count</th><th>Mill</th><th>Colour</th><th>Color Code</th><th>Lot No</th><th>Our Id</th>
+                          <th>SNo</th><th>Count</th><th>Color</th>
                           <th>Bags</th><th>Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
@@ -1021,29 +1099,14 @@ export default function YarnInward() {
                                   <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <select className="form-control" name="yarn_count" style={{ width: 100 }} value={item.yarn_count || ''} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
-                                  <option value="">Select...</option>
+                                <select className="form-control" name="yarn_count" style={{ width: 130 }} value={item.yarn_count || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
+                                  else updateItem(idx, 'yarn_count', e.target.value);
+                                }}>
+                                  <option value="">Select Count...</option>
                                   {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
                                   {item.yarn_count && !options.masters?.yarn_count_master?.includes(item.yarn_count) && (
                                     <option value={item.yarn_count}>{item.yarn_count}</option>
-                                  )}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td>
-                              {customMillNameIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Mill" value={customMillNameVal} onChange={e => setCustomMillNameVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomMillName} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomMillNameIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 120 }} value={item.mill_name || ''} onChange={e => updateItem(idx, 'mill_name', e.target.value)}>
-                                  <option value="">Select...</option>
-                                  {options.masters?.mill_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  {item.mill_name && !options.masters?.mill_name_master?.includes(item.mill_name) && (
-                                    <option value={item.mill_name}>{item.mill_name}</option>
                                   )}
                                   <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
                                 </select>
@@ -1057,8 +1120,15 @@ export default function YarnInward() {
                                   <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
                                 </div>
                               ) : (
-                                <select className="form-control" style={{ width: 100 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
-                                  <option value="">Select...</option>
+                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
+                                  if (e.target.value === 'custom') {
+                                    setCustomColourIdx(idx);
+                                    setCustomColourVal('');
+                                  } else {
+                                    updateItem(idx, 'colour', e.target.value);
+                                  }
+                                }}>
+                                  <option value="">Select Color...</option>
                                   {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
                                   {item.colour && !options.masters?.color_master?.includes(item.colour) && (
                                     <option value={item.colour}>{item.colour}</option>
@@ -1067,14 +1137,11 @@ export default function YarnInward() {
                                 </select>
                               )}
                             </td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.color_code} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80 }} value={item.our_id} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.amount} onChange={e => updateItem(idx, 'amount', e.target.value)} disabled /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
+                            <td><input type="number" className="form-control" style={{ width: 90 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 110 }} value={item.amount} disabled /></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -1084,46 +1151,125 @@ export default function YarnInward() {
               )}
 
               {activeTab === 'tax' && (
-                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Packing</label>
-                    {isCustomPacking ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
-                        <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
-                        <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                <div className="animate-fade" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    
+                    {/* ── Logistics & Packing ── */}
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Logistics & Packing</span>
                       </div>
-                    ) : (
-                      <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
-                        <option value="">Select...</option>
-                        {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                        {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
-                          <option value={form.packing}>{form.packing}</option>
-                        )}
-                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                      </select>
-                    )}
+                      <div style={{ padding: '16px 18px' }}>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
+                          <div className="form-group"><label>Packing</label>
+                            {isCustomPacking ? (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
+                                <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                                <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                              </div>
+                            ) : (
+                              <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
+                                <option value="">Select...</option>
+                                {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
+                                  <option value={form.packing}>{form.packing}</option>
+                                )}
+                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                              </select>
+                            )}
+                          </div>
+                          <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Tax & TDS/TCS Details ── */}
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Tax & TDS/TCS Details</span>
+                      </div>
+                      <div style={{ padding: '16px 18px' }}>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
+                          <div className="form-group"><label>TAX Type</label>
+                            <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
+                              <option>GST</option><option>IGST</option><option>Exempt</option>
+                            </select>
+                          </div>
+                          <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} readOnly /></div>
+                          <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
+                          <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} readOnly /></div>
+                          <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
-                  <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
-                  <div className="form-group"><label>TAX Type</label>
-                    <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                      <option>GST</option><option>IGST</option><option>Exempt</option>
-                    </select>
+
+                  {/* RIGHT SIDE — Order Summary */}
+                  <div style={{ flex: '0 0 300px', position: 'sticky', top: 24 }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Order Summary</span>
+                      </div>
+                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.gross_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>TCS Value</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.tcs_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.round_off || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Bags</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.total_bags || 0}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Received Kgs</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.received_kgs || 0).toLocaleString('en-IN')}</span>
+                        </div>
+
+                        <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Grand Total</span>
+                          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
-                  <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Other Remarks</label><input className="form-control" name="other_remarks" value={form.other_remarks} onChange={handleChange} /></div>
                 </div>
               )}
             </fieldset>
