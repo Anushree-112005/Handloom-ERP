@@ -132,13 +132,31 @@ export const searchEmployeesByPrefix = async (prefix) => {
 export const fetchDepartments = async () => {
   try {
     const res = await subMasterAPI.list('department');
-    return res.data || [];
+    return (res.data || []).map(item => {
+      let extra = {};
+      if (item.extra_field_3) {
+        try { extra = JSON.parse(item.extra_field_3); } catch(e){}
+      }
+      return {
+        id: item.id,
+        name: item.name,
+        code: item.code || '',
+        description: item.description || '',
+        type: item.extra_field_1 || '',
+        short_name: item.extra_field_2 || '',
+        category: extra.category || '',
+        budget_allocation: extra.budget_allocation || '',
+        cost_center: extra.cost_center || '',
+        status: item.is_active === false ? 'Inactive' : 'Active',
+        created_at: item.created_at || null
+      };
+    });
   } catch {
     return getLocalItems('departments', [
-      { id: 1, name: 'HR' },
-      { id: 2, name: 'Engineering' },
-      { id: 3, name: 'Sales' },
-      { id: 4, name: 'Finance' }
+      { id: 1, name: 'HR', code: 'HR-01', type: 'Support' },
+      { id: 2, name: 'Engineering', code: 'ENG-01', type: 'Operational' },
+      { id: 3, name: 'Sales', code: 'SAL-01', type: 'Operational' },
+      { id: 4, name: 'Finance', code: 'FIN-01', type: 'Support' }
     ]);
   }
 };
@@ -146,22 +164,33 @@ export const fetchDepartments = async () => {
 export const fetchDesignations = async () => {
   try {
     const res = await subMasterAPI.list('designation');
-    return (res.data || []).map(item => ({
-      id: item.id,
-      title: item.name,
-      department: item.code || '',
-      description: item.description || '',
-      grade: item.extra_field_1 || '',
-      min_salary: item.extra_field_2 ? parseInt(item.extra_field_2) : null,
-      max_salary: item.extra_field_3 ? parseInt(item.extra_field_3) : null,
-    }));
+    return (res.data || []).map(item => {
+      let extra = {};
+      if (item.extra_field_3) {
+        try { extra = JSON.parse(item.extra_field_3); } catch(e){}
+      }
+      return {
+        id: item.id,
+        title: item.name,
+        code: item.code || '',
+        department: item.extra_field_1 || '',
+        description: item.description || '',
+        grade: item.extra_field_2 || '',
+        min_salary: extra.min_salary || null,
+        max_salary: extra.max_salary || null,
+        experience: extra.experience || '',
+        skill_category: extra.skill_category || '',
+        status: item.is_active === false ? 'Inactive' : 'Active',
+        created_at: item.created_at || null,
+      };
+    });
   } catch {
     return getLocalItems('designations', [
-      { id: 1, title: 'Software Engineer', department: 'Engineering' },
-      { id: 2, title: 'Senior Software Engineer', department: 'Engineering' },
-      { id: 3, title: 'HR Manager', department: 'HR' },
-      { id: 4, title: 'Sales Executive', department: 'Sales' },
-      { id: 5, title: 'Driver', department: 'Logistics' }
+      { id: 1, title: 'Software Engineer', code: 'ENG-001', department: 'Engineering', grade: 'L3', min_salary: 800000, max_salary: 1500000, experience: '3+ Years', skill_category: 'Technical', status: 'Active', description: 'Develop and maintain software applications.' },
+      { id: 2, title: 'Senior Software Engineer', code: 'ENG-002', department: 'Engineering', grade: 'L5', min_salary: 1500000, max_salary: 2500000, experience: '5+ Years', skill_category: 'Technical', status: 'Active', description: 'Lead development of core features and mentor juniors.' },
+      { id: 3, title: 'HR Manager', code: 'HR-001', department: 'HR', grade: 'M1', min_salary: 1200000, max_salary: 1800000, experience: '7+ Years', skill_category: 'Management', status: 'Active', description: 'Oversee HR operations and recruitment.' },
+      { id: 4, title: 'Sales Executive', code: 'SAL-001', department: 'Sales', grade: 'L2', min_salary: 400000, max_salary: 800000, experience: '1+ Years', skill_category: 'Communication', status: 'Active', description: 'Drive sales and manage client relationships.' },
+      { id: 5, title: 'Driver', code: 'LOG-001', department: 'Logistics', grade: 'L1', min_salary: 250000, max_salary: 400000, experience: '2+ Years', skill_category: 'Operations', status: 'Inactive', description: 'Handle transportation of company goods.' }
     ]);
   }
 };
@@ -180,7 +209,20 @@ export const fetchShifts = async () => {
 
 export const createDepartment = async (data) => {
   try {
-    const res = await subMasterAPI.create('department', data);
+    const payload = {
+      name: data.name,
+      code: data.code || null,
+      description: data.description || null,
+      is_active: data.status !== 'Inactive',
+      extra_field_1: data.type || null,
+      extra_field_2: data.short_name || null,
+      extra_field_3: JSON.stringify({
+        category: data.category || '',
+        budget_allocation: data.budget_allocation || '',
+        cost_center: data.cost_center || ''
+      })
+    };
+    const res = await subMasterAPI.create('department', payload);
     return res.data;
   } catch {
     return addLocalItem('departments', data);
@@ -188,7 +230,20 @@ export const createDepartment = async (data) => {
 };
 export const updateDepartment = async (id, data) => {
   try {
-    const res = await subMasterAPI.update('department', id, data);
+    const payload = {
+      name: data.name,
+      code: data.code || null,
+      description: data.description || null,
+      is_active: data.status !== 'Inactive',
+      extra_field_1: data.type || null,
+      extra_field_2: data.short_name || null,
+      extra_field_3: JSON.stringify({
+        category: data.category || '',
+        budget_allocation: data.budget_allocation || '',
+        cost_center: data.cost_center || ''
+      })
+    };
+    const res = await subMasterAPI.update('department', id, payload);
     return res.data;
   } catch {
     return updateLocalItem('departments', id, data);
@@ -206,11 +261,17 @@ export const createDesignation = async (data) => {
   try {
     const payload = {
       name: data.title,
-      code: data.department || null,
+      code: data.code || null,
       description: data.description || null,
-      extra_field_1: data.grade || null,
-      extra_field_2: data.min_salary !== undefined && data.min_salary !== null ? String(data.min_salary) : null,
-      extra_field_3: data.max_salary !== undefined && data.max_salary !== null ? String(data.max_salary) : null,
+      is_active: data.status !== 'Inactive',
+      extra_field_1: data.department || null,
+      extra_field_2: data.grade || null,
+      extra_field_3: JSON.stringify({
+        min_salary: data.min_salary || null,
+        max_salary: data.max_salary || null,
+        experience: data.experience || '',
+        skill_category: data.skill_category || ''
+      })
     };
     const res = await subMasterAPI.create('designation', payload);
     return res.data;
@@ -222,11 +283,17 @@ export const updateDesignation = async (id, data) => {
   try {
     const payload = {
       name: data.title,
-      code: data.department || null,
+      code: data.code || null,
       description: data.description || null,
-      extra_field_1: data.grade || null,
-      extra_field_2: data.min_salary !== undefined && data.min_salary !== null ? String(data.min_salary) : null,
-      extra_field_3: data.max_salary !== undefined && data.max_salary !== null ? String(data.max_salary) : null,
+      is_active: data.status !== 'Inactive',
+      extra_field_1: data.department || null,
+      extra_field_2: data.grade || null,
+      extra_field_3: JSON.stringify({
+        min_salary: data.min_salary || null,
+        max_salary: data.max_salary || null,
+        experience: data.experience || '',
+        skill_category: data.skill_category || ''
+      })
     };
     const res = await subMasterAPI.update('designation', id, payload);
     return res.data;

@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarClock, CheckCircle2, AlertTriangle, Plus, Trash2, X, Clock, Calendar, User, Eye, MapPin, Info, Edit2, Filter, LayoutList, LayoutGrid } from 'lucide-react';
+import { CalendarClock, CheckCircle2, AlertTriangle, Plus, Trash2, X, Clock, Calendar, User, Eye, MapPin, Info, Edit2, Filter, LayoutList, LayoutGrid, Search, Download, FileText, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { fetchAttendance, createAttendance, updateAttendance, deleteAttendance, fetchLeaves, createLeave, updateLeave, deleteLeave, fetchEmployees, fetchShifts } from '../../../services/hrService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const initialAttendanceForm = {
   employee: '', date: new Date().toISOString().split('T')[0], shift: '', check_in: '', check_out: '',
@@ -34,6 +37,10 @@ const AttendanceLeave = () => {
   const [filterEmployee, setFilterEmployee] = useState('');
   const [filterLeaveType, setFilterLeaveType] = useState('');
   const [filterLeaveStatus, setFilterLeaveStatus] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -126,6 +133,79 @@ const AttendanceLeave = () => {
     const pendingLeaves = leaves.filter(l => l.status === 'Pending').length;
     return { otHours: otHours.toFixed(1), lopDays, presentDays, pendingLeaves };
   }, [rows, leaves]);
+
+  const totalPages = Math.ceil((activeTab === 'attendance' ? filteredRows.length : filteredLeaves.length) / itemsPerPage);
+  const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedLeaves = filteredLeaves.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    if (activeTab === 'attendance') {
+      doc.text("Attendance Report", 14, 15);
+      const tableColumn = ["#", "Employee", "Shift", "Check In", "Check Out", "Hours", "OT"];
+      const tableRows = [];
+      filteredRows.forEach((r, index) => {
+        tableRows.push([
+          index + 1,
+          r.employee,
+          r.shift || '-',
+          r.check_in || '-',
+          r.check_out || '-',
+          r.hours || 0,
+          r.ot_hours || 0
+        ]);
+      });
+      autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
+      doc.save(`Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    } else {
+      doc.text("Leave Report", 14, 15);
+      const tableColumn = ["#", "Employee", "Type", "Days", "Status", "Approver"];
+      const tableRows = [];
+      filteredLeaves.forEach((l, index) => {
+        tableRows.push([
+          index + 1,
+          l.employee,
+          l.leave_type || '-',
+          l.days || 1,
+          l.status || 'Pending',
+          l.approver || '-'
+        ]);
+      });
+      autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
+      doc.save(`Leave_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  };
+
+  const exportExcel = () => {
+    let data;
+    let filename;
+    if (activeTab === 'attendance') {
+      data = filteredRows.map((r, index) => ({
+        "#": index + 1,
+        "Employee": r.employee,
+        "Shift": r.shift || '-',
+        "Check In": r.check_in || '-',
+        "Check Out": r.check_out || '-',
+        "Hours": r.hours || 0,
+        "OT": r.ot_hours || 0
+      }));
+      filename = `Attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
+    } else {
+      data = filteredLeaves.map((l, index) => ({
+        "#": index + 1,
+        "Employee": l.employee,
+        "Type": l.leave_type || '-',
+        "Days": l.days || 1,
+        "Status": l.status || 'Pending',
+        "Approver": l.approver || '-'
+      }));
+      filename = `Leaves_${new Date().toISOString().split('T')[0]}.xlsx`;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    XLSX.writeFile(workbook, filename);
+  };
 
   const resetAttendanceForm = () => {
     setForm(initialAttendanceForm);
@@ -325,32 +405,43 @@ const AttendanceLeave = () => {
         <div style={{ padding: 24 }}>
           {/* HEADER */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            {/* LEFT: Title + stats badges */}
-          <h1 className="text-lg font-bold text-slate-900 uppercase tracking-wide">ATTENDANCE & LEAVE</h1>
+            {/* LEFT: Title */}
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                <CalendarClock size={24} color="var(--primary)" /> Attendance & Leave
+              </h2>
+              <p style={{ color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Manage daily employee attendance and leave requests.</p>
+            </div>
 
-        {/* RIGHT: Search + add button */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search employee..."
-            value={filterEmployee}
-            onChange={(e) => setFilterEmployee(e.target.value)}
-            className="form-control"
-            style={{ width: 180, margin: 0, padding: '6px 12px', fontSize: 13 }}
-          />
-          {activeTab === 'attendance' ? (
-            <button onClick={() => setShowAttendanceForm(true)}
-              className="btn btn-primary">
-              <Plus className="w-4 h-4" /> Log Attendance
-            </button>
-          ) : (
-            <button onClick={() => setShowLeaveForm(true)}
-              className="btn btn-primary">
-              <Plus className="w-4 h-4" /> Request Leave
-            </button>
-          )}
-        </div>
-      </div>
+            {/* RIGHT: Add dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowAddMenu(!showAddMenu)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Plus size={16} /> Create New
+                </button>
+                {showAddMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 180, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => { setShowAttendanceForm(true); setShowAddMenu(false); }}
+                      style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', borderBottom: '1px solid #e2e8f0', fontSize: 13, fontWeight: 500 }}
+                      onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Clock size={16} color="#6366f1" /> Log Attendance
+                    </button>
+                    <button
+                      onClick={() => { setShowLeaveForm(true); setShowAddMenu(false); }}
+                      style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontSize: 13, fontWeight: 500 }}
+                      onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Calendar size={16} color="#10b981" /> Request Leave
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
       {/* DATA AREA */}
       <div>
@@ -375,20 +466,111 @@ const AttendanceLeave = () => {
           ))}
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 shadow-sm" style={{ minWidth: '400px' }}>
-            <button onClick={() => setActiveTab('attendance')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-base font-bold transition-all ${activeTab === 'attendance' ? 'bg-white shadow-md text-indigo-700 ring-1 ring-slate-200/50 scale-[1.02]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                }`}>
-              <Clock className="w-5 h-5" /> Attendance
+
+
+        {/* Toolbar */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24, padding: '16px', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+            <input 
+              type="text" 
+              placeholder="Search by Employee Name..." 
+              value={filterEmployee}
+              onChange={(e) => { setFilterEmployee(e.target.value); setCurrentPage(1); }}
+              style={{ width: '100%', padding: '10px 16px 10px 44px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none', height: 44 }} 
+            />
+          </div>
+          
+          <div style={{ display: 'flex', gap: 12 }}>
+            <select 
+              value={activeTab} 
+              onChange={(e) => { setActiveTab(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, height: 44, outline: 'none', background: '#f8fafc', fontWeight: 600, color: '#334155', minWidth: 160, cursor: 'pointer' }}
+            >
+              <option value="attendance">Daily Attendance</option>
+              <option value="leave">Leave Requests</option>
+            </select>
+
+            {activeTab === 'attendance' ? (
+              <select 
+                value={filterShift} 
+                onChange={(e) => { setFilterShift(e.target.value); setCurrentPage(1); }}
+                style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 160 }}
+              >
+                <option value="">All Shifts</option>
+                {shifts.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+              </select>
+            ) : (
+              <>
+                <select 
+                  value={filterLeaveType} 
+                  onChange={(e) => { setFilterLeaveType(e.target.value); setCurrentPage(1); }}
+                  style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 160 }}
+                >
+                  <option value="">All Leave Types</option>
+                  <option value="Annual">Annual</option>
+                  <option value="Sick">Sick</option>
+                  <option value="Casual">Casual</option>
+                  <option value="Maternity">Maternity</option>
+                  <option value="Paternity">Paternity</option>
+                  <option value="Unpaid">Unpaid</option>
+                </select>
+                <select 
+                  value={filterLeaveStatus} 
+                  onChange={(e) => { setFilterLeaveStatus(e.target.value); setCurrentPage(1); }}
+                  style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 160 }}
+                >
+                  <option value="">All Status</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </>
+            )}
+
+            <button
+              onClick={() => {
+                setFilterEmployee('');
+                setFilterShift('');
+                setFilterLeaveType('');
+                setFilterLeaveStatus('');
+                setCurrentPage(1);
+              }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: 14, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
+              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOut={(e) => e.currentTarget.style.background = '#f8fafc'}
+            >
+              <RefreshCw size={16} /> Reset
             </button>
-            <button onClick={() => setActiveTab('leave')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg text-base font-bold transition-all ${activeTab === 'leave' ? 'bg-white shadow-md text-indigo-700 ring-1 ring-slate-200/50 scale-[1.02]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                }`}>
-              <Calendar className="w-5 h-5" /> Leave
-              {totals.pendingLeaves > 0 && <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center shadow-inner ml-1">{totals.pendingLeaves}</span>}
-            </button>
+
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowExportMenu(!showExportMenu)} 
+                style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', height: 44, padding: '0 20px', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: '#6366f1', fontWeight: 600, cursor: 'pointer' }}
+              >
+                <Download size={16} /> Export
+              </button>
+              {showExportMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 150, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                    style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', borderBottom: '1px solid #e2e8f0', fontSize: 13, fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <FileText size={16} color="#ef4444" /> PDF Report
+                  </button>
+                  <button
+                    onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                    style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontSize: 13, fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <FileSpreadsheet size={16} color="#10b981" /> Excel Sheet
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -423,11 +605,13 @@ const AttendanceLeave = () => {
                       <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
                       <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Shift & Time</th>
                       <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
-                      <th className="text-right px-6 py-4 text-xs uppercase font-bold text-slate-500">Actions</th>
+                      <th className="px-6 py-4 text-xs uppercase font-bold text-slate-500">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredRows.map(r => (
+                    {paginatedRows.map(r => (
                       <tr key={r.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -452,16 +636,16 @@ const AttendanceLeave = () => {
                             {r.lop_days > 0 && <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded-lg text-xs font-medium border border-red-100">LOP {r.lop_days}d</span>}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => handleViewAttendance(r)} className="btn btn-secondary">
-                              <Eye className="w-4 h-4" />
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => handleViewAttendance(r)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(99, 102, 241, 0.2)', cursor: 'pointer' }} title="View">
+                              <Eye size={14} color="#6366f1" />
                             </button>
-                            <button onClick={() => handleEditAttendance(r)} className="btn btn-secondary">
-                              <Edit2 className="w-4 h-4" />
+                            <button onClick={() => handleEditAttendance(r)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer' }} title="Edit">
+                              <Edit2 size={14} color="#3b82f6" />
                             </button>
-                            <button onClick={() => handleDeleteAttendance(r.id)} className="btn btn-danger">
-                              <Trash2 className="w-4 h-4" />
+                            <button onClick={() => handleDeleteAttendance(r.id)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }} title="Delete">
+                              <Trash2 size={14} color="#ef4444" />
                             </button>
                           </div>
                         </td>
@@ -477,6 +661,31 @@ const AttendanceLeave = () => {
                     )}
                   </tbody>
                 </table>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                    <div style={{ fontSize: 13, color: '#64748b' }}>
+                      Showing <span style={{ fontWeight: 600, color: '#1e293b' }}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span style={{ fontWeight: 600, color: '#1e293b' }}>{Math.min(currentPage * itemsPerPage, filteredRows.length)}</span> of <span style={{ fontWeight: 600, color: '#1e293b' }}>{filteredRows.length}</span> results
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => p - 1)}
+                        style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                      >
+                        Previous
+                      </button>
+                      <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(p => p + 1)}
+                        style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -554,11 +763,13 @@ const AttendanceLeave = () => {
                       <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Leave Details</th>
                       <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Approver</th>
                       <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
-                      <th className="text-right px-6 py-4 text-xs uppercase font-bold text-slate-500">Actions</th>
+                      <th className="px-6 py-4 text-xs uppercase font-bold text-slate-500">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredLeaves.map(l => (
+                    {paginatedLeaves.map(l => (
                       <tr key={l.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -581,23 +792,23 @@ const AttendanceLeave = () => {
                         <td className="px-6 py-4">
                           <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(l.status)}`}>{l.status}</span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {l.status === 'Pending' && (
                               <div className="flex gap-1 mr-2 border-r pr-2">
-                                <button onClick={() => approveLeave(l.id)} disabled={loading} className="btn btn-success text-xs px-2 py-1 h-auto">Approve</button>
-                                <button onClick={() => rejectLeave(l.id)} disabled={loading} className="btn btn-danger text-xs px-2 py-1 h-auto">Reject</button>
+                                <button onClick={() => approveLeave(l.id)} disabled={loading} className="btn btn-success text-xs px-2 py-1 h-auto" style={{ height: 32 }}>Approve</button>
+                                <button onClick={() => rejectLeave(l.id)} disabled={loading} className="btn btn-danger text-xs px-2 py-1 h-auto" style={{ height: 32 }}>Reject</button>
                               </div>
                             )}
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => handleViewLeave(l)} className="btn btn-secondary">
-                                <Eye className="w-4 h-4" />
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => handleViewLeave(l)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(99, 102, 241, 0.2)', cursor: 'pointer' }} title="View">
+                                <Eye size={14} color="#6366f1" />
                               </button>
-                              <button onClick={() => handleEditLeave(l)} className="btn btn-secondary">
-                                <Edit2 className="w-4 h-4" />
+                              <button onClick={() => handleEditLeave(l)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer' }} title="Edit">
+                                <Edit2 size={14} color="#3b82f6" />
                               </button>
-                              <button onClick={() => handleDeleteLeave(l.id)} className="btn btn-danger">
-                                <Trash2 className="w-4 h-4" />
+                              <button onClick={() => handleDeleteLeave(l.id)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }} title="Delete">
+                                <Trash2 size={14} color="#ef4444" />
                               </button>
                             </div>
                           </div>
@@ -614,6 +825,31 @@ const AttendanceLeave = () => {
                     )}
                   </tbody>
                 </table>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                    <div style={{ fontSize: 13, color: '#64748b' }}>
+                      Showing <span style={{ fontWeight: 600, color: '#1e293b' }}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span style={{ fontWeight: 600, color: '#1e293b' }}>{Math.min(currentPage * itemsPerPage, filteredLeaves.length)}</span> of <span style={{ fontWeight: 600, color: '#1e293b' }}>{filteredLeaves.length}</span> results
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => p - 1)}
+                        style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                      >
+                        Previous
+                      </button>
+                      <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage(p => p + 1)}
+                        style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -696,96 +932,102 @@ const AttendanceLeave = () => {
                 </button>
               </div>
             </div>
-            <form onSubmit={addAttendance} style={{ padding: 24 }}>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                <select className="form-control"
-                  value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} required>
-                  <option value="">Select Employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.employee_id || emp.id}>
-                      {emp.name} ({emp.employee_id})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginTop: 16 }}>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
-                <input type="date" className="form-control"
-                  value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
-              </div>
-
-              <div className="form-row" style={{ marginTop: 16 }}>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
-                  <select className="form-control"
-                    value={form.shift} onChange={(e) => setForm({ ...form, shift: e.target.value })}>
-                    <option value="">Select Shift</option>
-                    {shifts.length > 0 ? (
-                      shifts.map(shift => (
-                        <option key={shift.id} value={shift.name}>
-                          {shift.name} ({shift.start_time} - {shift.end_time})
+            <form onSubmit={addAttendance} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+                <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Attendance Details
+                </legend>
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label>Employee *</label>
+                    <select className="form-control"
+                      value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} required>
+                      <option value="">Select Employee</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.employee_id || emp.id}>
+                          {emp.name} ({emp.employee_id})
                         </option>
-                      ))
-                    ) : (
-                      <option value="">No shifts available</option>
-                    )}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Source</label>
-                  <select className="form-control"
-                    value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
-                    <option>Manual</option><option>Biometric</option><option>GPS</option><option>System</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row" style={{ marginTop: 16 }}>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Check-In *</label>
-                  <input type="time" className="form-control"
-                    value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Check-Out *</label>
-                  <input type="time" className="form-control"
-                    value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} required />
-                </div>
-              </div>
-
-              {form.check_in && form.check_out && (
-                <div className="bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-4 space-y-2 mt-4">
-                  <div className="form-row">
-                    <div>
-                      <p className="text-xs text-slate-600 mb-1">Total Time</p>
-                      <p className="text-sm font-bold text-slate-900">{calculateHours(form.check_in, form.check_out, form.shift) + (shifts.find(s => s.name === form.shift)?.break_duration || 1)}h</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-600 mb-1">Work Hours</p>
-                      <p className="text-sm font-bold text-emerald-700">{calculateHours(form.check_in, form.check_out, form.shift)}h</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-600 mb-1">OT Hours</p>
-                      <p className="text-sm font-bold text-indigo-700">{calculateOT(form.check_in, form.check_out, form.shift)}h</p>
-                    </div>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Date *</label>
+                    <input type="date" className="form-control"
+                      value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
                   </div>
                 </div>
-              )}
 
-              <div className="form-row" style={{ marginTop: 16 }}>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Leave Days</label>
-                  <input type="number" step="0.5" min="0" className="form-control"
-                    value={form.leave_days} onChange={(e) => setForm({ ...form, leave_days: parseFloat(e.target.value) || 0 })} />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Shift</label>
+                    <select className="form-control"
+                      value={form.shift} onChange={(e) => setForm({ ...form, shift: e.target.value })}>
+                      <option value="">Select Shift</option>
+                      {shifts.length > 0 ? (
+                        shifts.map(shift => (
+                          <option key={shift.id} value={shift.name}>
+                            {shift.name} ({shift.start_time} - {shift.end_time})
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No shifts available</option>
+                      )}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Source</label>
+                    <select className="form-control"
+                      value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
+                      <option>Manual</option><option>Biometric</option><option>GPS</option><option>System</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">LOP Days</label>
-                  <input type="number" step="0.5" min="0" className="form-control"
-                    value={form.lop_days} onChange={(e) => setForm({ ...form, lop_days: parseFloat(e.target.value) || 0 })} />
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Check-In *</label>
+                    <input type="time" className="form-control"
+                      value={form.check_in} onChange={(e) => setForm({ ...form, check_in: e.target.value })} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Check-Out *</label>
+                    <input type="time" className="form-control"
+                      value={form.check_out} onChange={(e) => setForm({ ...form, check_out: e.target.value })} required />
+                  </div>
                 </div>
-              </div>
+
+                {form.check_in && form.check_out && (
+                  <div className="bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-4 space-y-2 mt-4">
+                    <div className="form-row">
+                      <div>
+                        <p className="text-xs text-slate-600 mb-1">Total Time</p>
+                        <p className="text-sm font-bold text-slate-900">{calculateHours(form.check_in, form.check_out, form.shift) + (shifts.find(s => s.name === form.shift)?.break_duration || 1)}h</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 mb-1">Work Hours</p>
+                        <p className="text-sm font-bold text-emerald-700">{calculateHours(form.check_in, form.check_out, form.shift)}h</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-600 mb-1">OT Hours</p>
+                        <p className="text-sm font-bold text-indigo-700">{calculateOT(form.check_in, form.check_out, form.shift)}h</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="form-row" style={{ marginTop: 16 }}>
+                  <div className="form-group">
+                    <label>Leave Days</label>
+                    <input type="number" step="0.5" min="0" className="form-control"
+                      value={form.leave_days} onChange={(e) => setForm({ ...form, leave_days: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label>LOP Days</label>
+                    <input type="number" step="0.5" min="0" className="form-control"
+                      value={form.lop_days} onChange={(e) => setForm({ ...form, lop_days: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                </div>
+              </fieldset>
 
             </form>
           </div>
@@ -806,57 +1048,66 @@ const AttendanceLeave = () => {
                 </button>
               </div>
             </div>
-            <form onSubmit={addLeave} style={{ padding: 24 }}>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
-                <select className="form-control"
-                  value={leaveForm.employee} onChange={(e) => setLeaveForm({ ...leaveForm, employee: e.target.value })} required>
-                  <option value="">Select Employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.employee_id || emp.id}>
-                      {emp.name} ({emp.employee_id})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row" style={{ marginTop: 16 }}>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">From Date *</label>
-                  <input type="date" className="form-control"
-                    value={leaveForm.from_date} onChange={(e) => setLeaveForm({ ...leaveForm, from_date: e.target.value })} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">To Date *</label>
-                  <input type="date" className="form-control"
-                    value={leaveForm.to_date} onChange={(e) => setLeaveForm({ ...leaveForm, to_date: e.target.value })} required />
-                </div>
-              </div>
-              <div className="form-row" style={{ marginTop: 16 }}>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type</label>
-                  <select className="form-control"
-                    value={leaveForm.leave_type} onChange={(e) => setLeaveForm({ ...leaveForm, leave_type: e.target.value })}>
-                    <option>Annual</option><option>Sick</option><option>Casual</option><option>Maternity</option><option>Paternity</option><option>Compensatory</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Total Days</label>
-                  <div className="form-control">
-                    {leaveForm.from_date && leaveForm.to_date ? (
-                      Math.ceil((new Date(leaveForm.to_date) - new Date(leaveForm.from_date)) / (1000 * 60 * 60 * 24)) + 1
-                    ) : (
-                      '—'
-                    )} 
-                    <span className="text-xs text-slate-500 ml-2">day(s)</span>
+            <form onSubmit={addLeave} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+                <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Leave Request
+                </legend>
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label>Employee *</label>
+                    <select className="form-control"
+                      value={leaveForm.employee} onChange={(e) => setLeaveForm({ ...leaveForm, employee: e.target.value })} required>
+                      <option value="">Select Employee</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.employee_id || emp.id}>
+                          {emp.name} ({emp.employee_id})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>From Date *</label>
+                    <input type="date" className="form-control"
+                      value={leaveForm.from_date} onChange={(e) => setLeaveForm({ ...leaveForm, from_date: e.target.value })} required />
+                  </div>
+                  <div className="form-group">
+                    <label>To Date *</label>
+                    <input type="date" className="form-control"
+                      value={leaveForm.to_date} onChange={(e) => setLeaveForm({ ...leaveForm, to_date: e.target.value })} required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Leave Type</label>
+                    <select className="form-control"
+                      value={leaveForm.leave_type} onChange={(e) => setLeaveForm({ ...leaveForm, leave_type: e.target.value })}>
+                      <option>Annual</option><option>Sick</option><option>Casual</option><option>Maternity</option><option>Paternity</option><option>Compensatory</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Total Days</label>
+                    <div className="form-control" style={{ background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center' }}>
+                      {leaveForm.from_date && leaveForm.to_date ? (
+                        Math.ceil((new Date(leaveForm.to_date) - new Date(leaveForm.from_date)) / (1000 * 60 * 60 * 24)) + 1
+                      ) : (
+                        '—'
+                      )} 
+                      <span className="text-xs text-slate-500 ml-2">day(s)</span>
+                    </div>
+                  </div>
+                </div>
 
-              <div style={{ marginTop: 16 }}>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Approver</label>
-                <input className="form-control" placeholder="Manager name"
-                  value={leaveForm.approver} onChange={(e) => setLeaveForm({ ...leaveForm, approver: e.target.value })} />
-              </div>
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label>Approver</label>
+                    <input className="form-control" placeholder="Manager name"
+                      value={leaveForm.approver} onChange={(e) => setLeaveForm({ ...leaveForm, approver: e.target.value })} />
+                  </div>
+                </div>
+              </fieldset>
 
             </form>
           </div>

@@ -171,96 +171,106 @@ export default function LoomRegistration() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Loom Name / ID *</label>
-                <input type="text" className="form-control" name="loom_name" value={formData.loom_name} onChange={handleInputChange} required placeholder="e.g. LM-001" />
+          <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Basic Identification
+              </legend>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Loom Name / ID *</label>
+                  <input type="text" className="form-control" name="loom_name" value={formData.loom_name} onChange={handleInputChange} required placeholder="e.g. LM-001" />
+                </div>
+                <div className="form-group">
+                  <label>Loom Type</label>
+                  <select className="form-control" name="loom_type" value={formData.loom_type} onChange={handleInputChange}>
+                    <option value="Rapier">Rapier</option>
+                    <option value="Air Jet">Air Jet</option>
+                    <option value="Water Jet">Water Jet</option>
+                    <option value="Shuttle">Shuttle</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Manufacturer</label>
+                  <input type="text" className="form-control" name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} placeholder="e.g. Toyota" />
+                </div>
               </div>
-              <div className="form-group">
-                <label>Loom Type</label>
-                <select className="form-control" name="loom_type" value={formData.loom_type} onChange={handleInputChange}>
-                  <option value="Rapier">Rapier</option>
-                  <option value="Air Jet">Air Jet</option>
-                  <option value="Water Jet">Water Jet</option>
-                  <option value="Shuttle">Shuttle</option>
-                </select>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Model Number</label>
+                  <input type="text" className="form-control" name="model_number" value={formData.model_number} onChange={handleInputChange} placeholder="e.g. JAT910" />
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Location / Section</label>
+                  <input type="text" className="form-control" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g. Shed A" />
+                </div>
               </div>
-            </div>
+            </fieldset>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Manufacturer</label>
-                <input type="text" className="form-control" name="manufacturer" value={formData.manufacturer} onChange={handleInputChange} placeholder="e.g. Toyota" />
+            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Production Parameters
+              </legend>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Max Capacity (m/day) *</label>
+                  <input type="number" className="form-control" name="capacity_per_day" value={formData.capacity_per_day} onChange={handleInputChange} required placeholder="e.g. 500" />
+                </div>
+                <div className="form-group">
+                  <label>Speed (m/hour) *</label>
+                  <input type="number" className="form-control" name="running_speed_per_hr" value={formData.running_speed_per_hr} onChange={handleInputChange} required placeholder="e.g. 25" />
+                </div>
+                <div className="form-group">
+                  <label>Efficiency (%) *</label>
+                  <input type="number" className="form-control" name="efficiency_pct" value={formData.efficiency_pct} onChange={handleInputChange} required max="100" min="0" />
+                </div>
               </div>
-              <div className="form-group">
-                <label>Model Number</label>
-                <input type="text" className="form-control" name="model_number" value={formData.model_number} onChange={handleInputChange} placeholder="e.g. JAT910" />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Reed Width (cm)</label>
+                  <input type="number" className="form-control" name="reed_width" value={formData.reed_width} onChange={handleInputChange} placeholder="e.g. 190" />
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Total Ends</label>
+                  <input type="number" className="form-control" name="total_ends" value={formData.total_ends} onChange={handleInputChange} placeholder="e.g. 4800" />
+                </div>
               </div>
-            </div>
+            </fieldset>
 
-            <div className="form-group">
-              <label>Location / Section</label>
-              <input type="text" className="form-control" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g. Shed A" />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Max Capacity (m/day) *</label>
-                <input type="number" className="form-control" name="capacity_per_day" value={formData.capacity_per_day} onChange={handleInputChange} required placeholder="e.g. 500" />
+            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Maintenance & Status
+              </legend>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Installation Date</label>
+                  <input type="date" className="form-control" name="installation_date" value={formData.installation_date} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Last Service Date</label>
+                  <input type="date" className="form-control" name="last_service_date" value={formData.last_service_date} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Next Service Date</label>
+                  <input type="date" className="form-control" name="next_service_date" value={formData.next_service_date} onChange={handleInputChange} />
+                </div>
               </div>
-              <div className="form-group">
-                <label>Speed (m/hour) *</label>
-                <input type="number" className="form-control" name="running_speed_per_hr" value={formData.running_speed_per_hr} onChange={handleInputChange} required placeholder="e.g. 25" />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Current Status</label>
+                  <select className="form-control" name="status" value={formData.status} onChange={handleInputChange}>
+                    <option value="Running">Running</option>
+                    <option value="Idle">Idle</option>
+                    <option value="Breakdown">Breakdown</option>
+                    <option value="Maintenance">Maintenance</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Remarks</label>
+                  <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="Additional notes..." rows="2" />
+                </div>
               </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Efficiency (%) *</label>
-                <input type="number" className="form-control" name="efficiency_pct" value={formData.efficiency_pct} onChange={handleInputChange} required max="100" min="0" />
-              </div>
-              <div className="form-group">
-                <label>Reed Width (cm)</label>
-                <input type="number" className="form-control" name="reed_width" value={formData.reed_width} onChange={handleInputChange} placeholder="e.g. 190" />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Total Ends</label>
-              <input type="number" className="form-control" name="total_ends" value={formData.total_ends} onChange={handleInputChange} placeholder="e.g. 4800" />
-            </div>
-
-            <div className="form-group">
-              <label>Installation Date</label>
-              <input type="date" className="form-control" name="installation_date" value={formData.installation_date} onChange={handleInputChange} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Last Service Date</label>
-                <input type="date" className="form-control" name="last_service_date" value={formData.last_service_date} onChange={handleInputChange} />
-              </div>
-              <div className="form-group">
-                <label>Next Service Date</label>
-                <input type="date" className="form-control" name="next_service_date" value={formData.next_service_date} onChange={handleInputChange} />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Current Status</label>
-              <select className="form-control" name="status" value={formData.status} onChange={handleInputChange}>
-                <option value="Running">Running</option>
-                <option value="Idle">Idle</option>
-                <option value="Breakdown">Breakdown</option>
-                <option value="Maintenance">Maintenance</option>
-              </select>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 24 }}>
-              <label>Remarks</label>
-              <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleInputChange} placeholder="Additional notes..." rows="3" />
-            </div>
+            </fieldset>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
               <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>

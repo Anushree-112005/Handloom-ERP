@@ -1073,6 +1073,7 @@ async def driver_performance_report(
     vehicle_id: Optional[int] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    view_type: Optional[str] = "driver",
     db: AsyncSession = Depends(get_db)
 ):
     # 1. Fetch drivers and vehicles
@@ -1125,9 +1126,9 @@ async def driver_performance_report(
     
     # Calculate driver stats
     for d in drivers:
-        d_trips = [t for t in filtered_trips if t.driver_id == d.id]
-        if not d_trips and not driver_id:
+        if view_type != "driver":
             continue
+        d_trips = [t for t in filtered_trips if t.driver_id == d.id]
         
         driver_vehicle_ids = list(set([t.vehicle_id for t in d_trips if t.vehicle_id]))
         vehicle_nums = [vehicle_map[vid].vehicle_number for vid in driver_vehicle_ids if vid in vehicle_map]
@@ -1201,9 +1202,9 @@ async def driver_performance_report(
 
     # Add vehicle details
     for v in vehicles:
-        v_trips = [t for t in filtered_trips if t.vehicle_id == v.id]
-        if not v_trips and not vehicle_id:
+        if view_type != "vehicle":
             continue
+        v_trips = [t for t in filtered_trips if t.vehicle_id == v.id]
         
         driver_names = [driver_map[t.driver_id].driver_name for t in v_trips if t.driver_id and t.driver_id in driver_map]
         driver_name_str = ", ".join(list(set(driver_names))) if driver_names else "None"

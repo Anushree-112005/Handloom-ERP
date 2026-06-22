@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Plus, Search, X, Save, Edit2, Trash2, Users, TrendingUp, ChevronUp, ChevronDown, Eye, Building2, Award, DollarSign, FileText, Filter, LayoutList, LayoutGrid } from 'lucide-react';
+import { Briefcase, Plus, Search, X, Save, Edit2, Trash2, Users, TrendingUp, ChevronUp, ChevronDown, Eye, Building2, Award, DollarSign, FileText, Filter, LayoutList, LayoutGrid, CheckCircle2, XCircle, ShieldCheck, ShieldAlert, RefreshCw, Calendar, Download, FileSpreadsheet, ArrowUpDown } from 'lucide-react';
 import { fetchDesignations, createDesignation, updateDesignation, deleteDesignation, fetchDepartments } from '../../../services/hrService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 export default function Designations() {
   const [designations, setDesignations] = useState([]);
@@ -12,6 +15,12 @@ export default function Designations() {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All Status');
+  const [dateFilter, setDateFilter] = useState('All');
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState('list');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -22,6 +31,9 @@ export default function Designations() {
     department: '',
     min_salary: '',
     max_salary: '',
+    experience: '',
+    skill_category: '',
+    status: 'Active',
     description: ''
   };
   const [form, setForm] = useState(initialForm);
@@ -87,12 +99,15 @@ export default function Designations() {
 
   const handleEdit = (des) => {
     setForm({
-      title: des.title,
-      code: des.code,
-      level: des.level,
+      title: des.title || '',
+      code: des.code || '',
+      level: des.grade || '',
       department: des.department || '',
       min_salary: des.min_salary || '',
       max_salary: des.max_salary || '',
+      experience: des.experience || '',
+      skill_category: des.skill_category || '',
+      status: des.status || 'Active',
       description: des.description || ''
     });
     setEditingId(des.id);
@@ -116,21 +131,65 @@ export default function Designations() {
   };
 
   const departments = [...new Set(designations.map(d => d.department).filter(Boolean))];
+  const levels = [...new Set(designations.map(d => d.grade).filter(Boolean))];
 
   const filteredDesignations = designations.filter(des => {
     const matchesSearch = !searchTerm || 
       des.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      des.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       des.department?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDept = !filterDepartment || des.department === filterDepartment;
-    return matchesSearch && matchesDept;
+    const matchesLevel = !filterLevel || des.grade === filterLevel;
+    const matchesStatus = filterStatus === 'All Status' || des.status === filterStatus || (!des.status && filterStatus === 'Active');
+    const matchesDate = dateFilter === 'All' || (dateFilter === 'ThisMonth' && des.created_at && new Date(des.created_at).getMonth() === new Date().getMonth() && new Date(des.created_at).getFullYear() === new Date().getFullYear());
+    return matchesSearch && matchesDept && matchesLevel && matchesStatus && matchesDate;
   }).sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+  const totalPages = Math.ceil(filteredDesignations.length / itemsPerPage);
+  const paginatedDesignations = filteredDesignations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const stats = {
     total: designations.length,
-    totalEmployees: designations.reduce((sum, d) => sum + (d.employee_count || 0), 0),
-    avgSalary: designations.length > 0 
-      ? Math.round(designations.reduce((sum, d) => sum + (((d.min_salary || 0) + (d.max_salary || 0)) / 2), 0) / designations.length)
-      : 0
+    active: designations.filter(d => d.status === 'Active' || !d.status).length,
+    inactive: designations.filter(d => d.status === 'Inactive').length,
+    depts: new Set(designations.map(d => d.department).filter(Boolean)).size,
+    newThisMonth: designations.filter(d => d.created_at && new Date(d.created_at).getMonth() === new Date().getMonth() && new Date(d.created_at).getFullYear() === new Date().getFullYear()).length
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Designations Report", 14, 15);
+    const tableColumn = ["#", "Code", "Name", "Department", "Level", "Status"];
+    const tableRows = [];
+
+    filteredDesignations.forEach((des, index) => {
+      tableRows.push([
+        index + 1,
+        des.code || '-',
+        des.title,
+        des.department || '-',
+        des.grade || '-',
+        des.status || 'Active'
+      ]);
+    });
+
+    autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
+    doc.save(`Designations_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredDesignations.map((des, index) => ({
+      "#": index + 1,
+      "Code": des.code || '-',
+      "Name": des.title,
+      "Department": des.department || '-',
+      "Level": des.grade || '-',
+      "Status": des.status || 'Active'
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Designations");
+    XLSX.writeFile(workbook, `Designations_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const formatSalary = (amount) => {
@@ -184,56 +243,192 @@ export default function Designations() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card" style={{ padding: 20 }}>
-              <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
+            <div 
+              className="card stat-card" 
+              onClick={() => { setFilterStatus('All Status'); setDateFilter('All'); setCurrentPage(1); }}
+              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: filterStatus === 'All Status' && dateFilter === 'All' ? '2px solid #6366f1' : '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <div className="stat-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Briefcase size={24} />
               </div>
               <div className="stat-details">
-                <h3>Designations</h3>
-                <div className="value">{stats.total}</div>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>Total Designations</h3>
+                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.total}</div>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>All Designations</div>
               </div>
             </div>
-            <div className="card stat-card" style={{ padding: 20 }}>
-              <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
-                <TrendingUp size={24} />
+            
+            <div 
+              className="card stat-card" 
+              onClick={() => { setFilterStatus('Active'); setDateFilter('All'); setCurrentPage(1); }}
+              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: filterStatus === 'Active' && dateFilter === 'All' ? '2px solid #10B981' : '1px solid rgba(16,185,129,0.2)', boxShadow: '0 4px 12px rgba(16,185,129,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <ShieldCheck size={24} />
               </div>
               <div className="stat-details">
-                <h3>Avg Salary</h3>
-                <div className="value">{formatSalary(stats.avgSalary)}</div>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>Active Designations</h3>
+                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.active}</div>
+                <div style={{ fontSize: 12, color: '#10B981', marginTop: 4, fontWeight: 500 }}>Currently Active</div>
               </div>
+            </div>
+
+            <div 
+              className="card stat-card" 
+              onClick={() => { setFilterStatus('Inactive'); setDateFilter('All'); setCurrentPage(1); }}
+              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: filterStatus === 'Inactive' && dateFilter === 'All' ? '2px solid #ef4444' : '1px solid rgba(239,68,68,0.2)', boxShadow: '0 4px 12px rgba(239,68,68,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <ShieldAlert size={24} />
+              </div>
+              <div className="stat-details">
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>Inactive Designations</h3>
+                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.inactive}</div>
+                <div style={{ fontSize: 12, color: '#ef4444', marginTop: 4, fontWeight: 500 }}>Currently Inactive</div>
+              </div>
+            </div>
+
+            <div 
+              className="card stat-card" 
+              onClick={() => { setDateFilter('ThisMonth'); setFilterStatus('All Status'); setCurrentPage(1); }}
+              style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, border: dateFilter === 'ThisMonth' ? '2px solid #8b5cf6' : '1px solid rgba(139,92,246,0.2)', boxShadow: '0 4px 12px rgba(139,92,246,0.05)', borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', width: 48, height: 48, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(139,92,246,0.2)' }}>
+                <Calendar size={24} />
+              </div>
+              <div className="stat-details">
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e293b', margin: '0 0 4px 0' }}>New This Month</h3>
+                <div className="value" style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{stats.newThisMonth}</div>
+                <div style={{ fontSize: 12, color: '#8b5cf6', marginTop: 4 }}>Added This Month</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters Area */}
+          <div style={{ display: 'flex', gap: 16, marginBottom: 24, alignItems: 'center' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                placeholder="Search designation..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="form-control"
+                style={{ margin: 0, paddingLeft: 44, width: '100%', height: 44, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+              />
+            </div>
+            
+            <select
+              value={filterDepartment}
+              onChange={(e) => { setFilterDepartment(e.target.value); setCurrentPage(1); }}
+              className="form-control"
+              style={{ width: 180, margin: 0, height: 44, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+            >
+              <option value="">All Departments</option>
+              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            <select
+              value={filterLevel}
+              onChange={(e) => { setFilterLevel(e.target.value); setCurrentPage(1); }}
+              className="form-control"
+              style={{ width: 150, margin: 0, height: 44, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+            >
+              <option value="">All Levels</option>
+              {levels.map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+              className="form-control"
+              style={{ width: 150, margin: 0, height: 44, backgroundColor: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+            >
+              <option value="All Status">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setShowExportMenu(!showExportMenu)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', height: 44, padding: '0 20px', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: '#6366f1', fontWeight: 600 }}>
+                <Download size={16} /> Export
+              </button>
+              {showExportMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 150, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                    style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', borderBottom: '1px solid #e2e8f0', fontSize: 13, fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <FileText size={16} color="#ef4444" /> PDF Report
+                  </button>
+                  <button
+                    onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                    style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontSize: 13, fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <FileSpreadsheet size={16} color="#10b981" /> Excel Sheet
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* LIST VIEW - Table */}
           {viewMode === 'list' && (
-            <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
-              <table className="data-table">
+            <div className="card" style={{ padding: 0, overflowX: 'auto', borderRadius: 12 }}>
+              <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>
-                    <th>Designation</th>
-                    <th>Department</th>
-                    <th>Salary Range</th>
-                    <th>Actions</th>
+                  <tr style={{ backgroundColor: 'rgba(99, 102, 241, 0.04)', borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>#</th>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>CODE <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: 4, verticalAlign: 'middle' }} /></th>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>DESIGNATION NAME <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: 4, verticalAlign: 'middle' }} /></th>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>DEPARTMENT <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: 4, verticalAlign: 'middle' }} /></th>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>LEVEL <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: 4, verticalAlign: 'middle' }} /></th>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', textAlign: 'left' }}>STATUS <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: 4, verticalAlign: 'middle' }} /></th>
+                    <th style={{ padding: '16px 20px', color: '#6366f1', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>ACTIONS</div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredDesignations.length === 0 ? (
-                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No designations found</td></tr>
-                  ) : filteredDesignations.map((des, idx) => (
-                    <tr key={des.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{des.title}</td>
-                      <td>{des.department || '—'}</td>
-                      <td>{formatSalary(des.min_salary)} - {formatSalary(des.max_salary)}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => handleView(des)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="View">
-                            <Eye size={14} color="var(--primary)" />
+                  {paginatedDesignations.length === 0 ? (
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>No designations found</td></tr>
+                  ) : paginatedDesignations.map((des, idx) => (
+                    <tr key={des.id} style={{ transition: 'background-color 0.2s', borderBottom: '1px solid #f1f5f9' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.02)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                      <td style={{ padding: '16px 20px', fontSize: 13, color: '#475569', fontWeight: 500 }}>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                      <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{des.code || '—'}</td>
+                      <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{des.title}</td>
+                      <td style={{ padding: '16px 20px' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+                          {des.department || '—'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, backgroundColor: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' }}>
+                          {des.grade || '—'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: des.status === 'Active' || !des.status ? '#10B981' : '#ef4444' }}></span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: des.status === 'Active' || !des.status ? '#10B981' : '#ef4444' }}>
+                            {des.status || 'Active'}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <button onClick={() => handleView(des)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(99, 102, 241, 0.2)', cursor: 'pointer' }} title="View">
+                            <Eye size={14} color="#6366f1" />
                           </button>
-                          <button onClick={() => handleEdit(des)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="Edit">
-                            <Edit2 size={14} />
+                          <button onClick={() => handleEdit(des)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer' }} title="Edit">
+                            <Edit2 size={14} color="#3b82f6" />
                           </button>
-                          <button onClick={() => handleDelete(des.id)} className="btn btn-secondary" style={{ padding: '4px 8px' }} title="Delete">
+                          <button onClick={() => handleDelete(des.id)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }} title="Delete">
                             <Trash2 size={14} color="#ef4444" />
                           </button>
                         </div>
@@ -242,6 +437,33 @@ export default function Designations() {
                   ))}
                 </tbody>
               </table>
+              
+              {/* Pagination Footer */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+                <span style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>Showing {filteredDesignations.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredDesignations.length)} of {filteredDesignations.length} entries</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                   <select value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="form-control" style={{ margin: 0, padding: '6px 32px 6px 12px', fontSize: 13, width: 130, height: 36, borderRadius: 8, border: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
+                     <option value={10}>10 per page</option>
+                     <option value={20}>20 per page</option>
+                     <option value={50}>50 per page</option>
+                   </select>
+                   <div style={{ display: 'flex', gap: 4 }}>
+                     <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="btn btn-secondary" style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #e2e8f0', backgroundColor: '#fff', color: currentPage === 1 ? '#cbd5e1' : '#64748b', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}>&laquo;</button>
+                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                       <button
+                         key={page}
+                         onClick={() => setCurrentPage(page)}
+                         className={currentPage === page ? 'btn btn-primary' : 'btn btn-secondary'}
+                         style={{ padding: '6px 12px', borderRadius: 8, border: currentPage === page ? 'none' : '1px solid #e2e8f0', backgroundColor: currentPage === page ? '#6366f1' : '#fff', color: currentPage === page ? '#fff' : '#64748b', cursor: 'pointer' }}
+                       >
+                         {page}
+                       </button>
+                     ))}
+                     <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="btn btn-secondary" style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #e2e8f0', backgroundColor: '#fff', color: currentPage === totalPages || totalPages === 0 ? '#cbd5e1' : '#64748b', cursor: currentPage === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer' }}>&raquo;</button>
+                   </div>
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -304,67 +526,78 @@ export default function Designations() {
                 </button>
               </div>
             </div>
-            <div style={{ padding: 24, background: '#fff' }}>
-              <div className="form-row">
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Job Title *</label>
-                  <input
-                    type="text"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="form-control"
-                    placeholder="Senior Software Engineer"
-                  />
+            <form style={{ padding: 24, background: '#fff', display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+                <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Designation Information
+                </legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Designation Code <span style={{color: 'red'}}>*</span></label>
+                    <input type="text" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="form-control" placeholder="DSG-001" />
+                  </div>
+                  <div className="form-group">
+                    <label>Designation Name <span style={{color: 'red'}}>*</span></label>
+                    <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="form-control" placeholder="Senior Software Engineer" />
+                  </div>
                 </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Department</label>
-                  <select
-                    value={form.department || ''}
-                    onChange={(e) => setForm({ ...form, department: e.target.value })}
-                    className="form-control"
-                  >
-                    <option value="">Select Department</option>
-                    {deptList.map(dept => (
-                      <option key={dept.id} value={dept.name}>{dept.name}</option>
-                    ))}
-                  </select>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Department <span style={{color: 'red'}}>*</span></label>
+                    <select value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="form-control">
+                      <option value="">Select Department</option>
+                      {deptList.map(dept => (
+                        <option key={dept.id} value={dept.name}>{dept.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Grade / Level <span style={{color: 'red'}}>*</span></label>
+                    <input type="text" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} className="form-control" placeholder="L4" />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                <div className="form-group">
-                  <label>Min Salary (₹)</label>
-                  <input
-                    type="number"
-                    value={form.min_salary}
-                    onChange={(e) => setForm({ ...form, min_salary: parseInt(e.target.value) || '' })}
-                    className="form-control"
-                    placeholder="800000"
-                  />
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Min Salary</label>
+                    <input type="number" value={form.min_salary} onChange={(e) => setForm({ ...form, min_salary: parseInt(e.target.value) || '' })} className="form-control" placeholder="800000" />
+                  </div>
+                  <div className="form-group">
+                    <label>Max Salary</label>
+                    <input type="number" value={form.max_salary} onChange={(e) => setForm({ ...form, max_salary: parseInt(e.target.value) || '' })} className="form-control" placeholder="1500000" />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Max Salary (₹)</label>
-                  <input
-                    type="number"
-                    value={form.max_salary}
-                    onChange={(e) => setForm({ ...form, max_salary: parseInt(e.target.value) || '' })}
-                    className="form-control"
-                    placeholder="1500000"
-                  />
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Experience Required</label>
+                    <input type="text" value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })} className="form-control" placeholder="5+ Years" />
+                  </div>
+                  <div className="form-group">
+                    <label>Skill Category</label>
+                    <input type="text" value={form.skill_category} onChange={(e) => setForm({ ...form, skill_category: e.target.value })} className="form-control" placeholder="Technical" />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                <label>Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={2}
-                  className="form-control"
-                  placeholder="Job description and responsibilities..."
-                />
-              </div>
-            </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="form-control">
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Description</label>
+                    <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="form-control" placeholder="Job description and responsibilities..." />
+                  </div>
+                </div>
+              </fieldset>
+            </form>
           </div>
         </div>
       )}
@@ -372,18 +605,11 @@ export default function Designations() {
       {/* View Inline */}
       {showViewModal && viewingDesignation && (
         <div className="flex-1 overflow-auto bg-slate-50/50 p-6">
-          <div className="card animate-fade">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800">{viewingDesignation.title}</h2>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setShowViewModal(false)} className="btn btn-secondary">
+          <div className="card animate-fade" style={{ padding: 0 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>View Designation</h2>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn btn-secondary" onClick={() => setShowViewModal(false)}>
                   <X size={16} /> Close
                 </button>
                 <button
@@ -393,51 +619,75 @@ export default function Designations() {
                   }}
                   className="btn btn-primary"
                 >
-                  <Edit2 size={16} /> Edit Designation
+                  <Edit2 size={16} /> Edit
                 </button>
               </div>
             </div>
-
-            <div className="p-6 space-y-6">
-              {/* Stats Row */}
-              <div className="form-row">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div style={{ background: '#fff', padding: 8, borderRadius: 8 }}>
-                      <DollarSign className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-green-900">
-                        {formatSalary(viewingDesignation.min_salary)} - {formatSalary(viewingDesignation.max_salary)}
-                      </p>
-                      <p className="text-xs text-green-600">Salary Range</p>
-                    </div>
+            
+            <form style={{ padding: 24, background: '#fff', display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+                <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Designation Information
+                </legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Designation Code</label>
+                    <input type="text" value={viewingDesignation.code || ''} disabled className="form-control" />
+                  </div>
+                  <div className="form-group">
+                    <label>Designation Name</label>
+                    <input type="text" value={viewingDesignation.title || ''} disabled className="form-control" />
                   </div>
                 </div>
-              </div>
 
-              {/* Details Grid */}
-              <div className="form-row">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs">
-                    <Building2 className="w-4 h-4" />
-                    <span>Department</span>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Department</label>
+                    <input type="text" value={viewingDesignation.department || ''} disabled className="form-control" />
                   </div>
-                  <p className="text-slate-900 font-medium pl-6">{viewingDesignation.department || 'Not Assigned'}</p>
+                  <div className="form-group">
+                    <label>Grade / Level</label>
+                    <input type="text" value={viewingDesignation.grade || ''} disabled className="form-control" />
+                  </div>
                 </div>
-              </div>
 
-              {/* Description */}
-              {viewingDesignation.description && (
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 mt-6">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs mb-2">
-                    <FileText className="w-4 h-4" />
-                    <span>Description</span>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Min Salary</label>
+                    <input type="number" value={viewingDesignation.min_salary || ''} disabled className="form-control" />
                   </div>
-                  <p className="text-slate-700 text-sm leading-relaxed pl-6">{viewingDesignation.description}</p>
+                  <div className="form-group">
+                    <label>Max Salary</label>
+                    <input type="number" value={viewingDesignation.max_salary || ''} disabled className="form-control" />
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Experience Required</label>
+                    <input type="text" value={viewingDesignation.experience || ''} disabled className="form-control" />
+                  </div>
+                  <div className="form-group">
+                    <label>Skill Category</label>
+                    <input type="text" value={viewingDesignation.skill_category || ''} disabled className="form-control" />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Status</label>
+                    <input type="text" value={viewingDesignation.status || ''} disabled className="form-control" />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>Description</label>
+                    <textarea value={viewingDesignation.description || ''} disabled rows={2} className="form-control" />
+                  </div>
+                </div>
+              </fieldset>
+            </form>
           </div>
         </div>
       )}
