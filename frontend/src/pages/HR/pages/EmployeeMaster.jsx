@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEmployees, addEmployee, updateEmployee, deleteEmployee, searchEmployeesByPrefix, fetchDepartments, fetchDesignations, fetchShifts, getEmployeeById } from '../../../services/hrService';
-import { Users, Plus, Search, Edit2, Trash2, X, Save, Mail, Phone, Building, User, MapPin, Briefcase, CreditCard, FileText, ChevronRight, Eye, ExternalLink, LayoutList, LayoutGrid, Filter, IndianRupee } from 'lucide-react';
+import { Users, Plus, Search, Edit2, Trash2, X, Save, Mail, Phone, Building, User, MapPin, Briefcase, CreditCard, FileText, ChevronRight, Eye, ExternalLink, LayoutList, LayoutGrid, Filter, IndianRupee, Download, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 // Helper to extract error message from API response
 const getErrorMessage = (err, defaultMsg = 'An error occurred') => {
@@ -63,6 +66,10 @@ const EmployeeMaster = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [departmentFilter, setDepartmentFilter] = useState('All');
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState('All');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Load employees from backend
 
@@ -284,6 +291,45 @@ const EmployeeMaster = () => {
     { id: 'documents', label: 'Docs', icon: FileText },
     { id: 'salary', label: 'Salary', icon: IndianRupee },
   ];
+
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const paginatedEmployees = filteredEmployees.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Employees Report", 14, 15);
+    const tableColumn = ["#", "Emp ID", "Name", "Department", "Designation", "Status"];
+    const tableRows = [];
+
+    filteredEmployees.forEach((emp, index) => {
+      tableRows.push([
+        index + 1,
+        emp.employee_id || '-',
+        emp.name,
+        emp.department || '-',
+        emp.designation || '-',
+        emp.employment_status || 'Active'
+      ]);
+    });
+
+    autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
+    doc.save(`Employees_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredEmployees.map((emp, index) => ({
+      "#": index + 1,
+      "Emp ID": emp.employee_id || '-',
+      "Name": emp.name,
+      "Department": emp.department || '-',
+      "Designation": emp.designation || '-',
+      "Status": emp.employment_status || 'Active'
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Employees");
+    XLSX.writeFile(workbook, `Employees_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
 
   const renderBasicSection = () => (
     <div className="space-y-4">
@@ -836,20 +882,90 @@ const EmployeeMaster = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="card" style={{ padding: '12px 24px', display: 'flex', gap: 24, alignItems: 'center', marginBottom: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search by ID, Name or Email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: 40, width: '100%' }}
-          />
+      {/* Toolbar */}
+      {!showForm && (
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24, padding: '16px', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+            <input 
+              type="text" 
+              placeholder="Search by ID, Name or Email..." 
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              style={{ width: '100%', padding: '10px 16px 10px 44px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none', height: 44 }} 
+            />
+          </div>
+          
+          <div style={{ display: 'flex', gap: 12 }}>
+            <select 
+              value={departmentFilter} 
+              onChange={(e) => { setDepartmentFilter(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 160 }}
+            >
+              <option value="All">All Departments</option>
+              {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            <select 
+              value={statusFilter} 
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 160 }}
+            >
+              <option value="All">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Probation">Probation</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Notice Period">Notice Period</option>
+              <option value="Terminated">Terminated</option>
+              <option value="Resigned">Resigned</option>
+            </select>
+
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setDepartmentFilter('All');
+                setStatusFilter('All');
+                setEmploymentTypeFilter('All');
+                setCurrentPage(1);
+              }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: 14, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
+              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOut={(e) => e.currentTarget.style.background = '#f8fafc'}
+            >
+              <RefreshCw size={16} /> Reset
+            </button>
+
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowExportMenu(!showExportMenu)} 
+                style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', height: 44, padding: '0 20px', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: '#6366f1', fontWeight: 600, cursor: 'pointer' }}
+              >
+                <Download size={16} /> Export
+              </button>
+              {showExportMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 150, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                    style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', borderBottom: '1px solid #e2e8f0', fontSize: 13, fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <FileText size={16} color="#ef4444" /> PDF Report
+                  </button>
+                  <button
+                    onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                    style={{ width: '100%', padding: '12px 16px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontSize: 13, fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    <FileSpreadsheet size={16} color="#10b981" /> Excel Sheet
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* DATA AREA */}
       <div>
@@ -868,27 +984,29 @@ const EmployeeMaster = () => {
                 <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Department</th>
                 <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Designation</th>
                 <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Status</th>
-                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>ACTIONS</div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredEmployees.length === 0 ? (
+              {paginatedEmployees.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                     No employees found matching criteria.
                   </td>
                 </tr>
               ) : (
-                filteredEmployees.map((emp) => (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                paginatedEmployees.map((emp) => (
+                  <tr key={emp.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '16px 24px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 600, fontSize: 14 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontWeight: 600, fontSize: 14, border: '1px solid #e2e8f0' }}>
                           {emp.name?.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div 
-                            style={{ fontWeight: 600, color: 'var(--primary)', cursor: 'pointer' }}
+                            style={{ fontWeight: 600, color: '#1e293b', cursor: 'pointer' }}
                             onClick={() => navigate(`/hr/employees/${emp.id}`)}
                           >
                             {emp.name}
@@ -900,28 +1018,21 @@ const EmployeeMaster = () => {
                     <td style={{ padding: '16px 24px', color: 'var(--text-primary)' }}>{emp.department || '—'}</td>
                     <td style={{ padding: '16px 24px', color: 'var(--text-primary)' }}>{emp.designation || '—'}</td>
                     <td style={{ padding: '16px 24px' }}>
-                      <span style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '4px 8px',
-                        borderRadius: 4,
-                        background: emp.employment_status === 'Active' || !emp.employment_status ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-                        color: emp.employment_status === 'Active' || !emp.employment_status ? '#10b981' : '#f59e0b',
-                        border: `1px solid ${emp.employment_status === 'Active' || !emp.employment_status ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
-                      }}>
-                        {emp.employment_status || 'Active'}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: emp.employment_status === 'Active' || !emp.employment_status ? '#10b981' : '#f59e0b' }}></span>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: emp.employment_status === 'Active' || !emp.employment_status ? '#10b981' : '#f59e0b' }}>{emp.employment_status || 'Active'}</span>
+                      </div>
                     </td>
                     <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                        <button onClick={() => navigate(`/hr/employees/${emp.id}`)} className="btn btn-secondary" style={{ padding: '6px 10px' }} title="View Profile">
-                          <Eye size={14} />
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => navigate(`/hr/employees/${emp.id}`)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(99, 102, 241, 0.2)', cursor: 'pointer' }} title="View Profile">
+                          <Eye size={14} color="#6366f1" />
                         </button>
-                        <button onClick={() => handleEdit(emp)} className="btn btn-secondary" style={{ padding: '6px 10px' }} title="Edit">
-                          <Edit2 size={14} />
+                        <button onClick={() => handleEdit(emp)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer' }} title="Edit">
+                          <Edit2 size={14} color="#3b82f6" />
                         </button>
-                        <button onClick={() => handleDelete(emp.id)} className="btn btn-secondary" style={{ padding: '6px 10px', color: '#ef4444' }} title="Delete">
-                          <Trash2 size={14} />
+                        <button onClick={() => handleDelete(emp.id)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }} title="Delete">
+                          <Trash2 size={14} color="#ef4444" />
                         </button>
                       </div>
                     </td>
@@ -930,6 +1041,31 @@ const EmployeeMaster = () => {
               )}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {!showForm && totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+              <div style={{ fontSize: 13, color: '#64748b' }}>
+                Showing <span style={{ fontWeight: 600, color: '#1e293b' }}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span style={{ fontWeight: 600, color: '#1e293b' }}>{Math.min(currentPage * itemsPerPage, filteredEmployees.length)}</span> of <span style={{ fontWeight: 600, color: '#1e293b' }}>{filteredEmployees.length}</span> results
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

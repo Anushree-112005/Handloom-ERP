@@ -1258,7 +1258,9 @@ export default function HRReports() {
                       </div>
                     </th>
                   ))}
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                  </th>
                 </tr>
               </thead>
               <tbody>

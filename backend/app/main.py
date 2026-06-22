@@ -139,11 +139,25 @@ async def lifespan(app: FastAPI):
                     code = "".join([w[0] for w in desg_title.split() if w]).upper()[:6]
                     if len(code) < 2:
                         code = desg_title[:3].upper()
+                    
+                    # Generate some realistic dummy data for the new UI fields
+                    grade = "L1" if "Operator" in desg_title or "Worker" in desg_title else "M1" if "Manager" in desg_title else "E1"
+                    dept = "Management" if "Manager" in desg_title else "Production"
+                    extra_data = {
+                        "min_salary": 200000 if grade == "L1" else 600000,
+                        "max_salary": 400000 if grade == "L1" else 1200000,
+                        "experience": "1+ Years" if grade == "L1" else "5+ Years",
+                        "skill_category": "Operations" if grade == "L1" else "Management"
+                    }
+                    import json
                     session.add(SubMaster(
                         entity="designation",
                         name=desg_title,
                         code=code,
-                        is_active=True
+                        is_active=True,
+                        extra_field_1=dept,
+                        extra_field_2=grade,
+                        extra_field_3=json.dumps(extra_data)
                     ))
                 await session.commit()
             else:

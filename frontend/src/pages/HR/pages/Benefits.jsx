@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Plus, Filter, LayoutList, LayoutGrid, CheckCircle, X, Save, Eye, Edit2, Trash2, Users, DollarSign, Shield, Baby } from 'lucide-react';
+import { Heart, Plus, Filter, LayoutList, LayoutGrid, CheckCircle, X, Save, Eye, Edit2, Trash2, Users, DollarSign, Shield, Baby, Search, RefreshCw, User } from 'lucide-react';
 import { fetchBenefits, createBenefit, updateBenefit, deleteBenefit, fetchEmployees } from '../../../services/hrService';
 
 const benefitTypes = [
@@ -31,7 +31,9 @@ export default function Benefits() {
   const [showFilters, setShowFilters] = useState(false);
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // grid, list
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const initialForm = {
     employee_id: '',
@@ -137,25 +139,15 @@ export default function Benefits() {
   };
 
   const filteredBenefits = benefits.filter(b => {
+    const matchesSearch = (b.employee_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (b.benefit_type || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = !filterType || b.benefit_type === filterType;
     const matchesStatus = !filterStatus || b.status === filterStatus;
-    return matchesType && matchesStatus;
+    return matchesSearch && matchesType && matchesStatus;
   });
 
-  // Group benefits by type for summary
-  const benefitSummary = benefitTypes.map(type => ({
-    ...type,
-    count: benefits.filter(b => b.benefit_type === type.name && b.status === 'Active').length,
-    total: benefits.filter(b => b.benefit_type === type.name && b.status === 'Active')
-      .reduce((sum, b) => sum + (b.coverage_amount || 0), 0)
-  }));
-
-  const stats = {
-    totalBenefits: benefits.length,
-    activeBenefits: benefits.filter(b => b.status === 'Active').length,
-    totalCoverage: benefits.filter(b => b.status === 'Active').reduce((sum, b) => sum + (b.coverage_amount || 0), 0),
-    employerCost: benefits.filter(b => b.status === 'Active').reduce((sum, b) => sum + (b.employer_contribution || 0), 0)
-  };
+  const totalPages = Math.ceil(filteredBenefits.length / itemsPerPage);
+  const paginatedBenefits = filteredBenefits.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
@@ -187,206 +179,144 @@ export default function Benefits() {
       {/* DATA AREA */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Heart className="w-5 h-5" />
+        {/* Toolbar */}
+        <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="flex-1" style={{ minWidth: 300, position: 'relative' }}>
+            <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by Employee or Benefit Type..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-control"
+              style={{ paddingLeft: 44, width: '100%', height: 42, background: '#f8fafc', border: '1px solid #e2e8f0' }}
+            />
           </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.totalBenefits}</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Benefits</p>
-          </div>
+          <select
+            className="form-control"
+            style={{ width: 200, height: 42, background: '#f8fafc', border: '1px solid #e2e8f0' }}
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="">All Benefit Types</option>
+            {benefitTypes.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+          </select>
+          <select
+            className="form-control"
+            style={{ width: 160, height: 42, background: '#f8fafc', border: '1px solid #e2e8f0' }}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Pending">Pending</option>
+            <option value="Expired">Expired</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <button onClick={() => { setSearchTerm(''); setFilterType(''); setFilterStatus(''); }} className="btn btn-secondary" style={{ height: 42, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <RefreshCw className="w-4 h-4" /> Reset
+          </button>
         </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: '#10b98118', color: '#047857', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{stats.activeBenefits}</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Active</p>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(stats.totalCoverage / 100000).toFixed(1)}L</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Total Coverage</p>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, background: '#f59e0b18', color: '#b45309', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(stats.employerCost / 1000).toFixed(0)}K</p>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Employer Cost/Mo</p>
-          </div>
-        </div>
-      </div>
-      {/* Benefit Programs Summary */}
-      <div className="card" style={{ padding: 20 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px 0' }}>Benefit Programs</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
-          {benefitSummary.slice(0, 5).map(type => {
-            const IconComponent = type.icon;
-            return (
-              <div 
-                key={type.name} 
-                className={`p-4 rounded-lg border cursor-pointer transition-all ${filterType === type.name ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 hover:border-indigo-300'}`}
-                style={{ background: filterType === type.name ? 'rgba(79, 70, 229, 0.04)' : '#fff' }}
-                onClick={() => setFilterType(filterType === type.name ? '' : type.name)}
-              >
-                <div style={{ width: 32, height: 32, borderRadius: 6, background: '#4f46e510', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                  <IconComponent className="w-4 h-4" />
-                </div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }} className="truncate">{type.name}</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{type.count}</p>
-                <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>enrollments</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* Benefits Grid View */}
-      {viewMode === 'grid' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-          {filteredBenefits.map(benefit => (
-            <div key={benefit.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', itemsStart: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div>
-                    <span style={{ 
-                      padding: '2px 8px',
-                      borderRadius: 12,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      backgroundColor: benefit.status === 'Active' ? '#10b98118' : benefit.status === 'Pending' ? '#f59e0b18' : benefit.status === 'Expired' ? '#ef444418' : '#64748b18',
-                      color: benefit.status === 'Active' ? '#047857' : benefit.status === 'Pending' ? '#b45309' : benefit.status === 'Expired' ? '#b91c1c' : '#475569'
-                    }}>{benefit.status}</span>
-                    <h3 style={{ margin: '8px 0 2px 0', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{benefit.benefit_type}</h3>
-                    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>{benefit.employee_name}</p>
-                  </div>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#4f46e510', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Heart className="w-4 h-4" />
-                  </div>
-                </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 12 }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>Coverage</p>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>₹{benefit.coverage_amount?.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>Your Share</p>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>₹{benefit.employee_contribution?.toLocaleString()}/mo</p>
-                  </div>
-                </div>
-                
-                {benefit.provider_name && (
-                  <div style={{ marginBottom: 12, fontSize: 12 }}>
-                    <p style={{ margin: 0, color: 'var(--text-muted)' }}>Provider: <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{benefit.provider_name}</span></p>
-                    {benefit.policy_number && <p style={{ margin: '2px 0 0 0', color: 'var(--text-muted)' }}>Policy: <span style={{ fontFamily: 'monospace' }}>{benefit.policy_number}</span></p>}
-                  </div>
-                )}
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 12 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  Valid: {formatDate(benefit.start_date)} - {formatDate(benefit.end_date)}
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <button onClick={() => handleEdit(benefit)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                    <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                  </button>
-                  <button onClick={() => handleDelete(benefit.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }}>
-                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {filteredBenefits.length === 0 && (
-            <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
-              <Heart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500" style={{ margin: 0 }}>No benefits found</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Benefits List View */}
-      {viewMode === 'list' && (
+        {/* Benefits List View */}
         <div className="card" style={{ padding: 0 }}>
           <div className="overflow-x-auto">
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
+            <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead className="bg-slate-50/80 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employee</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Benefit Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Coverage</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employer</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Employee</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Provider</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Valid Period</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Actions</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Employee</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Benefit Type</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Coverage</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Employer / Employee</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Provider</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Valid Period</th>
+                  <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">Status</th>
+                  <th className="px-6 py-4 text-xs uppercase font-bold text-slate-500 tracking-wide">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredBenefits.map(benefit => (
-                  <tr key={benefit.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-slate-800">{benefit.employee_name}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">{benefit.benefit_type}</td>
+                {paginatedBenefits.map(benefit => (
+                  <tr key={benefit.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
                     <td className="px-6 py-4">
-                      <span style={{ 
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: 12,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        backgroundColor: benefit.status === 'Active' ? '#10b98118' : benefit.status === 'Pending' ? '#f59e0b18' : benefit.status === 'Expired' ? '#ef444418' : '#64748b18',
-                        color: benefit.status === 'Active' ? '#047857' : benefit.status === 'Pending' ? '#b45309' : benefit.status === 'Expired' ? '#b91c1c' : '#475569'
-                      }}>{benefit.status}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center shrink-0">
+                          <User className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <p className="font-semibold text-slate-900 text-sm">{benefit.employee_name}</p>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-800">₹{benefit.coverage_amount?.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">₹{benefit.employer_contribution?.toLocaleString()}/mo</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">₹{benefit.employee_contribution?.toLocaleString()}/mo</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">{benefit.benefit_type}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-emerald-600">₹{benefit.coverage_amount?.toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1 text-xs">
+                        <span className="text-slate-600">Employer: <span className="font-semibold">₹{benefit.employer_contribution?.toLocaleString()}/mo</span></span>
+                        <span className="text-slate-600">Employee: <span className="font-semibold">₹{benefit.employee_contribution?.toLocaleString()}/mo</span></span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       <span className="font-semibold text-slate-700">{benefit.provider_name || '—'}</span>
                       {benefit.policy_number && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{benefit.policy_number}</div>}
                     </td>
                     <td className="px-6 py-4 text-xs text-slate-500">
-                      {formatDate(benefit.start_date)} - {formatDate(benefit.end_date)}
+                      {formatDate(benefit.start_date)} -<br/>{formatDate(benefit.end_date)}
                     </td>
                     <td className="px-6 py-4">
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                        <button onClick={() => handleEdit(benefit)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
-                          <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ 
+                        backgroundColor: benefit.status === 'Active' ? '#10b98118' : benefit.status === 'Pending' ? '#f59e0b18' : benefit.status === 'Expired' ? '#ef444418' : '#64748b18',
+                        color: benefit.status === 'Active' ? '#047857' : benefit.status === 'Pending' ? '#b45309' : benefit.status === 'Expired' ? '#b91c1c' : '#475569'
+                      }}>{benefit.status}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => handleEdit(benefit)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer' }} title="Edit">
+                          <Edit2 size={14} color="#3b82f6" />
                         </button>
-                        <button onClick={() => handleDelete(benefit.id)} className="btn btn-danger" style={{ padding: 6, borderRadius: '50%', background: '#fef2f2', border: '1px solid #ef444430' }}>
-                          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        <button onClick={() => handleDelete(benefit.id)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }} title="Delete">
+                          <Trash2 size={14} color="#ef4444" />
                         </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filteredBenefits.length === 0 && (
+                {paginatedBenefits.length === 0 && (
                   <tr>
-                    <td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={8} className="text-center py-10 text-slate-500">
                       <Heart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      No benefits found
+                      <p style={{ margin: 0 }}>No benefits found</p>
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                <div style={{ fontSize: 13, color: '#64748b' }}>
+                  Showing <span style={{ fontWeight: 600, color: '#1e293b' }}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span style={{ fontWeight: 600, color: '#1e293b' }}>{Math.min(currentPage * itemsPerPage, filteredBenefits.length)}</span> of <span style={{ fontWeight: 600, color: '#1e293b' }}>{filteredBenefits.length}</span> results
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
       </div>{/* END DATA AREA */}
         </>
@@ -394,9 +324,9 @@ export default function Benefits() {
 
       {/* Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
           {/* Form Header */}
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {editingId ? 'Edit Benefit' : 'Add Benefit'}
             </h2>
@@ -410,8 +340,12 @@ export default function Benefits() {
             </div>
           </div>
           
-          <div className="p-6 space-y-4">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Benefit Details
+            </legend>
+
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Employee *</label>
                 <select
@@ -438,18 +372,20 @@ export default function Benefits() {
               </div>
             </div>
             
-            <div className="form-group">
-              <label>Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                rows={2}
-                className="form-control"
-                placeholder="Benefit details..."
-              />
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                <label>Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  rows={2}
+                  className="form-control"
+                  placeholder="Benefit details..."
+                />
+              </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
               <div className="form-group">
                 <label>Coverage (₹)</label>
                 <input
@@ -482,7 +418,7 @@ export default function Benefits() {
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Start Date</label>
                 <input
@@ -503,7 +439,7 @@ export default function Benefits() {
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Provider Name</label>
                 <input
@@ -525,7 +461,7 @@ export default function Benefits() {
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
         </form>
       )}
     </div>
