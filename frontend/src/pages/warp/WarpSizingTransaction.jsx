@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Layers, Search, Plus, Trash2, Edit, Check, X, Download, 
+  Layers, Search, Plus, Trash2, Edit, Edit2, Eye, Check, X, Download, 
   Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
   PlusCircle, FileText, CheckSquare, Truck, Globe, Printer, BookOpen, 
   MapPin, HelpCircle, Sparkles, Database, Shield, Scissors, Clock,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { workOrderTransactionAPI, partyAPI } from '../../services/api';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 export default function WarpSizingTransaction({ defaultSection = 'Beam & Transaction Entries' }) {
   const navigate = useNavigate();
@@ -79,6 +80,7 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
   const [setAmendments, setSetAmendments] = useState([]);
 
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [selectedViewRecord, setSelectedViewRecord] = useState(null);
 
   const loadData = async () => {
     try {
@@ -649,8 +651,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -701,8 +711,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -753,8 +771,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -805,8 +831,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           </td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -857,8 +891,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           <td><span className="badge badge-active">{row.status}</span></td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -903,8 +945,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           <td><span className="badge badge-active">{row.status}</span></td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -955,8 +1005,16 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
                           <td><span className="badge badge-active">{row.status}</span></td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)}><Trash2 size={12} /></button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => setSelectedViewRecord({...row, module_type: activePage})}
+                                title="Preview Record"
+                              >
+                                <Eye size={16} color="var(--primary)" />
+                              </button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)} title="Edit"><Edit2 size={12} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.db_id)} title="Delete"><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -2844,6 +2902,41 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
         </>
       )}
 
+      {activePage && (
+        <A4DocumentPreview
+          isOpen={!!selectedViewRecord}
+          onClose={() => setSelectedViewRecord(null)}
+          title={PAGES_METADATA[selectedViewRecord?.module_type]?.label?.toUpperCase() || 'DOCUMENT PREVIEW'}
+          documentNumber={selectedViewRecord?.voucherNo || selectedViewRecord?.billNo || selectedViewRecord?.setReportNo || selectedViewRecord?.amendmentNo || selectedViewRecord?.id}
+          status={selectedViewRecord?.statusTracking || selectedViewRecord?.status || selectedViewRecord?.qcStatus || 'Active'}
+          onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
+          sections={selectedViewRecord ? [
+            {
+              title: "GENERAL INFORMATION",
+              icon: "FileText",
+              type: "grid",
+              data: [
+                { label: "Document Date", value: selectedViewRecord.reportDate || selectedViewRecord.billDate || selectedViewRecord.date || selectedViewRecord.voucherDate },
+                { label: "Shift", value: selectedViewRecord.shift || '-' },
+                { label: "Operator / Weaver", value: selectedViewRecord.operatorName || selectedViewRecord.weaverName || '-' },
+                { label: "Supplier / Job Worker", value: selectedViewRecord.supplierName || selectedViewRecord.vendorName || '-' },
+              ]
+            },
+            {
+              title: "TECHNICAL SPECIFICATIONS",
+              icon: "Settings",
+              type: "grid",
+              data: [
+                { label: "Set No / Beam No", value: selectedViewRecord.setNo || selectedViewRecord.beamNo || '-' },
+                { label: "Machine Name", value: selectedViewRecord.machineName || '-' },
+                { label: "Total Ends", value: selectedViewRecord.totalEnds || '-' },
+                { label: "Beam Width", value: selectedViewRecord.beamWidth || '-' },
+                { label: "Warp Meter / Length", value: `${selectedViewRecord.warpMeter || selectedViewRecord.beamLength || 0} Mtr` }
+              ]
+            }
+          ] : []}
+        />
+      )}
     </div>
   );
 }

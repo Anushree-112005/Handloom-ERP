@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { clothDeliveryAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +23,7 @@ export default function ClothDelivery() {
 
   // Split view state
   const [selectedViewDelivery, setSelectedViewDelivery] = useState(null);
+  const [viewModalDelivery, setViewModalDelivery] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
 
   // Filters
@@ -1144,8 +1146,8 @@ export default function ClothDelivery() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => handleOpenForm(del, true)}
-                            title="Full Form View"
+                            onClick={() => setViewModalDelivery(del)}
+                            title="Preview"
                           >
                             <Eye size={16} color="var(--primary)" />
                           </button>
@@ -1175,61 +1177,59 @@ export default function ClothDelivery() {
           </div>
         </div>
 
-        {/* Right Split View Sidebar Details Pane */}
-        {selectedViewDelivery && (
-          <div style={{ flex: '0 0 360px' }}>
-            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                  <Truck size={18} /> Challan {selectedViewDelivery.dc_no}
-                </h3>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewDelivery, false)} title="Edit"><Edit2 size={14} /></button>
-                  <button onClick={() => setSelectedViewDelivery(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                </div>
-              </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                <DetailRow label="DC Date" value={selectedViewDelivery.dc_date} />
-                <DetailRow label="Party Name" value={selectedViewDelivery.party_name} />
-                <DetailRow label="Buyer Name" value={selectedViewDelivery.buyer_name} />
-                <DetailRow label="Delivery Type" value={<span className="badge badge-active">{selectedViewDelivery.delivery_type}</span>} />
-                <DetailRow label="PO Ref No" value={selectedViewDelivery.po_no} />
-
-                <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quality Specs</h4>
-                <DetailRow label="Process Type" value={selectedViewDelivery.process_type} />
-                <DetailRow label="Design No" value={selectedViewDelivery.design_no} />
-                <DetailRow label="IBPO No" value={selectedViewDelivery.ibpo} />
-                <DetailRow label="PC Type" value={selectedViewDelivery.pc_type} />
-                <DetailRow label="Fabric Details" value={selectedViewDelivery.fabric_detail} />
-                <DetailRow label="Finish Fold" value={selectedViewDelivery.finish_fold} />
-                <DetailRow label="OBA Agent" value={selectedViewDelivery.oba} />
-                <DetailRow label="Finish Pick" value={selectedViewDelivery.finish_pick} />
-                <DetailRow label="GLM Metric" value={selectedViewDelivery.glm} />
-
-                <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quantities</h4>
-                <DetailRow label="IBPO Order Mtr" value={selectedViewDelivery.ibpo_order_mtr} />
-                <DetailRow label="Delivered Mtr" value={selectedViewDelivery.delivery_mtr} />
-                <DetailRow label="Balance Remaining" value={selectedViewDelivery.balance} />
-                <DetailRow label="Total Pieces" value={`${selectedViewDelivery.total_pieces} Pcs`} />
-
-                <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Voucher & Value</h4>
-                <DetailRow label="Voucher No" value={selectedViewDelivery.voucher_no} />
-                <DetailRow label="Voucher Date" value={selectedViewDelivery.voucher_date} />
-                <DetailRow label="Rate per Meter" value={`Rs. ${selectedViewDelivery.rate_mtr}`} />
-                <DetailRow label="Debited Amount" value={`Rs. ${Number(selectedViewDelivery.debited_amount).toFixed(2)}`} />
-
-                <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Logistics Pass</h4>
-                <DetailRow label="Transport Name" value={selectedViewDelivery.transport_name} />
-                <DetailRow label="Vehicle No" value={selectedViewDelivery.vehicle_no} />
-                <DetailRow label="Driver Name" value={selectedViewDelivery.driver_name} />
-                <DetailRow label="Driver Mobile" value={selectedViewDelivery.mobile_no} />
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
+
+      <A4DocumentPreview
+        isOpen={!!viewModalDelivery}
+        onClose={() => setViewModalDelivery(null)}
+        title="CLOTH DELIVERY CHALLAN"
+        documentNumber={viewModalDelivery?.dc_no}
+        status="DISPATCHED"
+        onDownloadPdf={() => alert('PDF Download for Cloth Delivery triggered')}
+        sections={viewModalDelivery ? [
+          {
+            title: "DISPATCH INFO",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "DC Number", value: viewModalDelivery.dc_no },
+              { label: "Date", value: viewModalDelivery.dc_date },
+              { label: "Party", value: viewModalDelivery.party_name },
+              { label: "Process", value: viewModalDelivery.process_type || '-' },
+              { label: "Vehicle Number", value: viewModalDelivery.vehicle_no || '-' },
+              { label: "Voucher Number", value: viewModalDelivery.voucher_no || '-' }
+            ]
+          },
+          {
+            title: "FABRIC SPECIFICATIONS",
+            icon: "Layers",
+            type: "grid",
+            data: [
+              { label: "Design No", value: viewModalDelivery.design_no || '-' },
+              { label: "Delivery Type", value: viewModalDelivery.delivery_type || '-' },
+              { label: "Rate/Mtr", value: `Rs. ${viewModalDelivery.rate_mtr || 0}` },
+              { label: "Total Meters", value: `${Number(viewModalDelivery.total_meters || 0).toFixed(2)} Mtr` },
+              { label: "Amount Debited", value: `Rs. ${viewModalDelivery.debited_amount || 0}` }
+            ]
+          },
+          {
+            title: "PIECE DETAILS",
+            icon: "Columns",
+            type: "table",
+            headers: ["Piece No", "Lot No", "Meters", "Fold Mtrs", "Rate", "Amount"],
+            rows: (viewModalDelivery.items || []).map((b) => [
+              b.piece_no || '-',
+              b.lot_no || '-',
+              b.ok_mtr || 0,
+              b.fold_mtr || 0,
+              b.rate || 0,
+              b.amount || 0
+            ])
+          }
+        ] : []}
+      />
     </div>
   );
 }

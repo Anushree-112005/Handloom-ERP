@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText } from 'lucide-react';
+import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText, Eye } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -8,6 +9,7 @@ export default function YarnStock() {
   const [searchTerm, setSearchTerm] = useState('');
   const [countFilter, setCountFilter] = useState('All Counts');
   const [godownFilter, setGodownFilter] = useState('All Godowns');
+  const [viewModalStock, setViewModalStock] = useState(null);
 
   // Premium Curated Mock Data for Yarn Stock
   const MOCK_STOCK = [
@@ -165,6 +167,7 @@ export default function YarnStock() {
               <th style={{ textAlign: 'right' }}>Total Value</th>
               <th>Godown</th>
               <th>Status</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -183,6 +186,16 @@ export default function YarnStock() {
                     {item.status}
                   </span>
                 </td>
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => setViewModalStock(item)}
+                    title="View Lot Profile"
+                  >
+                    <Eye size={16} color="var(--primary)" />
+                  </button>
+                </td>
               </tr>
             ))}
             {filteredStock.length === 0 && (
@@ -195,6 +208,40 @@ export default function YarnStock() {
           </tbody>
         </table>
       </div>
+
+      <A4DocumentPreview
+        isOpen={!!viewModalStock}
+        onClose={() => setViewModalStock(null)}
+        title="YARN LOT PROFILE"
+        documentNumber={viewModalStock?.lotNo}
+        status={viewModalStock?.status}
+        onDownloadPdf={() => alert('PDF Download for Yarn Stock triggered')}
+        sections={viewModalStock ? [
+          {
+            title: "YARN & MILL INFORMATION",
+            icon: "Box",
+            type: "grid",
+            data: [
+              { label: "Yarn Count", value: viewModalStock.count },
+              { label: "Mill Name", value: viewModalStock.mill },
+              { label: "Lot Number", value: viewModalStock.lotNo },
+              { label: "Godown Location", value: viewModalStock.godown }
+            ]
+          },
+          {
+            title: "STOCK & VALUATION",
+            icon: "Layers",
+            type: "grid",
+            data: [
+              { label: "Total Bags", value: viewModalStock.bags },
+              { label: "Net Weight", value: `${viewModalStock.netWeight} Kg` },
+              { label: "Rate per Kg", value: `₹ ${viewModalStock.rate}` },
+              { label: "Total Valuation", value: `₹ ${(viewModalStock.netWeight * viewModalStock.rate).toLocaleString()}` }
+            ]
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

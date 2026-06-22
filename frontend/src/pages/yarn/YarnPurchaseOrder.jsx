@@ -4,6 +4,7 @@ import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI, buyerOrderAP
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -699,7 +700,14 @@ export default function YarnPurchaseOrder() {
                         <td><span className={`badge ${o.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{o.status}</span></td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(o, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => setSelectedViewOrder(o)}
+                              title="Full View"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(o, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(o.id, o.po_number, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -711,38 +719,52 @@ export default function YarnPurchaseOrder() {
               </div>
             </div>
 
-            {selectedViewOrder && (
-              <div style={{ flex: '0 0 350px' }}>
-                <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                      <Package size={18} /> {selectedViewOrder.po_number}
-                    </h3>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewOrder, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewOrder, false)} title="Edit"><Edit2 size={14} /></button>
-                      <button onClick={() => setSelectedViewOrder(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <DetailRow label="Date" value={selectedViewOrder.po_date} />
-                    <DetailRow label="Internal PO No" value={selectedViewOrder.internal_po_no} />
-                    <DetailRow label="Org Name" value={selectedViewOrder.org_name} />
-                    <DetailRow label="Supplier" value={selectedViewOrder.supplier_name} />
-                    <DetailRow label="Status" value={selectedViewOrder.status} />
-                    
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Financials</h4>
-                    <DetailRow label="Taxable Amt" value={`₹${selectedViewOrder.taxable_amount}`} />
-                    <DetailRow label="IGST" value={`${selectedViewOrder.igst_pct}%`} />
-                    <DetailRow label="Net Amount" value={<span style={{ color: 'var(--primary)', fontSize: 14 }}>₹{selectedViewOrder.net_amount}</span>} />
-                    
-
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+
+          <A4DocumentPreview
+            isOpen={!!selectedViewOrder}
+            onClose={() => setSelectedViewOrder(null)}
+            title="YARN PURCHASE ORDER"
+            documentNumber={selectedViewOrder?.po_number}
+            status={selectedViewOrder?.status || 'Active'}
+            onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
+            sections={selectedViewOrder ? [
+              {
+                title: "GENERAL INFO",
+                icon: "FileText",
+                type: "grid",
+                data: [
+                  { label: "Date", value: selectedViewOrder.po_date },
+                  { label: "Internal PO No", value: selectedViewOrder.internal_po_no || '-' },
+                  { label: "Org Name", value: selectedViewOrder.org_name || '-' },
+                  { label: "Supplier", value: selectedViewOrder.supplier_name || '-' }
+                ]
+              },
+              {
+                title: "FINANCIALS",
+                icon: "IndianRupee",
+                type: "grid",
+                data: [
+                  { label: "Taxable Amt", value: `₹${selectedViewOrder.taxable_amount || 0}` },
+                  { label: "IGST", value: `${selectedViewOrder.igst_pct || 0}%` },
+                  { label: "Net Amount", value: `₹${selectedViewOrder.net_amount || 0}` }
+                ]
+              },
+              {
+                title: "INDENT DETAILS",
+                icon: "Layers",
+                type: "table",
+                headers: ["Yarn Count", "Color", "Order Qty", "Rate", "Amount"],
+                rows: (selectedViewOrder.indent_details || []).map(i => [
+                  i.yarn_count || '-',
+                  i.colour || '-',
+                  i.order_qty || 0,
+                  `₹${i.rate || 0}`,
+                  `₹${i.amount || 0}`
+                ])
+              }
+            ] : []}
+          />
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
