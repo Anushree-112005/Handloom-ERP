@@ -82,5 +82,9 @@ class YarnPurchaseIndentDetail(Base):
     tot_reqd_qty = Column(Float, default=0.0)
     appd_qty = Column(Float, default=0.0)
     order_qty = Column(Float, default=0.0)
+    rate = Column(Float, default=0.0)
+    amount = Column(Float, default=0.0)
+    colour = Column(String(100))
+    delivery_date = Column(String(100))
 
     purchase_order = relationship("YarnPurchaseOrder", back_populates="indent_details")

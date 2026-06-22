@@ -182,60 +182,35 @@ const modules = [
 
   { section: 'Yarn Management' },
   { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-  { path: '/yarn/grey-delivery', label: 'Grey Yarn Delivery', icon: Truck },
-  { path: '/dyed-yarn/received', label: 'Dyed Yarn Received', icon: Palette },
-  { path: '/dyed-yarn/delivery', label: 'Dyed Yarn Delivery', icon: Truck },
+  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
 
-  { section: 'WARPING' },
-  { path: '/ppc/planning/availability', label: 'Warping Planning', icon: Calendar },
-  { path: '/warp/transaction/reports?tab=warping_report', label: 'Warping Set Entry', icon: Plus },
-  // { path: '/warp/transaction/reports?tab=warping_report', label: 'Warping Set Report Entry', icon: FileText },
-  // { path: '/warp/transaction/entries?tab=beam_received', label: 'Warp Beam Received Entry', icon: Factory },
+  { section: 'Job Work Management' },
+  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
+  { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
+  { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
+  { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
+  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
+  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
+  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
+  { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
+  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
+  { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
+  { path: '/jobwork/printing-delivery', label: 'Printing Delivery', icon: Truck },
+  { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
+  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
+  { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
+  { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
 
-  { section: 'SIZING' },
-  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Warp Beam Delivery Entry', icon: Truck },
-  { path: '/warp/transaction/reports?tab=sizing_report', label: 'Sizing Set Entry', icon: Plus },
-  // { path: '/warp/transaction/reports?tab=sizing_report', label: 'Sizing Set Report Entry', icon: FileText },
-  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sized Beam Received', icon: Box },
+  { section: 'Quality Control' },
+  { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
+  { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
 
-  { section: 'WEAVING' },
-  // { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Beam Issue To Loom', icon: PlayCircle },
-  { path: '/ppc/execution/shift-entry', label: 'Weaving Production', icon: Activity },
-  { path: '/cloth/inward', label: 'Fabric Inward', icon: ArrowDownLeft },
+  { section: 'Inventory' },
+  { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
+  { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
-  { section: 'QUALITY' },
-  { path: '/fabric/transaction/checking?tab=cloth_checking', label: 'Cloth Checking', icon: CheckSquare },
-  { path: '/cloth/checking', label: 'On Table Checking', icon: CheckSquare },
-  { path: '/fabric/transaction/checking?tab=lot_completion', label: 'Cloth Lot Completion', icon: Settings },
-
-  { section: 'PROCESSING' },
-  { path: '/cloth/delivery', label: 'Processing Delivery', icon: Truck },
-  // { path: '/cloth/inward', label: 'Processing Inward', icon: ArrowDownLeft },
-
-  { section: 'FINISHED GOODS' },
-  { path: '/finished-fabric', label: 'Finished Fabric Stock', icon: Box },
-
-
-
-  // { section: 'Quality Control' },
-  // { path: '/cloth/checking', label: 'On-Table Checking', icon: CheckSquare },
-
-  { section: 'Inventory & Warehouse' },
+  { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
-
-  // { section: 'Maintenance & Spares' },
-  // {
-  //   label: 'Maintenance & Spares Desk',
-  //   icon: Wrench,
-  //   children: [
-  //     { path: '/spares/desk/master-setup', label: 'Master Setup', icon: Settings },
-  //     { path: '/spares/desk/requests-approvals', label: 'Requests & Approvals', icon: FolderKanban },
-  //     { path: '/spares/desk/purchase-work-orders', label: 'Purchase & Work Orders', icon: ShoppingBag },
-  //     { path: '/spares/desk/consumption-jobwork', label: 'Consumption & Jobwork', icon: Factory }
-  //   ]
-  // },
-  // { path: '/spares/report', label: 'Spares Report', icon: FileText },
-
 
 
   { section: 'Sales & Dispatch' },
@@ -378,18 +353,7 @@ const modules = [
       { path: '/hr/reports', label: 'Reports', icon: FileText }
     ]
   },
-  // {
-  //   label: 'Account Transaction',
-  //   icon: Briefcase,
-  //   children: [
-  //     { path: '/accounts/voucher-entry', label: 'Voucher Entry', icon: FileDigit },
-  //     { path: '/accounts/transaction', label: 'Accounts Details', icon: FolderKanban },
-  //     { path: '/finance/desk/bills', label: 'Creditors Bills', icon: Receipt },
-  //     { path: '/finance/desk/invoices', label: 'Sales Invoices', icon: FileText },
-  //     { path: '/finance/desk/amendments', label: 'Sales Amendments', icon: Edit },
-  //     { path: '/finance/desk/lc', label: 'LC Entries', icon: Globe }
-  //   ]
-  // },
+
 
   { section: 'Vehicle Management' },
   {
@@ -532,11 +496,11 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {companyProfile.logo ? (
-                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
+                <div className="logo-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src={companyProfile.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
               ) : (
-                <div className="logo-icon" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
+                <div className="logo-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src={defaultLogo} alt="Default Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
               )}
@@ -655,9 +619,22 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                 </div>
               )}
             </div>
+          ) : (!item.path || item.path === '#') ? (
+            <div
+              key={item.label}
+              className="nav-item"
+              style={{
+                cursor: 'default',
+                pointerEvents: 'none',
+                opacity: 0.85
+              }}
+            >
+              <item.icon />
+              <span style={{ flex: 1 }}>{item.label}</span>
+            </div>
           ) : (
             <NavLink
-              key={item.path}
+              key={`${item.path}-${item.label}`}
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) => {

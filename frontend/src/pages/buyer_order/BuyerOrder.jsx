@@ -83,7 +83,7 @@ export default function BuyerOrder() {
     party_id: '', party_name: '', billing_address: '', agent_name: '',
     order_type: '', certified_type: '', buyer_name: '',
     state: '', state_code: '', gst_no: '', pan_no: '',
-    commission_type: '', commission_pct: 0, order_taken_by: '',
+    commission_type: '', commission_pct: 0, order_taken_by: '', merchandiser: '',
     nomination_type: '', regular_special: '',
 
     outstanding: 0, overdue: 0, due_30_days: 0, status: '',
@@ -102,10 +102,10 @@ export default function BuyerOrder() {
     items: [{
       party_po_no: '', po_date: '', point_of_contact: '', order_mtrs: 0, uom: 'MTR',
       tolerance_pct: 0, total_mtr_yard: 0, hsn_code: '', sample_mtr: 0, buyer_style: '',
-      short_no: '', design_no: '', gry_construction: '', fabric_type: 'Cotton', color: '',
+      design_no: '', gry_construction: '', fabric_type: 'Cotton', color: '',
       construction: '', weaving_type: 'Plain', pick_on_table: 0, print_name: '',
-      finish_reed: 0, finish_pick: 0, finish_width: 0, cuttable_width: 0, pattern: 'Solid',
-      packing_type: 'Roll', loom_type: '', insurance: 'No', packing_charge: 0, end_use: '',
+      finish_reed: 0, finish_pick: 0, finish_width: 0, cuttable_width: 0, pattern: '',
+      packing_type: '', loom_type: '', insurance: 'No', packing_charge: 0, end_use: '',
       season: 'All Season', party_comment: '', fabric_content: '', development_id: '',
       country: 'India', combo: '', currency: 'INR', pc_type: '', gsm: 0, price: 0,
       gst_pct: 0, gst_rate: 0, rate: 0, amount: 0, image_design_path: '', party_terms: ''
@@ -251,7 +251,8 @@ export default function BuyerOrder() {
       billing_address: fullAddress || '',
       state: party?.state || '',
       agent_name: party?.agent_name || '',
-      order_taken_by: party?.merchandiser || '',
+      order_taken_by: party?.manager || '',
+      merchandiser: party?.merchandiser || '',
       gst_no: party?.gst_no || '',
       pan_no: party?.pan_no || '',
     });
@@ -614,7 +615,16 @@ export default function BuyerOrder() {
       setOptions(dropdownsRes.data);
       
       const newItems = [...form.items];
-      newItems[customAddItem.index][customAddItem.field] = customAddItem.val.trim();
+      if (customAddItem.field === 'packing_type') {
+        const currentVal = newItems[customAddItem.index]['packing_type'] || '';
+        const selected = currentVal ? currentVal.split(',').map(s => s.trim()).filter(Boolean) : [];
+        if (!selected.includes(customAddItem.val.trim())) {
+          selected.push(customAddItem.val.trim());
+        }
+        newItems[customAddItem.index]['packing_type'] = selected.join(', ');
+      } else {
+        newItems[customAddItem.index][customAddItem.field] = customAddItem.val.trim();
+      }
       setForm({ ...form, items: newItems });
       
       setCustomAddItem({ field: null, index: null, val: '' });
@@ -664,6 +674,68 @@ export default function BuyerOrder() {
       )}
     </div>
   );
+
+  const renderPackingTypeCheckboxes = (index, item) => {
+    const field = 'packing_type';
+    const entity = 'packing_type_master';
+    const currentVal = item.packing_type || '';
+    const selected = currentVal ? currentVal.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const availableOptions = options?.masters?.[entity] || [];
+
+    const handleCheckboxChange = (opt, isChecked) => {
+      let newSelected = [...selected];
+      if (isChecked) {
+        if (!newSelected.includes(opt)) newSelected.push(opt);
+      } else {
+        newSelected = newSelected.filter(s => s !== opt);
+      }
+      updateItem(index, field, newSelected.join(', '));
+    };
+
+    return (
+      <div className="form-group" style={{ gridColumn: 'span 5' }}>
+        <label style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', display: 'block' }}>Packing Type</label>
+        {customAddItem.field === field && customAddItem.index === index ? (
+          <div style={{ display: 'flex', gap: '8px', maxWidth: '300px' }}>
+            <input 
+              autoFocus 
+              type="text" 
+              className="form-control" 
+              placeholder="New Packing Type..." 
+              value={customAddItem.val} 
+              onChange={(e) => setCustomAddItem({ ...customAddItem, val: e.target.value })} 
+            />
+            <button type="button" className="btn btn-primary" onClick={() => handleSaveCustomItem(entity)} style={{ padding: '6px' }}>Save</button>
+            <button type="button" className="btn btn-secondary" onClick={() => setCustomAddItem({ field: null, index: null, val: '' })} style={{ padding: '6px' }}>X</button>
+          </div>
+        ) : (
+          <div style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '10px 14px', minHeight: '38px', background: '#fff' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 20px', alignItems: 'center' }}>
+              {availableOptions.map(opt => (
+                <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 500, margin: 0, userSelect: 'none', color: 'var(--text-primary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(opt)}
+                    onChange={(e) => handleCheckboxChange(opt, e.target.checked)}
+                    style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '2px 8px', fontSize: '11px', height: '24px', display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', borderRadius: '4px' }}
+                onClick={() => setCustomAddItem({ field, index, val: '' })}
+              >
+                + Add Custom
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const tabs = [
     { id: 'main', label: 'Main Details', icon: FileText },
@@ -848,7 +920,7 @@ export default function BuyerOrder() {
                         onClick={() => handleRowClick(o)}
                         style={{ cursor: 'pointer', background: selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}
                       >
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{o.ibpo_number}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{o.ibpo_number}</td>
                         <td>{o.order_date}</td>
                         <td style={{ fontWeight: 500 }}>{o.party_name}</td>
                         <td><span className="badge badge-active">{o.order_type || 'Regular'}</span></td>
@@ -872,7 +944,7 @@ export default function BuyerOrder() {
               <div style={{ flex: '0 0 350px' }}>
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
                       <ShoppingCart size={18} /> {selectedViewOrder.ibpo_number}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
@@ -887,6 +959,8 @@ export default function BuyerOrder() {
                     <DetailRow label="Order Date" value={selectedViewOrder.order_date} />
                     <DetailRow label="Order Type" value={<span className="badge badge-active">{selectedViewOrder.order_type || 'Regular'}</span>} />
                     <DetailRow label="Status" value={selectedViewOrder.status} />
+                    <DetailRow label="Order Taken By" value={selectedViewOrder.order_taken_by} />
+                    <DetailRow label="Merchandiser" value={selectedViewOrder.merchandiser} />
 
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Financial</h4>
                     <DetailRow label="Outstanding" value={selectedViewOrder.outstanding} />
@@ -1108,6 +1182,13 @@ export default function BuyerOrder() {
                       </select>
                     </div>
                     <div className="form-group">
+                      <label>Merchandiser</label>
+                      <select className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange}>
+                        <option value="">Select Merchandiser...</option>
+                        {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
                       <label>Nomination</label>
                       <input className="form-control" name="nomination_type" value={form.nomination_type} onChange={handleChange} />
                     </div>
@@ -1227,19 +1308,20 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
                         <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
                         <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
-                        <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
+                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
 
+                        <div className="form-group"><label>Finished Construction</label><input className="form-control" value={item.construction} onChange={e => updateItem(index, 'construction', e.target.value)} /></div>
                         <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
                         {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
                         <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
                         <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-                        {renderItemDropdown('Pattern', 'pattern', 'pattern_master', index, item)}
 
-                        {renderItemDropdown('Packing Type', 'packing_type', 'packing_type_master', index, item)}
+                        <div className="form-group"><label>Pattern</label><input className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)} /></div>
                         {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
                         {renderItemDropdown('Season', 'season', 'season_master', index, item)}
-                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
-                        <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+
+                        {renderPackingTypeCheckboxes(index, item)}
                       </div>
                     </div>
                   ))}
@@ -1619,19 +1701,20 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
                         <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
                         <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
-                        <div className="form-group"><label>Short No</label><input className="form-control" value={item.short_no} onChange={e => updateItem(index, 'short_no', e.target.value)} /></div>
+                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
 
+                        <div className="form-group"><label>Finished Construction</label><input className="form-control" value={item.construction} onChange={e => updateItem(index, 'construction', e.target.value)} /></div>
                         <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
                         {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
                         <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
                         <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-                        {renderItemDropdown('Pattern', 'pattern', 'pattern_master', index, item)}
 
-                        {renderItemDropdown('Packing Type', 'packing_type', 'packing_type_master', index, item)}
+                        <div className="form-group"><label>Pattern</label><input className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)} /></div>
                         {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
                         {renderItemDropdown('Season', 'season', 'season_master', index, item)}
-                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
-                        <div className="form-group"><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+
+                        {renderPackingTypeCheckboxes(index, item)}
                       </div>
                     </div>
                   ))}

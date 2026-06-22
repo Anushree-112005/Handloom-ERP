@@ -1,299 +1,162 @@
 ================================================================================
                     DINESH EXPORTS TEXTILE ERP SYSTEM
-                     CURRENT ACTIVE SIDEBAR MODULES & PAGES
+                      CURRENT ACTIVE SIDEBAR MODULES & PAGES
 ================================================================================
 
 1. DASHBOARD
    - Dashboard [/]
    - Overview [/overview]
 
-2. SUB MASTERS
-   * Core System Basics:
-     - Buyer Master [/sub-master/buyer]
-     - Certified Type [/sub-master/certified_type]
-     - Color Master [/sub-master/color_master]
-     - Count System [/sub-master/count_system]
-     - Currency Master [/sub-master/currency_master]
-     - Designer Master [/sub-master/designer]
-     - District & City [/sub-master/district_city_master]
-     - End Use Master [/sub-master/end_use_master]
-     - Gate Location [/sub-master/gate_location_master]
-     - Godown Master [/sub-master/godown_master]
-     - Group Count [/sub-master/group_count]
-     - HSN Code Master [/sub-master/hsn_code_master]
-     - Loom Master [/sub-master/loom_master]
-     - Loom Type Master [/sub-master/loom_type_master]
-     - LR Terms [/sub-master/lr_terms]
-     - LR Type Master [/sub-master/lr_type_master]
-     - Organization Name Master [/sub-master/organization_name_master]
-     - Manager Master [/sub-master/manager]
-     - Merchandiser Master [/sub-master/merchandiser]
-     - Mill Name Master [/sub-master/mill_name_master]
-     - Order Type Master [/sub-master/order_type_master]
-     - Packing Type Master [/sub-master/packing_type_master]
-     - Party Group [/sub-master/party_group]
-     - Party Type [/sub-master/party_type]
-     - Party Type / Group [/sub-master/party_type_group]
-     - Pattern Master [/sub-master/pattern_master]
-     - Payment Terms [/sub-master/payment_terms_master]
-     - Payment Term & Conditions [/sub-master/payment_term_and_conditions]
-     - Sales Region [/sub-master/sales_region_master]
-     - Section Group [/sub-master/section_group]
-     - SP NO Master [/sub-master/sp_no]
-     - Unit Master [/sub-master/uom_master]
-     - Transport Mode Master [/sub-master/transport_mode_master]
-     - Transport Name Master [/sub-master/transport_name_master]
-     - Yarn Count Master [/sub-master/yarn_count_master]
-     - Yarn Type Master [/sub-master/yarn_type_master]
-
-   * Operations & Processing:
-     - A/C Incharge [/sub-master/ac_incharge]
-     - Against Reference Master [/sub-master/against_reference_master]
-     - Category Master [/sub-master/category_master]
-     - Freight Type Master [/sub-master/freight_type_master]
-     - Checker Name [/sub-master/checker_name_master]
-     - Checking Table/Machine [/sub-master/checking_table_machine]
-     - Chemical Group [/sub-master/chemical_group_master]
-     - Cloth Dyeing Order Process Type [/sub-master/cloth_dyeing_order_process_type]
-     - Damage Master [/sub-master/damage_master]
-     - Debit/Credit Reason [/sub-master/debit_credit_reason_master]
-     - Design Color [/sub-master/design_color_master]
-     - Dyeing Cly [/sub-master/dyeing_cly]
-     - Duty Master [/sub-master/duty_master]
-     - Expenses Group [/sub-master/expenses_group]
-     - Expenses Group/Head [/sub-master/expenses_group_head]
-     - Expense Type Master [/sub-master/expense_type_master]
-     - Payment Mode Master [/sub-master/payment_mode_master]
-     - Fabric Master [/sub-master/fabric_type_master]
-     - Fibre Count [/sub-master/fibre_count_master]
-     - Finishing Type [/sub-master/finishing_type_master]
-     - Grey Checker Name [/sub-master/grey_checker_name]
-     - Grey Damage Master [/sub-master/grey_damage]
-     - Gry Mas BaleType [/sub-master/gry_mas_baletype]
-     - Printing Technique [/sub-master/printing_technique_master]
-     - Process Sequences [/sub-master/process_sequence_master]
-     - Process Type Master [/sub-master/process_type_master]
-     - Remarks Master [/sub-master/remarks_master]
-     - Sample Master [/sub-master/sample]
-     - Shringage (Shrinkage) [/sub-master/shringage]
-     - Sizing Chemical [/sub-master/sizing_chemical_master]
-     - TDS Bill Type [/sub-master/tds_bill_type_master]
-     - Test Parameter [/sub-master/test_parameter_master]
-     - Weaving Master [/sub-master/weaving_type_master]
-
-   * Complex Masters:
-     - Buyer KYC Form [/sub-master/buyer_kyc_form]
-     - Buyer Sub Master [/sub-master/buyer_sub_master]
-     - Company Bank Master [/sub-master/company_bank_master]
-     - Fabric Costing Engine [/sub-master/fabric_costing_engine]
-     - Fabric Single Costing [/sub-master/fabric_single_costing]
-     - LC Bank Master [/sub-master/lc_bank_master]
-
-   * Amendment Masters:
-     - Cloth LOT No. AMD [/sub-master/cloth_lot_no_amd]
-     - Invoice AMD [/sub-master/invoice_amd]
-     - Despatch Request AMD [/sub-master/despatch_request_amd]
-     - Point AMD [/sub-master/point_amd]
-     - Vendor Order AMD [/sub-master/vendor_order_amd]
-
-   * System Config & Utilities:
-     - Approval Settings [/sub-master/approval_settings]
-     - Direct Invoice Limits [/sub-master/direct_invoice_limits]
-     - Sub Menu Master [/sub-master/sub_menu_master]
-     - Control Service [/sub-master/control_service]
-     - Log Report [/sub-master/log_report_util]
-     - Old Year Menu [/sub-master/old_year_menu]
+2. MASTERS
+   - Party Master [/party-master]
 
 3. ORDER MANAGEMENT
    - Buyer Order Form [/buyer-order]
 
 4. DESIGN MANAGEMENT
    - Design Entry [/design-entry]
-   - Design AI [/design-ai]
 
 5. PURCHASE MANAGEMENT
    - Yarn Purchase Order [/yarn/purchase-order]
 
 6. YARN MANAGEMENT
    - Yarn Inward [/yarn/inward]
-   - Grey Yarn Delivery [/yarn/grey-delivery]
-   - Dyed Yarn Received [/dyed-yarn/received]
-   - Dyed Yarn Delivery [/dyed-yarn/delivery]
+   - Yarn Stock [/yarn/stock]
 
-7. PRODUCTION PLANNING (PPC)
-   * Master Setup:
-     - Loom Master [/ppc/master/loom-master]
-     - Shift Master [/ppc/master/shift-master]
-     - Operator Master [/ppc/master/operator-master]
-     - Downtime Reason [/ppc/master/downtime-reason]
-   * Loom Planning:
-     - Availability Check [/ppc/planning/availability]
-     - Capacity Calc [/ppc/planning/capacity]
-     - Order Breakdown [/ppc/planning/order-breakdown]
-     - Load Balancing [/ppc/planning/load-balancing]
-     - Loom Allocation [/ppc/planning/allocation]
-   * Production Scheduling:
-     - Date Planning [/ppc/scheduling/start-end]
-     - Runtime Calc [/ppc/scheduling/runtime]
-     - Shift Planning [/ppc/scheduling/shift-planning]
-     - Operator Assign [/ppc/scheduling/operator-assign]
-     - Priority Schedule [/ppc/scheduling/priority]
-   * Production Execution:
-     - Loom Start Entry [/ppc/execution/loom-start]
-     - Shift Prod. Entry [/ppc/execution/shift-entry]
-     - IoT / Auto Entry [/ppc/execution/iot-entry]
-     - Speed Monitoring [/ppc/execution/speed-monitoring]
-     - Status Update [/ppc/execution/status-update]
-   * Daily Monitoring:
-     - Daily Prod. Report [/ppc/monitoring/daily-report]
-     - Target vs Actual [/ppc/monitoring/target-actual]
-     - Efficiency Calc [/ppc/monitoring/efficiency]
-     - Loss Analysis [/ppc/monitoring/loss-analysis]
-     - Shift Summary [/ppc/monitoring/shift-summary]
-   * Progress Tracking:
-     - Order Progress [/ppc/tracking/order-progress]
-     - Loom Contribution [/ppc/tracking/loom-contribution]
-     - Live Dashboard [/ppc/tracking/live-dashboard]
-     - Multi-loom View [/ppc/tracking/multi-loom]
-   * Problem Handling:
-     - Breakdown Entry [/ppc/problem/breakdown-entry]
-     - Downtime Calc [/ppc/problem/downtime-calc]
-     - Lost Meters Calc [/ppc/problem/lost-meters]
-     - Reallocation Engine [/ppc/problem/reallocation]
-     - Maintenance Log [/ppc/problem/maintenance]
-   * Finish Prediction (ETA):
-     - ETA Calculation [/ppc/prediction/eta-calc]
-     - Dynamic ETA Update [/ppc/prediction/dynamic-eta]
-   * Alert & Notification:
-     - Low Efficiency Alert [/ppc/alerts/low-efficiency]
-     - Breakdown Alert [/ppc/alerts/breakdown-alert]
-     - Next Order Alert [/ppc/alerts/next-order]
-   * Reports:
-     - Loom-wise Prod. [/ppc/reports/loom-wise]
-     - Order-wise Prod. [/ppc/reports/order-wise]
-     - Daily Factory [/ppc/reports/daily-factory]
-     - Efficiency Trend [/ppc/reports/efficiency-trend]
-     - Downtime History [/ppc/reports/downtime-history]
-     - Delivery Forecast [/ppc/reports/daily-factory]
+7. JOB WORK MANAGEMENT
+   - Yarn Dyeing Delivery [/dyed-yarn/delivery]
+   - Dyed Yarn Receipt [/dyed-yarn/received]
+   - Warping Delivery [/warp/delivery]
+   - Warping Receipt [/warp/beam-receipt]
+   - Sizing Delivery [/warp/transaction/entries?tab=beam_delivery]
+   - Sizing Receipt [/warp/transaction/entries?tab=beam_received]
+   - Weaving Delivery [/weaving/delivery]
+   - Grey Fabric Receipt [/cloth/inward]
+   - Fabric Dyeing Delivery [/jobwork/fabric-dyeing-delivery]
+   - Dyed Fabric Receipt [/jobwork/dyed-fabric-receipt]
+   - Printing Delivery [/jobwork/printing-delivery]
+   - Printed Fabric Receipt [/jobwork/printed-fabric-receipt]
+   - Finishing Delivery [/jobwork/finishing-delivery]
+   - Finished Fabric Receipt [/jobwork/finished-fabric-receipt]
+   - Job Work Status [/jobwork/status]
 
 8. QUALITY CONTROL
-   - On-Table Checking [/cloth/checking]
+   - Grey Inspection [/cloth/checking]
+   - Final Inspection [/fabric/transaction/checking]
 
-9. INVENTORY & WAREHOUSE
-   - Packing Slip [/packing]
+9. INVENTORY
+   - Stock Summary [/inventory/stock-summary]
+   - Stock Ledger [/inventory/stock-ledger]
 
-10. GATE & SECURITY
-    - Gate Inward [/gate/inward]
-    - Gate Outward [/gate/outward]
-    - Gate Pass Creation [/gate/pass]
-    - Gate Reports [/gate/reports]
+10. PACKING
+    - Packing Slip [/packing]
 
 11. SALES & DISPATCH
     - Goods Release (GRA) [/goods-release]
     - Sales Invoice [/sales-invoice]
     - Despatch Planning [/despatch]
 
-12. EXPORT & LOGISTICS
+12. GATE & SECURITY
+    - Gate Inward [/gate/inward]
+    - Gate Outward [/gate/outward]
+    - Gate Pass Creation [/gate/pass]
+    - Gate Reports [/gate/reports]
+
+13. EXPORT & LOGISTICS
     - E-Way Bill [/eway-bill]
 
-13. ACCOUNTS & FINANCE
-    * Finance:
+14. REPORTS & MIS
+    - Reports Dashboard [/reports-dashboard]
+    - Log Report [/log-report]
+
+15. ACCOUNTS & FINANCE (under Finance dropdown)
+    * HOME:
       - Dashboard [/cubebook/dashboard]
+    * MASTERS:
       - Create [/cubebook/masters]
       - Alter [/cubebook/masters/alter]
       - Chart of Accounts [/cubebook/masters/chart]
-      - Party Master [/party-master]
+    * TRANSACTIONS:
       - Vouchers [/cubebook/vouchers]
       - Day Book [/cubebook/day-book]
+    * REPORTS:
       - Trial Balance [/cubebook/reports/trial-balance]
       - Profit & Loss [/cubebook/reports/profit-loss]
       - Balance Sheet [/cubebook/reports/balance-sheet]
       - Ledger Report [/cubebook/reports/ledger]
-      - Cash Book [/cubebook/reports/cash-book]
       - Bank Book [/cubebook/reports/bank-book]
       - Outstanding [/cubebook/reports/outstanding]
       - Sales Register [/cubebook/reports/sales-register]
-      - Purchase Register [/cubebook/reports/purchase-register]
       - Ratio Analysis [/cubebook/reports/ratio-analysis]
-      - GST Dashboard [/cubebook/gst]
-      - GSTR-1 [/cubebook/gst/gstr1]
-      - GSTR-3B [/cubebook/gst/gstr3b]
-      - Input Tax Credit [/cubebook/gst/itc]
-      - Stock Summary [/cubebook/inventory/stock-summary]
-      - Stock Movement [/cubebook/inventory/movement]
-      - Godown Summary [/cubebook/inventory/godowns]
-      - Banking Overview [/cubebook/banking]
-      - Cheque Register [/cubebook/banking/cheque-register]
-      - Bank Reconcile [/cubebook/banking/activities]
-      - Employee Master [/cubebook/payroll/employees]
-      - Salary Processing [/cubebook/payroll/processing]
-      - Payroll Reports [/cubebook/payroll/reports]
-      - Company Master [/cubebook/companies]
-      - Company Settings [/cubebook/company-setup]
-      - User Management [/cubebook/admin/users]
-      - Roles & Permissions [/cubebook/admin/roles]
-      - Currency Master [/cubebook/currency]
-      - Audit Log [/cubebook/audit]
-      - Voucher History [/cubebook/audit/vouchers]
 
-14. HUMAN RESOURCES
-    * HR Management:
+16. PRODUCTION PLANNING (PPC) (under Production Management dropdown)
+    * OVERVIEW:
+      - Dashboard [/ppc/tracking/live-dashboard]
+    * MODULES:
+      - Master Setup [/ppc/master/loom-master]
+      - Loom Planning [/ppc/planning/availability]
+      - Scheduling [/ppc/scheduling/start-end]
+      - Execution [/ppc/execution/loom-start]
+      - Daily Monitor [/ppc/monitoring/target-actual]
+      - Progress [/ppc/tracking/order-progress]
+      - Problems [/ppc/problem/breakdown-entry]
+      - ETA Engine [/ppc/alerts/eta-calc]
+      - Alerts [/ppc/alerts/low-efficiency]
+      - Reports [/ppc/reports/loom-wise]
+
+17. HUMAN RESOURCES (under HR Management dropdown)
+    * DASHBOARDS:
       - HR Dashboard [/hr]
-      - Employee Master [/employee]
-      - Organization Chart [/hr/org-chart]
+    * MASTER:
       - Departments [/hr/departments]
       - Designations [/hr/designations]
-      - Projects [/hr/projects]
-      - Time & Attendance Hub [/hr/time-attendance]
-      - Attendance & Leave [/hr/attendance]
       - Shifts [/hr/shifts]
       - Holidays [/hr/holidays]
+      - Employee Master [/hr/employees]
+    * ATTENDANCE:
+      - Attendance & Leave [/hr/attendance]
       - Payroll [/hr/payroll]
+    * COMPENSATION:
       - Loans [/hr/loans]
       - Benefits [/hr/benefits]
-      - Expense Claims [/hr/expenses]
       - Travel Requests [/hr/travel]
-      - HR Reports [/hr/reports]
-      - HR Settings [/hr/settings]
-      - Administration Hub [/hr/administration]
-      - Documents [/hr/documents]
-      - Assets [/hr/assets]
-      - Announcements [/hr/announcements]
-      - Helpdesk [/hr/helpdesk]
+      - Expense Claims [/hr/expenses]
+    * REPORTS:
+      - Reports [/hr/reports]
 
-15. VEHICLE MANAGEMENT
-    * Vehicle Management:
-      - Dashboard [/fleet/dashboard]
-      - Vehicles [/fleet/vehicles]
-      - Vehicle Assignment [/fleet/drivers]
-      - Service Schedule [/fleet/service-schedule]
-      - Breakdown Entry [/fleet/breakdown-entry]
-      - Maintenance Log [/fleet/maintenance-log]
-      - RC / Insurance / Permit [/fleet/documents]
-      - Expiry Alerts [/fleet/expiry-alerts]
-      - Fuel Consumption Report [/fleet/fuel-consumption]
-      - Driver Report [/fleet/driver-performance]
+18. VEHICLE MANAGEMENT (under Vehicle Management dropdown)
+    - Dashboard [/fleet/dashboard]
+    - Vehicles [/fleet/vehicles]
+    - Vehicle Assignment [/fleet/drivers]
+    - Service Schedule [/fleet/service-schedule]
+    - Breakdown Entry [/fleet/breakdown-entry]
+    - Maintenance Log [/fleet/maintenance-log]
+    - RC / Insurance / Permit [/fleet/documents]
+    - Expiry Alerts [/fleet/expiry-alerts]
+    - Fuel Consumption Report [/fleet/fuel-consumption]
+    - Driver Report [/fleet/driver-performance]
 
-16. STORES & CONSUMABLES
-    * Stores & Consumables:
+19. STORES & CONSUMABLES (under Stores & Consumables dropdown)
+    * HOME:
       - Dashboard [/stores-consumables/dashboard]
+    * MASTERS:
       - Category Master [/stores-consumables/category]
       - UOM Master [/stores-consumables/uom]
       - Item Master [/stores-consumables/item]
       - Vendor Master [/stores-consumables/vendor]
       - Department Master [/stores-consumables/department]
+    * TRANSACTIONS:
       - Department Request [/stores-consumables/request]
       - Purchase Requisition [/stores-consumables/requisition]
+      - Vendor Quotation [/stores-consumables/quotation]
       - Purchase Order [/stores-consumables/po]
       - Stock Inward (GRN) [/stores-consumables/grn]
       - Issue to Dept [/stores-consumables/issue]
       - Return to Store [/stores-consumables/return]
       - Store Transfer [/stores-consumables/transfer]
       - Stock Adjustment [/stores-consumables/adjustment]
-      - Physical Verification [/stores-consumables/physical]
-      - Request Approval [/stores-consumables/approve-request]
-      - PO Approval [/stores-consumables/approve-po]
-      - Issue Approval [/stores-consumables/approve-issue]
+      - Returnable DC [/stores-consumables/returnable-dc]
+    * REPORTS & ANALYTICS:
       - Stock Inventory [/stores-consumables/report-stock]
       - Stock Ledger [/stores-consumables/report-ledger]
       - Consumption Analysis [/stores-consumables/report-consumption]
@@ -301,14 +164,10 @@
       - Low Stock Alerts [/stores-consumables/report-reorder]
       - Audit Trail [/stores-consumables/report-audit]
 
-17. REPORTS & MIS
-    - Reports Dashboard [/reports-dashboard]
-    - Log Report [/log-report]
-
-18. ADMINISTRATION & SECURITY
+20. ADMINISTRATION & SECURITY
     - User Management [/user-management]
 
-19. SYSTEM
+21. SYSTEM
     - Company [/company-settings]
     - About [/about]
 ================================================================================

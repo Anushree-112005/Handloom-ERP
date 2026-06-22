@@ -77,6 +77,7 @@ class OrderCreate(BaseModel):
     commission_type: Optional[str] = None
     commission_pct: Optional[float] = 0
     order_taken_by: Optional[str] = None
+    merchandiser: Optional[str] = None
     nomination_type: Optional[str] = None
     regular_special: Optional[str] = None
     
@@ -170,7 +171,7 @@ async def list_schedules(db: AsyncSession = Depends(get_db)):
 async def create_schedule(data: ScheduleCreate, db: AsyncSession = Depends(get_db)):
     max_id_q = await db.execute(select(func.max(BuyerOrderSchedule.id)))
     max_id = max_id_q.scalar() or 0
-    sch_id = f"SCH-{max_id + 1:03d}"
+    sch_id = f"SCH-{max_id + 1:05d}"
     
     sch_dict = data.model_dump()
     schedule = BuyerOrderSchedule(**sch_dict, schedule_id=sch_id)
@@ -235,7 +236,7 @@ async def list_sequences(db: AsyncSession = Depends(get_db)):
 async def create_sequence(data: SequenceCreate, db: AsyncSession = Depends(get_db)):
     max_id_q = await db.execute(select(func.max(BuyerOrderSequence.id)))
     max_id = max_id_q.scalar() or 0
-    seq_id = f"SEQ-{max_id + 1:04d}"
+    seq_id = f"SEQ-{max_id + 1:05d}"
     
     seq_dict = data.model_dump()
     sequence = BuyerOrderSequence(**seq_dict, sequence_id=seq_id)
@@ -300,7 +301,7 @@ async def list_amendments(db: AsyncSession = Depends(get_db)):
 async def create_amendment(data: AmendmentCreate, db: AsyncSession = Depends(get_db)):
     max_id_q = await db.execute(select(func.max(BuyerOrderAmendment.id)))
     max_id = max_id_q.scalar() or 0
-    amd_id = f"AMD-{max_id + 1:04d}"
+    amd_id = f"AMD-{max_id + 1:05d}"
     
     amd_dict = data.model_dump()
     amendment = BuyerOrderAmendment(**amd_dict, amendment_id=amd_id)
@@ -367,7 +368,7 @@ async def list_completions(db: AsyncSession = Depends(get_db)):
 async def create_completion(data: CompletionCreate, db: AsyncSession = Depends(get_db)):
     max_id_q = await db.execute(select(func.max(BuyerOrderCompletion.id)))
     max_id = max_id_q.scalar() or 0
-    cmp_id = f"CMP-{max_id + 1:03d}"
+    cmp_id = f"CMP-{max_id + 1:05d}"
     
     cmp_dict = data.model_dump()
     completion = BuyerOrderCompletion(**cmp_dict, cmp_id=cmp_id)
@@ -450,7 +451,7 @@ async def list_dispatches(db: AsyncSession = Depends(get_db)):
 async def create_dispatch(data: DispatchCreate, db: AsyncSession = Depends(get_db)):
     max_id_q = await db.execute(select(func.max(BuyerOrderDispatch.id)))
     max_id = max_id_q.scalar() or 0
-    indent_id = f"IND-{max_id + 1:04d}"
+    indent_id = f"IND-{max_id + 1:05d}"
     
     dispatch = BuyerOrderDispatch(**data.model_dump(), indent_id=indent_id)
     db.add(dispatch)
@@ -492,7 +493,7 @@ async def list_expenses(db: AsyncSession = Depends(get_db)):
 async def create_expense(data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
     max_id_q = await db.execute(select(func.max(BuyerOrderExpense.id)))
     max_id = max_id_q.scalar() or 0
-    expense_id = f"EXP-{max_id + 1:04d}"
+    expense_id = f"EXP-{max_id + 1:05d}"
     
     expense = BuyerOrderExpense(**data.model_dump(), expense_id=expense_id)
     db.add(expense)

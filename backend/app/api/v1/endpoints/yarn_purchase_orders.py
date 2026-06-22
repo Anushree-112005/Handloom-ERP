@@ -36,6 +36,10 @@ class YarnPurchaseIndentDetailIn(BaseModel):
     tot_reqd_qty: Optional[float] = 0.0
     appd_qty: Optional[float] = 0.0
     order_qty: Optional[float] = 0.0
+    rate: Optional[float] = 0.0
+    amount: Optional[float] = 0.0
+    colour: Optional[str] = None
+    delivery_date: Optional[str] = None
 
 class YarnPurchaseOrderCreate(BaseModel):
     po_date: date

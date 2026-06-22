@@ -322,7 +322,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   const [iapInternalNotes, setIapInternalNotes] = useState('');
 
   // Dummy fallback states for old grid support
-  const [iapIndentRef, setIapIndentRef] = useState('IND-2026-001');
+  const [iapIndentRef, setIapIndentRef] = useState('IND-00001');
   const [iapSection, setIapSection] = useState('Weaving Division A');
   const [iapRequestedBy, setIapRequestedBy] = useState('Murugan Swamy');
   const [iapPriority, setIapPriority] = useState('High');
@@ -667,7 +667,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   // 4. PURCHASE ORDER ENTRY HELPERS & MEMOS
   // ----------------------------------------------------
   // Form Fields for PO (shadow/fallback states)
-  const [poIndentRef, setPoIndentRef] = useState('IAP-2026-001');
+  const [poIndentRef, setPoIndentRef] = useState('IAP-00001');
   const [poSupplierName, setPoSupplierName] = useState('Standard Gears Ltd');
   const [poAddress, setPoAddress] = useState('Plot 10, Industrial Estate, Salem');
   const [poContact, setPoContact] = useState('Mr. Subramaniam');
@@ -712,7 +712,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   // ----------------------------------------------------
   // 5. PURCHASE ORDER APPROVAL HELPERS & MEMOS
   // ----------------------------------------------------
-  const [poaPoRef, setPoaPoRef] = useState('SPO-2026-001');
+  const [poaPoRef, setPoaPoRef] = useState('SPO-00001');
   const [poaSupplierName, setPoaSupplierName] = useState('Standard Gears Ltd');
   const [poaTotalValue, setPoaTotalValue] = useState(10620);
   const [poaRemarks, setPoaRemarks] = useState('');
@@ -735,10 +735,10 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   // ----------------------------------------------------
   // 6. PURCHASE ENTRY HELPERS & MEMOS
   // ----------------------------------------------------
-  const [pePoRef, setPePoRef] = useState('SPO-2026-001');
+  const [pePoRef, setPePoRef] = useState('SPO-00001');
   const [peSupplierName, setPeSupplierName] = useState('Standard Gears Ltd');
   const [peInvoiceDate, setPeInvoiceDate] = useState('');
-  const [peGateInward, setPeGateInward] = useState('GIN-2026-001');
+  const [peGateInward, setPeGateInward] = useState('GIN-00001');
   const [peStoreLocation, setPeStoreLocation] = useState('Rack A-2');
   const [peRemarks, setPeRemarks] = useState('');
   const [peGridItems, setPeGridItems] = useState([{ name: 'Airjet Loom Solenoid Valve', poQty: 2, receivedQty: 2, pendingQty: 0, rate: 4500, amount: 9000, condition: 'Good' }]);
@@ -809,7 +809,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   const [conMachineLocation, setConMachineLocation] = useState('');
 
   // Work Order Details
-  const [conWoRef, setConWoRef] = useState('WO-2026-001');
+  const [conWoRef, setConWoRef] = useState('WO-00001');
   const [conComplaintNo, setConComplaintNo] = useState('');
   const [conMaintenanceType, setConMaintenanceType] = useState('Breakdown Maintenance');
 
@@ -995,7 +995,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
   const [jwrReceiptType, setJwrReceiptType] = useState('Job Work Return');
 
   // Reference Details
-  const [jwrIssueRef, setJwrIssueRef] = useState('JWI-2026-001');
+  const [jwrIssueRef, setJwrIssueRef] = useState('JWI-00001');
   const [jwrWoRef, setJwrWoRef] = useState('');
   const [jwrPartyName, setJwrPartyName] = useState('Standard Gears Ltd');
 
@@ -1453,7 +1453,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
       setSprInternalNotes('');
     }
     if (activeTab === 'OpeningStock') {
-      nextId = `OS-2026-00${openingStocks.length + 1}`;
+      nextId = `OS-${String(openingStocks.length + 1).padStart(5, '0')}`;
       
       // Reset recommended fields
       setOsDate(new Date().toISOString().substring(0, 10));
@@ -1490,7 +1490,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
       setOsInternalNotes('');
     }
     if (activeTab === 'RequestIndent') {
-      nextId = `IND-2026-00${indents.length + 1}`;
+      nextId = `IND-${String(indents.length + 1).padStart(5, '0')}`;
       setIndDate(new Date().toISOString().substring(0, 10));
       setIndRequestType('Spare Request');
       setIndEmployeeId('');
@@ -1530,7 +1530,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
       setIndInternalNotes('');
     }
     if (activeTab === 'IndentApproval') {
-      nextId = `IAP-2026-00${indentApprovals.length + 1}`;
+      nextId = `IAP-${String(indentApprovals.length + 1).padStart(5, '0')}`;
       setIapApprovalNo(nextId);
       setIapApprovalDate(new Date().toISOString().substring(0, 10));
       setIapApprovalType('Stock Issue Approval');
@@ -1574,13 +1574,13 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
       setIapStoreRemarks('');
       setIapInternalNotes('');
     }
-    if (activeTab === 'PurchaseOrder') nextId = `SPO-2026-00${purchaseOrders.length + 1}`;
-    if (activeTab === 'POApproval') nextId = `POA-2026-00${poApprovals.length + 1}`;
-    if (activeTab === 'PurchaseEntry') nextId = `PE-2026-00${purchaseEntries.length + 1}`;
-    if (activeTab === 'WorkOrder') nextId = `WO-2026-00${workOrders.length + 1}`;
-    if (activeTab === 'Consumption') nextId = `CON-2026-00${consumptions.length + 1}`;
-    if (activeTab === 'JobWorkIssue') nextId = `JWI-2026-00${issues.length + 1}`;
-    if (activeTab === 'JobWorkRecv') nextId = `JWR-2026-00${receipts.length + 1}`;
+    if (activeTab === 'PurchaseOrder') nextId = `SPO-${String(purchaseOrders.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'POApproval') nextId = `POA-${String(poApprovals.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'PurchaseEntry') nextId = `PE-${String(purchaseEntries.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'WorkOrder') nextId = `WO-${String(workOrders.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'Consumption') nextId = `CON-${String(consumptions.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'JobWorkIssue') nextId = `JWI-${String(issues.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'JobWorkRecv') nextId = `JWR-${String(receipts.length + 1).padStart(5, '0')}`;
 
     setCurrentFormId(nextId);
     setActiveFormTab('Reference Info');
@@ -4303,7 +4303,7 @@ export default function SparesTransaction({ defaultSection = 'Master Setup' }) {
                           </div>
                           <div className="form-group">
                             <label>Work Order No Reference</label>
-                            <input type="text" className="form-control" placeholder="e.g. WO-2026-003" value={indWorkOrderNo} onChange={e => setIndWorkOrderNo(e.target.value)} />
+                            <input type="text" className="form-control" placeholder="e.g. WO-00003" value={indWorkOrderNo} onChange={e => setIndWorkOrderNo(e.target.value)} />
                           </div>
                           <div className="form-group">
                             <label>Requirement Reason *</label>

@@ -296,7 +296,7 @@ export default function WarpDelivery() {
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No deliveries found.</td></tr>
                     ) : filteredDeliveries.map(r => (
                       <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{r.dc_no}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.dc_no}</td>
                         <td>{r.dc_date}</td>
                         <td style={{ fontWeight: 500 }}>{r.party_name || '-'}</td>
                         <td><span className={`badge ${r.delivery_type === 'Direct' ? 'badge-completed' : 'badge-active'}`}>{r.delivery_type}</span></td>

@@ -312,7 +312,7 @@ Database Schema:
    - ibpo_number: character varying
    - order_date: date
    - party_name: character varying (customer name)
-   - status: character varying ('Pending', 'Completed', etc.)
+   - status: character varying ('Active', 'Completed', etc.)
 
 8. yarn_purchase_orders (Orders to buy yarn from suppliers):
    - id: integer

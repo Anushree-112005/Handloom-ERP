@@ -79,7 +79,7 @@ export default function VoucherEntry() {
 
   // Form fields for Payment Advise
   const [paCreditorName, setPaCreditorName] = useState('Vardhman Spinning');
-  const [paBillPassingRef, setPaBillPassingRef] = useState('BP-2026-001');
+  const [paBillPassingRef, setPaBillPassingRef] = useState('BP-00001');
   const [paBillAmount, setPaBillAmount] = useState(166500);
   const [paPrevOutstanding, setPaPrevOutstanding] = useState(45000);
   const [paPaymentAmount, setPaPaymentAmount] = useState('');
@@ -107,7 +107,7 @@ export default function VoucherEntry() {
   const [dnBuyerName, setDnBuyerName] = useState('Raymond Ltd');
   const [dnBuyerDebitNo, setDnBuyerDebitNo] = useState('');
   const [dnBuyerDebitDate, setDnBuyerDebitDate] = useState('');
-  const [dnAgainstInvoice, setDnAgainstInvoice] = useState('INV-2026-8802');
+  const [dnAgainstInvoice, setDnAgainstInvoice] = useState('INV-08802');
   const [dnInvoiceDate, setDnInvoiceDate] = useState('2026-05-15');
   const [dnInvoiceAmount, setDnInvoiceAmount] = useState(480000);
   const [dnDebitAmount, setDnDebitAmount] = useState('');
@@ -152,7 +152,7 @@ export default function VoucherEntry() {
   const [approvals, setApprovals] = useState([]);
 
   // Form Fields for Approval
-  const [apDebitRef, setApDebitRef] = useState('DNR-2026-001');
+  const [apDebitRef, setApDebitRef] = useState('DNR-00001');
   const [apBuyerName, setApBuyerName] = useState('Raymond Ltd');
   const [apDebitNo, setApDebitNo] = useState('DN-RAY-889');
   const [apDebitAmount, setApDebitAmount] = useState(26250);
@@ -177,7 +177,7 @@ export default function VoucherEntry() {
   // Form Fields for Receipt Entry
   const [rcReceiptType, setRcReceiptType] = useState('Against Invoice');
   const [rcReceivedFrom, setRcReceivedFrom] = useState('Raymond Ltd');
-  const [rcAgainstInvoice, setRcAgainstInvoice] = useState('INV-2026-8802');
+  const [rcAgainstInvoice, setRcAgainstInvoice] = useState('INV-08802');
   const [rcInvoiceAmount, setRcInvoiceAmount] = useState(480000);
   const [rcPrevOutstanding, setRcPrevOutstanding] = useState(120000);
   const [rcReceiptAmount, setRcReceiptAmount] = useState('');
@@ -206,11 +206,11 @@ export default function VoucherEntry() {
   // ----------------------------------------------------
   const handleCreateNew = () => {
     let nextId = '';
-    if (activeTab === 'BillPassing') nextId = `BP-2026-00${bills.length + 1}`;
-    if (activeTab === 'PaymentAdvise') nextId = `PA-2026-00${advises.length + 1}`;
-    if (activeTab === 'DebitNoteRecv') nextId = `DNR-2026-00${debitNotes.length + 1}`;
-    if (activeTab === 'DebitNoteAppr') nextId = `APP-2026-00${approvals.length + 1}`;
-    if (activeTab === 'ReceiptEntry') nextId = `REC-2026-00${receipts.length + 1}`;
+    if (activeTab === 'BillPassing') nextId = `BP-${String(bills.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'PaymentAdvise') nextId = `PA-${String(advises.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'DebitNoteRecv') nextId = `DNR-${String(debitNotes.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'DebitNoteAppr') nextId = `APP-${String(approvals.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'ReceiptEntry') nextId = `REC-${String(receipts.length + 1).padStart(5, '0')}`;
 
     setCurrentFormId(nextId);
     setActiveFormTab('Reference Info');

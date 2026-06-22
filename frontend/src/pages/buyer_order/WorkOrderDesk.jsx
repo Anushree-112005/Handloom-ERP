@@ -467,7 +467,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
       });
     }
     else if (activePage === 'cloth_po') {
-      nextId = `CPO-2026-00${clothPurchaseOrders.length + 1}`;
+      nextId = `CPO-${String(clothPurchaseOrders.length + 1).padStart(5, '0')}`;
       setFields({
         id: nextId,
         purchaseDate: dateToday,
@@ -649,7 +649,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
       });
     }
     else if (activePage === 'dev_bulk_order') {
-      nextId = `DBO-2026-00${bulkOrders.length + 1}`;
+      nextId = `DBO-${String(bulkOrders.length + 1).padStart(5, '0')}`;
       setFields({
         id: nextId,
         orderDate: dateToday,
@@ -693,7 +693,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
       });
     }
     else if (activePage === 'dev_bulk_followup') {
-      nextId = `DBF-2026-00${orderFollowups.length + 1}`;
+      nextId = `DBF-${String(orderFollowups.length + 1).padStart(5, '0')}`;
       setFields({
         id: nextId,
         followupDate: dateToday,
@@ -3964,7 +3964,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </div>
                       <div className="form-group">
                         <label>Related Order No * (Order Link)</label>
-                        <input type="text" className="form-control" name="relatedOrderNo" value={fields.relatedOrderNo || ''} onChange={handleInputChange} placeholder="e.g. DBO-2026-001" required />
+                        <input type="text" className="form-control" name="relatedOrderNo" value={fields.relatedOrderNo || ''} onChange={handleInputChange} placeholder="e.g. DBO-00001" required />
                       </div>
                       <div className="form-group">
                         <label>Buyer Name *</label>

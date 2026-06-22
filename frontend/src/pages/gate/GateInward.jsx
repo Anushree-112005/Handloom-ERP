@@ -50,11 +50,11 @@ export default function GateInward() {
           const seedData = [];
           for (let i = 0; i < 10; i++) {
             const vehicle = fetchedVehicles[i % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[i % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const bo = fetchedBOs[i % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
             const party = fetchedParties[i % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
             
             seedData.push({
-              id: `GIN-2026-00${i + 1}`,
+              id: `GIN-${String(i + 1).padStart(5, '0')}`,
               dateTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
               vehicleNo: vehicle.vehicle_number,
               driverName: `Driver ${i + 1}`,
@@ -213,7 +213,7 @@ export default function GateInward() {
   }, [inwards, searchTerm, filterMaterial, filterFromDate, filterToDate]);
 
   const handleCreateNew = () => {
-    const nextId = `GIN-2026-00${inwards.length + 1}`;
+    const nextId = `GIN-${String(inwards.length + 1).padStart(5, '0')}`;
     setCurrentFormId(nextId);
     
     // Reset Form Fields

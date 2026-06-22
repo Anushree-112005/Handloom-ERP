@@ -302,7 +302,7 @@ export default function WarpBeamReceipt() {
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No receipts found.</td></tr>
                     ) : filteredReceipts.map(r => (
                       <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{r.ref_no}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.ref_no}</td>
                         <td>{r.rcvd_date}</td>
                         <td style={{ fontWeight: 500 }}>{r.party_name || '-'}</td>
                         <td><span className={`badge ${r.rcvd_type === 'Direct' ? 'badge-completed' : 'badge-active'}`}>{r.rcvd_type}</span></td>

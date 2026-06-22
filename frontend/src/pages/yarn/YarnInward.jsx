@@ -359,6 +359,7 @@ export default function YarnInward() {
             our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
           }]
         };
+      } else {
         const selectedPo = pos.find(po => {
           const poDateStr = po.po_date ? po.po_date.substring(0, 10) : '';
           const matchStr = `${po.po_number} / ${poDateStr}`;
@@ -380,8 +381,8 @@ export default function YarnInward() {
               our_id: '',
               bags: 0,
               kgs: item.order_kgs || item.order_qty || 0,
-              rate: 0,
-              amount: 0
+              rate: item.rate || 0,
+              amount: item.amount || 0
             };
           });
 
@@ -664,7 +665,7 @@ export default function YarnInward() {
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No inwards found.</td></tr>
                     ) : filteredInwards.map(i => (
                       <tr key={i.id} onClick={() => handleRowClick(i)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === i.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{i.ref_no}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{i.ref_no}</td>
                         <td>{i.inward_date}</td>
                         <td style={{ fontWeight: 500 }}>{i.received_from || '-'}</td>
                         <td><span className={`badge ${i.received_type === 'Direct' ? 'badge-draft' : 'badge-active'}`}>{i.received_type}</span></td>
@@ -687,7 +688,7 @@ export default function YarnInward() {
               <div style={{ flex: '0 0 350px' }}>
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
                       <ArrowRightLeft size={18} /> {selectedViewEntry.ref_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>

@@ -25,7 +25,7 @@ export default function SparesApproval() {
   const [indentApprovals, setIndentApprovals] = useState([]);
 
   // Form fields for Indent Approval
-  const [iapIndentRef, setIapIndentRef] = useState('IND-2026-001');
+  const [iapIndentRef, setIapIndentRef] = useState('IND-00001');
   const [iapSection, setIapSection] = useState('Weaving Division A');
   const [iapRequestedBy, setIapRequestedBy] = useState('Murugan Swamy');
   const [iapPriority, setIapPriority] = useState('High');
@@ -50,7 +50,7 @@ export default function SparesApproval() {
   const [poApprovals, setPoApprovals] = useState([]);
 
   // Form Fields for PO Approval
-  const [poaPoRef, setPoaPoRef] = useState('SPO-2026-001');
+  const [poaPoRef, setPoaPoRef] = useState('SPO-00001');
   const [poaSupplierName, setPoaSupplierName] = useState('Standard Gears Ltd');
   const [poaTotalValue, setPoaTotalValue] = useState(10620);
   const [poaApprovedBy, setPoaApprovedBy] = useState('Dinesh Balasamy (MD)');
@@ -77,8 +77,8 @@ export default function SparesApproval() {
   // ----------------------------------------------------
   const handleCreateNew = () => {
     let nextId = '';
-    if (activeTab === 'IndentApproval') nextId = `IAP-2026-00${indentApprovals.length + 1}`;
-    if (activeTab === 'POApproval') nextId = `POA-2026-00${poApprovals.length + 1}`;
+    if (activeTab === 'IndentApproval') nextId = `IAP-${String(indentApprovals.length + 1).padStart(5, '0')}`;
+    if (activeTab === 'POApproval') nextId = `POA-${String(poApprovals.length + 1).padStart(5, '0')}`;
 
     setCurrentFormId(nextId);
     setActiveFormTab('Reference Info');
@@ -429,7 +429,7 @@ export default function SparesApproval() {
                     <>
                       <div className="form-group">
                         <label>Indent Ref No Link *</label>
-                        <input type="text" className="form-control" placeholder="e.g. IND-2026-001" value={iapIndentRef} onChange={e => setIapIndentRef(e.target.value)} required />
+                        <input type="text" className="form-control" placeholder="e.g. IND-00001" value={iapIndentRef} onChange={e => setIapIndentRef(e.target.value)} required />
                       </div>
                       <div className="form-group">
                         <label>Section (Auto Fill)</label>
@@ -444,7 +444,7 @@ export default function SparesApproval() {
                     <>
                       <div className="form-group">
                         <label>PO Ref Link *</label>
-                        <input type="text" className="form-control" placeholder="e.g. SPO-2026-001" value={poaPoRef} onChange={e => setPoaPoRef(e.target.value)} required />
+                        <input type="text" className="form-control" placeholder="e.g. SPO-00001" value={poaPoRef} onChange={e => setPoaPoRef(e.target.value)} required />
                       </div>
                       <div className="form-group">
                         <label>Supplier Name (Auto Fill)</label>

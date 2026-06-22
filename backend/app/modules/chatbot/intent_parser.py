@@ -5,6 +5,11 @@ from datetime import datetime, timedelta
 from app.core.config import settings
 from app.modules.reports.registry import REPORT_REGISTRY
 
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -14,9 +19,8 @@ def parse_intent(message: str, context: dict = None) -> dict:
     context = context or {}
 
     # Check if Groq API key is configured
-    if settings.GROQ_API_KEY:
+    if settings.GROQ_API_KEY and Groq is not None:
         try:
-            from groq import Groq
             intent = parse_intent_with_groq(message, context)
             if intent:
                 return intent

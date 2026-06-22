@@ -50,13 +50,13 @@ export default function GateOutward() {
           const seedData = [];
           for (let i = 0; i < 10; i++) {
             const vehicle = fetchedVehicles[(i + 2) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[(i + 1) % fetchedBOs.length] || { ibpo_number: `IBPO-26-00${i+1}`, buyer_name: 'HM Sweden' };
+            const bo = fetchedBOs[(i + 1) % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
             const party = fetchedParties[(i + 1) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
             
             seedData.push({
-              id: `GOT-2026-00${i + 1}`,
+              id: `GOT-${String(i + 1).padStart(5, '0')}`,
               dateTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-              inwardRef: `GIN-2026-00${i + 1}`,
+              inwardRef: `GIN-${String(i + 1).padStart(5, '0')}`,
               vehicleNo: vehicle.vehicle_number,
               driverName: `Driver ${i + 5}`,
               driverMobile: `987654311${i}`,
@@ -70,7 +70,7 @@ export default function GateOutward() {
               unit: i % 2 === 0 ? "Meter" : "Kg",
               weight: 850 + i * 150,
               packages: 15 + i,
-              gatePassNo: `GP-2026-00${i + 1}`,
+              gatePassNo: `GP-${String(i + 1).padStart(5, '0')}`,
               guardName: "K. Palanisamy",
               outTime: `17:${10 + i}`,
               remarks: `Sales delivery clearance for order ${bo.ibpo_number}`,
@@ -217,7 +217,7 @@ export default function GateOutward() {
   }, [outwards, searchTerm, filterPurpose, filterFromDate, filterToDate]);
 
   const handleCreateNew = () => {
-    const nextId = `GOT-2026-00${outwards.length + 1}`;
+    const nextId = `GOT-${String(outwards.length + 1).padStart(5, '0')}`;
     setCurrentFormId(nextId);
 
     // Reset Form Fields

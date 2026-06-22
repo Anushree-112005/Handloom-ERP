@@ -495,7 +495,7 @@ export default function DesignEntry() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>DS Ref No</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Actions</th>
+                      <th>Design EntryNo</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -505,7 +505,7 @@ export default function DesignEntry() {
                       <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No designs found.</td></tr>
                     ) : filteredEntries.map(e => (
                       <tr key={e.id} onClick={() => handleRowClick(e)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === e.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{e.ds_ref_no}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{e.ds_ref_no}</td>
                         <td>{e.ds_date}</td>
                         <td style={{ fontWeight: 500 }}>{e.design_no}</td>
                         <td>{e.buyer_name || '-'}</td>

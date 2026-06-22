@@ -3,8 +3,8 @@ import { Package, Search, Save } from 'lucide-react';
 
 export default function WarpWeftIssue() {
   const [requisitions, setRequisitions] = useState([
-    { id: 'REQ-1001', order: 'PO-2026-101', loom: 'Loom L1', status: 'Pending', warp: 'Cotton 40s (12,000 ends)', weft: 'Polyester 150D', date: '2026-06-12' },
-    { id: 'REQ-1002', order: 'PO-2026-205', loom: 'Loom L3', status: 'Issued', warp: 'Linen Blend (8,500 ends)', weft: 'Cotton 30s', date: '2026-06-11' },
+    { id: 'REQ-1001', order: 'PO-00101', loom: 'Loom L1', status: 'Pending', warp: 'Cotton 40s (12,000 ends)', weft: 'Polyester 150D', date: '2026-06-12' },
+    { id: 'REQ-1002', order: 'PO-00205', loom: 'Loom L3', status: 'Issued', warp: 'Linen Blend (8,500 ends)', weft: 'Cotton 30s', date: '2026-06-11' },
   ]);
 
   const [formData, setFormData] = useState({
@@ -99,7 +99,7 @@ export default function WarpWeftIssue() {
               <input 
                 type="text" className="form-control" 
                 value={formData.order} onChange={e => setFormData({...formData, order: e.target.value})}
-                required placeholder="e.g. PO-2026-105"
+                required placeholder="e.g. PO-00105"
               />
             </div>
             <div className="form-group">
