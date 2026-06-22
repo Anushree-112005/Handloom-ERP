@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -23,6 +24,7 @@ export default function DesignEntry() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [viewModalDesign, setViewModalDesign] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -513,7 +515,7 @@ export default function DesignEntry() {
                         <td><span className="badge badge-active">{e.weaving || 'N/A'}</span></td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(e, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => { evt.stopPropagation(); setViewModalDesign(e); }} title="Preview Design"><Eye size={14} color="var(--primary)" /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(e, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(e.id, e.ds_ref_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -533,7 +535,7 @@ export default function DesignEntry() {
                       <Palette size={18} /> {selectedViewEntry.ds_ref_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setViewModalDesign(selectedViewEntry)} title="Preview Design"><Eye size={14} color="var(--primary)" /></button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -1236,6 +1238,54 @@ export default function DesignEntry() {
           </div>
         </div>
       )}
+
+      <A4DocumentPreview
+        isOpen={!!viewModalDesign}
+        onClose={() => setViewModalDesign(null)}
+        title="DESIGN PROFILE"
+        documentNumber={viewModalDesign?.ds_ref_no}
+        status="ACTIVE"
+        onDownloadPdf={() => alert('PDF Download for Design Entry triggered')}
+        sections={viewModalDesign ? [
+          {
+            title: "DESIGN & BUYER",
+            icon: "Palette",
+            type: "grid",
+            data: [
+              { label: "Design No", value: viewModalDesign.design_no },
+              { label: "DS Date", value: viewModalDesign.ds_date },
+              { label: "Buyer Name", value: viewModalDesign.buyer_name || '-' },
+              { label: "IBPO No", value: viewModalDesign.ibpo_no || '-' },
+              { label: "Created By", value: viewModalDesign.created_by || '-' }
+            ]
+          },
+          {
+            title: "FABRIC & SPECIFICATIONS",
+            icon: "Layers",
+            type: "grid",
+            data: [
+              { label: "Fabric Type", value: viewModalDesign.fabric },
+              { label: "Weaving", value: viewModalDesign.weaving },
+              { label: "Design Type", value: viewModalDesign.design_type },
+              { label: "Gry Construction", value: viewModalDesign.gry_const || '-' },
+              { label: "Reed / Pick OT", value: `${viewModalDesign.reed || 0} / ${viewModalDesign.pick_ot || 0}` },
+              { label: "Finish Width", value: `${viewModalDesign.finish_width || 0}"` }
+            ]
+          },
+          {
+            title: "METRICS & LENGTHS",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "Total Mtrs", value: `${viewModalDesign.total_mtr || 0} Mtr` },
+              { label: "Warp Mtrs", value: `${viewModalDesign.warp_mtr || 0} Mtr` },
+              { label: "Weight (Grms)", value: `${viewModalDesign.weight_grm || 0} g` },
+              { label: "QLM", value: viewModalDesign.qlm || 0 }
+            ]
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

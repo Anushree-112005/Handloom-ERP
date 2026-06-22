@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { despatchAPI, buyerOrderAPI, subMasterAPI, dropdownAPI, partyAPI } from '../../services/api';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 // Dynamic Date Formatter Utility
 const getFormattedDate = (d = new Date()) => {
@@ -94,6 +95,7 @@ export default function DespatchPlanning() {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [buyerOrdersList, setBuyerOrdersList] = useState([]);
+  const [selectedViewRecord, setSelectedViewRecord] = useState(null);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -708,7 +710,7 @@ export default function DespatchPlanning() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px' }}
-                            onClick={() => handleOpenForm(r, true)}
+                            onClick={() => setSelectedViewRecord(r)}
                             title="View Detail"
                           >
                             <Eye size={15} color="var(--primary)" />
@@ -737,6 +739,51 @@ export default function DespatchPlanning() {
               </tbody>
             </table>
           </div>
+
+          {selectedViewRecord && (
+            <A4DocumentPreview
+              isOpen={!!selectedViewRecord}
+              onClose={() => setSelectedViewRecord(null)}
+              title="Despatch Plan Preview"
+              data={selectedViewRecord}
+              sections={[
+                {
+                  title: 'Basic Details',
+                  fields: [
+                    { label: 'Ref No', value: selectedViewRecord.ref_no },
+                    { label: 'Date', value: selectedViewRecord.date },
+                    { label: 'IBPO', value: selectedViewRecord.ibpo },
+                    { label: 'PO Date', value: selectedViewRecord.po_date },
+                    { label: 'Billing Party', value: selectedViewRecord.billing_party },
+                    { label: 'Design No', value: selectedViewRecord.design_no },
+                    { label: 'Order No', value: selectedViewRecord.order_no },
+                    { label: 'Fabric Type', value: selectedViewRecord.fabric_type }
+                  ]
+                },
+                {
+                  title: 'Quantities & Stock',
+                  fields: [
+                    { label: 'Total Planning', value: selectedViewRecord.total_planning },
+                    { label: 'Planned Mtrs', value: selectedViewRecord.planned_mtrs },
+                    { label: 'Tolerance %', value: selectedViewRecord.tolerance_percent },
+                    { label: 'Max Despatch Qty', value: selectedViewRecord.max_despatch_qty },
+                    { label: 'Stock Available', value: selectedViewRecord.stock },
+                    { label: 'Balance Mtrs', value: selectedViewRecord.balance_mtrs }
+                  ]
+                },
+                {
+                  title: 'Delivery & Logistics',
+                  fields: [
+                    { label: 'Delivery Party', value: selectedViewRecord.delivery_party },
+                    { label: 'Delivery Address', value: selectedViewRecord.delivery_address },
+                    { label: 'Delivery Starting', value: selectedViewRecord.delivery_starting },
+                    { label: 'Last Desp Date', value: selectedViewRecord.last_desp_date },
+                    { label: 'Merchandiser', value: selectedViewRecord.merchand }
+                  ]
+                }
+              ]}
+            />
+          )}
         </>
       ) : (
         /* INPUT FORM COMPONENT - ACCORDING TO CLIENT PICTURE */

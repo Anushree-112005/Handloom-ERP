@@ -37,7 +37,7 @@ export default function GreyYarnDelivery() {
   const [customCertificateTypeVal, setCustomCertificateTypeVal] = useState('');
   const [isCustomDeliveryMode, setIsCustomDeliveryMode] = useState(false);
   const [customDeliveryModeVal, setCustomDeliveryModeVal] = useState('');
-  
+
   const [customColourIdx, setCustomColourIdx] = useState(null);
   const [customColourVal, setCustomColourVal] = useState('');
 
@@ -49,7 +49,7 @@ export default function GreyYarnDelivery() {
     vehicle_no: '', delivery_name: '', delivery_time: '', certificate_type: '',
     design_count: '', order_kgs: 0, total_dely_kgs: 0, total_rtn_kgs: 0, balance_kgs: 0,
     status: 'Delivered',
-    
+
     items: [{
       cone_type: 'Full Cone', count: '', our_lot_no: '', color: '',
       stock: 0, bags: 0, cones: 0, total_kgs: 0, rate: 0, amount: 0
@@ -87,7 +87,7 @@ export default function GreyYarnDelivery() {
       } else {
         await greyYarnDeliveryAPI.create(payload);
       }
-      
+
       setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving delivery');
@@ -150,7 +150,7 @@ export default function GreyYarnDelivery() {
       const { data } = await greyYarnDeliveryAPI.get(entry.id);
       if (data.dc_date) data.dc_date = data.dc_date.substring(0, 10);
       if (data.ref_date) data.ref_date = data.ref_date.substring(0, 10);
-      
+
       const dataWithCalculatedAmounts = {
         ...data,
         items: (data.items || []).map(item => ({
@@ -158,7 +158,7 @@ export default function GreyYarnDelivery() {
           amount: (parseFloat(item.total_kgs) || 0) * (parseFloat(item.rate) || 0)
         }))
       };
-      
+
       setForm({ ...initialForm, ...dataWithCalculatedAmounts });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
@@ -193,26 +193,26 @@ export default function GreyYarnDelivery() {
   };
 
   const handleChange = (e) => {
-  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      setActiveTab(nextTab);
-      setTimeout(() => {
-        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        } else {
-          // Fallback to first focusable element
-          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-          if (fallback) fallback.focus();
-        }
-      }, 100);
-    }
-  };
+    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        setActiveTab(nextTab);
+        setTimeout(() => {
+          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+          if (nextInput) {
+            nextInput.focus();
+          } else {
+            // Fallback to first focusable element
+            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+            if (fallback) fallback.focus();
+          }
+        }, 100);
+      }
+    };
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
-    
+
     if (name === 'transport' && value === 'custom') {
       setIsCustomTransport(true); setCustomTransportVal(''); return;
     }
@@ -238,11 +238,11 @@ export default function GreyYarnDelivery() {
     let val = value;
     if (['stock', 'bags', 'cones', 'total_kgs', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
     newItems[index][field] = val;
-    
+
     if (field === 'total_kgs' || field === 'rate') {
       newItems[index].amount = (parseFloat(newItems[index].total_kgs) || 0) * (parseFloat(newItems[index].rate) || 0);
     }
-    
+
     setForm({ ...form, items: newItems });
   };
 
@@ -250,10 +250,10 @@ export default function GreyYarnDelivery() {
     const matchesSearch = searchTerm === '' ||
       d.dc_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.party_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesStatus = statusFilter === 'All Status' || d.status === statusFilter;
     const matchesType = typeFilter === 'All Types' || d.delivery_type === typeFilter;
-    
+
     let matchesDate = true;
     if (d.dc_date) {
       const entryDate = new Date(d.dc_date);
@@ -405,7 +405,14 @@ export default function GreyYarnDelivery() {
                         <td>{d.items?.length || 0}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(d, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => handleOpenForm(d, true)}
+                              title="Full View"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(d, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(d.id, d.dc_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -425,7 +432,14 @@ export default function GreyYarnDelivery() {
                       <Truck size={18} /> {selectedViewEntry.dc_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => handleOpenForm(selectedViewEntry, true)}
+                        title="Full View"
+                      >
+                        <Eye size={16} color="var(--primary)" />
+                      </button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -437,11 +451,11 @@ export default function GreyYarnDelivery() {
                     <DetailRow label="Party Name" value={selectedViewEntry.party_name} />
                     <DetailRow label="Mode" value={selectedViewEntry.delivery_mode} />
                     <DetailRow label="Vehicle No" value={selectedViewEntry.vehicle_no} />
-                    
+
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Metrics</h4>
                     <DetailRow label="Total Kgs Dely" value={`${selectedViewEntry.total_dely_kgs} kg`} />
                     <DetailRow label="Balance Kgs" value={`${selectedViewEntry.balance_kgs} kg`} />
-                    
+
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items ({selectedViewEntry.items?.length || 0})</h4>
                     {selectedViewEntry.items?.map((c, idx) => (
                       <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 8, border: '1px solid var(--border)' }}>
@@ -472,7 +486,7 @@ export default function GreyYarnDelivery() {
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
             {tabs.map(tab => (
-              <button 
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
@@ -482,14 +496,14 @@ export default function GreyYarnDelivery() {
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
                 }}
               >
-                <tab.icon size={16}/> {tab.label}
+                <tab.icon size={16} /> {tab.label}
               </button>
             ))}
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
+
               {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Delivery Information */}
@@ -503,7 +517,7 @@ export default function GreyYarnDelivery() {
                         <option>Direct</option><option>Against Order</option>
                       </select>
                     </div>
-                    
+
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
                         <option value="">Select Party...</option>
@@ -526,9 +540,9 @@ export default function GreyYarnDelivery() {
                       )}
                     </div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Transport</label>
                       {isCustomTransport ? (
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -546,7 +560,7 @@ export default function GreyYarnDelivery() {
                     </div>
                     <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Name</label><input className="form-control" name="delivery_name" value={form.delivery_name} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Certificate Type</label>
                       {isCustomCertificateType ? (
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -564,7 +578,7 @@ export default function GreyYarnDelivery() {
                     </div>
                     <div className="form-group"><label>Design Count</label><input className="form-control" name="design_count" value={form.design_count} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order Kgs / Total Kgs</label><input type="number" className="form-control" name="order_kgs" value={form.order_kgs} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Total Dely Kgs</label><input type="number" className="form-control" name="total_dely_kgs" value={form.total_dely_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Rtn Kgs</label><input type="number" className="form-control" name="total_rtn_kgs" value={form.total_rtn_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} /></div>
@@ -616,7 +630,7 @@ export default function GreyYarnDelivery() {
                             <td><input type="number" className="form-control" style={{ width: 80 }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80 }} value={item.amount} onChange={e => updateItem(idx, 'amount', e.target.value)} disabled /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16} /></button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -630,7 +644,7 @@ export default function GreyYarnDelivery() {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
                     <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
                   </div>
-                  
+
                   <div style={{ overflowX: 'auto' }}>
                     <table className="data-table">
                       <thead>
@@ -671,7 +685,7 @@ export default function GreyYarnDelivery() {
                             <td><input type="number" className="form-control" style={{ width: 80 }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80 }} value={item.amount} onChange={e => updateItem(idx, 'amount', e.target.value)} disabled /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16} /></button></td>
                           </tr>
                         ))}
                       </tbody>

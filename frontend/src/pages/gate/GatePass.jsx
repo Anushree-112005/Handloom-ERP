@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
   FileText, Search, Plus, Trash2, Printer, Check, CheckCircle,
-  Clock, Truck, Edit, AlertCircle, UserCheck, X, Download
+  Clock, Truck, Edit, AlertCircle, UserCheck, X, Download, Eye
 } from 'lucide-react';
 import api, { dropdownAPI, subMasterAPI, partyAPI, employeeAPI, buyerOrderAPI } from '../../services/api';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 export default function GatePass() {
   // Local Storage Database
@@ -155,6 +156,7 @@ export default function GatePass() {
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentFormId, setCurrentFormId] = useState('');
+  const [viewModalPass, setViewModalPass] = useState(null);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -484,14 +486,14 @@ export default function GatePass() {
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <div style={{ display: 'inline-flex', gap: '8px' }}>
-                            <button className="btn btn-secondary" title="Edit Pass" onClick={() => handleEdit(item)} style={{ padding: '4px 8px', fontSize: '12px' }}>
-                              <Edit size={12} /> Edit
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewModalPass(item)} title="View Pass">
+                              <Eye size={16} color="var(--primary)" />
                             </button>
-                            <button className="btn btn-secondary" title="Print Slip" onClick={() => handlePrintSlip(item)} style={{ padding: '4px 8px', fontSize: '12px' }}>
-                              <Printer size={12} /> Print
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleEdit(item)} title="Edit Pass">
+                              <Edit size={16} />
                             </button>
-                            <button className="btn btn-secondary" title="Delete" onClick={() => handleDelete(item.id)} style={{ padding: '4px 8px', color: 'var(--danger)' }}>
-                              <Trash2 size={12} />
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)' }} onClick={() => handleDelete(item.id)} title="Delete">
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
@@ -936,6 +938,54 @@ export default function GatePass() {
           <option key={v.id} value={v.vehicle_number}>{v.vehicle_number} ({v.make} {v.model})</option>
         ))}
       </datalist>
+
+      {/* A4 Modal View Preview */}
+      {viewModalPass && (
+        <A4DocumentPreview
+          isOpen={!!viewModalPass}
+          onClose={() => setViewModalPass(null)}
+          title="Gate Pass Authorization"
+          documentNumber={viewModalPass.id}
+          status={viewModalPass.status}
+          sections={[
+            {
+              title: 'Pass & Party Details',
+              type: 'grid',
+              icon: 'FileText',
+              data: [
+                { label: 'Date', value: viewModalPass.passDate },
+                { label: 'Pass Type', value: viewModalPass.passType },
+                { label: 'Valid Till', value: viewModalPass.validTill },
+                { label: 'Party Name', value: viewModalPass.partyName },
+                { label: 'Contact', value: `${viewModalPass.contactPerson} (${viewModalPass.mobileNo})` }
+              ]
+            },
+            {
+              title: 'Material Lines',
+              type: 'table',
+              icon: 'Box',
+              headers: ['Item Description', 'Quantity', 'Returnable', 'Return Date'],
+              rows: viewModalPass.items?.map(item => [
+                item.name,
+                `${item.qty} ${item.unit}`,
+                item.returnable,
+                item.expectedReturn || '-'
+              ]) || []
+            },
+            {
+              title: 'Logistics & Security',
+              type: 'grid',
+              icon: 'Truck',
+              data: [
+                { label: 'Vehicle No', value: viewModalPass.vehicleNo },
+                { label: 'Purpose', value: viewModalPass.purpose },
+                { label: 'Authorized By', value: viewModalPass.authorizedBy },
+                { label: 'Remarks', value: viewModalPass.remarks || '-' }
+              ]
+            }
+          ]}
+        />
+      )}
 
     </div>
   );

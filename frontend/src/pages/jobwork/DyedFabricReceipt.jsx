@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet, ClipboardList, CheckCircle, RefreshCw } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { finishedFabricAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -30,6 +31,7 @@ export default function DyedFabricReceipt() {
 
   // Split view state
   const [selectedViewInward, setSelectedViewInward] = useState(null);
+  const [viewModalReceipt, setViewModalReceipt] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
 
   // Filters
@@ -544,8 +546,16 @@ export default function DyedFabricReceipt() {
                 <td><span className="badge badge-active">{inw.status}</span></td>
                 <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(inw)}><Edit2 size={12} /></button>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(inw.id, inw.ref_no)}><Trash2 size={12} /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => setViewModalReceipt(inw)}
+                              title="Preview"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(inw)} title="Edit"><Edit2 size={12} /></button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(inw.id, inw.ref_no)} title="Delete"><Trash2 size={12} /></button>
                   </div>
                 </td>
               </tr>
@@ -553,6 +563,52 @@ export default function DyedFabricReceipt() {
           </tbody>
         </table>
       </div>
+
+      <A4DocumentPreview
+        isOpen={!!viewModalReceipt}
+        onClose={() => setViewModalReceipt(null)}
+        title="DYED FABRIC RECEIPT"
+        documentNumber={viewModalReceipt?.ref_no}
+        status="RECEIVED"
+        onDownloadPdf={() => alert('PDF Download for Dyed Fabric Receipt triggered')}
+        sections={viewModalReceipt ? [
+          {
+            title: "RECEIPT INFO",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "Receipt ID", value: viewModalReceipt.ref_no },
+              { label: "Date", value: viewModalReceipt.inv_date },
+              { label: "Vendor", value: viewModalReceipt.party_name },
+              { label: "DC Number", value: viewModalReceipt.dc_no || '-' },
+              { label: "Order Number", value: viewModalReceipt.order_no || '-' }
+            ]
+          },
+          {
+            title: "FABRIC SPECIFICATIONS",
+            icon: "Layers",
+            type: "grid",
+            data: [
+              { label: "Design No", value: viewModalReceipt.design_no || '-' },
+              { label: "Total Pieces", value: viewModalReceipt.total_pieces || 0 },
+              { label: "Total Meters", value: `${Number(viewModalReceipt.total_meters || 0).toFixed(2)} Mtr` }
+            ]
+          },
+          {
+            title: "FABRIC PIECES",
+            icon: "Columns",
+            type: "table",
+            headers: ["Piece No", "VLoom", "Weight (Kg)", "Meters"],
+            rows: (viewModalReceipt.items || []).map((b) => [
+              b.piece_no || '-',
+              b.v_loom || '-',
+              b.weight || 0,
+              b.meters || 0
+            ])
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

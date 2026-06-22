@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { clothDeliveryAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +23,7 @@ export default function FinishingDelivery() {
 
   // Split view state
   const [selectedViewDelivery, setSelectedViewDelivery] = useState(null);
+  const [viewModalDelivery, setViewModalDelivery] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
 
   // Filters
@@ -601,8 +603,16 @@ export default function FinishingDelivery() {
                 <td><span className="badge badge-active">{del.status}</span></td>
                 <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(del)}><Edit2 size={12} /></button>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(del.id, del.dc_no)}><Trash2 size={12} /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => setViewModalDelivery(del)}
+                              title="Preview"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(del)} title="Edit"><Edit2 size={12} /></button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(del.id, del.dc_no)} title="Delete"><Trash2 size={12} /></button>
                   </div>
                 </td>
               </tr>
@@ -611,25 +621,56 @@ export default function FinishingDelivery() {
         </table>
       </div>
 
-      {selectedViewDelivery && (
-        <div style={{ position: 'fixed', top: 0, right: 0, width: '450px', height: '100vh', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border)', boxShadow: '-10px 0 30px rgba(0,0,0,0.15)', zIndex: 100, padding: 24, overflowY: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h3>Challan Details: {selectedViewDelivery.dc_no}</h3>
-            <button className="btn btn-secondary" style={{ padding: 4 }} onClick={() => setSelectedViewDelivery(null)}><X size={18} /></button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <DetailRow label="DC Date" value={selectedViewDelivery.dc_date} />
-            <DetailRow label="Processor" value={selectedViewDelivery.party_name} />
-            <DetailRow label="Design No" value={selectedViewDelivery.design_no} />
-            <DetailRow label="PO No" value={selectedViewDelivery.po_no} />
-            <DetailRow label="Vessel/Vehicle No" value={selectedViewDelivery.vehicle_no} />
-            <DetailRow label="Meters Sent" value={`${Number(selectedViewDelivery.total_meters).toFixed(2)} Mtr`} />
-            <DetailRow label="Voucher No" value={selectedViewDelivery.voucher_no} />
-            <DetailRow label="Rate" value={`Rs. ${selectedViewDelivery.rate_mtr}`} />
-            <DetailRow label="Amount Debited" value={`Rs. ${selectedViewDelivery.debited_amount}`} />
-          </div>
-        </div>
-      )}
+      <A4DocumentPreview
+        isOpen={!!viewModalDelivery}
+        onClose={() => setViewModalDelivery(null)}
+        title="FABRIC FINISHING DELIVERY CHALLAN"
+        documentNumber={viewModalDelivery?.dc_no}
+        status="DISPATCHED"
+        onDownloadPdf={() => alert('PDF Download for Finishing Delivery triggered')}
+        sections={viewModalDelivery ? [
+          {
+            title: "DISPATCH INFO",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "DC Number", value: viewModalDelivery.dc_no },
+              { label: "Date", value: viewModalDelivery.dc_date },
+              { label: "Processor", value: viewModalDelivery.party_name },
+              { label: "PO No", value: viewModalDelivery.po_no || '-' },
+              { label: "Vehicle Number", value: viewModalDelivery.vehicle_no || '-' },
+              { label: "Voucher Number", value: viewModalDelivery.voucher_no || '-' }
+            ]
+          },
+          {
+            title: "FINISHING SPECIFICATIONS",
+            icon: "Layers",
+            type: "grid",
+            data: [
+              { label: "Design No", value: viewModalDelivery.design_no || '-' },
+              { label: "Process", value: viewModalDelivery.process_type || 'Finishing' },
+              { label: "Rate/Mtr", value: `Rs. ${viewModalDelivery.rate_mtr || 0}` },
+              { label: "Total Meters", value: `${Number(viewModalDelivery.total_meters || 0).toFixed(2)} Mtr` },
+              { label: "Amount Debited", value: `Rs. ${viewModalDelivery.debited_amount || 0}` }
+            ]
+          },
+          {
+            title: "FABRIC PIECES",
+            icon: "Columns",
+            type: "table",
+            headers: ["Piece No", "Lot No", "Meters", "Fold Mtrs", "Rate", "Amount"],
+            rows: (viewModalDelivery.items || []).map((b) => [
+              b.piece_no || '-',
+              b.lot_no || '-',
+              b.ok_mtr || 0,
+              b.fold_mtr || 0,
+              b.rate || 0,
+              b.amount || 0
+            ])
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

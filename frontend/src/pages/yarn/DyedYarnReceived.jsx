@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Package, Download, ChevronDown, FileText } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { dyedYarnReceiptAPI, partyAPI, greyYarnDeliveryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -23,6 +24,7 @@ export default function DyedYarnReceived() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [viewModalReceipt, setViewModalReceipt] = useState(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -346,7 +348,14 @@ export default function DyedYarnReceived() {
                         <td>{r.items?.length || 0}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={(evt) => { evt.stopPropagation(); setViewModalReceipt(r); }}
+                              title="Preview Receipt"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(r.id, r.inv_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -366,7 +375,14 @@ export default function DyedYarnReceived() {
                       <Palette size={18} /> {selectedViewEntry.inv_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => setViewModalReceipt(selectedViewEntry)}
+                        title="Preview Receipt"
+                      >
+                        <Eye size={16} color="var(--primary)" />
+                      </button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -549,6 +565,57 @@ export default function DyedYarnReceived() {
           </div>
         </div>
       )}
+
+      <A4DocumentPreview
+        isOpen={!!viewModalReceipt}
+        onClose={() => setViewModalReceipt(null)}
+        title="DYED YARN RECEIPT"
+        documentNumber={viewModalReceipt?.inv_no}
+        status="RECEIVED"
+        onDownloadPdf={() => alert('PDF Download for Dyed Yarn Receipt triggered')}
+        sections={viewModalReceipt ? [
+          {
+            title: "RECEIPT DETAILS",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "Invoice No", value: viewModalReceipt.inv_no },
+              { label: "Invoice Date", value: viewModalReceipt.inv_date },
+              { label: "Party Name", value: viewModalReceipt.party_name || '-' },
+              { label: "Received Type", value: viewModalReceipt.received_type },
+              { label: "Our DC No", value: viewModalReceipt.our_dc_no || '-' },
+              { label: "Party DC No", value: viewModalReceipt.party_dc_no || '-' }
+            ]
+          },
+          {
+            title: "YARN & DESIGN",
+            icon: "Palette",
+            type: "grid",
+            data: [
+              { label: "Design No", value: viewModalReceipt.design_no || '-' },
+              { label: "Design Count", value: viewModalReceipt.design_count || '-' },
+              { label: "Order No", value: viewModalReceipt.order_no || '-' },
+              { label: "Total Items", value: viewModalReceipt.items?.length || 0 }
+            ]
+          },
+          {
+            title: "RECEIVED CONSIGNMENT",
+            icon: "Box",
+            type: "table",
+            headers: ["S.No", "Color", "Lot No", "Taken (Kg)", "Rcvd (Kg)", "Short (Kg)", "Short %"],
+            rows: (viewModalReceipt.items || []).map((item, idx) => [
+              idx + 1,
+              item.color || '-',
+              item.our_lot_no || '-',
+              item.taken_kgs || 0,
+              item.rcvd_kgs || 0,
+              item.short_kgs || 0,
+              `${item.short_pct || 0}%`
+            ])
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, FileText, CreditCard, Truck, Settings, MessageSquare, ClipboardList, Edit2, Filter, CheckCircle, ShoppingCart, Briefcase, Users, Star, Download, ChevronDown } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, ShoppingCart, Activity, CheckCircle, Package, Clock, Download, FileText, ChevronDown, MessageSquare, CreditCard, ClipboardList, Settings, Truck, Star, Filter } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { buyerOrderAPI, partyAPI, employeeAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -23,6 +24,7 @@ export default function BuyerOrder() {
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [viewModalOrder, setViewModalOrder] = useState(null);
   
   const [options, setOptions] = useState({ masters: {} });
   
@@ -928,7 +930,14 @@ export default function BuyerOrder() {
                         <td><span className={`badge ${o.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{o.status}</span></td>
                         <td onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(o, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={(evt) => { evt.stopPropagation(); setViewModalOrder(o); }}
+                              title="Preview Order"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(o, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(e) => handleDelete(o.id, o.ibpo_number, e)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -948,7 +957,14 @@ export default function BuyerOrder() {
                       <ShoppingCart size={18} /> {selectedViewOrder.ibpo_number}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewOrder, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => setViewModalOrder(selectedViewOrder)}
+                        title="Preview Order"
+                      >
+                        <Eye size={16} color="var(--primary)" />
+                      </button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewOrder, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewOrder(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -1724,6 +1740,56 @@ export default function BuyerOrder() {
           </div>
         </div>
       )}
+
+      <A4DocumentPreview
+        isOpen={!!viewModalOrder}
+        onClose={() => setViewModalOrder(null)}
+        title="BUYER ORDER"
+        documentNumber={viewModalOrder?.ibpo_number}
+        status={viewModalOrder?.status}
+        onDownloadPdf={() => alert('PDF Download for Buyer Order triggered')}
+        sections={viewModalOrder ? [
+          {
+            title: "ORDER & BUYER",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "IBPO Number", value: viewModalOrder.ibpo_number },
+              { label: "Order Date", value: viewModalOrder.ibpo_date },
+              { label: "Buyer Name", value: viewModalOrder.party_name },
+              { label: "Expected Delivery", value: viewModalOrder.expected_del_date || '-' },
+              { label: "Total Target Mtr", value: `${viewModalOrder.total_target_mtr || 0} Mtr` }
+            ]
+          },
+          {
+            title: "AGENCY & BROKER",
+            icon: "User",
+            type: "grid",
+            data: [
+              { label: "Agent Name", value: viewModalOrder.agent_name || '-' },
+              { label: "Broker Name", value: viewModalOrder.broker_name || '-' },
+              { label: "Commission %", value: `${viewModalOrder.commission_pct || 0}%` },
+              { label: "Dispatch Date", value: viewModalOrder.dispatch_date || '-' }
+            ]
+          },
+          {
+            title: "ORDER ITEMS",
+            icon: "Box",
+            type: "table",
+            headers: ["S.No", "Design No", "Color", "Fabric", "Order Mtrs", "Rate", "Amount"],
+            rows: (viewModalOrder.items || []).map((item, idx) => [
+              idx + 1,
+              item.design_no,
+              item.color,
+              item.fabric_type,
+              item.order_mtrs,
+              `₹ ${item.rate}`,
+              `₹ ${Number(item.amount).toFixed(2)}`
+            ])
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

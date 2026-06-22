@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Factory, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, Barcode, HelpCircle, Check, Percent, Settings, Scale } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { clothInwardAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -30,6 +31,7 @@ export default function ClothInward() {
 
   // Split view state
   const [selectedInward, setSelectedInward] = useState(null);
+  const [viewModalInward, setViewModalInward] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
 
   // Filters
@@ -507,8 +509,8 @@ export default function ClothInward() {
                               <button
                                 className="btn btn-secondary"
                                 style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                onClick={() => handleOpenForm(e, true)}
-                                title="View Details"
+                                onClick={() => setViewModalInward(e)}
+                                title="Preview"
                               >
                                 <Eye size={16} color="var(--primary)" />
                               </button>
@@ -537,55 +539,55 @@ export default function ClothInward() {
                 </table>
               </div>
             </div>
-
-            {/* SPLIT PANEL DETAILS */}
-            {selectedInward && (
-              <div style={{ flex: '0 0 360px' }}>
-                <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
-                      <Factory size={18} /> Inward Details: {selectedInward.ref_no}
-                    </h3>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedInward, false)} title="Edit"><Edit2 size={14} /></button>
-                      <button onClick={() => setSelectedInward(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <DetailRow label="Inward ID" value={selectedInward.ref_no} />
-                    <DetailRow label="Inward Type" value={selectedInward.inward_type} />
-                    <DetailRow label="Inward Date" value={selectedInward.inw_date?.split('T')[0]} />
-                    <DetailRow label="Vendor Name" value={selectedInward.party_name} />
-                    <DetailRow label="DC Number" value={selectedInward.dc_no} />
-                    <DetailRow label="DC Date" value={selectedInward.dc_date?.split('T')[0]} />
-
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loom & Quality Spec</h4>
-                    <DetailRow label="Design No" value={selectedInward.design_no} />
-                    <DetailRow label="Const/Fabric" value={selectedInward.const_fabric_type} />
-                    <DetailRow label="Reed / Pick" value={`${selectedInward.reed || '-'} / ${selectedInward.pick || '-'}`} />
-                    <DetailRow label="Width" value={selectedInward.width} />
-                    <DetailRow label="Loom No" value={selectedInward.loom_no} />
-                    <DetailRow label="Shed No" value={selectedInward.shed_no} />
-                    <DetailRow label="Beam No" value={selectedInward.beam_no} />
-                    <DetailRow label="Sizing No (Szt)" value={selectedInward.szt_no} />
-
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Grid Metrics</h4>
-                    <DetailRow label="Total Pieces" value={`${selectedInward.total_pieces} Pcs`} />
-                    <DetailRow label="Total Volume" value={`${selectedInward.total_meters} Mtr`} />
-                    <DetailRow label="Order Volume" value={`${selectedInward.order_mtr} Mtr`} />
-                    <DetailRow label="Remaining Balance" value={`${(Number(selectedInward.order_mtr) - Number(selectedInward.total_meters)).toFixed(2)} Mtr`} highlight={true} />
-
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Process & Remarks</h4>
-                    <DetailRow label="Process Type" value={selectedInward.process_type} />
-                    <div style={{ color: 'var(--text-secondary)', fontStyle: 'italic', padding: 8, background: 'var(--bg-primary)', borderRadius: 6, borderLeft: '3px solid #10b981', fontSize: 12 }}>
-                      {selectedInward.remarks || 'No remarks recorded.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+
+          <A4DocumentPreview
+            isOpen={!!viewModalInward}
+            onClose={() => setViewModalInward(null)}
+            title="CLOTH INWARD RECEIPT"
+            documentNumber={viewModalInward?.ref_no}
+            status="RECEIVED"
+            onDownloadPdf={() => alert('PDF Download for Cloth Inward triggered')}
+            sections={viewModalInward ? [
+              {
+                title: "INWARD INFO",
+                icon: "Briefcase",
+                type: "grid",
+                data: [
+                  { label: "Inward ID", value: viewModalInward.ref_no },
+                  { label: "Date", value: viewModalInward.inw_date?.split('T')[0] || '-' },
+                  { label: "Vendor", value: viewModalInward.party_name },
+                  { label: "DC Number", value: viewModalInward.dc_no || '-' },
+                  { label: "Inward Type", value: viewModalInward.inward_type || '-' },
+                  { label: "Process", value: viewModalInward.process_type || '-' }
+                ]
+              },
+              {
+                title: "FABRIC SPECIFICATIONS",
+                icon: "Layers",
+                type: "grid",
+                data: [
+                  { label: "Design No", value: viewModalInward.design_no || '-' },
+                  { label: "Fabric Const", value: viewModalInward.const_fabric_type || '-' },
+                  { label: "Width", value: viewModalInward.width || '-' },
+                  { label: "Total Pieces", value: viewModalInward.total_pieces || 0 },
+                  { label: "Total Meters", value: `${Number(viewModalInward.total_meters || 0).toFixed(2)} Mtr` }
+                ]
+              },
+              {
+                title: "PIECE DETAILS",
+                icon: "Columns",
+                type: "table",
+                headers: ["Piece No", "VLoom", "Weight (Kg)", "Meters"],
+                rows: (viewModalInward.items || []).map((b) => [
+                  b.piece_no || '-',
+                  b.vloom || '-',
+                  b.weight || 0,
+                  b.meters || 0
+                ])
+              }
+            ] : []}
+          />
         </>
       ) : (
         /* FORM ENTRY VIEW */

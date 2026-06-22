@@ -5,8 +5,9 @@ import {
   Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
   PlusCircle, FileText, CheckSquare, Truck, Globe, Printer, BookOpen, 
   MapPin, HelpCircle, Sparkles, Database, Shield, Layers,
-  Palette, Scale, ShieldCheck, Info, FileImage, Users
+  Palette, Scale, ShieldCheck, Info, FileImage, Users, Eye, Edit2
 } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import * as XLSX from 'xlsx';
 import { workOrderTransactionAPI, partyAPI } from '../../services/api';
 
@@ -37,10 +38,10 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
   // Search Filter state
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Form toggle states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentFormId, setCurrentFormId] = useState('');
   const [activeFormTab, setActiveFormTab] = useState('General Info');
+  const [viewModalTransaction, setViewModalTransaction] = useState(null);
 
   const [partiesList, setPartiesList] = useState([]);
 
@@ -3368,9 +3369,10 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                           <td>{row.width}"</td>
                           <td>{row.gsm || row.weight}</td>
                           <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
+                            <div style={{ display: 'inline-flex', gap: '8px' }}>
+                              <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewModalTransaction(row)} title="View"><Eye size={16} color="var(--primary)" /></button>
+                              <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleEdit(row)} title="Edit"><Edit size={16} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)} title="Delete"><Trash2 size={16} /></button>
                             </div>
                           </td>
                         </tr>
@@ -4474,6 +4476,43 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
             </div>
           )}
         </>
+      )}
+
+      {/* A4 Modal View Preview */}
+      {viewModalTransaction && (
+        <A4DocumentPreview
+          isOpen={!!viewModalTransaction}
+          onClose={() => setViewModalTransaction(null)}
+          title="Design Upload Details"
+          documentNumber={viewModalTransaction.designNo || viewModalTransaction.id}
+          status={viewModalTransaction.status || 'Uploaded'}
+          sections={[
+            {
+              title: 'General Information',
+              type: 'grid',
+              icon: 'FileText',
+              data: [
+                { label: 'Design No', value: viewModalTransaction.designNo },
+                { label: 'Design Name', value: viewModalTransaction.designName || viewModalTransaction.name },
+                { label: 'Date', value: viewModalTransaction.date },
+                { label: 'Category', value: viewModalTransaction.category || viewModalTransaction.uploadType },
+                { label: 'Status', value: viewModalTransaction.status || 'Active' }
+              ]
+            },
+            {
+              title: 'Product Specifications',
+              type: 'grid',
+              icon: 'Palette',
+              data: [
+                { label: 'Buyer Name', value: viewModalTransaction.buyerName },
+                { label: 'Fabric Type', value: viewModalTransaction.fabricType },
+                { label: 'Composition', value: viewModalTransaction.composition },
+                { label: 'Width (Inch)', value: `${viewModalTransaction.width}"` },
+                { label: 'GSM / Weight', value: viewModalTransaction.gsm || viewModalTransaction.weight }
+              ]
+            }
+          ]}
+        />
       )}
 
     </div>
