@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown } from 'lucide-react';
-import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
+import React, { useEffect, useState } from 'react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown, Printer } from 'lucide-react';
+import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI, designEntryAPI, companySettingAPI } from '../../services/api';
+import defaultLogo from '../../assets/logo.svg';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -25,6 +26,76 @@ export default function YarnPurchaseOrder() {
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  const [companyProfile, setCompanyProfile] = useState({
+    company_name: 'Dinesh Exports Private Limited',
+    description: '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
+    logo: ''
+  });
+
+  const formatDateString = (dateStr, separator = '-') => {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = months[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day}${separator}${month}${separator}${year}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const toIndianRupeesWords = (num) => {
+    const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    const g = (n) => {
+      if (n < 20) return a[n];
+      let d = n % 10;
+      return b[Math.floor(n / 10)] + (d ? ' ' + a[d] : '');
+    };
+
+    const getWords = (n) => {
+      let str = '';
+      if (n >= 10000000) {
+        str += getWords(Math.floor(n / 10000000)) + 'Crores ';
+        n %= 10000000;
+      }
+      if (n >= 100000) {
+        str += getWords(Math.floor(n / 100000)) + 'Lakhs ';
+        n %= 100000;
+      }
+      if (n >= 1000) {
+        str += getWords(Math.floor(n / 1000)) + 'Thousand ';
+        n %= 1000;
+      }
+      if (n >= 100) {
+        str += getWords(Math.floor(n / 100)) + 'Hundred ';
+        n %= 100;
+      }
+      if (n > 0) {
+        if (str !== '') str += 'and ';
+        str += g(n);
+      }
+      return str;
+    };
+
+    let cleanNum = Math.floor(num);
+    if (cleanNum === 0) return 'Zero only';
+    let words = getWords(cleanNum);
+    
+    let paise = Math.round((num - cleanNum) * 100);
+    let paiseStr = '';
+    if (paise > 0) {
+      paiseStr = ' and ' + g(paise) + 'Paise';
+    }
+
+    return (words + paiseStr + ' only').replace(/\s+/g, ' ').replace('and only', 'only').trim();
+  };
+
   const [isCustomOrg, setIsCustomOrg] = useState(false);
   const [customOrgVal, setCustomOrgVal] = useState('');
   const [isCustomAgainstRef, setIsCustomAgainstRef] = useState(false);
@@ -45,6 +116,8 @@ export default function YarnPurchaseOrder() {
   const [customYarnCountVal, setCustomYarnCountVal] = useState('');
   const [customTableColourIdx, setCustomTableColourIdx] = useState(null);
   const [customTableColourVal, setCustomTableColourVal] = useState('');
+  const [customTablePackingTypeIdx, setCustomTablePackingTypeIdx] = useState(null);
+  const [customTablePackingTypeVal, setCustomTablePackingTypeVal] = useState('');
 
   // Custom Inline Fields for Supplier
   const [isCustomMainSupplier, setIsCustomMainSupplier] = useState(false);
@@ -86,19 +159,33 @@ export default function YarnPurchaseOrder() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  const [editingTermIdx, setEditingTermIdx] = useState(null);
+  const [editingTermVal, setEditingTermVal] = useState('');
+  const [newTermVal, setNewTermVal] = useState('');
+
+  const defaultTerms = [
+    'Material not meeting our specification and standards will be returned',
+    'Demanded Qty to be supplied in whole and excess/short supply will not be accepted.',
+    'Send Invoice along with Material.',
+    'Defective and damage pieces will not be accepted.',
+    'Start bulk production only after getting the sample Approval.',
+    'Subject to Namakkal Jurisdiction.'
+  ];
+
   const initialForm = {
     po_date: new Date().toISOString().split('T')[0],
     org_name: '', internal_po_no: '', used_for: '', against_ref: '', agent_name: '',
     supplier_name: '', delivery_at: '',
     
     freight_type: '', freight_chg: 0, insurance_chg: 0, total_order_kgs: 0,
-    transport: '', tax_type: '', taxable_amount: 0, dispatch_date: '',
-    packing_type: '', sgst_pct: 0, cgst_pct: 0, igst_pct: 0, labeling: '',
+    transport: '', tax_type: 'GST', taxable_amount: 0, dispatch_date: '',
+    packing_type: '', sgst_pct: 2.50, cgst_pct: 2.50, igst_pct: 0, labeling: '',
     colour: '', net_amount: 0, due_days: 0, remarks: '', status: 'Active',
+    terms_conditions: [...defaultTerms],
     
     count_details: [],
     indent_details: [{
-      yarn_count: '', colour: '', order_qty: 0, delivery_date: '', rate: 0, amount: 0
+      yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: ''
     }]
   };
 
@@ -143,18 +230,26 @@ export default function YarnPurchaseOrder() {
 
   const loadData = async () => {
     try {
-      const [ordRes, partRes, dropRes, buyerOrdRes, designRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, designRes, compRes] = await Promise.all([
         yarnPurchaseOrderAPI.list(), 
         partyAPI.list(), 
         dropdownAPI.getAll(),
         buyerOrderAPI.list(),
-        designEntryAPI.list()
+        designEntryAPI.list(),
+        companySettingAPI.get().catch(() => null)
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
       setDesignEntries(designRes.data || []);
+      if (compRes && compRes.data) {
+        setCompanyProfile({
+          company_name: compRes.data.company_name || 'Dinesh Exports Private Limited',
+          description: compRes.data.description || '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
+          logo: compRes.data.logo || ''
+        });
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -304,6 +399,20 @@ export default function YarnPurchaseOrder() {
     }
   };
 
+  const handleSaveCustomTablePackingType = async () => {
+    if (!customTablePackingTypeVal.trim() || customTablePackingTypeIdx === null) return;
+    try {
+      await subMasterAPI.create('packing_type_master', { entity: 'packing_type_master', name: customTablePackingTypeVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      updateIndentDetail(customTablePackingTypeIdx, 'packing_type', customTablePackingTypeVal.trim());
+      setCustomTablePackingTypeIdx(null);
+      setCustomTablePackingTypeVal('');
+    } catch (err) {
+      alert('Error saving custom packing type');
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -333,7 +442,13 @@ export default function YarnPurchaseOrder() {
       if (data.po_date) data.po_date = data.po_date.substring(0, 10);
       if (data.dispatch_date) data.dispatch_date = data.dispatch_date.substring(0, 10);
       
-      setForm({ ...initialForm, ...data });
+      setForm({
+        ...initialForm,
+        ...data,
+        terms_conditions: (data.terms_conditions && data.terms_conditions.length > 0)
+          ? data.terms_conditions
+          : [...defaultTerms]
+      });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
       setActiveTab('main');
@@ -495,6 +610,19 @@ export default function YarnPurchaseOrder() {
       return;
     }
 
+    if (name === 'tax_type') {
+      let taxUpdates = { tax_type: value };
+      if (value === 'GST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+      } else if (value === 'IGST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+      } else if (value === 'Exempt') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
+      }
+      setForm(recalculate({ ...form, ...taxUpdates }));
+      return;
+    }
+
     setForm(recalculate({ ...form, [name]: value }));
   };
 
@@ -511,7 +639,7 @@ export default function YarnPurchaseOrder() {
 
   const addIndentDetail = () => {
     const newRow = {
-      yarn_count: '', colour: '', order_qty: 0, delivery_date: '', rate: 0, amount: 0
+      yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: ''
     };
     setForm(recalculate({ ...form, indent_details: [...form.indent_details, newRow] }));
   };
@@ -744,7 +872,307 @@ export default function YarnPurchaseOrder() {
             )}
           </div>
         </>
-      ) : (
+      ) : isReadOnly ? (() => {
+        const taxableAmount = form.taxable_amount || 0;
+        const cgstPct = parseFloat(form.cgst_pct) || 0;
+        const sgstPct = parseFloat(form.sgst_pct) || 0;
+        const igstPct = parseFloat(form.igst_pct) || 0;
+        const cgstAmt = (cgstPct / 100) * taxableAmount;
+        const sgstAmt = (sgstPct / 100) * taxableAmount;
+        const igstAmt = (igstPct / 100) * taxableAmount;
+        return (
+          <div style={{ background: '#f8fafc', padding: '40px 20px', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-yarn-po, #printable-yarn-po * {
+                  visibility: visible !important;
+                }
+                #printable-yarn-po {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  box-shadow: none !important;
+                  border: none !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+              }
+            `}</style>
+            
+            {/* Header Actions */}
+            <div className="no-print" style={{ width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, background: '#fff', padding: '16px 24px', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Yarn Purchase Order Document Preview</h2>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn btn-primary" onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Printer size={16} /> Print / Export PDF
+                </button>
+                <button className="btn btn-secondary" onClick={() => {
+                  setShowForm(false);
+                  setIsReadOnly(false);
+                }} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <X size={16} /> Close
+                </button>
+              </div>
+            </div>
+            
+            {/* Printable A4 Form Sheet */}
+            <div id="printable-yarn-po" style={{
+              backgroundColor: '#fff',
+              width: '100%',
+              maxWidth: '1000px',
+              padding: '40px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              boxSizing: 'border-box'
+            }}>
+              <div style={{ textAlign: 'center', position: 'relative', marginBottom: '20px' }}>
+                <h3 style={{ textDecoration: 'underline', fontSize: '20px', fontWeight: 'bold', margin: '0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Yarn Purchase Order Form</h3>
+                <span style={{ position: 'absolute', right: '0', bottom: '0', fontSize: '11px', fontWeight: '600', color: '#475569' }}>Original / Duplicate / Extra</span>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid #000', fontSize: '13px', color: '#000' }}>
+                <tbody>
+                  {/* Row 1: Exporter details & PO info */}
+                  <tr>
+                    <td style={{ width: '55%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+                        <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ width: '65px', height: '65px', objectFit: 'contain' }} />
+                        <div>
+                          <div style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>{companyProfile.company_name}</div>
+                          <div style={{ fontSize: '11px', lineLine: '1.4', color: '#1e293b', whiteSpace: 'pre-line' }}>{companyProfile.description}</div>
+                          <div style={{ fontSize: '11px', marginTop: '4px', color: '#1e293b' }}><strong>E-Mail:</strong> palanivel@dineshexports.net</div>
+                          <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '2px' }}>GST : 33AAACD0905A1ZG</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ width: '45%', border: '1px solid #000', padding: 0, verticalAlign: 'top' }}>
+                      <table style={{ width: '100%', height: '100%', borderCollapse: 'collapse' }}>
+                        <tbody>
+                          <tr>
+                            <td style={{ padding: '12px', borderBottom: '1px solid #000', fontSize: '14px' }}>
+                              <strong>P.O.No. :</strong> <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>{form.po_number || 'DEPL- 185/26-27'}</span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '12px', fontSize: '14px' }}>
+                              <strong>P.O. Date :</strong> <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>{form.po_date ? formatDateString(form.po_date, '-') : '-'}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 2: Delivery At & Agent/Mill */}
+                  <tr>
+                    <td style={{ width: '55%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
+                      <div style={{ textAlign: 'center', textDecoration: 'underline', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>Delivery At</div>
+                      <div style={{ fontWeight: 'bold', fontSize: '13px' }}>DINESH EXPORTS PRIVATE LIMITED</div>
+                      <div style={{ fontSize: '11px', lineLine: '1.4', margin: '4px 0', color: '#1e293b' }}>
+                        {form.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
+                      </div>
+                      <div style={{ fontWeight: 'bold', fontSize: '11px', marginTop: '4px' }}>GST : 33AAACD0905A1ZG</div>
+                    </td>
+                    <td style={{ width: '45%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
+                      <div style={{ textAlign: 'center', textDecoration: 'underline', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>Agent / Mill Name and Address</div>
+                      <div style={{ fontSize: '12px', lineLine: '1.5', color: '#1e293b', whiteSpace: 'pre-line' }}>
+                        {form.agent_name && (<div><strong>Agent:</strong> {form.agent_name}</div>)}
+                        {form.supplier_name ? (
+                          <div style={{ marginTop: form.agent_name ? '6px' : '0' }}>
+                            <strong>Supplier:</strong> {form.supplier_name}
+                          </div>
+                        ) : (
+                          <div style={{ textAlign: 'center', color: '#64748b', marginTop: '10px' }}>-</div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 3: Design & Commission */}
+                  <tr>
+                    <td colSpan="2" style={{ border: '1px solid #000', padding: '8px 12px' }}>
+                      <div style={{ display: 'flex', justifycontent: 'space-between', fontSize: '13px', fontWeight: 'bold' }}>
+                        <span>Design No. : <span style={{ fontWeight: 'normal', marginLeft: '6px' }}>{form.against_ref || '-'}</span></span>
+                        <span>Commission % : <span style={{ fontWeight: 'normal', marginLeft: '6px' }}>0.00</span></span>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 4: Items Table */}
+                  <tr>
+                    <td colSpan="2" style={{ border: '1px solid #000', padding: 0, verticalAlign: 'top' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1.5px solid #000' }}>
+                            <th style={{ borderRight: '1px solid #000', padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', width: '40%' }}>Description TFX</th>
+                            <th style={{ borderRight: '1px solid #000', padding: '8px 10px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold', width: '12%' }}>CSP</th>
+                            <th style={{ borderRight: '1px solid #000', padding: '8px 10px', textAlign: 'right', fontSize: '12px', fontWeight: 'bold', width: '14%' }}>Quantity</th>
+                            <th style={{ borderRight: '1px solid #000', padding: '8px 10px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold', width: '10%' }}>Unit</th>
+                            <th style={{ borderRight: '1px solid #000', padding: '8px 10px', textAlign: 'right', fontSize: '12px', fontWeight: 'bold', width: '12%' }}>Rate Rs</th>
+                            <th style={{ padding: '8px 10px', textAlign: 'right', fontSize: '12px', fontWeight: 'bold', width: '12%' }}>Amount Rs</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {form.indent_details?.map((item, idx) => {
+                            const countDetail = form.count_details?.[idx] || {};
+                            const csp = countDetail.yarn_csp || '';
+                            const labelingText = item.labeling || form.labeling || '';
+                            return (
+                              <React.Fragment key={idx}>
+                                <tr style={{ borderBottom: '1px solid #000' }}>
+                                  <td style={{ borderRight: '1px solid #000', padding: '10px', fontSize: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                      <span>{item.yarn_count || 'YARN'}</span>
+                                      <span style={{ marginRight: '20px' }}>{item.colour || '-'}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ borderRight: '1px solid #000', padding: '10px', textAlign: 'center', fontSize: '12px' }}>
+                                    {csp || '-'}
+                                  </td>
+                                  <td style={{ borderRight: '1px solid #000', padding: '10px', textAlign: 'right', fontSize: '12px', fontWeight: 'bold' }}>
+                                    {parseFloat(item.order_qty || 0).toFixed(3)}
+                                  </td>
+                                  <td style={{ borderRight: '1px solid #000', padding: '10px', textAlign: 'center', fontSize: '12px' }}>
+                                    {item.uom || 'KGS'}
+                                  </td>
+                                  <td style={{ borderRight: '1px solid #000', padding: '10px', textAlign: 'right', fontSize: '12px' }}>
+                                    {parseFloat(item.rate || 0).toFixed(2)}
+                                  </td>
+                                  <td style={{ padding: '10px', textAlign: 'right', fontSize: '12px', fontWeight: 'bold' }}>
+                                    {parseFloat(item.amount || 0).toFixed(2)}
+                                  </td>
+                                </tr>
+                                {labelingText && (
+                                  <tr style={{ borderBottom: '1px solid #000' }}>
+                                    <td colSpan="6" style={{ padding: '8px 12px', fontSize: '11px', color: '#1e293b', backgroundColor: '#f8fafc', fontStyle: 'italic' }}>
+                                      {labelingText}
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 5: Terms & Conditions and Taxes */}
+                  <tr>
+                    <td style={{ width: '55%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
+                      <div style={{ fontWeight: 'bold', fontStyle: 'italic', marginBottom: '8px', fontSize: '12px' }}>Terms and Conditions:</div>
+                      <ol style={{ margin: 0, paddingLeft: '18px', fontSize: '11px', lineLine: '1.6', color: '#1e293b' }}>
+                        {form.terms_conditions?.map((term, tIdx) => (
+                          <li key={tIdx} style={{ marginBottom: '4px' }}>{term}</li>
+                        )) || defaultTerms.map((term, tIdx) => (
+                          <li key={tIdx} style={{ marginBottom: '4px' }}>{term}</li>
+                        ))}
+                      </ol>
+                    </td>
+                    <td style={{ width: '45%', border: '1px solid #000', padding: 0, verticalAlign: 'top' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none', fontSize: '12px' }}>
+                        <tbody>
+                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right', width: '60%' }}>CGST: {parseFloat(form.cgst_pct || 0).toFixed(2)} %</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', width: '40%' }}>{cgstAmt > 0 ? cgstAmt.toFixed(2) : '0.00'}</td>
+                          </tr>
+                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>SGST: {parseFloat(form.sgst_pct || 0).toFixed(2)} %</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{sgstAmt > 0 ? sgstAmt.toFixed(2) : '0.00'}</td>
+                          </tr>
+                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>IGST: {parseFloat(form.igst_pct || 0).toFixed(2)} %</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{igstAmt > 0 ? igstAmt.toFixed(2) : '0.00'}</td>
+                          </tr>
+                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>Freight Chg:</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{form.freight_chg ? parseFloat(form.freight_chg).toFixed(2) : '0.00'}</td>
+                          </tr>
+                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>Insurance Chg:</td>
+                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{form.insurance_chg ? parseFloat(form.insurance_chg).toFixed(2) : '0.00'}</td>
+                          </tr>
+                          <tr style={{ backgroundColor: '#f8fafc', borderTop: '1.5px solid #000' }}>
+                            <td style={{ padding: '10px', fontWeight: 'bold', textAlign: 'right', fontSize: '13px' }}>Net Amount :</td>
+                            <td style={{ padding: '10px', textAlign: 'right', fontWeight: 'bold', fontSize: '13px' }}>{parseFloat(form.net_amount || 0).toFixed(2)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 6: Rupees in words */}
+                  <tr>
+                    <td colSpan="2" style={{ border: '1px solid #000', padding: '12px', fontSize: '13px' }}>
+                      <strong>Rupees :</strong> <span style={{ fontStyle: 'italic', marginLeft: '8px', fontWeight: 'bold' }}>{toIndianRupeesWords(form.net_amount || 0)}</span>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 7: Logistics Terms */}
+                  <tr>
+                    <td colSpan="2" style={{ border: '1px solid #000', padding: 0 }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none', fontSize: '12px' }}>
+                        <tbody>
+                          <tr style={{ borderBottom: '1px solid #000' }}>
+                            <td style={{ width: '20%', padding: '8px 10px', fontWeight: 'bold', borderRight: '1px solid #000', backgroundColor: '#f8fafc' }}>Freight</td>
+                            <td style={{ width: '30%', padding: '8px 10px', borderRight: '1px solid #000' }}>{form.freight_type || '-'}</td>
+                            <td style={{ width: '20%', padding: '8px 10px', fontWeight: 'bold', borderRight: '1px solid #000', backgroundColor: '#f8fafc' }}>Payment</td>
+                            <td style={{ width: '30%', padding: '8px 10px' }}>{form.due_days ? `${form.due_days} DAYS` : '-'}</td>
+                          </tr>
+                          <tr style={{ borderBottom: '1px solid #000' }}>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', borderRight: '1px solid #000', backgroundColor: '#f8fafc' }}>Packing</td>
+                            <td style={{ padding: '8px 10px', borderRight: '1px solid #000' }}>{form.packing_type || '-'}</td>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', borderRight: '1px solid #000', backgroundColor: '#f8fafc' }}>Transportation</td>
+                            <td style={{ padding: '8px 10px' }}>{form.transport || '-'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', borderRight: '1px solid #000', backgroundColor: '#f8fafc' }}>Date of Despatch</td>
+                            <td style={{ padding: '8px 10px', borderRight: '1px solid #000' }}>{form.dispatch_date ? formatDateString(form.dispatch_date, '/') : '-'}</td>
+                            <td style={{ padding: '8px 10px', fontWeight: 'bold', borderRight: '1px solid #000', backgroundColor: '#f8fafc' }}>Labelling</td>
+                            <td style={{ padding: '8px 10px' }}>{form.labeling || '-'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  {/* Row 8: Signatures */}
+                  <tr>
+                    <td colSpan="2" style={{ border: '1px solid #000', padding: 0 }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none', fontSize: '11px' }}>
+                        <tbody>
+                          <tr>
+                            <td style={{ width: '33%', borderRight: '1px solid #000', padding: '12px', height: '110px', position: 'relative', verticalAlign: 'top' }}>
+                              <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>We Agree our Term & Conditions</div>
+                              <div style={{ fontWeight: 'bold' }}>AND Accept the above Order.</div>
+                              <div style={{ fontWeight: 'bold', position: 'absolute', bottom: '12px', left: 0, right: 0, textAlign: 'center' }}>Signature with Seal</div>
+                            </td>
+                            <td style={{ width: '33%', borderRight: '1px solid #000', padding: '12px', textAlign: 'center', verticalAlign: 'bottom', height: '110px' }}>
+                              <div style={{ fontWeight: 'bold', marginBottom: '0px' }}>Prepared By</div>
+                            </td>
+                            <td style={{ width: '34%', padding: '12px', verticalAlign: 'top', height: '110px', position: 'relative' }}>
+                              <div style={{ fontWeight: 'bold', textAlign: 'center' }}>For Dinesh Exports Private Limited</div>
+                              <div style={{ fontWeight: 'bold', position: 'absolute', bottom: '12px', left: 0, right: 0, textAlign: 'center' }}>Authorised Signatory</div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })() : (
         <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View PO Details' : editingId ? 'Edit PO' : 'New Purchase Order'}</h2>
@@ -866,130 +1294,10 @@ export default function YarnPurchaseOrder() {
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
                     <div className="form-group"><label>Status</label>
-                      <select className="form-control" name="status" value={form.status} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'indent', 'req_ind_no')}>
+                      <select className="form-control" name="status" value={form.status} onChange={handleChange}>
                         <option>Active</option><option>Closed</option>
                       </select>
                     </div>
-                  </div>
-
-                  {/* Section 3: Indent / Design */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Indent / Design</h4>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addIndentDetail}><Plus size={16} /> Add Indent Row</button>
-                  </div>
-                  <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
-                    <table className="data-table" style={{ minWidth: '1000px' }}>
-                      <thead>
-                        <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.indent_details.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              {customYarnCountIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 80 }} autoFocus value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomYarnCount}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomYarnCountIdx(null); setCustomYarnCountVal(''); }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 120 }} value={item.yarn_count || ''} onChange={e => {
-                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
-                                  else updateIndentDetail(idx, 'yarn_count', e.target.value);
-                                }}>
-                                  <option value="">Select Count...</option>
-                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td>
-                              {customTableColourIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customTableColourVal} onChange={e => setCustomTableColourVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomTableColour}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomTableColourIdx(null); setCustomTableColourVal(''); }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
-                                  if (e.target.value === 'custom') {
-                                    setCustomTableColourIdx(idx);
-                                    setCustomTableColourVal('');
-                                  } else {
-                                    updateIndentDetail(idx, 'colour', e.target.value);
-                                  }
-                                }}>
-                                  <option value="">Select Color...</option>
-                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
-                            <td><input type="date" className="form-control" style={{ width: 130 }} value={item.delivery_date || ''} onChange={e => updateIndentDetail(idx, 'delivery_date', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100 }} placeholder="Rate" value={item.rate || 0} onChange={e => updateIndentDetail(idx, 'rate', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 120, fontWeight: 'bold', background: '#f1f5f9' }} value={item.amount || 0} readOnly /></td>
-                            <td><button type="button" onClick={() => removeIndentDetail(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Section 4: Tax & Logistics */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group"><label>Freight Type</label>
-                      {isCustomFreightType ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Freight Type..." value={customFreightTypeVal} onChange={e => setCustomFreightTypeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightType}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightType(false); setCustomFreightTypeVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="freight_type" value={form.freight_type || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomFreightType(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select...</option>
-                          {options.masters?.freight_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight Type...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>Freight Chg</label><input type="number" className="form-control" name="freight_chg" value={form.freight_chg} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Insurance Chg</label><input type="number" className="form-control" name="insurance_chg" value={form.insurance_chg} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
-                    
-                    <div className="form-group"><label>Transport</label>
-                      {isCustomTransport ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="transport" value={form.transport || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomTransport(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select...</option>
-                          {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>TAX Type</label>
-                      <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                        <option>GST</option><option>IGST</option><option>Exempt</option>
-                      </select>
-                    </div>
-                    <div className="form-group"><label>Taxable Amount</label><input type="number" className="form-control" name="taxable_amount" value={form.taxable_amount} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Dispatch Date</label><input type="date" className="form-control" name="dispatch_date" value={form.dispatch_date} onChange={handleChange} /></div>
-                    
                     <div className="form-group"><label>Packing Type</label>
                       {isCustomPackingType ? (
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -1008,50 +1316,21 @@ export default function YarnPurchaseOrder() {
                         </select>
                       )}
                     </div>
-                    <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                    <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                    <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                    
-                    <div className="form-group"><label>Labeling</label><input className="form-control" name="labeling" value={form.labeling} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Colour</label>
-                      {isCustomColour ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Colour..." value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomColour}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomColour(false); setCustomColourVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="colour" value={form.colour || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomColour(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select...</option>
-                          {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Colour...</option>
-                        </select>
-                      )}
+                    <div className="form-group"><label>Labeling</label>
+                      <input className="form-control" name="labeling" value={form.labeling} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'indent', 'req_ind_no')} />
                     </div>
-                    <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
-                    
-                    <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
-                </div>
-              )}
 
-
-
-              {activeTab === 'indent' && (
-                <div className="animate-fade">
+                  {/* Section 3: Indent / Design */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Indent / Design</h4>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
                     <button type="button" className="btn btn-secondary" onClick={addIndentDetail}><Plus size={16} /> Add Indent Row</button>
                   </div>
-                  
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="data-table">
+                  <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
+                    <table className="data-table" style={{ minWidth: '1100px' }}>
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
+                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Unit</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1099,6 +1378,189 @@ export default function YarnPurchaseOrder() {
                               )}
                             </td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
+                            <td>
+                              <select className="form-control" style={{ width: 80 }} value={item.uom || 'KGS'} onChange={e => updateIndentDetail(idx, 'uom', e.target.value)}>
+                                <option value="KGS">KGS</option>
+                                <option value="BAGS">BAGS</option>
+                                <option value="PCS">PCS</option>
+                                <option value="MTRS">MTRS</option>
+                              </select>
+                            </td>
+                            <td><input type="date" className="form-control" style={{ width: 130 }} value={item.delivery_date || ''} onChange={e => updateIndentDetail(idx, 'delivery_date', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} placeholder="Rate" value={item.rate || 0} onChange={e => updateIndentDetail(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 120, fontWeight: 'bold', background: '#f1f5f9' }} value={item.amount || 0} readOnly /></td>
+                            <td><button type="button" onClick={() => removeIndentDetail(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16}/></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Section 4: Tax & Logistics */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+
+                      {/* ── Terms & Conditions ── */}
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Terms & Conditions</span>
+                        </div>
+                        <div style={{ padding: '16px 18px' }}>
+                          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {(form.terms_conditions || []).map((term, idx) => (
+                              <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                {editingTermIdx === idx ? (
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                    <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                    <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                    <span>{term}</span>
+                                    {!isReadOnly && (
+                                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                          {!isReadOnly && (
+                            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                              <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} placeholder="Add new term or condition..." value={newTermVal} onChange={e => setNewTermVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || []), newTermVal.trim()] }); setNewTermVal(''); }}} />
+                              <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || []), newTermVal.trim()] }); setNewTermVal(''); }}}><Plus size={14} /> Add</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RIGHT SIDE — Order Summary */}
+                    <div style={{ flex: '0 0 300px', position: 'sticky', top: 24 }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Order Summary</span>
+                        </div>
+                        <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.insurance_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.total_order_kgs || 0}</span>
+                          </div>
+
+                          <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Grand Total</span>
+                            <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+              {activeTab === 'indent' && (
+                <div className="animate-fade">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-secondary" onClick={addIndentDetail}><Plus size={16} /> Add Indent Row</button>
+                  </div>
+                  
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="data-table" style={{ minWidth: '1100px' }}>
+                      <thead>
+                        <tr>
+                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Unit</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {form.indent_details.map((item, idx) => (
+                          <tr key={idx}>
+                            <td>{idx + 1}</td>
+                            <td>
+                              {customYarnCountIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 80 }} autoFocus value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomYarnCount}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomYarnCountIdx(null); setCustomYarnCountVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 120 }} value={item.yarn_count || ''} onChange={e => {
+                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
+                                  else updateIndentDetail(idx, 'yarn_count', e.target.value);
+                                }}>
+                                  <option value="">Select Count...</option>
+                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td>
+                              {customTableColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} autoFocus value={customTableColourVal} onChange={e => setCustomTableColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveCustomTableColour}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => { setCustomTableColourIdx(null); setCustomTableColourVal(''); }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
+                                  if (e.target.value === 'custom') {
+                                    setCustomTableColourIdx(idx);
+                                    setCustomTableColourVal('');
+                                  } else {
+                                    updateIndentDetail(idx, 'colour', e.target.value);
+                                  }
+                                }}>
+                                  <option value="">Select Color...</option>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.order_qty} onChange={e => updateIndentDetail(idx, 'order_qty', e.target.value)} /></td>
+                            <td>
+                              <select className="form-control" style={{ width: 80 }} value={item.uom || 'KGS'} onChange={e => updateIndentDetail(idx, 'uom', e.target.value)}>
+                                <option value="KGS">KGS</option>
+                                <option value="BAGS">BAGS</option>
+                                <option value="PCS">PCS</option>
+                                <option value="MTRS">MTRS</option>
+                              </select>
+                            </td>
                             <td><input type="date" className="form-control" style={{ width: 130 }} value={item.delivery_date || ''} onChange={e => updateIndentDetail(idx, 'delivery_date', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} placeholder="Rate" value={item.rate || 0} onChange={e => updateIndentDetail(idx, 'rate', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 120, fontWeight: 'bold', background: '#f1f5f9' }} value={item.amount || 0} readOnly /></td>
@@ -1112,100 +1574,145 @@ export default function YarnPurchaseOrder() {
               )}
 
               {activeTab === 'tax' && (
-                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                  <div className="form-group"><label>Freight Type</label>
-                    {isCustomFreightType ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="text" className="form-control" autoFocus placeholder="Enter Freight Type..." value={customFreightTypeVal} onChange={e => setCustomFreightTypeVal(e.target.value)} />
-                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightType}><CheckCircle size={16} /></button>
-                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightType(false); setCustomFreightTypeVal(''); }}><X size={16} /></button>
+                <div className="animate-fade" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                  {/* LEFT SIDE — Grouped Card Sections */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                    {/* ── Freight & Shipping ── */}
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Freight & Shipping</span>
                       </div>
-                    ) : (
-                      <select className="form-control" name="freight_type" value={form.freight_type || ''} onChange={e => {
-                        if (e.target.value === 'custom') setIsCustomFreightType(true);
-                        else handleChange(e);
-                      }}>
-                        <option value="">Select...</option>
-                        {options.masters?.freight_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight Type...</option>
-                      </select>
-                    )}
-                  </div>
-                  <div className="form-group"><label>Freight Chg</label><input type="number" className="form-control" name="freight_chg" value={form.freight_chg} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Insurance Chg</label><input type="number" className="form-control" name="insurance_chg" value={form.insurance_chg} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Transport</label>
-                    {isCustomTransport ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
-                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
-                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
+                      <div style={{ padding: '16px 18px' }}>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0 }}>
+                          <div className="form-group"><label>Freight Type</label>
+                            {isCustomFreightType ? (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <input type="text" className="form-control" autoFocus placeholder="Enter Freight Type..." value={customFreightTypeVal} onChange={e => setCustomFreightTypeVal(e.target.value)} />
+                                <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightType}><CheckCircle size={16} /></button>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightType(false); setCustomFreightTypeVal(''); }}><X size={16} /></button>
+                              </div>
+                            ) : (
+                              <select className="form-control" name="freight_type" value={form.freight_type || ''} onChange={e => {
+                                if (e.target.value === 'custom') setIsCustomFreightType(true);
+                                else handleChange(e);
+                              }}>
+                                <option value="">Select...</option>
+                                {options.masters?.freight_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight Type...</option>
+                              </select>
+                            )}
+                          </div>
+                          <div className="form-group"><label>Freight Chg</label><input type="number" className="form-control" name="freight_chg" value={form.freight_chg} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Insurance Chg</label><input type="number" className="form-control" name="insurance_chg" value={form.insurance_chg} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
+                        </div>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0, marginTop: 12 }}>
+                          <div className="form-group"><label>Transport</label>
+                            {isCustomTransport ? (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                                <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
+                              </div>
+                            ) : (
+                              <select className="form-control" name="transport" value={form.transport || ''} onChange={e => {
+                                if (e.target.value === 'custom') setIsCustomTransport(true);
+                                else handleChange(e);
+                              }}>
+                                <option value="">Select...</option>
+                                {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
+                              </select>
+                            )}
+                          </div>
+                          <div className="form-group"><label>Dispatch Date</label><input type="date" className="form-control" name="dispatch_date" value={form.dispatch_date} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
+                          <div className="form-group" />
+                        </div>
                       </div>
-                    ) : (
-                      <select className="form-control" name="transport" value={form.transport || ''} onChange={e => {
-                        if (e.target.value === 'custom') setIsCustomTransport(true);
-                        else handleChange(e);
-                      }}>
-                        <option value="">Select...</option>
-                        {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
-                      </select>
-                    )}
-                  </div>
-                  <div className="form-group"><label>TAX Type</label>
-                    <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                      <option>GST</option><option>IGST</option><option>Exempt</option>
-                    </select>
-                  </div>
-                  <div className="form-group"><label>Taxable Amount</label><input type="number" className="form-control" name="taxable_amount" value={form.taxable_amount} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Dispatch Date</label><input type="date" className="form-control" name="dispatch_date" value={form.dispatch_date} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Packing Type</label>
-                    {isCustomPackingType ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="text" className="form-control" autoFocus placeholder="Enter Packing Type..." value={customPackingTypeVal} onChange={e => setCustomPackingTypeVal(e.target.value)} />
-                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomPackingType}><CheckCircle size={16} /></button>
-                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomPackingType(false); setCustomPackingTypeVal(''); }}><X size={16} /></button>
+                    </div>
+
+                    {/* ── Tax Details ── */}
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Tax Details</span>
                       </div>
-                    ) : (
-                      <select className="form-control" name="packing_type" value={form.packing_type || ''} onChange={e => {
-                        if (e.target.value === 'custom') setIsCustomPackingType(true);
-                        else handleChange(e);
-                      }}>
-                        <option value="">Select...</option>
-                        {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Packing...</option>
-                      </select>
-                    )}
-                  </div>
-                  <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                  <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                  
-                  <div className="form-group"><label>Labeling</label><input className="form-control" name="labeling" value={form.labeling} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Colour</label>
-                    {isCustomColour ? (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="text" className="form-control" autoFocus placeholder="Enter Colour..." value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                        <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomColour}><CheckCircle size={16} /></button>
-                        <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomColour(false); setCustomColourVal(''); }}><X size={16} /></button>
+                      <div style={{ padding: '16px 18px' }}>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0 }}>
+                          <div className="form-group"><label>TAX Type</label>
+                            <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
+                              <option>GST</option><option>IGST</option><option>Exempt</option>
+                            </select>
+                          </div>
+                          <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                        </div>
                       </div>
-                    ) : (
-                      <select className="form-control" name="colour" value={form.colour || ''} onChange={e => {
-                        if (e.target.value === 'custom') setIsCustomColour(true);
-                        else handleChange(e);
-                      }}>
-                        <option value="">Select...</option>
-                        {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                        <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Colour...</option>
-                      </select>
-                    )}
+                    </div>
+
+
+                    {/* ── Remarks ── */}
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Remarks</span>
+                      </div>
+                      <div style={{ padding: '16px 18px' }}>
+                        <textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} rows={3} placeholder="Enter any additional notes or remarks..." style={{ width: '100%', resize: 'vertical' }} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
-                  <div className="form-group"><label>Nett Amount</label><input type="number" className="form-control" style={{ fontWeight: 'bold', background: '#e0f2fe', color: '#0369a1' }} name="net_amount" value={form.net_amount} onChange={handleChange} /></div>
-                  
-                  <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+
+                  {/* RIGHT SIDE — Order Summary */}
+                  <div style={{ flex: '0 0 300px', position: 'sticky', top: 24 }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Order Summary</span>
+                      </div>
+                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.insurance_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.total_order_kgs || 0}</span>
+                        </div>
+
+                        <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Grand Total</span>
+                          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </fieldset>

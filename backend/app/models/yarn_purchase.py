@@ -1,5 +1,5 @@
 """Yarn Purchase Order models."""
-from sqlalchemy import Column, Integer, String, Date, DateTime, Float, Text, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Date, DateTime, Float, Text, JSON, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -38,6 +38,7 @@ class YarnPurchaseOrder(Base):
     remarks = Column(Text)
     
     status = Column(String(30), default="Open")
+    terms_conditions = Column(JSON, default=list)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -86,5 +87,8 @@ class YarnPurchaseIndentDetail(Base):
     amount = Column(Float, default=0.0)
     colour = Column(String(100))
     delivery_date = Column(String(100))
+    packing_type = Column(String(100))
+    labeling = Column(String(255))
+    uom = Column(String(50), default="KGS")
 
     purchase_order = relationship("YarnPurchaseOrder", back_populates="indent_details")
