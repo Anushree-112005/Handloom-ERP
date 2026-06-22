@@ -216,6 +216,7 @@ export default function YarnStock() {
               <th style={{ textAlign: 'right' }}>Total Value</th>
               <th>Godown</th>
               <th>Status</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -233,6 +234,16 @@ export default function YarnStock() {
                   <span className={`badge ${item.status === 'Available' ? 'badge-active' : 'badge-pending'}`}>
                     {item.status}
                   </span>
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => setViewModalStock(item)}
+                    title="View Lot Profile"
+                  >
+                    <Eye size={16} color="var(--primary)" />
+                  </button>
                 </td>
               </tr>
             ))}

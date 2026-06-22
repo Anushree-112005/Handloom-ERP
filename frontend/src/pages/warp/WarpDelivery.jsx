@@ -4,6 +4,7 @@ import { warpDeliveryAPI, partyAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -79,7 +80,7 @@ export default function WarpDelivery() {
       const { data } = await warpDeliveryAPI.get(entry.id);
       if (data.dc_date) data.dc_date = data.dc_date.substring(0, 10);
       if (data.po_date) data.po_date = data.po_date.substring(0, 10);
-      
+
       setForm({ ...initialForm, ...data });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
@@ -114,22 +115,22 @@ export default function WarpDelivery() {
   };
 
   const handleChange = (e) => {
-  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      setActiveTab(nextTab);
-      setTimeout(() => {
-        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        } else {
-          // Fallback to first focusable element
-          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-          if (fallback) fallback.focus();
-        }
-      }, 100);
-    }
-  };
+    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        setActiveTab(nextTab);
+        setTimeout(() => {
+          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+          if (nextInput) {
+            nextInput.focus();
+          } else {
+            // Fallback to first focusable element
+            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+            if (fallback) fallback.focus();
+          }
+        }, 100);
+      }
+    };
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
@@ -152,9 +153,9 @@ export default function WarpDelivery() {
     const matchesSearch = searchTerm === '' ||
       r.dc_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.party_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesType = typeFilter === 'All Types' || r.delivery_type === typeFilter;
-    
+
     let matchesDate = true;
     if (r.dc_date) {
       const entryDate = new Date(r.dc_date);
@@ -303,7 +304,14 @@ export default function WarpDelivery() {
                         <td>{parseFloat(r.total_meters || 0).toFixed(2)}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => setSelectedViewEntry(r)}
+                              title="Full View"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(r.id, r.dc_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -315,40 +323,51 @@ export default function WarpDelivery() {
               </div>
             </div>
 
-            {selectedViewEntry && (
-              <div style={{ flex: '0 0 350px' }}>
-                <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                      <Truck size={18} /> {selectedViewEntry.dc_no}
-                    </h3>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
-                      <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <DetailRow label="DC Date" value={selectedViewEntry.dc_date} />
-                    <DetailRow label="Delivery Type" value={selectedViewEntry.delivery_type} />
-                    <DetailRow label="Vendor" value={selectedViewEntry.party_name} />
-                    <DetailRow label="Total Mtrs" value={selectedViewEntry.total_meters} />
-                    
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Beams ({selectedViewEntry.items?.length || 0})</h4>
-                    {selectedViewEntry.items?.map((c, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 8, border: '1px solid var(--border)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Beam: {c.beam_no || 'N/A'} - {c.beam_type}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                          <span>Warp Mtrs: {c.warp_mtrs}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+
+          <A4DocumentPreview
+            isOpen={!!selectedViewEntry}
+            onClose={() => setSelectedViewEntry(null)}
+            title="WARP DELIVERY"
+            documentNumber={selectedViewEntry?.dc_no}
+            status={selectedViewEntry?.status || 'Delivered'}
+            onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
+            sections={selectedViewEntry ? [
+              {
+                title: "GENERAL INFO",
+                icon: "FileText",
+                type: "grid",
+                data: [
+                  { label: "DC No", value: selectedViewEntry.dc_no },
+                  { label: "DC Date", value: selectedViewEntry.dc_date },
+                  { label: "Vendor", value: selectedViewEntry.party_name || '-' },
+                  { label: "Delivery Type", value: selectedViewEntry.delivery_type }
+                ]
+              },
+              {
+                title: "DELIVERY DETAILS",
+                icon: "Truck",
+                type: "grid",
+                data: [
+                  { label: "Total Mtrs", value: selectedViewEntry.total_meters },
+                  { label: "Order No", value: selectedViewEntry.order_no || '-' },
+                  { label: "Vehicle No", value: selectedViewEntry.vehicle_no || '-' }
+                ]
+              },
+              {
+                title: "BEAMS INFO",
+                icon: "Package",
+                type: "table",
+                headers: ["Beam No", "Warp Mtrs", "Type", "Loom"],
+                rows: (selectedViewEntry.items || []).map(b => [
+                  b.beam_no || '-',
+                  b.warp_mtrs || 0,
+                  b.beam_type || '-',
+                  b.loom_no || '-'
+                ])
+              }
+            ] : []}
+          />
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
@@ -364,7 +383,7 @@ export default function WarpDelivery() {
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
             {[{ id: 'general', label: 'Top Section Fields' }, { id: 'items', label: 'Table Section (Beams)' }].map(tab => (
-              <button 
+              <button
                 key={tab.id} onClick={() => setActiveTab(tab.id)}
                 style={{
                   padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
@@ -380,7 +399,7 @@ export default function WarpDelivery() {
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
+
               {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Top Section Fields */}
@@ -394,7 +413,7 @@ export default function WarpDelivery() {
                     </div>
                     <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
                     <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Sizing Name</label><input className="form-control" name="sizing_name" value={form.sizing_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Vendor Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
@@ -402,31 +421,31 @@ export default function WarpDelivery() {
                         {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                       </select>
                     </div>
-                    
+
                     <div className="form-group"><label>Entry Type</label><input className="form-control" name="entry_type" value={form.entry_type} onChange={handleChange} /></div>
                     <div className="form-group"><label>BPO No</label><input className="form-control" name="bpo_no" value={form.bpo_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Address</label><input className="form-control" name="address" value={form.address} onChange={handleChange} /></div>
                     <div className="form-group"><label>SET ID (No.)</label><input className="form-control" name="set_id" value={form.set_id} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Ends</label><input type="number" className="form-control" name="warp_ends" value={form.warp_ends} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Yarn Count</label><input className="form-control" name="yarn_count" value={form.yarn_count} onChange={handleChange} /></div>
                     <div className="form-group"><label>Vendor PO No</label><input className="form-control" name="vendor_po_no" value={form.vendor_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order Mtrs</label><input type="number" className="form-control" name="order_mtrs" value={form.order_mtrs} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>With Crimp</label><input className="form-control" name="with_crimp" value={form.with_crimp} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivered Mtrs</label><input type="number" className="form-control" name="delivered_mtrs" value={form.delivered_mtrs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Balance Mtrs</label><input type="number" className="form-control" name="balance_meters" value={form.balance_meters} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Beams</label><input type="number" className="form-control" name="total_beams" value={form.total_beams} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
                     <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Warp Mtrs</label><input type="number" className="form-control" name="total_meters" value={form.total_meters} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Exptd Mtrs</label><input type="number" className="form-control" name="total_exptd_mtrs" value={form.total_exptd_mtrs} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'beam_no')} /></div>
                   </div>
 
@@ -449,7 +468,7 @@ export default function WarpDelivery() {
                             <td><input type="number" className="form-control" style={{ width: 120, padding: '6px' }} value={item.warp_mtrs} onChange={e => updateItem(idx, 'warp_mtrs', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 160, padding: '6px' }} value={item.beam_type} onChange={e => updateItem(idx, 'beam_type', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 140, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -477,7 +496,7 @@ export default function WarpDelivery() {
                             <td><input type="number" className="form-control" style={{ width: 120, padding: '6px' }} value={item.warp_mtrs} onChange={e => updateItem(idx, 'warp_mtrs', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 160, padding: '6px' }} value={item.beam_type} onChange={e => updateItem(idx, 'beam_type', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 140, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button></td>
                           </tr>
                         ))}
                       </tbody>

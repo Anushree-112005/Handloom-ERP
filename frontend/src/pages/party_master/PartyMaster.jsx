@@ -1,14 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, Briefcase, CheckCircle, Download, FileText } from 'lucide-react';
+import { Users, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, Briefcase, CheckCircle, Download, FileText, User, Phone, MapPin, IndianRupee, Mail, Globe, Box } from 'lucide-react';
 import { partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import logoImg from '../../assets/logo.png';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
     <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
     <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
+  </div>
+);
+
+const InfoRow2 = ({ label, value }) => (
+  <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+    <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>{label}</div>
+    <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+    <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>{value}</div>
   </div>
 );
 
@@ -835,6 +844,234 @@ export default function PartyMaster() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Parties");
     XLSX.writeFile(wb, `Party_Master_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const generatePartyPDF = async (party) => {
+    const doc = new jsPDF('p', 'pt', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 40;
+
+    // Load Logo for PDF
+    try {
+      const response = await fetch(logoImg);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      const base64data = await new Promise((resolve) => {
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => resolve(reader.result);
+      });
+      // Draw image (x, y, width, height)
+      doc.addImage(base64data, 'PNG', 40, y - 8, 45, 45);
+    } catch (e) {
+      console.error("Failed to load logo", e);
+      doc.setDrawColor(15, 23, 42);
+      doc.setLineWidth(2);
+      doc.rect(40, y, 30, 30);
+    }
+    
+    // Header Left
+    doc.setFontSize(24);
+    doc.setTextColor(15, 23, 42); // #0f172a
+    doc.setFont("helvetica", "bold");
+    doc.text("DINESH EXPORTS", 80, y + 16);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(148, 163, 184); // #94a3b8
+    doc.setFont("helvetica", "bold");
+    doc.text("THE HOUSE OF FABRICS", 80, y + 28);
+    
+    // Header Right
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42);
+    doc.text("PARTY MASTER PROFILE", pageWidth - 40, y + 10, { align: 'right' });
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    const rightX = pageWidth - 180;
+    doc.text("Party Code", rightX, y + 30);
+    doc.text(":", rightX + 60, y + 30);
+    doc.setFont("helvetica", "bold");
+    doc.text(party.customer_code || '-', rightX + 70, y + 30);
+
+    doc.setFont("helvetica", "normal");
+    doc.text("Status", rightX, y + 45);
+    doc.text(":", rightX + 60, y + 45);
+    doc.setFillColor(34, 197, 94);
+    doc.rect(rightX + 70, y + 36, 40, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text((party.status || 'ACTIVE').toUpperCase(), rightX + 75, y + 45);
+
+    // Thick Line
+    y += 60;
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(2);
+    doc.line(40, y, pageWidth - 40, y);
+    
+    // Function to draw section
+    const drawSection = (title, startX, startY, width, height) => {
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(1);
+      doc.roundedRect(startX, startY, width, height, 4, 4);
+      
+      doc.setFillColor(15, 23, 42);
+      doc.roundedRect(startX - 1, startY - 10, 140, 18, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, startX + 10, startY + 2);
+    };
+
+    y += 30;
+
+    // Section 1: Party Details
+    drawSection("1. PARTY DETAILS", 40, y, pageWidth - 80, 100);
+    autoTable(doc, {
+      startY: y + 15,
+      margin: { left: 45, right: 45 },
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: {
+        0: { cellWidth: 80, fontStyle: 'bold', textColor: [15, 23, 42] },
+        1: { cellWidth: 10, fontStyle: 'bold' },
+        2: { cellWidth: 140, textColor: [15, 23, 42] },
+        3: { cellWidth: 80, fontStyle: 'bold', textColor: [15, 23, 42] },
+        4: { cellWidth: 10, fontStyle: 'bold' },
+        5: { cellWidth: 140, textColor: [15, 23, 42] },
+      },
+      body: [
+        ['Party Name', ':', party.company_name || '-', 'GST Number', ':', party.gst_no || '-'],
+        ['Party Group', ':', party.party_group || '-', 'PAN Number', ':', party.pan_no || '-'],
+        ['Party Type', ':', party.party_type || '-', 'Business Type', ':', 'Service'],
+        ['Customer Code', ':', party.customer_code || '-', 'Status', ':', party.status || 'Active'],
+      ],
+      didDrawCell: (data) => {
+        if (data.row.index < 3) {
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.setLineDash([2, 2], 0);
+          doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+          doc.setLineDash([], 0);
+        }
+      }
+    });
+
+    y += 120;
+    const halfWidth = (pageWidth - 90) / 2;
+
+    // Section 2 & 3
+    drawSection("2. CONTACT DETAILS", 40, y, halfWidth, 100);
+    autoTable(doc, {
+      startY: y + 15,
+      margin: { left: 45 },
+      tableWidth: halfWidth - 10,
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: { 0: { cellWidth: 70, fontStyle: 'bold' }, 1: { cellWidth: 10 }, 2: { cellWidth: halfWidth - 90 } },
+      body: [
+        ['Contact Person', ':', party.contact_person || '-'],
+        ['Phone / Mobile', ':', party.phone || '-'],
+        ['Email Address', ':', party.email || '-'],
+        ['Website', ':', party.website || '-'],
+      ],
+      didDrawCell: (data) => {
+        if (data.row.index < 3) {
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.setLineDash([2, 2], 0);
+          doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+          doc.setLineDash([], 0);
+        }
+      }
+    });
+
+    drawSection("3. ADDRESS DETAILS", 40 + halfWidth + 10, y, halfWidth, 100);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(party.address || '-', 55 + halfWidth + 10, y + 30);
+    doc.text(`${party.city || '-'}, ${party.district || '-'}`, 55 + halfWidth + 10, y + 45);
+    doc.text(`${party.state || '-'} - ${party.pin_code || '-'}`, 55 + halfWidth + 10, y + 60);
+    doc.text(party.country || '-', 55 + halfWidth + 10, y + 75);
+
+    y += 120;
+
+    // Section 4 & 5
+    drawSection("4. FINANCIAL DETAILS", 40, y, halfWidth, 110);
+    autoTable(doc, {
+      startY: y + 15,
+      margin: { left: 45 },
+      tableWidth: halfWidth - 10,
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: { 0: { cellWidth: 90, fontStyle: 'bold' }, 1: { cellWidth: 10 }, 2: { cellWidth: halfWidth - 110 } },
+      body: [
+        ['Credit Limit', ':', `Rs. ${party.credit_limit || '0.00'}`],
+        ['Credit Days', ':', `${party.credit_days || 0} Days`],
+        ['Payment Terms', ':', party.payment_terms || 'Immediate'],
+        ['Outstanding Amount', ':', 'Rs. 0.00'],
+        ['Currency', ':', party.currency || 'INR'],
+      ],
+      didDrawCell: (data) => {
+        if (data.row.index < 4) {
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.setLineDash([2, 2], 0);
+          doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+          doc.setLineDash([], 0);
+        }
+      }
+    });
+
+    drawSection("5. BUSINESS INFO", 40 + halfWidth + 10, y, halfWidth, 110);
+    autoTable(doc, {
+      startY: y + 15,
+      margin: { left: 40 + halfWidth + 15 },
+      tableWidth: halfWidth - 10,
+      theme: 'plain',
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: { 0: { cellWidth: 90, fontStyle: 'bold' }, 1: { cellWidth: 10 }, 2: { cellWidth: halfWidth - 110 } },
+      body: [
+        ['Pricing Type', ':', party.gst_type || 'Exclusive'],
+        ['Tax Preference', ':', 'Taxable'],
+        ['TDS Applicable', ':', party.tds ? 'Yes' : 'No'],
+        ['E-Way Bill', ':', 'Yes'],
+        ['Place of Supply', ':', `${party.state || 'Tamil Nadu'}`],
+      ],
+      didDrawCell: (data) => {
+        if (data.row.index < 4) {
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.setLineDash([2, 2], 0);
+          doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height);
+          doc.setLineDash([], 0);
+        }
+      }
+    });
+
+    y += 130;
+
+    // Footer
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(2);
+    doc.line(40, doc.internal.pageSize.getHeight() - 60, pageWidth - 40, doc.internal.pageSize.getHeight() - 60);
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("Dinesh Exports", 40, doc.internal.pageSize.getHeight() - 40);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text("No. 123, Textile Street, Erode, Tamil Nadu - 638001", 40, doc.internal.pageSize.getHeight() - 30);
+    
+    doc.text("0424-1234567 | info@dineshexports.com", pageWidth / 2, doc.internal.pageSize.getHeight() - 40, { align: 'center' });
+    
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("GSTIN: 33ABCDE1234F1Z5", pageWidth - 40, doc.internal.pageSize.getHeight() - 40, { align: 'right' });
+
+    doc.save(`Party_Profile_${party.company_name || 'Party'}.pdf`);
   };
 
   const totalParties = parties.length;
@@ -2080,8 +2317,8 @@ export default function PartyMaster() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => handleOpenForm(p, true)}
-                            title="Full Form View"
+                            onClick={() => setSelectedViewParty(p)}
+                            title="Preview Party"
                           >
                             <Eye size={16} color="var(--primary)" />
                           </button>
@@ -2253,6 +2490,218 @@ export default function PartyMaster() {
               >
                 Yes, Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Party Preview Modal */}
+      {selectedViewParty && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+          <div className="card animate-fade" style={{ background: '#cbd5e1', width: '100%', maxWidth: 900, height: '90vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', zIndex: 10, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Eye size={18} style={{ color: '#4f46e5' }} /> 
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Party Profile Preview</h3>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <button onClick={() => generatePartyPDF(selectedViewParty)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#e2e8f0', border: 'none', color: '#1e293b', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+                  <Download size={14} /> Download PDF
+                </button>
+                <button onClick={() => setSelectedViewParty(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+              </div>
+            </div>
+
+            {/* Scrollable Modal Body (Greyish background) */}
+            <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
+              
+              {/* A4 Paper */}
+              <div style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+                
+                {/* Top Header Section */}
+                <div style={{ padding: '32px 40px 20px 40px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                      <div>
+                        <img src={logoImg} alt="Dinesh Exports" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                      </div>
+                      <div>
+                         <h1 style={{ margin: 0, color: '#0f172a', fontSize: 28, fontWeight: 900, letterSpacing: '-0.02em' }}>DINESH EXPORTS</h1>
+                         <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>THE HOUSE OF FABRICS</p>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'left', width: 300 }}>
+                      <h2 style={{ margin: '0 0 16px 0', color: '#0f172a', fontSize: 18, fontWeight: 800, letterSpacing: '0.05em', textAlign: 'right' }}>PARTY MASTER PROFILE</h2>
+                      
+                      <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Party Code</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{selectedViewParty.customer_code}</div>
+                      </div>
+                      <div style={{ display: 'flex', fontSize: 11, marginBottom: 6, alignItems: 'center' }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Status</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div><span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: 9, fontWeight: 700 }}>{(selectedViewParty.status || 'ACTIVE').toUpperCase()}</span></div>
+                      </div>
+                      <div style={{ display: 'flex', fontSize: 11, marginBottom: 6 }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated On</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                      <div style={{ display: 'flex', fontSize: 11 }}>
+                        <div style={{ width: 100, fontWeight: 600, color: '#0f172a' }}>Generated By</div>
+                        <div style={{ width: 20, textAlign: 'center' }}>:</div>
+                        <div style={{ fontWeight: 500, color: '#0f172a' }}>Administrator</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Thick Line */}
+                <div style={{ borderBottom: '3px solid #0f172a' }}></div>
+
+                {/* Body Content */}
+                <div style={{ padding: '10px 40px 40px 40px' }}>
+                  {/* Section 1 */}
+                  <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                    <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <User size={14} /> 1. PARTY DETAILS
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                      <div>
+                        <InfoRow2 label="Party Name" value={selectedViewParty.company_name} />
+                        <InfoRow2 label="Party Group" value={selectedViewParty.party_group || '-'} />
+                        <InfoRow2 label="Party Type" value={selectedViewParty.party_type || '-'} />
+                        <InfoRow2 label="Customer Code" value={selectedViewParty.customer_code} />
+                      </div>
+                      <div>
+                        <InfoRow2 label="GST Number" value={selectedViewParty.gst_no || '-'} />
+                        <InfoRow2 label="PAN Number" value={selectedViewParty.pan_no || '-'} />
+                        <InfoRow2 label="Business Type" value={selectedViewParty.party_type || 'Service'} />
+                        <div style={{ display: 'flex', padding: '8px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+                          <div style={{ width: '40%', color: '#0f172a', fontWeight: 600 }}>Status</div>
+                          <div style={{ width: '5%', color: '#0f172a', textAlign: 'center' }}>:</div>
+                          <div style={{ width: '55%', color: '#0f172a', fontWeight: 500 }}>
+                            <span style={{ border: '1px solid #22c55e', color: '#22c55e', padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600 }}>{selectedViewParty.status || 'Active'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2 & 3 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 24 }}>
+                    {/* Section 2 */}
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px' }}>
+                        <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                          <Phone size={14} /> 2. CONTACT DETAILS
+                        </div>
+                        <InfoRow2 label="Contact Person" value={selectedViewParty.contact_person || '-'} />
+                        <InfoRow2 label="Phone / Mobile" value={selectedViewParty.phone || '-'} />
+                        <InfoRow2 label="Email Address" value={selectedViewParty.email || '-'} />
+                        <InfoRow2 label="Website" value={selectedViewParty.website || '-'} />
+                    </div>
+                    {/* Section 3 */}
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px' }}>
+                        <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                          <MapPin size={14} /> 3. ADDRESS DETAILS
+                        </div>
+                        <div style={{ color: '#0f172a', fontSize: 12, lineHeight: '24px', fontWeight: 600, marginTop: 8 }}>
+                          <div>{selectedViewParty.address || '-'}</div>
+                          <div>{selectedViewParty.city || '-'}</div>
+                          <div>{selectedViewParty.state || '-'} - {selectedViewParty.pin_code || '-'}</div>
+                          <div>{selectedViewParty.country || '-'}</div>
+                        </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4 & 5 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 24 }}>
+                    {/* Section 4 */}
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px' }}>
+                        <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                          <IndianRupee size={14} /> 4. FINANCIAL DETAILS
+                        </div>
+                        <InfoRow2 label="Credit Limit" value={`₹ ${selectedViewParty.credit_limit || '0.00'}`} />
+                        <InfoRow2 label="Credit Days" value={`${selectedViewParty.credit_days || 0} Days`} />
+                        <InfoRow2 label="Payment Terms" value={selectedViewParty.payment_terms || 'Immediate'} />
+                        <InfoRow2 label="Outstanding Amount" value="₹ 0.00" />
+                        <InfoRow2 label="Currency" value={selectedViewParty.currency || 'INR'} />
+                    </div>
+                    {/* Section 5 */}
+                    <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px' }}>
+                        <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                          <Briefcase size={14} /> 5. BUSINESS INFORMATION
+                        </div>
+                        <InfoRow2 label="Pricing Type" value={selectedViewParty.gst_type || 'Exclusive'} />
+                        <InfoRow2 label="Tax Preference" value="Taxable" />
+                        <InfoRow2 label="TDS Applicable" value={selectedViewParty.tds ? 'Yes' : 'No'} />
+                        <InfoRow2 label="E-Way Bill Applicable" value="Yes" />
+                        <InfoRow2 label="Place of Supply" value={`${selectedViewParty.state || 'Tamil Nadu'} (33)`} />
+                    </div>
+                  </div>
+
+                  {/* Section 6 */}
+                  <div style={{ position: 'relative', border: '1px solid #e2e8f0', borderRadius: 6, padding: '24px 20px 12px 20px', marginTop: 24 }}>
+                    <div style={{ position: 'absolute', top: -14, left: -1, background: '#0f172a', color: 'white', padding: '6px 16px', borderRadius: '6px 6px 6px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>
+                      <FileText size={14} /> 6. ADDITIONAL INFORMATION
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
+                      <div>
+                          <InfoRow2 label="Remarks" value="-" />
+                          <InfoRow2 label="Created Date" value={new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} />
+                          <InfoRow2 label="Last Modified Date" value={new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} />
+                      </div>
+                      <div>
+                          <InfoRow2 label="Created By" value="Administrator" />
+                          <InfoRow2 label="Last Modified By" value="Administrator" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Signatures */}
+                  <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '32px 40px 16px 40px', marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, textAlign: 'center' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#0f172a', fontWeight: 800, fontSize: 11, marginBottom: 40 }}>
+                            <User size={14} /> PREPARED BY
+                        </div>
+                        <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: 12, color: '#0f172a', fontSize: 11, fontWeight: 700 }}>
+                          Administrator
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#0f172a', fontWeight: 800, fontSize: 11, marginBottom: 40 }}>
+                            <User size={14} /> AUTHORIZED BY
+                        </div>
+                        <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: 12, color: '#0f172a', fontSize: 11, fontWeight: 700 }}>
+                          Authorised Signatory
+                        </div>
+                      </div>
+                  </div>
+
+                </div>
+
+                {/* Footer */}
+                <div style={{ borderTop: '2px solid #0f172a', background: '#f8fafc', padding: '16px 40px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16, fontSize: 10, color: '#0f172a' }}>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <MapPin size={16} strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2, color: '#1e3a8a' }} />
+                    <div>
+                      <div style={{ fontWeight: 800, marginBottom: 2 }}>Dinesh Exports</div>
+                      <div style={{ color: '#475569', fontWeight: 500, lineHeight: '16px' }}>No. 123, Textile Street,<br/>Erode, Tamil Nadu - 638001, India</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Phone size={14} color="#1e3a8a" strokeWidth={2.5}/> 0424-1234567</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Mail size={14} color="#1e3a8a" strokeWidth={2.5}/> info@dineshexports.com</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><Globe size={14} color="#1e3a8a" strokeWidth={2.5}/> www.dineshexports.com</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', fontWeight: 700 }}>
+                      <FileText size={16} color="#1e3a8a" strokeWidth={2.5}/> GSTIN : 33ABCDE1234F1Z5
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { clothDeliveryAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -326,7 +327,7 @@ export default function FabricDyeingDelivery() {
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
             {[{ id: 'general', label: 'General Info' }, { id: 'specs', label: 'Fabrication Specs' }, { id: 'items', label: 'Pieces Grid' }, { id: 'logistics', label: 'Vouchers & Logistics' }].map(tab => (
-              <button 
+              <button
                 type="button"
                 key={tab.id} onClick={() => setActiveTab(tab.id)}
                 style={{
@@ -601,8 +602,16 @@ export default function FabricDyeingDelivery() {
                 <td><span className="badge badge-active">{del.status}</span></td>
                 <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(del)}><Edit2 size={12} /></button>
-                    <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(del.id, del.dc_no)}><Trash2 size={12} /></button>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onClick={() => setSelectedViewDelivery(del)}
+                      title="Preview Delivery"
+                    >
+                      <Eye size={16} color="var(--primary)" />
+                    </button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(del)} title="Edit"><Edit2 size={12} /></button>
+                    <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(del.id, del.dc_no)} title="Delete"><Trash2 size={12} /></button>
                   </div>
                 </td>
               </tr>
@@ -611,25 +620,41 @@ export default function FabricDyeingDelivery() {
         </table>
       </div>
 
-      {selectedViewDelivery && (
-        <div style={{ position: 'fixed', top: 0, right: 0, width: '450px', height: '100vh', background: 'var(--bg-secondary)', borderLeft: '1px solid var(--border)', boxShadow: '-10px 0 30px rgba(0,0,0,0.15)', zIndex: 100, padding: 24, overflowY: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h3>Challan Details: {selectedViewDelivery.dc_no}</h3>
-            <button className="btn btn-secondary" style={{ padding: 4 }} onClick={() => setSelectedViewDelivery(null)}><X size={18} /></button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <DetailRow label="DC Date" value={selectedViewDelivery.dc_date} />
-            <DetailRow label="Processor" value={selectedViewDelivery.party_name} />
-            <DetailRow label="Design No" value={selectedViewDelivery.design_no} />
-            <DetailRow label="PO No" value={selectedViewDelivery.po_no} />
-            <DetailRow label="Vessel/Vehicle No" value={selectedViewDelivery.vehicle_no} />
-            <DetailRow label="Meters Sent" value={`${Number(selectedViewDelivery.total_meters).toFixed(2)} Mtr`} />
-            <DetailRow label="Voucher No" value={selectedViewDelivery.voucher_no} />
-            <DetailRow label="Rate" value={`Rs. ${selectedViewDelivery.rate_mtr}`} />
-            <DetailRow label="Amount Debited" value={`Rs. ${selectedViewDelivery.debited_amount}`} />
-          </div>
-        </div>
-      )}
+      <A4DocumentPreview
+        isOpen={!!selectedViewDelivery}
+        onClose={() => setSelectedViewDelivery(null)}
+        title="FABRIC DYEING DELIVERY CHALLAN"
+        documentNumber={selectedViewDelivery?.dc_no}
+        status={selectedViewDelivery?.status}
+        onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
+        sections={selectedViewDelivery ? [
+          {
+            title: "CHALLAN DETAILS",
+            icon: "FileText",
+            type: "grid",
+            data: [
+              { label: "DC Number", value: selectedViewDelivery.dc_no },
+              { label: "DC Date", value: selectedViewDelivery.dc_date },
+              { label: "Processor Name", value: selectedViewDelivery.party_name },
+              { label: "Design No", value: selectedViewDelivery.design_no },
+              { label: "PO No", value: selectedViewDelivery.po_no || '-' },
+              { label: "Vessel/Vehicle No", value: selectedViewDelivery.vehicle_no || '-' }
+            ]
+          },
+          {
+            title: "FINANCIALS & QUANTITY",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "Total Pieces", value: selectedViewDelivery.total_pieces },
+              { label: "Total Meters", value: `${Number(selectedViewDelivery.total_meters).toFixed(2)} Mtr` },
+              { label: "Voucher No", value: selectedViewDelivery.voucher_no || '-' },
+              { label: "Rate per Meter", value: `₹${selectedViewDelivery.rate_mtr || '0.00'}` },
+              { label: "Amount Debited", value: `₹${selectedViewDelivery.debited_amount || '0.00'}` }
+            ]
+          }
+        ] : []}
+      />
     </div>
   );
 }

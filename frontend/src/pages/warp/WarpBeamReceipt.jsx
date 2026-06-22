@@ -4,6 +4,7 @@ import { warpBeamReceiptAPI, partyAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -80,11 +81,11 @@ export default function WarpBeamReceipt() {
       const { data } = await warpBeamReceiptAPI.get(entry.id);
       if (data.rcvd_date) data.rcvd_date = data.rcvd_date.substring(0, 10);
       if (data.siz_dc_date) data.siz_dc_date = data.siz_dc_date.substring(0, 10);
-      
+
       data.beams = data.beams.map(b => ({
-          ...b, 
-          dc_date: b.dc_date ? b.dc_date.substring(0, 10) : '',
-          loading_date: b.loading_date ? b.loading_date.substring(0, 10) : ''
+        ...b,
+        dc_date: b.dc_date ? b.dc_date.substring(0, 10) : '',
+        loading_date: b.loading_date ? b.loading_date.substring(0, 10) : ''
       }));
 
       setForm({ ...initialForm, ...data });
@@ -121,22 +122,22 @@ export default function WarpBeamReceipt() {
   };
 
   const handleChange = (e) => {
-  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      setActiveTab(nextTab);
-      setTimeout(() => {
-        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        } else {
-          // Fallback to first focusable element
-          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-          if (fallback) fallback.focus();
-        }
-      }, 100);
-    }
-  };
+    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+      if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        setActiveTab(nextTab);
+        setTimeout(() => {
+          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+          if (nextInput) {
+            nextInput.focus();
+          } else {
+            // Fallback to first focusable element
+            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+            if (fallback) fallback.focus();
+          }
+        }, 100);
+      }
+    };
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
@@ -159,9 +160,9 @@ export default function WarpBeamReceipt() {
     const matchesSearch = searchTerm === '' ||
       r.ref_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.party_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesType = typeFilter === 'All Types' || r.rcvd_type === typeFilter;
-    
+
     let matchesDate = true;
     if (r.rcvd_date) {
       const entryDate = new Date(r.rcvd_date);
@@ -309,7 +310,14 @@ export default function WarpBeamReceipt() {
                         <td>{parseFloat(r.warp_meters || 0).toFixed(2)}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => setSelectedViewEntry(r)}
+                              title="Full View"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(r.id, r.ref_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -320,42 +328,51 @@ export default function WarpBeamReceipt() {
                 </table>
               </div>
             </div>
-
-            {selectedViewEntry && (
-              <div style={{ flex: '0 0 350px' }}>
-                <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                      <Columns size={18} /> {selectedViewEntry.ref_no}
-                    </h3>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
-                      <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <DetailRow label="Rcvd Date" value={selectedViewEntry.rcvd_date} />
-                    <DetailRow label="Type" value={selectedViewEntry.rcvd_type} />
-                    <DetailRow label="Party Name" value={selectedViewEntry.party_name} />
-                    <DetailRow label="Warp Meters" value={selectedViewEntry.warp_meters} />
-                    
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Beams ({selectedViewEntry.beams?.length || 0})</h4>
-                    {selectedViewEntry.beams?.map((c, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 8, border: '1px solid var(--border)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Beam: {c.beam_no || 'N/A'} - {c.beam_type}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                          <span>Warp Mtrs: {c.warp_mtrs}</span>
-                          <span>Loom: {c.loom_no || 'N/A'}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+
+          <A4DocumentPreview
+            isOpen={!!selectedViewEntry}
+            onClose={() => setSelectedViewEntry(null)}
+            title="WARP BEAM RECEIPT"
+            documentNumber={selectedViewEntry?.ref_no}
+            status={selectedViewEntry?.status || 'Active'}
+            onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
+            sections={selectedViewEntry ? [
+              {
+                title: "GENERAL INFO",
+                icon: "FileText",
+                type: "grid",
+                data: [
+                  { label: "Ref No", value: selectedViewEntry.ref_no },
+                  { label: "Received Date", value: selectedViewEntry.rcvd_date },
+                  { label: "Party Name", value: selectedViewEntry.party_name || '-' },
+                  { label: "Type", value: selectedViewEntry.rcvd_type }
+                ]
+              },
+              {
+                title: "WARP DETAILS",
+                icon: "Layers",
+                type: "grid",
+                data: [
+                  { label: "Total Warp Meters", value: selectedViewEntry.warp_meters },
+                  { label: "Design No", value: selectedViewEntry.design_no || '-' },
+                  { label: "Order No", value: selectedViewEntry.order_no || '-' }
+                ]
+              },
+              {
+                title: "BEAMS INFO",
+                icon: "Columns",
+                type: "table",
+                headers: ["Beam No", "Warp Mtrs", "Type", "Loom"],
+                rows: (selectedViewEntry.beams || []).map(b => [
+                  b.beam_no || '-',
+                  b.warp_mtrs || 0,
+                  b.beam_type || '-',
+                  b.loom_no || '-'
+                ])
+              }
+            ] : []}
+          />
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
@@ -371,7 +388,7 @@ export default function WarpBeamReceipt() {
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
             {[{ id: 'general', label: 'Top Section Fields' }, { id: 'items', label: 'Warp Beam Details' }].map(tab => (
-              <button 
+              <button
                 key={tab.id} onClick={() => setActiveTab(tab.id)}
                 style={{
                   padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
@@ -387,7 +404,7 @@ export default function WarpBeamReceipt() {
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
+
               {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Top Section Fields */}
@@ -401,7 +418,7 @@ export default function WarpBeamReceipt() {
                       </select>
                     </div>
                     <div className="form-group"><label>Beam Type</label><input className="form-control" name="beam_type" value={form.beam_type} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
                         <option value="">Select Party...</option>
@@ -410,12 +427,12 @@ export default function WarpBeamReceipt() {
                     </div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Count</label><input className="form-control" name="warp_count" value={form.warp_count} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Ends</label><input type="number" className="form-control" name="warp_ends" value={form.warp_ends} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Meters</label><input type="number" className="form-control" name="warp_meters" value={form.warp_meters} onChange={handleChange} /></div>
-                    
+
                     <div className="form-group"><label>Set No</label><input className="form-control" name="set_no" value={form.set_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Siz DC No</label><input className="form-control" name="siz_dc_no" value={form.siz_dc_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Siz DC Date</label><input type="date" className="form-control" name="siz_dc_date" value={form.siz_dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'beam_no')} /></div>
@@ -447,7 +464,7 @@ export default function WarpBeamReceipt() {
                             <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
                             <td><input type="date" className="form-control" style={{ width: 120, padding: '6px' }} value={item.loading_date} onChange={e => updateItem(idx, 'loading_date', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.total_meters} onChange={e => updateItem(idx, 'total_meters', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -482,7 +499,7 @@ export default function WarpBeamReceipt() {
                             <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
                             <td><input type="date" className="form-control" style={{ width: 120, padding: '6px' }} value={item.loading_date} onChange={e => updateItem(idx, 'loading_date', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.total_meters} onChange={e => updateItem(idx, 'total_meters', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button></td>
                           </tr>
                         ))}
                       </tbody>

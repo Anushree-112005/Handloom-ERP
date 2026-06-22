@@ -6,6 +6,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api, { partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI } from '../../services/api';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 export default function GateOutward() {
   // Local Storage Database
@@ -162,6 +163,7 @@ export default function GateOutward() {
   // View state: list mode or form mode
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentFormId, setCurrentFormId] = useState('');
+  const [viewModalOutward, setViewModalOutward] = useState(null);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -483,14 +485,14 @@ export default function GateOutward() {
                         <td style={{ fontWeight: 700 }}>🎫 {item.gatePassNo}</td>
                         <td style={{ textAlign: 'center' }}>
                           <div style={{ display: 'inline-flex', gap: '8px' }}>
-                            <button className="btn btn-secondary" title="Edit Outward" onClick={() => handleEdit(item)} style={{ padding: '4px 8px', fontSize: '12px' }}>
-                              <Edit size={12} /> Edit
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewModalOutward(item)} title="View Outward">
+                              <Eye size={16} color="var(--primary)" />
                             </button>
-                            <button className="btn btn-secondary" title="Print Slip" onClick={() => handlePrintSlip(item)} style={{ padding: '4px 8px', fontSize: '12px' }}>
-                              <Printer size={12} /> Print
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleEdit(item)} title="Edit Outward">
+                              <Edit size={16} />
                             </button>
-                            <button className="btn btn-secondary" title="Delete" onClick={() => handleDelete(item.id)} style={{ padding: '4px 8px', color: 'var(--danger)' }}>
-                              <Trash2 size={12} />
+                            <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)' }} onClick={() => handleDelete(item.id)} title="Delete">
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
@@ -957,6 +959,63 @@ export default function GateOutward() {
           <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.buyer_name})</option>
         ))}
       </datalist>
+
+      {/* A4 Modal View Preview */}
+      {viewModalOutward && (
+        <A4DocumentPreview
+          isOpen={!!viewModalOutward}
+          onClose={() => setViewModalOutward(null)}
+          title="Gate Outward Entry"
+          documentNumber={viewModalOutward.id}
+          status={viewModalOutward.status}
+          sections={[
+            {
+              title: 'Reference Info',
+              type: 'grid',
+              icon: 'Truck',
+              data: [
+                { label: 'Date', value: viewModalOutward.dateTime },
+                { label: 'Party Name', value: viewModalOutward.partyName },
+                { label: 'Vehicle No', value: viewModalOutward.vehicleNo },
+                { label: 'Driver Name', value: viewModalOutward.driverName },
+                { label: 'Gate Pass No', value: viewModalOutward.gatePassNo }
+              ]
+            },
+            {
+              title: 'Dispatch Information',
+              type: 'grid',
+              icon: 'Box',
+              data: [
+                { label: 'Material Type', value: viewModalOutward.materialType },
+                { label: 'Purpose', value: viewModalOutward.purpose },
+                { label: 'DC / Challan No', value: viewModalOutward.dcNo },
+                { label: 'Invoice No', value: viewModalOutward.invoiceNo || '-' },
+                { label: 'Item Description', value: viewModalOutward.itemDesc }
+              ]
+            },
+            {
+              title: 'Quantity & Weights',
+              type: 'grid',
+              icon: 'Scale',
+              data: [
+                { label: 'Quantity', value: `${viewModalOutward.qty} ${viewModalOutward.unit}` },
+                { label: 'Weight', value: `${viewModalOutward.weight} Kg` },
+                { label: 'Packages', value: `${viewModalOutward.packages} Nos` }
+              ]
+            },
+            {
+              title: 'Security Logs',
+              type: 'grid',
+              icon: 'Shield',
+              data: [
+                { label: 'Guard Name', value: viewModalOutward.guardName },
+                { label: 'Outward Time', value: viewModalOutward.outTime || '-' },
+                { label: 'Remarks', value: viewModalOutward.remarks || '-' }
+              ]
+            }
+          ]}
+        />
+      )}
 
     </div>
   );

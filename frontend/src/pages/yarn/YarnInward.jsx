@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown } from 'lucide-react';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI, subMasterAPI, dropdownAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -23,6 +24,7 @@ export default function YarnInward() {
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [viewModalInward, setViewModalInward] = useState(null);
 
   const [options, setOptions] = useState({});
   const [colorMasters, setColorMasters] = useState([]);
@@ -681,7 +683,14 @@ export default function YarnInward() {
                         <td style={{ fontWeight: 600 }}>₹{i.net_amount?.toFixed(2) || '0.00'}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(i, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={(evt) => { evt.stopPropagation(); setViewModalInward(i); }}
+                              title="Preview Inward"
+                            >
+                              <Eye size={16} color="var(--primary)" />
+                            </button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(i, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(i.id, i.ref_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -701,7 +710,14 @@ export default function YarnInward() {
                       <ArrowRightLeft size={18} /> {selectedViewEntry.ref_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, true)} title="Full View"><Eye size={14} color="var(--primary)" /></button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => setViewModalInward(selectedViewEntry)}
+                        title="Preview Inward"
+                      >
+                        <Eye size={16} color="var(--primary)" />
+                      </button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -1282,6 +1298,58 @@ export default function YarnInward() {
           </div>
         </div>
       )}
+
+      <A4DocumentPreview
+        isOpen={!!viewModalInward}
+        onClose={() => setViewModalInward(null)}
+        title="YARN INWARD RECEIPT"
+        documentNumber={viewModalInward?.ref_no}
+        status={viewModalInward?.status}
+        onDownloadPdf={() => alert('PDF Download for Yarn Inward triggered')}
+        sections={viewModalInward ? [
+          {
+            title: "LOGISTICS & SUPPLIER",
+            icon: "Briefcase",
+            type: "grid",
+            data: [
+              { label: "Supplier", value: viewModalInward.received_from || '-' },
+              { label: "Inward Date", value: viewModalInward.inward_date },
+              { label: "Type", value: viewModalInward.received_type },
+              { label: "Vehicle No", value: viewModalInward.veh_no || '-' },
+              { label: "Transport", value: viewModalInward.transport || '-' },
+              { label: "Gate No", value: viewModalInward.gate_no || '-' }
+            ]
+          },
+          {
+            title: "FINANCIAL SUMMARY",
+            icon: "IndianRupee",
+            type: "grid",
+            data: [
+              { label: "Bill No", value: viewModalInward.bill_no || '-' },
+              { label: "Bill Amount", value: `₹ ${Number(viewModalInward.bill_amount).toFixed(2)}` },
+              { label: "Gross Amount", value: `₹ ${Number(viewModalInward.gross_amount).toFixed(2)}` },
+              { label: "Total Tax", value: `₹ ${Number(viewModalInward.total_tax).toFixed(2)}` },
+              { label: "Net Amount", value: `₹ ${Number(viewModalInward.net_amount).toFixed(2)}` }
+            ]
+          },
+          {
+            title: "YARN ITEMS",
+            icon: "Box",
+            type: "table",
+            headers: ["S.No", "Yarn Count", "Colour", "Bags", "Kgs", "Rate", "Amount"],
+            rows: (viewModalInward.items || []).map((item, idx) => [
+              idx + 1,
+              item.yarn_count,
+              item.colour,
+              item.bags,
+              item.kgs,
+              `₹ ${item.rate}`,
+              `₹ ${Number(item.amount).toFixed(2)}`
+            ])
+          }
+        ] : []}
+      />
+
     </div>
   );
 }

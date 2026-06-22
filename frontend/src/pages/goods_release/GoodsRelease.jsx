@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ClipboardList, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
 import { goodsReleaseAPI, dropdownAPI, partyAPI, subMasterAPI } from '../../services/api';
+import A4DocumentPreview from '../../components/A4DocumentPreview';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -1447,7 +1448,7 @@ export default function GoodsRelease() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={() => handleOpenForm(rel, true)}
+                            onClick={() => setSelectedViewRelease(rel)}
                             title="Full View"
                           >
                             <Eye size={16} color="var(--primary)" />
@@ -1478,63 +1479,45 @@ export default function GoodsRelease() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: DETAILS PANE */}
+        {/* A4 Modal View Preview */}
         {selectedViewRelease && (
-          <div style={{ flex: '0 0 380px' }}>
-            <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', fontWeight: 700 }}>
-                  <ClipboardList size={18} /> GRA {selectedViewRelease.gra_no}
-                </h3>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewRelease, false)} title="Edit"><Edit2 size={14} /></button>
-                  <button onClick={() => setSelectedViewRelease(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                <DetailRow label="GRA No" value={selectedViewRelease.gra_no} />
-                <DetailRow label="GRA Date" value={selectedViewRelease.gra_date} />
-                <DetailRow label="Party Name" value={selectedViewRelease.party_name} />
-                <DetailRow label="Delivery Address" value={selectedViewRelease.delivery_address} />
-                <DetailRow label="Transport Mode" value={selectedViewRelease.transport_mode} />
-                <DetailRow label="Transport Name" value={selectedViewRelease.transport_name} />
-                <DetailRow label="Vehicle No" value={selectedViewRelease.vehicle_no} />
-                <DetailRow label="LR No" value={selectedViewRelease.lr_no} />
-                <DetailRow label="LR Date" value={selectedViewRelease.lr_date} />
-                <DetailRow label="Total Bales" value={selectedViewRelease.total_bales} />
-                <DetailRow label="Total Meters" value={`${Number(selectedViewRelease.total_meters).toFixed(2)} Mtr`} />
-                <DetailRow label="Gross Weight" value={selectedViewRelease.gross_weight} />
-                <DetailRow label="Net Weight" value={selectedViewRelease.net_weight} />
-                <DetailRow label="Approval Status" value={selectedViewRelease.approval_status} />
-                <DetailRow label="Approved By" value={selectedViewRelease.approved_by} />
-
-                <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Despatch Details</h4>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden' }}>
-                  <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse', background: 'var(--bg-secondary)' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                        <th style={{ padding: 4, textAlign: 'left' }}>Design</th>
-                        <th style={{ padding: 4, textAlign: 'left' }}>Color</th>
-                        <th style={{ padding: 4, textAlign: 'right' }}>Mtr</th>
-                        <th style={{ padding: 4, textAlign: 'right' }}>Amt</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedViewRelease.items?.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px dashed var(--border)' }}>
-                          <td style={{ padding: 4 }}>{item.design_no}</td>
-                          <td style={{ padding: 4 }}>{item.color}</td>
-                          <td style={{ padding: 4, textAlign: 'right' }}>{item.meters}</td>
-                          <td style={{ padding: 4, textAlign: 'right' }}>₹{Number(item.amount).toFixed(0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+          <A4DocumentPreview
+            isOpen={!!selectedViewRelease}
+            onClose={() => setSelectedViewRelease(null)}
+            title="Goods Release Advice (GRA)"
+            data={selectedViewRelease}
+            sections={[
+              {
+                title: 'Basic Info',
+                fields: [
+                  { label: 'GRA No', value: selectedViewRelease.gra_no },
+                  { label: 'GRA Date', value: selectedViewRelease.gra_date },
+                  { label: 'Party Name', value: selectedViewRelease.party_name },
+                  { label: 'Approval Status', value: selectedViewRelease.approval_status }
+                ]
+              },
+              {
+                title: 'Delivery & Transport',
+                fields: [
+                  { label: 'Delivery Address', value: selectedViewRelease.delivery_address },
+                  { label: 'Transport Mode', value: selectedViewRelease.transport_mode },
+                  { label: 'Transport Name', value: selectedViewRelease.transport_name },
+                  { label: 'Vehicle No', value: selectedViewRelease.vehicle_no },
+                  { label: 'LR No', value: selectedViewRelease.lr_no },
+                  { label: 'LR Date', value: selectedViewRelease.lr_date }
+                ]
+              },
+              {
+                title: 'Weights & Measurements',
+                fields: [
+                  { label: 'Total Bales', value: selectedViewRelease.total_bales },
+                  { label: 'Total Meters', value: selectedViewRelease.total_meters ? `${Number(selectedViewRelease.total_meters).toFixed(2)} Mtr` : '' },
+                  { label: 'Gross Weight', value: selectedViewRelease.gross_weight },
+                  { label: 'Net Weight', value: selectedViewRelease.net_weight }
+                ]
+              }
+            ]}
+          />
         )}
       </div>
 
