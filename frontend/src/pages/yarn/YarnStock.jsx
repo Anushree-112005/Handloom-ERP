@@ -206,7 +206,7 @@ export default function YarnStock() {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table className="data-table">
           <thead>
-            <tr>
+             <tr>
               <th>Yarn Count</th>
               <th>Mill Name</th>
               <th>Lot Number</th>
@@ -216,7 +216,6 @@ export default function YarnStock() {
               <th style={{ textAlign: 'right' }}>Total Value</th>
               <th>Godown</th>
               <th>Status</th>
-              <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -234,16 +233,6 @@ export default function YarnStock() {
                   <span className={`badge ${item.status === 'Available' ? 'badge-active' : 'badge-pending'}`}>
                     {item.status}
                   </span>
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    onClick={() => setViewModalStock(item)}
-                    title="View Lot Profile"
-                  >
-                    <Eye size={16} color="var(--primary)" />
-                  </button>
                 </td>
               </tr>
             ))}

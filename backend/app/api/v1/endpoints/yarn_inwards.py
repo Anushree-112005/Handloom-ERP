@@ -100,9 +100,22 @@ async def list_inwards(skip: int = 0, limit: int = 100, db: AsyncSession = Depen
 
 @router.post("/", response_model=YarnInwardOut, status_code=201)
 async def create_inward(data: YarnInwardCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(YarnInward.id)))
-    max_id = max_id_q.scalar() or 0
-    ref_no = f"YIW-{max_id + 1:05d}"
+    # Generate ref_no by parsing the maximum numeric suffix from GRN-Y- ref_nos
+    q = select(YarnInward.ref_no).where(YarnInward.ref_no.like("GRN-Y-%"))
+    res = await db.execute(q)
+    ref_nos = res.scalars().all()
+    
+    max_num = 0
+    for r in ref_nos:
+        if r:
+            try:
+                parts = r.split('-')
+                val = int(parts[-1])
+                if val > max_num:
+                    max_num = val
+            except (ValueError, IndexError):
+                continue
+    ref_no = f"GRN-Y-{max_num + 1:05d}"
 
     items_data = data.items or []
     order_dict = data.model_dump(exclude={"items"})
