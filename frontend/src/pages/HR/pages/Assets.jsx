@@ -295,7 +295,9 @@ export default function Assets() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Assigned To</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Condition</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">Status</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600">Actions</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-600">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

@@ -246,7 +246,9 @@ export default function Loans() {
                   <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Paid Amount</th>
                   <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Balance Amount</th>
                   <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Status</th>
-                  <th className="text-right px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Actions</th>
+                  <th className="px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -278,7 +280,7 @@ export default function Loans() {
                         color: loan.status === 'Approved' || loan.status === 'Disbursed' || loan.status === 'Repaying' ? '#047857' : loan.status === 'Pending' ? '#b45309' : loan.status === 'Rejected' ? '#b91c1c' : '#475569'
                       }}>{loan.status}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-right" style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
                         <button onClick={() => setViewingLoan(loan)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
                           <Eye className="w-3.5 h-3.5 text-slate-500" />
@@ -372,8 +374,8 @@ export default function Loans() {
 
       {/* Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {editingId ? 'Edit Loan Request' : 'New Loan Request'}
             </h2>
@@ -387,9 +389,13 @@ export default function Loans() {
             </div>
           </div>
           
-          <div className="p-6 space-y-4">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <div className="form-group">
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Loan Details
+            </legend>
+
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
                 <label>Employee *</label>
                 <select
                   value={form.employee_id}
@@ -402,6 +408,9 @@ export default function Loans() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="form-row">
               <div className="form-group">
                 <label>Loan Type *</label>
                 <select
@@ -423,31 +432,32 @@ export default function Loans() {
                   required
                 />
               </div>
+              <div className="form-group">
+                <label>Amount (₹) *</label>
+                <input
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className="form-control"
+                  placeholder="50000"
+                />
+              </div>
             </div>
             
-            <div className="form-group">
-              <label>Amount (₹) *</label>
-              <input
-                type="number"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                className="form-control"
-                placeholder="50000"
-              />
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                <label>Purpose</label>
+                <textarea
+                  value={form.purpose}
+                  onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+                  rows={2}
+                  className="form-control"
+                  placeholder="Reason for loan..."
+                />
+              </div>
             </div>
             
-            <div className="form-group">
-              <label>Purpose</label>
-              <textarea
-                value={form.purpose}
-                onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                rows={2}
-                className="form-control"
-                placeholder="Reason for loan..."
-              />
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Guarantor Name</label>
                 <input
@@ -467,7 +477,7 @@ export default function Loans() {
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
         </form>
       )}
 

@@ -165,3 +165,21 @@ Body: b'{"dc_date":"2026-06-19","ref_date":"2026-06-19","stock_godown":"780","de
 Validation Error: [{'type': 'string_type', 'loc': ('body', 'items', 0, 'stock'), 'msg': 'Input should be a valid string', 'input': 40}]
 Body: b'{"dc_date":"2026-06-19","ref_date":"2026-06-19","stock_godown":"780","delivery_type":"Direct","party_name":"ABC Apparel Pvt Ltd","delivery_mode":"Road","delivery_address":"H&M Buying Office No 25, 5th Floor, Embassy Tower MG Road, Bengaluru Karnataka - 560001 India","design_no":"49","order_no":"","transport":"Blue Dart Express","vehicle_no":"TN-09-M-2309","delivery_name":"Rajesh Kumar","delivery_time":"","certificate_type":"Global Organic Textile Standard","design_count":"45","order_kgs":50,"total_dely_kgs":560,"total_rtn_kgs":500,"balance_kgs":340,"status":"Delivered","items":[{"cone_type":"Full Cone","count":"34","our_lot_no":"34","color":"Scarlet Red","stock":40,"bags":30,"cones":20,"total_kgs":200,"rate":5060,"amount":1012000}]}'
 
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'EMP1781862651860'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'EMP1781862651860'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'EMP001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'EMP001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'EMP001'}]
+Body: b''
+
+Validation Error: [{'type': 'int_parsing', 'loc': ('path', 'emp_id'), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'EMP001'}]
+Body: b''
+

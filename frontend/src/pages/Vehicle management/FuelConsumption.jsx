@@ -161,22 +161,21 @@ const FuelConsumption = () => {
     let grandTotalDistance = 0;
 
     Object.values(vehicleStats).forEach(stat => {
-      if (stat.entries.length > 0 || stat.trip_count > 0) {
-        if (stat.min_odometer !== Number.MAX_SAFE_INTEGER && stat.max_odometer > stat.min_odometer) {
-           stat.total_distance = stat.max_odometer - stat.min_odometer;
-        } else {
-           stat.total_distance = stat.manual_distance > 0 ? stat.manual_distance : (stat.trip_count * 150);
-        }
-
-        grandTotalLiters += stat.total_fuel_liters;
-        grandTotalCost += stat.total_fuel_cost;
-        grandTotalDistance += stat.total_distance;
-
-        stat.mileage = stat.total_fuel_liters > 0 ? (stat.total_distance / stat.total_fuel_liters).toFixed(2) : 0;
-        stat.cost_per_km = stat.total_distance > 0 ? (stat.total_fuel_cost / stat.total_distance).toFixed(2) : 0;
-
-        finalTableData.push(stat);
+      // Include all vehicles even if they have 0 trips or fuel logs, to maintain visibility
+      if (stat.min_odometer !== Number.MAX_SAFE_INTEGER && stat.max_odometer > stat.min_odometer) {
+         stat.total_distance = stat.max_odometer - stat.min_odometer;
+      } else {
+         stat.total_distance = stat.manual_distance > 0 ? stat.manual_distance : (stat.trip_count * 150);
       }
+
+      grandTotalLiters += stat.total_fuel_liters;
+      grandTotalCost += stat.total_fuel_cost;
+      grandTotalDistance += stat.total_distance;
+
+      stat.mileage = stat.total_fuel_liters > 0 ? (stat.total_distance / stat.total_fuel_liters).toFixed(2) : 0;
+      stat.cost_per_km = stat.total_distance > 0 ? (stat.total_fuel_cost / stat.total_distance).toFixed(2) : 0;
+
+      finalTableData.push(stat);
     });
 
     const summary = {
@@ -383,7 +382,7 @@ const FuelConsumption = () => {
             style={{ width: 180, margin: 0, height: 38 }}
           >
             <option value="">All Drivers</option>
-            {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_name}</option>)}
           </select>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

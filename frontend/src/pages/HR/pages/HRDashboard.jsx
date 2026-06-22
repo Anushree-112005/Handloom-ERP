@@ -1,228 +1,225 @@
 import React, { useEffect, useState } from 'react';
-import { Users, ClipboardList, Briefcase, Clock3, CheckCircle, AlertTriangle, DollarSign, CalendarRange, Plus, FileText, UserPlus, Calendar } from 'lucide-react';
+import { Users, Building2, Award, Clock, Calendar, CalendarCheck, DollarSign, Landmark, Heart, Plane, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import hrService from '../../../services/hrService';
+import hrService, { 
+  fetchEmployees, fetchDepartments, fetchDesignations, 
+  fetchShifts, fetchAttendance, fetchExpenseClaims,
+  fetchHolidays, fetchPayroll, fetchLoans, fetchBenefits, fetchTravelRequests 
+} from '../../../services/hrService';
 
-const StatCard = ({ icon: Icon, label, value, hint, tone = 'default', onClick }) => {
-  const toneClasses = {
-    default: 'stat-icon blue',
-    success: 'stat-icon emerald',
-    warning: 'stat-icon amber',
-    info: 'stat-icon purple'
+const StatCard = ({ icon: Icon, label, value, hint, tone = 'indigo', onClick }) => {
+  const themes = {
+    blue: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3b82f6', border: '#3b82f6' },
+    emerald: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: '#10b981' },
+    amber: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', border: '#f59e0b' },
+    purple: { bg: 'rgba(168, 85, 247, 0.1)', text: '#a855f7', border: '#a855f7' },
+    indigo: { bg: 'rgba(99, 102, 241, 0.1)', text: '#6366f1', border: '#6366f1' },
+    slate: { bg: 'rgba(100, 116, 139, 0.1)', text: '#64748b', border: '#64748b' },
+    teal: { bg: 'rgba(20, 184, 166, 0.1)', text: '#14b8a6', border: '#14b8a6' },
+    rose: { bg: 'rgba(244, 63, 94, 0.1)', text: '#f43f5e', border: '#f43f5e' }
   };
+
+  const theme = themes[tone] || themes.indigo;
 
   return (
     <div
       onClick={onClick}
-      className={`card stat-card ${onClick ? 'cursor-pointer' : ''}`}
+      className={`card cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md`}
       style={{
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s',
+        padding: '24px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        borderTop: `4px solid ${theme.border}`,
+        backgroundColor: '#fff',
+        borderRadius: '8px'
       }}
     >
-      <div className={toneClasses[tone] || toneClasses.default}>
-        <Icon size={24} />
+      <div style={{ width: 56, height: 56, borderRadius: '12px', backgroundColor: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={28} color={theme.text} />
       </div>
-      <div className="stat-details">
-        <h3>{label}</h3>
-        <div className="value">{value}</div>
-        {hint && <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{hint}</p>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+          {value}
+        </div>
+        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)', marginTop: '4px' }}>
+          {label}
+        </div>
       </div>
     </div>
   );
 };
 
-const QuickAction = ({ icon: Icon, label, onClick, color = 'indigo' }) => (
-  <div
-    onClick={onClick}
-    className={`card cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center gap-3 p-6 min-h-[140px] border-t-4 border-t-${color}-500`}
-  >
-    <div className={`w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center mb-1`}>
-      <Icon className={`w-6 h-6 text-${color}-600`} />
-    </div>
-    <span className="text-sm font-bold text-slate-700 text-center">{label}</span>
-  </div>
-);
-
 const HRDashboard = () => {
   const navigate = useNavigate();
-  const [summary, setSummary] = useState(null);
-  const [requisitions, setRequisitions] = useState([]);
-  const [candidates, setCandidates] = useState([]);
-  const [onboarding, setOnboarding] = useState([]);
-  const [offers, setOffers] = useState([]);
-  const [performance, setPerformance] = useState([]);
-  const [offboarding, setOffboarding] = useState([]);
-  const [payrollEntries, setPayrollEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [empCount, setEmpCount] = useState(0);
+  const [deptCount, setDeptCount] = useState(0);
+  const [desigCount, setDesigCount] = useState(0);
+  const [shiftCount, setShiftCount] = useState(0);
+  const [attendanceCount, setAttendanceCount] = useState(0);
+  const [claimsCount, setClaimsCount] = useState(0);
+  const [deptData, setDeptData] = useState([]);
+  const [recentHires, setRecentHires] = useState([]);
+  
+  // New extra counts
+  const [holidaysCount, setHolidaysCount] = useState(0);
+  const [payrollCount, setPayrollCount] = useState(0);
+  const [loansCount, setLoansCount] = useState(0);
+  const [benefitsCount, setBenefitsCount] = useState(0);
+  const [travelCount, setTravelCount] = useState(0);
 
   useEffect(() => {
-    const load = async () => {
+    const loadData = async () => {
       try {
-        const [sum, reqs, cands, tasks, offs, perf, offb, payroll] = await Promise.all([
-          hrService.getSummary(),
-          hrService.listRequisitions(),
-          hrService.listCandidates(),
-          hrService.listTasks(),
-          hrService.listOffers(),
-          hrService.listPerformance(),
-          hrService.listOffboarding(),
-          hrService.listPayroll(),
+        const [emps, depts, desigs, shifts, attendance, claims, holidays, payroll, loans, benefits, travel] = await Promise.all([
+          fetchEmployees().catch(() => []),
+          fetchDepartments().catch(() => []),
+          fetchDesignations().catch(() => []),
+          fetchShifts().catch(() => []),
+          fetchAttendance().catch(() => []),
+          fetchExpenseClaims().catch(() => []),
+          fetchHolidays().catch(() => []),
+          fetchPayroll().catch(() => []),
+          fetchLoans().catch(() => []),
+          fetchBenefits().catch(() => []),
+          fetchTravelRequests().catch(() => [])
         ]);
-        setSummary(sum);
-        setRequisitions(reqs.slice(0, 3));
-        setCandidates(cands.slice(0, 3));
-        setOnboarding(tasks.slice(0, 3));
-        setOffers(offs.slice(0, 1));
-        setPerformance(perf.slice(0, 3));
-        setOffboarding(offb.slice(0, 2));
-        setPayrollEntries(payroll.slice(0, 1));
+        
+        setEmpCount(emps.length);
+        setDeptCount(depts.length);
+        setDesigCount(desigs.length);
+        setShiftCount(shifts.length);
+        setAttendanceCount(attendance.length);
+        setClaimsCount(claims.filter(c => c.status === 'Pending').length);
+        
+        setHolidaysCount(holidays.length);
+        setPayrollCount(payroll.length);
+        setLoansCount(loans.length);
+        setBenefitsCount(benefits.length);
+        setTravelCount(travel.length);
+        
+        // Setup Department Headcount Data
+        const dCounts = {};
+        emps.forEach(emp => {
+          const d = emp.department || 'Unassigned';
+          dCounts[d] = (dCounts[d] || 0) + 1;
+        });
+        const formattedDeptData = Object.keys(dCounts)
+          .map(k => ({ name: k, value: dCounts[k] }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5); // top 5
+        setDeptData(formattedDeptData);
+        
+        // Setup Recent Hires List
+        setRecentHires(emps.slice(-5).reverse());
+      } catch(e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
     };
-    load();
+    loadData();
   }, []);
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-lg md:text-xl font-bold text-slate-900">HR Dashboard</h1>
-        <p className="text-xs md:text-sm text-slate-500">Manage your workforce lifecycle</p>
+        <h1 className="text-2xl font-bold text-slate-900">HR Modules</h1>
+        <p className="text-sm text-slate-500">Manage your workforce lifecycle and operations</p>
       </div>
 
-
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={ClipboardList} label="Requisitions" value={summary?.requisitions ?? '—'} hint="Draft / pending / approved" onClick={() => navigate('/hr/requisitions')} />
-        <StatCard icon={Users} label="Candidates" value={summary?.candidates ?? '—'} hint="In pipeline" tone="info" onClick={() => navigate('/hr/recruitment')} />
-        <StatCard icon={Clock3} label="Onboarding" value={summary?.onboarding_tasks ?? '—'} hint="Pending tasks" tone="warning" onClick={() => navigate('/hr/offers-onboarding')} />
-        <StatCard icon={DollarSign} label="Payroll" value={summary?.payroll ?? '—'} hint="Entries" tone="success" onClick={() => navigate('/hr/payroll')} />
+        <StatCard icon={Users} label="Total Employees" value={loading ? '...' : empCount} tone="indigo" onClick={() => navigate('/hr/employee-master')} />
+        <StatCard icon={Building2} label="Departments" value={loading ? '...' : deptCount} tone="purple" onClick={() => navigate('/hr/departments')} />
+        <StatCard icon={Clock} label="Total Shifts" value={loading ? '...' : shiftCount} tone="emerald" onClick={() => navigate('/hr/shifts')} />
+        <StatCard icon={Receipt} label="Pending Claims" value={loading ? '...' : claimsCount} tone="amber" onClick={() => navigate('/hr/expense')} />
       </div>
 
-      {/* Requisitions & Candidates */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Open Positions</h2>
-            <span className="btn btn-primary">{requisitions.length}</span>
+      {/* Middle Layout matching the screenshot exactly */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Horizontal Progress Bar Chart */}
+        <div className="card lg:col-span-2">
+          <div className="card-header border-b border-slate-100 pb-4 mb-4">
+            <h2 className="card-title text-lg flex items-center gap-2">
+              <Users className="w-5 h-5 text-indigo-500" /> Headcount by Department
+            </h2>
           </div>
-          <div className="space-y-2">
-            {requisitions.map((req) => (
-              <div key={req.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3" onClick={() => navigate('/hr/requisitions')}>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 truncate">{req.title}</p>
-                  <p className="text-xs text-slate-500">{req.department}</p>
-                </div>
-                <span className={`shrink-0 ml-2 text-[11px] px-2 py-1 rounded-full ${req.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                    req.status === 'Pending Approval' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'
-                  }`}>{req.status}</span>
-              </div>
-            ))}
-            {(!loading && requisitions.length === 0) && (
-              <p className="text-sm text-slate-500 py-4 text-center">No requisitions yet</p>
-            )}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Candidates</h2>
-            <span className="btn btn-success">{candidates.length}</span>
-          </div>
-          <div className="space-y-2">
-            {candidates.map((cand) => {
-              const rating = cand.rating || {};
-              const score = ((rating.technical || 0) * 0.4 + (rating.communication || 0) * 0.3 + (rating.domain || 0) * 0.2 + (rating.culture || 0) * 0.1).toFixed(1);
-              return (
-                <div key={cand.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3" onClick={() => navigate('/hr/recruitment')}>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900 truncate">{cand.name}</p>
-                    <p className="text-xs text-slate-500">{cand.position || cand.position_applied}</p>
+          <div className="space-y-6 px-2">
+            {loading ? (
+              <p className="text-slate-400 text-sm">Loading...</p>
+            ) : deptData.length > 0 ? (
+              deptData.map((d, i) => {
+                const max = Math.max(...deptData.map(x => x.value)) || 1;
+                const percentage = (d.value / max) * 100;
+                const colors = ['#f59e0b', '#ec4899', '#10b981', '#6366f1', '#06b6d4'];
+                const color = colors[i % colors.length];
+                return (
+                  <div key={d.name}>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-semibold text-slate-700">{d.name}</span>
+                      <span className="font-bold text-slate-900">{d.value}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div 
+                        className="h-2 rounded-full transition-all duration-1000"
+                        style={{ width: `${percentage}%`, backgroundColor: color }}
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className="text-xs font-medium text-indigo-600">{score}</span>
-                    <span className={`text-[11px] px-2 py-1 rounded-full ${cand.status === 'Hired' ? 'bg-emerald-100 text-emerald-700' :
-                        cand.status === 'Interview' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
-                      }`}>{cand.status}</span>
+                );
+              })
+            ) : (
+              <p className="text-slate-400 text-sm">No department data</p>
+            )}
+          </div>
+        </div>
+
+        {/* Right Side List */}
+        <div className="card">
+          <div className="card-header border-b border-slate-100 pb-4 mb-4">
+            <h2 className="card-title text-lg flex items-center gap-2">
+              <CalendarCheck className="w-5 h-5 text-purple-500" /> Recent Hires
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {loading ? (
+              <p className="text-slate-400 text-sm">Loading...</p>
+            ) : recentHires.length > 0 ? (
+              recentHires.map((emp, i) => (
+                <div key={i} className="flex justify-between items-start border-b border-slate-50 pb-3 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{emp.name || emp.employee_id}</p>
+                    <p className="text-xs text-slate-500 mt-1">Status: <span className="text-emerald-600">{emp.employment_status || 'Active'}</span></p>
                   </div>
+                  <span className="text-xs text-slate-400">{emp.department || 'Unassigned'}</span>
                 </div>
-              );
-            })}
-            {(!loading && candidates.length === 0) && (
-              <p className="text-sm text-slate-500 py-4 text-center">No candidates yet</p>
+              ))
+            ) : (
+              <p className="text-slate-400 text-sm">No recent hires</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Onboarding & Payroll */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Onboarding Tasks</h2>
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
+      <div className="space-y-8 mt-8">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-500 mb-4 uppercase tracking-wider">All HR Modules</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <StatCard icon={Building2} label="Departments" value={deptCount} tone="slate" onClick={() => navigate('/hr/departments')} />
+            <StatCard icon={Award} label="Designations" value={desigCount} tone="purple" onClick={() => navigate('/hr/designations')} />
+            <StatCard icon={Clock} label="Shifts" value={shiftCount} tone="blue" onClick={() => navigate('/hr/shifts')} />
+            <StatCard icon={Calendar} label="Holidays" value={holidaysCount} tone="rose" onClick={() => navigate('/hr/holidays')} />
+            <StatCard icon={Users} label="Employees" value={empCount} tone="indigo" onClick={() => navigate('/hr/employee-master')} />
+            <StatCard icon={CalendarCheck} label="Attendance" value={attendanceCount} tone="emerald" onClick={() => navigate('/hr/attendance')} />
+            <StatCard icon={DollarSign} label="Payroll" value={payrollCount} tone="amber" onClick={() => navigate('/hr/payroll')} />
+            <StatCard icon={Landmark} label="Loans" value={loansCount} tone="blue" onClick={() => navigate('/hr/loans')} />
+            <StatCard icon={Heart} label="Benefits" value={benefitsCount} tone="rose" onClick={() => navigate('/hr/benefits')} />
+            <StatCard icon={Plane} label="Travel" value={travelCount} tone="teal" onClick={() => navigate('/hr/travel')} />
+            <StatCard icon={Receipt} label="Expense" value={claimsCount} tone="purple" onClick={() => navigate('/hr/expense')} />
           </div>
-          <div className="space-y-2">
-            {onboarding.map((task) => (
-              <div key={task.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 truncate">{task.title}</p>
-                  <p className="text-xs text-slate-500">{task.owner} {task.due_date ? `• ${task.due_date}` : ''}</p>
-                </div>
-                <span className={`shrink-0 ml-2 text-[11px] px-2 py-1 rounded-full ${task.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                  }`}>{task.status}</span>
-              </div>
-            ))}
-            {(!loading && onboarding.length === 0) && (
-              <p className="text-sm text-slate-500 py-4 text-center">No onboarding tasks</p>
-            )}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Performance</h2>
-            <CalendarRange className="w-4 h-4 text-indigo-600" />
-          </div>
-          <div className="space-y-2">
-            {performance.map((row) => (
-              <div key={row.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all mb-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 truncate">{row.employee}</p>
-                  <p className="text-xs text-slate-500">Score: {row.final_score}</p>
-                </div>
-                <span className={`shrink-0 ml-2 text-[11px] px-2 py-1 rounded-full ${row.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
-                  }`}>{row.status}</span>
-              </div>
-            ))}
-            {(!loading && performance.length === 0) && (
-              <p className="text-sm text-slate-500 py-4 text-center">No performance reviews</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Offboarding */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Offboarding</h2>
-          <Briefcase className="w-4 h-4 text-slate-600" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {offboarding.map((item) => (
-            <div key={item.id} className="card flex items-center justify-between p-4 cursor-pointer hover:shadow-md transition-all">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900 truncate">{item.employee}</p>
-                <p className="text-xs text-slate-500">{item.step}</p>
-              </div>
-              <span className={`shrink-0 ml-2 text-[11px] px-2 py-1 rounded-full ${item.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>{item.status}</span>
-            </div>
-          ))}
-          {(!loading && offboarding.length === 0) && (
-            <p className="text-sm text-slate-500 py-4 text-center col-span-2">No offboarding cases</p>
-          )}
         </div>
       </div>
     </div>

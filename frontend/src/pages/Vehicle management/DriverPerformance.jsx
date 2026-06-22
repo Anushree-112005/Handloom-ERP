@@ -67,6 +67,7 @@ const DriverPerformance = () => {
       if (filters.vehicleId) params.append('vehicle_id', filters.vehicleId);
       if (filters.startDate) params.append('start_date', filters.startDate);
       if (filters.endDate) params.append('end_date', filters.endDate);
+      params.append('view_type', viewType);
       
       const res = await api.get(`/fleet/driver-performance-report?${params.toString()}`);
       setData(res.data);
@@ -267,7 +268,7 @@ const DriverPerformance = () => {
               onChange={(e) => setFilters({...filters, driverId: e.target.value})}
             >
               <option value="">All Drivers</option>
-              {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_name}</option>)}
             </select>
           ) : (
             <select 

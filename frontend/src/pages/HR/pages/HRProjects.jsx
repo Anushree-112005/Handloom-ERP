@@ -341,7 +341,9 @@ export default function HRProjects() {
                                         <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Priority</th>
                                         <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Status</th>
                                         <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Progress</th>
-                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>Actions</th>
+                                        <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
+                                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -97,7 +97,12 @@ export default function POApproval() {
                           {po.status}
                         </span>
                       </td>
-                      <td style={{ textAlign: "center" }}>
+                      <td style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: 8 }}>
+                        {po.status === 'Ordered' && (
+                          <button onClick={() => handleApprove(po.id)} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: 6, background: '#10b981', border: 'none', color: 'white' }}>
+                            <Check size={14} /> Approve
+                          </button>
+                        )}
                         <button onClick={() => { setSelectedPO(po); setView('form'); }} className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12, borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                           <Eye size={14} /> Review
                         </button>

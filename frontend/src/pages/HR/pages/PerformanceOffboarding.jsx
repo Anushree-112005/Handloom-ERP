@@ -347,7 +347,9 @@ const PerformanceOffboarding = () => {
                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Goals</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Score</th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Actions</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -484,7 +486,9 @@ const PerformanceOffboarding = () => {
                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Assets</th>
                         <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">F&F</th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Actions</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">

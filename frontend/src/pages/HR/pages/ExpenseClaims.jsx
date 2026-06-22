@@ -245,7 +245,9 @@ export default function ExpenseClaims() {
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Category</th>
                   <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Amount</th>
                   <th className="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Status</th>
-                  <th className="text-center px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">Actions</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -270,8 +272,8 @@ export default function ExpenseClaims() {
                           {resolvedStatus}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <td className="px-6 py-4 text-right" style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
                           <button onClick={() => setViewingClaim(claim)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }} title="View">
                             <Eye className="w-4 h-4 text-slate-500" />
                           </button>
@@ -370,9 +372,9 @@ export default function ExpenseClaims() {
       )}
       {/* Create/Edit Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
           {/* Form Header */}
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {editingId ? 'Edit Expense Claim' : 'New Expense Claim'}
             </h2>
@@ -386,21 +388,28 @@ export default function ExpenseClaims() {
             </div>
           </div>
           
-          <div className="p-6 space-y-4">
-            <div className="form-group">
-              <label>Employee *</label>
-              <select
-                value={form.employee_id}
-                onChange={handleEmployeeChange}
-                className="form-control"
-              >
-                <option value="">Select Employee</option>
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.name} ({emp.employee_id})</option>
-                ))}
-              </select>
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Claim Details
+            </legend>
+
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Employee *</label>
+                <select
+                  value={form.employee_id}
+                  onChange={handleEmployeeChange}
+                  className="form-control"
+                >
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.employee_id})</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Expense Date *</label>
                 <input
@@ -426,85 +435,91 @@ export default function ExpenseClaims() {
             </div>
 
             {form.category === 'Travel' && (
-              <div className="form-group" style={{ background: 'var(--bg-secondary)', padding: 16, borderRadius: 8, border: '1px solid var(--border)' }}>
-                <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Associate Travel Request</label>
-                <select
-                  value={form.travel_request_id || ''}
-                  onChange={(e) => {
-                    const reqId = e.target.value;
-                    const req = travelRequests.find(r => String(r.id) === String(reqId) || String(r.request_id) === String(reqId));
-                    setForm({
-                      ...form,
-                      travel_request_id: reqId,
-                      travel_request_detail: req ? {
-                        request_id: req.request_id,
-                        from_location: req.from_location,
-                        to_location: req.to_location,
-                        departure_date: req.departure_date,
-                        return_date: req.return_date,
-                        purpose: req.purpose,
-                        estimated_cost: req.estimated_cost,
-                        co_travelers: req.co_travelers
-                      } : null,
-                      actual_expense_amount: req ? String(req.estimated_cost || '') : '',
-                      advance_amount_received: req ? String(req.advance_required || '') : '',
-                      amount: req ? String((req.estimated_cost || 0) - (req.advance_required || 0)) : form.amount,
-                      description: req ? `Travel Request ${req.request_id}: ${req.from_location} to ${req.to_location}` : form.description
-                    });
-                  }}
-                  className="form-control"
-                  style={{ width: '100%', maxWidth: '300px' }}
-                >
-                  <option value="">Select Travel Request...</option>
-                  {travelRequests
-                    .filter(r => String(r.employee_id) === String(form.employee_id) || (r.co_travelers && r.co_travelers.some(c => String(c.id) === String(form.employee_id))))
-                    .map(r => (
-                      <option key={r.id} value={r.request_id || r.id}>
-                        {r.request_id} ({r.from_location} → {r.to_location})
-                      </option>
-                    ))}
-                </select>
+              <div className="form-row">
+                <div className="form-group" style={{ gridColumn: 'span 2', background: 'var(--bg-secondary)', padding: 16, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <label style={{ fontWeight: 600, display: 'block', marginBottom: 8 }}>Associate Travel Request</label>
+                  <select
+                    value={form.travel_request_id || ''}
+                    onChange={(e) => {
+                      const reqId = e.target.value;
+                      const req = travelRequests.find(r => String(r.id) === String(reqId) || String(r.request_id) === String(reqId));
+                      setForm({
+                        ...form,
+                        travel_request_id: reqId,
+                        travel_request_detail: req ? {
+                          request_id: req.request_id,
+                          from_location: req.from_location,
+                          to_location: req.to_location,
+                          departure_date: req.departure_date,
+                          return_date: req.return_date,
+                          purpose: req.purpose,
+                          estimated_cost: req.estimated_cost,
+                          co_travelers: req.co_travelers
+                        } : null,
+                        actual_expense_amount: req ? String(req.estimated_cost || '') : '',
+                        advance_amount_received: req ? String(req.advance_required || '') : '',
+                        amount: req ? String((req.estimated_cost || 0) - (req.advance_required || 0)) : form.amount,
+                        description: req ? `Travel Request ${req.request_id}: ${req.from_location} to ${req.to_location}` : form.description
+                      });
+                    }}
+                    className="form-control"
+                    style={{ width: '100%', maxWidth: '300px' }}
+                  >
+                    <option value="">Select Travel Request...</option>
+                    {travelRequests
+                      .filter(r => String(r.employee_id) === String(form.employee_id) || (r.co_travelers && r.co_travelers.some(c => String(c.id) === String(form.employee_id))))
+                      .map(r => (
+                        <option key={r.id} value={r.request_id || r.id}>
+                          {r.request_id} ({r.from_location} → {r.to_location})
+                        </option>
+                      ))}
+                  </select>
 
-                {form.travel_request_detail && (
-                  <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-primary)', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13 }} className="space-y-1">
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="text-slate-500">Route:</span>
-                      <span className="font-semibold">{form.travel_request_detail.from_location} → {form.travel_request_detail.to_location}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="text-slate-500">Dates:</span>
-                      <span className="font-semibold">{form.travel_request_detail.departure_date ? new Date(form.travel_request_detail.departure_date).toLocaleDateString('en-IN') : ''} to {form.travel_request_detail.return_date ? new Date(form.travel_request_detail.return_date).toLocaleDateString('en-IN') : ''}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="text-slate-500">Purpose:</span>
-                      <span className="font-semibold">{form.travel_request_detail.purpose}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="text-slate-500">Estimated Cost:</span>
-                      <span className="font-bold text-indigo-600">₹{form.travel_request_detail.estimated_cost?.toLocaleString()}</span>
-                    </div>
-                    {form.travel_request_detail.co_travelers && form.travel_request_detail.co_travelers.length > 0 && (
+                  {form.travel_request_detail && (
+                    <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-primary)', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13 }} className="space-y-1">
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="text-slate-500">Co-travelers:</span>
-                        <span className="font-semibold">{form.travel_request_detail.co_travelers.map(c => c.name).join(', ')}</span>
+                        <span className="text-slate-500">Route:</span>
+                        <span className="font-semibold">{form.travel_request_detail.from_location} → {form.travel_request_detail.to_location}</span>
                       </div>
-                    )}
-                  </div>
-                )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span className="text-slate-500">Dates:</span>
+                        <span className="font-semibold">{form.travel_request_detail.departure_date ? new Date(form.travel_request_detail.departure_date).toLocaleDateString('en-IN') : ''} to {form.travel_request_detail.return_date ? new Date(form.travel_request_detail.return_date).toLocaleDateString('en-IN') : ''}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span className="text-slate-500">Purpose:</span>
+                        <span className="font-semibold">{form.travel_request_detail.purpose}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span className="text-slate-500">Estimated Cost:</span>
+                        <span className="font-bold text-indigo-600">₹{form.travel_request_detail.estimated_cost?.toLocaleString()}</span>
+                      </div>
+                      {form.travel_request_detail.co_travelers && form.travel_request_detail.co_travelers.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span className="text-slate-500">Co-travelers:</span>
+                          <span className="font-semibold">{form.travel_request_detail.co_travelers.map(c => c.name).join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            <div className="form-group">
-              <label>Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                rows={2}
-                className="form-control"
-                placeholder="Brief description of expense..."
-              />
+            
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  rows={2}
+                  className="form-control"
+                  placeholder="Brief description of expense..."
+                />
+              </div>
             </div>
+
             {form.category === 'Travel' ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
                 <div className="form-group">
                   <label>Total Actual Expense (₹) *</label>
                   <input
@@ -564,7 +579,7 @@ export default function ExpenseClaims() {
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <div className="form-group">
                   <label>Amount *</label>
                   <input
@@ -587,7 +602,7 @@ export default function ExpenseClaims() {
                 </div>
               </div>
             )}
-          </div>
+          </fieldset>
         </form>
       )}
 
