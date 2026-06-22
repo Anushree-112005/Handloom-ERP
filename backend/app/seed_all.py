@@ -562,7 +562,7 @@ async def seed_all_data(session):
             await session.refresh(gd)
             item = GreyYarnDeliveryItem(
                 delivery_id=gd.id, cone_type="Paper Cone", count="40S CTN", our_lot_no=f"LOT-40CTN-{200+i}",
-                color="Off White", stock="5020.0", bags=50, cones=1000, total_kgs=2500.0, rate=50.0, amount=125000.0
+                color="Off White", stock=5020.0, bags=50, cones=1000, total_kgs=2500.0, rate=50.0, amount=125000.0
             )
             session.add(item)
         await session.commit()

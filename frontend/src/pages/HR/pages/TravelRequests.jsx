@@ -321,7 +321,9 @@ export default function TravelRequests() {
                       <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Travel Dates</th>
                       <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Transport</th>
                       <th className="text-left px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Status</th>
-                      <th className="text-right px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">Actions</th>
+                      <th className="px-6 py-4 text-xs uppercase font-semibold text-slate-500 border-b border-slate-100">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -361,7 +363,7 @@ export default function TravelRequests() {
                             {req.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right" style={{ textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                             <button onClick={() => setViewingRequest(req)} className="btn btn-secondary" style={{ padding: 6 }}>
                               <Eye size={14} />
@@ -398,9 +400,9 @@ export default function TravelRequests() {
 
       {/* Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 0 }} onSubmit={(e) => e.preventDefault()}>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={(e) => e.preventDefault()}>
           {/* Form Header */}
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               {editingId ? 'Edit Travel Request' : 'New Travel Request'}
             </h2>
@@ -414,8 +416,12 @@ export default function TravelRequests() {
             </div>
           </div>
           
-          <div className="p-6 space-y-4">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Travel Details
+            </legend>
+
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Employee *</label>
                 <select
@@ -508,21 +514,23 @@ export default function TravelRequests() {
                     </span>
                   ))}
                 </div>
-              )}
+                )}
+              </div>
+            
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Purpose</label>
+                <textarea
+                  value={form.purpose}
+                  onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+                  rows={2}
+                  className="form-control"
+                  placeholder="Purpose of travel..."
+                />
+              </div>
             </div>
             
-            <div className="form-group">
-              <label>Purpose</label>
-              <textarea
-                value={form.purpose}
-                onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                rows={2}
-                className="form-control"
-                placeholder="Purpose of travel..."
-              />
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>From Location *</label>
                 <input
@@ -545,7 +553,7 @@ export default function TravelRequests() {
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Departure Date *</label>
                 <input
@@ -566,7 +574,7 @@ export default function TravelRequests() {
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Transport Mode</label>
                 <select
@@ -603,7 +611,7 @@ export default function TravelRequests() {
             </div>
             
             {form.hotel_required && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                 <div className="form-group">
                   <label>Hotel Name</label>
                   <input
@@ -634,7 +642,7 @@ export default function TravelRequests() {
               </div>
             )}
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Estimated Cost (₹)</label>
                 <input
@@ -656,7 +664,7 @@ export default function TravelRequests() {
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
         </form>
       )}
 

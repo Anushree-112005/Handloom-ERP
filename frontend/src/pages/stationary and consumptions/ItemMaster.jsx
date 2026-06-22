@@ -152,21 +152,29 @@ export default function ItemMaster() {
           </div>
         </div>
       ) : (
-        <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-            <div style={{ padding: 10, background: '#6366f115', borderRadius: 10, color: '#6366f1' }}>
-              {editingId ? <Edit2 size={20} /> : <Plus size={20} />}
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>{editingId ? 'Edit Item' : 'New Item Registration'}</h3>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Fill out the required information</p>
+        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+              {editingId ? 'Edit Item' : 'New Item'}
+            </h2>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="btn btn-primary" type="submit" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Save size={16} /> {editingId ? 'Update' : 'Save'}
+              </button>
+              <button className="btn btn-secondary" type="button" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X size={16} /> Close
+              </button>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Item Details
+            </legend>
+            
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
-                <label>Item Name <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Item Name *</label>
                 <input 
                   type="text" required value={formData.name} 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
@@ -174,7 +182,7 @@ export default function ItemMaster() {
                 />
               </div>
               <div className="form-group">
-                <label>Item Code / Short Name <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Item Code / Short Name *</label>
                 <input 
                   type="text" required value={formData.code} 
                   onChange={(e) => setFormData({...formData, code: e.target.value})} 
@@ -182,7 +190,7 @@ export default function ItemMaster() {
                 />
               </div>
               <div className="form-group">
-                <label>Category <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Category *</label>
                 <select 
                   value={formData.category} 
                   onChange={(e) => setFormData({...formData, category: e.target.value})} 
@@ -192,7 +200,7 @@ export default function ItemMaster() {
                 </select>
               </div>
               <div className="form-group">
-                <label>UOM <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>UOM *</label>
                 <select 
                   value={formData.uom} 
                   onChange={(e) => setFormData({...formData, uom: e.target.value})} 
@@ -202,7 +210,7 @@ export default function ItemMaster() {
                 </select>
               </div>
               <div className="form-group">
-                <label>GST % <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>GST % *</label>
                 <input 
                   type="number" required value={formData.gstPercent} 
                   onChange={(e) => setFormData({...formData, gstPercent: Number(e.target.value)})} 
@@ -210,7 +218,7 @@ export default function ItemMaster() {
                 />
               </div>
               <div className="form-group">
-                <label>Standard Cost / Rate <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Standard Cost / Rate *</label>
                 <input 
                   type="number" required value={formData.rate} 
                   onChange={(e) => setFormData({...formData, rate: Number(e.target.value)})} 
@@ -218,7 +226,7 @@ export default function ItemMaster() {
                 />
               </div>
               <div className="form-group">
-                <label>Min Stock Level <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Min Stock Level *</label>
                 <input 
                   type="number" required value={formData.minStock} 
                   onChange={(e) => setFormData({...formData, minStock: Number(e.target.value)})} 
@@ -226,7 +234,7 @@ export default function ItemMaster() {
                 />
               </div>
               <div className="form-group">
-                <label>Preferred Vendor <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Preferred Vendor *</label>
                 <select 
                   value={formData.vendor} 
                   onChange={(e) => setFormData({...formData, vendor: e.target.value})} 
@@ -236,15 +244,8 @@ export default function ItemMaster() {
                 </select>
               </div>
             </div>
-            
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid var(--border)", marginTop: 8 }}>
-              <button type="button" onClick={() => setView('list')} className="btn btn-secondary">Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Save size={16} /> Save Item
-              </button>
-            </div>
-          </form>
-        </div>
+          </fieldset>
+        </form>
       )}
     </div>
   );

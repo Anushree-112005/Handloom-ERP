@@ -311,7 +311,9 @@ export default function Documents() {
                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Category</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Expiry</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -348,7 +350,7 @@ export default function Documents() {
                               {doc.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-right" style={{ textAlign: 'right' }}>
                             <div className="flex items-center justify-end gap-1">
                               {doc.file_url && (
                                 <button className="btn btn-secondary" title="Download">

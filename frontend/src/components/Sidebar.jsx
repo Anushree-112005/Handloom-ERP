@@ -19,6 +19,7 @@ const modules = [
   { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
+  { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
 
 
   { section: 'Masters' },
@@ -439,18 +440,18 @@ const modules = [
       { path: '/stores-consumables/returnable-dc', label: 'Returnable DC', icon: FileText },
 
 
-      // { section: 'APPROVALS' },
-      // { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
-      // { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
-      // { path: '/stores-consumables/approve-issue', label: 'Issue Approval', icon: Shield },
-
       { section: 'REPORTS & ANALYTICS' },
       { path: '/stores-consumables/report-stock', label: 'Stock Inventory', icon: PieChart },
       { path: '/stores-consumables/report-ledger', label: 'Stock Ledger', icon: FileText },
       { path: '/stores-consumables/report-consumption', label: 'Consumption Analysis', icon: PieChart },
       { path: '/stores-consumables/report-purchase', label: 'Purchase Analysis', icon: Receipt },
       { path: '/stores-consumables/report-reorder', label: 'Low Stock Alerts', icon: AlertTriangle },
-      { path: '/stores-consumables/report-audit', label: 'Audit Trail', icon: ClipboardList }
+      { path: '/stores-consumables/report-audit', label: 'Audit Trail', icon: ClipboardList },
+
+      { section: 'APPROVALS' },
+      { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
+      { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
+      { path: '/stores-consumables/approve-issue', label: 'Issue Approval', icon: Shield }
     ]
   },
 

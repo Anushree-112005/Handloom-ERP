@@ -5,6 +5,7 @@ import ModulePage from './components/ModulePage';
 import Login from './pages/Login';
 import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
+import MyApprovals from './pages/dashboard/MyApprovals';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import OrderSubModule from './pages/buyer_order/OrderSubModule';
@@ -143,6 +144,7 @@ export default function App() {
       }>
         <Route index element={<Dashboard />} />
         <Route path="overview" element={<Overview />} />
+        <Route path="my-approvals" element={<MockDbSyncWrapper><MyApprovals /></MockDbSyncWrapper>} />
         <Route path="party-master" element={<PartyMaster />} />
 
         {/* Dynamic Sub-Master route — handles all 38 generic master forms */}

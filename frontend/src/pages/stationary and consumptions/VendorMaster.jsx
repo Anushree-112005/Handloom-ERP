@@ -118,54 +118,61 @@ export default function VendorMaster() {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Vendor' : 'Add New Vendor'}</h2>
+        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+              {editingId ? 'Edit Vendor' : 'New Vendor'}
+            </h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')}>
-                <X size={16} /> Close
+              <button className="btn btn-primary" type="submit" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Save size={16} /> {editingId ? 'Update' : 'Save'}
               </button>
-              <button className="btn btn-primary" type="submit">
-                <Save size={16} /> Save Vendor
+              <button className="btn btn-secondary" type="button" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X size={16} /> Close
               </button>
             </div>
           </div>
-          <div style={{ padding: 24, background: '#fff', display: "flex", flexDirection: "column", gap: 16 }}>
-            <div className="form-row" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-              <div>
-                <label >Vendor Name *</label>
+
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Vendor Details
+            </legend>
+            
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="form-group">
+                <label>Vendor Name *</label>
                 <input 
                   type="text" required value={formData.name} 
                   onChange={(e) => setFormData({...formData, name: e.target.value})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Vendor Code *</label>
+              <div className="form-group">
+                <label>Vendor Code *</label>
                 <input 
                   type="text" required value={formData.code} 
                   onChange={(e) => setFormData({...formData, code: e.target.value})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >GST Number</label>
+              <div className="form-group">
+                <label>GST Number</label>
                 <input 
                   type="text" value={formData.gst} 
                   onChange={(e) => setFormData({...formData, gst: e.target.value})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Mobile / Phone</label>
+              <div className="form-group">
+                <label>Mobile / Phone</label>
                 <input 
                   type="text" value={formData.phone} 
                   onChange={(e) => setFormData({...formData, phone: e.target.value})} 
                   className="form-control" 
                 />
               </div>
-              <div>
-                <label >Email</label>
+              <div className="form-group">
+                <label>Email</label>
                 <input 
                   type="email" value={formData.email} 
                   onChange={(e) => setFormData({...formData, email: e.target.value})} 
@@ -173,7 +180,7 @@ export default function VendorMaster() {
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
         </form>
       )}
     </div>

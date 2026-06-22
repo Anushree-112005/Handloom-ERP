@@ -569,7 +569,9 @@ const JobRequisitions = () => {
                     <th className="px-6 py-4">Salary Range</th>
                     <th className="px-6 py-4">Priority</th>
                     <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Actions</th>
+                    <th className="px-6 py-4">
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white text-sm">

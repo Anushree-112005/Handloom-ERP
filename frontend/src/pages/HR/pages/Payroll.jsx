@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { Calculator, AlertTriangle, CheckCircle2, FileText, Plus, Trash2, X, DollarSign, Eye, User, Calendar, Building, RefreshCw, Download, Printer, FileSpreadsheet, Filter, LayoutList, LayoutGrid, Sparkles } from 'lucide-react';
+import { Calculator, AlertTriangle, CheckCircle2, FileText, Plus, Trash2, X, DollarSign, Eye, User, Calendar, Building, RefreshCw, Download, Printer, FileSpreadsheet, Filter, LayoutList, LayoutGrid, Sparkles, Search, Edit2 } from 'lucide-react';
 import hrService, { fetchPayroll, createPayroll, updatePayroll, deletePayroll, fetchLoans, fetchEmployees } from '../../../services/hrService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -21,13 +21,16 @@ const Payroll = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const [editingId, setEditingId] = useState(null);
   const [viewingPayslip, setViewingPayslip] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPeriod, setFilterPeriod] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('list');
   const payslipRef = useRef(null);
   
   const [isDetecting, setIsDetecting] = useState(false);
@@ -77,11 +80,17 @@ const Payroll = () => {
 
   const filteredRows = useMemo(() => {
     return rows.filter(row => {
+      const empName = employees.find(e => e.employee_id === row.employee || e.id === parseInt(row.employee))?.name || row.employee;
+      const matchesSearch = empName.toLowerCase().includes(searchTerm.toLowerCase()) || row.employee.toLowerCase().includes(searchTerm.toLowerCase());
+      if (searchTerm && !matchesSearch) return false;
       if (filterStatus && row.status !== filterStatus) return false;
       if (filterPeriod && row.period !== filterPeriod) return false;
       return true;
     });
-  }, [rows, filterStatus, filterPeriod]);
+  }, [rows, filterStatus, filterPeriod, searchTerm, employees]);
+
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const paginatedRows = filteredRows.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const totals = useMemo(() => {
     const totalGross = rows.reduce((sum, r) => sum + computeSalary(r).gross, 0);
@@ -170,11 +179,29 @@ const Payroll = () => {
 
   const resetForm = () => {
     setForm(initialForm);
+    setEditingId(null);
     setShowForm(false);
     setError('');
   };
 
-  const addRow = async (e) => {
+  const handleEdit = (r) => {
+    setForm({
+      employee: r.employee,
+      period: r.period || 'Monthly',
+      month: r.month || '',
+      basic: r.basic || 0,
+      allowances: r.allowances || 0,
+      deductions: r.deductions || 0,
+      lop_days: r.lop_days || 0,
+      ot_hours: r.ot_hours || 0,
+      loan_amount: r.loan_amount || 0
+    });
+    setEditingId(r.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -186,7 +213,7 @@ const Payroll = () => {
 
     setLoading(true);
     try {
-      await createPayroll({
+      const payload = {
         ...form,
         basic: Number(form.basic),
         allowances: Number(form.allowances) || 0,
@@ -194,8 +221,15 @@ const Payroll = () => {
         lop_days: Number(form.lop_days) || 0,
         ot_hours: Number(form.ot_hours) || 0,
         loan_amount: Number(form.loan_amount) || 0
-      });
-      setSuccess('Payroll entry added!');
+      };
+
+      if (editingId) {
+        await updatePayroll(editingId, payload);
+        setSuccess('Payroll entry updated successfully!');
+      } else {
+        await createPayroll(payload);
+        setSuccess('Payroll entry added successfully!');
+      }
       resetForm();
       await loadData();
     } catch (err) {
@@ -652,151 +686,177 @@ const Payroll = () => {
           </div>
         )}
 
-        {/* Payroll Cards - List View */}
-        {viewMode === 'list' && (
-          <div className="space-y-4">
-            {filteredRows.length === 0 && !loading ? (
-              <div className="card" style={{ padding: 40, textAlign: 'center' }}>
-                <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500" style={{ margin: 0 }}>No payroll entries yet</p>
-              </div>
-            ) : filteredRows.map((r) => {
-              const salary = computeSalary(r);
-              const empName = employees.find(e => e.employee_id === r.employee || e.id === parseInt(r.employee))?.name || r.employee;
-              return (
-                <div key={r.id} className="card" style={{ padding: 20 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ width: 44, height: 44, background: '#10b98118', borderRadius: 8, color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <DollarSign className="w-5 h-5" />
+        {/* Toolbar */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24, padding: '16px', background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+            <input 
+              type="text" 
+              placeholder="Search by Employee Name or ID..." 
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              style={{ width: '100%', padding: '10px 16px 10px 44px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, outline: 'none', height: 44 }} 
+            />
+          </div>
+          
+          <div style={{ display: 'flex', gap: 12 }}>
+            <select 
+              value={filterPeriod} 
+              onChange={(e) => { setFilterPeriod(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 140 }}
+            >
+              <option value="">All Periods</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Weekly">Weekly</option>
+            </select>
+
+            <select 
+              value={filterStatus} 
+              onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 140 }}
+            >
+              <option value="">All Statuses</option>
+              <option value="Approved">Approved</option>
+              <option value="Pending Finance">Pending Finance</option>
+              <option value="Pending HR">Pending HR</option>
+            </select>
+
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterPeriod('');
+                setFilterStatus('');
+                setCurrentPage(1);
+              }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: 14, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
+              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOut={(e) => e.currentTarget.style.background = '#f8fafc'}
+            >
+              <RefreshCw size={16} /> Reset
+            </button>
+            <button 
+              onClick={handleAIDetectErrors} 
+              style={{ display: 'flex', alignItems: 'center', gap: 8, backgroundColor: '#fff', height: 44, padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', color: '#8b5cf6', fontWeight: 600, cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+            >
+              <Sparkles size={16} /> AI Detect
+            </button>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+          <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead className="bg-slate-50/80 border-b border-slate-200">
+              <tr>
+                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
+                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Period</th>
+                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Earnings & Deductions</th>
+                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Net Pay</th>
+                <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
+                <th className="px-6 py-4 text-xs uppercase font-bold text-slate-500">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedRows.map(r => {
+                const salary = computeSalary(r);
+                const empName = employees.find(e => e.employee_id === r.employee || e.id === parseInt(r.employee))?.name || r.employee;
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+                          <User className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900">{empName}</p>
+                          <p className="text-xs text-slate-500">ID: {r.employee}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{empName}</p>
-                        <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}{r.month ? ` (${r.month})` : ''}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-800">
+                      {r.period}{r.month ? ` (${r.month})` : ''}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1 text-xs">
+                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Basic: ₹{(r.basic || 0).toLocaleString()}</span>
+                        {r.allowances > 0 && <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-100">+ ₹{r.allowances.toLocaleString()}</span>}
+                        {r.ot_hours > 0 && <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-100">OT: +{(r.ot_hours * 200).toLocaleString()}</span>}
+                        {r.deductions > 0 && <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-100">- ₹{r.deductions.toLocaleString()}</span>}
+                        {r.lop_days > 0 && <span className="bg-orange-50 text-orange-700 px-2 py-0.5 rounded border border-orange-100">LOP: {r.lop_days}d</span>}
+                        {r.loan_amount > 0 && <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-100">Loan: -₹{r.loan_amount.toLocaleString()}</span>}
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                      <span style={{ 
-                        padding: '4px 10px',
-                        borderRadius: 12,
-                        fontSize: 12,
-                        fontWeight: 600,
+                    </td>
+                    <td className="px-6 py-4 font-bold text-emerald-600">
+                      ₹{salary.net.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{
                         backgroundColor: r.status === 'Approved' ? '#10b98118' : r.status === 'Pending Finance' ? '#3b82f618' : '#f59e0b18',
                         color: r.status === 'Approved' ? '#047857' : r.status === 'Pending Finance' ? '#1d4ed8' : '#b45309'
-                      }}>{r.status}</span>
-                      <span style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>₹{salary.net.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', itemsCenter: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12, color: 'var(--text-muted)' }}>
-                    <span style={{ background: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 4 }}>Basic: ₹{(r.basic || 0).toLocaleString()}</span>
-                    {r.allowances > 0 && <span style={{ background: '#10b98110', color: '#047857', padding: '4px 8px', borderRadius: 4 }}>Allowances: +₹{r.allowances.toLocaleString()}</span>}
-                    {r.deductions > 0 && <span style={{ background: '#ef444410', color: '#b91c1c', padding: '4px 8px', borderRadius: 4 }}>Deductions: -₹{r.deductions.toLocaleString()}</span>}
-                    {r.ot_hours > 0 && <span style={{ background: '#3b82f610', color: '#1d4ed8', padding: '4px 8px', borderRadius: 4 }}>OT: {r.ot_hours}h</span>}
-                    {r.lop_days > 0 && <span style={{ background: '#f59e0b10', color: '#b45309', padding: '4px 8px', borderRadius: 4 }}>LOP: {r.lop_days}d</span>}
-                    {r.loan_amount > 0 && <span style={{ background: '#f59e0b10', color: '#b45309', padding: '4px 8px', borderRadius: 4 }}>Loan Deduct: -₹{r.loan_amount.toLocaleString()}</span>}
-                  </div>
+                      }}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right" style={{ textAlign: 'right' }}>
+                      <div className="flex items-center justify-end gap-2">
+                        {r.status === 'Pending HR' && (
+                          <button onClick={() => approve(r.id, 'Pending Finance')} className="btn btn-primary text-xs px-2 py-1 h-auto" style={{ height: 32 }}>HR Approve</button>
+                        )}
+                        {r.status === 'Pending Finance' && (
+                          <button onClick={() => approve(r.id, 'Approved')} className="btn btn-success text-xs px-2 py-1 h-auto" style={{ height: 32 }}>Fin Approve</button>
+                        )}
+                        <button onClick={() => setViewingPayslip(r)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(99, 102, 241, 0.2)', cursor: 'pointer' }} title="View">
+                          <Eye size={14} color="#6366f1" />
+                        </button>
+                        <button onClick={() => handleEdit(r)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer' }} title="Edit">
+                          <Edit2 size={14} color="#3b82f6" />
+                        </button>
+                        <button onClick={() => handleDelete(r.id)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(239, 68, 68, 0.2)', cursor: 'pointer' }} title="Delete">
+                          <Trash2 size={14} color="#ef4444" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {paginatedRows.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="text-center py-10">
+                    <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500" style={{ margin: 0 }}>No payroll entries yet</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                    <button onClick={() => setViewingPayslip(r)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: 13 }}>
-                      <Eye className="w-4 h-4" /> View Payslip
-                    </button>
-                    {r.status === 'Pending HR' && (
-                      <button onClick={() => approve(r.id, 'Pending Finance')} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: 13 }}>
-                        HR Approve
-                      </button>
-                    )}
-                    {r.status === 'Pending Finance' && (
-                      <button onClick={() => approve(r.id, 'Approved')} className="btn btn-success" style={{ padding: '8px 16px', fontSize: 13, background: '#10b981', borderColor: '#10b981' }}>
-                        Finance Approve
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(r.id)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', fontSize: 13, color: '#dc2626', marginLeft: 'auto' }}>
-                      <Trash2 className="w-4 h-4" /> Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Payroll Cards - Grid View */}
-        {viewMode === 'grid' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-            {filteredRows.length === 0 && !loading ? (
-              <div className="card" style={{ padding: 40, textAlign: 'center', gridColumn: '1/-1' }}>
-                <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500" style={{ margin: 0 }}>No payroll entries yet</p>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+              <div style={{ fontSize: 13, color: '#64748b' }}>
+                Showing <span style={{ fontWeight: 600, color: '#1e293b' }}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span style={{ fontWeight: 600, color: '#1e293b' }}>{Math.min(currentPage * itemsPerPage, filteredRows.length)}</span> of <span style={{ fontWeight: 600, color: '#1e293b' }}>{filteredRows.length}</span> results
               </div>
-            ) : filteredRows.map((r) => {
-              const salary = computeSalary(r);
-              const empName = employees.find(e => e.employee_id === r.employee || e.id === parseInt(r.employee))?.name || r.employee;
-              return (
-                <div key={r.id} className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', itemsCenter: 'center', gap: 12, marginBottom: 16 }}>
-                      <div style={{ width: 36, height: 36, background: '#10b98118', borderRadius: 8, color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <DollarSign className="w-5 h-5" />
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{empName}</p>
-                        <p style={{ margin: '2px 0 0 0', fontSize: 11, color: 'var(--text-muted)' }}>ID: {r.employee} • {r.period}{r.month ? ` (${r.month})` : ''}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2" style={{ marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Basic</span>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>₹{(r.basic || 0).toLocaleString()}</span>
-                      </div>
-                      {r.loan_amount > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Loan Deduct</span>
-                          <span style={{ fontWeight: 600, color: '#b45309' }}>-₹{r.loan_amount.toLocaleString()}</span>
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Net Pay</span>
-                        <span style={{ fontWeight: 700, color: '#10b981' }}>₹{salary.net.toLocaleString()}</span>
-                      </div>
-                      <div style={{ marginTop: 8 }}>
-                        <span style={{ 
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          borderRadius: 12,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          backgroundColor: r.status === 'Approved' ? '#10b98118' : r.status === 'Pending Finance' ? '#3b82f618' : '#f59e0b18',
-                          color: r.status === 'Approved' ? '#047857' : r.status === 'Pending Finance' ? '#1d4ed8' : '#b45309'
-                        }}>{r.status}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-                    <button onClick={() => setViewingPayslip(r)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px', fontSize: 12, flex: 1 }}>
-                      <Eye className="w-3.5 h-3.5" /> View
-                    </button>
-                    {r.status === 'Pending HR' && (
-                      <button onClick={() => approve(r.id, 'Pending Finance')} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12, flex: 1, justifyContent: 'center' }}>
-                        Approve
-                      </button>
-                    )}
-                    {r.status === 'Pending Finance' && (
-                      <button onClick={() => approve(r.id, 'Approved')} className="btn btn-success" style={{ padding: '6px 12px', fontSize: 12, flex: 1, justifyContent: 'center', background: '#10b981', borderColor: '#10b981' }}>
-                        Approve
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(r.id)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 8px', color: '#dc2626' }} title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === 1 ? '#f1f5f9' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: currentPage === totalPages ? '#f1f5f9' : '#fff', color: currentPage === totalPages ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
       </div>{/* END DATA AREA */}
       </>
@@ -804,34 +864,43 @@ const Payroll = () => {
 
       {/* Add Entry Form Inline */}
       {showForm && (
-        <form className="card" style={{ padding: 0 }} onSubmit={addRow}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Add Payroll Entry</h2>
+        <form className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={handleSubmit}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Payroll Entry' : 'Add Payroll Entry'}
+            </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button type="button" onClick={resetForm} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <X className="w-4 h-4" /> Close
               </button>
-              <button onClick={(e) => addRow(e)} disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Plus className="w-4 h-4" /> {loading ? 'Saving...' : 'Add Entry'}
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {editingId ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />} 
+                {loading ? 'Saving...' : (editingId ? 'Update Entry' : 'Add Entry')}
               </button>
             </div>
           </div>
 
-          <div className="p-6 space-y-4">
-            <div className="form-group">
-              <label>Employee *</label>
-              <select className="form-control"
-                value={form.employee} onChange={(e) => handleEmployeeChange(e.target.value)} required>
-                <option value="">Select Employee</option>
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.employee_id || emp.id}>
-                    {emp.name} ({emp.employee_id})
-                  </option>
-                ))}
-              </select>
+          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 24, margin: 0 }}>
+            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Payroll Details
+            </legend>
+
+            <div className="form-row">
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                <label>Employee *</label>
+                <select className="form-control"
+                  value={form.employee} onChange={(e) => handleEmployeeChange(e.target.value)} required>
+                  <option value="">Select Employee</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.employee_id || emp.id}>
+                      {emp.name} ({emp.employee_id})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <div className="form-row">
               <div className="form-group">
                 <label>Period</label>
                 <select className="form-control"
@@ -856,7 +925,7 @@ const Payroll = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
               <div className="form-group">
                 <label>Allowances</label>
                 <input type="number" min="0" className="form-control"
@@ -869,7 +938,7 @@ const Payroll = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <div className="form-row">
               <div className="form-group">
                 <label>LOP Days</label>
                 <input type="number" step="0.5" min="0" className="form-control"
@@ -888,7 +957,7 @@ const Payroll = () => {
             </div>
 
             {/* Preview */}
-            <div className="bg-slate-50 rounded-lg p-3 space-y-2 text-sm border border-slate-100">
+            <div className="bg-slate-50 rounded-lg p-3 space-y-2 text-sm border border-slate-100 mt-4">
               <div className="flex justify-between"><span className="text-slate-500">Gross</span><span className="font-semibold text-slate-800">₹{computeSalary(form).gross.toLocaleString()}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{(Number(form.deductions) || 0).toLocaleString()}</span></div>
               {Number(form.lop_days) > 0 && (
@@ -899,7 +968,7 @@ const Payroll = () => {
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--border)', paddingTop: 8 }}><span className="font-bold text-slate-700">Net Pay</span><span className="font-bold text-emerald-600 text-base">₹{computeSalary(form).net.toLocaleString()}</span></div>
             </div>
-          </div>
+          </fieldset>
         </form>
       )}
     </div>
