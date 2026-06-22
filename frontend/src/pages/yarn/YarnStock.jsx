@@ -16,12 +16,16 @@ export default function YarnStock() {
     const fetchStockData = async () => {
       try {
         const { data: inwards } = await yarnInwardAPI.list();
-        const aggregatedStock = [];
         const lotMap = {};
 
         inwards.forEach(inward => {
           if (inward.items && Array.isArray(inward.items)) {
             inward.items.forEach(item => {
+              // Skip incomplete items (must have yarn_count and lot_no)
+              if (!item.yarn_count || !item.lot_no) {
+                return;
+              }
+
               const key = `${item.lot_no}-${item.yarn_count}`;
               if (!lotMap[key]) {
                 lotMap[key] = {

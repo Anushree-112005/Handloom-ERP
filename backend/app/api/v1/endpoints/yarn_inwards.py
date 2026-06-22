@@ -109,12 +109,14 @@ async def create_inward(data: YarnInwardCreate, db: AsyncSession = Depends(get_d
     order = YarnInward(**order_dict, ref_no=ref_no)
 
     for item in items_data:
+      # Skip incomplete items - must have yarn_count and lot_no
+      if item.yarn_count and item.lot_no:
         order.items.append(YarnInwardItem(**item.model_dump()))
 
     db.add(order)
     await db.commit()
     await db.refresh(order)
-    
+
     result = await db.execute(
         select(YarnInward).options(selectinload(YarnInward.items)).where(YarnInward.id == order.id)
     )
@@ -150,8 +152,10 @@ async def update_inward(inward_id: int, data: YarnInwardCreate, db: AsyncSession
     for item in order.items:
         await db.delete(item)
     order.items = []
-    
+
     for item in items_data:
+      # Skip incomplete items - must have yarn_count and lot_no
+      if item.yarn_count and item.lot_no:
         order.items.append(YarnInwardItem(**item.model_dump()))
 
     await db.commit()
