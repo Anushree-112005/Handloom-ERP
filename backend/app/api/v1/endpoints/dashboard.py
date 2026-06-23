@@ -44,26 +44,15 @@ async def dashboard_stats(db: AsyncSession = Depends(get_db)):
     total_dc_challans = int(await count(EwayBill))
     total_qty_meters = float(await sum_col(SalesInvoice.total_qty))
 
-    # Fallbacks to baseline mock data if 0
-    if vendor_inward_rolls == 0: vendor_inward_rolls = 14
-    if purchase_inward_kgs == 0: purchase_inward_kgs = 2450.0
-    if process_delivery_batches == 0: process_delivery_batches = 8
-    if process_inward_bags == 0: process_inward_bags = 12
-    if sales_delivery == 0: sales_delivery = 6
-    if impo_orders == 0: impo_orders = 18
-    if imbo_lots == 0: imbo_lots = 14
-    if total_dc_challans == 0: total_dc_challans = 22
-    if total_qty_meters == 0: total_qty_meters = 15800.0
-
     # 2. Production vs Dispatch by Month (Jan-Jun)
     months_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
     prod_vs_disp_map = {
-        'Jan': {'Production': 40000, 'Dispatch': 32000},
-        'Feb': {'Production': 45000, 'Dispatch': 38000},
-        'Mar': {'Production': 52000, 'Dispatch': 46000},
-        'Apr': {'Production': 48000, 'Dispatch': 42000},
-        'May': {'Production': 61000, 'Dispatch': 55000},
-        'Jun': {'Production': 58000, 'Dispatch': 57000},
+        'Jan': {'Production': 0.0, 'Dispatch': 0.0},
+        'Feb': {'Production': 0.0, 'Dispatch': 0.0},
+        'Mar': {'Production': 0.0, 'Dispatch': 0.0},
+        'Apr': {'Production': 0.0, 'Dispatch': 0.0},
+        'May': {'Production': 0.0, 'Dispatch': 0.0},
+        'Jun': {'Production': 0.0, 'Dispatch': 0.0},
     }
     
     # Query actual records and group by month name
@@ -90,11 +79,11 @@ async def dashboard_stats(db: AsyncSession = Depends(get_db)):
     ]
 
     # 3. Process Bottlenecks
-    warping_count = int(await count(WarpDelivery)) or 15
-    weaving_count = int(await count(LoomAllocation)) or 28
-    dyeing_count = int(await count(DyedYarnDelivery)) or 42
-    checking_count = int(await count(OnTableChecking)) or 19
-    packing_count = int(await count(PackingSlip)) or 8
+    warping_count = int(await count(WarpDelivery)) or 0
+    weaving_count = int(await count(LoomAllocation)) or 0
+    dyeing_count = int(await count(DyedYarnDelivery)) or 0
+    checking_count = int(await count(OnTableChecking)) or 0
+    packing_count = int(await count(PackingSlip)) or 0
     
     process_bottlenecks = [
         {"name": "Warping", "value": warping_count},
@@ -108,32 +97,19 @@ async def dashboard_stats(db: AsyncSession = Depends(get_db)):
     buyer_vol_query = select(BuyerOrder.party_name, func.sum(BuyerOrderItem.order_mtrs)).join(BuyerOrderItem).group_by(BuyerOrder.party_name)
     buyer_vol_res = await db.execute(buyer_vol_query)
     buyer_volumes = [{"name": row[0], "value": float(row[1] or 0)} for row in buyer_vol_res.fetchall() if row[0]]
-    if not buyer_volumes:
-        buyer_volumes = [
-            { "name": 'SK Textiles', "value": 45000 },
-            { "name": 'Mani Spinners', "value": 32000 },
-            { "name": 'Global Exim', "value": 28000 },
-            { "name": 'A1 Garments', "value": 22000 }
-        ]
 
     # 5. Quality Compliance %
     quality_compliance = [
-        { "name": 'Warping', "value": 98 },
-        { "name": 'Weaving', "value": 92 },
-        { "name": 'Dyeing', "value": 89 },
-        { "name": 'Checking', "value": 99 }
+        { "name": 'Warping', "value": 0 },
+        { "name": 'Weaving', "value": 0 },
+        { "name": 'Dyeing', "value": 0 },
+        { "name": 'Checking', "value": 0 }
     ]
 
     # 6. Dispatch by Transporter
     trans_query = select(ClothDelivery.transport, func.sum(ClothDelivery.total_meters)).group_by(ClothDelivery.transport)
     trans_res = await db.execute(trans_query)
     transporter_data = [{"name": row[0], "value": float(row[1] or 0)} for row in trans_res.fetchall() if row[0]]
-    if not transporter_data:
-        transporter_data = [
-            { "name": 'Hari Roadways', "value": 12000 },
-            { "name": 'Om Logistics', "value": 15000 },
-            { "name": 'VRL Travels', "value": 8000 }
-        ]
 
     # 7. Daily Factory Activity (last 7 days)
     daily_production_list = []
@@ -159,16 +135,12 @@ async def dashboard_stats(db: AsyncSession = Depends(get_db)):
         ci_val = ci_days_map.get(d, 0)
         otc_val = otc_days_map.get(d, 0)
         gyd_val = gyd_days_map.get(d, 0)
-        
-        base_vendor = [12, 19, 15, 22, 25, 21, 8][6 - days_ago]
-        base_checking = [8, 12, 10, 16, 18, 14, 4][6 - days_ago]
-        base_grey = [10, 14, 11, 18, 20, 16, 6][6 - days_ago]
 
         daily_production_list.append({
             "name": lbl,
-            "Vendor": ci_val + base_vendor,
-            "Checking": otc_val + base_checking,
-            "GreyDelivery": gyd_val + base_grey
+            "Vendor": ci_val,
+            "Checking": otc_val,
+            "GreyDelivery": gyd_val
         })
 
     return {

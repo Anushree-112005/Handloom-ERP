@@ -23,52 +23,12 @@ const getPastDateLabel = (daysAgo) => {
   return `${dd}/${mm}`;
 };
 
-const baseDailyProductionData = [
-  { name: getPastDateLabel(6), Vendor: 12, Checking: 8, GreyDelivery: 10 },
-  { name: getPastDateLabel(5), Vendor: 19, Checking: 12, GreyDelivery: 14 },
-  { name: getPastDateLabel(4), Vendor: 15, Checking: 10, GreyDelivery: 11 },
-  { name: getPastDateLabel(3), Vendor: 22, Checking: 16, GreyDelivery: 18 },
-  { name: getPastDateLabel(2), Vendor: 25, Checking: 18, GreyDelivery: 20 },
-  { name: getPastDateLabel(1), Vendor: 21, Checking: 14, GreyDelivery: 16 },
-  { name: getPastDateLabel(0), Vendor: 8, Checking: 4, GreyDelivery: 6 },
-];
-
-const baseProdVsDispatchData = [
-  { name: 'Jan', Production: 40000, Dispatch: 32000 },
-  { name: 'Feb', Production: 45000, Dispatch: 38000 },
-  { name: 'Mar', Production: 52000, Dispatch: 46000 },
-  { name: 'Apr', Production: 48000, Dispatch: 42000 },
-  { name: 'May', Production: 61000, Dispatch: 55000 },
-  { name: 'Jun', Production: 58000, Dispatch: 57000 },
-];
-
-const baseBottleneckData = [
-  { name: 'Warping', value: 15 },
-  { name: 'Weaving', value: 28 },
-  { name: 'Dyeing', value: 42 },
-  { name: 'Checking', value: 19 },
-  { name: 'Packing', value: 8 },
-];
-
-const baseBuyerQtyData = [
-  { name: 'SK Textiles', value: 45000 },
-  { name: 'Mani Spinners', value: 32000 },
-  { name: 'Global Exim', value: 28000 },
-  { name: 'A1 Garments', value: 22000 }
-];
-
-const baseQualityCompliance = [
-  { name: 'Warping', value: 98 },
-  { name: 'Weaving', value: 92 },
-  { name: 'Dyeing', value: 89 },
-  { name: 'Checking', value: 99 }
-];
-
-const baseDispatchByTransporter = [
-  { name: 'Hari Roadways', value: 12000 },
-  { name: 'Om Logistics', value: 15000 },
-  { name: 'VRL Travels', value: 8000 }
-];
+const baseDailyProductionData = [];
+const baseProdVsDispatchData = [];
+const baseBottleneckData = [];
+const baseBuyerQtyData = [];
+const baseQualityCompliance = [];
+const baseDispatchByTransporter = [];
 
 const COLORS = ['#0ea5e9', '#0284c7', '#0369a1', '#38bdf8', '#7dd3fc', '#bae6fd'];
 
@@ -108,28 +68,28 @@ export default function Dashboard() {
     else if (dateFilter === 'This Year') factor = 8.5;
     else if (dateFilter === 'Custom Range') factor = 0.7;
 
-    // Retrieve stats or use mock default
-    const vendorInward = stats.vendor_inward_rolls !== undefined ? stats.vendor_inward_rolls : 14;
-    const purchaseInward = stats.purchase_inward_kgs !== undefined ? stats.purchase_inward_kgs : 2450;
-    const processDelivery = stats.process_delivery_batches !== undefined ? stats.process_delivery_batches : 8;
-    const processInward = stats.process_inward_bags !== undefined ? stats.process_inward_bags : 12;
-    const salesDelivery = stats.sales_delivery !== undefined ? stats.sales_delivery : 6;
-    const impoVal = stats.impo_orders !== undefined ? stats.impo_orders : 18;
-    const imboVal = stats.imbo_lots !== undefined ? stats.imbo_lots : 14;
-    const totalDC = stats.total_dc_challans !== undefined ? stats.total_dc_challans : 22;
-    const totalQty = stats.total_qty_meters !== undefined ? stats.total_qty_meters : 15800;
+    // Retrieve stats or use mock default (0)
+    const vendorInward = stats.vendor_inward_rolls !== undefined ? stats.vendor_inward_rolls : 0;
+    const purchaseInward = stats.purchase_inward_kgs !== undefined ? stats.purchase_inward_kgs : 0;
+    const processDelivery = stats.process_delivery_batches !== undefined ? stats.process_delivery_batches : 0;
+    const processInward = stats.process_inward_bags !== undefined ? stats.process_inward_bags : 0;
+    const salesDelivery = stats.sales_delivery !== undefined ? stats.sales_delivery : 0;
+    const impoVal = stats.impo_orders !== undefined ? stats.impo_orders : 0;
+    const imboVal = stats.imbo_lots !== undefined ? stats.imbo_lots : 0;
+    const totalDC = stats.total_dc_challans !== undefined ? stats.total_dc_challans : 0;
+    const totalQty = stats.total_qty_meters !== undefined ? stats.total_qty_meters : 0;
 
     // 1. Update Daily Operations Panel
     setOperations([
-      { label: 'Vendor Inward', value: `${Math.round(vendorInward * factor) || 1} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
-      { label: 'Purchase Inward', value: `${(Math.round(purchaseInward * factor) || 100).toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
-      { label: 'Process Delivery', value: `${Math.round(processDelivery * factor) || 1} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
-      { label: 'Process Inward', value: `${Math.round(processInward * factor) || 1} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
-      { label: 'Sales Delivery', value: `${Math.round(salesDelivery * factor) || 1} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
-      { label: 'IMPO', value: `${Math.round(impoVal * factor) || 2} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
-      { label: 'IMBO', value: `${Math.round(imboVal * factor) || 1} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
-      { label: 'Total DC', value: `${Math.round(totalDC * factor) || 2} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
-      { label: 'Total Qty', value: `${(Math.round(totalQty * factor) || 1000).toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
+      { label: 'Vendor Inward', value: `${Math.round(vendorInward * factor)} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
+      { label: 'Purchase Inward', value: `${Math.round(purchaseInward * factor).toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
+      { label: 'Process Delivery', value: `${Math.round(processDelivery * factor)} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
+      { label: 'Process Inward', value: `${Math.round(processInward * factor)} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
+      { label: 'Sales Delivery', value: `${Math.round(salesDelivery * factor)} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
+      { label: 'IMPO', value: `${Math.round(impoVal * factor)} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
+      { label: 'IMBO', value: `${Math.round(imboVal * factor)} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
+      { label: 'Total DC', value: `${Math.round(totalDC * factor)} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
+      { label: 'Total Qty', value: `${Math.round(totalQty * factor).toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
     ]);
 
     // 2. Update Charts
@@ -331,7 +291,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Process Bottlenecks" subtitle="Pending Lots/Orders">
+        <ChartCard title="Process Chart" subtitle="Pending Lots/Orders">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={bottleneckData} innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value">

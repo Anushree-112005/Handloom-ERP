@@ -185,22 +185,7 @@ const modules = [
   { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
   { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
 
-  { section: 'Job Work Management' },
-  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
-  { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
-  { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
-  { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
-  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
-  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
-  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
-  { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
-  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
-  { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/printing-delivery', label: 'Printing Delivery', icon: Truck },
-  { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
-  { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
-  { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
+  { isJobWorkDynamic: true },
 
   { section: 'Quality Control' },
   { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
@@ -385,9 +370,9 @@ const modules = [
       { section: 'MASTERS' },
       { path: '/stores-consumables/category', label: 'Category Master', icon: Layers },
       { path: '/stores-consumables/uom', label: 'UOM Master', icon: Layers },
-      { path: '/stores-consumables/item', label: 'Item Master', icon: Box },
       { path: '/stores-consumables/vendor', label: 'Vendor Master', icon: Users },
       { path: '/stores-consumables/department', label: 'Department Master', icon: Building },
+      { path: '/stores-consumables/item', label: 'Item Master', icon: Box },
 
       { section: 'TRANSACTIONS' },
       { path: '/stores-consumables/request', label: 'Department Request', icon: FileText },
@@ -408,12 +393,7 @@ const modules = [
 
       { section: 'REPORTS & ANALYTICS' },
       { path: '/stores-consumables/report-stock', label: 'Stock Inventory', icon: PieChart },
-      { path: '/stores-consumables/report-ledger', label: 'Stock Ledger', icon: FileText },
-      { path: '/stores-consumables/report-consumption', label: 'Consumption Analysis', icon: PieChart },
-      { path: '/stores-consumables/report-purchase', label: 'Purchase Analysis', icon: Receipt },
-      { path: '/stores-consumables/report-reorder', label: 'Low Stock Alerts', icon: AlertTriangle },
-      { path: '/stores-consumables/report-audit', label: 'Audit Trail', icon: ClipboardList },
-
+  
       { section: 'APPROVALS' },
       { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
       { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
@@ -430,6 +410,24 @@ const modules = [
   { section: 'System' },
   { path: '/company-settings', label: 'Company', icon: Settings },
   { path: '/about', label: 'About', icon: Info },
+];
+
+const jobWorkRoutes = [
+  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
+  { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
+  { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
+  { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
+  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
+  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
+  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
+  { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
+  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
+  { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
+  { path: '/jobwork/printing-delivery', label: 'Printing Delivery', icon: Truck },
+  { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
+  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
+  { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
+  { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
 ];
 
 export default function Sidebar({ isCollapsed, onToggleSidebar }) {
@@ -556,6 +554,26 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         {modules.map((item, i) =>
           item.section ? (
             <div key={i} className="nav-section">{item.section}</div>
+          ) : item.isJobWorkDynamic ? (
+            <div key={i} className="nav-group">
+              <div className="nav-section" style={{ marginTop: '0', paddingBottom: '8px' }}>JOB WORK MANAGEMENT</div>
+              {jobWorkRoutes.map((route, rIdx) => (
+                <NavLink
+                  key={`jw-${rIdx}`}
+                  to={route.path}
+                  end={route.path === '/'}
+                  className={({ isActive }) => {
+                    const isReallyActive = route.path.includes('?')
+                      ? (location.pathname === route.path.split('?')[0] && location.search.includes(route.path.split('?')[1]))
+                      : isActive;
+                    return `nav-item ${isReallyActive ? 'active' : ''}`;
+                  }}
+                >
+                  <route.icon />
+                  <span style={{ flex: 1 }}>{route.label}</span>
+                </NavLink>
+              ))}
+            </div>
           ) : item.children ? (
             <div key={item.label} className="nav-group">
               <button

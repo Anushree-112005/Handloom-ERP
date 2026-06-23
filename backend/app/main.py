@@ -1,6 +1,7 @@
 """
 Dinesh Textile ERP — FastAPI application entry point.
 """
+from pickle import TRUE
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -199,8 +200,8 @@ async def lifespan(app: FastAPI):
                     ))
                 await session.commit()
 
-            from app.seed_ppc import seed_ppc_data
-            await seed_ppc_data(session)
+            # from app.seed_ppc import seed_ppc_data
+            # await seed_ppc_data(session)
 
             try:
                 from finance_app.scripts.sync_realtime_data import sync_data

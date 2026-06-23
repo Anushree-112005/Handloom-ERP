@@ -63,6 +63,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
   const filteredLedger = useMemo(() => {
     return ledger.filter(l => {
       const detail = items.find(x => x.id === l.itemId) || {};
+      const matchCat = categoryFilter === '' || detail.category === categoryFilter;
       const matchItem = selectedItem === '' || l.itemId === selectedItem;
       const matchSearch = searchTerm === '' || 
         (detail.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,35 +71,43 @@ export default function StoresReport({ defaultTab = 'stock' }) {
         l.refType.toLowerCase().includes(searchTerm.toLowerCase());
       const matchDateFrom = dateFrom === '' || l.date >= dateFrom;
       const matchDateTo = dateTo === '' || l.date <= dateTo;
-      return matchItem && matchSearch && matchDateFrom && matchDateTo;
+      return matchCat && matchItem && matchSearch && matchDateFrom && matchDateTo;
     });
-  }, [ledger, items, selectedItem, searchTerm, dateFrom, dateTo]);
+  }, [ledger, items, categoryFilter, selectedItem, searchTerm, dateFrom, dateTo]);
 
   // 3. Consumption Filtering
   const filteredIssues = useMemo(() => {
     return issues.filter(iss => {
+      const matchCat = categoryFilter === '' || iss.items.some(line => {
+        const detail = items.find(x => x.id === line.itemId) || {};
+        return detail.category === categoryFilter;
+      });
       const matchSearch = searchTerm === '' || 
         iss.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
         iss.employee.toLowerCase().includes(searchTerm.toLowerCase()) ||
         iss.id.toLowerCase().includes(searchTerm.toLowerCase());
       const matchDateFrom = dateFrom === '' || iss.date >= dateFrom;
       const matchDateTo = dateTo === '' || iss.date <= dateTo;
-      return matchSearch && matchDateFrom && matchDateTo;
+      return matchCat && matchSearch && matchDateFrom && matchDateTo;
     });
-  }, [issues, searchTerm, dateFrom, dateTo]);
+  }, [issues, items, categoryFilter, searchTerm, dateFrom, dateTo]);
 
   // 4. Purchase Filtering
   const filteredGrns = useMemo(() => {
     return grns.filter(g => {
+      const matchCat = categoryFilter === '' || g.items.some(line => {
+        const detail = items.find(x => x.id === line.itemId) || {};
+        return detail.category === categoryFilter;
+      });
       const matchSearch = searchTerm === '' || 
         g.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
         g.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (g.poId || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchDateFrom = dateFrom === '' || g.date >= dateFrom;
       const matchDateTo = dateTo === '' || g.date <= dateTo;
-      return matchSearch && matchDateFrom && matchDateTo;
+      return matchCat && matchSearch && matchDateFrom && matchDateTo;
     });
-  }, [grns, searchTerm, dateFrom, dateTo]);
+  }, [grns, items, categoryFilter, searchTerm, dateFrom, dateTo]);
 
   // 5. Reorder Alerts Filtering
   const lowStockItems = useMemo(() => {
@@ -118,38 +127,49 @@ export default function StoresReport({ defaultTab = 'stock' }) {
     const rawAudits = ledger.filter(x => x.refType.includes('Adjustment') || x.refType.includes('Audit'));
     return rawAudits.filter(a => {
       const detail = items.find(x => x.id === a.itemId) || {};
+      const matchCat = categoryFilter === '' || detail.category === categoryFilter;
       const matchSearch = searchTerm === '' || 
         (detail.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.refId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.refType.toLowerCase().includes(searchTerm.toLowerCase());
       const matchDateFrom = dateFrom === '' || a.date >= dateFrom;
       const matchDateTo = dateTo === '' || a.date <= dateTo;
-      return matchSearch && matchDateFrom && matchDateTo;
+      return matchCat && matchSearch && matchDateFrom && matchDateTo;
     });
-  }, [ledger, items, searchTerm, dateFrom, dateTo]);
+  }, [ledger, items, categoryFilter, searchTerm, dateFrom, dateTo]);
 
   // Calculations
   const totalValuation = useMemo(() => {
-    return items.reduce((acc, i) => acc + ((i.currentStock || 0) * (i.rate || 0)), 0);
-  }, [items]);
+    return items
+      .filter(i => categoryFilter === '' || i.category === categoryFilter)
+      .reduce((acc, i) => acc + ((i.currentStock || 0) * (i.rate || 0)), 0);
+  }, [items, categoryFilter]);
 
   const totalConsumptionValue = useMemo(() => {
     return issues.reduce((acc, iss) => {
       let val = 0;
       iss.items.forEach(line => {
         const detail = items.find(x => x.id === line.itemId);
-        val += line.qty * (detail?.rate || 0);
+        if (categoryFilter === '' || detail?.category === categoryFilter) {
+          val += line.qty * (detail?.rate || 0);
+        }
       });
       return acc + val;
     }, 0);
-  }, [issues, items]);
+  }, [issues, items, categoryFilter]);
 
   const totalPurchaseValue = useMemo(() => {
     return grns.reduce((acc, g) => {
-      const val = g.items.reduce((sum, i) => sum + (i.acceptedQty * i.rate), 0);
+      const val = g.items.reduce((sum, line) => {
+        const detail = items.find(x => x.id === line.itemId);
+        if (categoryFilter === '' || detail?.category === categoryFilter) {
+          return sum + (line.acceptedQty * line.rate);
+        }
+        return sum;
+      }, 0);
       return acc + val;
     }, 0);
-  }, [grns]);
+  }, [grns, items, categoryFilter]);
 
   // Department Consumption breakdown for charts
   const deptSummary = useMemo(() => {
@@ -251,7 +271,11 @@ export default function StoresReport({ defaultTab = 'stock' }) {
       fileName = 'Stores_Stock_Ledger_Report';
     } else if (activeTab === 'consumption') {
       data = filteredIssues.map(iss => {
-        const val = iss.items.reduce((sum, line) => {
+        const filteredLines = iss.items.filter(line => {
+          const detail = items.find(x => x.id === line.itemId) || {};
+          return categoryFilter === '' || detail.category === categoryFilter;
+        });
+        const val = filteredLines.reduce((sum, line) => {
           const detail = items.find(x => x.id === line.itemId);
           return sum + (line.qty * (detail?.rate || 0));
         }, 0);
@@ -261,21 +285,25 @@ export default function StoresReport({ defaultTab = 'stock' }) {
           'Department': iss.department,
           'Employee': iss.employee,
           'Purpose': iss.purpose,
-          'Items Count': iss.items.length,
+          'Items Count': filteredLines.length,
           'Consumption Value (Rs)': val
         };
       });
       fileName = 'Stores_Consumption_Analysis_Report';
     } else if (activeTab === 'purchase') {
       data = filteredGrns.map(g => {
-        const val = g.items.reduce((sum, i) => sum + (i.acceptedQty * i.rate), 0);
+        const filteredLines = g.items.filter(line => {
+          const detail = items.find(x => x.id === line.itemId) || {};
+          return categoryFilter === '' || detail.category === categoryFilter;
+        });
+        const val = filteredLines.reduce((sum, i) => sum + (i.acceptedQty * i.rate), 0);
         return {
           'GRN ID': g.id,
           'Date': g.date,
           'Vendor': g.vendor,
           'PO Reference': g.poId || 'N/A',
           'Invoice Number': g.invoiceNo || 'N/A',
-          'Items Count': g.items.length,
+          'Items Count': filteredLines.length,
           'Inward Value (Rs)': val
         };
       });
@@ -357,7 +385,11 @@ export default function StoresReport({ defaultTab = 'stock' }) {
       title = 'DEPARTMENT-WISE CONSUMPTION AUDIT';
       headers = [['Issue ID', 'Date', 'Department', 'Employee', 'Items Count', 'Total Cost']];
       body = filteredIssues.map(iss => {
-        const val = iss.items.reduce((sum, line) => {
+        const filteredLines = iss.items.filter(line => {
+          const detail = items.find(x => x.id === line.itemId) || {};
+          return categoryFilter === '' || detail.category === categoryFilter;
+        });
+        const val = filteredLines.reduce((sum, line) => {
           const detail = items.find(x => x.id === line.itemId);
           return sum + (line.qty * (detail?.rate || 0));
         }, 0);
@@ -366,7 +398,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
           iss.date,
           iss.department,
           iss.employee,
-          iss.items.length,
+          filteredLines.length,
           `Rs.${val.toLocaleString()}`
         ];
       });
@@ -374,7 +406,11 @@ export default function StoresReport({ defaultTab = 'stock' }) {
       title = 'VENDOR PURCHASE & STOCK INWARDS';
       headers = [['GRN ID', 'Date', 'Vendor', 'PO Ref', 'Invoice No', 'Value']];
       body = filteredGrns.map(g => {
-        const val = g.items.reduce((sum, i) => sum + (i.acceptedQty * i.rate), 0);
+        const filteredLines = g.items.filter(line => {
+          const detail = items.find(x => x.id === line.itemId) || {};
+          return categoryFilter === '' || detail.category === categoryFilter;
+        });
+        const val = filteredLines.reduce((sum, i) => sum + (i.acceptedQty * i.rate), 0);
         return [
           g.id,
           g.date,
@@ -621,9 +657,9 @@ export default function StoresReport({ defaultTab = 'stock' }) {
         <h4 style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Filter size={14} /> Report Filter parameters
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 100px', gap: '16px', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           
-          <div className="form-group" style={{ margin: 0 }}>
+          <div className="form-group" style={{ margin: 0, flex: '1 1 240px' }}>
             <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Keyword Search</label>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -638,33 +674,33 @@ export default function StoresReport({ defaultTab = 'stock' }) {
             </div>
           </div>
 
-          {['stock', 'reorder'].includes(activeTab) && (
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Category</label>
-              <select className="form-control" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ margin: 0, fontSize: '13px' }}>
-                <option value="">All Categories</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
-          )}
+          <div className="form-group" style={{ margin: 0, width: '200px' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Category</label>
+            <select className="form-control" value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setSelectedItem(''); }} style={{ margin: 0, fontSize: '13px' }}>
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
 
           {activeTab === 'ledger' && (
-            <div className="form-group" style={{ margin: 0 }}>
+            <div className="form-group" style={{ margin: 0, width: '200px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Filter by Item</label>
               <select className="form-control" value={selectedItem} onChange={e => setSelectedItem(e.target.value)} style={{ margin: 0, fontSize: '13px' }}>
                 <option value="">All Items</option>
-                {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                {items
+                  .filter(i => categoryFilter === '' || i.category === categoryFilter)
+                  .map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
             </div>
           )}
 
           {['ledger', 'consumption', 'purchase', 'audit'].includes(activeTab) && (
             <>
-              <div className="form-group" style={{ margin: 0 }}>
+              <div className="form-group" style={{ margin: 0, width: '150px' }}>
                 <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Date From</label>
                 <input type="date" className="form-control" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ margin: 0, fontSize: '13px' }} />
               </div>
-              <div className="form-group" style={{ margin: 0 }}>
+              <div className="form-group" style={{ margin: 0, width: '150px' }}>
                 <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Date To</label>
                 <input type="date" className="form-control" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ margin: 0, fontSize: '13px' }} />
               </div>
@@ -673,7 +709,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
 
           <button 
             className="btn btn-secondary" 
-            style={{ padding: '9px', fontSize: '13px', justifyContent: 'center', margin: 0 }} 
+            style={{ padding: '9px', fontSize: '13px', justifyContent: 'center', margin: 0, width: '100px' }} 
             onClick={handleResetFilters}
           >
             Reset
@@ -802,7 +838,15 @@ export default function StoresReport({ defaultTab = 'stock' }) {
                   </tr>
                 ) : (
                   filteredIssues.map(iss => {
-                    const val = iss.items.reduce((sum, line) => {
+                    const filteredLines = iss.items.filter(line => {
+                      const detail = items.find(x => x.id === line.itemId) || {};
+                      return categoryFilter === '';
+                    });
+                    const filteredItems = iss.items.filter(line => {
+                      const detail = items.find(x => x.id === line.itemId) || {};
+                      return categoryFilter === '' || detail.category === categoryFilter;
+                    });
+                    const val = filteredItems.reduce((sum, line) => {
                       const detail = items.find(x => x.id === line.itemId);
                       return sum + (line.qty * (detail?.rate || 0));
                     }, 0);
@@ -813,7 +857,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
                         <td style={{ fontWeight: 600 }}>🏢 {iss.department}</td>
                         <td>{iss.employee}</td>
                         <td>{iss.purpose}</td>
-                        <td style={{ textAlign: 'right' }}>{iss.items.length}</td>
+                        <td style={{ textAlign: 'right' }}>{filteredItems.length}</td>
                         <td style={{ textAlign: 'right', fontWeight: 800, color: '#d97706' }}>₹{val.toLocaleString()}</td>
                       </tr>
                     );
@@ -843,7 +887,11 @@ export default function StoresReport({ defaultTab = 'stock' }) {
                   </tr>
                 ) : (
                   filteredGrns.map(grn => {
-                    const inwardValue = grn.items.reduce((acc, i) => acc + (i.acceptedQty * i.rate), 0);
+                    const filteredItems = grn.items.filter(line => {
+                      const detail = items.find(x => x.id === line.itemId) || {};
+                      return categoryFilter === '' || detail.category === categoryFilter;
+                    });
+                    const inwardValue = filteredItems.reduce((acc, i) => acc + (i.acceptedQty * i.rate), 0);
                     return (
                       <tr key={grn.id}>
                         <td style={{ fontWeight: 700, fontFamily: 'monospace' }}>{grn.id}</td>
@@ -851,7 +899,7 @@ export default function StoresReport({ defaultTab = 'stock' }) {
                         <td style={{ fontWeight: 600 }}>{grn.vendor}</td>
                         <td style={{ fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{grn.poId || '-'}</td>
                         <td>{grn.invoiceNo || '-'}</td>
-                        <td style={{ textAlign: 'right' }}>{grn.items.length}</td>
+                        <td style={{ textAlign: 'right' }}>{filteredItems.length}</td>
                         <td style={{ textAlign: 'right', fontWeight: 800 }}>₹{inwardValue.toLocaleString()}</td>
                       </tr>
                     );

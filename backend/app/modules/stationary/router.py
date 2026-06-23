@@ -177,12 +177,25 @@ async def upload_po_quotation(file: UploadFile = File(...)):
 
 @router.get("/{category}")
 async def list_stationary_items(category: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(StationaryItem).where(StationaryItem.category == category))
+    result = await db.execute(select(StationaryItem).where(StationaryItem.category == category).order_by(StationaryItem.id))
     items = result.scalars().all()
     return [{"id": item.id, "category": item.category, **item.data} for item in items]
 
 @router.post("/{category}", status_code=201)
 async def create_stationary_item(category: str, payload: Dict[str, Any] = Body(...), db: AsyncSession = Depends(get_db)):
+    item_id = payload.get("id") or payload.get("itemId")
+    if item_id:
+        result = await db.execute(select(StationaryItem).where(StationaryItem.category == category))
+        all_items = result.scalars().all()
+        for it in all_items:
+            if str(it.data.get("id")) == str(item_id) or str(it.data.get("itemId")) == str(item_id) or str(it.id) == str(item_id):
+                # Item already exists, merge/update and return it
+                merged_data = {**it.data, **payload}
+                it.data = merged_data
+                await db.commit()
+                await db.refresh(it)
+                return {"id": it.id, "category": it.category, **it.data}
+
     db_item = StationaryItem(
         category=category,
         data=payload
@@ -197,8 +210,15 @@ async def bulk_save_stationary_items(category: str, payload: Dict[str, Any] = Bo
     await db.execute(delete(StationaryItem).where(StationaryItem.category == category))
     
     items = payload.get("items") or []
+    seen_ids = set()
     inserted = []
     for item in items:
+        item_id = item.get("id") or item.get("itemId")
+        if item_id:
+            if item_id in seen_ids:
+                continue
+            seen_ids.add(item_id)
+            
         db_item = StationaryItem(
             category=category,
             data=item
