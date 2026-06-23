@@ -179,7 +179,14 @@ const modules = [
   // { path: '/design-ai', label: 'Design AI', icon: Sparkles },
 
   { section: 'Purchase Management' },
-  { path: '/yarn/purchase-order', label: 'Yarn Purchase Order', icon: Package },
+  { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
+  { path: '/purchase-order/twisting-doubling', label: 'Twisting / Doubling PO', icon: Layers },
+  { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
+  { path: '/purchase-order/fabric-dyeing', label: 'Fabric Dyeing PO', icon: Palette },
+  { path: '/purchase-order/warping-sizing', label: 'Warping / Sizing PO', icon: Factory },
+  { path: '/purchase-order/weaving', label: 'Weaving PO', icon: Layers },
+  { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
+  { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
   { section: 'Yarn Management' },
   { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
@@ -443,7 +450,7 @@ const jobWorkRoutes = {
     { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
     { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
     //{ path: '/packing', label: 'Packing', icon: Box },
-   // { path: '/sales-invoice', label: 'Invoice Dispatch', icon: Receipt },
+    // { path: '/sales-invoice', label: 'Invoice Dispatch', icon: Receipt },
     { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
   ],
   'Solid': [
@@ -472,7 +479,7 @@ const jobWorkRoutes = {
     { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
     { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
     { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
-   // { path: '/packing', label: 'Packing', icon: Box },
+    // { path: '/packing', label: 'Packing', icon: Box },
     //{ path: '/sales-invoice', label: 'Invoice Dispatch', icon: Receipt },
     { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
   ],
@@ -504,7 +511,7 @@ const jobWorkRoutes = {
     { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
     { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
     { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
-   // { path: '/packing', label: 'Packing', icon: Box },
+    // { path: '/packing', label: 'Packing', icon: Box },
     //{ path: '/sales-invoice', label: 'Invoice Dispatch', icon: Receipt },
     { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
   ]
@@ -513,7 +520,7 @@ const jobWorkRoutes = {
 export default function Sidebar({ isCollapsed, onToggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [openMenus, setOpenMenus] = useState({});
+  const [openMenus, setOpenMenus] = useState({ 'Purchase Order': true });
   const [fabricType, setFabricType] = useState('All');
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'DINESH EXPORTS',
