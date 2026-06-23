@@ -12,9 +12,15 @@ router = APIRouter(prefix="/warp-deliveries", tags=["Warp Deliveries"])
 
 class WarpDeliveryItemBase(BaseModel):
     beam_no: Optional[str] = None
-    warp_mtrs: Optional[float] = 0
     beam_type: Optional[str] = None
+    yarn_count: Optional[str] = None
+    warp_ends: Optional[int] = 0
+    reed_width: Optional[float] = 0
+    warp_mtrs: Optional[float] = 0
+    weight_kgs: Optional[float] = 0
     loom_no: Optional[str] = None
+    beam_status: Optional[str] = None
+    remarks: Optional[str] = None
 
 class WarpDeliveryCreate(BaseModel):
     dc_no: Optional[str] = None
@@ -33,6 +39,13 @@ class WarpDeliveryCreate(BaseModel):
     yarn_count: Optional[str] = None
     vendor_po_no: Optional[str] = None
     po_date: Optional[date] = None
+    
+    party_po_no: Optional[str] = None
+    delivery_time: Optional[str] = None
+    driver_name: Optional[str] = None
+    mobile_no: Optional[str] = None
+    lr_no: Optional[str] = None
+    
     order_mtrs: Optional[float] = 0
     with_crimp: Optional[str] = None
     delivered_mtrs: Optional[float] = 0

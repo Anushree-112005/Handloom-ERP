@@ -133,11 +133,74 @@ export const textileDesignAPI = {
 };
 
 export const yarnPurchaseOrderAPI = {
-  list: (params) => api.get('/yarn-purchase-orders/', { params }),
+  list: () => api.get('/yarn-purchase-orders'),
   get: (id) => api.get(`/yarn-purchase-orders/${id}`),
-  create: (data) => api.post('/yarn-purchase-orders/', data),
+  create: (data) => api.post('/yarn-purchase-orders', data),
   update: (id, data) => api.put(`/yarn-purchase-orders/${id}`, data),
-  delete: (id) => api.delete(`/yarn-purchase-orders/${id}`),
+  delete: (id) => api.delete(`/yarn-purchase-orders/${id}`)
+};
+
+export const twistingDoublingPOAPI = {
+  list: () => api.get('/twisting-doubling-po/'),
+  create: (data) => api.post('/twisting-doubling-po/', data),
+  getById: (id) => api.get(`/twisting-doubling-po/${id}`),
+  update: (id, data) => api.put(`/twisting-doubling-po/${id}`, data),
+  delete: (id) => api.delete(`/twisting-doubling-po/${id}`)
+};
+
+export const yarnDyeingPOAPI = {
+  list: () => api.get('/yarn-dyeing-po/'),
+  create: (data) => api.post('/yarn-dyeing-po/', data),
+  getById: (id) => api.get(`/yarn-dyeing-po/${id}`),
+  update: (id, data) => api.put(`/yarn-dyeing-po/${id}`, data),
+  delete: (id) => api.delete(`/yarn-dyeing-po/${id}`)
+};
+
+export const fabricDyeingPOAPI = {
+  list: () => api.get('/fabric-dyeing-po/'),
+  create: (data) => api.post('/fabric-dyeing-po/', data),
+  getById: (id) => api.get(`/fabric-dyeing-po/${id}`),
+  update: (id, data) => api.put(`/fabric-dyeing-po/${id}`, data),
+  delete: (id) => api.delete(`/fabric-dyeing-po/${id}`)
+};
+
+export const warpingSizingPOAPI = {
+  list: () => api.get('/warping-sizing-po/'),
+  create: (data) => api.post('/warping-sizing-po/', data),
+  getById: (id) => api.get(`/warping-sizing-po/${id}`),
+  update: (id, data) => api.put(`/warping-sizing-po/${id}`, data),
+  delete: (id) => api.delete(`/warping-sizing-po/${id}`)
+};
+
+export const weavingPOAPI = {
+  list: () => api.get('/weaving-po/'),
+  create: (data) => api.post('/weaving-po/', data),
+  getById: (id) => api.get(`/weaving-po/${id}`),
+  update: (id, data) => api.put(`/weaving-po/${id}`, data),
+  delete: (id) => api.delete(`/weaving-po/${id}`)
+};
+
+export const processingPOAPI = {
+  list: () => api.get('/processing-po/'),
+  create: (data) => api.post('/processing-po/', data),
+  getById: (id) => api.get(`/processing-po/${id}`),
+  update: (id, data) => api.put(`/processing-po/${id}`, data),
+  delete: (id) => api.delete(`/processing-po/${id}`)
+};
+
+export const clothPurchasePOAPI = {
+  list: () => api.get('/cloth-purchase-po/'),
+  create: (data) => api.post('/cloth-purchase-po/', data),
+  getById: (id) => api.get(`/cloth-purchase-po/${id}`),
+  update: (id, data) => api.put(`/cloth-purchase-po/${id}`, data),
+  delete: (id) => api.delete(`/cloth-purchase-po/${id}`)
+};
+
+export const genericPurchaseOrderAPI = {
+  list: (poType) => api.get(`/generic-po${poType ? `?po_type=${poType}` : ''}`),
+  get: (id) => api.get(`/generic-po/${id}`),
+  create: (data) => api.post('/generic-po', data),
+  delete: (id) => api.delete(`/generic-po/${id}`)
 };
 
 export const yarnInwardAPI = {
@@ -337,4 +400,3 @@ export const ppcAPI = {
 };
 
 export default api;
-
