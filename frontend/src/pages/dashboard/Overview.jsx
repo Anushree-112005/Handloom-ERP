@@ -34,7 +34,7 @@ const workflowSteps = [
     color: "#0284c7", // Light Blue
     icon: Factory,
     path: "/yarn/grey-delivery",
-    bullets: ["Dyeing & Weaving", "Process Tracking"]
+    bullets: ["Dyeing & Weaving", "Warping", "Sizing", "Process Tracking"]
   },
   {
     num: 5,
@@ -49,7 +49,7 @@ const workflowSteps = [
     title: "Inventory & Warehousing",
     color: "#0d9488", // Teal
     icon: Warehouse,
-    path: "/packing",
+    path: "/inventory/stock-summary",
     bullets: ["Stock Management", "Finished Goods Storage"]
   },
   {

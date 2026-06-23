@@ -435,7 +435,49 @@ export default function YarnInward() {
       newForm.balance_kgs = (parseFloat(value) || 0) - (parseFloat(newForm.received_kgs) || 0);
     }
 
-    const financialFields = ['gross_amount', 'freight', 'cgst_pct', 'sgst_pct', 'igst_pct', 'tax_type', 'tcs_value', 'tds_pct', 'round_off'];
+    if (name === 'received_from') {
+      const selectedParty = parties.find(p => p.company_name === value);
+      if (selectedParty) {
+        const stateLower = (selectedParty.state || '').toLowerCase().trim();
+        const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+        const isTN = stateLower.includes('tamil') || gstCode === '33';
+        if (!isTN && (stateLower !== '' || gstCode !== '')) {
+          newForm = {
+            ...newForm,
+            tax_type: 'IGST',
+            sgst_pct: 0,
+            cgst_pct: 0,
+            igst_pct: 5.0
+          };
+        } else {
+          newForm = {
+            ...newForm,
+            tax_type: 'GST',
+            sgst_pct: 2.5,
+            cgst_pct: 2.5,
+            igst_pct: 0
+          };
+        }
+      }
+    }
+
+    if (name === 'tax_type') {
+      if (value === 'GST') {
+        newForm.cgst_pct = 2.5;
+        newForm.sgst_pct = 2.5;
+        newForm.igst_pct = 0;
+      } else if (value === 'IGST') {
+        newForm.cgst_pct = 0;
+        newForm.sgst_pct = 0;
+        newForm.igst_pct = 5.0;
+      } else if (value === 'Exempt') {
+        newForm.cgst_pct = 0;
+        newForm.sgst_pct = 0;
+        newForm.igst_pct = 0;
+      }
+    }
+
+    const financialFields = ['gross_amount', 'freight', 'cgst_pct', 'sgst_pct', 'igst_pct', 'tax_type', 'tcs_value', 'tds_pct', 'round_off', 'received_from'];
     if (financialFields.includes(name) || name === 'po_no_dt') {
       setForm(calculateFinancials(newForm));
     } else {
@@ -1014,9 +1056,15 @@ export default function YarnInward() {
                                 <option>GST</option><option>IGST</option><option>Exempt</option>
                               </select>
                             </div>
-                            <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                            <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                            <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                            {form.tax_type === 'GST' && (
+                              <>
+                                <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                                <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                              </>
+                            )}
+                            {form.tax_type === 'IGST' && (
+                              <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                            )}
                             <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} readOnly /></div>
                             <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
                             <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
@@ -1045,20 +1093,26 @@ export default function YarnInward() {
                             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                           </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                          {form.tax_type === 'GST' && (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            </>
+                          )}
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                          {form.tax_type === 'IGST' && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          )}
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>TCS Value</span>
@@ -1219,9 +1273,15 @@ export default function YarnInward() {
                               <option>GST</option><option>IGST</option><option>Exempt</option>
                             </select>
                           </div>
-                          <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                          <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                          {form.tax_type === 'GST' && (
+                            <>
+                              <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                              <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                            </>
+                          )}
+                          {form.tax_type === 'IGST' && (
+                            <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                          )}
                           <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} readOnly /></div>
                           <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
                           <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
@@ -1250,20 +1310,26 @@ export default function YarnInward() {
                           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                          {form.tax_type === 'GST' && (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            </>
+                          )}
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                          {form.tax_type === 'IGST' && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          )}
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>TCS Value</span>

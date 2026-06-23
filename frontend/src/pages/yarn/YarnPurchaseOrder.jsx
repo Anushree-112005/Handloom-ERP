@@ -536,13 +536,28 @@ export default function YarnPurchaseOrder() {
             };
           });
 
+          const supplierName = selectedOrder?.party_name || form.supplier_name || '';
+          const selectedParty = parties.find(p => p.company_name === supplierName);
+          let taxUpdates = {};
+          if (selectedParty) {
+            const stateLower = (selectedParty.state || '').toLowerCase().trim();
+            const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+            const isTN = stateLower.includes('tamil') || gstCode === '33';
+            if (!isTN && (stateLower !== '' || gstCode !== '')) {
+              taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+            } else {
+              taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+            }
+          }
+
           setForm(recalculate({
             ...form,
             against_ref: value,
             agent_name: selectedOrder?.agent_name || form.agent_name || '',
-            supplier_name: selectedOrder?.party_name || form.supplier_name || '',
+            supplier_name: supplierName,
             delivery_at: selectedOrder?.delivery_at || form.delivery_at || '',
-            indent_details: newIndentDetails
+            indent_details: newIndentDetails,
+            ...taxUpdates
           }));
           return;
         } else if (selectedOrder) {
@@ -557,24 +572,56 @@ export default function YarnPurchaseOrder() {
             };
           });
 
+          const supplierName = selectedOrder.party_name || form.supplier_name || '';
+          const selectedParty = parties.find(p => p.company_name === supplierName);
+          let taxUpdates = {};
+          if (selectedParty) {
+            const stateLower = (selectedParty.state || '').toLowerCase().trim();
+            const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+            const isTN = stateLower.includes('tamil') || gstCode === '33';
+            if (!isTN && (stateLower !== '' || gstCode !== '')) {
+              taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+            } else {
+              taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+            }
+          }
+
           setForm(recalculate({
             ...form,
             against_ref: value,
             agent_name: selectedOrder.agent_name || form.agent_name || '',
-            supplier_name: selectedOrder.party_name || form.supplier_name || '',
+            supplier_name: supplierName,
             delivery_at: selectedOrder.delivery_at || form.delivery_at || '',
-            indent_details: newIndentDetails.length > 0 ? newIndentDetails : form.indent_details
+            indent_details: newIndentDetails.length > 0 ? newIndentDetails : form.indent_details,
+            ...taxUpdates
           }));
           return;
         }
       }
     }
 
-    if (name === 'supplier_name' && value === 'custom_add_new') {
-      setIsCustomMainSupplier(true);
-      setCustomMainSupplierVal('');
+    if (name === 'supplier_name') {
+      if (value === 'custom_add_new') {
+        setIsCustomMainSupplier(true);
+        setCustomMainSupplierVal('');
+        return;
+      }
+      const selectedParty = parties.find(p => p.company_name === value);
+      let taxUpdates = {};
+      if (selectedParty) {
+        const stateLower = (selectedParty.state || '').toLowerCase().trim();
+        const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+        const isTN = stateLower.includes('tamil') || gstCode === '33';
+        if (!isTN && (stateLower !== '' || gstCode !== '')) {
+          taxUpdates = { tax_type: 'IGST', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+        } else {
+          taxUpdates = { tax_type: 'GST', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+        }
+      }
+      setForm(recalculate({ ...form, supplier_name: value, ...taxUpdates }));
       return;
     }
+
     if (name === 'org_name' && value === 'custom') {
       setIsCustomOrg(true);
       setCustomOrgVal('');
@@ -868,9 +915,14 @@ export default function YarnPurchaseOrder() {
                 icon: "IndianRupee",
                 type: "grid",
                 data: [
-                  { label: "Taxable Amt", value: `₹${selectedViewOrder.taxable_amount || 0}` },
-                  { label: "IGST", value: `${selectedViewOrder.igst_pct || 0}%` },
-                  { label: "Net Amount", value: `₹${selectedViewOrder.net_amount || 0}` }
+                  { label: "Taxable Amt", value: `₹${(selectedViewOrder.taxable_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` },
+                  ...(selectedViewOrder.tax_type === 'GST' ? [
+                    { label: "CGST", value: `${selectedViewOrder.cgst_pct || 0}%` },
+                    { label: "SGST", value: `${selectedViewOrder.sgst_pct || 0}%` }
+                  ] : selectedViewOrder.tax_type === 'IGST' ? [
+                    { label: "IGST", value: `${selectedViewOrder.igst_pct || 0}%` }
+                  ] : []),
+                  { label: "Net Amount", value: `₹${(selectedViewOrder.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` }
                 ]
               },
               {
@@ -1097,18 +1149,24 @@ export default function YarnPurchaseOrder() {
                     <td style={{ width: '45%', border: '1px solid #000', padding: 0, verticalAlign: 'top' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none', fontSize: '12px' }}>
                         <tbody>
-                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right', width: '60%' }}>CGST: {parseFloat(form.cgst_pct || 0).toFixed(2)} %</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', width: '40%' }}>{cgstAmt > 0 ? cgstAmt.toFixed(2) : '0.00'}</td>
-                          </tr>
-                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>SGST: {parseFloat(form.sgst_pct || 0).toFixed(2)} %</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{sgstAmt > 0 ? sgstAmt.toFixed(2) : '0.00'}</td>
-                          </tr>
-                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>IGST: {parseFloat(form.igst_pct || 0).toFixed(2)} %</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{igstAmt > 0 ? igstAmt.toFixed(2) : '0.00'}</td>
-                          </tr>
+                          {form.tax_type === 'GST' && (
+                            <>
+                              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right', width: '60%' }}>CGST: {parseFloat(form.cgst_pct || 0).toFixed(2)} %</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', width: '40%' }}>{cgstAmt > 0 ? cgstAmt.toFixed(2) : '0.00'}</td>
+                              </tr>
+                              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>SGST: {parseFloat(form.sgst_pct || 0).toFixed(2)} %</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{sgstAmt > 0 ? sgstAmt.toFixed(2) : '0.00'}</td>
+                              </tr>
+                            </>
+                          )}
+                          {form.tax_type === 'IGST' && (
+                            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                              <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right', width: '60%' }}>IGST: {parseFloat(form.igst_pct || 0).toFixed(2)} %</td>
+                              <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', width: '40%' }}>{igstAmt > 0 ? igstAmt.toFixed(2) : '0.00'}</td>
+                            </tr>
+                          )}
                           <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                             <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>Freight Chg:</td>
                             <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{form.freight_chg ? parseFloat(form.freight_chg).toFixed(2) : '0.00'}</td>
@@ -1480,20 +1538,26 @@ export default function YarnPurchaseOrder() {
                             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.insurance_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                           </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                          {form.tax_type === 'GST' && (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            </>
+                          )}
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                          {form.tax_type === 'IGST' && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          )}
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
@@ -1656,15 +1720,24 @@ export default function YarnPurchaseOrder() {
                         <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Tax Details</span>
                       </div>
                       <div style={{ padding: '16px 18px' }}>
-                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0 }}>
+                        <div className="form-row" style={{ 
+                          gridTemplateColumns: form.tax_type === 'GST' ? 'repeat(3, 1fr)' : form.tax_type === 'IGST' ? 'repeat(2, 1fr)' : '1fr', 
+                          margin: 0 
+                        }}>
                           <div className="form-group"><label>TAX Type</label>
                             <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
                               <option>GST</option><option>IGST</option><option>Exempt</option>
                             </select>
                           </div>
-                          <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                          <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                          {form.tax_type === 'GST' && (
+                            <>
+                              <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                              <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                            </>
+                          )}
+                          {form.tax_type === 'IGST' && (
+                            <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1703,20 +1776,26 @@ export default function YarnPurchaseOrder() {
                           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.insurance_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                        {form.tax_type === 'GST' && (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          </>
+                        )}
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                        {form.tax_type === 'IGST' && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        )}
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
