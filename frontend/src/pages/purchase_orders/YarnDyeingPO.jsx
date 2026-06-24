@@ -556,10 +556,10 @@ export default function YarnDyeingPO() {
                 </div>
                 
                 {/* Tax & Charges Details */}
-                <div style={{ width: 400, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ width: 350, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TAX & CHARGES</span>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
                     </div>
                     <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -567,26 +567,144 @@ export default function YarnDyeingPO() {
                         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'center' }}>
-                        <div className="form-group" style={{ margin: 0 }}><label>Dyeing Charge</label><input type="number" className="form-control" name="dyeing_charge" value={form.dyeing_charge} onChange={handleChange} /></div>
-                        <div className="form-group" style={{ margin: 0 }}><label>Packing Charge</label><input type="number" className="form-control" name="packing_charge" value={form.packing_charge} onChange={handleChange} /></div>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'center' }}>
-                        <div className="form-group" style={{ margin: 0 }}><label>Transport Charge</label><input type="number" className="form-control" name="transport_charge" value={form.transport_charge} onChange={handleChange} /></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Dyeing Charge</span>
+                        <input 
+                          type="number" 
+                          name="dyeing_charge" 
+                          value={form.dyeing_charge} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'center' }}>
-                        <div className="form-group" style={{ margin: 0 }}><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                        <div style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-primary)' }}>{form.cgst_amount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charge</span>
+                        <input 
+                          type="number" 
+                          name="packing_charge" 
+                          value={form.packing_charge} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'center' }}>
-                        <div className="form-group" style={{ margin: 0 }}><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                        <div style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-primary)' }}>{form.sgst_amount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Transport Charge</span>
+                        <input 
+                          type="number" 
+                          name="transport_charge" 
+                          value={form.transport_charge} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'center' }}>
-                        <div className="form-group" style={{ margin: 0 }}><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                        <div style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-primary)' }}>{form.igst_amount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST</span>
+                          <input 
+                            type="number" 
+                            name="cgst_pct" 
+                            value={form.cgst_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST</span>
+                          <input 
+                            type="number" 
+                            name="sgst_pct" 
+                            value={form.sgst_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST</span>
+                          <input 
+                            type="number" 
+                            name="igst_pct" 
+                            value={form.igst_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
