@@ -23,6 +23,14 @@ from app.models.work_order import WorkOrderTransaction
 from app.models.textile_design import TextileDesign, WarpDesignItem, WeftDesignItem
 from app.models.chat_message import ChatMessage
 from app.models.report_job import ReportJob
+from app.models.generic_po import GenericPurchaseOrder, GenericPurchaseOrderItem
+from app.models.twisting_doubling_po import TwistingDoublingPO, TwistingDoublingPOItem
+from app.models.yarn_dyeing_po import YarnDyeingPO, YarnDyeingPOItem
+from app.models.fabric_dyeing_po import FabricDyeingPO, FabricDyeingPOItem
+from app.models.warping_sizing_po import WarpingSizingPO, WarpingSizingPOItem
+from app.models.weaving_po import WeavingPO, WeavingPOItem
+from app.models.processing_po import ProcessingPO, ProcessingPOItem
+from app.models.cloth_purchase_po import ClothPurchasePO, ClothPurchasePOItem
 from app.modules.hr.models import HRItem
 from app.modules.vehicle_management.models import FleetItem
 from app.modules.stationary.models import StationaryItem, SwatchCard, FabricInspectionRoll, ReturnableDC

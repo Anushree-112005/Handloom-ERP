@@ -50,11 +50,12 @@ export default function DyedYarnDelivery() {
     dc_no: '', dc_no_alt: '', ref_receipt_inv: '', dc_date: new Date().toISOString().split('T')[0], add_date: new Date().toISOString().split('T')[0],
     delivery_type: 'Direct', delivery_mode: '', party_name: '', delivery_address: '',
     design_no: '', order_no: '', design_type: '', transport: '', certificate_type: '', driver_name: '', delivery_time: '',
+    vehicle_no: '', lr_no: '', delivery_challan_type: '', customer_po_no: '', dyeing_batch_no: '', dispatch_from: '', received_by: '', mobile_no: '',
     total_delv_kgs: 0, total_rin_kgs: 0, balance_kgs: 0,
-    cost: 0, insurance: 0, other_charges: 0, gross_amount: 0, tax_value: 0, sgst: 0, igst: 0, total_gst: 0, round_off: 0, net_amount: 0,
+    cost: 0, insurance: 0, other_charges: 0, freight_charges: 0, loading_charges: 0, discount: 0, tcs: 0, tds: 0, advance_received: 0, balance_amount: 0, gross_amount: 0, tax_value: 0, sgst: 0, igst: 0, total_gst: 0, round_off: 0, net_amount: 0,
     remarks: '', status: 'Delivered',
     items: [{
-      yarn_type: '', count: '', color: '', lot_no: '', stock: '', bags: 0, cones: 0, total_kgs: 0, rate: 0, amount: 0
+      yarn_type: '', count: '', color: '', shade_no: '', lot_no: '', batch_no: '', bags: 0, cones: 0, total_kgs: 0, rate: 0, amount: 0, remarks: ''
     }]
   };
 
@@ -540,13 +541,13 @@ export default function DyedYarnDelivery() {
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
               
               {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Top Section Fields */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
                     <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
                     <div className="form-group"><label>DC No (second field)</label><input className="form-control" name="dc_no_alt" value={form.dc_no_alt} onChange={handleChange} /></div>
                     <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
@@ -628,6 +629,22 @@ export default function DyedYarnDelivery() {
                     <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Time</label><input type="time" className="form-control" name="delivery_time" value={form.delivery_time} onChange={handleChange} /></div>
                     
+                    <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>LR No / Consignment No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Challan Type</label>
+                      <select className="form-control" name="delivery_challan_type" value={form.delivery_challan_type} onChange={handleChange}>
+                        <option value="">Select...</option>
+                        <option>Internal</option>
+                        <option>Customer</option>
+                        <option>Return</option>
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Customer PO No</label><input className="form-control" name="customer_po_no" value={form.customer_po_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Dyeing Batch No</label><input className="form-control" name="dyeing_batch_no" value={form.dyeing_batch_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Dispatch From</label><input className="form-control" name="dispatch_from" value={form.dispatch_from} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Received By</label><input className="form-control" name="received_by" value={form.received_by} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Mobile No</label><input className="form-control" name="mobile_no" value={form.mobile_no} onChange={handleChange} /></div>
+                    
                     <div className="form-group"><label>Total Delv Kgs</label><input type="number" className="form-control" name="total_delv_kgs" value={form.total_delv_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Rin Kgs</label><input type="number" className="form-control" name="total_rin_kgs" value={form.total_rin_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'shade_no')} /></div>
@@ -642,8 +659,8 @@ export default function DyedYarnDelivery() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>S.No</th><th>Yarn Type</th><th>Count</th><th>Colour</th><th>Lot No.</th><th>Stock</th>
-                          <th>Bag</th><th>Cones</th><th>Tot Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
+                          <th>S.No</th><th>Yarn Type</th><th>Count</th><th>Colour</th><th>Shade No</th><th>Lot No</th><th>Batch No</th>
+                          <th>Bag</th><th>Cones</th><th>Net Weight (Kgs)</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -681,13 +698,15 @@ export default function DyedYarnDelivery() {
                                 </select>
                               )}
                             </td>
+                            <td><input className="form-control" name="shade_no" style={{ width: 90, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
                             <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
                         ))}
@@ -697,17 +716,24 @@ export default function DyedYarnDelivery() {
 
                   {/* Section 3: Bottom Section (Financials) */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Bottom Section (Financials)</h4>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
                     <div className="form-group"><label>COST</label><input type="number" className="form-control" name="cost" value={form.cost} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Freight Charges</label><input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Loading Charges</label><input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} /></div>
                     <div className="form-group"><label>Insurance</label><input type="number" className="form-control" name="insurance" value={form.insurance} onChange={handleChange} /></div>
                     <div className="form-group"><label>Others</label><input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Discount</label><input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} /></div>
                     <div className="form-group"><label>Gr.Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
                     <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} /></div>
                     <div className="form-group"><label>SGST</label><input type="number" className="form-control" name="sgst" value={form.sgst} onChange={handleChange} /></div>
                     <div className="form-group"><label>IGST</label><input type="number" className="form-control" name="igst" value={form.igst} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total GST</label><input type="number" className="form-control" name="total_gst" value={form.total_gst} onChange={handleChange} /></div>
+                    <div className="form-group"><label>TCS</label><input type="number" className="form-control" name="tcs" value={form.tcs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>TDS</label><input type="number" className="form-control" name="tds" value={form.tds} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Advance Received</label><input type="number" className="form-control" name="advance_received" value={form.advance_received} onChange={handleChange} /></div>
                     <div className="form-group"><label>Round off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Net Amount</label><input type="number" className="form-control" name="net_amount" value={form.net_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
+                    <div className="form-group"><label>Net Amount</label><input type="number" className="form-control" name="net_amount" value={form.net_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
+                    <div className="form-group"><label>Balance Amount</label><input type="number" className="form-control" name="balance_amount" value={form.balance_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
                 </div>
@@ -722,8 +748,8 @@ export default function DyedYarnDelivery() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>S.No</th><th>Yarn Type</th><th>Count</th><th>Colour</th><th>Lot No.</th><th>Stock</th>
-                          <th>Bag</th><th>Cones</th><th>Tot Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
+                          <th>S.No</th><th>Yarn Type</th><th>Count</th><th>Colour</th><th>Shade No</th><th>Lot No</th><th>Batch No</th>
+                          <th>Bag</th><th>Cones</th><th>Net Weight (Kgs)</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -761,13 +787,15 @@ export default function DyedYarnDelivery() {
                                 </select>
                               )}
                             </td>
+                            <td><input className="form-control" name="shade_no" style={{ width: 90, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
                             <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
                         ))}
@@ -778,17 +806,24 @@ export default function DyedYarnDelivery() {
               )}
 
               {activeTab === 'financials' && (
-                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
                   <div className="form-group"><label>COST</label><input type="number" className="form-control" name="cost" value={form.cost} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Freight Charges</label><input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Loading Charges</label><input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} /></div>
                   <div className="form-group"><label>Insurance</label><input type="number" className="form-control" name="insurance" value={form.insurance} onChange={handleChange} /></div>
                   <div className="form-group"><label>Others</label><input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Discount</label><input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} /></div>
                   <div className="form-group"><label>Gr.Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
                   <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} /></div>
                   <div className="form-group"><label>SGST</label><input type="number" className="form-control" name="sgst" value={form.sgst} onChange={handleChange} /></div>
                   <div className="form-group"><label>IGST</label><input type="number" className="form-control" name="igst" value={form.igst} onChange={handleChange} /></div>
                   <div className="form-group"><label>Total GST</label><input type="number" className="form-control" name="total_gst" value={form.total_gst} onChange={handleChange} /></div>
+                  <div className="form-group"><label>TCS</label><input type="number" className="form-control" name="tcs" value={form.tcs} onChange={handleChange} /></div>
+                  <div className="form-group"><label>TDS</label><input type="number" className="form-control" name="tds" value={form.tds} onChange={handleChange} /></div>
+                  <div className="form-group"><label>Advance Received</label><input type="number" className="form-control" name="advance_received" value={form.advance_received} onChange={handleChange} /></div>
                   <div className="form-group"><label>Round off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
-                  <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Net Amount</label><input type="number" className="form-control" name="net_amount" value={form.net_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
+                  <div className="form-group"><label>Net Amount</label><input type="number" className="form-control" name="net_amount" value={form.net_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
+                  <div className="form-group"><label>Balance Amount</label><input type="number" className="form-control" name="balance_amount" value={form.balance_amount} onChange={handleChange} style={{ fontWeight: 'bold', fontSize: 16, color: 'var(--primary-dark)' }} /></div>
                   <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                 </div>
               )}

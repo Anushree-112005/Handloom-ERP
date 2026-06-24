@@ -120,7 +120,13 @@ import PrintingDelivery from './pages/jobwork/PrintingDelivery';
 import PrintedFabricReceipt from './pages/jobwork/PrintedFabricReceipt';
 import FinishingDelivery from './pages/jobwork/FinishingDelivery';
 import FinishedFabricReceipt from './pages/jobwork/FinishedFabricReceipt';
-
+import TwistingDoublingPO from './pages/purchase_orders/TwistingDoublingPO';
+import YarnDyeingPO from './pages/purchase_orders/YarnDyeingPO';
+import FabricDyeingPO from './pages/purchase_orders/FabricDyeingPO';
+import WarpingSizingPO from './pages/purchase_orders/WarpingSizingPO';
+import WeavingPO from './pages/purchase_orders/WeavingPO';
+import ProcessingPO from './pages/purchase_orders/ProcessingPO';
+import ClothPurchasePO from './pages/purchase_orders/ClothPurchasePO';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -226,6 +232,15 @@ export default function App() {
         <Route path="design-ai" element={<DesignAI />} />
 
         <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
+
+        {/* New Purchase Order Modules */}
+        <Route path="purchase-order/twisting-doubling" element={<TwistingDoublingPO />} />
+        <Route path="purchase-order/yarn-dyeing" element={<YarnDyeingPO />} />
+        <Route path="purchase-order/fabric-dyeing" element={<FabricDyeingPO />} />
+        <Route path="purchase-order/warping-sizing" element={<WarpingSizingPO />} />
+        <Route path="purchase-order/weaving" element={<WeavingPO />} />
+        <Route path="purchase-order/processing" element={<ProcessingPO />} />
+        <Route path="purchase-order/cloth" element={<ClothPurchasePO />} />
 
         <Route path="yarn/inward" element={<YarnInward />} />
         <Route path="yarn/stock" element={<YarnStock />} />
