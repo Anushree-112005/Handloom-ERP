@@ -576,29 +576,9 @@ export default function ClothPurchasePO() {
                     </div>
                   </div>
                 </div>
-                  {/* Tax & Charges Inputs */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TAX & ADDITIONAL CHARGES</span>
-                    </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                        <div className="form-group"><label>Discount %</label><input type="number" className="form-control" name="discount_pct" value={form.discount_pct} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Packing Charges</label><input type="number" className="form-control" name="packing_charges" value={form.packing_charges} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Freight Charges</label><input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Loading Charges</label><input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Unloading Charges</label><input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Other Charges</label><input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} /></div>
-                        <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                        <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                        <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
                 
                 {/* ORDER SUMMARY */}
-                <div style={{ flex: '0 0 300px', position: 'sticky', top: 24 }}>
+                <div style={{ width: 350, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
                     <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
                       <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
@@ -612,77 +592,230 @@ export default function ClothPurchasePO() {
                         </span>
                       </div>
 
-                      {parseFloat(form.discount_amount) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount ({form.discount_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>- {(form.discount_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount</span>
+                          <input 
+                            type="number" 
+                            name="discount_pct" 
+                            value={form.discount_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
                         </div>
-                      )}
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>- {(form.discount_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Value</span>
                         <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
 
-                      {parseFloat(form.packing_charges) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.packing_charges) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                      {parseFloat(form.freight_charges) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.freight_charges) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                      {parseFloat(form.loading_charges) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.loading_charges) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                      {parseFloat(form.unloading_charges) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.unloading_charges) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                      {parseFloat(form.other_charges) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.other_charges) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charges</span>
+                        <input 
+                          type="number" 
+                          name="packing_charges" 
+                          value={form.packing_charges} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                        <input 
+                          type="number" 
+                          name="freight_charges" 
+                          value={form.freight_charges} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charges</span>
+                        <input 
+                          type="number" 
+                          name="loading_charges" 
+                          value={form.loading_charges} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charges</span>
+                        <input 
+                          type="number" 
+                          name="unloading_charges" 
+                          value={form.unloading_charges} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
+                        <input 
+                          type="number" 
+                          name="other_charges" 
+                          value={form.other_charges} 
+                          onChange={handleChange} 
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST</span>
+                          <input 
+                            type="number" 
+                            name="cgst_pct" 
+                            value={form.cgst_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                        </div>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST</span>
+                          <input 
+                            type="number" 
+                            name="sgst_pct" 
+                            value={form.sgst_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                        </div>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST</span>
+                          <input 
+                            type="number" 
+                            name="igst_pct" 
+                            value={form.igst_pct} 
+                            onChange={handleChange} 
+                            style={{
+                              width: '60px',
+                              textAlign: 'right',
+                              border: '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: '2px 4px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent'
+                            }}
+                          />
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                        </div>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
                       
-                      {parseFloat(form.round_off) !== 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.round_off || 0).toFixed(2)}</span>
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
+                      </div>
 
                       <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>GRAND TOTAL</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Net Amount</span>
                         <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
           </form>
         </div>
       )}

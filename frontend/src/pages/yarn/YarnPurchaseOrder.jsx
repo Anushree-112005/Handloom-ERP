@@ -180,7 +180,7 @@ export default function YarnPurchaseOrder() {
     
     freight_type: '', freight_chg: 0, insurance_chg: 0, total_order_kgs: 0,
     transport: '', tax_type: 'GST', taxable_amount: 0, dispatch_date: '',
-    packing_type: '', sgst_pct: 2.50, cgst_pct: 2.50, igst_pct: 0, labeling: '',
+    packing_type: '', sgst_pct: 2.50, cgst_pct: 2.50, igst_pct: 5.0, labeling: '',
     colour: '', net_amount: 0, due_days: 0, remarks: '', status: 'Active',
     terms_conditions: [...defaultTerms],
     
@@ -920,7 +920,7 @@ export default function YarnPurchaseOrder() {
                     { label: "CGST", value: `${selectedViewOrder.cgst_pct || 0}%` },
                     { label: "SGST", value: `${selectedViewOrder.sgst_pct || 0}%` }
                   ] : selectedViewOrder.tax_type === 'IGST' ? [
-                    { label: "IGST", value: `${selectedViewOrder.igst_pct || 0}%` }
+                    { label: "IGST", value: `${selectedViewOrder.igst_pct || 5.0}%` }
                   ] : []),
                   { label: "Net Amount", value: `₹${(selectedViewOrder.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` }
                 ]
@@ -945,7 +945,7 @@ export default function YarnPurchaseOrder() {
         const taxableAmount = form.taxable_amount || 0;
         const cgstPct = parseFloat(form.cgst_pct) || 0;
         const sgstPct = parseFloat(form.sgst_pct) || 0;
-        const igstPct = parseFloat(form.igst_pct) || 0;
+        const igstPct = parseFloat(form.igst_pct) || 5.0;
         const cgstAmt = (cgstPct / 100) * taxableAmount;
         const sgstAmt = (sgstPct / 100) * taxableAmount;
         const igstAmt = (igstPct / 100) * taxableAmount;
@@ -1163,17 +1163,13 @@ export default function YarnPurchaseOrder() {
                           )}
                           {form.tax_type === 'IGST' && (
                             <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                              <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right', width: '60%' }}>IGST: {parseFloat(form.igst_pct || 0).toFixed(2)} %</td>
+                              <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right', width: '60%' }}>IGST: {parseFloat(form.igst_pct || 5.0).toFixed(2)} %</td>
                               <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', width: '40%' }}>{igstAmt > 0 ? igstAmt.toFixed(2) : '0.00'}</td>
                             </tr>
                           )}
                           <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                             <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>Freight Chg:</td>
                             <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{form.freight_chg ? parseFloat(form.freight_chg).toFixed(2) : '0.00'}</td>
-                          </tr>
-                          <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                            <td style={{ padding: '8px 10px', fontWeight: 'bold', textAlign: 'right' }}>Insurance Chg:</td>
-                            <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold' }}>{form.insurance_chg ? parseFloat(form.insurance_chg).toFixed(2) : '0.00'}</td>
                           </tr>
                           <tr style={{ backgroundColor: '#f8fafc', borderTop: '1.5px solid #000' }}>
                             <td style={{ padding: '10px', fontWeight: 'bold', textAlign: 'right', fontSize: '13px' }}>Net Amount :</td>
@@ -1530,34 +1526,53 @@ export default function YarnPurchaseOrder() {
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            <input 
+                              type="number" 
+                              name="freight_chg" 
+                              value={form.freight_chg} 
+                              onChange={handleChange} 
+                              disabled={isReadOnly}
+                              style={{
+                                width: '100px',
+                                textAlign: 'right',
+                                border: isReadOnly ? 'none' : '1px solid var(--border)',
+                                borderRadius: '4px',
+                                padding: isReadOnly ? '4px 0' : '4px 8px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                color: 'var(--text-primary)',
+                                background: 'transparent',
+                                pointerEvents: isReadOnly ? 'none' : 'auto'
+                              }}
+                            />
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.insurance_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {form.tax_type === 'GST' 
+                                ? ((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                                : '0.00'}
+                            </span>
                           </div>
 
-                          {form.tax_type === 'GST' && (
-                            <>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                              </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {form.tax_type === 'GST' 
+                                ? ((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                                : '0.00'}
+                            </span>
+                          </div>
 
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                              </div>
-                            </>
-                          )}
-
-                          {form.tax_type === 'IGST' && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                          )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 5.0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {form.tax_type === 'IGST' 
+                                ? ((form.taxable_amount || 0) * (form.igst_pct || 5.0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                                : '0.00'}
+                            </span>
+                          </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
@@ -1665,7 +1680,7 @@ export default function YarnPurchaseOrder() {
                         <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Freight & Shipping</span>
                       </div>
                       <div style={{ padding: '16px 18px' }}>
-                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0 }}>
+                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', margin: 0 }}>
                           <div className="form-group"><label>Freight Type</label>
                             {isCustomFreightType ? (
                               <div style={{ display: 'flex', gap: 8 }}>
@@ -1684,8 +1699,6 @@ export default function YarnPurchaseOrder() {
                               </select>
                             )}
                           </div>
-                          <div className="form-group"><label>Freight Chg</label><input type="number" className="form-control" name="freight_chg" value={form.freight_chg} onChange={handleChange} /></div>
-                          <div className="form-group"><label>Insurance Chg</label><input type="number" className="form-control" name="insurance_chg" value={form.insurance_chg} onChange={handleChange} /></div>
                           <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
                         </div>
                         <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0, marginTop: 12 }}>
@@ -1768,34 +1781,53 @@ export default function YarnPurchaseOrder() {
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          <input 
+                            type="number" 
+                            name="freight_chg" 
+                            value={form.freight_chg} 
+                            onChange={handleChange} 
+                            disabled={isReadOnly}
+                            style={{
+                              width: '100px',
+                              textAlign: 'right',
+                              border: isReadOnly ? 'none' : '1px solid var(--border)',
+                              borderRadius: '4px',
+                              padding: isReadOnly ? '4px 0' : '4px 8px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: 'var(--text-primary)',
+                              background: 'transparent',
+                              pointerEvents: isReadOnly ? 'none' : 'auto'
+                            }}
+                          />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.insurance_chg || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {form.tax_type === 'GST' 
+                              ? ((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                              : '0.00'}
+                          </span>
                         </div>
 
-                        {form.tax_type === 'GST' && (
-                          <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {form.tax_type === 'GST' 
+                              ? ((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                              : '0.00'}
+                          </span>
+                        </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                          </>
-                        )}
-
-                        {form.tax_type === 'IGST' && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{((form.taxable_amount || 0) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                        )}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 5.0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {form.tax_type === 'IGST' 
+                              ? ((form.taxable_amount || 0) * (form.igst_pct || 5.0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                              : '0.00'}
+                          </span>
+                        </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
