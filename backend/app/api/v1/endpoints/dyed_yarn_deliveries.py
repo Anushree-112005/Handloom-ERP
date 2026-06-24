@@ -14,13 +14,16 @@ class DyedYarnDeliveryItemBase(BaseModel):
     yarn_type: Optional[str] = None
     count: Optional[str] = None
     color: Optional[str] = None
+    shade_no: Optional[str] = None
     lot_no: Optional[str] = None
+    batch_no: Optional[str] = None
     stock: Optional[str] = None
     bags: Optional[int] = 0
     cones: Optional[int] = 0
     total_kgs: Optional[float] = 0
     rate: Optional[float] = 0
     amount: Optional[float] = 0
+    remarks: Optional[str] = None
 
 class DyedYarnDeliveryCreate(BaseModel):
     dc_no: Optional[str] = None
@@ -39,6 +42,15 @@ class DyedYarnDeliveryCreate(BaseModel):
     driver_name: Optional[str] = None
     delivery_time: Optional[str] = None
     
+    vehicle_no: Optional[str] = None
+    lr_no: Optional[str] = None
+    delivery_challan_type: Optional[str] = None
+    customer_po_no: Optional[str] = None
+    dyeing_batch_no: Optional[str] = None
+    dispatch_from: Optional[str] = None
+    received_by: Optional[str] = None
+    mobile_no: Optional[str] = None
+    
     total_delv_kgs: Optional[float] = 0
     total_rin_kgs: Optional[float] = 0
     balance_kgs: Optional[float] = 0
@@ -46,13 +58,20 @@ class DyedYarnDeliveryCreate(BaseModel):
     cost: Optional[float] = 0
     insurance: Optional[float] = 0
     other_charges: Optional[float] = 0
+    freight_charges: Optional[float] = 0
+    loading_charges: Optional[float] = 0
+    discount: Optional[float] = 0
     gross_amount: Optional[float] = 0
     tax_value: Optional[float] = 0
     sgst: Optional[float] = 0
     igst: Optional[float] = 0
     total_gst: Optional[float] = 0
+    tcs: Optional[float] = 0
+    tds: Optional[float] = 0
+    advance_received: Optional[float] = 0
     round_off: Optional[float] = 0
     net_amount: Optional[float] = 0
+    balance_amount: Optional[float] = 0
     
     remarks: Optional[str] = None
     status: Optional[str] = "Delivered"

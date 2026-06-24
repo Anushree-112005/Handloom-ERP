@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText } from 'lucide-react';
+import { Box, Search, Download, Filter, Layers, Database, ArrowRightLeft, FileText, Eye } from 'lucide-react';
 import { yarnInwardAPI } from '../../services/api';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';

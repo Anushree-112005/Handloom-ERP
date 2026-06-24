@@ -38,11 +38,12 @@ export default function DyedYarnReceived() {
     received_type: 'Direct', receive_mode: 'Direct', party_name: '',
     design_no: '', design_count: '', order_no: '',
     our_dc_no: '', party_dc_no: '', dc_date: new Date().toISOString().split('T')[0],
+    vehicle_no: '', transport: '', driver_name: '', lr_no: '', received_by: '', received_time: '', godown: '',
     remarks: '', status: 'Received',
     items: [{
-      cone_type: 'Full Cone', delivery_count: 0, received_count: 0,
-      our_lot_no: '', color: '', taken_kgs: 0, dyed_lot_no: '',
-      bags: 0, cones: 0, rcvd_kgs: 0, short_kgs: 0, short_pct: 0
+      cone_type: 'Full Cone', yarn_count: '',
+      color: '', shade_no: '', our_lot_no: '', dyed_lot_no: '', taken_kgs: 0, rcvd_kgs: 0,
+      short_kgs: 0, short_pct: 0, bags: 0, cones: 0, remarks: ''
     }]
   };
 
@@ -159,7 +160,7 @@ export default function DyedYarnReceived() {
           newForm.items = delivery.items.map(item => ({
             ...initialForm.items[0],
             cone_type: item.cone_type || 'Full Cone',
-            delivery_count: item.count || 0,
+            yarn_count: item.count || '',
             our_lot_no: item.our_lot_no || '',
             color: item.color || '',
             taken_kgs: item.total_kgs || 0,
@@ -179,7 +180,7 @@ export default function DyedYarnReceived() {
   const updateItem = (index, field, value) => {
     const newItems = [...form.items];
     let val = value;
-    if (['delivery_count', 'received_count', 'taken_kgs', 'bags', 'cones', 'rcvd_kgs', 'short_kgs', 'short_pct'].includes(field)) {
+    if (['taken_kgs', 'bags', 'cones', 'rcvd_kgs', 'short_kgs', 'short_pct'].includes(field)) {
       val = parseFloat(value) || 0;
     }
     newItems[index][field] = val;
@@ -438,13 +439,13 @@ export default function DyedYarnReceived() {
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
               
               {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Top Section Fields */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
                     <div className="form-group"><label>Inv No</label><input className="form-control" name="inv_no" value={form.inv_no} onChange={handleChange} disabled={editingId != null} /></div>
                     <div className="form-group"><label>Inv Date</label><input type="date" className="form-control" name="inv_date" value={form.inv_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Received Type</label>
@@ -475,7 +476,16 @@ export default function DyedYarnReceived() {
                       </select>
                     </div>
                     <div className="form-group"><label>Party DC No.</label><input className="form-control" name="party_dc_no" value={form.party_dc_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'item_no')} /></div>
+                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'cone_type')} /></div>
+
+                    <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>LR No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Received By</label><input className="form-control" name="received_by" value={form.received_by} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Received Time</label><input type="time" className="form-control" name="received_time" value={form.received_time} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Godown / Store Location</label><input className="form-control" name="godown" value={form.godown} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
 
                   {/* Section 2: Table Section Fields */}
@@ -487,8 +497,8 @@ export default function DyedYarnReceived() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>S.No</th><th>Cone Type</th><th>Dely Count</th><th>Rcvd Count</th><th>Our Lot No.</th><th>Color</th>
-                          <th>Taken Kgs</th><th>Dyed Lot No.</th><th>Bags</th><th>Cones</th><th>Rcvd Kgs</th><th>Short Kgs</th><th>Short %</th><th>X</th>
+                          <th>S.No</th><th>Cone Type</th><th>Yarn Count</th><th>Color</th><th>Shade No</th><th>Our Lot No</th>
+                          <th>Dyed Lot No</th><th>Taken Kgs</th><th>Received Kgs</th><th>Short Kgs</th><th>Short %</th><th>Bags</th><th>Cones</th><th>Remarks</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -500,17 +510,18 @@ export default function DyedYarnReceived() {
                                 <option>Full Cone</option><option>Half Cone</option>
                               </select>
                             </td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.delivery_count} onChange={e => updateItem(idx, 'delivery_count', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.received_count} onChange={e => updateItem(idx, 'received_count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.taken_kgs} onChange={e => updateItem(idx, 'taken_kgs', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.dyed_lot_no} onChange={e => updateItem(idx, 'dyed_lot_no', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.taken_kgs} onChange={e => updateItem(idx, 'taken_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rcvd_kgs} onChange={e => updateItem(idx, 'rcvd_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.short_kgs} onChange={e => updateItem(idx, 'short_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.short_pct} onChange={e => updateItem(idx, 'short_pct', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
                             <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
                         ))}
@@ -529,8 +540,8 @@ export default function DyedYarnReceived() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>S.No</th><th>Cone Type</th><th>Dely Count</th><th>Rcvd Count</th><th>Our Lot No.</th><th>Color</th>
-                          <th>Taken Kgs</th><th>Dyed Lot No.</th><th>Bags</th><th>Cones</th><th>Rcvd Kgs</th><th>Short Kgs</th><th>Short %</th><th>X</th>
+                          <th>S.No</th><th>Cone Type</th><th>Yarn Count</th><th>Color</th><th>Shade No</th><th>Our Lot No</th>
+                          <th>Dyed Lot No</th><th>Taken Kgs</th><th>Received Kgs</th><th>Short Kgs</th><th>Short %</th><th>Bags</th><th>Cones</th><th>Remarks</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -542,17 +553,18 @@ export default function DyedYarnReceived() {
                                 <option>Full Cone</option><option>Half Cone</option>
                               </select>
                             </td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.delivery_count} onChange={e => updateItem(idx, 'delivery_count', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.received_count} onChange={e => updateItem(idx, 'received_count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.taken_kgs} onChange={e => updateItem(idx, 'taken_kgs', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.dyed_lot_no} onChange={e => updateItem(idx, 'dyed_lot_no', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.taken_kgs} onChange={e => updateItem(idx, 'taken_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rcvd_kgs} onChange={e => updateItem(idx, 'rcvd_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.short_kgs} onChange={e => updateItem(idx, 'short_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.short_pct} onChange={e => updateItem(idx, 'short_pct', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
                             <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
                         ))}

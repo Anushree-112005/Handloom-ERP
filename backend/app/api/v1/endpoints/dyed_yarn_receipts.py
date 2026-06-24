@@ -12,8 +12,8 @@ router = APIRouter(prefix="/dyed-yarn-receipts", tags=["Dyed Yarn Receipts"])
 
 class DyedYarnReceivedItemBase(BaseModel):
     cone_type: Optional[str] = None
-    delivery_count: Optional[float] = 0
-    received_count: Optional[float] = 0
+    yarn_count: Optional[str] = None
+    shade_no: Optional[str] = None
     our_lot_no: Optional[str] = None
     color: Optional[str] = None
     taken_kgs: Optional[float] = 0
@@ -23,6 +23,7 @@ class DyedYarnReceivedItemBase(BaseModel):
     rcvd_kgs: Optional[float] = 0
     short_kgs: Optional[float] = 0
     short_pct: Optional[float] = 0
+    remarks: Optional[str] = None
 
 class DyedYarnReceivedCreate(BaseModel):
     inv_no: Optional[str] = None
@@ -36,6 +37,13 @@ class DyedYarnReceivedCreate(BaseModel):
     our_dc_no: Optional[str] = None
     party_dc_no: Optional[str] = None
     dc_date: Optional[date] = None
+    vehicle_no: Optional[str] = None
+    transport: Optional[str] = None
+    driver_name: Optional[str] = None
+    lr_no: Optional[str] = None
+    received_by: Optional[str] = None
+    received_time: Optional[str] = None
+    godown: Optional[str] = None
     remarks: Optional[str] = None
     status: Optional[str] = "Received"
     items: List[DyedYarnReceivedItemBase] = []
@@ -54,6 +62,13 @@ async def create_dyed_yarn_receipt(receipt_in: DyedYarnReceivedCreate, db: Async
         our_dc_no=receipt_in.our_dc_no,
         party_dc_no=receipt_in.party_dc_no,
         dc_date=receipt_in.dc_date,
+        vehicle_no=receipt_in.vehicle_no,
+        transport=receipt_in.transport,
+        driver_name=receipt_in.driver_name,
+        lr_no=receipt_in.lr_no,
+        received_by=receipt_in.received_by,
+        received_time=receipt_in.received_time,
+        godown=receipt_in.godown,
         remarks=receipt_in.remarks,
         status=receipt_in.status
     )

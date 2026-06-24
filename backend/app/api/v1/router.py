@@ -1,6 +1,6 @@
 """Aggregated API router — includes all module endpoints."""
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet
+from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet, twisting_doubling_po, yarn_dyeing_po, fabric_dyeing_po, warping_sizing_po, weaving_po, processing_po, cloth_purchase_po
 
 
 api_router = APIRouter()
@@ -35,6 +35,13 @@ api_router.include_router(warp_beam_receipts.router)
 api_router.include_router(warp_deliveries.router)
 api_router.include_router(sub_masters.router)
 api_router.include_router(fleet.router)
+api_router.include_router(twisting_doubling_po.router, prefix="/twisting-doubling-po", tags=["Twisting Doubling PO"])
+api_router.include_router(yarn_dyeing_po.router, prefix="/yarn-dyeing-po", tags=["Yarn Dyeing PO"])
+api_router.include_router(fabric_dyeing_po.router, prefix="/fabric-dyeing-po", tags=["Fabric Dyeing PO"])
+api_router.include_router(warping_sizing_po.router, prefix="/warping-sizing-po", tags=["Warping Sizing PO"])
+api_router.include_router(weaving_po.router, prefix="/weaving-po", tags=["Weaving PO"])
+api_router.include_router(processing_po.router, prefix="/processing-po", tags=["Processing PO"])
+api_router.include_router(cloth_purchase_po.router, prefix="/cloth-purchase-po", tags=["Cloth Purchase PO"])
 
 from app.api.v1.endpoints import work_order_transactions
 api_router.include_router(work_order_transactions.router)
@@ -60,5 +67,8 @@ from app.modules.stationary.router import router as stationary_router
 api_router.include_router(hr_router)
 api_router.include_router(fleet_router)
 api_router.include_router(stationary_router)
+
+from app.api.v1.endpoints import generic_po
+api_router.include_router(generic_po.router)
 
 
