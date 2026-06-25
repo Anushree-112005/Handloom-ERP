@@ -10,59 +10,55 @@ from app.models.processing_po import ProcessingPO, ProcessingPOItem
 router = APIRouter()
 
 class ProcessingPOItemCreate(BaseModel):
-    fabric_code: Optional[str] = None
-    fabric_name: Optional[str] = None
-    fabric_type: Optional[str] = None
     design_no: Optional[str] = None
-    gsm: Optional[str] = None
-    width: Optional[str] = None
-    color: Optional[str] = None
-    batch_no: Optional[str] = None
-    lot_no: Optional[str] = None
-    uom: Optional[str] = "MTRS"
-    qty: Optional[float] = 0
+    ibpo_no: Optional[str] = None
+    fabric_construction: Optional[str] = None
+    colour_process: Optional[str] = None
+    mtr: Optional[float] = 0
+    kgs: Optional[float] = 0
     rate: Optional[float] = 0
     amount: Optional[float] = 0
 
 class ProcessingPOCreate(BaseModel):
-    po_no: str
+    po_s_no: Optional[str] = None
     po_date: date
-    supplier_processing_unit: Optional[str] = None
-    supplier_code: Optional[str] = None
+    party_name: Optional[str] = None
+    po_no: str
     delivery_date: Optional[date] = None
-    payment_terms: Optional[str] = None
-    buyer_name: Optional[str] = None
+    
+    merchandiser: Optional[str] = None
+    merchandiser_ext: Optional[str] = None
+    fob_point: Optional[str] = None
+    glm: Optional[str] = None
+    
+    process_sequence: Optional[str] = None
+    process_sequence_ext: Optional[str] = None
+    grey_rate: Optional[float] = 0
+    
+    order_type: Optional[str] = None
+    order_type_ext: Optional[str] = None
+    
     status: Optional[str] = "Active"
-    remarks: Optional[str] = None
 
-    indent_no: Optional[str] = None
-    sales_order_no: Optional[str] = None
-    production_order_no: Optional[str] = None
-    buyer_order_no: Optional[str] = None
-    department: Optional[str] = None
-
-    taxable_value: Optional[float] = 0
-    processing_charge: Optional[float] = 0
-    packing_charge: Optional[float] = 0
-    loading_charge: Optional[float] = 0
-    unloading_charge: Optional[float] = 0
-    transport_charge: Optional[float] = 0
-    other_charges: Optional[float] = 0
-    cgst_pct: Optional[float] = 0
-    cgst_amount: Optional[float] = 0
-    sgst_pct: Optional[float] = 0
-    sgst_amount: Optional[float] = 0
-    igst_pct: Optional[float] = 0
-    igst_amount: Optional[float] = 0
+    total_mtr: Optional[float] = 0
+    gross_amt: Optional[float] = 0
+    
+    tax_type: Optional[str] = None
+    cgst: Optional[float] = 0
+    sgst: Optional[float] = 0
+    igst: Optional[float] = 0
+    total_gst: Optional[float] = 0
+    
+    payment: Optional[str] = None
+    packing: Optional[str] = None
+    ship_pack_chg: Optional[float] = 0
+    add_other: Optional[float] = 0
+    tax_value: Optional[float] = 0
+    
+    delivery_instruction: Optional[str] = None
     round_off: Optional[float] = 0
     net_amount: Optional[float] = 0
-
-    delivery_location: Optional[str] = None
-    dispatch_mode: Optional[str] = None
-    transport_name: Optional[str] = None
-    vehicle_no: Optional[str] = None
-    delivery_instructions: Optional[str] = None
-    terms_conditions: List[str] = []
+    remarks: Optional[str] = None
 
     items: List[ProcessingPOItemCreate] = []
 
@@ -74,41 +70,37 @@ async def get_processing_pos(db: Session = Depends(get_db)):
 @router.post("/")
 async def create_processing_po(data: ProcessingPOCreate, db: Session = Depends(get_db)):
     new_po = ProcessingPO(
-        po_no=data.po_no,
+        po_s_no=data.po_s_no,
         po_date=data.po_date,
-        supplier_processing_unit=data.supplier_processing_unit,
-        supplier_code=data.supplier_code,
+        party_name=data.party_name,
+        po_no=data.po_no,
         delivery_date=data.delivery_date,
-        payment_terms=data.payment_terms,
-        buyer_name=data.buyer_name,
+        merchandiser=data.merchandiser,
+        merchandiser_ext=data.merchandiser_ext,
+        fob_point=data.fob_point,
+        glm=data.glm,
+        process_sequence=data.process_sequence,
+        process_sequence_ext=data.process_sequence_ext,
+        grey_rate=data.grey_rate,
+        order_type=data.order_type,
+        order_type_ext=data.order_type_ext,
         status=data.status,
-        remarks=data.remarks,
-        indent_no=data.indent_no,
-        sales_order_no=data.sales_order_no,
-        production_order_no=data.production_order_no,
-        buyer_order_no=data.buyer_order_no,
-        department=data.department,
-        taxable_value=data.taxable_value,
-        processing_charge=data.processing_charge,
-        packing_charge=data.packing_charge,
-        loading_charge=data.loading_charge,
-        unloading_charge=data.unloading_charge,
-        transport_charge=data.transport_charge,
-        other_charges=data.other_charges,
-        cgst_pct=data.cgst_pct,
-        cgst_amount=data.cgst_amount,
-        sgst_pct=data.sgst_pct,
-        sgst_amount=data.sgst_amount,
-        igst_pct=data.igst_pct,
-        igst_amount=data.igst_amount,
+        total_mtr=data.total_mtr,
+        gross_amt=data.gross_amt,
+        tax_type=data.tax_type,
+        cgst=data.cgst,
+        sgst=data.sgst,
+        igst=data.igst,
+        total_gst=data.total_gst,
+        payment=data.payment,
+        packing=data.packing,
+        ship_pack_chg=data.ship_pack_chg,
+        add_other=data.add_other,
+        tax_value=data.tax_value,
+        delivery_instruction=data.delivery_instruction,
         round_off=data.round_off,
         net_amount=data.net_amount,
-        delivery_location=data.delivery_location,
-        dispatch_mode=data.dispatch_mode,
-        transport_name=data.transport_name,
-        vehicle_no=data.vehicle_no,
-        delivery_instructions=data.delivery_instructions,
-        terms_conditions=data.terms_conditions
+        remarks=data.remarks
     )
     db.add(new_po)
     await db.commit()
@@ -127,41 +119,37 @@ async def update_processing_po(id: int, data: ProcessingPOCreate, db: Session = 
     if not po:
         raise HTTPException(status_code=404, detail="PO not found")
         
-    po.po_no = data.po_no
+    po.po_s_no = data.po_s_no
     po.po_date = data.po_date
-    po.supplier_processing_unit = data.supplier_processing_unit
-    po.supplier_code = data.supplier_code
+    po.party_name = data.party_name
+    po.po_no = data.po_no
     po.delivery_date = data.delivery_date
-    po.payment_terms = data.payment_terms
-    po.buyer_name = data.buyer_name
+    po.merchandiser = data.merchandiser
+    po.merchandiser_ext = data.merchandiser_ext
+    po.fob_point = data.fob_point
+    po.glm = data.glm
+    po.process_sequence = data.process_sequence
+    po.process_sequence_ext = data.process_sequence_ext
+    po.grey_rate = data.grey_rate
+    po.order_type = data.order_type
+    po.order_type_ext = data.order_type_ext
     po.status = data.status
-    po.remarks = data.remarks
-    po.indent_no = data.indent_no
-    po.sales_order_no = data.sales_order_no
-    po.production_order_no = data.production_order_no
-    po.buyer_order_no = data.buyer_order_no
-    po.department = data.department
-    po.taxable_value = data.taxable_value
-    po.processing_charge = data.processing_charge
-    po.packing_charge = data.packing_charge
-    po.loading_charge = data.loading_charge
-    po.unloading_charge = data.unloading_charge
-    po.transport_charge = data.transport_charge
-    po.other_charges = data.other_charges
-    po.cgst_pct = data.cgst_pct
-    po.cgst_amount = data.cgst_amount
-    po.sgst_pct = data.sgst_pct
-    po.sgst_amount = data.sgst_amount
-    po.igst_pct = data.igst_pct
-    po.igst_amount = data.igst_amount
+    po.total_mtr = data.total_mtr
+    po.gross_amt = data.gross_amt
+    po.tax_type = data.tax_type
+    po.cgst = data.cgst
+    po.sgst = data.sgst
+    po.igst = data.igst
+    po.total_gst = data.total_gst
+    po.payment = data.payment
+    po.packing = data.packing
+    po.ship_pack_chg = data.ship_pack_chg
+    po.add_other = data.add_other
+    po.tax_value = data.tax_value
+    po.delivery_instruction = data.delivery_instruction
     po.round_off = data.round_off
     po.net_amount = data.net_amount
-    po.delivery_location = data.delivery_location
-    po.dispatch_mode = data.dispatch_mode
-    po.transport_name = data.transport_name
-    po.vehicle_no = data.vehicle_no
-    po.delivery_instructions = data.delivery_instructions
-    po.terms_conditions = data.terms_conditions
+    po.remarks = data.remarks
 
     await db.execute(ProcessingPOItem.__table__.delete().where(ProcessingPOItem.po_id == id))
     

@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table } from 'lucide-react';
 import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function FabricDyeingPO() {
   const title = 'Fabric Dyeing PO';
@@ -14,7 +15,10 @@ export default function FabricDyeingPO() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState('info');
+  const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   
   const initialForm = {
     po_no: '',
@@ -174,16 +178,19 @@ export default function FabricDyeingPO() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
+      const payload = { ...form };
+      if (!payload.delivery_date) payload.delivery_date = null;
+
       if (form.id) {
-        await fabricDyeingPOAPI.update(form.id, form);
+        await fabricDyeingPOAPI.update(form.id, payload);
       } else {
-        await fabricDyeingPOAPI.create(form);
+        await fabricDyeingPOAPI.create(payload);
       }
       setShowForm(false);
       setForm(initialForm);
       loadData();
     } catch (err) {
-      alert("Error saving order: " + (err.response?.data?.detail || err.message));
+      alert("Error saving order: " + (err.response?.data?.detail ? JSON.stringify(err.response.data.detail) : err.message));
     }
   };
 
@@ -235,13 +242,28 @@ export default function FabricDyeingPO() {
   };
 
   const filteredOrders = orders.filter(o => {
-    return (searchTerm === '' || o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) || o.supplier_dyeing_unit?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-           (statusFilter === 'All Status' || o.status === statusFilter);
+    const matchesSearch = searchTerm === '' ||
+      o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.supplier_dyeing_unit?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const matchesStatus = statusFilter === 'All Status' || o.status === statusFilter;
+    
+    let matchesDate = true;
+    if (o.po_date) {
+      const entryDate = new Date(o.po_date);
+      if (fromDate) matchesDate = matchesDate && entryDate >= new Date(fromDate);
+      if (toDate) {
+        const tDate = new Date(toDate);
+        tDate.setHours(23, 59, 59);
+        matchesDate = matchesDate && entryDate <= tDate;
+      }
+    }
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   return (
     <div className="animate-fade">
-      {!showForm ? (
+      {!showForm && !selectedViewOrder ? (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
@@ -290,26 +312,31 @@ export default function FabricDyeingPO() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: 350 }}>
+          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
               <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input type="text" className="form-control" placeholder="Search PO or Supplier..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option>All Status</option><option>Active</option><option>Closed</option>
-            </select>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <select className="form-control" style={{ width: 130, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option>All Status</option><option>Active</option><option>Closed</option>
+              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span><input type="date" className="form-control" style={{ width: 130, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} /></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span><input type="date" className="form-control" style={{ width: 130, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} /></div>
+            </div>
           </div>
 
           <div className="card" style={{ overflowX: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>PO No</th>
-                  <th>Date</th>
-                  <th>Supplier / Dyeing Unit</th>
-                  <th>Total Amount</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>PO NO</th>
+                  <th>DATE</th>
+                  <th>SUPPLIER / DYEING UNIT</th>
+                  <th>TOTAL AMOUNT</th>
+                  <th>STATUS</th>
+                  <th style={{ textAlign: 'center' }}>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -318,18 +345,28 @@ export default function FabricDyeingPO() {
                 ) : (
                   filteredOrders.map(order => (
                     <tr key={order.id}>
-                      <td style={{ fontWeight: 600 }}>{order.po_no}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{order.po_no}</td>
                       <td>{order.po_date}</td>
-                      <td>{order.supplier_dyeing_unit}</td>
-                      <td>₹{order.net_amount?.toFixed(2)}</td>
+                      <td style={{ fontWeight: 500 }}>{order.supplier_dyeing_unit}</td>
+                      <td style={{ fontWeight: 600 }}>₹{order.net_amount?.toFixed(2) || '0.00'}</td>
                       <td>
-                        <span className={`badge ${order.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
-                          {order.status}
+                        <span className={`badge ${order.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>
+                          {order.status === 'Active' ? 'Open' : order.status}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button className="icon-btn" style={{ color: 'var(--primary)' }} onClick={() => handleEdit(order)}><Edit2 size={16} /></button>
-                        <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleDelete(order.id)}><Trash2 size={16} /></button>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={() => setSelectedViewOrder(order)}
+                            title="Full View"
+                          >
+                            <Eye size={14} color="var(--primary)" />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(order)} title="Edit"><Edit2 size={14} /></button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleDelete(order.id)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -338,6 +375,55 @@ export default function FabricDyeingPO() {
             </table>
           </div>
         </>
+      ) : selectedViewOrder ? (
+          <CustomPODocumentPreview
+            isOpen={!!selectedViewOrder}
+            onClose={() => setSelectedViewOrder(null)}
+            title="FABRIC DYEING PO"
+            poNumber={selectedViewOrder?.po_no}
+            poDate={selectedViewOrder?.po_date}
+            deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
+            supplierName={selectedViewOrder?.supplier_dyeing_unit}
+            agentName=""
+            designNo={selectedViewOrder?.sales_order_no || '-'}
+            commission="0.00"
+            terms={selectedViewOrder?.terms_conditions || []}
+            taxes={{
+              cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
+              sgst_pct: selectedViewOrder?.sgst_pct || 0, sgst_amt: selectedViewOrder?.sgst_amount || 0,
+              igst_pct: selectedViewOrder?.igst_pct || 0, igst_amt: selectedViewOrder?.igst_amount || 0
+            }}
+            freightChg={parseFloat(selectedViewOrder?.transport_charge || 0) + parseFloat(selectedViewOrder?.loading_charge || 0) + parseFloat(selectedViewOrder?.unloading_charge || 0)}
+            insuranceChg={parseFloat(selectedViewOrder?.packing_charge || 0) + parseFloat(selectedViewOrder?.other_charges || 0)}
+            netAmount={selectedViewOrder?.net_amount || 0}
+            logistics={{
+              freight_type: "-",
+              transport: "-",
+              delivery_date: selectedViewOrder?.delivery_date || "-",
+              payment_terms: selectedViewOrder?.payment_terms || "-"
+            }}
+            tableHeaders={[
+              { label: 'Fabric Name', align: 'left', width: '25%' },
+              { label: 'Design No', align: 'left', width: '15%' },
+              { label: 'GSM / Width', align: 'center', width: '15%' },
+              { label: 'Color / Batch', align: 'left', width: '15%' },
+              { label: 'Qty', align: 'right', width: '10%' },
+              { label: 'Rate', align: 'right', width: '10%' },
+              { label: 'Amount', align: 'right', width: '10%' }
+            ]}
+            tableRows={(selectedViewOrder?.items || []).map(i => ({
+              rowData: [
+                i.fabric_name || '-',
+                i.design_no || '-',
+                `${i.gsm || '-'} / ${i.width || '-'}`,
+                `${i.color || '-'} / ${i.batch_no || '-'}`,
+                `${parseFloat(i.qty || 0).toFixed(2)} ${i.uom || ''}`,
+                parseFloat(i.rate || 0).toFixed(2),
+                parseFloat(i.amount || 0).toFixed(2)
+              ],
+              rowNote: i.fabric_code ? `Fabric Code: ${i.fabric_code}` : null
+            }))}
+          />
       ) : (
         <div className="card">
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>

@@ -419,6 +419,12 @@ export default function YarnPurchaseOrder() {
     try {
       const payload = { ...form };
       if (!payload.dispatch_date) payload.dispatch_date = null;
+      if (payload.indent_details) {
+        payload.indent_details = payload.indent_details.map(item => ({
+          ...item,
+          delivery_date: item.delivery_date ? item.delivery_date : null
+        }));
+      }
 
       if (editingId) {
         await yarnPurchaseOrderAPI.update(editingId, payload);
@@ -432,7 +438,7 @@ export default function YarnPurchaseOrder() {
       setCustomCountSupplierIdx(null);
       setCustomCountSupplierVal('');
     } catch (err) {
-      alert(err.response?.data?.detail || 'Error saving order');
+      alert("Error saving order: " + (err.response?.data?.detail ? JSON.stringify(err.response.data.detail) : err.message));
       console.error(err);
     }
   };
@@ -481,7 +487,6 @@ export default function YarnPurchaseOrder() {
     await handleOpenForm(order, true);
   };
 
-  const handleChange = (e) => {
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -498,6 +503,8 @@ export default function YarnPurchaseOrder() {
       }, 100);
     }
   };
+
+  const handleChange = (e) => {
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;

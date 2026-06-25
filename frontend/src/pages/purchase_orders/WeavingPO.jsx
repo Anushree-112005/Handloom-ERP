@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Download, Table } from 'lucide-react';
 import { weavingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function WeavingPO() {
   const title = 'Weaving PO';
@@ -14,7 +15,10 @@ export default function WeavingPO() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState('info');
+  const [selectedViewOrder, setSelectedViewOrder] = useState(null);
   
   const initialForm = {
     po_no: '',
@@ -173,16 +177,19 @@ export default function WeavingPO() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
+      const payload = { ...form };
+      if (!payload.delivery_date) payload.delivery_date = null;
+
       if (form.id) {
-        await weavingPOAPI.update(form.id, form);
+        await weavingPOAPI.update(form.id, payload);
       } else {
-        await weavingPOAPI.create(form);
+        await weavingPOAPI.create(payload);
       }
       setShowForm(false);
       setForm(initialForm);
       loadData();
     } catch (err) {
-      alert("Error saving order: " + (err.response?.data?.detail || err.message));
+      alert("Error saving order: " + (err.response?.data?.detail ? JSON.stringify(err.response.data.detail) : err.message));
     }
   };
 
@@ -234,13 +241,28 @@ export default function WeavingPO() {
   };
 
   const filteredOrders = orders.filter(o => {
-    return (searchTerm === '' || o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) || o.supplier_weaver?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-           (statusFilter === 'All Status' || o.status === statusFilter);
+    const matchesSearch = searchTerm === '' ||
+      o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.supplier_weaver?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const matchesStatus = statusFilter === 'All Status' || o.status === statusFilter;
+    
+    let matchesDate = true;
+    if (o.po_date) {
+      const entryDate = new Date(o.po_date);
+      if (fromDate) matchesDate = matchesDate && entryDate >= new Date(fromDate);
+      if (toDate) {
+        const tDate = new Date(toDate);
+        tDate.setHours(23, 59, 59);
+        matchesDate = matchesDate && entryDate <= tDate;
+      }
+    }
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   return (
     <div className="animate-fade">
-      {!showForm ? (
+      {!showForm && !selectedViewOrder ? (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
@@ -289,26 +311,31 @@ export default function WeavingPO() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: 350 }}>
+          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 250, maxWidth: 350 }}>
               <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input type="text" className="form-control" placeholder="Search PO or Weaver..." style={{ paddingLeft: 38, width: '100%', margin: 0 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <select className="form-control" style={{ width: 150, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option>All Status</option><option>Active</option><option>Closed</option>
-            </select>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <select className="form-control" style={{ width: 130, margin: 0 }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option>All Status</option><option>Active</option><option>Closed</option>
+              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span><input type="date" className="form-control" style={{ width: 130, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} /></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>To:</span><input type="date" className="form-control" style={{ width: 130, margin: 0 }} value={toDate} onChange={e => setToDate(e.target.value)} /></div>
+            </div>
           </div>
 
           <div className="card" style={{ overflowX: 'auto' }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>PO No</th>
-                  <th>Date</th>
-                  <th>Supplier / Weaver</th>
-                  <th>Total Amount</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
+                  <th>PO NO</th>
+                  <th>DATE</th>
+                  <th>SUPPLIER / WEAVER</th>
+                  <th>TOTAL AMOUNT</th>
+                  <th>STATUS</th>
+                  <th style={{ textAlign: 'center' }}>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -317,18 +344,28 @@ export default function WeavingPO() {
                 ) : (
                   filteredOrders.map(order => (
                     <tr key={order.id}>
-                      <td style={{ fontWeight: 600 }}>{order.po_no}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{order.po_no}</td>
                       <td>{order.po_date}</td>
-                      <td>{order.supplier_weaver}</td>
-                      <td>₹{order.net_amount?.toFixed(2)}</td>
+                      <td style={{ fontWeight: 500 }}>{order.supplier_weaver}</td>
+                      <td style={{ fontWeight: 600 }}>₹{order.net_amount?.toFixed(2) || '0.00'}</td>
                       <td>
-                        <span className={`badge ${order.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
-                          {order.status}
+                        <span className={`badge ${order.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>
+                          {order.status === 'Active' ? 'Open' : order.status}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button className="icon-btn" style={{ color: 'var(--primary)' }} onClick={() => handleEdit(order)}><Edit2 size={16} /></button>
-                        <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleDelete(order.id)}><Trash2 size={16} /></button>
+                      <td>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={() => setSelectedViewOrder(order)}
+                            title="Full View"
+                          >
+                            <Eye size={14} color="var(--primary)" />
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(order)} title="Edit"><Edit2 size={14} /></button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleDelete(order.id)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -337,6 +374,53 @@ export default function WeavingPO() {
             </table>
           </div>
         </>
+      ) : selectedViewOrder ? (
+          <CustomPODocumentPreview
+            isOpen={!!selectedViewOrder}
+            onClose={() => setSelectedViewOrder(null)}
+            title="WEAVING PURCHASE ORDER"
+            poNumber={selectedViewOrder?.po_no}
+            poDate={selectedViewOrder?.po_date}
+            deliveryAt={selectedViewOrder?.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
+            supplierName={selectedViewOrder?.supplier_weaver}
+            agentName=""
+            designNo={selectedViewOrder?.against_ref || '-'}
+            commission="0.00"
+            terms={selectedViewOrder?.terms_conditions || []}
+            taxes={{
+              cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
+              sgst_pct: selectedViewOrder?.sgst_pct || 0, sgst_amt: selectedViewOrder?.sgst_amount || 0,
+              igst_pct: selectedViewOrder?.igst_pct || 0, igst_amt: selectedViewOrder?.igst_amount || 0
+            }}
+            freightChg={parseFloat(selectedViewOrder?.transport_charge || 0) + parseFloat(selectedViewOrder?.loading_charge || 0) + parseFloat(selectedViewOrder?.unloading_charge || 0)}
+            insuranceChg={parseFloat(selectedViewOrder?.packing_charge || 0) + parseFloat(selectedViewOrder?.other_charges || 0)}
+            netAmount={selectedViewOrder?.net_amount || 0}
+            logistics={{
+              freight_type: "-",
+              transport: selectedViewOrder?.dispatch_through || "-",
+              delivery_date: "-",
+              payment_terms: selectedViewOrder?.payment_terms || "-"
+            }}
+            tableHeaders={[
+              { label: 'Fabric Name', align: 'left', width: '30%' },
+              { label: 'Color', align: 'left', width: '15%' },
+              { label: 'GSM / Width', align: 'center', width: '15%' },
+              { label: 'Qty Mtrs', align: 'right', width: '15%' },
+              { label: 'Rate/Mtr', align: 'right', width: '10%' },
+              { label: 'Amount', align: 'right', width: '15%' }
+            ]}
+            tableRows={(selectedViewOrder?.items || []).map(i => ({
+              rowData: [
+                i.fabric_name || '-',
+                i.color || '-',
+                `${i.gsm || '-'} / ${i.width || '-'}`,
+                parseFloat(i.qty_mtrs || 0).toFixed(2),
+                parseFloat(i.rate_per_mtr || 0).toFixed(2),
+                parseFloat(i.amount || 0).toFixed(2)
+              ],
+              rowNote: i.fabric_code ? `Fabric Code: ${i.fabric_code} | Design No: ${i.design_no || '-'}` : null
+            }))}
+          />
       ) : (
         <div className="card">
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
