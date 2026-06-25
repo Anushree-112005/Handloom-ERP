@@ -149,12 +149,13 @@ export default function GenericPurchaseOrder({ title, description, icon: Icon = 
     e.preventDefault();
     try {
       const payload = { ...form, po_type: moduleType };
+      if (!payload.delivery_date) payload.delivery_date = null;
       await genericPurchaseOrderAPI.create(payload);
       setShowForm(false);
       setForm(initialForm);
       loadData();
     } catch (err) {
-      alert("Error saving order: " + (err.response?.data?.detail || err.message));
+      alert("Error saving order: " + (err.response?.data?.detail ? JSON.stringify(err.response.data.detail) : err.message));
     }
   };
 

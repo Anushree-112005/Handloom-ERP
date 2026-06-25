@@ -14,17 +14,18 @@ router = APIRouter()
 # --- Schemas ---
 
 class YarnDyeingPOItemBase(BaseModel):
-    yarn_code: Optional[str] = None
-    yarn_name: Optional[str] = None
+    sp_no: Optional[str] = None
+    dsn_count: Optional[str] = None
     yarn_count: Optional[str] = None
-    yarn_type: Optional[str] = None
-    mill_name: Optional[str] = None
-    lot_no: Optional[str] = None
-    shade_name: Optional[str] = None
-    shade_code: Optional[str] = None
+    color: Optional[str] = None
     uom: Optional[str] = 'KGS'
-    qty_kg: Optional[float] = 0
-    rate_per_kg: Optional[float] = 0
+    warp_qty: Optional[float] = 0
+    weft_qty: Optional[float] = 0
+    tot_qty: Optional[float] = 0
+    tole_pct: Optional[float] = 0
+    wrp_order: Optional[float] = 0
+    wft_order: Optional[float] = 0
+    rate: Optional[float] = 0
     amount: Optional[float] = 0
 
 class YarnDyeingPOItemCreate(YarnDyeingPOItemBase):
@@ -47,11 +48,25 @@ class YarnDyeingPOCreate(BaseModel):
     status: Optional[str] = "Active"
     remarks: Optional[str] = None
 
-    indent_no: Optional[str] = None
-    sales_order_no: Optional[str] = None
-    production_order_no: Optional[str] = None
-    buyer_order_no: Optional[str] = None
-    department: Optional[str] = None
+    ref_no_1: Optional[str] = None
+    ref_no_2: Optional[str] = None
+    order_type: Optional[str] = None
+    azo_free: Optional[str] = None
+    apeo_npeo: Optional[str] = None
+    fastness_dry: Optional[str] = None
+    fastness_wet: Optional[str] = None
+    color_fastness: Optional[str] = None
+    shade_change: Optional[str] = None
+    deschargability: Optional[str] = None
+    pcp_free: Optional[str] = None
+    staining_on_cotton: Optional[str] = None
+    design_no: Optional[str] = None
+
+    tax_type: Optional[str] = None
+    certificate_type: Optional[str] = None
+    gross_amt: Optional[float] = 0
+    design_wise_details: Optional[str] = None
+    color_wise_details: Optional[str] = None
 
     taxable_value: Optional[float] = 0
     dyeing_charge: Optional[float] = 0
@@ -102,11 +117,25 @@ async def create_yarn_dyeing_po(data: YarnDyeingPOCreate, db: AsyncSession = Dep
         status=data.status,
         remarks=data.remarks,
 
-        indent_no=data.indent_no,
-        sales_order_no=data.sales_order_no,
-        production_order_no=data.production_order_no,
-        buyer_order_no=data.buyer_order_no,
-        department=data.department,
+        ref_no_1=data.ref_no_1,
+        ref_no_2=data.ref_no_2,
+        order_type=data.order_type,
+        azo_free=data.azo_free,
+        apeo_npeo=data.apeo_npeo,
+        fastness_dry=data.fastness_dry,
+        fastness_wet=data.fastness_wet,
+        color_fastness=data.color_fastness,
+        shade_change=data.shade_change,
+        deschargability=data.deschargability,
+        pcp_free=data.pcp_free,
+        staining_on_cotton=data.staining_on_cotton,
+        design_no=data.design_no,
+
+        tax_type=data.tax_type,
+        certificate_type=data.certificate_type,
+        gross_amt=data.gross_amt,
+        design_wise_details=data.design_wise_details,
+        color_wise_details=data.color_wise_details,
 
         taxable_value=data.taxable_value,
         dyeing_charge=data.dyeing_charge,

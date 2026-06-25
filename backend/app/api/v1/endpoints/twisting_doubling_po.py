@@ -14,13 +14,15 @@ router = APIRouter()
 # --- Schemas ---
 
 class TwistingDoublingPOItemBase(BaseModel):
-    yarn_code: Optional[str] = None
-    yarn_name: Optional[str] = None
+    fibre_group: Optional[str] = None
     yarn_count: Optional[str] = None
-    lot_no: Optional[str] = None
-    shade: Optional[str] = None
-    qty_kg: Optional[float] = 0
-    rate_per_kg: Optional[float] = 0
+    mill_name: Optional[str] = None
+    design_no: Optional[str] = None
+    colour: Optional[str] = None
+    conversion_count: Optional[str] = None
+    order_kgs: Optional[float] = 0
+    job_work_charge: Optional[float] = 0
+    tolerance_pct: Optional[float] = 0
     amount: Optional[float] = 0
 
 class TwistingDoublingPOItemCreate(TwistingDoublingPOItemBase):
@@ -43,19 +45,19 @@ class TwistingDoublingPOCreate(BaseModel):
     status: Optional[str] = "Active"
     remarks: Optional[str] = None
 
-    indent_no: Optional[str] = None
-    sales_order_no: Optional[str] = None
-    production_order_no: Optional[str] = None
-    department: Optional[str] = None
+    ref_no_1: Optional[str] = None
+    entry_against: Optional[str] = None
+    packing_type: Optional[str] = None
 
-    taxable_value: Optional[float] = 0
+    tax_type: Optional[str] = None
+    taxable_amount: Optional[float] = 0
+    total_order_kgs: Optional[float] = 0
     cgst_pct: Optional[float] = 0
     cgst_amount: Optional[float] = 0
     sgst_pct: Optional[float] = 0
     sgst_amount: Optional[float] = 0
     igst_pct: Optional[float] = 0
     igst_amount: Optional[float] = 0
-    round_off: Optional[float] = 0
     net_amount: Optional[float] = 0
 
     delivery_location: Optional[str] = None
@@ -94,19 +96,19 @@ async def create_twisting_doubling_po(data: TwistingDoublingPOCreate, db: AsyncS
         status=data.status,
         remarks=data.remarks,
 
-        indent_no=data.indent_no,
-        sales_order_no=data.sales_order_no,
-        production_order_no=data.production_order_no,
-        department=data.department,
+        ref_no_1=data.ref_no_1,
+        entry_against=data.entry_against,
+        packing_type=data.packing_type,
 
-        taxable_value=data.taxable_value,
+        tax_type=data.tax_type,
+        taxable_amount=data.taxable_amount,
+        total_order_kgs=data.total_order_kgs,
         cgst_pct=data.cgst_pct,
         cgst_amount=data.cgst_amount,
         sgst_pct=data.sgst_pct,
         sgst_amount=data.sgst_amount,
         igst_pct=data.igst_pct,
         igst_amount=data.igst_amount,
-        round_off=data.round_off,
         net_amount=data.net_amount,
 
         delivery_location=data.delivery_location,
