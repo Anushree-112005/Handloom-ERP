@@ -797,7 +797,7 @@ export default function DesignEntry() {
   const [viewModalDesign, setViewModalDesign] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [colorMasters, setColorMasters] = useState([]);
   const [yarnCountMasters, setYarnCountMasters] = useState([]);
   const [yarnRows, setYarnRows] = useState([]);
@@ -988,7 +988,7 @@ export default function DesignEntry() {
       if (fileToUpload && savedEntry && savedEntry.id) {
         await designEntryAPI.uploadImage(savedEntry.id, fileToUpload);
       }
-      
+
       setShowForm(false);
       setEditingId(null);
       setForm(initialForm);
@@ -1008,16 +1008,16 @@ export default function DesignEntry() {
     try {
       const { data } = await designEntryAPI.get(entry.id);
       if (data.ds_date) data.ds_date = data.ds_date.substring(0, 10);
-      
+
       let yDetails = [];
       let fdDetails = [];
       try {
         if (data.yarn_details) yDetails = JSON.parse(data.yarn_details);
-      } catch (e) {}
+      } catch (e) { }
       try {
         if (data.fabric_design_details) fdDetails = JSON.parse(data.fabric_design_details);
-      } catch (e) {}
-      
+      } catch (e) { }
+
       setYarnRows(yDetails);
       setFabricDesignRows(fdDetails);
       setImagePreviewUrl(data.image_path || null);
@@ -1143,11 +1143,11 @@ export default function DesignEntry() {
     const matchesSearch = searchTerm === '' ||
       e.ds_ref_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.design_no?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesFabric = fabricFilter === 'All Fabrics' || (e.fabric || 'Cotton') === fabricFilter;
     const matchesWeaving = weavingFilter === 'All Weaves' || (e.weaving || 'Plain') === weavingFilter;
     const matchesType = typeFilter === 'All Types' || (e.design_type || 'Normal') === typeFilter;
-    
+
     let matchesDate = true;
     if (e.ds_date) {
       const entryDate = new Date(e.ds_date);
@@ -1364,7 +1364,7 @@ export default function DesignEntry() {
                     <DetailRow label="Fabric" value={selectedViewEntry.fabric} />
                     <DetailRow label="Weaving" value={selectedViewEntry.weaving} />
                     <DetailRow label="Design Type" value={selectedViewEntry.design_type} />
-                    
+
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Measurements</h4>
                     <DetailRow label="Total Mtr" value={selectedViewEntry.total_mtr} />
                     <DetailRow label="Finish Width" value={selectedViewEntry.finish_width} />
@@ -1372,9 +1372,9 @@ export default function DesignEntry() {
                     {selectedViewEntry.image_path && (
                       <div style={{ marginTop: 12 }}>
                         <h4 style={{ margin: '8px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Design Image</h4>
-                        <img 
-                          src={`http://localhost:8000${selectedViewEntry.image_path}`} 
-                          alt="Design Preview" 
+                        <img
+                          src={`http://localhost:8000${selectedViewEntry.image_path}`}
+                          alt="Design Preview"
                           style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)', marginTop: 4, cursor: 'pointer' }}
                           onClick={() => window.open(`http://localhost:8000${selectedViewEntry.image_path}`, '_blank')}
                         />
@@ -1399,12 +1399,12 @@ export default function DesignEntry() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'basic', label: 'Basic & Buyer Info' }, 
-              { id: 'fabric', label: 'Fabric & Weaving' },
-              { id: 'metrics', label: 'Metrics & Lengths' },
-              { id: 'allowances', label: 'Allowances & Percentages' }
-             ].map(tab => (
-              <button 
+            {[{ id: 'basic', label: 'Basic & Buyer Info' },
+            { id: 'fabric', label: 'Fabric & Weaving' },
+            { id: 'metrics', label: 'Metrics & Lengths' },
+            { id: 'allowances', label: 'Allowances & Percentages' }
+            ].map(tab => (
+              <button
                 key={tab.id} onClick={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
                 type="button"
                 style={{
@@ -1615,8 +1615,8 @@ export default function DesignEntry() {
                             {!isReadOnly && (
                               <tr>
                                 <td>
-                                  <select 
-                                    className="form-control" 
+                                  <select
+                                    className="form-control"
                                     style={{ padding: '4px 6px', margin: 0, minWidth: 70 }}
                                     value={newYarnRow.type}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, type: e.target.value })}
@@ -1626,8 +1626,8 @@ export default function DesignEntry() {
                                   </select>
                                 </td>
                                 <td>
-                                  <select 
-                                    className="form-control" 
+                                  <select
+                                    className="form-control"
                                     style={{ padding: '4px 6px', margin: 0, minWidth: 100 }}
                                     value={newYarnRow.yarn_count}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, yarn_count: e.target.value })}
@@ -1637,9 +1637,9 @@ export default function DesignEntry() {
                                   </select>
                                 </td>
                                 <td>
-                                  <input 
-                                    type="text" 
-                                    className="form-control" 
+                                  <input
+                                    type="text"
+                                    className="form-control"
                                     style={{ padding: '4px 6px', margin: 0 }}
                                     placeholder="Act"
                                     value={newYarnRow.act_count}
@@ -1647,9 +1647,9 @@ export default function DesignEntry() {
                                   />
                                 </td>
                                 <td>
-                                  <input 
-                                    type="text" 
-                                    className="form-control" 
+                                  <input
+                                    type="text"
+                                    className="form-control"
                                     style={{ padding: '4px 6px', margin: 0 }}
                                     placeholder="Ends"
                                     value={newYarnRow.ends}
@@ -1657,9 +1657,9 @@ export default function DesignEntry() {
                                   />
                                 </td>
                                 <td>
-                                  <input 
-                                    type="text" 
-                                    className="form-control" 
+                                  <input
+                                    type="text"
+                                    className="form-control"
                                     style={{ padding: '4px 6px', margin: 0 }}
                                     placeholder="Crimp"
                                     value={newYarnRow.crimp_pct}
@@ -1667,9 +1667,9 @@ export default function DesignEntry() {
                                   />
                                 </td>
                                 <td>
-                                  <button 
-                                    type="button" 
-                                    className="btn btn-primary" 
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary"
                                     style={{ padding: '6px 10px', background: '#10b981', borderColor: '#10b981' }}
                                     onClick={addYarnRow}
                                   >
@@ -1686,22 +1686,22 @@ export default function DesignEntry() {
                 </div>
 
                 {/* Fabric Design Blue Header bar */}
-                <div style={{ 
-                  background: '#1e3a8a', 
-                  color: '#fff', 
-                  padding: '12px 20px', 
-                  borderRadius: '6px 6px 0 0', 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  marginTop: 32 
+                <div style={{
+                  background: '#1e3a8a',
+                  color: '#fff',
+                  padding: '12px 20px',
+                  borderRadius: '6px 6px 0 0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: 32
                 }}>
                   <span style={{ fontWeight: 700, fontSize: 16 }}>Fabric Design</span>
                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <input 
                       type="file" 
                       accept="image/*"
-                      id="fabric-design-file" 
+                      id="fabric-design-file"
                       style={{ display: 'none' }}
                       multiple
                       onChange={(e) => {
@@ -1714,9 +1714,9 @@ export default function DesignEntry() {
                       }}
                       disabled={isReadOnly}
                     />
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary" 
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
                       style={{ padding: '4px 12px', background: '#fff', color: '#1e3a8a', fontWeight: 600 }}
                       onClick={() => document.getElementById('fabric-design-file').click()}
                       disabled={isReadOnly}
@@ -1764,9 +1764,9 @@ export default function DesignEntry() {
                         : (selectedFile ? selectedFile.name : (imagePreviewUrl ? "Design image loaded" : "No file chosen"))}
                     </span>
                     {imagePreviewUrl && (
-                      <button 
-                        type="button" 
-                        className="btn" 
+                      <button
+                        type="button"
+                        className="btn"
                         style={{ padding: '4px 12px', background: '#f59e0b', color: '#fff', fontWeight: 600 }}
                         onClick={() => {
                           window.open(imagePreviewUrl.startsWith('blob:') ? imagePreviewUrl : `http://localhost:8000${imagePreviewUrl}`, '_blank');
@@ -1775,9 +1775,9 @@ export default function DesignEntry() {
                         View Image
                       </button>
                     )}
-                    <button 
-                      type="button" 
-                      className="btn" 
+                    <button
+                      type="button"
+                      className="btn"
                       style={{ padding: '4px 12px', background: '#f59e0b', color: '#fff', fontWeight: 600 }}
                       onClick={() => setShowPatternModal(true)}
                     >
@@ -2027,8 +2027,8 @@ export default function DesignEntry() {
                         <tr>
                           <td>New</td>
                           <td>
-                            <select 
-                              className="form-control" 
+                            <select
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0, minWidth: 70 }}
                               value={newFabricDesignRow.type}
                               onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, type: e.target.value })}
@@ -2038,8 +2038,8 @@ export default function DesignEntry() {
                             </select>
                           </td>
                           <td>
-                            <select 
-                              className="form-control" 
+                            <select
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0, minWidth: 100 }}
                               value={newFabricDesignRow.yarn_count}
                               onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, yarn_count: e.target.value })}
@@ -2049,8 +2049,8 @@ export default function DesignEntry() {
                             </select>
                           </td>
                           <td>
-                            <select 
-                              className="form-control" 
+                            <select
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0, minWidth: 100 }}
                               value={newFabricDesignRow.color}
                               onChange={e => setNewFabricDesignRow({ ...newFabricDesignRow, color: e.target.value })}
@@ -2060,9 +2060,9 @@ export default function DesignEntry() {
                             </select>
                           </td>
                           <td>
-                            <input 
-                              type="number" 
-                              className="form-control" 
+                            <input
+                              type="number"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Threads"
                               value={newFabricDesignRow.threads}
@@ -2070,9 +2070,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="number" 
-                              className="form-control" 
+                            <input
+                              type="number"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Times"
                               value={newFabricDesignRow.times}
@@ -2080,9 +2080,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="text" 
-                              className="form-control" 
+                            <input
+                              type="text"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Line"
                               value={newFabricDesignRow.line}
@@ -2090,9 +2090,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="text" 
-                              className="form-control" 
+                            <input
+                              type="text"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Pick"
                               value={newFabricDesignRow.pick}
@@ -2100,9 +2100,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="text" 
-                              className="form-control" 
+                            <input
+                              type="text"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Drawing"
                               value={newFabricDesignRow.drawing_order}
@@ -2110,9 +2110,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="text" 
-                              className="form-control" 
+                            <input
+                              type="text"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Dents"
                               value={newFabricDesignRow.dents}
@@ -2120,9 +2120,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="text" 
-                              className="form-control" 
+                            <input
+                              type="text"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Line"
                               value={newFabricDesignRow.line_val}
@@ -2130,9 +2130,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <input 
-                              type="text" 
-                              className="form-control" 
+                            <input
+                              type="text"
+                              className="form-control"
                               style={{ padding: '4px 6px', margin: 0 }}
                               placeholder="Ends/Dent"
                               value={newFabricDesignRow.ends_for_dents}
@@ -2140,9 +2140,9 @@ export default function DesignEntry() {
                             />
                           </td>
                           <td>
-                            <button 
-                              type="button" 
-                              className="btn btn-primary" 
+                            <button
+                              type="button"
+                              className="btn btn-primary"
                               style={{ padding: '6px 10px', background: '#10b981', borderColor: '#10b981' }}
                               onClick={addFabricDesignRow}
                             >
