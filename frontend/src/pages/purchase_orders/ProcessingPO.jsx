@@ -33,6 +33,7 @@ export default function ProcessingPO() {
     buyer_order_no: '',
     department: '',
 
+    tax_type: 'GST',
     taxable_value: 0,
     processing_charge: 0,
     packing_charge: 0,
@@ -40,9 +41,9 @@ export default function ProcessingPO() {
     unloading_charge: 0,
     transport_charge: 0,
     other_charges: 0,
-    cgst_pct: 0,
+    cgst_pct: 2.5,
     cgst_amount: 0,
-    sgst_pct: 0,
+    sgst_pct: 2.5,
     sgst_amount: 0,
     igst_pct: 0,
     igst_amount: 0,
@@ -116,14 +117,21 @@ export default function ProcessingPO() {
     const otherCharges = parseFloat(updatedForm.other_charges) || 0;
 
     const taxableValue = itemsAmount + processingCharge + packingCharge + loadingCharge + unloadingCharge + transportCharge + otherCharges;
-    
+    const taxType = updatedForm.tax_type || 'GST';
     const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
     const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
     const igstPct = parseFloat(updatedForm.igst_pct) || 0;
 
-    const cgstAmount = parseFloat(((cgstPct / 100) * taxableValue).toFixed(2));
-    const sgstAmount = parseFloat(((sgstPct / 100) * taxableValue).toFixed(2));
-    const igstAmount = parseFloat(((igstPct / 100) * taxableValue).toFixed(2));
+    let cgstAmount = 0;
+    let sgstAmount = 0;
+    let igstAmount = 0;
+
+    if (taxType === 'GST') {
+      cgstAmount = parseFloat(((cgstPct / 100) * taxableValue).toFixed(2));
+      sgstAmount = parseFloat(((sgstPct / 100) * taxableValue).toFixed(2));
+    } else if (taxType === 'IGST') {
+      igstAmount = parseFloat(((igstPct / 100) * taxableValue).toFixed(2));
+    }
 
     let netAmountRaw = taxableValue + cgstAmount + sgstAmount + igstAmount;
     const netAmountRounded = Math.round(netAmountRaw);
@@ -144,6 +152,20 @@ export default function ProcessingPO() {
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+
+    if (name === 'tax_type') {
+      let taxUpdates = { tax_type: value };
+      if (value === 'GST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+      } else if (value === 'IGST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+      } else if (value === 'Exempt') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
+      }
+      setForm(recalculate({ ...form, ...taxUpdates }));
+      return;
+    }
+
     setForm(recalculate({ ...form, [name]: value }));
   };
 
@@ -519,6 +541,36 @@ export default function ProcessingPO() {
                     </div>
                   </div>
 
+                  {/* Tax Details */}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff', marginBottom: 24 }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TAX DETAILS</span>
+                    </div>
+                    <div style={{ padding: '16px 18px' }}>
+                      <div className="form-row" style={{ 
+                        gridTemplateColumns: form.tax_type === 'GST' ? 'repeat(3, 1fr)' : form.tax_type === 'IGST' ? 'repeat(2, 1fr)' : '1fr', 
+                        margin: 0 
+                      }}>
+                        <div className="form-group"><label>Tax Type</label>
+                          <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange}>
+                            <option value="GST">GST</option>
+                            <option value="IGST">IGST</option>
+                            <option value="Exempt">Exempt</option>
+                          </select>
+                        </div>
+                        {(form.tax_type === 'GST' || !form.tax_type) && (
+                          <>
+                            <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
+                            <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
+                          </>
+                        )}
+                        {form.tax_type === 'IGST' && (
+                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Terms and Conditions */}
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
                     <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
@@ -694,80 +746,26 @@ export default function ProcessingPO() {
                         />
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST</span>
-                          <input 
-                            type="number" 
-                            name="cgst_pct" 
-                            value={form.cgst_pct} 
-                            onChange={handleChange} 
-                            style={{
-                              width: '60px',
-                              textAlign: 'right',
-                              border: '1px solid var(--border)',
-                              borderRadius: '4px',
-                              padding: '2px 4px',
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              color: 'var(--text-primary)',
-                              background: 'transparent'
-                            }}
-                          />
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
+                      {(form.tax_type === 'GST' || !form.tax_type) && (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST</span>
-                          <input 
-                            type="number" 
-                            name="sgst_pct" 
-                            value={form.sgst_pct} 
-                            onChange={handleChange} 
-                            style={{
-                              width: '60px',
-                              textAlign: 'right',
-                              border: '1px solid var(--border)',
-                              borderRadius: '4px',
-                              padding: '2px 4px',
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              color: 'var(--text-primary)',
-                              background: 'transparent'
-                            }}
-                          />
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </>
+                      )}
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST</span>
-                          <input 
-                            type="number" 
-                            name="igst_pct" 
-                            value={form.igst_pct} 
-                            onChange={handleChange} 
-                            style={{
-                              width: '60px',
-                              textAlign: 'right',
-                              border: '1px solid var(--border)',
-                              borderRadius: '4px',
-                              padding: '2px 4px',
-                              fontSize: '13px',
-                              fontWeight: '600',
-                              color: 'var(--text-primary)',
-                              background: 'transparent'
-                            }}
-                          />
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>%</span>
+                      {form.tax_type === 'IGST' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
+                      )}
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
