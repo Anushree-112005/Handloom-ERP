@@ -44,6 +44,8 @@ class DesignEntry(Base):
     yarn_details = Column(String(4000), nullable=True)
     fabric_design_details = Column(String(4000), nullable=True)
     image_path = Column(String(500), nullable=True)
+    book_no = Column(String(100), nullable=True)
+    page_no = Column(String(100), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

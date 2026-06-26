@@ -91,14 +91,27 @@ async def generate_pdf(payload: dict):
             warp_total_kg=payload.get("warp_total_kg", 0.0),
             weft_total_ends=payload.get("weft_total_ends", 0),
             weft_total_kg=payload.get("weft_total_kg", 0.0),
-            grand_total_kg=payload.get("grand_total_kg", 0.0)
+            grand_total_kg=payload.get("grand_total_kg", 0.0),
+            book_no=payload.get("book_no", ""),
+            page_no=payload.get("page_no", ""),
+            image_path=payload.get("image_path", None)
         )
         
+        def link_callback(uri, rel):
+            import os
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            if uri.startswith('/uploads/'):
+                return os.path.join(base_dir, "uploads", uri.replace('/uploads/', ''))
+            elif uri.startswith('uploads/'):
+                return os.path.join(base_dir, "uploads", uri.replace('uploads/', ''))
+            return uri
+
         # Compile HTML to PDF using xhtml2pdf
         pdf_file = io.BytesIO()
         pisa_status = pisa.CreatePDF(
             io.StringIO(html_out),
-            dest=pdf_file
+            dest=pdf_file,
+            link_callback=link_callback
         )
         if pisa_status.err:
             raise Exception("PDF generation failed")

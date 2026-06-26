@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI } from '../../services/api';
+import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -12,6 +12,776 @@ const DetailRow = ({ label, value }) => (
     <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{value || '-'}</span>
   </div>
 );
+
+const getColorHex = (colorName, colorMastersList) => {
+  if (!colorName) return '#cbd5e1';
+  const cname = colorName.trim().toLowerCase();
+  const colorMap = {
+    'white': '#ffffff',
+    'off white': '#f8f9fa',
+    'cream': '#fdf5e6',
+    'khaki': '#c3b091',
+    'olive': '#808000',
+    'olive green': '#556b2f',
+    'l.brown': '#b5651d',
+    'd.brown': '#5c4033',
+    'light brown': '#b5651d',
+    'dark brown': '#5c4033',
+    'brown': '#8b4513',
+    'navy': '#000080',
+    'navy blue': '#000080',
+    'red': '#ff0000',
+    'scarlet red': '#ff2400',
+    'grey': '#808080',
+    'gray': '#808080',
+    'charcoal': '#36454f',
+    'charcoal grey': '#36454f',
+    'charcoal gray': '#36454f',
+    'black': '#000000',
+    'jet black': '#0a0a0a',
+    'blue': '#0000ff',
+    'royal blue': '#4169e1',
+    'emerald': '#50c878',
+    'emerald green': '#50c878',
+    'yellow': '#ffff00',
+    'mustard': '#e1ad01',
+    'mustard yellow': '#e1ad01',
+    'pink': '#ffc0cb',
+    'coral pink': '#f88379',
+    'orange': '#ffa500'
+  };
+
+  if (colorMap[cname]) return colorMap[cname];
+
+  if (colorMastersList && colorMastersList.length > 0) {
+    const match = colorMastersList.find(c => 
+      c.name.toLowerCase() === cname || 
+      c.name.toLowerCase().includes(cname) || 
+      cname.includes(c.name.toLowerCase())
+    );
+    if (match) {
+      const code = match.code.trim();
+      if (code.startsWith('#') || colorMap[code.toLowerCase()]) {
+        return code;
+      }
+      if (colorMap[code.toLowerCase()]) {
+        return colorMap[code.toLowerCase()];
+      }
+    }
+  }
+
+  const cssColors = ['red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink', 'brown', 'black', 'white', 'gray', 'grey', 'olive', 'lime', 'teal', 'navy'];
+  if (cssColors.includes(cname)) return cname;
+
+  return '#cbd5e1';
+};
+
+const getRowSpans = (rows, key) => {
+  const spans = [];
+  let i = 0;
+  while (i < rows.length) {
+    const val = rows[i][key];
+    const type = rows[i].type;
+    
+    // If the value is "1", empty, or falsy, do not group
+    if (!val || val === '1' || (key === 'drawing_order' && String(val).trim() === '')) {
+      spans.push({ span: 1, isStart: true, value: val });
+      i++;
+      continue;
+    }
+    
+    // Find consecutive rows of the same type with the same column value
+    let count = 1;
+    while (
+      i + count < rows.length && 
+      rows[i + count].type === type && 
+      rows[i + count][key] === val
+    ) {
+      count++;
+    }
+    
+    spans.push({ span: count, isStart: true, value: val });
+    for (let j = 1; j < count; j++) {
+      spans.push({ span: count, isStart: false, value: val });
+    }
+    i += count;
+  }
+  return spans;
+};
+
+const calculateRepeatSize = (rows) => {
+  let total = 0;
+  let i = 0;
+  while (i < rows.length) {
+    const r = rows[i];
+    const val = r.times;
+    const type = r.type;
+    
+    // If the value is empty, "1", or falsy, do not group. Just add row's threads.
+    if (!val || val === '1' || val === '') {
+      total += parseInt(r.threads) || 0;
+      i++;
+      continue;
+    }
+    
+    // Find consecutive rows of the same type with the same times value
+    let count = 1;
+    let groupThreads = parseInt(r.threads) || 0;
+    while (
+      i + count < rows.length && 
+      rows[i + count].type === type &&
+      rows[i + count].times === val
+    ) {
+      groupThreads += parseInt(rows[i + count].threads) || 0;
+      count++;
+    }
+    
+    const timesMultiplier = parseInt(val) || 1;
+    total += groupThreads * timesMultiplier;
+    i += count;
+  }
+  return total;
+};
+
+const renderBracketCell = (value, span, hasBorder = false) => {
+  if (span <= 1) {
+    return <td style={hasBorder ? { padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' } : {}}>{value || '-'}</td>;
+  }
+  
+  const topPercent = `${(0.5 / span) * 100}%`;
+  const bottomPercent = `${(0.5 / span) * 100}%`;
+  
+  return (
+    <td 
+      rowSpan={span} 
+      style={{ 
+        verticalAlign: 'middle', 
+        textAlign: 'center', 
+        padding: '4px 8px',
+        backgroundColor: '#ffffff',
+        border: hasBorder ? '1px solid #ccc' : undefined
+      }}
+    >
+      <div style={{ 
+        display: 'inline-flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        position: 'relative',
+        paddingLeft: 22,
+        height: '100%',
+        minHeight: span * 24 - 8,
+        width: '100%'
+      }}>
+        {/* Bracket Graphic container */}
+        <div style={{ 
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 16
+        }}>
+          {/* Top horizontal tick pointing left */}
+          <div style={{
+            position: 'absolute',
+            top: topPercent,
+            left: 0,
+            right: 2,
+            height: 1.5,
+            background: '#4b5563'
+          }} />
+          {/* Vertical line connecting top to bottom (on the right) */}
+          <div style={{
+            position: 'absolute',
+            top: topPercent,
+            bottom: bottomPercent,
+            right: 2,
+            width: 1.5,
+            background: '#4b5563'
+          }} />
+          {/* Bottom horizontal tick pointing left */}
+          <div style={{
+            position: 'absolute',
+            bottom: bottomPercent,
+            left: 0,
+            right: 2,
+            height: 1.5,
+            background: '#4b5563'
+          }} />
+          {/* Middle horizontal line pointing right to the text */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            right: -8,
+            width: 10,
+            height: 1.5,
+            transform: 'translateY(-50%)',
+            background: '#4b5563'
+          }} />
+        </div>
+        
+        {/* Bracket value text */}
+        <span style={{ 
+          fontWeight: 600, 
+          fontSize: 11,
+          color: '#1f2937',
+          paddingLeft: 4,
+          whiteSpace: 'nowrap'
+        }}>
+          {value}
+        </span>
+      </div>
+    </td>
+  );
+};
+
+function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
+  const [downloading, setDownloading] = useState(false);
+  if (!isOpen || !design) return null;
+
+  // 1. Parse details
+  let yarnRows = [];
+  try {
+    yarnRows = design.yarn_details ? JSON.parse(design.yarn_details) : [];
+  } catch (e) {
+    console.error("Error parsing yarn_details", e);
+  }
+
+  let fabricDesignRows = [];
+  try {
+    fabricDesignRows = design.fabric_design_details ? JSON.parse(design.fabric_design_details) : [];
+  } catch (e) {
+    console.error("Error parsing fabric_design_details", e);
+  }
+
+  const warpRows = fabricDesignRows.filter(r => r.type === 'Warp');
+  const weftRows = fabricDesignRows.filter(r => r.type === 'Weft');
+
+  // 2. Calculations
+  const warpRepeatSize = calculateRepeatSize(warpRows);
+  const weftRepeatSize = calculateRepeatSize(weftRows);
+
+  const totalEnds = parseFloat(design.total_ends) || 0;
+  const selvage = parseFloat(design.selvage_waste) || 0;
+  const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
+  const repeatEnds = warpRepeatSize * noD;
+  const balance = totalEnds - repeatEnds - selvage;
+
+  // Extra ends distribution
+  const extraEnds = warpRows.map(() => 0);
+  let remaining = balance;
+  let idx = 0;
+  while (remaining > 0 && warpRows.length > 0) {
+    const item = warpRows[idx % warpRows.length];
+    const take = Math.min(remaining, parseInt(item.threads) || 1);
+    extraEnds[idx % warpRows.length] += take;
+    remaining -= take;
+    idx++;
+  }
+
+  const totalMtr = parseFloat(design.total_mtr) || 0;
+  const warpLength = totalMtr + 30;
+  const crimpPct = parseFloat(design.crimp_pct) || 0;
+  const skgPct = parseFloat(design.skg_pct) || 0;
+  const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
+  const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
+  const warpWastage = Math.max(1.0, wastageFactor - 0.015);
+
+  const parseEqCount = (lbl) => {
+    const YARN_COUNTS = {
+      "10S CTN": 10.0,
+      "20S CTN": 20.0,
+      "30S CTN": 30.0,
+      "40S CTN": 40.0,
+      "60S CTN": 60.0,
+      "80S CTN": 80.0,
+      "2/20S CTN": 10.0,
+      "2/40S CTN": 20.0,
+      "2/60S CTN": 30.0,
+      "2/80S CTN": 40.0,
+    };
+    if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+    if (!lbl) return 20.0;
+    let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+    if (cleaned.includes('/')) {
+      const parts = cleaned.split('/');
+      const ply = parseFloat(parts[0]) || 1.0;
+      const countPart = parts[1].match(/\d+/);
+      const count = countPart ? parseFloat(countPart[0]) : 40.0;
+      return count / ply;
+    } else {
+      const match = cleaned.match(/\d+/);
+      return match ? parseFloat(match[0]) : 20.0;
+    }
+  };
+
+  // Aggregate Warp
+  const warpColorAgg = {};
+  warpRows.forEach((item, index) => {
+    const cname = item.color || 'White';
+    const yc = item.yarn_count || '40S CTN';
+    const key = `${yc}_${cname}`;
+    const itemEnds = parseInt(item.threads) || 0;
+    const itemExtra = extraEnds[index] || 0;
+    const itemTotalEnds = (itemEnds * noD) + itemExtra;
+
+    if (warpColorAgg[key]) {
+        warpColorAgg[key].ends += itemEnds;
+      warpColorAgg[key].extra += itemExtra;
+      warpColorAgg[key].total_ends += itemTotalEnds;
+    } else {
+      const colorCode = getColorHex(cname, colorMasters);
+      warpColorAgg[key] = {
+        beam_type: 'Warp Beam1',
+        count: yc,
+        color: cname,
+        hex: colorCode,
+        ends: itemEnds,
+        noD: noD,
+        extra: itemExtra,
+        total_ends: itemTotalEnds
+      };
+    }
+  });
+
+  const warpSummary = Object.values(warpColorAgg).map(row => {
+    const eqCount = parseEqCount(row.count);
+    const lengthYards = warpLength * 1.09361;
+    const req_kg = Math.ceil((row.total_ends * lengthYards) / (eqCount * 840) * warpWastage * 0.45359237);
+    return { ...row, req_kg };
+  });
+
+  // Weft Design
+  const pick = parseFloat(design.pick_ot) || 0;
+  const finishWidth = parseFloat(design.finish_width) || 0;
+  const weftWidth = finishWidth + selvage;
+  const weftWastage = Math.max(1.0, wastageFactor - 0.085);
+
+  const weftColorAgg = {};
+  weftRows.forEach(item => {
+    const cname = item.color || 'White';
+    const yc = item.yarn_count || '40S CTN';
+    const key = `${yc}_${cname}`;
+    const itemEnds = parseInt(item.threads) || 0;
+
+    if (weftColorAgg[key]) {
+      weftColorAgg[key].ends += itemEnds;
+    } else {
+      const colorCode = getColorHex(cname, colorMasters);
+      weftColorAgg[key] = {
+        beam_type: 'Weft',
+        count: yc,
+        color: cname,
+        hex: colorCode,
+        ends: itemEnds,
+        noD: 1,
+        extra: 0,
+        total_ends: 0
+      };
+    }
+  });
+
+  const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
+  const totalWeftEndsCalculated = Math.round(pick * weftWidth);
+
+  const weftSummary = Object.values(weftColorAgg).map(row => {
+    const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
+    const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
+    const eqCount = parseEqCount(row.count);
+    const lengthYards = totalMtr * 1.09361;
+    const totalPicks = pick * weftWidth * lengthYards;
+    const groupPicks = totalPicks * ratio;
+    const req_kg = Math.ceil(groupPicks / (eqCount * 840) * weftWastage * 0.45359237);
+
+    return {
+      ...row,
+      total_ends: groupEnds,
+      req_kg
+    };
+  });
+
+  const warpTotalEnds = warpSummary.reduce((sum, r) => sum + r.total_ends, 0);
+  const warpTotalKg = warpSummary.reduce((sum, r) => sum + r.req_kg, 0);
+  const weftTotalEnds = weftSummary.reduce((sum, r) => sum + r.total_ends, 0);
+  const weftTotalKg = weftSummary.reduce((sum, r) => sum + r.req_kg, 0);
+  const grandTotalKg = warpTotalKg + weftTotalKg;
+
+  const warpCountLabel = yarnRows.find(y => y.type === 'Warp')?.yarn_count || '40S CTN';
+  const weftCountLabel = yarnRows.find(y => y.type === 'Weft')?.yarn_count || '40S CTN';
+
+  // 3. Download PDF Trigger
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      const payload = {
+        company_name: "Dinesh Exports Private Limited",
+        design_no: design.design_no,
+        weave_type: design.weaving || 'Plain',
+        reed: parseInt(design.reed) || 0,
+        pick: parseInt(design.pick_ot) || 0,
+        width: parseFloat(design.finish_width) || 0.0,
+        order_length: parseFloat(design.total_mtr) || 0.0,
+        warp_count: warpCountLabel,
+        weft_count: weftCountLabel,
+        wastage: parseFloat((wastageFactor).toFixed(3)),
+        total_ends: totalEnds,
+        book_no: design.book_no || '',
+        page_no: design.page_no || '',
+        image_path: design.image_path || null,
+        
+        warp_design: warpRows.map((r, i) => ({
+          color_name: r.color,
+          threads: parseInt(r.threads) || 0,
+          hex: getColorHex(r.color, colorMasters),
+          showTop: r.drawing_order || '-',
+          rowSpan: 1,
+          times: r.times || '',
+          line: r.line || ''
+        })),
+        weft_design: weftRows.map((r, i) => ({
+          color_name: r.color,
+          threads: parseInt(r.threads) || 0,
+          hex: getColorHex(r.color, colorMasters),
+          times: r.times || '',
+          line: r.line || ''
+        })),
+        warp_design_sum: warpRepeatSize,
+        weft_design_sum: weftRepeatSize,
+        
+        noD: noD,
+        repeatEnds: repeatEnds,
+        balance: balance,
+        selvage: selvage,
+        
+        warp_summary: warpSummary.map(row => ({
+          beam_type: row.beam_type,
+          count: row.count,
+          color: row.color,
+          hex: row.hex,
+          ends: row.ends,
+          noD: row.noD,
+          extra: row.extra,
+          total_ends: row.total_ends,
+          req_kg: row.req_kg
+        })),
+        weft_summary: weftSummary.map(row => ({
+          beam_type: row.beam_type,
+          count: row.count,
+          color: row.color,
+          hex: row.hex,
+          ends: row.ends,
+          noD: row.noD,
+          extra: row.extra,
+          total_ends: row.total_ends,
+          req_kg: row.req_kg
+        })),
+        warp_total_ends: warpTotalEnds,
+        warp_total_kg: warpTotalKg,
+        weft_total_ends: weftTotalEnds,
+        weft_total_kg: weftTotalKg,
+        grand_total_kg: grandTotalKg
+      };
+
+      const response = await textileDesignAPI.generatePdf(payload);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${design.design_no.replace(/\s+/g, '_')}_design_sheet.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      alert('PDF generation failed.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+      <div style={{ background: '#fff', width: '100%', maxWidth: 950, height: '95vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', borderRadius: 8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+        
+        {/* Modal Header */}
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText size={18} style={{ color: '#4f46e5' }} /> 
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1e293b' }}>Design Sheet Preview - {design.design_no}</h3>
+          </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button onClick={handleDownload} disabled={downloading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#4f46e5', border: 'none', color: '#fff', padding: '6px 12px', fontSize: 12, fontWeight: 600 }}>
+              <Download size={14} /> {downloading ? 'Generating...' : 'Download PDF'}
+            </button>
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+          </div>
+        </div>
+
+        {/* Scrollable Document Area */}
+        <div style={{ padding: '40px 20px', background: '#fff', display: 'flex', justifyContent: 'center', flex: 1, overflowY: 'auto' }}>
+          
+          <div className="design-sheet-print" style={{ background: '#fff', width: '100%', maxWidth: 850, padding: '40px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', borderRadius: 4, color: '#333', fontFamily: 'Arial, sans-serif' }}>
+            
+            {/* Header */}
+            <div style={{ textAlign: 'center', borderBottom: '2px solid #333', paddingBottom: 12, marginBottom: 20 }}>
+              <h2 style={{ margin: '0 0 4px 0', fontSize: 18, fontWeight: 800, textTransform: 'uppercase', color: '#000' }}>Dinesh Exports Private Limited</h2>
+              <p style={{ margin: '0 0 10px 0', fontSize: 11, color: '#555', fontWeight: 600 }}>Tiruchencode, Namakkal-638008</p>
+              <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#444' }}>DESIGN SHEET</h3>
+            </div>
+
+            {/* Meta Section with Fabric Image */}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+              <div style={{ flex: 1, border: '1px solid #aaa', borderRadius: 4, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #aaa' }}>
+                      <td style={{ padding: '6px 10px', width: '25%', background: '#fff', fontWeight: 700 }}>B.No (DS Ref):</td>
+                      <td style={{ padding: '6px 10px', width: '25%' }}>{design.ds_ref_no}</td>
+                      <td style={{ padding: '6px 10px', width: '25%', background: '#fff', fontWeight: 700 }}>On Loom Reed:</td>
+                      <td style={{ padding: '6px 10px', width: '25%' }}>{design.reed_ol || design.reed}</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #aaa' }}>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Design No:</td>
+                      <td>{design.design_no}</td>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Pick On Table:</td>
+                      <td>{design.pick_ot}</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #aaa' }}>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Weave Type:</td>
+                      <td>{design.weaving}</td>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>On Loom Width:</td>
+                      <td>{design.finish_width} inches</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #aaa' }}>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Order Length:</td>
+                      <td>{design.total_mtr} Mtr</td>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Warp Yarn:</td>
+                      <td>{warpCountLabel}</td>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid #aaa' }}>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Weft Yarn:</td>
+                      <td>{weftCountLabel}</td>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Wastage:</td>
+                      <td>{(wastageFactor).toFixed(3)}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Total Ends:</td>
+                      <td>{design.total_ends}</td>
+                      <td style={{ padding: '6px 10px', background: '#fff', fontWeight: 700 }}>Book & Page No:</td>
+                      <td>Book: {design.book_no || '-'}, Page: {design.page_no || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {design.image_path && (
+                <div style={{ width: 140, border: '1px solid #aaa', borderRadius: 4, padding: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff', flexShrink: 0 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: 4 }}>Fabric Sample</span>
+                  <img 
+                    src={`http://localhost:8000${design.image_path}`} 
+                    alt="Fabric Sample" 
+                    style={{ width: '100%', height: 110, objectFit: 'cover', borderRadius: 2, border: '1px solid #e2e8f0', cursor: 'pointer' }}
+                    onClick={() => window.open(`http://localhost:8000${design.image_path}`, '_blank')}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Warp Design Section */}
+            <h4 style={{ margin: '0 0 8px 0', borderLeft: '3px solid #333', paddingLeft: 8, fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Warp Design</h4>
+            <div style={{ overflowX: 'auto', marginBottom: 15 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead>
+                  <tr style={{ background: '#fff', borderBottom: '1px solid #aaa' }}>
+                    <th rowSpan="2" style={{ padding: '6px 10px', textAlign: 'center', border: '1px solid #ccc' }}>S.No</th>
+                    <th rowSpan="2" style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Count</th>
+                    <th rowSpan="2" style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Color</th>
+                    <th colSpan="2" style={{ padding: '6px 10px', textAlign: 'center', border: '1px solid #ccc' }}>Threads</th>
+                  </tr>
+                  <tr style={{ background: '#fff', borderBottom: '1px solid #aaa' }}>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>Base</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>TOP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const timesSpans = getRowSpans(warpRows, 'times');
+                    return warpRows.map((row, idx) => {
+                      const colorCode = getColorHex(row.color, colorMasters);
+                      const isTop = row.line && row.line.toLowerCase() === 'top';
+                      const baseThreads = isTop ? '-' : row.threads;
+                      const spanInfo = timesSpans[idx];
+                      return (
+                        <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '6px 10px', textAlign: 'center', border: '1px solid #ccc' }}>{idx + 1}</td>
+                          <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>{row.yarn_count}</td>
+                          <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>
+                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: colorCode, marginRight: 6, border: '1px solid #aaa' }} />
+                            {row.color}
+                          </td>
+                          <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{baseThreads}</td>
+                          {spanInfo?.isStart && renderBracketCell(spanInfo.span > 1 ? row.times : (isTop ? row.threads : '-'), spanInfo.span, true)}
+                        </tr>
+                      );
+                    });
+                  })()}
+                  {warpRows.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '8px', textAlign: 'center', color: '#999' }}>No Warp Design rows configured.</td>
+                    </tr>
+                  )}
+                  <tr style={{ background: '#fff', fontWeight: 700, borderTop: '1px solid #ccc' }}>
+                    <td colSpan="3" style={{ padding: '6px 10px', border: '1px solid #ccc' }}>Repeat Size</td>
+                    <td colSpan="2" style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{warpRepeatSize}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Warp Calculations Box */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, border: '1px solid #ccc', borderRadius: 4, padding: 12, marginBottom: 20, fontSize: 11, background: '#fff' }}>
+              <div><strong>Repeat size:</strong> {warpRepeatSize} X {noD} = {repeatEnds} Ends</div>
+              <div><strong>Balance Ends:</strong> {balance}</div>
+              <div><strong>Selvage:</strong> {selvage}</div>
+              <div><strong>Total Ends:</strong> {totalEnds}</div>
+            </div>
+
+            {/* Weft Design Section */}
+            <h4 style={{ margin: '0 0 8px 0', borderLeft: '3px solid #333', paddingLeft: 8, fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Weft Design</h4>
+            <div style={{ overflowX: 'auto', marginBottom: 20 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead>
+                  <tr style={{ background: '#fff', borderBottom: '1px solid #aaa' }}>
+                    <th rowSpan="2" style={{ padding: '6px 10px', textAlign: 'center', border: '1px solid #ccc' }}>S.No</th>
+                    <th rowSpan="2" style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Count</th>
+                    <th rowSpan="2" style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Color</th>
+                    <th colSpan="2" style={{ padding: '6px 10px', textAlign: 'center', border: '1px solid #ccc' }}>Threads</th>
+                  </tr>
+                  <tr style={{ background: '#fff', borderBottom: '1px solid #aaa' }}>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>Base</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>TOP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const timesSpans = getRowSpans(weftRows, 'times');
+                    return weftRows.map((row, idx) => {
+                      const colorCode = getColorHex(row.color, colorMasters);
+                      const isTop = row.line && row.line.toLowerCase() === 'top';
+                      const baseThreads = isTop ? '-' : row.threads;
+                      const spanInfo = timesSpans[idx];
+                      return (
+                        <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '6px 10px', textAlign: 'center', border: '1px solid #ccc' }}>{idx + 1}</td>
+                          <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>{row.yarn_count}</td>
+                          <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>
+                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: colorCode, marginRight: 6, border: '1px solid #aaa' }} />
+                            {row.color}
+                          </td>
+                          <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{baseThreads}</td>
+                          {spanInfo?.isStart && renderBracketCell(spanInfo.span > 1 ? row.times : (isTop ? row.threads : '-'), spanInfo.span, true)}
+                        </tr>
+                      );
+                    });
+                  })()}
+                  {weftRows.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '8px', textAlign: 'center', color: '#999' }}>No Weft Design rows configured.</td>
+                    </tr>
+                  )}
+                  <tr style={{ background: '#fff', fontWeight: 700, borderTop: '1px solid #ccc' }}>
+                    <td colSpan="3" style={{ padding: '6px 10px', border: '1px solid #ccc' }}>Weft Repeat Size</td>
+                    <td colSpan="2" style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{weftRepeatSize}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Design Requirement Summary Section */}
+            <h4 style={{ margin: '0 0 8px 0', borderLeft: '3px solid #333', paddingLeft: 8, fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Design Requirement - Summary</h4>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead>
+                  <tr style={{ background: '#fff', borderBottom: '1px solid #aaa' }}>
+                    <th style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Beam Type</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Count</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'left', border: '1px solid #ccc' }}>Color</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>Ends</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>No D</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>Extra</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>Total End</th>
+                    <th style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>Req kg</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Warp Summary Rows */}
+                  {warpSummary.map((row, i) => (
+                    <tr key={`warp-${i}`} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>{row.beam_type}</td>
+                      <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>{row.count}</td>
+                      <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>
+                        <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: row.hex, marginRight: 6, border: '1px solid #aaa' }} />
+                        {row.color}
+                      </td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.ends}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.noD}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.extra}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.total_ends}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, border: '1px solid #ccc' }}>{row.req_kg}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ background: '#fff', fontWeight: 700 }}>
+                    <td colSpan="3" style={{ padding: '6px 10px', border: '1px solid #ccc' }}>Subtotal (Warp)</td>
+                    <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{warpRepeatSize}</td>
+                    <td colSpan="2" style={{ border: '1px solid #ccc' }} />
+                    <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{warpTotalEnds}</td>
+                    <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{warpTotalKg} kg</td>
+                  </tr>
+
+                  {/* Spacer */}
+                  <tr style={{ height: 10, background: '#fff' }}><td colSpan="8" style={{ border: '1px solid #ccc' }} /></tr>
+
+                  {/* Weft Summary Rows */}
+                  {weftSummary.map((row, i) => (
+                    <tr key={`weft-${i}`} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>{row.beam_type}</td>
+                      <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>{row.count}</td>
+                      <td style={{ padding: '6px 10px', border: '1px solid #ccc' }}>
+                        <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: row.hex, marginRight: 6, border: '1px solid #aaa' }} />
+                        {row.color}
+                      </td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.ends}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.noD}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.extra}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{row.total_ends}</td>
+                      <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, border: '1px solid #ccc' }}>{row.req_kg}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ background: '#fff', fontWeight: 700 }}>
+                    <td colSpan="3" style={{ padding: '6px 10px', border: '1px solid #ccc' }}>Subtotal (Weft)</td>
+                    <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{weftRepeatSize}</td>
+                    <td colSpan="2" style={{ border: '1px solid #ccc' }} />
+                    <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{weftTotalEnds}</td>
+                    <td style={{ padding: '6px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{weftTotalKg} kg</td>
+                  </tr>
+
+                  {/* Grand Total */}
+                  <tr style={{ background: '#fff', fontWeight: 800, fontSize: 12 }}>
+                    <td colSpan="7" style={{ padding: '8px 10px', border: '1px solid #ccc' }}>GRAND TOTAL REQUIREMENT</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right', border: '1px solid #ccc' }}>{grandTotalKg} kg</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ marginTop: 25, fontSize: 9, color: '#777', borderTop: '1px solid #ddd', paddingTop: 10, lineHeight: 1.4 }}>
+              <strong>Note:</strong> Weights are calculated using standard formulas: Warp weight (kg) = (Total Ends * Length) / (Count * 840) * Wastage * 0.4536. Weft weight (kg) = (PPI * Width * Length) / (Count * 840) * Wastage * 0.4536.
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
 
 export default function DesignEntry() {
   const [entries, setEntries] = useState([]);
@@ -54,6 +824,8 @@ export default function DesignEntry() {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [showPatternModal, setShowPatternModal] = useState(false);
 
   const addYarnRow = () => {
@@ -99,7 +871,7 @@ export default function DesignEntry() {
   const deleteFabricDesignRow = (idx) => {
     setFabricDesignRows(fabricDesignRows.filter((_, i) => i !== idx));
   };
-  
+
   // Filters
   const [fabricFilter, setFabricFilter] = useState('All Fabrics');
   const [weavingFilter, setWeavingFilter] = useState('All Weaves');
@@ -114,7 +886,8 @@ export default function DesignEntry() {
     crimp_pct: 0, skg_pct: 0, warp_mtr: 0, weft_pro_mtr: 0, gray_width: 0,
     finish_width: 0, reed_ol: 0, pick_ot: 0, reed: 0, fabric: 'Cotton',
     total_ends: 0, warp_width: 0, qlm: 0, toie_pct: 0, selvage_waste: 0,
-    weaving: 'Plain', design_type: 'Normal', packing_less: 0, weight_grm: 0, dyeing_loss_pct: 0
+    weaving: 'Plain', design_type: 'Normal', packing_less: 0, weight_grm: 0, dyeing_loss_pct: 0,
+    book_no: '', page_no: ''
   };
 
   const [form, setForm] = useState(initialForm);
@@ -145,7 +918,11 @@ export default function DesignEntry() {
   useEffect(() => { loadData(); }, []);
 
   const handleUploadImageOnly = async () => {
-    if (!selectedFile) {
+    let fileToUpload = selectedFile;
+    if (selectedFiles && selectedFiles.length >= 2) {
+      fileToUpload = selectedFiles[1];
+    }
+    if (!fileToUpload) {
       alert("Please choose a file first");
       return;
     }
@@ -154,13 +931,36 @@ export default function DesignEntry() {
       return;
     }
     try {
-      const res = await designEntryAPI.uploadImage(editingId, selectedFile);
+      const res = await designEntryAPI.uploadImage(editingId, fileToUpload);
       alert("Image uploaded successfully!");
       setImagePreviewUrl(res.data.image_path);
       loadData();
     } catch (err) {
       alert("Failed to upload image.");
       console.error(err);
+    }
+  };
+
+  const handleExtractDesign = async (filesToExtract) => {
+    const targetFiles = filesToExtract || selectedFiles;
+    if (!targetFiles || targetFiles.length === 0) {
+      alert("Please choose one or more images first");
+      return;
+    }
+    setIsExtracting(true);
+    try {
+      const res = await designEntryAPI.extractDesign(targetFiles);
+      const extractedRows = res.data.rows.map((row, idx) => ({
+        ...row,
+        id: Date.now() + idx
+      }));
+      setFabricDesignRows([...fabricDesignRows, ...extractedRows]);
+      alert(`Successfully extracted ${extractedRows.length} design lines from the image(s)!`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to extract design from image(s). Please make sure the Groq API key is valid.");
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -181,14 +981,19 @@ export default function DesignEntry() {
         savedEntry = res.data;
       }
 
-      if (selectedFile && savedEntry && savedEntry.id) {
-        await designEntryAPI.uploadImage(savedEntry.id, selectedFile);
+      let fileToUpload = selectedFile;
+      if (selectedFiles && selectedFiles.length >= 2) {
+        fileToUpload = selectedFiles[1];
+      }
+      if (fileToUpload && savedEntry && savedEntry.id) {
+        await designEntryAPI.uploadImage(savedEntry.id, fileToUpload);
       }
       
       setShowForm(false);
       setEditingId(null);
       setForm(initialForm);
       setSelectedFile(null);
+      setSelectedFiles([]);
       setImagePreviewUrl(null);
       setYarnRows([]);
       setFabricDesignRows([]);
@@ -217,6 +1022,7 @@ export default function DesignEntry() {
       setFabricDesignRows(fdDetails);
       setImagePreviewUrl(data.image_path || null);
       setSelectedFile(null);
+      setSelectedFiles([]);
 
       setForm({ ...initialForm, ...data });
       setEditingId(data.id);
@@ -372,14 +1178,16 @@ export default function DesignEntry() {
   const exportPDF = () => {
     const doc = new jsPDF('landscape');
     doc.text("Dinesh Textile - Design Entry Report", 14, 15);
-    const headers = [["DS Ref No", "Date", "Design No", "Buyer", "Fabric", "Weaving"]];
+    const headers = [["DS Ref No", "Date", "Design No", "Buyer", "Fabric", "Weaving", "Book No", "Page No"]];
     const rows = filteredEntries.map(e => [
       e.ds_ref_no || '-',
       e.ds_date || '-',
       e.design_no || '-',
       e.buyer_name || '-',
       e.fabric || '-',
-      e.weaving || '-'
+      e.weaving || '-',
+      e.book_no || '-',
+      e.page_no || '-'
     ]);
     autoTable(doc, { head: headers, body: rows, startY: 20 });
     doc.save(`Design_Entries_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -394,6 +1202,8 @@ export default function DesignEntry() {
       "Fabric": e.fabric,
       "Weaving": e.weaving,
       "Design Type": e.design_type,
+      "Book No": e.book_no,
+      "Page No": e.page_no,
       "Created By": e.created_by
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -444,7 +1254,7 @@ export default function DesignEntry() {
                   </div>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); setYarnRows([]); setFabricDesignRows([]); setSelectedFile(null); setImagePreviewUrl(null); }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); setYarnRows([]); setFabricDesignRows([]); setSelectedFile(null); setSelectedFiles([]); setImagePreviewUrl(null); }}>
                 <Plus size={16} /> New Design
               </button>
             </div>
@@ -546,6 +1356,8 @@ export default function DesignEntry() {
                     <DetailRow label="DS Date" value={selectedViewEntry.ds_date} />
                     <DetailRow label="Buyer" value={selectedViewEntry.buyer_name} />
                     <DetailRow label="IBPO No" value={selectedViewEntry.ibpo_no} />
+                    <DetailRow label="Book No" value={selectedViewEntry.book_no} />
+                    <DetailRow label="Page No" value={selectedViewEntry.page_no} />
                     
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Specifications</h4>
                     <DetailRow label="Gry Const" value={selectedViewEntry.gry_const} />
@@ -643,6 +1455,8 @@ export default function DesignEntry() {
                                 {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
                               </select>
                             </div>
+                            <div className="form-group"><label>Book No</label><input className="form-control" name="book_no" value={form.book_no || ''} onChange={handleChange} /></div>
+                            <div className="form-group"><label>Page No</label><input className="form-control" name="page_no" value={form.page_no || ''} onChange={handleChange} /></div>
                             <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'fabric', 'fabric')} /></div>
                           </div>
                         </div>
@@ -883,17 +1697,19 @@ export default function DesignEntry() {
                   marginTop: 32 
                 }}>
                   <span style={{ fontWeight: 700, fontSize: 16 }}>Fabric Design</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <input 
                       type="file" 
                       accept="image/*"
                       id="fabric-design-file" 
                       style={{ display: 'none' }}
+                      multiple
                       onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          setSelectedFile(file);
-                          setImagePreviewUrl(URL.createObjectURL(file));
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 0) {
+                          setSelectedFiles(files);
+                          setSelectedFile(files[0]);
+                          setImagePreviewUrl(URL.createObjectURL(files[0]));
                         }
                       }}
                       disabled={isReadOnly}
@@ -905,9 +1721,9 @@ export default function DesignEntry() {
                       onClick={() => document.getElementById('fabric-design-file').click()}
                       disabled={isReadOnly}
                     >
-                      Choose File
+                      Choose File(s)
                     </button>
-                    {!isReadOnly && (
+                    {!isReadOnly && selectedFile && (
                       <button 
                         type="button" 
                         className="btn" 
@@ -917,8 +1733,35 @@ export default function DesignEntry() {
                         Upload
                       </button>
                     )}
+                    {!isReadOnly && selectedFiles.length > 0 && (
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ padding: '4px 12px', background: '#3b82f6', color: '#fff', fontWeight: 600 }}
+                        onClick={() => handleExtractDesign(selectedFiles)}
+                        disabled={isExtracting}
+                      >
+                        {isExtracting ? "Extracting..." : "Extract AI Data"}
+                      </button>
+                    )}
+                    {!isReadOnly && fabricDesignRows.length > 0 && (
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        style={{ padding: '4px 12px', background: '#ef4444', color: '#fff', fontWeight: 600 }}
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to clear the Fabric Design table?")) {
+                            setFabricDesignRows([]);
+                          }
+                        }}
+                      >
+                        Clear Table
+                      </button>
+                    )}
                     <span style={{ fontSize: 13, color: '#e5e7eb', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {selectedFile ? selectedFile.name : (imagePreviewUrl ? "Design image loaded" : "No file chosen")}
+                      {selectedFiles.length > 0 
+                        ? `${selectedFiles.length} file(s) selected` 
+                        : (selectedFile ? selectedFile.name : (imagePreviewUrl ? "Design image loaded" : "No file chosen"))}
                     </span>
                     {imagePreviewUrl && (
                       <button 
@@ -964,44 +1807,222 @@ export default function DesignEntry() {
                       </tr>
                     </thead>
                     <tbody>
-                      {fabricDesignRows.map((row, idx) => (
-                        <tr key={row.id || idx}>
-                          <td>{idx + 1}</td>
-                          <td style={{ fontWeight: 600 }}>{row.type}</td>
-                          <td>{row.yarn_count}</td>
-                          <td>
-                            <span style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: 6 
-                            }}>
-                              <span style={{ 
-                                width: 12, 
-                                height: 12, 
-                                borderRadius: '50%', 
-                                background: colorMasters.find(c => c.name === row.color)?.code || '#ccc',
-                                border: '1px solid #999'
-                              }} />
-                              {row.color}
-                            </span>
-                          </td>
-                          <td>{row.threads}</td>
-                          <td>{row.times}</td>
-                          <td>{row.line || '-'}</td>
-                          <td>{row.pick || '-'}</td>
-                          <td>{row.drawing_order || '-'}</td>
-                          <td>{row.dents || '-'}</td>
-                          <td>{row.line_val || '-'}</td>
-                          <td>{row.ends_for_dents || '-'}</td>
-                          <td>
-                            {!isReadOnly && (
-                              <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => deleteFabricDesignRow(idx)}>
-                                <Trash2 size={14} color="#ef4444" />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        const timesSpans = getRowSpans(fabricDesignRows, 'times');
+                        const drawingSpans = getRowSpans(fabricDesignRows, 'drawing_order');
+                        
+                        const updateRowValue = (rIdx, field, val) => {
+                          const updated = [...fabricDesignRows];
+                          updated[rIdx] = { ...updated[rIdx], [field]: val };
+                          setFabricDesignRows(updated);
+                        };
+
+                        const updateBracketValue = (startIdx, key, val, span) => {
+                          const updated = [...fabricDesignRows];
+                          for (let k = 0; k < span; k++) {
+                            updated[startIdx + k] = { ...updated[startIdx + k], [key]: val };
+                          }
+                          setFabricDesignRows(updated);
+                        };
+
+                        return fabricDesignRows.map((row, idx) => {
+                          const colorCode = getColorHex(row.color, colorMasters);
+                          
+                          if (isReadOnly) {
+                            return (
+                              <tr key={row.id || idx}>
+                                <td>{idx + 1}</td>
+                                <td style={{ fontWeight: 600 }}>{row.type}</td>
+                                <td>{row.yarn_count}</td>
+                                <td>
+                                  <span style={{ 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    gap: 6 
+                                  }}>
+                                    <span style={{ 
+                                      width: 12, 
+                                      height: 12, 
+                                      borderRadius: '50%', 
+                                      background: colorCode,
+                                      border: '1px solid #999'
+                                    }} />
+                                    {row.color}
+                                  </span>
+                                </td>
+                                <td>{row.threads}</td>
+                                {timesSpans[idx]?.isStart && renderBracketCell(row.times, timesSpans[idx]?.span)}
+                                <td>{row.line || '-'}</td>
+                                <td>{row.pick || '-'}</td>
+                                {drawingSpans[idx]?.isStart && renderBracketCell(row.drawing_order, drawingSpans[idx]?.span)}
+                                <td>{row.dents || '-'}</td>
+                                <td>{row.line_val || '-'}</td>
+                                <td>{row.ends_for_dents || '-'}</td>
+                                <td></td>
+                              </tr>
+                            );
+                          }
+
+                          // Editable view
+                          const countOptions = [...yarnCountMasters];
+                          if (row.yarn_count && !countOptions.some(o => o.name === row.yarn_count)) {
+                            countOptions.push({ id: 'temp-' + row.yarn_count, name: row.yarn_count });
+                          }
+
+                          const colorOptions = [...colorMasters];
+                          if (row.color && !colorOptions.some(o => o.name === row.color)) {
+                            colorOptions.push({ id: 'temp-' + row.color, name: row.color });
+                          }
+
+                          return (
+                            <tr key={row.id || idx}>
+                              <td>{idx + 1}</td>
+                              <td>
+                                <select 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 70 }}
+                                  value={row.type}
+                                  onChange={e => updateRowValue(idx, 'type', e.target.value)}
+                                >
+                                  <option>Warp</option>
+                                  <option>Weft</option>
+                                </select>
+                              </td>
+                              <td>
+                                <select 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, minWidth: 80 }}
+                                  value={row.yarn_count}
+                                  onChange={e => updateRowValue(idx, 'yarn_count', e.target.value)}
+                                >
+                                  <option value="">Select...</option>
+                                  {countOptions.map(y => <option key={y.id} value={y.name}>{y.name}</option>)}
+                                </select>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ 
+                                    width: 10, 
+                                    height: 10, 
+                                    borderRadius: '50%', 
+                                    background: colorCode,
+                                    border: '1px solid #999',
+                                    flexShrink: 0
+                                  }} />
+                                  <select 
+                                    className="form-control" 
+                                    style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, minWidth: 80 }}
+                                    value={row.color}
+                                    onChange={e => updateRowValue(idx, 'color', e.target.value)}
+                                  >
+                                    <option value="">Select...</option>
+                                    {colorOptions.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                  </select>
+                                </div>
+                              </td>
+                              <td>
+                                <input 
+                                  type="number" 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 50 }}
+                                  value={row.threads}
+                                  onChange={e => updateRowValue(idx, 'threads', e.target.value)}
+                                />
+                              </td>
+                              {timesSpans[idx]?.isStart && (
+                                <td 
+                                  rowSpan={timesSpans[idx]?.span} 
+                                  style={{ 
+                                    verticalAlign: 'middle', 
+                                    textAlign: 'center', 
+                                    padding: '4px 8px',
+                                    backgroundColor: '#ffffff',
+                                    border: '1px solid #ccc'
+                                  }}
+                                >
+                                  <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 40, textAlign: 'center', fontWeight: 600 }}
+                                    value={row.times || '1'}
+                                    onChange={e => updateBracketValue(idx, 'times', e.target.value, timesSpans[idx]?.span)}
+                                  />
+                                </td>
+                              )}
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 50 }}
+                                  value={row.line || ''}
+                                  onChange={e => updateRowValue(idx, 'line', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 50 }}
+                                  value={row.pick || ''}
+                                  onChange={e => updateRowValue(idx, 'pick', e.target.value)}
+                                />
+                              </td>
+                              {drawingSpans[idx]?.isStart && (
+                                <td 
+                                  rowSpan={drawingSpans[idx]?.span} 
+                                  style={{ 
+                                    verticalAlign: 'middle', 
+                                    textAlign: 'center', 
+                                    padding: '4px 8px',
+                                    backgroundColor: '#ffffff',
+                                    border: '1px solid #ccc'
+                                  }}
+                                >
+                                  <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 40, textAlign: 'center', fontWeight: 600 }}
+                                    value={row.drawing_order || ''}
+                                    onChange={e => updateBracketValue(idx, 'drawing_order', e.target.value, drawingSpans[idx]?.span)}
+                                  />
+                                </td>
+                              )}
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 50 }}
+                                  value={row.dents || ''}
+                                  onChange={e => updateRowValue(idx, 'dents', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 50 }}
+                                  value={row.line_val || ''}
+                                  onChange={e => updateRowValue(idx, 'line_val', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 50 }}
+                                  value={row.ends_for_dents || ''}
+                                  onChange={e => updateRowValue(idx, 'ends_for_dents', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => deleteFabricDesignRow(idx)}>
+                                  <Trash2 size={14} color="#ef4444" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        });
+                      })()}
                       {!isReadOnly && (
                         <tr>
                           <td>New</td>
@@ -1139,151 +2160,150 @@ export default function DesignEntry() {
         </div>
       )}
 
-      {showPatternModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: 600, padding: 24, background: '#fff', position: 'relative' }}>
-            <h3 style={{ margin: '0 0 16px 0', color: 'var(--primary)', fontWeight: 700 }}>Fabric Design Preview</h3>
-            <button 
-              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
-              onClick={() => setShowPatternModal(false)}
-            >
-              <X size={20} />
-            </button>
-            <div style={{ display: 'flex', gap: 20, flexDirection: 'column' }}>
-              <div>
-                <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Warp Stripes Repeat Layout</h5>
-                <div style={{ display: 'flex', height: 40, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden' }}>
-                  {fabricDesignRows.filter(r => r.type === 'Warp').map((row, idx) => {
-                    const colorCode = colorMasters.find(c => c.name === row.color)?.code || '#ccc';
-                    const weight = parseFloat(row.threads) || 1;
-                    return (
-                      <div 
-                        key={idx} 
-                        style={{ 
-                          background: colorCode, 
-                          flexGrow: weight,
-                          height: '100%',
-                          borderRight: '1px solid rgba(0,0,0,0.1)'
-                        }} 
-                        title={`Warp: ${row.threads} thds of ${row.color}`}
-                      />
-                    );
-                  })}
-                  {fabricDesignRows.filter(r => r.type === 'Warp').length === 0 && (
-                    <div style={{ padding: 8, color: '#999', fontSize: 13 }}>No Warp stripes configured.</div>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Weft Stripes Repeat Layout</h5>
-                <div style={{ display: 'flex', flexDirection: 'column', width: 40, height: 150, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden' }}>
-                  {fabricDesignRows.filter(r => r.type === 'Weft').map((row, idx) => {
-                    const colorCode = colorMasters.find(c => c.name === row.color)?.code || '#ccc';
-                    const weight = parseFloat(row.threads) || 1;
-                    return (
-                      <div 
-                        key={idx} 
-                        style={{ 
-                          background: colorCode, 
-                          flexGrow: weight,
-                          width: '100%',
-                          borderBottom: '1px solid rgba(0,0,0,0.1)'
-                        }} 
-                        title={`Weft: ${row.threads} thds of ${row.color}`}
-                      />
-                    );
-                  })}
-                  {fabricDesignRows.filter(r => r.type === 'Weft').length === 0 && (
-                    <div style={{ padding: 8, color: '#999', fontSize: 13 }}>No Weft stripes configured.</div>
-                  )}
-                </div>
-              </div>
+      {showPatternModal && (() => {
+        const getExpandedPattern = (rows, type) => {
+          const filtered = rows.filter(r => r.type === type);
+          const spans = getRowSpans(filtered, 'times');
+          
+          const expanded = [];
+          let i = 0;
+          while (i < filtered.length) {
+            const spanInfo = spans[i];
+            if (spanInfo && spanInfo.isStart && spanInfo.span > 1) {
+              const group = filtered.slice(i, i + spanInfo.span);
+              const times = parseInt(spanInfo.value) || 1;
+              for (let t = 0; t < times; t++) {
+                for (const row of group) {
+                  expanded.push({
+                    color: row.color,
+                    threads: parseFloat(row.threads) || 1
+                  });
+                }
+              }
+              i += spanInfo.span;
+            } else {
+              const row = filtered[i];
+              const times = parseInt(row.times) || 1;
+              for (let t = 0; t < times; t++) {
+                expanded.push({
+                  color: row.color,
+                  threads: parseFloat(row.threads) || 1
+                });
+              }
+              i++;
+            }
+          }
+          if (expanded.length > 200) {
+            return expanded.slice(0, 200);
+          }
+          return expanded;
+        };
 
-              <div>
-                <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Grid Fabric Intersect (Simulated Weave)</h5>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: `repeat(${Math.max(1, fabricDesignRows.filter(r => r.type === 'Warp').length)}, 1fr)`,
-                  gridTemplateRows: `repeat(${Math.max(1, fabricDesignRows.filter(r => r.type === 'Weft').length)}, 1fr)`,
-                  height: 150, 
-                  border: '1px solid #ccc',
-                  borderRadius: 4,
-                  overflow: 'hidden'
-                }}>
-                  {fabricDesignRows.filter(r => r.type === 'Weft').map((weftRow) => {
-                    const weftColor = colorMasters.find(c => c.name === weftRow.color)?.code || '#ccc';
-                    return fabricDesignRows.filter(r => r.type === 'Warp').map((warpRow, wIdx) => {
-                      const warpColor = colorMasters.find(c => c.name === warpRow.color)?.code || '#ccc';
-                      const isWarpFacing = (wIdx % 2 === 0);
+        const expandedWarp = getExpandedPattern(fabricDesignRows, 'Warp');
+        const expandedWeft = getExpandedPattern(fabricDesignRows, 'Weft');
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div className="card" style={{ width: 750, padding: 24, background: '#fff', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+              <h3 style={{ margin: '0 0 16px 0', color: 'var(--primary)', fontWeight: 700 }}>Fabric Design Preview</h3>
+              <button 
+                style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}
+                onClick={() => setShowPatternModal(false)}
+              >
+                <X size={20} />
+              </button>
+              <div style={{ display: 'flex', gap: 20, flexDirection: 'column' }}>
+                <div>
+                  <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Warp Stripes Repeat Layout</h5>
+                  <div style={{ display: 'flex', height: 40, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden' }}>
+                    {expandedWarp.map((row, idx) => {
+                      const colorCode = getColorHex(row.color, colorMasters);
                       return (
                         <div 
-                          key={wIdx} 
+                          key={idx} 
                           style={{ 
-                            background: isWarpFacing ? warpColor : weftColor,
-                            width: '100%',
-                            height: '100%',
-                            border: '0.5px solid rgba(0,0,0,0.05)'
+                            background: colorCode, 
+                            flexGrow: row.threads,
+                            height: '100%'
                           }} 
+                          title={`Warp: ${row.threads} thds of ${row.color}`}
                         />
                       );
-                    });
-                  })}
+                    })}
+                    {expandedWarp.length === 0 && (
+                      <div style={{ padding: 8, color: '#999', fontSize: 13 }}>No Warp stripes configured.</div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Weft Stripes Repeat Layout</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', height: 40, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden' }}>
+                    {expandedWeft.map((row, idx) => {
+                      const colorCode = getColorHex(row.color, colorMasters);
+                      return (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            background: colorCode, 
+                            flexGrow: row.threads,
+                            width: '100%'
+                          }} 
+                          title={`Weft: ${row.threads} thds of ${row.color}`}
+                        />
+                      );
+                    })}
+                    {expandedWeft.length === 0 && (
+                      <div style={{ padding: 8, color: '#999', fontSize: 13 }}>No Weft stripes configured.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h5 style={{ fontWeight: 600, marginBottom: 8 }}>Grid Fabric Intersect (Simulated Weave)</h5>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: expandedWarp.length > 0 ? expandedWarp.map(w => `${w.threads}fr`).join(' ') : '1fr',
+                    gridTemplateRows: expandedWeft.length > 0 ? expandedWeft.map(y => `${y.threads}fr`).join(' ') : '1fr',
+                    height: 300, 
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    overflow: 'hidden'
+                  }}>
+                    {expandedWeft.map((weftRow, rIdx) => {
+                      const weftColor = getColorHex(weftRow.color, colorMasters);
+                      return expandedWarp.map((warpRow, cIdx) => {
+                        const warpColor = getColorHex(warpRow.color, colorMasters);
+                        // Plain weave checkerboard pattern
+                        const isWarpFacing = ((rIdx + cIdx) % 2 === 0);
+                        return (
+                          <div 
+                            key={`${rIdx}-${cIdx}`} 
+                            style={{ 
+                              background: isWarpFacing ? warpColor : weftColor,
+                              width: '100%',
+                              height: '100%'
+                            }} 
+                          />
+                        );
+                      });
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div style={{ marginTop: 24, textAlign: 'right' }}>
-              <button className="btn btn-secondary" onClick={() => setShowPatternModal(false)}>Close Preview</button>
+              <div style={{ marginTop: 24, textAlign: 'right' }}>
+                <button className="btn btn-secondary" onClick={() => setShowPatternModal(false)}>Close Preview</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      <A4DocumentPreview
+      <DesignSheetModal
         isOpen={!!viewModalDesign}
         onClose={() => setViewModalDesign(null)}
-        title="DESIGN PROFILE"
-        documentNumber={viewModalDesign?.ds_ref_no}
-        status="ACTIVE"
-        onDownloadPdf={() => alert('PDF Download for Design Entry triggered')}
-        sections={viewModalDesign ? [
-          {
-            title: "DESIGN & BUYER",
-            icon: "Palette",
-            type: "grid",
-            data: [
-              { label: "Design No", value: viewModalDesign.design_no },
-              { label: "DS Date", value: viewModalDesign.ds_date },
-              { label: "Buyer Name", value: viewModalDesign.buyer_name || '-' },
-              { label: "IBPO No", value: viewModalDesign.ibpo_no || '-' },
-              { label: "Created By", value: viewModalDesign.created_by || '-' }
-            ]
-          },
-          {
-            title: "FABRIC & SPECIFICATIONS",
-            icon: "Layers",
-            type: "grid",
-            data: [
-              { label: "Fabric Type", value: viewModalDesign.fabric },
-              { label: "Weaving", value: viewModalDesign.weaving },
-              { label: "Design Type", value: viewModalDesign.design_type },
-              { label: "Gry Construction", value: viewModalDesign.gry_const || '-' },
-              { label: "Reed / Pick OT", value: `${viewModalDesign.reed || 0} / ${viewModalDesign.pick_ot || 0}` },
-              { label: "Finish Width", value: `${viewModalDesign.finish_width || 0}"` }
-            ]
-          },
-          {
-            title: "METRICS & LENGTHS",
-            icon: "Briefcase",
-            type: "grid",
-            data: [
-              { label: "Total Mtrs", value: `${viewModalDesign.total_mtr || 0} Mtr` },
-              { label: "Warp Mtrs", value: `${viewModalDesign.warp_mtr || 0} Mtr` },
-              { label: "Weight (Grms)", value: `${viewModalDesign.weight_grm || 0} g` },
-              { label: "QLM", value: viewModalDesign.qlm || 0 }
-            ]
-          }
-        ] : []}
+        design={viewModalDesign}
+        colorMasters={colorMasters}
       />
 
     </div>
