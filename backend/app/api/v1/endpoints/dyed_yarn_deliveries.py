@@ -11,82 +11,106 @@ from app.models.dyed_yarn import DyedYarnDelivery, DyedYarnDeliveryItem
 router = APIRouter(prefix="/dyed-yarn-deliveries", tags=["Dyed Yarn Deliveries"])
 
 class DyedYarnDeliveryItemBase(BaseModel):
+    sp_no: Optional[str] = None
+    design_no: Optional[str] = None
     yarn_type: Optional[str] = None
-    count: Optional[str] = None
-    color: Optional[str] = None
+    yarn_count: Optional[str] = None
+    ply: Optional[str] = None
+    colour: Optional[str] = None
     shade_no: Optional[str] = None
     lot_no: Optional[str] = None
     batch_no: Optional[str] = None
-    stock: Optional[str] = None
-    bags: Optional[int] = 0
-    cones: Optional[int] = 0
-    total_kgs: Optional[float] = 0
+    unit: Optional[str] = "KGS"
+    
+    ordered_qty: Optional[float] = 0
+    prev_delivered_qty: Optional[float] = 0
+    balance_qty: Optional[float] = 0
+    current_delivery_qty: Optional[float] = 0
+    
+    no_of_bags: Optional[int] = 0
+    no_of_cones: Optional[int] = 0
+    gross_weight: Optional[float] = 0
+    tare_weight: Optional[float] = 0
+    net_weight: Optional[float] = 0
+    
     rate: Optional[float] = 0
     amount: Optional[float] = 0
     remarks: Optional[str] = None
 
 class DyedYarnDeliveryCreate(BaseModel):
+    delivery_no: Optional[str] = None
     dc_no: Optional[str] = None
-    dc_no_alt: Optional[str] = None
-    dc_date: date
-    add_date: Optional[date] = None
+    dc_date: Optional[date] = None
+    delivery_date: Optional[date] = None
     delivery_type: Optional[str] = None
     delivery_mode: Optional[str] = None
+    yarn_dyeing_po_no: Optional[str] = None
+    processor_name: Optional[str] = None
     party_name: Optional[str] = None
-    delivery_address: Optional[str] = None
-    design_no: Optional[str] = None
     order_no: Optional[str] = None
-    design_type: Optional[str] = None
-    transport: Optional[str] = None
-    certificate_type: Optional[str] = None
-    driver_name: Optional[str] = None
-    delivery_time: Optional[str] = None
+    ref_no: Optional[str] = None
+    design_no: Optional[str] = None
+    merchandiser: Optional[str] = None
     
     vehicle_no: Optional[str] = None
+    driver_name: Optional[str] = None
+    driver_mobile: Optional[str] = None
+    transport_name: Optional[str] = None
     lr_no: Optional[str] = None
-    delivery_challan_type: Optional[str] = None
-    customer_po_no: Optional[str] = None
-    dyeing_batch_no: Optional[str] = None
-    dispatch_from: Optional[str] = None
-    received_by: Optional[str] = None
-    mobile_no: Optional[str] = None
-    
-    total_delv_kgs: Optional[float] = 0
-    total_rin_kgs: Optional[float] = 0
-    balance_kgs: Optional[float] = 0
-    
-    cost: Optional[float] = 0
-    insurance: Optional[float] = 0
-    other_charges: Optional[float] = 0
+    gate_pass_no: Optional[str] = None
+    eway_bill_no: Optional[str] = None
+    dispatch_from_godown: Optional[str] = None
+    remarks: Optional[str] = None
+
+    # Quantity Summary
+    total_ordered_qty: Optional[float] = 0
+    total_prev_delivered_qty: Optional[float] = 0
+    total_current_delivery_qty: Optional[float] = 0
+    total_balance_qty: Optional[float] = 0
+    total_bags: Optional[int] = 0
+    total_cones: Optional[int] = 0
+    total_gross_weight: Optional[float] = 0
+    total_net_weight: Optional[float] = 0
+
+    # Financial / Logistics Details
     freight_charges: Optional[float] = 0
     loading_charges: Optional[float] = 0
-    discount: Optional[float] = 0
-    gross_amount: Optional[float] = 0
-    tax_value: Optional[float] = 0
-    sgst: Optional[float] = 0
-    igst: Optional[float] = 0
+    unloading_charges: Optional[float] = 0
+    insurance_charges: Optional[float] = 0
+    other_charges: Optional[float] = 0
+    transport_remarks: Optional[str] = None
+
+    # Tax Details
+    taxable_amount: Optional[float] = 0
+    sgst_pct: Optional[float] = 0
+    sgst_amount: Optional[float] = 0
+    cgst_pct: Optional[float] = 0
+    cgst_amount: Optional[float] = 0
+    igst_pct: Optional[float] = 0
+    igst_amount: Optional[float] = 0
     total_gst: Optional[float] = 0
-    tcs: Optional[float] = 0
-    tds: Optional[float] = 0
-    advance_received: Optional[float] = 0
+
+    # Summary
+    gross_amount: Optional[float] = 0
+    discount: Optional[float] = 0
     round_off: Optional[float] = 0
-    net_amount: Optional[float] = 0
-    balance_amount: Optional[float] = 0
-    
-    remarks: Optional[str] = None
-    status: Optional[str] = "Delivered"
+    grand_total: Optional[float] = 0
+    advance: Optional[float] = 0
+    balance: Optional[float] = 0
+
+    delivery_status: Optional[str] = "Pending"
     items: List[DyedYarnDeliveryItemBase] = []
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_dyed_yarn_delivery(data: DyedYarnDeliveryCreate, db: AsyncSession = Depends(get_db)):
     db_delivery = DyedYarnDelivery(**data.model_dump(exclude={"items"}))
     
-    if not db_delivery.dc_no:
+    if not db_delivery.delivery_no:
         q = select(DyedYarnDelivery).order_by(desc(DyedYarnDelivery.id))
         result = await db.execute(q)
         last_rec = result.scalars().first()
         new_id = (last_rec.id + 1) if last_rec else 1
-        db_delivery.dc_no = f"DYD-{new_id:05d}"
+        db_delivery.delivery_no = f"DYD-{new_id:05d}"
 
     db.add(db_delivery)
     await db.commit()
@@ -97,7 +121,7 @@ async def create_dyed_yarn_delivery(data: DyedYarnDeliveryCreate, db: AsyncSessi
         db.add(db_item)
     
     await db.commit()
-    return {"id": db_delivery.id, "dc_no": db_delivery.dc_no, "message": "Dyed Yarn Delivery created successfully"}
+    return {"id": db_delivery.id, "delivery_no": db_delivery.delivery_no, "message": "Dyed Yarn Delivery created successfully"}
 
 @router.get("")
 async def list_dyed_yarn_deliveries(db: AsyncSession = Depends(get_db)):
@@ -110,13 +134,14 @@ async def list_dyed_yarn_deliveries(db: AsyncSession = Depends(get_db)):
         for r in deliveries:
             output.append({
                 "id": r.id,
+                "delivery_no": r.delivery_no,
                 "dc_no": r.dc_no,
-                "dc_date": r.dc_date,
+                "delivery_date": r.delivery_date,
                 "party_name": r.party_name,
                 "delivery_type": r.delivery_type,
-                "status": r.status,
-                "items": [{"color": i.color, "total_kgs": float(i.total_kgs) if i.total_kgs else 0.0} for i in r.items],
-                "net_amount": float(r.net_amount) if r.net_amount else 0.0
+                "delivery_status": r.delivery_status,
+                "items": [{"colour": i.colour, "total_net_weight": float(i.net_weight) if i.net_weight else 0.0} for i in r.items],
+                "grand_total": float(r.grand_total) if r.grand_total else 0.0
             })
         return output
     except Exception as e:
