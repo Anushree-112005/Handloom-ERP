@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Layers, FileText, IndianRupee, Download, Table } from 'lucide-react';
-import { twistingDoublingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import { twistingDoublingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function TwistingDoublingPO() {
@@ -31,6 +31,8 @@ export default function TwistingDoublingPO() {
     remarks: '',
 
     ref_no_1: '',
+    buyer_order_no: '',
+    design_no: '',
     entry_against: '',
     packing_type: '',
 
@@ -66,20 +68,23 @@ export default function TwistingDoublingPO() {
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
   
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
         twistingDoublingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
-        buyerOrderAPI.list()
+        buyerOrderAPI.list(),
+        designEntryAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(dsRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -127,6 +132,22 @@ export default function TwistingDoublingPO() {
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      const updatedItems = [...form.items];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = value;
+      }
+      setForm(recalculate({
+        ...form,
+        design_no: value,
+        buyer_name: de?.buyer_name || form.buyer_name,
+        items: updatedItems
+      }));
+      return;
+    }
+
     setForm(recalculate({ ...form, [name]: value }));
   };
 
@@ -416,18 +437,34 @@ export default function TwistingDoublingPO() {
 
           <form id="td-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
             {/* Header Section */}
-            <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
+            <div className="form-row" style={{ gridTemplateColumns: 'repeat(6, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
               <div className="form-group"><label>Ref. No</label><input type="text" className="form-control" name="ref_no_1" value={form.ref_no_1} onChange={handleChange} /></div>
               <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
               <div className="form-group"><label>Org. Name</label><input type="text" className="form-control" value="DEPL" disabled /></div>
-              <div className="form-group"><label>PO No</label><input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required /></div>
+              <div className="form-group"><label>PO No *</label><input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required /></div>
+              <div className="form-group"><label>Order No *</label>
+                <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
+                  <option value="">Select Order...</option>
+                  {buyerOrders.map(bo => (
+                    <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group"><label>Design Entry ID *</label>
+                <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
+                  <option value="">Select Design...</option>
+                  {designEntries.map(de => (
+                    <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
+                  ))}
+                </select>
+              </div>
               <div className="form-group" style={{ gridColumn: 'span 2' }}><label>JobWorker Name</label>
                 <select className="form-control" name="supplier_worker" value={form.supplier_worker} onChange={handleChange}>
                   <option value="-">-</option>
                   {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                 </select>
               </div>
-              <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery At</label>
+              <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Delivery At</label>
                 <select className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange}>
                   <option value="-">-</option>
                   {options.masters?.department?.map(o => <option key={o} value={o}>{o}</option>)}

@@ -246,6 +246,7 @@ async def list_all_entities(db: AsyncSession = Depends(get_db)):
     """Return all distinct entity names with counts — useful for admin dashboard."""
     result = await db.execute(
         select(SubMaster.entity, func.count(SubMaster.id).label("count"))
+        .where(SubMaster.entity != "system_seeded")
         .group_by(SubMaster.entity)
         .order_by(SubMaster.entity)
     )

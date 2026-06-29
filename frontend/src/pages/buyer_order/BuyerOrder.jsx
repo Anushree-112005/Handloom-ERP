@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, ShoppingCart, Activity, CheckCircle, Package, Clock, Download, FileText, ChevronDown, MessageSquare, CreditCard, ClipboardList, Settings, Truck, Star, Filter } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { buyerOrderAPI, partyAPI, employeeAPI, dropdownAPI, subMasterAPI } from '../../services/api';
+import SubMasterDropdown from '../../components/SubMasterDropdown';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -14,6 +16,9 @@ const DetailRow = ({ label, value }) => (
 );
 
 export default function BuyerOrder() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryId = searchParams.get('id');
+
   const [orders, setOrders] = useState([]);
   const [parties, setParties] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -135,9 +140,32 @@ export default function BuyerOrder() {
     }
   };
 
+  const refreshDropdownOptions = async () => {
+    try {
+      const dropdownsRes = await dropdownAPI.getAll();
+      setOptions(dropdownsRes.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDropdownChange = (name, val) => {
+    setForm(prev => ({ ...prev, [name]: val }));
+  };
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (queryId && orders.length > 0) {
+      const matched = orders.find(o => String(o.id) === String(queryId));
+      if (matched) {
+        handleOpenForm(matched, true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [queryId, orders]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -334,8 +362,30 @@ export default function BuyerOrder() {
       return;
     }
     
-    if (name === 'buyer_name' && value === 'custom_add_new') {
-      setIsCustomBuyer(true);
+    if (name === 'buyer_name') {
+      if (value === 'custom_add_new') {
+        setIsCustomBuyer(true);
+        return;
+      }
+      const party = parties.find(p => p.company_name === value);
+      if (party) {
+        let fullAddress = [party.address, party.city, party.district, party.state, party.country]
+          .filter(Boolean)
+          .join(', ');
+        if (party.pin_code) {
+          fullAddress += ` - ${party.pin_code}`;
+        }
+        setForm(prev => ({
+          ...prev,
+          buyer_name: value,
+          billing_address: fullAddress || '',
+          state: party.state || '',
+          gst_no: party.gst_no || '',
+          pan_no: party.pan_no || ''
+        }));
+      } else {
+        setForm(prev => ({ ...prev, buyer_name: value }));
+      }
       return;
     }
     
@@ -660,21 +710,15 @@ export default function BuyerOrder() {
   };
 
   const renderItemDropdown = (label, field, entity, index, item) => (
-    <div className="form-group"><label>{label}</label>
-      {customAddItem.field === field && customAddItem.index === index ? (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input autoFocus type="text" className="form-control" placeholder={`New ${label}...`} value={customAddItem.val} onChange={(e) => setCustomAddItem({ ...customAddItem, val: e.target.value })} />
-          <button type="button" className="btn btn-primary" onClick={() => handleSaveCustomItem(entity)} style={{ padding: '6px' }}>Save</button>
-          <button type="button" className="btn btn-secondary" onClick={() => setCustomAddItem({ field: null, index: null, val: '' })} style={{ padding: '6px' }}>X</button>
-        </div>
-      ) : (
-        <select className="form-control" value={item[field]} onChange={e => updateItem(index, field, e.target.value)}>
-          <option value="">-- Select --</option>
-          {options?.masters?.[entity]?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom...</option>
-        </select>
-      )}
-    </div>
+    <SubMasterDropdown
+      label={label}
+      name={field}
+      value={item[field] || ''}
+      entity={entity}
+      options={options}
+      onChange={(fieldName, val) => updateItem(index, fieldName, val)}
+      onOptionsRefresh={refreshDropdownOptions}
+    />
   );
 
   const renderPackingTypeCheckboxes = (index, item) => {
@@ -823,6 +867,32 @@ export default function BuyerOrder() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Buyer Orders");
     XLSX.writeFile(wb, `Buyer_Orders_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const isSalesParty = (p) => {
+    if (!p) return false;
+    const type = (p.party_type || '').toLowerCase();
+    const group = (p.party_group || '').toLowerCase();
+
+    // Exclude service providers (job workers, processors, logistics, agents, etc.)
+    const excludeTerms = [
+      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+      'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
+      'lab', 'washing', 'service'
+    ];
+
+    if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
+      return false;
+    }
+
+    return (
+      type.includes('sales') ||
+      type.includes('customer') ||
+      type.includes('buyer') ||
+      group.includes('customer') ||
+      group.includes('buyer')
+    );
   };
 
   return (
@@ -1054,7 +1124,9 @@ export default function BuyerOrder() {
                       <label>Party Name *</label>
                       <select className="form-control" required value={form.party_id} onChange={handlePartyChange}>
                         <option value="">Select Party...</option>
-                        {parties.map(p => <option key={p.id} value={p.id}>{p.company_name}</option>)}
+                        {parties.filter(isSalesParty).map(p => (
+                          <option key={p.id} value={p.id}>{p.company_name} ({p.customer_code})</option>
+                        ))}
                       </select>
                     </div>
                     <div className="form-group">
@@ -1068,10 +1140,12 @@ export default function BuyerOrder() {
                       ) : (
                         <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
                           <option value="">-- Select Buyer Name --</option>
-                          {form.buyer_name && !(options?.masters?.['buyer'] || []).includes(form.buyer_name) && (
+                          {form.buyer_name && !parties.filter(isSalesParty).some(p => p.company_name === form.buyer_name) && (
                             <option value={form.buyer_name}>{form.buyer_name}</option>
                           )}
-                          {options?.masters?.['buyer']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                          {parties.filter(isSalesParty).map(p => (
+                            <option key={p.id} value={p.company_name}>{p.company_name} ({p.customer_code})</option>
+                          ))}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
                         </select>
                       )}
@@ -1103,56 +1177,24 @@ export default function BuyerOrder() {
                         </select>
                       )}
                     </div>
-                    <div className="form-group">
-                      <label>Order Type</label>
-                      {isCustomOrderType ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Order Type..." 
-                            value={customOrderTypeVal}
-                            onChange={(e) => setCustomOrderTypeVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomOrderType} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomOrderType(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
-                          <option value="">-- Select Order Type --</option>
-                          {options?.masters?.['order_type_master']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Order Type...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group">
-                      <label>Certified Type</label>
-                      {isCustomCertifiedType ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Certified Type..." 
-                            value={customCertifiedTypeVal}
-                            onChange={(e) => setCustomCertifiedTypeVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomCertifiedType} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomCertifiedType(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="certified_type" value={form.certified_type} onChange={handleChange}>
-                          <option value="">-- Select Certified Type --</option>
-                          {options?.masters?.['certified_type']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Certified Type...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Order Type"
+                      name="order_type"
+                      value={form.order_type || ''}
+                      entity="order_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="Certified Type"
+                      name="certified_type"
+                      value={form.certified_type || ''}
+                      entity="certified_type"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group">
                       <label>GST No</label>
                       <input className="form-control" name="gst_no" value={form.gst_no} onChange={handleChange} />
@@ -1161,31 +1203,15 @@ export default function BuyerOrder() {
                       <label>PAN No</label>
                       <input className="form-control" name="pan_no" value={form.pan_no} onChange={handleChange} />
                     </div>
-                    <div className="form-group">
-                      <label>Commission Type</label>
-                      {isCustomCommissionType ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Commission Type..." 
-                            value={customCommissionTypeVal}
-                            onChange={(e) => setCustomCommissionTypeVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomCommissionType} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomCommissionType(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="commission_type" value={form.commission_type} onChange={handleChange}>
-                          <option value="">-- Select Commission Type --</option>
-                          {options?.masters?.['commission_type_master']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Commission Type...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Commission Type"
+                      name="commission_type"
+                      value={form.commission_type || ''}
+                      entity="commission_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group">
                       <label>Commission Value</label>
                       <input type="number" className="form-control" name="commission_pct" value={form.commission_pct} onChange={handleChange} />
@@ -1208,31 +1234,16 @@ export default function BuyerOrder() {
                       <label>Nomination</label>
                       <input className="form-control" name="nomination_type" value={form.nomination_type} onChange={handleChange} />
                     </div>
-                    <div className="form-group">
-                      <label>Regular / Special</label>
-                      {isCustomRegularSpecial ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new value..." 
-                            value={customRegularSpecialVal}
-                            onChange={(e) => setCustomRegularSpecialVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomRegularSpecial} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomRegularSpecial(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="regular_special" value={form.regular_special} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'payment', 'outstanding')}>
-                          <option value="">-- Select --</option>
-                          {options?.masters?.['regular_special_master']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Regular / Special"
+                      name="regular_special"
+                      value={form.regular_special || ''}
+                      entity="regular_special_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                      onKeyDown={(e) => handleKeyDownTabTransition(e, 'payment', 'outstanding')}
+                    />
                   </div>
 
                   {/* Section 2: Payment Details */}
@@ -1241,58 +1252,28 @@ export default function BuyerOrder() {
                     <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
                     <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
                     <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Status</label>
-                      {isCustomStatus ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Status..." 
-                            value={customStatusVal}
-                            onChange={(e) => setCustomStatusVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomStatus} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomStatus(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                          <option value="">-- Select Status --</option>
-                          {options?.masters?.['status_master']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Status"
+                      name="status"
+                      value={form.status || ''}
+                      entity="status_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
                     <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Payment Terms</label>
-                      {isCustomPaymentTerms ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Payment Terms..." 
-                            value={customPaymentTermsVal}
-                            onChange={(e) => setCustomPaymentTermsVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPaymentTerms} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPaymentTerms(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
-                          <option value="">-- Select Payment Terms --</option>
-                          {options?.masters?.['payment_terms']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Payment Terms"
+                      name="payment_terms"
+                      value={form.payment_terms || ''}
+                      entity="payment_terms_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
                     <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
@@ -1345,97 +1326,51 @@ export default function BuyerOrder() {
                   {/* Section 4: Transport & Delivery */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Transport & Delivery</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                    <div className="form-group"><label>Transport Mode</label>
-                      {isCustomTransportMode ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New Mode..." value={customTransportModeVal} onChange={(e) => setCustomTransportModeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportMode} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportMode(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
-                          <option value="">-- Select Transport Mode --</option>
-                          {options?.masters?.['transport_mode_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>Transport Name</label>
-                      {isCustomTransportName ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New Transport Name..." value={customTransportNameVal} onChange={(e) => setCustomTransportNameVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportName} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportName(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
-                          <option value="">-- Select Transport Name --</option>
-                          {form.transport_name && !(options?.masters?.['transport_name_master'] || []).includes(form.transport_name) && (
-                            <option value={form.transport_name}>{form.transport_name}</option>
-                          )}
-                          {options?.masters?.['transport_name_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>Party Terms</label>
-                      {isCustomPartyTerms ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input
-                            autoFocus
-                            type="text"
-                            className="form-control"
-                            placeholder="New Party Terms..."
-                            value={customPartyTermsVal}
-                            onChange={(e) => setCustomPartyTermsVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPartyTerms} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPartyTerms(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
-                          <option value="">-- Select Party Terms --</option>
-                          {form.party_terms && !(options?.masters?.['party_terms_master'] || []).includes(form.party_terms) && !['FOB', 'CIF', 'Ex-Works'].includes(form.party_terms) && (
-                            <option value={form.party_terms}>{form.party_terms}</option>
-                          )}
-                          <option value="FOB">FOB</option>
-                          <option value="CIF">CIF</option>
-                          <option value="Ex-Works">Ex-Works</option>
-                          {options?.masters?.['party_terms_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>LR Type</label>
-                      {isCustomLRType ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New LR Type..." value={customLRTypeVal} onChange={(e) => setCustomLRTypeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRType} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRType(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange}>
-                          <option value="">-- Select LR Type --</option>
-                          {options?.masters?.['lr_type_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>LR Terms</label>
-                      {isCustomLRTerms ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New LR Terms..." value={customLRTermsVal} onChange={(e) => setCustomLRTermsVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRTerms} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRTerms(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange}>
-                          <option value="">-- Select LR Terms --</option>
-                          {options?.masters?.['lr_terms']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Transport Mode"
+                      name="transport_mode"
+                      value={form.transport_mode || ''}
+                      entity="transport_mode_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="Transport Name"
+                      name="transport_name"
+                      value={form.transport_name || ''}
+                      entity="transport_name_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="Party Terms"
+                      name="party_terms"
+                      value={form.party_terms || ''}
+                      entity="party_terms_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="LR Type"
+                      name="lr_type"
+                      value={form.lr_type || ''}
+                      entity="lr_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="LR Terms"
+                      name="lr_terms"
+                      value={form.lr_terms || ''}
+                      entity="lr_terms"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
@@ -1448,22 +1383,16 @@ export default function BuyerOrder() {
 
                   {/* Section 5: Process Follow */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Process Follow</h4>
-                  <div className="form-group">
-                    <label>Process Follow Sequence</label>
-                    {isCustomProcessSequence ? (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input autoFocus type="text" className="form-control" placeholder="New Process Sequence..." value={customProcessSequenceVal} onChange={(e) => setCustomProcessSequenceVal(e.target.value)} />
-                        <button type="button" className="btn btn-primary" onClick={handleSaveCustomProcessSequence} style={{ padding: '6px' }}>Save</button>
-                        <button type="button" className="btn btn-secondary" onClick={() => setIsCustomProcessSequence(false)} style={{ padding: '6px' }}>X</button>
-                      </div>
-                    ) : (
-                      <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
-                        <option value="">-- Select Process Sequence --</option>
-                        {options?.masters?.['process_sequence_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                      </select>
-                    )}
-                  </div>
+                    <SubMasterDropdown
+                      label="Process Follow Sequence"
+                      name="process_sequence"
+                      value={form.process_sequence || ''}
+                      entity="process_sequence_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                      onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}
+                    />
 
                   {/* Section 6: Instructions */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Instructions</h4>
@@ -1486,58 +1415,28 @@ export default function BuyerOrder() {
                     <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
                     <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
                     <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Status</label>
-                      {isCustomStatus ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Status..." 
-                            value={customStatusVal}
-                            onChange={(e) => setCustomStatusVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomStatus} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomStatus(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                          <option value="">-- Select Status --</option>
-                          {options?.masters?.['status_master']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Status"
+                      name="status"
+                      value={form.status || ''}
+                      entity="status_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
                     <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
                     <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Payment Terms</label>
-                      {isCustomPaymentTerms ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            autoFocus
-                            type="text" 
-                            className="form-control" 
-                            placeholder="Enter new Payment Terms..." 
-                            value={customPaymentTermsVal}
-                            onChange={(e) => setCustomPaymentTermsVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPaymentTerms} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPaymentTerms(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange}>
-                          <option value="">-- Select Payment Terms --</option>
-                          {options?.masters?.['payment_terms']?.map(opt => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Payment Terms"
+                      name="payment_terms"
+                      value={form.payment_terms || ''}
+                      entity="payment_terms_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
                     <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
@@ -1549,97 +1448,51 @@ export default function BuyerOrder() {
               {activeTab === 'transport' && (
                 <div className="animate-fade">
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                    <div className="form-group"><label>Transport Mode</label>
-                      {isCustomTransportMode ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New Mode..." value={customTransportModeVal} onChange={(e) => setCustomTransportModeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportMode} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportMode(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="transport_mode" value={form.transport_mode} onChange={handleChange}>
-                          <option value="">-- Select Transport Mode --</option>
-                          {options?.masters?.['transport_mode_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>Transport Name</label>
-                      {isCustomTransportName ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New Transport Name..." value={customTransportNameVal} onChange={(e) => setCustomTransportNameVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransportName} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransportName(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
-                          <option value="">-- Select Transport Name --</option>
-                          {form.transport_name && !(options?.masters?.['transport_name_master'] || []).includes(form.transport_name) && (
-                            <option value={form.transport_name}>{form.transport_name}</option>
-                          )}
-                          {options?.masters?.['transport_name_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>Party Terms</label>
-                      {isCustomPartyTerms ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input
-                            autoFocus
-                            type="text"
-                            className="form-control"
-                            placeholder="New Party Terms..."
-                            value={customPartyTermsVal}
-                            onChange={(e) => setCustomPartyTermsVal(e.target.value)}
-                          />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomPartyTerms} style={{ padding: '6px 12px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPartyTerms(false)} style={{ padding: '6px 12px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="party_terms" value={form.party_terms} onChange={handleChange}>
-                          <option value="">-- Select Party Terms --</option>
-                          {form.party_terms && !(options?.masters?.['party_terms_master'] || []).includes(form.party_terms) && !['FOB', 'CIF', 'Ex-Works'].includes(form.party_terms) && (
-                            <option value={form.party_terms}>{form.party_terms}</option>
-                          )}
-                          <option value="FOB">FOB</option>
-                          <option value="CIF">CIF</option>
-                          <option value="Ex-Works">Ex-Works</option>
-                          {options?.masters?.['party_terms_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>LR Type</label>
-                      {isCustomLRType ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New LR Type..." value={customLRTypeVal} onChange={(e) => setCustomLRTypeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRType} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRType(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="lr_type" value={form.lr_type} onChange={handleChange}>
-                          <option value="">-- Select LR Type --</option>
-                          {options?.masters?.['lr_type_master']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
-                    <div className="form-group"><label>LR Terms</label>
-                      {isCustomLRTerms ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input autoFocus type="text" className="form-control" placeholder="New LR Terms..." value={customLRTermsVal} onChange={(e) => setCustomLRTermsVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomLRTerms} style={{ padding: '6px' }}>Save</button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomLRTerms(false)} style={{ padding: '6px' }}>X</button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="lr_terms" value={form.lr_terms} onChange={handleChange}>
-                          <option value="">-- Select LR Terms --</option>
-                          {options?.masters?.['lr_terms']?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                          <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 600 }}>+ Add Custom Option...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Transport Mode"
+                      name="transport_mode"
+                      value={form.transport_mode || ''}
+                      entity="transport_mode_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="Transport Name"
+                      name="transport_name"
+                      value={form.transport_name || ''}
+                      entity="transport_name_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="Party Terms"
+                      name="party_terms"
+                      value={form.party_terms || ''}
+                      entity="party_terms_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="LR Type"
+                      name="lr_type"
+                      value={form.lr_type || ''}
+                      entity="lr_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
+                    <SubMasterDropdown
+                      label="LR Terms"
+                      name="lr_terms"
+                      value={form.lr_terms || ''}
+                      entity="lr_terms"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
@@ -1656,13 +1509,16 @@ export default function BuyerOrder() {
               {activeTab === 'process' && (
                 <div className="animate-fade">
                   <div className="form-group">
-                    <label>Process Follow Sequence</label>
-                    <select className="form-control" name="process_sequence" value={form.process_sequence} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}>
-                      <option value="">-- Select Process Sequence --</option>
-                      <option>Weaving {"->"} Processing {"->"} Dispatch</option>
-                      <option>Yarn Dyeing {"->"} Weaving {"->"} Finishing</option>
-                      <option>Direct Dispatch (Trading)</option>
-                    </select>
+                    <SubMasterDropdown
+                      label="Process Follow Sequence"
+                      name="process_sequence"
+                      value={form.process_sequence || ''}
+                      entity="process_sequence_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                      onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}
+                    />
                   </div>
                 </div>
               )}

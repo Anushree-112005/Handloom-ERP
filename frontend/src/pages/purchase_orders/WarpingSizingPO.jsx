@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Factory, Download, Table } from 'lucide-react';
-import { warpingSizingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import { warpingSizingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function WarpingSizingPO() {
@@ -38,20 +38,23 @@ export default function WarpingSizingPO() {
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
   
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
         warpingSizingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
-        buyerOrderAPI.list()
+        buyerOrderAPI.list(),
+        designEntryAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(dsRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -89,6 +92,16 @@ export default function WarpingSizingPO() {
         taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
       }
       setForm(recalculate({ ...form, ...taxUpdates }));
+      return;
+    }
+
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      setForm(recalculate({
+        ...form,
+        design_no: value,
+        merchandiser: de?.buyer_name || form.merchandiser
+      }));
       return;
     }
 
@@ -409,13 +422,22 @@ export default function WarpingSizingPO() {
                     <input type="text" className="form-control" name="ref_no_2" value={form.ref_no_2} onChange={handleChange} style={{ width: '50%' }} />
                   </div>
                 </div>
-                <div className="form-group"><label>Order No.</label><input type="text" className="form-control" name="order_no" value={form.order_no} onChange={handleChange} required /></div>
+                <div className="form-group"><label>Order No *</label>
+                  <select className="form-control" name="order_no" value={form.order_no} onChange={handleChange} required>
+                    <option value="">Select Order...</option>
+                    {buyerOrders.map(bo => (
+                      <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="order_date" value={form.order_date} onChange={handleChange} required /></div>
                 
                 <div className="form-group"><label>Completion Date</label><input type="date" className="form-control" name="completion_date" value={form.completion_date} onChange={handleChange} /></div>
                 <div className="form-group"><label>Order Type</label>
                   <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
                     <option value="">Select...</option>
+                    <option value="Against SP No.">Against SP No.</option>
+                    <option value="Direct">Direct</option>
                   </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
@@ -425,9 +447,12 @@ export default function WarpingSizingPO() {
                   </select>
                 </div>
 
-                <div className="form-group"><label>Design No.</label>
-                  <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange}>
-                    <option value="">Select...</option>
+                <div className="form-group"><label>Design No *</label>
+                  <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required>
+                    <option value="">Select Design...</option>
+                    {designEntries.map(de => (
+                      <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group"><label>Beam Type</label>

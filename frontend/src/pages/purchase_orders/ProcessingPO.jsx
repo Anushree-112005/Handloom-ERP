@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table } from 'lucide-react';
-import { processingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import { processingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function ProcessingPO() {
@@ -26,6 +26,8 @@ export default function ProcessingPO() {
     party_name: '',
     po_no: '',
     delivery_date: '',
+    buyer_order_no: '',
+    design_no: '',
     
     merchandiser: '',
     merchandiser_ext: '',
@@ -74,20 +76,23 @@ export default function ProcessingPO() {
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
   
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
         processingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
-        buyerOrderAPI.list()
+        buyerOrderAPI.list(),
+        designEntryAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(dsRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -151,6 +156,21 @@ export default function ProcessingPO() {
         taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
       }
       setForm(recalculate({ ...form, ...taxUpdates }));
+      return;
+    }
+
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      const updatedItems = [...form.items];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = value;
+      }
+      setForm(recalculate({
+        ...form,
+        design_no: value,
+        merchandiser: de?.buyer_name || form.merchandiser,
+        items: updatedItems
+      }));
       return;
     }
 
@@ -485,6 +505,23 @@ export default function ProcessingPO() {
                 </div>
                 <div className="form-group"><label>PO No *</label><input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required /></div>
                 <div className="form-group"><label>Dely Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
+                
+                <div className="form-group"><label>Order No *</label>
+                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
+                    <option value="">Select Order...</option>
+                    {buyerOrders.map(bo => (
+                      <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group"><label>Design Entry ID *</label>
+                  <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
+                    <option value="">Select Design...</option>
+                    {designEntries.map(de => (
+                      <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
+                    ))}
+                  </select>
+                </div>
                 
                 <div className="form-group"><label>Merchandiser</label><input type="text" className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange} /></div>
                 <div className="form-group"><label>&nbsp;</label>

@@ -19,7 +19,7 @@ const modules = [
   { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
-  { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
+  // { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
 
 
   { section: 'Masters' },
@@ -180,8 +180,8 @@ const modules = [
 
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
-  { path: '/purchase-order/twisting-doubling', label: 'Twisting / Doubling PO', icon: Layers },
   { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
+  { path: '/purchase-order/twisting-doubling', label: 'Twisting / Doubling PO', icon: Layers },
   { path: '/purchase-order/fabric-dyeing', label: 'Fabric Dyeing PO', icon: Palette },
   { path: '/purchase-order/warping-sizing', label: 'Warping / Sizing PO', icon: Factory },
   { path: '/purchase-order/weaving', label: 'Weaving PO', icon: Layers },
