@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Download, Table } from 'lucide-react';
-import { clothPurchasePOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import { clothPurchasePOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function ClothPurchasePO() {
@@ -36,6 +36,7 @@ export default function ClothPurchasePO() {
     indent_no: '',
     requisition_no: '',
     buyer_order_no: '',
+    design_no: '',
     department: '',
     purchase_type: 'Local',
 
@@ -85,20 +86,23 @@ export default function ClothPurchasePO() {
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
   
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
         clothPurchasePOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
-        buyerOrderAPI.list()
+        buyerOrderAPI.list(),
+        designEntryAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(dsRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -176,6 +180,21 @@ export default function ClothPurchasePO() {
         taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
       }
       setForm(recalculate({ ...form, ...taxUpdates }));
+      return;
+    }
+
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      const updatedItems = [...form.items];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = value;
+      }
+      setForm(recalculate({
+        ...form,
+        design_no: value,
+        contact_person: de?.buyer_name || form.contact_person,
+        items: updatedItems
+      }));
       return;
     }
 
@@ -532,14 +551,22 @@ export default function ClothPurchasePO() {
             {/* Section: Reference Info */}
             <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
                 <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Requisition No</label><input type="text" className="form-control" name="requisition_no" value={form.requisition_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Order No</label>
-                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange}>
+                <div className="form-group"><label>Buyer Order No *</label>
+                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
                     {buyerOrders.map(bo => (
                       <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group"><label>Design No *</label>
+                  <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
+                    <option value="">Select...</option>
+                    {designEntries.map(de => (
+                      <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
                     ))}
                   </select>
                 </div>

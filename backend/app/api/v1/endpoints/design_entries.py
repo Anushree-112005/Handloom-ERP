@@ -325,10 +325,10 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
 
         warp_prompt = """
 Analyze this handwritten textile design sheet (Warp section on the left).
+There are NO yarn count specifications or fabric types written on this page. The handwritten entries only show color names and thread numbers (e.g., "Navy - 68", "White - 3").
 Extract all lines in order from top to bottom.
 
-For each line:
-- yarn_count: default to "40s".
+For each line, extract:
 - color: Standardize to "Navy", "White", "Red", "Olive".
 - threads: The number of threads/ends (integer).
 - times: If there is a bracket/brace grouping multiple rows with a repeat multiplier (e.g. "} 17" or "} 4 times"), extract the multiplier number (e.g. "17" or "4") for all rows inside that bracket. If no bracket/multiplier applies to the row, default to "1".
@@ -336,7 +336,7 @@ For each line:
 Return ONLY a JSON object of this structure:
 {
   "warp": [
-    {"yarn_count": "40S CTN", "color": "Navy", "threads": 68, "times": "1"},
+    {"color": "Navy", "threads": 68, "times": "1"},
     ...
   ]
 }
@@ -344,10 +344,10 @@ Return ONLY a JSON object of this structure:
 
         weft_prompt = """
 Analyze this handwritten textile design sheet (Weft section on the right).
+There are NO yarn count specifications or fabric types written on this page. The handwritten entries only show color names and thread/pick numbers (e.g., "Navy - 84", "Red - 13").
 Extract all lines in order from top to bottom.
 
-For each line:
-- yarn_count: default to "40s".
+For each line, extract:
 - color: Standardize to "Navy", "White", "Red", "Olive".
 - threads: The number of threads/ends (integer).
 - times: If there is a bracket/brace grouping multiple rows with a repeat multiplier (e.g. "} 17" or "} 4 times"), extract the multiplier number (e.g. "17" or "4") for all rows inside that bracket. If no bracket/multiplier applies to the row, default to "1".
@@ -355,7 +355,7 @@ For each line:
 Return ONLY a JSON object of this structure:
 {
   "weft": [
-    {"yarn_count": "40S CTN", "color": "Navy", "threads": 84, "times": "1"},
+    {"color": "Navy", "threads": 84, "times": "1"},
     ...
   ]
 }

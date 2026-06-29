@@ -122,6 +122,7 @@ export default function YarnDyeingPO() {
     const insurance = parseFloat(updatedForm.packing_charge) || 0;
     
     const taxableValue = grossAmt + freight + insurance;
+    const taxType = updatedForm.tax_type || 'GST';
 
     const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
     const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
@@ -158,8 +159,8 @@ export default function YarnDyeingPO() {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
 
-    if (name === 'po_no' && form.order_type === 'Against SP No.') {
-      const de = designEntries.find(d => d.ds_ref_no === value);
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
       if (de) {
         let newItems = [];
         try {
@@ -216,8 +217,7 @@ export default function YarnDyeingPO() {
 
         setForm(recalculate({
           ...form,
-          [name]: value,
-          design_no: de.design_no || '',
+          design_no: value,
           buyer_name: de.buyer_name || '',
           items: newItems
         }));
@@ -559,17 +559,13 @@ export default function YarnDyeingPO() {
                 </div>
               </div>
               <div className="form-group">
-                <label>Order No.</label>
-                {form.order_type === 'Against SP No.' ? (
-                  <select className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required>
-                    <option value="">Select Order No...</option>
-                    {designEntries.map(de => (
-                      <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required />
-                )}
+                <label>Order No. *</label>
+                <select className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required>
+                  <option value="">Select Order No...</option>
+                  {buyerOrders.map(bo => (
+                    <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
 
@@ -602,15 +598,14 @@ export default function YarnDyeingPO() {
               <div className="form-group"><label>PCP Free</label><input type="text" className="form-control" name="pcp_free" value={form.pcp_free} onChange={handleChange} /></div>
 
               <div className="form-group"><label>Staining on Cotton</label><input type="text" className="form-control" name="staining_on_cotton" value={form.staining_on_cotton} onChange={handleChange} /></div>
-              <div className="form-group"><label>Design No.</label>
-                {form.order_type === 'Against SP No.' ? (
-                  <input type="text" className="form-control" name="design_no" value={form.design_no} readOnly />
-                ) : (
-                  <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange}>
-                    <option value="-">-</option>
-                    {options.masters?.design_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                )}
+              <div className="form-group">
+                <label>Design No. *</label>
+                <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required>
+                  <option value="">Select Design No...</option>
+                  {designEntries.map(de => (
+                    <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Merchandiser</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
             </div>

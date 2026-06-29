@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Receipt, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI } from '../../services/api';
@@ -14,6 +15,9 @@ const DetailRow = ({ label, value }) => (
 );
 
 export default function SalesInvoice() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryId = searchParams.get('id');
+
   const [view, setView] = useState('list'); // 'list' | 'form'
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,6 +134,16 @@ export default function SalesInvoice() {
     fetchOptions();
     fetchGraList();
   }, []);
+
+  useEffect(() => {
+    if (queryId && invoices.length > 0) {
+      const matched = invoices.find(inv => String(inv.id) === String(queryId));
+      if (matched) {
+        handleOpenForm(matched, true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [queryId, invoices]);
 
   const fetchGraList = async () => {
     try {

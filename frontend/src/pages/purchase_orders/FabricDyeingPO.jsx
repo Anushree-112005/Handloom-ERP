@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table } from 'lucide-react';
-import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI } from '../../services/api';
+import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function FabricDyeingPO() {
@@ -35,6 +35,7 @@ export default function FabricDyeingPO() {
     sales_order_no: '',
     production_order_no: '',
     buyer_order_no: '',
+    design_no: '',
     department: '',
 
     tax_type: 'GST',
@@ -81,20 +82,23 @@ export default function FabricDyeingPO() {
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
   
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
         fabricDyeingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
-        buyerOrderAPI.list()
+        buyerOrderAPI.list(),
+        designEntryAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
+      setDesignEntries(dsRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,6 +173,18 @@ export default function FabricDyeingPO() {
       }
       setForm(recalculate({ ...form, ...taxUpdates }));
       return;
+    }
+
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      if (de) {
+        setForm(recalculate({
+          ...form,
+          design_no: value,
+          buyer_name: de.buyer_name || form.buyer_name
+        }));
+        return;
+      }
     }
 
     setForm(recalculate({ ...form, [name]: value }));
@@ -520,15 +536,23 @@ export default function FabricDyeingPO() {
             {/* Section: Reference Info */}
             <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
                 <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Sales Order No</label><input type="text" className="form-control" name="sales_order_no" value={form.sales_order_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Production Order No</label><input type="text" className="form-control" name="production_order_no" value={form.production_order_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Order No</label>
-                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange}>
+                <div className="form-group"><label>Buyer Order No *</label>
+                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
                     {buyerOrders.map(bo => (
                       <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group"><label>Design No *</label>
+                  <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
+                    <option value="">Select...</option>
+                    {designEntries.map(de => (
+                      <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
                     ))}
                   </select>
                 </div>
