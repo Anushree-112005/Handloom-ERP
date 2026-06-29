@@ -17,7 +17,7 @@ pipeline {
 
         // ── VM Deployment Target ────────────────────────────────────────────
         VM_USER    = "cubeai"                            // your-vm-username
-        VM_HOST    = "192.168.1.42"                     // your.vm.ip.address
+        VM_HOST    = "192.168.1.107"                     // your.vm.ip.address
         VM_APP_DIR = "/home/cubeai/dinesh-tex-deploy"    // /home/your-vm-username/your-project-name
 
         // ── Git Configuration ───────────────────────────────────────────────
