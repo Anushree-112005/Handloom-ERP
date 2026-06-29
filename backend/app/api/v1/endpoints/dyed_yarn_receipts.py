@@ -24,6 +24,16 @@ class DyedYarnReceivedItemBase(BaseModel):
     short_kgs: Optional[float] = 0
     short_pct: Optional[float] = 0
     remarks: Optional[str] = None
+    yarn_type: Optional[str] = None
+    ply: Optional[str] = None
+    batch_no: Optional[str] = None
+    gross_weight: Optional[float] = 0
+    tare_weight: Optional[float] = 0
+    net_weight: Optional[float] = 0
+    excess_qty: Optional[float] = 0
+    accepted_qty: Optional[float] = 0
+    rejected_qty: Optional[float] = 0
+    qc_remarks: Optional[str] = None
 
 class DyedYarnReceivedCreate(BaseModel):
     inv_no: Optional[str] = None
@@ -46,6 +56,25 @@ class DyedYarnReceivedCreate(BaseModel):
     godown: Optional[str] = None
     remarks: Optional[str] = None
     status: Optional[str] = "Received"
+    receipt_no: Optional[str] = None
+    receipt_date: Optional[date] = None
+    yarn_dyeing_po_no: Optional[str] = None
+    yarn_dyeing_delivery_no: Optional[str] = None
+    processor_name: Optional[str] = None
+    buyer_name: Optional[str] = None
+    party_invoice_no: Optional[str] = None
+    driver_mobile: Optional[str] = None
+    checked_by: Optional[str] = None
+    qc_status: Optional[str] = "Pending"
+    receipt_status: Optional[str] = "Pending"
+    total_taken_qty: Optional[float] = 0
+    total_received_qty: Optional[float] = 0
+    total_short_qty: Optional[float] = 0
+    total_excess_qty: Optional[float] = 0
+    total_bags: Optional[float] = 0
+    total_cones: Optional[float] = 0
+    total_gross_weight: Optional[float] = 0
+    total_net_weight: Optional[float] = 0
     items: List[DyedYarnReceivedItemBase] = []
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
@@ -70,15 +99,36 @@ async def create_dyed_yarn_receipt(receipt_in: DyedYarnReceivedCreate, db: Async
         received_time=receipt_in.received_time,
         godown=receipt_in.godown,
         remarks=receipt_in.remarks,
-        status=receipt_in.status
+        status=receipt_in.status,
+        receipt_no=receipt_in.receipt_no,
+        receipt_date=receipt_in.receipt_date,
+        yarn_dyeing_po_no=receipt_in.yarn_dyeing_po_no,
+        yarn_dyeing_delivery_no=receipt_in.yarn_dyeing_delivery_no,
+        processor_name=receipt_in.processor_name,
+        buyer_name=receipt_in.buyer_name,
+        party_invoice_no=receipt_in.party_invoice_no,
+        driver_mobile=receipt_in.driver_mobile,
+        checked_by=receipt_in.checked_by,
+        qc_status=receipt_in.qc_status,
+        receipt_status=receipt_in.receipt_status,
+        total_taken_qty=receipt_in.total_taken_qty,
+        total_received_qty=receipt_in.total_received_qty,
+        total_short_qty=receipt_in.total_short_qty,
+        total_excess_qty=receipt_in.total_excess_qty,
+        total_bags=receipt_in.total_bags,
+        total_cones=receipt_in.total_cones,
+        total_gross_weight=receipt_in.total_gross_weight,
+        total_net_weight=receipt_in.total_net_weight
     )
     
-    if not db_receipt.inv_no:
+    if not db_receipt.receipt_no:
         q = select(DyedYarnReceived).order_by(desc(DyedYarnReceived.id))
         result = await db.execute(q)
         last_receipt = result.scalars().first()
         new_id = (last_receipt.id + 1) if last_receipt else 1
-        db_receipt.inv_no = f"DYR-{new_id:05d}"
+        db_receipt.receipt_no = f"DYR-{new_id:05d}"
+        if not db_receipt.inv_no:
+            db_receipt.inv_no = db_receipt.receipt_no
 
     db.add(db_receipt)
     await db.commit()
