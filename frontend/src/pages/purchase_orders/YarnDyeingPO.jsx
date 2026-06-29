@@ -126,17 +126,19 @@ export default function YarnDyeingPO() {
     const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
     const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
     const igstPct = parseFloat(updatedForm.igst_pct) || 0;
+    const taxType = updatedForm.tax_type || '';
 
     let cgstAmount = 0;
     let sgstAmount = 0;
     let igstAmount = 0;
 
-    if (taxType === 'GST') {
+    if (taxType.includes('GST') && !taxType.includes('IGST')) {
       cgstAmount = parseFloat(((cgstPct / 100) * taxableValue).toFixed(2));
       sgstAmount = parseFloat(((sgstPct / 100) * taxableValue).toFixed(2));
-    } else if (taxType === 'IGST') {
+    } else if (taxType.includes('IGST')) {
       igstAmount = parseFloat(((igstPct / 100) * taxableValue).toFixed(2));
     }
+
 
     let netAmountRaw = taxableValue + cgstAmount + sgstAmount + igstAmount;
     const netAmountRounded = Math.round(netAmountRaw);

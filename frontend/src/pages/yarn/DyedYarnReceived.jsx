@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Package, Download, ChevronDown, FileText } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { dyedYarnReceiptAPI, partyAPI, greyYarnDeliveryAPI } from '../../services/api';
+import { dyedYarnReceiptAPI, partyAPI, greyYarnDeliveryAPI, yarnDyeingPOAPI, dyedYarnDeliveryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -17,33 +17,39 @@ export default function DyedYarnReceived() {
   const [receipts, setReceipts] = useState([]);
   const [parties, setParties] = useState([]);
   const [greyDeliveries, setGreyDeliveries] = useState([]);
+  const [yarnDyeingPOs, setYarnDyeingPOs] = useState([]);
+  const [dyedYarnDeliveries, setDyedYarnDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [activeTab, setActiveTab] = useState('general');
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [viewModalReceipt, setViewModalReceipt] = useState(null);
 
-  // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All Types');
-  const [statusFilter, setStatusFilter] = useState('All Status');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
   const initialForm = {
+    receipt_no: '', receipt_date: new Date().toISOString().split('T')[0],
     inv_no: '', inv_date: new Date().toISOString().split('T')[0],
     received_type: 'Direct', receive_mode: 'Direct', party_name: '',
+    yarn_dyeing_po_no: '', yarn_dyeing_delivery_no: '', processor_name: '', buyer_name: '', party_invoice_no: '',
     design_no: '', design_count: '', order_no: '',
     our_dc_no: '', party_dc_no: '', dc_date: new Date().toISOString().split('T')[0],
-    vehicle_no: '', transport: '', driver_name: '', lr_no: '', received_by: '', received_time: '', godown: '',
-    remarks: '', status: 'Received',
+    vehicle_no: '', transport: '', driver_name: '', driver_mobile: '', lr_no: '', 
+    received_by: '', checked_by: '', received_time: '', godown: '',
+    remarks: '', status: 'Received', qc_status: 'Pending', receipt_status: 'Pending',
+    total_taken_qty: 0, total_received_qty: 0, total_short_qty: 0, total_excess_qty: 0,
+    total_bags: 0, total_cones: 0, total_gross_weight: 0, total_net_weight: 0,
     items: [{
-      cone_type: 'Full Cone', yarn_count: '',
-      color: '', shade_no: '', our_lot_no: '', dyed_lot_no: '', taken_kgs: 0, rcvd_kgs: 0,
-      short_kgs: 0, short_pct: 0, bags: 0, cones: 0, remarks: ''
+      cone_type: 'Full Cone', yarn_type: '', yarn_count: '', ply: '',
+      color: '', shade_no: '', our_lot_no: '', dyed_lot_no: '', batch_no: '', 
+      taken_kgs: 0, rcvd_kgs: 0, short_kgs: 0, short_pct: 0, excess_qty: 0,
+      bags: 0, cones: 0, gross_weight: 0, tare_weight: 0, net_weight: 0,
+      accepted_qty: 0, rejected_qty: 0, qc_remarks: '', remarks: ''
     }]
   };
 
@@ -51,12 +57,14 @@ export default function DyedYarnReceived() {
 
   const loadData = async () => {
     try {
-      const [recRes, partRes, greyRes] = await Promise.all([
-        dyedYarnReceiptAPI.list(), partyAPI.list(), greyYarnDeliveryAPI.list()
+      const [recRes, partRes, greyRes, ydPORes, ydDelRes] = await Promise.all([
+        dyedYarnReceiptAPI.list(), partyAPI.list(), greyYarnDeliveryAPI.list(), yarnDyeingPOAPI.list(), dyedYarnDeliveryAPI.list()
       ]);
       setReceipts(recRes.data);
       setParties(partRes.data);
       setGreyDeliveries(greyRes.data);
+      setYarnDyeingPOs(ydPORes.data);
+      setDyedYarnDeliveries(ydDelRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -66,10 +74,71 @@ export default function DyedYarnReceived() {
 
   useEffect(() => { loadData(); }, []);
 
+  useEffect(() => {
+    if (!showForm) return;
+
+    let tTaken = 0, tRcvd = 0, tShort = 0, tExcess = 0;
+    let tBags = 0, tCones = 0, tGross = 0, tNet = 0;
+
+    const newItems = form.items.map(item => {
+      const taken = parseFloat(item.taken_kgs) || 0;
+      const rcvd = parseFloat(item.rcvd_kgs) || 0;
+      let short = 0;
+      let excess = 0;
+      
+      if (rcvd < taken) {
+        short = taken - rcvd;
+      } else if (rcvd > taken) {
+        excess = rcvd - taken;
+      }
+      
+      const shortPct = taken > 0 ? parseFloat(((short / taken) * 100).toFixed(2)) : 0;
+
+      tTaken += taken;
+      tRcvd += rcvd;
+      tShort += short;
+      tExcess += excess;
+      tBags += parseInt(item.bags) || 0;
+      tCones += parseInt(item.cones) || 0;
+      tGross += parseFloat(item.gross_weight) || 0;
+      tNet += parseFloat(item.net_weight) || 0;
+
+      return { ...item, short_kgs: short, short_pct: shortPct, excess_qty: excess };
+    });
+
+    setForm(prev => {
+      if (
+        prev.total_taken_qty === tTaken && prev.total_received_qty === tRcvd &&
+        prev.total_bags === tBags && prev.total_net_weight === tNet &&
+        JSON.stringify(prev.items) === JSON.stringify(newItems)
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        items: newItems,
+        total_taken_qty: tTaken, total_received_qty: tRcvd,
+        total_short_qty: tShort, total_excess_qty: tExcess,
+        total_bags: tBags, total_cones: tCones,
+        total_gross_weight: tGross, total_net_weight: tNet
+      };
+    });
+
+  }, [form.items, showForm]);
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
       const payload = { ...form };
+      
+      // Clean up empty strings for date fields to prevent FastAPI 422 errors
+      const dateFields = ['receipt_date', 'inv_date', 'dc_date'];
+      dateFields.forEach(field => {
+        if (!payload[field] || payload[field] === '') {
+          payload[field] = null;
+        }
+      });
+
       if (editingId) {
         await dyedYarnReceiptAPI.update(editingId, payload);
       } else {
@@ -81,15 +150,38 @@ export default function DyedYarnReceived() {
     }
   };
 
-  const handleOpenForm = async (entry, readOnly = false) => {
+  const handleOpenForm = async (entry = null, readOnly = false) => {
     try {
-      const { data } = await dyedYarnReceiptAPI.get(entry.id);
-      if (data.inv_date) data.inv_date = data.inv_date.substring(0, 10);
-      if (data.dc_date) data.dc_date = data.dc_date.substring(0, 10);
-      setForm({ ...initialForm, ...data });
-      setEditingId(data.id);
+      if (entry) {
+        const { data } = await dyedYarnReceiptAPI.get(entry.id);
+        
+        // Sanitize data to prevent uncontrolled input React warnings
+        const sanitizedData = {};
+        for (const key in data) {
+          sanitizedData[key] = data[key] === null || data[key] === undefined ? '' : data[key];
+        }
+        
+        if (sanitizedData.inv_date) sanitizedData.inv_date = sanitizedData.inv_date.substring(0, 10);
+        if (sanitizedData.dc_date) sanitizedData.dc_date = sanitizedData.dc_date.substring(0, 10);
+        if (sanitizedData.receipt_date) sanitizedData.receipt_date = sanitizedData.receipt_date.substring(0, 10);
+
+        if (Array.isArray(sanitizedData.items)) {
+          sanitizedData.items = sanitizedData.items.map(item => {
+            const cleanItem = {};
+            for (const key in item) {
+              cleanItem[key] = item[key] === null || item[key] === undefined ? '' : item[key];
+            }
+            return cleanItem;
+          });
+        }
+        
+        setForm({ ...initialForm, ...sanitizedData });
+        setEditingId(sanitizedData.id);
+      } else {
+        setForm(initialForm);
+        setEditingId(null);
+      }
       setIsReadOnly(readOnly);
-      setActiveTab('general');
       setShowForm(true);
       setSelectedViewEntry(null);
     } catch (err) {
@@ -110,89 +202,71 @@ export default function DyedYarnReceived() {
     }
   };
 
-  const handleRowClick = async (entry) => {
-    try {
-      const { data } = await dyedYarnReceiptAPI.get(entry.id);
-      setSelectedViewEntry(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleChange = (e) => {
-  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      setActiveTab(nextTab);
-      setTimeout(() => {
-        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        } else {
-          // Fallback to first focusable element
-          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-          if (fallback) fallback.focus();
-        }
-      }, 100);
-    }
-  };
-
-    let { name, value, type } = e.target;
-    if (type === 'number') value = parseFloat(value) || 0;
-    setForm({ ...form, [name]: value });
-  };
-
-  const handleFetchFromGreyDelivery = (val) => {
-    if (!val) {
-      setForm(prev => ({ ...prev, our_dc_no: val }));
+  const handleFetchFromYarnDyeingDelivery = (delivery_no) => {
+    if (!delivery_no) {
+      setForm(prev => ({ ...prev, yarn_dyeing_delivery_no: delivery_no }));
       return;
     }
-    const delivery = greyDeliveries.find(d => d.dc_no === val);
+    const delivery = dyedYarnDeliveries.find(p => p.delivery_no === delivery_no);
     if (delivery) {
       setForm(prev => {
-        const newForm = { ...prev };
-        newForm.our_dc_no = val;
+        const newForm = { ...prev, yarn_dyeing_delivery_no: delivery_no };
+        newForm.processor_name = delivery.processor_name || prev.processor_name;
         newForm.party_name = delivery.party_name || prev.party_name;
-        newForm.design_no = delivery.design_no || prev.design_no;
         newForm.order_no = delivery.order_no || prev.order_no;
+        newForm.design_no = delivery.design_no || prev.design_no;
+        newForm.buyer_name = delivery.merchandiser || prev.buyer_name;
+        newForm.yarn_dyeing_po_no = delivery.yarn_dyeing_po_no || prev.yarn_dyeing_po_no;
+        
+        // Additional Autofill fields from Logistics
+        newForm.our_dc_no = delivery.dc_no || prev.our_dc_no;
+        newForm.dc_date = delivery.dc_date || prev.dc_date;
+        newForm.vehicle_no = delivery.vehicle_no || prev.vehicle_no;
+        newForm.transport = delivery.transport_name || prev.transport;
+        newForm.driver_name = delivery.driver_name || prev.driver_name;
+        newForm.driver_mobile = delivery.driver_mobile || prev.driver_mobile;
+        newForm.lr_no = delivery.lr_no || prev.lr_no;
         
         if (delivery.items && delivery.items.length > 0) {
           newForm.items = delivery.items.map(item => ({
             ...initialForm.items[0],
-            cone_type: item.cone_type || 'Full Cone',
-            yarn_count: item.count || '',
-            our_lot_no: item.our_lot_no || '',
-            color: item.color || '',
-            taken_kgs: item.total_kgs || 0,
-            bags: item.bags || 0,
-            cones: item.cones || 0,
+            yarn_type: item.yarn_type || '',
+            yarn_count: item.yarn_count || '',
+            ply: item.ply || '',
+            color: item.colour || '',
+            shade_no: item.shade_no || '',
+            dyed_lot_no: item.lot_no || '',
+            batch_no: item.batch_no || '',
+            taken_kgs: parseFloat(item.current_delivery_qty) || 0
           }));
         }
         return newForm;
       });
     } else {
-      setForm(prev => ({ ...prev, our_dc_no: val }));
+      setForm(prev => ({ ...prev, yarn_dyeing_delivery_no: delivery_no }));
     }
+  };
+
+  const handleChange = (e) => {
+    let { name, value, type } = e.target;
+    if (type === 'number') value = parseFloat(value) || 0;
+    if (name === 'yarn_dyeing_delivery_no') {
+      handleFetchFromYarnDyeingDelivery(value);
+      return;
+    }
+    setForm({ ...form, [name]: value });
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
   const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+  
   const updateItem = (index, field, value) => {
     const newItems = [...form.items];
     let val = value;
-    if (['taken_kgs', 'bags', 'cones', 'rcvd_kgs', 'short_kgs', 'short_pct'].includes(field)) {
+    if (['taken_kgs', 'rcvd_kgs', 'bags', 'cones', 'gross_weight', 'tare_weight', 'net_weight', 'excess_qty', 'accepted_qty', 'rejected_qty'].includes(field)) {
       val = parseFloat(value) || 0;
     }
     newItems[index][field] = val;
-
-    // Auto-calculate shortages
-    if (field === 'taken_kgs' || field === 'rcvd_kgs') {
-      const taken = parseFloat(newItems[index].taken_kgs) || 0;
-      const rcvd = parseFloat(newItems[index].rcvd_kgs) || 0;
-      newItems[index].short_kgs = taken - rcvd;
-      newItems[index].short_pct = taken > 0 ? parseFloat(((taken - rcvd) / taken * 100).toFixed(2)) : 0;
-    }
-
     setForm({ ...form, items: newItems });
   };
 
@@ -200,9 +274,7 @@ export default function DyedYarnReceived() {
     const matchesSearch = searchTerm === '' ||
       r.inv_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.party_name?.toLowerCase().includes(searchTerm.toLowerCase());
-      
     const matchesType = typeFilter === 'All Types' || r.received_type === typeFilter;
-    
     let matchesDate = true;
     if (r.inv_date) {
       const entryDate = new Date(r.inv_date);
@@ -216,99 +288,20 @@ export default function DyedYarnReceived() {
     return matchesSearch && matchesType && matchesDate;
   });
 
-  const exportPDF = () => {
-    const doc = new jsPDF('landscape');
-    doc.text("Dinesh Textile - Dyed Yarn Receipts", 14, 15);
-    const headers = [["Inv No", "Inv Date", "Party Name", "Received Type", "Status"]];
-    const rows = filteredReceipts.map(r => [
-      r.inv_no || '-',
-      r.inv_date || '-',
-      r.party_name || '-',
-      r.received_type || '-',
-      r.status || '-'
-    ]);
-    autoTable(doc, { head: headers, body: rows, startY: 20 });
-    doc.save(`Dyed_Yarn_Receipts_${new Date().toISOString().split('T')[0]}.pdf`);
-  };
-
-  const exportExcel = () => {
-    const data = filteredReceipts.map(r => ({
-      "Inv No": r.inv_no,
-      "Inv Date": r.inv_date,
-      "Received Type": r.received_type,
-      "Party Name": r.party_name,
-      "Our DC No": r.our_dc_no,
-      "Party DC No": r.party_dc_no,
-      "Design No": r.design_no,
-      "Status": r.status
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Dyed Yarn Receipts");
-    XLSX.writeFile(wb, `Dyed_Yarn_Receipts_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
-
   return (
-    <div className="animate-fade">
+    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
       {!showForm ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Palette size={24} color="var(--primary)" /> Dyed Yarn Received
-              </h2>
-              <p style={{ color: 'var(--text-muted)' }}>Manage receipts and shortage tracking for dyed yarn.</p>
+              <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Palette size={32} color="var(--primary)" /> Dyed Yarn Received
+              </h1>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 15 }}>Manage receipts and shortage tracking for dyed yarn.</p>
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ position: 'relative' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Download size={16} /> Export <ChevronDown size={14} />
-                </button>
-
-                {showExportMenu && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
-                    <button
-                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
-                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                    >
-                      <FileText size={16} color="#ef4444" /> PDF Report
-                    </button>
-                    <button
-                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
-                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                    >
-                      <Download size={16} color="#10b981" /> Excel Sheet
-                    </button>
-                  </div>
-                )}
-              </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
-                <Plus size={18} /> New Receipt
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card" onClick={() => setTypeFilter('All Types')} style={{ cursor: 'pointer', border: typeFilter === 'All Types' ? '2px solid var(--primary)' : '1px solid transparent' }}>
-              <div className="stat-icon purple"><Package size={24} /></div>
-              <div className="stat-details"><h3>Total Receipts</h3><div className="value">{receipts.length}</div></div>
-            </div>
-            <div className="card stat-card" onClick={() => setTypeFilter('Direct')} style={{ cursor: 'pointer', border: typeFilter === 'Direct' ? '2px solid #10b981' : '1px solid transparent' }}>
-              <div className="stat-icon emerald"><Package size={24} /></div>
-              <div className="stat-details"><h3>Direct</h3><div className="value">{receipts.filter(r => r.received_type === 'Direct').length}</div></div>
-            </div>
-            <div className="card stat-card" onClick={() => setTypeFilter('Against Order')} style={{ cursor: 'pointer', border: typeFilter === 'Against Order' ? '2px solid #f59e0b' : '1px solid transparent' }}>
-              <div className="stat-icon amber"><Package size={24} /></div>
-              <div className="stat-details"><h3>Against Order</h3><div className="value">{receipts.filter(r => r.received_type === 'Against Order').length}</div></div>
-            </div>
+            <button className="btn btn-primary" onClick={() => handleOpenForm(null, false)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Plus size={18} /> New Receipt
+            </button>
           </div>
 
           <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
@@ -341,7 +334,7 @@ export default function DyedYarnReceived() {
                     ) : filteredReceipts.length === 0 ? (
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No receipts found.</td></tr>
                     ) : filteredReceipts.map(r => (
-                      <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                      <tr key={r.id} onClick={() => setSelectedViewEntry(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.inv_no}</td>
                         <td>{r.inv_date}</td>
                         <td style={{ fontWeight: 500 }}>{r.party_name || '-'}</td>
@@ -349,14 +342,7 @@ export default function DyedYarnReceived() {
                         <td>{r.items?.length || 0}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button
-                              className="btn btn-secondary"
-                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              onClick={(evt) => { evt.stopPropagation(); setViewModalReceipt(r); }}
-                              title="Preview Receipt"
-                            >
-                              <Eye size={16} color="var(--primary)" />
-                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(evt) => { evt.stopPropagation(); setViewModalReceipt(r); }}><Eye size={16} color="var(--primary)" /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(r.id, r.inv_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
@@ -376,14 +362,6 @@ export default function DyedYarnReceived() {
                       <Palette size={18} /> {selectedViewEntry.inv_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        onClick={() => setViewModalReceipt(selectedViewEntry)}
-                        title="Preview Receipt"
-                      >
-                        <Eye size={16} color="var(--primary)" />
-                      </button>
                       <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
@@ -393,17 +371,6 @@ export default function DyedYarnReceived() {
                     <DetailRow label="Date" value={selectedViewEntry.inv_date} />
                     <DetailRow label="Type" value={selectedViewEntry.received_type} />
                     <DetailRow label="Party" value={selectedViewEntry.party_name} />
-                    
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items ({selectedViewEntry.items?.length || 0})</h4>
-                    {selectedViewEntry.items?.map((c, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 8, border: '1px solid var(--border)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Color: {c.color || 'N/A'}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                          <span>Rcvd Kgs: {c.rcvd_kgs}</span>
-                          <span>Short: {c.short_kgs} kg</span>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -411,43 +378,35 @@ export default function DyedYarnReceived() {
           </div>
         </>
       ) : (
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Receipt Details' : editingId ? 'Edit Receipt' : 'New Dyed Yarn Receipt'}</h2>
+        <div className="card" style={{ padding: 0, background: '#f8fafc', border: 'none' }}>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Palette size={20} color="var(--primary)" /> {isReadOnly ? 'View Receipt Details' : editingId ? 'Edit Receipt' : 'New Dyed Yarn Receipt'}
+            </h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
               {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}</button>
+                <button type="submit" form="receipt-form" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}</button>
               )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'Top Section Fields' }, { id: 'items', label: 'Table Section Fields' }].map(tab => (
-              <button 
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap'
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ padding: 24, background: '#fff' }}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
+          <form id="receipt-form" onSubmit={handleCreate} style={{ display: 'flex', gap: 24, padding: 24, alignItems: 'flex-start' }}>
+            {/* MAIN CONTENT COLUMN */}
+            <fieldset disabled={isReadOnly} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0, border: 'none', padding: 0, margin: 0 }}>
               
-              {activeTab === 'general' && (
-                <div className="animate-fade">
-                  {/* Section 1: Top Section Fields */}
-                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
+              {/* Receipt & Party Info */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>RECEIPT INFO</span>
+                </div>
+                <div style={{ padding: '20px 18px' }}>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
-                    <div className="form-group"><label>Inv No</label><input className="form-control" name="inv_no" value={form.inv_no} onChange={handleChange} disabled={editingId != null} /></div>
+                    <div className="form-group"><label>Receipt No</label><input className="form-control" name="receipt_no" value={form.receipt_no} onChange={handleChange} placeholder="Auto Generated" disabled /></div>
+                    <div className="form-group"><label>Receipt Date</label><input type="date" className="form-control" name="receipt_date" value={form.receipt_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Inv No</label><input className="form-control" name="inv_no" value={form.inv_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Inv Date</label><input type="date" className="form-control" name="inv_date" value={form.inv_date} onChange={handleChange} /></div>
+                    
                     <div className="form-group"><label>Received Type</label>
                       <select className="form-control" name="received_type" value={form.received_type} onChange={handleChange}>
                         <option>Direct</option><option>Against Order</option>
@@ -458,7 +417,18 @@ export default function DyedYarnReceived() {
                         <option>Direct</option><option>Against Order</option>
                       </select>
                     </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing Delivery No</label>
+                      <select className="form-control" name="yarn_dyeing_delivery_no" value={form.yarn_dyeing_delivery_no} onChange={handleChange}>
+                        <option value="">Select Delivery...</option>
+                        {dyedYarnDeliveries.map(del => <option key={del.id} value={del.delivery_no}>{del.delivery_no}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing PO No</label>
+                      <input className="form-control" name="yarn_dyeing_po_no" value={form.yarn_dyeing_po_no} readOnly style={{ background: '#f1f5f9' }} placeholder="Auto-filled from Delivery" />
+                    </div>
                     
+                    <div className="form-group"><label>Processor Name</label><input className="form-control" name="processor_name" value={form.processor_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Buyer Name</label><input className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
                         <option value="">Select Party...</option>
@@ -467,38 +437,63 @@ export default function DyedYarnReceived() {
                     </div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Design Count</label><input className="form-control" name="design_count" value={form.design_count} onChange={handleChange} /></div>
-                    
                     <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Our DC No.</label>
-                      <select className="form-control" name="our_dc_no" value={form.our_dc_no} onChange={(e) => handleFetchFromGreyDelivery(e.target.value)}>
-                        <option value="">Select DC...</option>
-                        {greyDeliveries.map(d => <option key={d.id} value={d.dc_no}>{d.dc_no} - {d.party_name}</option>)}
+                    <div className="form-group"><label>Party Invoice No</label><input className="form-control" name="party_invoice_no" value={form.party_invoice_no} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>Our DC No.</label><input className="form-control" name="our_dc_no" value={form.our_dc_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Party DC No.</label><input className="form-control" name="party_dc_no" value={form.party_dc_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Godown / Store Location</label><input className="form-control" name="godown" value={form.godown} onChange={handleChange} /></div>
+                    
+                    <div className="form-group"><label>QC Status</label>
+                      <select className="form-control" name="qc_status" value={form.qc_status} onChange={handleChange}>
+                        <option>Pending</option><option>Accepted</option><option>Rejected</option>
                       </select>
                     </div>
-                    <div className="form-group"><label>Party DC No.</label><input className="form-control" name="party_dc_no" value={form.party_dc_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'cone_type')} /></div>
+                    <div className="form-group"><label>Receipt Status</label>
+                      <select className="form-control" name="receipt_status" value={form.receipt_status} onChange={handleChange}>
+                        <option>Pending</option><option>Partial</option><option>Completed</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} rows={1} /></div>
+                  </div>
+                </div>
+              </div>
 
+              {/* Logistics */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>LOGISTICS</span>
+                </div>
+                <div style={{ padding: '20px 18px' }}>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
                     <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
                     <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Driver Mobile</label><input className="form-control" name="driver_mobile" value={form.driver_mobile} onChange={handleChange} /></div>
                     <div className="form-group"><label>LR No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Received By</label><input className="form-control" name="received_by" value={form.received_by} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Checked By</label><input className="form-control" name="checked_by" value={form.checked_by} onChange={handleChange} /></div>
                     <div className="form-group"><label>Received Time</label><input type="time" className="form-control" name="received_time" value={form.received_time} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Godown / Store Location</label><input className="form-control" name="godown" value={form.godown} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Section 2: Table Section Fields */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Table Section Fields</h4>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
-                  </div>
+              {/* Items Block */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>YARN DETAILS</span>
+                  {!isReadOnly && <button type="button" className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}><Plus size={14} /> Add Row</button>}
+                </div>
                   <div style={{ overflowX: 'auto', marginBottom: 16 }}>
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>S.No</th><th>Cone Type</th><th>Yarn Count</th><th>Color</th><th>Shade No</th><th>Our Lot No</th>
-                          <th>Dyed Lot No</th><th>Taken Kgs</th><th>Received Kgs</th><th>Short Kgs</th><th>Short %</th><th>Bags</th><th>Cones</th><th>Remarks</th><th>X</th>
+                          <th>S.No</th><th>Cone Type</th><th>Yarn Type</th><th>Yarn Count</th><th>Ply</th><th>Color</th>
+                          <th>Shade No</th><th>Our Lot No</th><th>Dyed Lot No</th><th>Batch No</th>
+                          <th>Taken Kgs</th><th>Received Kgs</th><th>Short Kgs</th><th>Short %</th><th>Excess Qty</th>
+                          <th>Bags</th><th>Cones</th><th>Gross Wt</th><th>Tare Wt</th><th>Net Wt</th>
+                          <th>Accepted Qty</th><th>Rejected Qty</th><th>QC Remarks</th><th>Remarks</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -510,17 +505,30 @@ export default function DyedYarnReceived() {
                                 <option>Full Cone</option><option>Half Cone</option>
                               </select>
                             </td>
+                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_type} onChange={e => updateItem(idx, 'yarn_type', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.ply} onChange={e => updateItem(idx, 'ply', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.dyed_lot_no} onChange={e => updateItem(idx, 'dyed_lot_no', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
+                            
                             <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.taken_kgs} onChange={e => updateItem(idx, 'taken_kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rcvd_kgs} onChange={e => updateItem(idx, 'rcvd_kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.short_kgs} onChange={e => updateItem(idx, 'short_kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.short_pct} onChange={e => updateItem(idx, 'short_pct', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.short_kgs} readOnly /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.short_pct} readOnly /></td>
+                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.excess_qty} readOnly /></td>
+                            
                             <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.gross_weight} onChange={e => updateItem(idx, 'gross_weight', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.tare_weight} onChange={e => updateItem(idx, 'tare_weight', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.net_weight} onChange={e => updateItem(idx, 'net_weight', e.target.value)} /></td>
+                            
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.accepted_qty} onChange={e => updateItem(idx, 'accepted_qty', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rejected_qty} onChange={e => updateItem(idx, 'rejected_qty', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.qc_remarks} onChange={e => updateItem(idx, 'qc_remarks', e.target.value)} /></td>
                             <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
                             <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
                           </tr>
@@ -528,106 +536,33 @@ export default function DyedYarnReceived() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-              )}
+              </div>
 
-              {activeTab === 'items' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>S.No</th><th>Cone Type</th><th>Yarn Count</th><th>Color</th><th>Shade No</th><th>Our Lot No</th>
-                          <th>Dyed Lot No</th><th>Taken Kgs</th><th>Received Kgs</th><th>Short Kgs</th><th>Short %</th><th>Bags</th><th>Cones</th><th>Remarks</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              <select className="form-control" style={{ width: 100, padding: '6px' }} value={item.cone_type} onChange={e => updateItem(idx, 'cone_type', e.target.value)}>
-                                <option>Full Cone</option><option>Half Cone</option>
-                              </select>
-                            </td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.dyed_lot_no} onChange={e => updateItem(idx, 'dyed_lot_no', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.taken_kgs} onChange={e => updateItem(idx, 'taken_kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rcvd_kgs} onChange={e => updateItem(idx, 'rcvd_kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.short_kgs} onChange={e => updateItem(idx, 'short_kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70, padding: '6px' }} value={item.short_pct} onChange={e => updateItem(idx, 'short_pct', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </fieldset>
-          </div>
+
+            {/* STICKY SUMMARY COLUMN */}
+            <div style={{ flex: '0 0 320px', position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>QUANTITY SUMMARY</span>
+                </div>
+                <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <DetailRow label="Total Taken Qty" value={`${form.total_taken_qty} Kg`} />
+                  <DetailRow label="Total Received Qty" value={`${form.total_received_qty} Kg`} />
+                  <DetailRow label="Total Short Qty" value={`${form.total_short_qty} Kg`} />
+                  <DetailRow label="Total Excess Qty" value={`${form.total_excess_qty} Kg`} />
+                  <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
+                  <DetailRow label="Total Bags" value={form.total_bags} />
+                  <DetailRow label="Total Cones" value={form.total_cones} />
+                  <DetailRow label="Total Gross Weight" value={`${form.total_gross_weight} Kg`} />
+                  <DetailRow label="Total Net Weight" value={`${form.total_net_weight} Kg`} />
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
       )}
-
-      <A4DocumentPreview
-        isOpen={!!viewModalReceipt}
-        onClose={() => setViewModalReceipt(null)}
-        title="DYED YARN RECEIPT"
-        documentNumber={viewModalReceipt?.inv_no}
-        status="RECEIVED"
-        onDownloadPdf={() => alert('PDF Download for Dyed Yarn Receipt triggered')}
-        sections={viewModalReceipt ? [
-          {
-            title: "RECEIPT DETAILS",
-            icon: "Briefcase",
-            type: "grid",
-            data: [
-              { label: "Invoice No", value: viewModalReceipt.inv_no },
-              { label: "Invoice Date", value: viewModalReceipt.inv_date },
-              { label: "Party Name", value: viewModalReceipt.party_name || '-' },
-              { label: "Received Type", value: viewModalReceipt.received_type },
-              { label: "Our DC No", value: viewModalReceipt.our_dc_no || '-' },
-              { label: "Party DC No", value: viewModalReceipt.party_dc_no || '-' }
-            ]
-          },
-          {
-            title: "YARN & DESIGN",
-            icon: "Palette",
-            type: "grid",
-            data: [
-              { label: "Design No", value: viewModalReceipt.design_no || '-' },
-              { label: "Design Count", value: viewModalReceipt.design_count || '-' },
-              { label: "Order No", value: viewModalReceipt.order_no || '-' },
-              { label: "Total Items", value: viewModalReceipt.items?.length || 0 }
-            ]
-          },
-          {
-            title: "RECEIVED CONSIGNMENT",
-            icon: "Box",
-            type: "table",
-            headers: ["S.No", "Color", "Lot No", "Taken (Kg)", "Rcvd (Kg)", "Short (Kg)", "Short %"],
-            rows: (viewModalReceipt.items || []).map((item, idx) => [
-              idx + 1,
-              item.color || '-',
-              item.our_lot_no || '-',
-              item.taken_kgs || 0,
-              item.rcvd_kgs || 0,
-              item.short_kgs || 0,
-              `${item.short_pct || 0}%`
-            ])
-          }
-        ] : []}
-      />
-
     </div>
   );
 }
