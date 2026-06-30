@@ -476,7 +476,8 @@ export default function FabricDyeingPO() {
             {[
               { id: 'info', label: 'Order Info', icon: FileText }, 
               { id: 'ref', label: 'Reference Info', icon: Layers }, 
-              { id: 'items', label: 'Fabric Details', icon: Package }, 
+              { id: 'delivery', label: 'Delivery Details', icon: Package },
+              { id: 'items', label: 'Fabric Details', icon: Table },
               { id: 'tax', label: 'Tax & Logistics', icon: IndianRupee }
             ].map(tab => (
               <button
@@ -565,6 +566,39 @@ export default function FabricDyeingPO() {
               </div>
             </div>
 
+            {/* Section: Delivery Details */}
+            <div id="section-delivery" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery Details</h4>
+              <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  {/* Delivery Details */}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY DETAILS</span>
+                    </div>
+                    <div style={{ padding: '16px 18px' }}>
+                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                        <div className="form-group"><label>Delivery Location</label><input type="text" className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Dispatch Mode</label><input type="text" className="form-control" name="dispatch_mode" value={form.dispatch_mode} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Transport Name</label>
+                          <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
+                            <option value="">Select...</option>
+                            {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Vehicle No</label><input type="text" className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Instructions</label><input type="text" className="form-control" name="delivery_instructions" value={form.delivery_instructions} onChange={handleChange} /></div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+                
+
+              </div>
+            </div>
+
             {/* Section: Fabric Details */}
             <div id="section-items" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric Details</h4>
@@ -622,272 +656,238 @@ export default function FabricDyeingPO() {
               </div>
             </div>
 
-            {/* Section: Tax Details & Delivery */}
+            {/* Section: Tax & Logistics */}
             <div id="section-tax" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
               <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {/* Delivery Details */}
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY DETAILS</span>
-                    </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                        <div className="form-group"><label>Delivery Location</label><input type="text" className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Dispatch Mode</label><input type="text" className="form-control" name="dispatch_mode" value={form.dispatch_mode} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Transport Name</label>
-                          <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Vehicle No</label><input type="text" className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Instructions</label><input type="text" className="form-control" name="delivery_instructions" value={form.delivery_instructions} onChange={handleChange} /></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tax Details */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff', marginBottom: 24 }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TAX DETAILS</span>
-                    </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ 
-                        gridTemplateColumns: form.tax_type === 'GST' ? 'repeat(3, 1fr)' : form.tax_type === 'IGST' ? 'repeat(2, 1fr)' : '1fr', 
-                        margin: 0 
-                      }}>
-                        <div className="form-group"><label>Tax Type</label>
-                          <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange}>
-                            <option value="GST">GST</option>
-                            <option value="IGST">IGST</option>
-                            <option value="Exempt">Exempt</option>
-                          </select>
-                        </div>
-                        {(form.tax_type === 'GST' || !form.tax_type) && (
-                          <>
-                            <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                            <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                          </>
+                <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
+                </div>
+                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {(form.terms_conditions || []).map((term, idx) => (
+                      <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                        {editingTermIdx === idx ? (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                            <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                            <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                            <span>{term}</span>
+                            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                            </div>
+                          </div>
                         )}
-                        {form.tax_type === 'IGST' && (
-                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Terms and Conditions */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
-                    </div>
-                    <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {(form.terms_conditions || []).map((term, idx) => (
-                          <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                            {editingTermIdx === idx ? (
-                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
-                                <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
-                                <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                                <span>{term}</span>
-                                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
-                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
-                                </div>
-                              </div>
-                            )}
-                          </li>
-                        ))}
-                      </ol>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
-                        <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
-                          <Plus size={16} /> Add
-                        </button>
-                      </div>
-                    </div>
+                      </li>
+                    ))}
+                  </ol>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
+                    <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
+                      <Plus size={16} /> Add
+                    </button>
                   </div>
                 </div>
-                
-                {/* Tax & Charges Details */}
+              </div>
+            </div>
+
+            {/* ORDER SUMMARY */}
                 <div style={{ width: 350, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                  <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
+                  </div>
+                  <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Value</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Value</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Dyeing Charge</span>
-                        <input 
-                          type="number" 
-                          name="dyeing_charge" 
-                          value={form.dyeing_charge} 
-                          onChange={handleChange} 
-                          style={{
-                            width: '100px',
-                            textAlign: 'right',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: 'var(--text-primary)',
-                            background: 'transparent'
-                          }}
-                        />
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Dyeing Charge</span>
+                      <input 
+                        type="number" 
+                        name="dyeing_charge" 
+                        value={form.dyeing_charge} 
+                        onChange={handleChange} 
+                        style={{
+                          width: '100px',
+                          textAlign: 'right',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--text-primary)',
+                          background: 'transparent'
+                        }}
+                      />
+                    </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charge</span>
-                        <input 
-                          type="number" 
-                          name="packing_charge" 
-                          value={form.packing_charge} 
-                          onChange={handleChange} 
-                          style={{
-                            width: '100px',
-                            textAlign: 'right',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: 'var(--text-primary)',
-                            background: 'transparent'
-                          }}
-                        />
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charge</span>
+                      <input 
+                        type="number" 
+                        name="packing_charge" 
+                        value={form.packing_charge} 
+                        onChange={handleChange} 
+                        style={{
+                          width: '100px',
+                          textAlign: 'right',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--text-primary)',
+                          background: 'transparent'
+                        }}
+                      />
+                    </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charge</span>
-                        <input 
-                          type="number" 
-                          name="loading_charge" 
-                          value={form.loading_charge} 
-                          onChange={handleChange} 
-                          style={{
-                            width: '100px',
-                            textAlign: 'right',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: 'var(--text-primary)',
-                            background: 'transparent'
-                          }}
-                        />
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charge</span>
+                      <input 
+                        type="number" 
+                        name="loading_charge" 
+                        value={form.loading_charge} 
+                        onChange={handleChange} 
+                        style={{
+                          width: '100px',
+                          textAlign: 'right',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--text-primary)',
+                          background: 'transparent'
+                        }}
+                      />
+                    </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charge</span>
-                        <input 
-                          type="number" 
-                          name="unloading_charge" 
-                          value={form.unloading_charge} 
-                          onChange={handleChange} 
-                          style={{
-                            width: '100px',
-                            textAlign: 'right',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: 'var(--text-primary)',
-                            background: 'transparent'
-                          }}
-                        />
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charge</span>
+                      <input 
+                        type="number" 
+                        name="unloading_charge" 
+                        value={form.unloading_charge} 
+                        onChange={handleChange} 
+                        style={{
+                          width: '100px',
+                          textAlign: 'right',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--text-primary)',
+                          background: 'transparent'
+                        }}
+                      />
+                    </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Transport Charge</span>
-                        <input 
-                          type="number" 
-                          name="transport_charge" 
-                          value={form.transport_charge} 
-                          onChange={handleChange} 
-                          style={{
-                            width: '100px',
-                            textAlign: 'right',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: 'var(--text-primary)',
-                            background: 'transparent'
-                          }}
-                        />
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Transport Charge</span>
+                      <input 
+                        type="number" 
+                        name="transport_charge" 
+                        value={form.transport_charge} 
+                        onChange={handleChange} 
+                        style={{
+                          width: '100px',
+                          textAlign: 'right',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--text-primary)',
+                          background: 'transparent'
+                        }}
+                      />
+                    </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
-                        <input 
-                          type="number" 
-                          name="other_charges" 
-                          value={form.other_charges} 
-                          onChange={handleChange} 
-                          style={{
-                            width: '100px',
-                            textAlign: 'right',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: 'var(--text-primary)',
-                            background: 'transparent'
-                          }}
-                        />
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
+                      <input 
+                        type="number" 
+                        name="other_charges" 
+                        value={form.other_charges} 
+                        onChange={handleChange} 
+                        style={{
+                          width: '100px',
+                          textAlign: 'right',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          color: 'var(--text-primary)',
+                          background: 'transparent'
+                        }}
+                      />
+                    </div>
 
-                      {(form.tax_type === 'GST' || !form.tax_type) && (
-                        <>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Tax Type</span>
+                      <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange} style={{ width: 100, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }}>
+                        <option value="GST">GST</option>
+                        <option value="IGST">IGST</option>
+                        <option value="Exempt">Exempt</option>
+                      </select>
+                    </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                        </>
-                      )}
-
-                      {form.tax_type === 'IGST' && (
+                    {(form.tax_type === 'GST' || !form.tax_type) && (
+                      <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                            <input type="number" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
-                      )}
 
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                            <input type="number" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      </>
+                    )}
+
+                    {form.tax_type === 'IGST' && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                          <input type="number" name="igst_pct" value={form.igst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
-                      <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Net Amount</span>
-                        <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
+                    </div>
+                    <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Net Amount</span>
+                      <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </form>
+          </div>
+        </form>
         </div>
       )}
     </div>

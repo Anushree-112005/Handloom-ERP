@@ -132,12 +132,13 @@ export default function YarnDyeingPO() {
     let sgstAmount = 0;
     let igstAmount = 0;
 
-    if (taxType === 'GST') {
+    if (taxType.includes('GST') && !taxType.includes('IGST')) {
       cgstAmount = parseFloat(((cgstPct / 100) * taxableValue).toFixed(2));
       sgstAmount = parseFloat(((sgstPct / 100) * taxableValue).toFixed(2));
-    } else if (taxType === 'IGST') {
+    } else if (taxType.includes('IGST')) {
       igstAmount = parseFloat(((igstPct / 100) * taxableValue).toFixed(2));
     }
+
 
     let netAmountRaw = taxableValue + cgstAmount + sgstAmount + igstAmount;
     const netAmountRounded = Math.round(netAmountRaw);
@@ -608,6 +609,20 @@ export default function YarnDyeingPO() {
                 </select>
               </div>
               <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Merchandiser</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
+              
+              <div style={{ gridColumn: 'span 2', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+                 <div style={{ background: 'var(--bg-secondary)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>DESIGN WISE DETAILS</span>
+                 </div>
+                 <textarea className="form-control" name="design_wise_details" value={form.design_wise_details} onChange={handleChange} style={{ height: 80, border: 'none', resize: 'vertical', margin: 0, padding: '12px' }} placeholder="Enter design details..." />
+              </div>
+              
+              <div style={{ gridColumn: 'span 2', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+                 <div style={{ background: 'var(--bg-secondary)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>COLOR WISE DETAILS</span>
+                 </div>
+                 <textarea className="form-control" name="color_wise_details" value={form.color_wise_details} onChange={handleChange} style={{ height: 80, border: 'none', resize: 'vertical', margin: 0, padding: '12px' }} placeholder="Enter color details..." />
+              </div>
             </div>
 
             {/* Yarn Details Table */}
@@ -765,22 +780,6 @@ export default function YarnDyeingPO() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                 <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DESIGN WISE DETAILS</span>
-                 </div>
-                 <textarea className="form-control" name="design_wise_details" value={form.design_wise_details} onChange={handleChange} style={{ height: 100, border: 'none', resize: 'vertical', width: '100%', margin: 0, padding: '16px 18px' }} placeholder="Enter design details..." />
-              </div>
-              
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                 <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>COLOR WISE DETAILS</span>
-                 </div>
-                 <textarea className="form-control" name="color_wise_details" value={form.color_wise_details} onChange={handleChange} style={{ height: 100, border: 'none', resize: 'vertical', width: '100%', margin: 0, padding: '16px 18px' }} placeholder="Enter color details..." />
               </div>
             </div>
           </form>

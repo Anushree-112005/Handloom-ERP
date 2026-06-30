@@ -34,6 +34,12 @@ class TwistingDoublingPO(Base):
     igst_pct = Column(Numeric(5, 2), default=0)
     igst_amount = Column(Numeric(10, 2), default=0)
     net_amount = Column(Numeric(10, 2), default=0)
+    
+    transport_charge = Column(Numeric(10, 2), default=0)
+    loading_charge = Column(Numeric(10, 2), default=0)
+    unloading_charge = Column(Numeric(10, 2), default=0)
+    packing_charge = Column(Numeric(10, 2), default=0)
+    other_charges = Column(Numeric(10, 2), default=0)
 
     # Delivery Details
     delivery_location = Column(String(255))

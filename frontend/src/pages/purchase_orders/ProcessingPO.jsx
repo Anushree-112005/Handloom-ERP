@@ -48,8 +48,11 @@ export default function ProcessingPO() {
     gross_amt: 0,
     
     tax_type: '',
+    cgst_pct: 0,
     cgst: 0,
+    sgst_pct: 0,
     sgst: 0,
+    igst_pct: 0,
     igst: 0,
     total_gst: 0,
     
@@ -62,6 +65,14 @@ export default function ProcessingPO() {
     delivery_instruction: '',
     round_off: 0,
     net_amount: 0,
+    terms_conditions: [
+      "Material not meeting our specification and standards will be returned",
+      "Demanded Qty to be supplied in whole and excess/short supply will not be accepted.",
+      "Send Invoice along with Material.",
+      "Defective and damage pieces will not be accepted.",
+      "Start bulk production only after getting the sample Approval.",
+      "Subject to Namakkal Jurisdiction."
+    ],
 
     items: [{
       design_no: '', ibpo_no: '', fabric_construction: '', colour_process: '', mtr: 0, kgs: 0, rate: 0, amount: 0
@@ -115,18 +126,23 @@ export default function ProcessingPO() {
     const totalMtr = updatedItems.reduce((sum, item) => sum + (parseFloat(item.mtr) || 0), 0);
     
     const grossAmt = itemsAmount;
-    
-    const cgst = parseFloat(updatedForm.cgst) || 0;
-    const sgst = parseFloat(updatedForm.sgst) || 0;
-    const igst = parseFloat(updatedForm.igst) || 0;
-    const totalGst = cgst + sgst + igst;
-    
     const shipPackChg = parseFloat(updatedForm.ship_pack_chg) || 0;
     const addOther = parseFloat(updatedForm.add_other) || 0;
     
+    const preTaxTotal = grossAmt + shipPackChg + addOther;
+    
+    const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
+    const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
+    const igstPct = parseFloat(updatedForm.igst_pct) || 0;
+    
+    const cgstAmount = parseFloat(((cgstPct / 100) * preTaxTotal).toFixed(2));
+    const sgstAmount = parseFloat(((sgstPct / 100) * preTaxTotal).toFixed(2));
+    const igstAmount = parseFloat(((igstPct / 100) * preTaxTotal).toFixed(2));
+    
+    const totalGst = cgstAmount + sgstAmount + igstAmount;
     const taxValue = totalGst;
     
-    let netAmountRaw = grossAmt + totalGst + shipPackChg + addOther;
+    let netAmountRaw = preTaxTotal + totalGst;
     const netAmountRounded = Math.round(netAmountRaw);
     const roundOff = parseFloat((netAmountRounded - netAmountRaw).toFixed(2));
 
@@ -135,6 +151,9 @@ export default function ProcessingPO() {
       items: updatedItems,
       total_mtr: totalMtr,
       gross_amt: grossAmt,
+      cgst: cgstAmount,
+      sgst: sgstAmount,
+      igst: igstAmount,
       total_gst: totalGst,
       tax_value: taxValue,
       round_off: roundOff,
@@ -591,39 +610,42 @@ export default function ProcessingPO() {
               </div>
             </div>
 
-            {/* Section: Tax Details & Delivery */}
+            {/* Section: Tax & Logistics */}
             <div id="section-tax" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
               <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
                     <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TAX & ADDITIONAL DETAILS</span>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
                     </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                        <div className="form-group"><label>Tax Type</label>
-                          <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                            <option value="">Select...</option>
-                            <option value="GST">GST</option>
-                            <option value="IGST">IGST</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>CGST</label><input type="number" className="form-control" name="cgst" value={form.cgst} onChange={handleChange} /></div>
-                        <div className="form-group"><label>SGST</label><input type="number" className="form-control" name="sgst" value={form.sgst} onChange={handleChange} /></div>
-                        <div className="form-group"><label>IGST</label><input type="number" className="form-control" name="igst" value={form.igst} onChange={handleChange} /></div>
-                        
-                        <div className="form-group"><label>Payment</label><input type="text" className="form-control" name="payment" value={form.payment} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Packing</label>
-                          <select className="form-control" name="packing" value={form.packing} onChange={handleChange}>
-                            <option value="">Select...</option>
-                            <option value="Standard">Standard</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Ship/Pack Chg</label><input type="number" className="form-control" name="ship_pack_chg" value={form.ship_pack_chg} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Add Other</label><input type="number" className="form-control" name="add_other" value={form.add_other} onChange={handleChange} /></div>
-                        
-                        <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Delivery Instruction</label><input type="text" className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
+                    <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {(form.terms_conditions || []).map((term, idx) => (
+                          <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                            {editingTermIdx === idx ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                <span>{term}</span>
+                                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a32fa', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
+                          <Plus size={16} /> Add
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -637,48 +659,73 @@ export default function ProcessingPO() {
                     </div>
                     <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Tax Type</span>
+                        <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange} style={{ width: 100, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }}>
+                          <option value="GST">GST</option>
+                          <option value="IGST">IGST</option>
+                          <option value="Exempt">Exempt</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                        <input type="number" value={form.gross_amt} disabled style={{ width: '100px', textAlign: 'right', border: '1px solid transparent', borderRadius: '4px', padding: '4px 8px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', background: 'transparent' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Ship/Pack Chg</span>
+                        <input type="number" name="ship_pack_chg" value={form.ship_pack_chg} onChange={handleChange} style={{ width: '100px', textAlign: 'right', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', background: 'transparent' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Add Other</span>
+                        <input type="number" name="add_other" value={form.add_other} onChange={handleChange} style={{ width: '100px', textAlign: 'right', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', background: 'transparent' }} />
+                      </div>
+
+                      <div style={{ borderTop: '1px dashed var(--border)', margin: '4px 0' }}></div>
+
+                      {(form.tax_type === 'GST' || !form.tax_type) && (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                              <input type="number" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                              <input type="number" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {form.tax_type === 'IGST' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                            <input type="number" name="igst_pct" value={form.igst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Mtr</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{form.total_mtr || 0}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.total_mtr || 0}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Gross Amt</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.gross_amt || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      </div>
-
-                      {parseFloat(form.total_gst) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total GST</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.total_gst || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                      
-                      {parseFloat(form.ship_pack_chg) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Ship/Pack Chg</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.ship_pack_chg) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
-                      {parseFloat(form.add_other) > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Add Other</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(parseFloat(form.add_other) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      )}
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Tax Value</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.tax_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
                       </div>
-
-                      {parseFloat(form.round_off) !== 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.round_off || 0).toFixed(2)}</span>
-                        </div>
-                      )}
                       
                       <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>NET AMOUNT</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>GRAND TOTAL</span>
                         <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                       </div>
                     </div>
