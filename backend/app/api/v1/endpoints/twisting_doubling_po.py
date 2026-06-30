@@ -59,6 +59,11 @@ class TwistingDoublingPOCreate(BaseModel):
     igst_pct: Optional[float] = 0
     igst_amount: Optional[float] = 0
     net_amount: Optional[float] = 0
+    transport_charge: Optional[float] = 0
+    loading_charge: Optional[float] = 0
+    unloading_charge: Optional[float] = 0
+    packing_charge: Optional[float] = 0
+    other_charges: Optional[float] = 0
 
     delivery_location: Optional[str] = None
     dispatch_mode: Optional[str] = None
@@ -110,6 +115,11 @@ async def create_twisting_doubling_po(data: TwistingDoublingPOCreate, db: AsyncS
         igst_pct=data.igst_pct,
         igst_amount=data.igst_amount,
         net_amount=data.net_amount,
+        transport_charge=data.transport_charge,
+        loading_charge=data.loading_charge,
+        unloading_charge=data.unloading_charge,
+        packing_charge=data.packing_charge,
+        other_charges=data.other_charges,
 
         delivery_location=data.delivery_location,
         dispatch_mode=data.dispatch_mode,

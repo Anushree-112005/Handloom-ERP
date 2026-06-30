@@ -132,17 +132,11 @@ async def list_dyed_yarn_deliveries(db: AsyncSession = Depends(get_db)):
         
         output = []
         for r in deliveries:
-            output.append({
-                "id": r.id,
-                "delivery_no": r.delivery_no,
-                "dc_no": r.dc_no,
-                "delivery_date": r.delivery_date,
-                "party_name": r.party_name,
-                "delivery_type": r.delivery_type,
-                "delivery_status": r.delivery_status,
-                "items": [{"colour": i.colour, "total_net_weight": float(i.net_weight) if i.net_weight else 0.0} for i in r.items],
-                "grand_total": float(r.grand_total) if r.grand_total else 0.0
-            })
+            del_dict = {c.name: getattr(r, c.name) for c in r.__table__.columns}
+            del_dict["items"] = []
+            for item in r.items:
+                del_dict["items"].append({c.name: float(getattr(item, c.name)) if hasattr(getattr(item, c.name), 'normalize') else getattr(item, c.name) for c in item.__table__.columns})
+            output.append(del_dict)
         return output
     except Exception as e:
         import traceback

@@ -37,6 +37,9 @@ export default function TwistingDoublingPO() {
     packing_type: '',
 
     tax_type: '',
+    gross_amt: 0,
+    transport_charge: 0,
+    packing_charge: 0,
     taxable_amount: 0,
     total_order_kgs: 0,
     cgst_pct: 0,
@@ -52,7 +55,14 @@ export default function TwistingDoublingPO() {
     transport_name: '',
     vehicle_type: '',
     delivery_instructions: '',
-    terms_conditions: [],
+    terms_conditions: [
+      'Material not meeting our specification and standards will be returned',
+      'Demanded Qty to be supplied in whole and excess/short supply will not be accepted.',
+      'Send Invoice along with Material.',
+      'Defective and damage pieces will not be accepted.',
+      'Start bulk production only after getting the sample Approval.',
+      'Subject to Namakkal Jurisdiction.'
+    ],
 
     items: [{
       fibre_group: '', yarn_count: '', mill_name: '', design_no: '', colour: '', conversion_count: '', order_kgs: 0, job_work_charge: 0, tolerance_pct: 0, amount: 0
@@ -103,24 +113,29 @@ export default function TwistingDoublingPO() {
       return { ...item, amount: parseFloat((qty * charge).toFixed(2)) };
     });
 
-    const taxableAmount = updatedItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const itemsAmount = updatedItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const grossAmt = itemsAmount;
+    const freight = parseFloat(updatedForm.transport_charge) || 0;
+    const insurance = parseFloat(updatedForm.packing_charge) || 0;
+    const taxableValue = grossAmt + freight + insurance;
     const totalOrderKgs = updatedItems.reduce((sum, item) => sum + (item.order_kgs || 0), 0);
 
     const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
     const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
     const igstPct = parseFloat(updatedForm.igst_pct) || 0;
 
-    const cgstAmount = parseFloat(((cgstPct / 100) * taxableAmount).toFixed(2));
-    const sgstAmount = parseFloat(((sgstPct / 100) * taxableAmount).toFixed(2));
-    const igstAmount = parseFloat(((igstPct / 100) * taxableAmount).toFixed(2));
+    const cgstAmount = parseFloat(((cgstPct / 100) * taxableValue).toFixed(2));
+    const sgstAmount = parseFloat(((sgstPct / 100) * taxableValue).toFixed(2));
+    const igstAmount = parseFloat(((igstPct / 100) * taxableValue).toFixed(2));
 
-    let netAmountRaw = taxableAmount + cgstAmount + sgstAmount + igstAmount;
+    let netAmountRaw = taxableValue + cgstAmount + sgstAmount + igstAmount;
     const netAmountRounded = Math.round(netAmountRaw);
 
     return {
       ...updatedForm,
       items: updatedItems,
-      taxable_amount: taxableAmount,
+      gross_amt: grossAmt,
+      taxable_amount: taxableValue,
       total_order_kgs: totalOrderKgs,
       cgst_amount: cgstAmount,
       sgst_amount: sgstAmount,
@@ -535,63 +550,108 @@ export default function TwistingDoublingPO() {
               </div>
             </div>
 
-            {/* Bottom Section: Tax/Other Details */}
-            <div style={{ border: '2px solid #fdba74', padding: 12 }}>
-              <h4 style={{ margin: '0 0 16px 0', color: '#ea580c', fontWeight: 'bold' }}>Tax/Other Details</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px 24px', alignItems: 'center' }}>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, gridColumn: 'span 2' }}>
-                  <label style={{ width: 140, margin: 0 }}>Date of Despatch</label>
-                  <input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} style={{ margin: 0 }} />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                  <label style={{ width: 100, margin: 0 }}>Packing Type</label>
-                  <input type="text" className="form-control" name="packing_type" value={form.packing_type} onChange={handleChange} style={{ margin: 0 }} />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                  <label style={{ width: 120, margin: 0 }}>Total Order Kgs</label>
-                  <input type="number" className="form-control" style={{ margin: 0, background: '#f1f5f9' }} value={form.total_order_kgs} disabled />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                  <label style={{ width: 120, margin: 0 }}>Taxable Amount</label>
-                  <input type="number" className="form-control" style={{ margin: 0, background: '#f1f5f9' }} value={form.taxable_amount} disabled />
-                </div>
-
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, gridColumn: 'span 2' }}>
-                  <label style={{ width: 140, margin: 0 }}>TAX Type</label>
-                  <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange} style={{ margin: 0 }}>
-                    <option value="-">-</option>
-                    <option value="GST 5% - INTRA STATE">GST 5% - INTRA STATE</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, gridColumn: 'span 2' }}>
-                  <label style={{ width: 100, margin: 0 }}>Transport</label>
-                  <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} style={{ margin: 0 }}>
-                    <option value="-">-</option>
-                    {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div />
-
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                  <label style={{ width: 60, margin: 0 }}>SGST %</label>
-                  <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ margin: 0 }} />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                  <label style={{ width: 60, margin: 0 }}>CGST %</label>
-                  <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ margin: 0 }} />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                  <label style={{ width: 60, margin: 0 }}>IGST %</label>
-                  <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ margin: 0 }} />
-                </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, gridColumn: 'span 2' }}>
-                  <label style={{ width: 100, margin: 0, textAlign: 'right' }}>Nett Amount</label>
-                  <input type="number" className="form-control" style={{ margin: 0, background: '#fbcfe8', fontWeight: 'bold' }} value={form.net_amount} disabled />
+            {/* Section: Tax & Logistics */}
+            <div id="section-tax" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
+              <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  
+                  {/* Terms and Conditions */}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
+                    </div>
+                    <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {(form.terms_conditions || []).map((term, idx) => (
+                          <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                            {editingTermIdx === idx ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                <span>{term}</span>
+                                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5a32fa', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px 16px', background: '#5a32fa', borderColor: '#5a32fa' }} onClick={addTerm}>
+                          <Plus size={16} /> Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, gridColumn: 'span 5' }}>
-                  <label style={{ width: 140, margin: 0 }}>Remarks</label>
-                  <input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} style={{ margin: 0 }} />
+                {/* ORDER SUMMARY */}
+                <div style={{ flex: '0 0 350px', position: 'sticky', top: 24 }}>
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
+                    </div>
+                    <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.gross_amt || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                        <input type="number" className="form-control" name="transport_charge" value={form.transport_charge} onChange={handleChange} style={{ width: 80, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
+                        <input type="number" className="form-control" name="packing_charge" value={form.packing_charge} onChange={handleChange} style={{ width: 80, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                          <input type="number" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                          <input type="number" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                          <input type="number" name="igst_pct" value={form.igst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Order Kgs</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.total_order_kgs || 0).toFixed(2)}</span>
+                      </div>
+
+                      <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>GRAND TOTAL</span>
+                        <span style={{ fontSize: 18, fontWeight: 800, color: '#5a32fa' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

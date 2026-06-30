@@ -19,7 +19,7 @@ export default function WeavingPO() {
   const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState('info');
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
-  
+
   const initialForm = {
     po_no: '',
     po_date: new Date().toISOString().split('T')[0],
@@ -82,7 +82,7 @@ export default function WeavingPO() {
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
-  
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -285,9 +285,9 @@ export default function WeavingPO() {
     const matchesSearch = searchTerm === '' ||
       o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       o.supplier_weaver?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesStatus = statusFilter === 'All Status' || o.status === statusFilter;
-    
+
     let matchesDate = true;
     if (o.po_date) {
       const entryDate = new Date(o.po_date);
@@ -416,52 +416,52 @@ export default function WeavingPO() {
           </div>
         </>
       ) : selectedViewOrder ? (
-          <CustomPODocumentPreview
-            isOpen={!!selectedViewOrder}
-            onClose={() => setSelectedViewOrder(null)}
-            title="WEAVING PURCHASE ORDER"
-            poNumber={selectedViewOrder?.po_no}
-            poDate={selectedViewOrder?.po_date}
-            deliveryAt={selectedViewOrder?.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
-            supplierName={selectedViewOrder?.supplier_weaver}
-            agentName=""
-            designNo={selectedViewOrder?.against_ref || '-'}
-            commission="0.00"
-            terms={selectedViewOrder?.terms_conditions || []}
-            taxes={{
-              cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
-              sgst_pct: selectedViewOrder?.sgst_pct || 0, sgst_amt: selectedViewOrder?.sgst_amount || 0,
-              igst_pct: selectedViewOrder?.igst_pct || 0, igst_amt: selectedViewOrder?.igst_amount || 0
-            }}
-            freightChg={parseFloat(selectedViewOrder?.transport_charge || 0) + parseFloat(selectedViewOrder?.loading_charge || 0) + parseFloat(selectedViewOrder?.unloading_charge || 0)}
-            insuranceChg={parseFloat(selectedViewOrder?.packing_charge || 0) + parseFloat(selectedViewOrder?.other_charges || 0)}
-            netAmount={selectedViewOrder?.net_amount || 0}
-            logistics={{
-              freight_type: "-",
-              transport: selectedViewOrder?.dispatch_through || "-",
-              delivery_date: "-",
-              payment_terms: selectedViewOrder?.payment_terms || "-"
-            }}
-            tableHeaders={[
-              { label: 'Fabric Name', align: 'left', width: '30%' },
-              { label: 'Color', align: 'left', width: '15%' },
-              { label: 'GSM / Width', align: 'center', width: '15%' },
-              { label: 'Qty Mtrs', align: 'right', width: '15%' },
-              { label: 'Rate/Mtr', align: 'right', width: '10%' },
-              { label: 'Amount', align: 'right', width: '15%' }
-            ]}
-            tableRows={(selectedViewOrder?.items || []).map(i => ({
-              rowData: [
-                i.fabric_name || '-',
-                i.color || '-',
-                `${i.gsm || '-'} / ${i.width || '-'}`,
-                parseFloat(i.qty_mtrs || 0).toFixed(2),
-                parseFloat(i.rate_per_mtr || 0).toFixed(2),
-                parseFloat(i.amount || 0).toFixed(2)
-              ],
-              rowNote: i.fabric_code ? `Fabric Code: ${i.fabric_code} | Design No: ${i.design_no || '-'}` : null
-            }))}
-          />
+        <CustomPODocumentPreview
+          isOpen={!!selectedViewOrder}
+          onClose={() => setSelectedViewOrder(null)}
+          title="WEAVING PURCHASE ORDER"
+          poNumber={selectedViewOrder?.po_no}
+          poDate={selectedViewOrder?.po_date}
+          deliveryAt={selectedViewOrder?.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
+          supplierName={selectedViewOrder?.supplier_weaver}
+          agentName=""
+          designNo={selectedViewOrder?.against_ref || '-'}
+          commission="0.00"
+          terms={selectedViewOrder?.terms_conditions || []}
+          taxes={{
+            cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
+            sgst_pct: selectedViewOrder?.sgst_pct || 0, sgst_amt: selectedViewOrder?.sgst_amount || 0,
+            igst_pct: selectedViewOrder?.igst_pct || 0, igst_amt: selectedViewOrder?.igst_amount || 0
+          }}
+          freightChg={parseFloat(selectedViewOrder?.transport_charge || 0) + parseFloat(selectedViewOrder?.loading_charge || 0) + parseFloat(selectedViewOrder?.unloading_charge || 0)}
+          insuranceChg={parseFloat(selectedViewOrder?.packing_charge || 0) + parseFloat(selectedViewOrder?.other_charges || 0)}
+          netAmount={selectedViewOrder?.net_amount || 0}
+          logistics={{
+            freight_type: "-",
+            transport: selectedViewOrder?.dispatch_through || "-",
+            delivery_date: "-",
+            payment_terms: selectedViewOrder?.payment_terms || "-"
+          }}
+          tableHeaders={[
+            { label: 'Fabric Name', align: 'left', width: '30%' },
+            { label: 'Color', align: 'left', width: '15%' },
+            { label: 'GSM / Width', align: 'center', width: '15%' },
+            { label: 'Qty Mtrs', align: 'right', width: '15%' },
+            { label: 'Rate/Mtr', align: 'right', width: '10%' },
+            { label: 'Amount', align: 'right', width: '15%' }
+          ]}
+          tableRows={(selectedViewOrder?.items || []).map(i => ({
+            rowData: [
+              i.fabric_name || '-',
+              i.color || '-',
+              `${i.gsm || '-'} / ${i.width || '-'}`,
+              parseFloat(i.qty_mtrs || 0).toFixed(2),
+              parseFloat(i.rate_per_mtr || 0).toFixed(2),
+              parseFloat(i.amount || 0).toFixed(2)
+            ],
+            rowNote: i.fabric_code ? `Fabric Code: ${i.fabric_code} | Design No: ${i.design_no || '-'}` : null
+          }))}
+        />
       ) : (
         <div className="card">
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
@@ -474,9 +474,10 @@ export default function WeavingPO() {
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
             {[
-              { id: 'info', label: 'Order Info', icon: FileText }, 
-              { id: 'ref', label: 'Reference Info', icon: Layers }, 
-              { id: 'items', label: 'Fabric Details', icon: Package }, 
+              { id: 'info', label: 'Order Info', icon: FileText },
+              { id: 'ref', label: 'Reference Info', icon: Layers },
+              { id: 'delivery', label: 'Delivery Details', icon: Clock },
+              { id: 'items', label: 'Fabric Details', icon: Package },
               { id: 'tax', label: 'Tax & Logistics', icon: IndianRupee }
             ].map(tab => (
               <button
@@ -488,16 +489,16 @@ export default function WeavingPO() {
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
                 style={{
-                  padding: '16px 24px', 
+                  padding: '16px 24px',
                   background: activeSection === tab.id ? '#fff' : 'transparent',
-                  border: 'none', 
+                  border: 'none',
                   borderBottom: activeSection === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, 
+                  fontWeight: 600,
                   color: activeSection === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8, 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
                   whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease'
                 }}
@@ -565,6 +566,34 @@ export default function WeavingPO() {
               </div>
             </div>
 
+            {/* Section: Delivery Details */}
+            <div id="section-delivery" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery Details</h4>
+              <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY DETAILS</span>
+                    </div>
+                    <div style={{ padding: '16px 18px' }}>
+                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                        <div className="form-group"><label>Delivery Location</label><input type="text" className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Dispatch Mode</label><input type="text" className="form-control" name="dispatch_mode" value={form.dispatch_mode} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Transport Name</label>
+                          <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
+                            <option value="">Select...</option>
+                            {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Vehicle No</label><input type="text" className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Instructions</label><input type="text" className="form-control" name="delivery_instructions" value={form.delivery_instructions} onChange={handleChange} /></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Section: Fabric Details */}
             <div id="section-items" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric Details</h4>
@@ -616,62 +645,11 @@ export default function WeavingPO() {
               </div>
             </div>
 
-            {/* Section: Tax Details & Delivery */}
+            {/* Section: Tax & Logistics */}
             <div id="section-tax" className="animate-fade" style={{ marginTop: 32 }}>
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
               <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {/* Delivery Details */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY DETAILS</span>
-                    </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                        <div className="form-group"><label>Delivery Location</label><input type="text" className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Dispatch Mode</label><input type="text" className="form-control" name="dispatch_mode" value={form.dispatch_mode} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Transport Name</label>
-                          <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Vehicle No</label><input type="text" className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Instructions</label><input type="text" className="form-control" name="delivery_instructions" value={form.delivery_instructions} onChange={handleChange} /></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tax Details */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff', marginBottom: 24 }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TAX DETAILS</span>
-                    </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ 
-                        gridTemplateColumns: form.tax_type === 'GST' ? 'repeat(3, 1fr)' : form.tax_type === 'IGST' ? 'repeat(2, 1fr)' : '1fr', 
-                        margin: 0 
-                      }}>
-                        <div className="form-group"><label>Tax Type</label>
-                          <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange}>
-                            <option value="GST">GST</option>
-                            <option value="IGST">IGST</option>
-                            <option value="Exempt">Exempt</option>
-                          </select>
-                        </div>
-                        {(form.tax_type === 'GST' || !form.tax_type) && (
-                          <>
-                            <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                            <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                          </>
-                        )}
-                        {form.tax_type === 'IGST' && (
-                          <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Terms and Conditions */}
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
                     <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
@@ -683,7 +661,7 @@ export default function WeavingPO() {
                           <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                             {editingTermIdx === idx ? (
                               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); } }} />
                                 <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
                                 <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
                               </div>
@@ -723,11 +701,11 @@ export default function WeavingPO() {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Weaving Charge</span>
-                        <input 
-                          type="number" 
-                          name="weaving_charge" 
-                          value={form.weaving_charge} 
-                          onChange={handleChange} 
+                        <input
+                          type="number"
+                          name="weaving_charge"
+                          value={form.weaving_charge}
+                          onChange={handleChange}
                           style={{
                             width: '100px',
                             textAlign: 'right',
@@ -744,11 +722,11 @@ export default function WeavingPO() {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charge</span>
-                        <input 
-                          type="number" 
-                          name="packing_charge" 
-                          value={form.packing_charge} 
-                          onChange={handleChange} 
+                        <input
+                          type="number"
+                          name="packing_charge"
+                          value={form.packing_charge}
+                          onChange={handleChange}
                           style={{
                             width: '100px',
                             textAlign: 'right',
@@ -765,11 +743,11 @@ export default function WeavingPO() {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charge</span>
-                        <input 
-                          type="number" 
-                          name="loading_charge" 
-                          value={form.loading_charge} 
-                          onChange={handleChange} 
+                        <input
+                          type="number"
+                          name="loading_charge"
+                          value={form.loading_charge}
+                          onChange={handleChange}
                           style={{
                             width: '100px',
                             textAlign: 'right',
@@ -786,11 +764,11 @@ export default function WeavingPO() {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charge</span>
-                        <input 
-                          type="number" 
-                          name="unloading_charge" 
-                          value={form.unloading_charge} 
-                          onChange={handleChange} 
+                        <input
+                          type="number"
+                          name="unloading_charge"
+                          value={form.unloading_charge}
+                          onChange={handleChange}
                           style={{
                             width: '100px',
                             textAlign: 'right',
@@ -807,11 +785,11 @@ export default function WeavingPO() {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Transport Charge</span>
-                        <input 
-                          type="number" 
-                          name="transport_charge" 
-                          value={form.transport_charge} 
-                          onChange={handleChange} 
+                        <input
+                          type="number"
+                          name="transport_charge"
+                          value={form.transport_charge}
+                          onChange={handleChange}
                           style={{
                             width: '100px',
                             textAlign: 'right',
@@ -828,11 +806,11 @@ export default function WeavingPO() {
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
-                        <input 
-                          type="number" 
-                          name="other_charges" 
-                          value={form.other_charges} 
-                          onChange={handleChange} 
+                        <input
+                          type="number"
+                          name="other_charges"
+                          value={form.other_charges}
+                          onChange={handleChange}
                           style={{
                             width: '100px',
                             textAlign: 'right',
@@ -872,7 +850,7 @@ export default function WeavingPO() {
                         <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
                       </div>
-                      
+
                       <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Net Amount</span>
                         <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
