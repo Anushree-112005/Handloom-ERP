@@ -74,6 +74,7 @@ class YarnDyeingPOItem(Base):
     
     sp_no = Column(String(100))
     lot_no = Column(String(100))
+    stock_qty = Column(Numeric(10, 3), default=0)
     dsn_count = Column(String(100))
     yarn_count = Column(String(100))
     color = Column(String(100))
