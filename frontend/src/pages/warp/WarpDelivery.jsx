@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, Package, Factory, Download, ChevronDown, FileText } from 'lucide-react';
-import { warpDeliveryAPI, partyAPI } from '../../services/api';
+import { warpDeliveryAPI, partyAPI, dyedYarnReceiptAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -16,6 +16,7 @@ const DetailRow = ({ label, value }) => (
 export default function WarpDelivery() {
   const [deliveries, setDeliveries] = useState([]);
   const [parties, setParties] = useState([]);
+  const [dyedYarnReceipts, setDyedYarnReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -31,6 +32,7 @@ export default function WarpDelivery() {
   const [toDate, setToDate] = useState('');
 
   const initialForm = {
+    dyed_yarn_receipt_no: '',
     dc_no: '', ref_no: '', dc_date: new Date().toISOString().split('T')[0], delivery_type: 'Direct',
     sizing_name: '', party_name: '', entry_type: '', bpo_no: '', design_no: '', order_no: '',
     address: '', set_id: '', warp_ends: 0, yarn_count: '', vendor_po_no: '', po_date: new Date().toISOString().split('T')[0],
@@ -50,11 +52,12 @@ export default function WarpDelivery() {
 
   const loadData = async () => {
     try {
-      const [delvRes, partRes] = await Promise.all([
-        warpDeliveryAPI.list(), partyAPI.list()
+      const [delvRes, partRes, dyedRes] = await Promise.all([
+        warpDeliveryAPI.list(), partyAPI.list(), dyedYarnReceiptAPI.list()
       ]);
       setDeliveries(delvRes.data);
       setParties(partRes.data);
+      setDyedYarnReceipts(dyedRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -68,6 +71,15 @@ export default function WarpDelivery() {
     e.preventDefault();
     try {
       const payload = { ...form };
+      delete payload.dyed_yarn_receipt_no;
+      
+      const dateFields = ['dc_date', 'po_date'];
+      dateFields.forEach(field => {
+        if (!payload[field] || payload[field] === '') {
+          payload[field] = null;
+        }
+      });
+      
       if (editingId) {
         await warpDeliveryAPI.update(editingId, payload);
       } else {
@@ -118,6 +130,56 @@ export default function WarpDelivery() {
     }
   };
 
+  const handleFetchFromDyedYarnReceipt = (inv_no) => {
+    if (!inv_no) {
+      setForm(prev => ({ ...prev, dyed_yarn_receipt_no: inv_no }));
+      return;
+    }
+    const receipt = dyedYarnReceipts.find(r => r.inv_no === inv_no);
+    if (receipt) {
+      setForm(prev => {
+        const newForm = { ...prev, dyed_yarn_receipt_no: inv_no, ref_no: inv_no };
+        newForm.party_name = receipt.party_name || prev.party_name;
+        newForm.sizing_name = receipt.processor_name || prev.sizing_name;
+        newForm.order_no = receipt.order_no || prev.order_no;
+        newForm.design_no = receipt.design_no || prev.design_no;
+        newForm.vendor_po_no = receipt.yarn_dyeing_po_no || prev.vendor_po_no;
+        
+        // Additional general mappings
+        newForm.party_po_no = receipt.party_invoice_no || prev.party_po_no;
+        newForm.dc_date = receipt.dc_date || prev.dc_date;
+        newForm.address = receipt.godown || prev.address;
+        newForm.remarks = receipt.remarks || prev.remarks;
+        
+        // Logistics
+        newForm.vehicle_no = receipt.vehicle_no || prev.vehicle_no;
+        newForm.transport = receipt.transport || prev.transport;
+        newForm.driver_name = receipt.driver_name || prev.driver_name;
+        newForm.mobile_no = receipt.driver_mobile || prev.mobile_no;
+        newForm.lr_no = receipt.lr_no || prev.lr_no;
+        newForm.delivery_time = receipt.received_time || prev.delivery_time;
+        
+        if (receipt.items && receipt.items.length > 0) {
+          const firstItem = receipt.items[0];
+          const yarnCount = firstItem.yarn_count || receipt.design_count || prev.yarn_count;
+          newForm.yarn_count = yarnCount;
+          
+          newForm.items = newForm.items.map(item => ({
+            ...item,
+            yarn_count: yarnCount,
+            weight_kgs: firstItem.rcvd_kgs || item.weight_kgs,
+            remarks: firstItem.remarks || item.remarks
+          }));
+        } else if (receipt.design_count) {
+          newForm.yarn_count = receipt.design_count;
+        }
+        return newForm;
+      });
+    } else {
+      setForm(prev => ({ ...prev, dyed_yarn_receipt_no: inv_no }));
+    }
+  };
+
   const handleChange = (e) => {
     const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
       if (e.key === 'Tab' && !e.shiftKey) {
@@ -138,6 +200,12 @@ export default function WarpDelivery() {
 
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+    
+    if (name === 'dyed_yarn_receipt_no') {
+      handleFetchFromDyedYarnReceipt(value);
+      return;
+    }
+    
     setForm({ ...form, [name]: value });
   };
 
@@ -414,6 +482,12 @@ export default function WarpDelivery() {
                   {/* Section 1: Top Section Fields */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Dyed Yarn Receipt No (Auto-fill Base)</label>
+                      <select className="form-control" name="dyed_yarn_receipt_no" value={form.dyed_yarn_receipt_no || ''} onChange={handleChange}>
+                        <option value="" disabled hidden>Select Receipt...</option>
+                        {dyedYarnReceipts.filter(r => r.inv_no).map(r => <option key={r.id} value={r.inv_no}>{r.inv_no}</option>)}
+                      </select>
+                    </div>
                     <div className="form-group"><label>Ref No / DC SNo</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Dely Type</label>
                       <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>

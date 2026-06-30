@@ -534,9 +534,19 @@ async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depend
 
 @router.post("/", response_model=OrderOut, status_code=201)
 async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(BuyerOrder.id)))
-    max_id = max_id_q.scalar() or 0
-    ibpo = f"IBPO-{max_id + 1:05d}"
+    # Fetch all existing ibpo_numbers to calculate the next sequential number
+    res = await db.execute(select(BuyerOrder.ibpo_number))
+    ibpo_list = res.scalars().all()
+    max_num = 0
+    for val in ibpo_list:
+        if val and val.startswith("IBPO-"):
+            try:
+                num = int(val.split("-")[1])
+                if num > max_num:
+                    max_num = num
+            except (ValueError, IndexError):
+                pass
+    ibpo = f"IBPO-{max_num + 1:05d}"
 
     items_data = data.items or []
     order_dict = data.model_dump(exclude={"items"})

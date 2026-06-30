@@ -237,7 +237,13 @@ export default function DyedYarnReceived() {
             shade_no: item.shade_no || '',
             dyed_lot_no: item.lot_no || '',
             batch_no: item.batch_no || '',
-            taken_kgs: parseFloat(item.current_delivery_qty) || 0
+            taken_kgs: parseFloat(item.current_delivery_qty) || 0,
+            rcvd_kgs: parseFloat(item.current_delivery_qty) || 0,
+            bags: parseInt(item.no_of_bags) || 0,
+            cones: parseInt(item.no_of_cones) || 0,
+            gross_weight: parseFloat(item.gross_weight) || 0,
+            tare_weight: parseFloat(item.tare_weight) || 0,
+            net_weight: parseFloat(item.net_weight) || 0
           }));
         }
         return newForm;
@@ -419,8 +425,8 @@ export default function DyedYarnReceived() {
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing Delivery No</label>
                       <select className="form-control" name="yarn_dyeing_delivery_no" value={form.yarn_dyeing_delivery_no} onChange={handleChange}>
-                        <option value="">Select Delivery...</option>
-                        {dyedYarnDeliveries.map(del => <option key={del.id} value={del.delivery_no}>{del.delivery_no}</option>)}
+                        <option value="" disabled hidden>Select Delivery...</option>
+                        {dyedYarnDeliveries.filter(del => del.delivery_no).map(del => <option key={del.id} value={del.delivery_no}>{del.delivery_no}</option>)}
                       </select>
                     </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing PO No</label>
@@ -431,8 +437,8 @@ export default function DyedYarnReceived() {
                     <div className="form-group"><label>Buyer Name</label><input className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
-                        <option value="">Select Party...</option>
-                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                        <option value="" disabled hidden>Select Party...</option>
+                        {parties.filter(p => p.company_name).map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                       </select>
                     </div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>

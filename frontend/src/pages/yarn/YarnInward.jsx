@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI, subMasterAPI, dropdownAPI } from '../../services/api';
@@ -14,6 +15,9 @@ const DetailRow = ({ label, value }) => (
 );
 
 export default function YarnInward() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryId = searchParams.get('id');
+
   const [inwards, setInwards] = useState([]);
   const [parties, setParties] = useState([]);
   const [pos, setPos] = useState([]);
@@ -191,6 +195,16 @@ export default function YarnInward() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (queryId && inwards.length > 0) {
+      const matched = inwards.find(i => String(i.id) === String(queryId));
+      if (matched) {
+        handleOpenForm(matched, true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [queryId, inwards]);
 
   const handleCreate = async (e) => {
     e.preventDefault();

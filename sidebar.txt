@@ -1,173 +1,764 @@
 ================================================================================
                     DINESH EXPORTS TEXTILE ERP SYSTEM
-                      CURRENT ACTIVE SIDEBAR MODULES & PAGES
+                      CURRENT ACTIVE SIDEBAR MODULES & PAGES WITH FIELDS
 ================================================================================
 
 1. DASHBOARD
    - Dashboard [/]
+     * Fields & Components:
+       - Graphical KPI Cards (Sales, Active Orders, Production, Stock value)
+       - Today's Activity Log Panel
+       - Pending Approvals Table
+
    - Overview [/overview]
+     * Fields & Components:
+       - Operations Line Charts (Yarn Inward vs Dyed Yarn Inward)
+       - Production bar chart (Grey Loom output vs Finished inspection output)
+       - Target vs Actual efficiency meters
 
 2. MASTERS
    - Party Master [/party-master]
+     * Form Fields:
+       - Party Type [Dropdown: Sales Party, Purchase Party, Logistics, Agent, Vendor, Processor]
+       - Customer Code [Auto-generated unique numeric ID]
+       - Customer Grade [Dropdown: Grade A, Grade B, Grade C]
+       - Status [Dropdown: Activate, Deactivate]
+       - Business Name [Text: Full trade/company name]
+       - Party Group [Dropdown: Suppliers, Agents, Customers, Logistics Partners]
+       - Address [Text: Postal address]
+       - State/Code [Dropdown: TN-33, KA-29, MH-27, etc.]
+       - Pincode [Numeric]
+       - City [Dropdown: Tiruchengodu, Erode, Coimbatore, Salem]
+       - Phone No [Numeric/Text]
+       - Sales Region [Dropdown: South Zone, North Zone, East Zone, West Zone]
+       - Country [Dropdown: India, Bangladesh, Sri Lanka, USA]
+       - Currency [Dropdown: INR, USD, EUR, GBP]
+       - Point of Contact [Text: Communication contact name]
+       - Mail ID [Text: Official email ID]
+       - Tally No [Text: Ledger code mapping for Tally integration]
+       - Address SNo [Dropdown: 1, 2, 3 sequence for multiple addresses]
+       - TCS Applicable [Dropdown: Yes, No]
+       - TIN No [Text]
+       - CST No [Text]
+       - GSTIN [Text: 15-digit alphanumeric]
+       - GST Type [Dropdown: With GST, Without GST]
+       - PAN No [Text: 10-digit alphanumeric]
+       - TDS [Dropdown: Section 194C, Section 194J, Section 194H]
+       - TDS % [Numeric: e.g. 1%, 10%]
+       - Pc ID [Text: Internal party code]
+       - Merchandiser [Dropdown: Merchandiser list from Employee Master]
+       - Manager [Dropdown: Manager list from Employee Master]
+       - Bill Credit Days [Numeric: Allowed credit period in days]
+       - Credit Limit Rs. [Numeric: Maximum credit limit amount]
+       - A/c Incharge [Dropdown: Accountant names from Employee Master]
+       - Deliver Party Name [Dropdown: Warehouse A, Depot B from Delivery Party Master]
+       - Payment Terms [Dropdown: Net 30, Net 60, Advance, COD]
+       - Transport Name [Dropdown: VRL Logistics, SafeExpress from Transport Master]
+       - Delivery Address [Text]
+       - Agent Name [Dropdown: Kumar Agencies from Agent Master]
+     * Buttons:
+       - Save, Edit, Delete, Print, Close
 
 3. ORDER MANAGEMENT
    - Buyer Order Form [/buyer-order]
+     * Header Fields:
+       - IBPO Number [Numeric: Auto-generated]
+       - Date [Date Picker]
+       - Party Name [Dropdown: Party Master]
+       - Address [Text: Autofilled]
+       - Agent Name [Dropdown: Agent Master]
+       - Order Type [Dropdown: Regular, Export, Special]
+       - Certified Type [Dropdown: ISO, Organic, Fair Trade, etc.]
+       - Buyer Name [Dropdown: Buyer Master]
+       - State [Dropdown: State Master]
+       - GST No / PAN No [Text: Autofilled]
+       - Commission Type [Dropdown: Percentage, Fixed]
+       - Commission [Numeric]
+       - Order Taken By [Dropdown: Employee Master]
+       - Nomination [Text]
+       - Regular / Special [Dropdown: Classification]
+     * Sub-Form: Payment Details
+       - Outstanding [Numeric]
+       - Over Due [Numeric]
+       - 30 Days+ Due [Numeric]
+       - Status [Dropdown: Active, Inactive, Settled]
+       - Status Remark [Text]
+       - Max Crd Days [Numeric]
+       - PO Credit [Numeric]
+       - PO Max Crd [Numeric]
+       - Bill Credit [Numeric]
+       - Payment Detail [Text]
+       - Payment Terms [Dropdown: Payment Terms Master]
+       - Choose File [File Upload: Supporting document]
+     * Sub-Form: Party PO Details
+       - Party PO No [Text]
+       - PO Date [Date Picker]
+       - Point of Contact [Text]
+       - Order Mtr/Yard [Numeric]
+       - UOM [Dropdown: MTR, YARD, PCS from UOM Master]
+       - Tolerance % [Numeric]
+       - Total Mtr/Yard [Numeric: System calculated]
+       - HSN Code [Dropdown: HSN Code Master]
+       - Sample Mtr [Numeric]
+       - Party Style [Text]
+       - Short No [Text]
+       - Design No [Dropdown: Design Master]
+       - Gry Construction [Text]
+       - Fabric Type [Dropdown: Cotton, Polyester, Blended, Silk from Fabric Type Master]
+       - Color [Dropdown: Color Master]
+       - Construction [Text]
+       - Weaving Type [Dropdown: Plain, Twill, Satin, Jacquard]
+       - Pick on Table [Numeric]
+       - Print Name [Text]
+       - Finish Reed [Numeric]
+       - Finish Pick [Numeric]
+       - Finish Width [Numeric]
+       - Cuttable Width [Numeric]
+       - Pattern [Dropdown: Stripe, Check, Solid, Printed from Pattern Master]
+       - Packing Type [Dropdown: Bale, Box, Roll from Packing Master]
+       - Loom Type [Dropdown: Power Loom, Hand Loom, Auto Loom from Loom Master]
+       - Insurance [Dropdown: Yes, No]
+       - Packing Charge [Numeric]
+       - End Use [Dropdown: Apparel, Home Textile, Industrial]
+       - Season [Dropdown: Summer, Winter, All Season]
+       - Party Comment [Text]
+       - Fabric Content [Text]
+       - Development ID [Text]
+       - Country [Dropdown: Country Master]
+       - Combo [Text]
+       - Currency [Dropdown: Currency Master]
+       - PC Type [Dropdown: PC Type Master]
+       - GSM [Numeric]
+       - Price [Numeric]
+       - GST % [Numeric]
+       - GST Rate [Numeric]
+       - Rate [Numeric]
+       - Image Design [File Upload]
+     * Sub-Form: Transport & Delivery Detail
+       - Transport Mode [Dropdown: Road, Rail, Air, Sea]
+       - Transport Name [Dropdown: Transport Master]
+       - Party Terms [Dropdown: FOB, CIF, Ex-Works from Payment Terms Master]
+       - LR Type [Dropdown: LR Master]
+       - LR Terms [Dropdown: LR Terms Master]
+       - Party Comp Date [Date Picker]
+       - Exfactory Date [Date Picker]
+       - Delivery Starting [Date Picker]
+       - Delivery At [Text]
+       - Desp Mtr Min [Numeric]
+       - Desp Mtr Max [Numeric]
+       - Delivery Address [Text]
+       - Delivery Place [Text]
+     * Sub-Form: Process Follow
+       - Process Sequence [Dropdown: Process Sequence Master + Add Row Button]
+     * Sub-Form: Instructions
+       - Process Instruction [Text]
+       - Email TO [Text]
+       - Email CC [Text]
+       - Yarn Instruction [Text]
+       - Prod Instruction [Text]
+       - Delivery Instruction [Text]
+       - Remarks [Text]
+     * Action Buttons:
+       - Save, View, Close
+       - Save & Print [Checkbox]
 
 4. DESIGN MANAGEMENT
    - Design Entry [/design-entry]
+     * Header & Spec Fields:
+       - DS Ref No [Numeric: Auto-generated]
+       - DS Date [Date Picker]
+       - Design No [Text: Unique design reference]
+       - Color [Dropdown: Color Master]
+       - Created By [Dropdown: Employee Master]
+       - Gry Const [Text]
+       - Count RxPXW [Numeric]
+       - Buyer Name [Dropdown: Buyer Master]
+       - IBPO No [Dropdown: Buyer PO Master]
+       - Order Mtr [Numeric]
+       - Ex Mtr [Numeric]
+       - Total Mtr [Numeric: System calculated]
+       - Crimp % [Numeric]
+       - SKG % [Numeric: Shrinkage]
+       - Warp Mtr [Numeric]
+       - Weft (Pro) Mtr [Numeric]
+       - Gray Width [Numeric]
+       - Finish Width [Numeric]
+       - Reed OL [Numeric]
+       - Pick OT [Numeric]
+       - Reed [Numeric]
+       - Fabric [Dropdown: Fabric Master]
+       - Total Ends [Numeric]
+       - Warp Width [Numeric]
+       - QLM [Numeric]
+       - Toie % [Numeric]
+       - Selvage Waste [Numeric]
+       - Weaving [Dropdown: Weaving Master]
+       - Design Type [Dropdown: Normal, Special, Sample from Design Type Master]
+       - Packing Less [Numeric]
+       - Weight Grm [Numeric]
+       - Dyeing Loss % [Numeric]
+     * Yarn Spec Grid Fields:
+       - S.No, Type [Dropdown: Warp, Weft], Yarn Count [Dropdown: Yarn Count Master], Act Count [Numeric], End's [Numeric]
+     * Fabric Design Grid Fields:
+       - S.No, Type [Dropdown: Warp, Weft], Yarn Count [Dropdown: Yarn Count Master], Color [Dropdown: Color Master], Threads [Numeric], Times [Numeric], Line [Numeric], Pick [Numeric], Drawing Order [Text], DENTS [Numeric], Line (second) [Numeric], ENDS FOR DENTS [Numeric]
+     * Image Upload Section:
+       - Design File Upload [File Input]
+       - View Image, View Design [Action Buttons]
+     * Action Buttons:
+       - Save, Print, Edit, Delete, View, Close
 
 5. PURCHASE MANAGEMENT
    - Yarn Purchase Order [/yarn/purchase-order]
+     * Order Info:
+       - Ref No [Numeric: Auto-generated]
+       - Order Date [Date Picker]
+       - Org. Name [Dropdown: Org Master]
+       - PO No [Numeric]
+       - Used For [Text]
+       - Against [Dropdown: Against Master]
+       - Agent Name [Dropdown: Agent Master]
+       - Supplier Name [Dropdown: Supplier Master]
+       - Delivery At [Dropdown: Delivery Place Master]
+     * Yarn Count Details:
+       - Supplier Name [Dropdown], Fibre Group [Dropdown: Fibre Count Master], Yarn Count [Dropdown: Yarn Count Master], Yarn CSP [Numeric], Min Cone Wgt [Numeric], Order Kgs [Numeric], Mill Name [Dropdown: Mill Name Master], Print Name [Text], Tolerance % [Numeric]
+     * Indent / Design Details Grid:
+       - Req Ind No [Dropdown], Design No [Dropdown], IBPO No [Dropdown], Party Name [Text], Fabric Name [Text], Yarn Count [Dropdown], Order Mtrs [Numeric], Warp Qty [Numeric], Weft Qty [Numeric], Tot Reqd Qty [Numeric], Appd Qty [Numeric], Order Qty [Numeric]
+     * Tax / Financial Details:
+       - Freight [Dropdown], Freight Chg [Numeric], Insurance Chg [Numeric], Total Order Kgs [Numeric], Transport [Dropdown: Transport Master], TAX Type [Dropdown: Tax Master], Taxable Amount [Numeric], Date of Dispatch [Date Picker], Packing Type [Dropdown: Packing Master], SGST % [Numeric], CGST % [Numeric], IGST % [Numeric], Labeling [Text], Colour [Dropdown: Color Master], Nett Amount [Numeric], Due Days [Numeric], Remarks [Text]
+     * Action Buttons:
+       - New, Save, Print, Edit, Delete, Close
 
 6. YARN MANAGEMENT
    - Yarn Inward [/yarn/inward]
+     * Header & Logistics Fields:
+       - Ref No [Numeric], Date [Date Picker], Inward Date [Date Picker], Status [Text]
+       - Recvd Type [Dropdown: Direct, Against PO]
+       - Received From [Dropdown: Supplier Master / Party Master]
+       - PO No / Dt [Dropdown: Purchase Order List + Date]
+       - Agent [Dropdown: Agent Master], Stock Godown [Dropdown: Godown Master], Godown Id [Numeric]
+       - Cone [Dropdown: Full Cone, Half Cone from Cone Master], Order Kgs [Numeric], Received Kgs [Numeric], Balance Kgs [Numeric]
+       - Pc ID [Text], Tolerance % [Numeric], Bill No [Text], Bill Amount [Numeric]
+       - Gross Kgs [Numeric], Net Kgs [Numeric], Chipnam [Text], Due Days [Numeric]
+       - Transport [Text], Veh No [Text], Bags [Numeric], E-Way Bill [Text]
+       - Org GRN No [Numeric], Gate No [Numeric], WBridge No [Text], W Weight [Numeric]
+     * Yarn Details Grid:
+       - Yarn Count [Dropdown: Yarn Count Master], Mill [Dropdown: Mill Name Master], Colour [Dropdown: Color Master], Color Code [Text], Lot No [Text], Our Id [Text], Bags [Numeric], Kgs [Numeric], Rate [Numeric], Amount [Numeric]
+     * Tax / Bottom Section:
+       - Others [Text], Packing [Dropdown: Packing Master], Freight [Numeric], Total Kgs [Numeric], Tot Bags [Numeric], Amount [Numeric], Tax Type [Dropdown: Tax Master], CGST % [Numeric], SGST % [Numeric], IGST % [Numeric], Tax Value [Numeric], TCS Value [Numeric], TDS % [Numeric], Total Tax [Numeric], Round Off [Numeric], Net Amt [Numeric], Remarks [Text]
+     * Buttons:
+       - Save, Print, Edit, Delete, Close
+
    - Yarn Stock [/yarn/stock]
+     * Filters:
+       - Godown [Dropdown: Godown Master]
+       - Yarn Count [Dropdown: Yarn Count Master]
+       - Color [Dropdown: Color Master]
+       - Lot No [Text]
+     * Display Fields:
+       - Yarn Type, Count, Color, Lot No, Stock Bags, Total Weight (Kgs)
 
 7. JOB WORK MANAGEMENT
    - Yarn Dyeing Delivery [/dyed-yarn/delivery]
+     * Delivery Header:
+       - DC No [Numeric], DC Date [Date Picker], Add Date [Date Picker]
+       - Delivery Type [Dropdown: Direct, Against Order]
+       - Delivery Mode [Dropdown: Road, Rail, Courier]
+       - Party Name [Dropdown: Party Master], Delivery Address [Text]
+       - Design No [Dropdown: Design Master], Order No [Dropdown: Buyer Order Master], Design Type [Dropdown]
+       - Transport [Dropdown: Transport Master], Certificate Type [Dropdown: Certified Type Master]
+       - Driver Name [Text], Delivery Time [Time Picker]
+       - Total Delv Kgs [Numeric], Total Rin Kgs [Numeric], Balance Kgs [Numeric]
+     * Yarn Grid Section:
+       - Yarn Type [Dropdown], Count [Dropdown], Colour [Dropdown], Lot No. [Dropdown], Stock [Dropdown], Bag [Numeric], Cones [Numeric], Tot Kgs [Numeric], Rate [Numeric]
+     * Bottom Section:
+       - Total Kgs [Numeric], Insurance [Numeric], Others [Numeric], COST [Numeric], Gr.Amount [Numeric], SGST [Numeric], IGST [Numeric], Tax Value [Numeric], Remarks [Text], Total GST [Numeric], Round off [Numeric], Net Amount [Numeric]
+     * Buttons:
+       - New, Save, Print, Delete, View, Close
+
    - Dyed Yarn Receipt [/dyed-yarn/received]
+     * Receipt Header:
+       - Inv No [Text], Inv Date [Date Picker], Received Type [Dropdown: Direct, Against Order], Receive Mode [Dropdown]
+       - Party Name [Dropdown], Design No [Dropdown], Design Count [Dropdown], Order No [Dropdown]
+       - Our Dc No. [Dropdown: Sizing/Warping Delivery Challan Master], Party DC No [Dropdown], DC Date [Date Picker]
+     * Receipt Grid Section:
+       - Cone Type [Dropdown], Delivery Count [Numeric], Received Count [Numeric], Our Lot No. [Dropdown], Color [Dropdown], Taken Kgs [Numeric], Dyed Lot No. [Text], Bags [Numeric], Cones [Numeric], Rcvd Kgs [Numeric], Short Kgs [Numeric], Short % [Numeric]
+     * Bottom Section:
+       - Remarks [Text], Total Bags [Numeric], Total Kgs [Numeric]
+     * Buttons:
+       - Save, Print, Edit, Delete, Close
+
    - Warping Delivery [/warp/delivery]
+     * Delivery Fields:
+       - Ref No / DC SNo [Numeric], Dely Type [Dropdown], DC No [Numeric], DC Date [Date Picker]
+       - Sizing Name [Dropdown: Sizing Master], Vendor Name [Dropdown: Vendor Master], Entry Type [Dropdown]
+       - BPO No [Dropdown], Design No [Dropdown], Address [Text], SET ID (No.) [Text]
+       - Warp Ends [Numeric], Yarn Count [Text], Vendor PO No [Text], PO Date [Date Picker]
+       - Order Mtrs [Numeric], With Crimp [Numeric], Delivered Mtrs [Numeric], Balance Mtrs [Numeric]
+       - Transport [Dropdown: Transport Master], Vehicle No [Text], Delivery Beam [Dropdown]
+       - Total Beams [Numeric], Total Warp Mtrs [Numeric], Total Exptd Mtrs [Numeric], Remarks [Text]
+     * Buttons:
+       - New, Save, Print, Delete, View, Close
+
    - Warping Receipt [/warp/beam-receipt]
+     * Receipt Header:
+       - Ref No [Numeric], Rcvd Date [Date Picker], Rcvd Type [Dropdown], Beam Type [Dropdown: Beam Master]
+       - Party Name [Dropdown], Design No [Dropdown], Order No [Dropdown], Color [Dropdown: Color Master]
+       - Warp Count [Dropdown: Yarn Count Master], Warp Ends [Numeric], Warp Meters [Numeric], Set No [Text]
+       - Siz DC No [Dropdown: Sizing Delivery Challans], Siz DC Date [Date Picker]
+     * Beam Details Grid:
+       - Beam No [Text], Warp Mtrs [Numeric], Type [Dropdown], Delivery To Weaver [Dropdown], Order No [Dropdown], DC No [Dropdown], DC Date [Date Picker], Loom No [Dropdown: Loom Master], Loading Date [Date Picker], Total Meters [Numeric]
+     * Buttons:
+       - Save, Print, Edit, Delete, Close
+
    - Sizing Delivery [/warp/transaction/entries?tab=beam_delivery]
+     * Delivery Fields:
+       - Ref No / DC SNo [Numeric], Dely Type [Dropdown], DC No [Numeric], DC Date [Date Picker]
+       - Sizing Name [Dropdown: Sizing Master], Vendor Name [Dropdown: Vendor Master], Entry Type [Dropdown]
+       - BPO No [Dropdown], Design No [Dropdown], Address [Text], SET ID (No.) [Text]
+       - Warp Ends [Numeric], Yarn Count [Text], Vendor PO No [Text], PO Date [Date Picker]
+       - Order Mtrs [Numeric], With Crimp [Numeric], Delivered Mtrs [Numeric], Balance Mtrs [Numeric]
+       - Transport [Dropdown: Transport Master], Vehicle No [Text], Delivery Beam [Dropdown]
+       - Total Beams [Numeric], Total Warp Mtrs [Numeric], Total Exptd Mtrs [Numeric], Remarks [Text]
+     * Buttons:
+       - New, Save, Print, Delete, View, Close
+
    - Sizing Receipt [/warp/transaction/entries?tab=beam_received]
+     * Receipt Header:
+       - Ref No [Numeric], Rcvd Date [Date Picker], Rcvd Type [Dropdown], Beam Type [Dropdown]
+       - Party Name [Dropdown], Design No [Dropdown], Order No [Dropdown], Color [Dropdown]
+       - Warp Count [Dropdown], Warp Ends [Numeric], Warp Meters [Numeric], Set No [Text]
+       - Siz DC No [Dropdown], Siz DC Date [Date Picker]
+     * Beam Details Grid:
+       - Beam No, Warp Mtrs, Type, Delivery To Weaver, Order No, DC No, DC Date, Loom No, Loading Date, Total Meters
+     * Buttons:
+       - Save, Print, Edit, Delete, Close
+
    - Weaving Delivery [/weaving/delivery]
+     * Delivery Fields:
+       - Ref No / DC SNo [Numeric], Dely Type [Dropdown], DC No [Numeric], DC Date [Date Picker]
+       - Sizing Name [Dropdown: Sizing Master], Vendor Name [Dropdown: Vendor Master], Entry Type [Dropdown]
+       - BPO No [Dropdown], Design No [Dropdown], Address [Text], SET ID (No.) [Text]
+       - Warp Ends [Numeric], Yarn Count [Text], Vendor PO No [Text], PO Date [Date Picker]
+       - Order Mtrs [Numeric], With Crimp [Numeric], Delivered Mtrs [Numeric], Balance Mtrs [Numeric]
+       - Transport [Dropdown: Transport Master], Vehicle No [Text], Delivery Beam [Dropdown]
+       - Total Beams [Numeric], Total Warp Mtrs [Numeric], Total Exptd Mtrs [Numeric], Remarks [Text]
+     * Buttons:
+       - New, Save, Print, Delete, View, Close
+
    - Grey Fabric Receipt [/cloth/inward]
+     * Inward Header Fields:
+       - Inward Type [Dropdown: Grey Inward, Process Return, Purchase], Inv ID [Numeric], Inv Dt [Date Picker]
+       - Vendor Order [Text], Vendor Name [Dropdown: Vendor Master], Vendor DC No [Text], DC Date [Date Picker]
+       - Vendor Order Mtr [Numeric], Order Mtr + 10% [Numeric], Received Mtr [Numeric], Balance Mtr [Numeric]
+       - BPO No [Text], Design No [Dropdown: Design Master], Party Name [Dropdown], Cloth Article Type [Dropdown: Fabric Master]
+       - Reed [Numeric], Pick [Numeric], Width [Numeric], Order Mtr [Numeric], Warp Mtr [Numeric], Inward Mtr [Numeric]
+       - Shed No [Text], Balance Mtr [Numeric], Looms [Text], All No [Text], Beam No [Text], Set No [Text]
+       - Total Mtr [Numeric], Inspection Type [Dropdown], Inv Pin [Text], Remarks [Text]
+       - Process Type [Dropdown: Process Type Master], Process Remarks [Text]
+     * Piece Details Grid:
+       - S.No, Pcno [Text], Weight [Numeric], VLoom [Text], VPc No [Text], Mtr [Numeric]
+     * Buttons:
+       - Save, View, Close
+
    - Fabric Dyeing Delivery [/jobwork/fabric-dyeing-delivery]
+     * Delivery Header Fields:
+       - Dc No [Numeric], Dc Date [Date Picker], Delivery Type [Dropdown: Job Work, Return, Processing]
+       - PO No [Text], Party Name [Dropdown: Party Master], Process Type [Dropdown: Process Type Master]
+       - Design No [Dropdown], IBPO [Text], Fabric Detail [Text], PC Type [Dropdown: PC Type Master]
+       - IBPO Order Mtr [Numeric], Delivery Mtr [Numeric], Balance [Numeric], Fresh Width [Numeric]
+       - Finish Fold [Text], Process Comm [Text], BPO No [Text], Buyer Name [Dropdown: Buyer Master], LOT No [Text]
+       - Griege Rate [Numeric], Return Type [Dropdown], Optical Brightening Agent [Text], Finish Pick [Numeric], GLM [Numeric]
+     * Delivery Grid Table:
+       - S.No, PC No [Text], Lot No [Text], OK Mtr [Numeric], Fold Mtr [Numeric]
+     * Voucher Section:
+       - Voucher No [Text], Voucher Date [Date Picker], Rate/Mtr [Numeric], Debited Amount [Numeric], Detailed Remarks [Text]
+     * Gate Pass Section:
+       - Transport Name [Dropdown], Vehicle No [Text], Driver Name [Text], Mobile No [Text]
+     * Buttons:
+       - Save, View, Close
+
    - Dyed Fabric Receipt [/jobwork/dyed-fabric-receipt]
+     * Inward Header Fields:
+       - Inward Type [Dropdown: Processing Return, Purchase, Job Work], Inv ID [Numeric], Inv Date [Date Picker]
+       - Vendor Name [Dropdown], Vendor DC No [Text], DC Date [Date Picker], Design No [Dropdown], IBPO [Text]
+       - Vendor Order [Text], Vendor Order Mtr [Numeric], Grey Delivery Mtr [Numeric], Received Mtr [Numeric], Balance Mtr [Numeric]
+       - Const Fabric Type [Dropdown], Reed [Numeric], Pick [Numeric], Width [Numeric], Order Mtr [Numeric], Warp Mtr [Numeric], Inward Mtr [Numeric]
+       - Shed No [Text], Balance Mtr [Numeric], Lot No [Text], Affi No [Text], Total PC [Numeric], Total Mtr [Numeric]
+       - Inspection Type [Dropdown], Inv Pin [Text], Remarks [Text]
+     * Piece Details Grid Table:
+       - S.No, Pc No [Text], Weight [Numeric], VLoom [Text], VPc No [Text], Mtr [Numeric]
+     * Buttons:
+       - Save, View, Close
+
    - Printing Delivery [/jobwork/printing-delivery]
+     * Fields & Grid Details:
+       - Same structural configuration as 'Fabric Dyeing Delivery'. Linkages connect to Print Job Workers.
+
    - Printed Fabric Receipt [/jobwork/printed-fabric-receipt]
+     * Fields & Grid Details:
+       - Same structural configuration as 'Dyed Fabric Receipt'. Linkages connect to Printed Fabric.
+
    - Finishing Delivery [/jobwork/finishing-delivery]
+     * Fields & Grid Details:
+       - Same structural configuration as 'Fabric Dyeing Delivery'. Linkages connect to Finishing Processors.
+
    - Finished Fabric Receipt [/jobwork/finished-fabric-receipt]
+     * Fields & Grid Details:
+       - Same structural configuration as 'Dyed Fabric Receipt'. Linkages connect to Finished Fabric.
+
    - Job Work Status [/jobwork/status]
+     * Status Monitoring Fields:
+       - BPO No [Dropdown / Text]
+       - Process Type [Dropdown: Process Type Master]
+       - Status [Dropdown: Pending, In-Progress, Completed, Returned]
 
 8. QUALITY CONTROL
    - Grey Inspection [/cloth/checking]
+     * QC Inspection Fields:
+       - Ref No [Numeric: Auto], Checking Date [Date Picker]
+       - Table No [Dropdown: Checking Table Machine Master]
+       - Design No [Dropdown: Design Master], PC No [Text], VPC No [Text], Inv Pin [Text], Checking Pin [Text]
+       - Barcode Scan [Scan Input Field / Popup Trigger]
+       - PC Type [Dropdown: Pass, Fail, Reject]
+       - PC 1 to PC 7 [Text: QC defect observation points]
+       - SWEX [Text: Special quality remarks]
+     * Buttons:
+       - Save, View, Close
+
    - Final Inspection [/fabric/transaction/checking]
+     * QC Inspection Fields:
+       - Ref No, Checking Date, Table No, Design No, PC No, VPC No, Inv Pin, Checking Pin
+       - Barcode Scan, PC Type [Dropdown: Pass, Fail, Reject], PC 1 to PC 7, SWEX
+     * Buttons:
+       - Save, View, Close
 
 9. INVENTORY
    - Stock Summary [/inventory/stock-summary]
+     * Filter Fields:
+       - Date [Date Picker]
+       - Stock Category [Dropdown: Yarn, Grey Fabric, Finished Fabric]
+       - Godown [Dropdown: Godown Master]
+
    - Stock Ledger [/inventory/stock-ledger]
+     * Filter Fields:
+       - From Date [Date Picker]
+       - To Date [Date Picker]
+       - Item Code / Name [Dropdown: Yarn Count / Fabric Master]
 
 10. PACKING
     - Packing Slip [/packing]
+      * Packing Header Fields:
+        - Ref No [Numeric], Date [Date Picker], Pack Type [Dropdown: Packing Master / Bale Type], No of Roll [Numeric]
+        - Shed [Dropdown: Godown Master], Pin [Text], Bale List [Dropdown], Bale No [Text / Auto]
+        - Design No [Dropdown], Warp Lot [Text], Weft Lot [Text], IBPO [Text]
+        - Order Mtr + Tole [Numeric], Received Mtr [Numeric], Balance [Numeric]
+        - Stock Type [Dropdown], Command [Text], Transport [Dropdown: Transport Master], Pack Dimensions (L × W × H) [Numeric]
+      * Bale Entry Grid Table:
+        - S.No, Pc No [Text], Lot No [Text], Loom No [Text], Pass Mtr [Numeric], Bale Mtr [Numeric]
+      * Packed Bale Details Grid:
+        - Bale No, SP No, Quality, Total Mtr
+      * Weight Calculation Section:
+        - Total Pcs [Numeric], Total Mtr [Numeric], Act Wgt [Numeric], Cal Wgt [Numeric], Tube Wgt [Numeric]
+        - Packing Wgt [Numeric], Phy Wgt [Numeric], Gross Wgt [Numeric], Net Wgt [Numeric], Auto Weight [Checkbox]
+      * Bale Summary Section:
+        - Total Bale [Numeric], Total Mtrs [Numeric]
+      * Buttons:
+        - Reload, New, Save/Print, View, Close, Add Row
 
 11. SALES & DISPATCH
     - Goods Release (GRA) [/goods-release]
+      * Dispatch Header Fields:
+        - GRA No [Numeric], GRA Date [Date Picker], Inv Mode [Dropdown: Local, Export, Sample]
+        - Bale Type [Dropdown: Bale Type Master], Status [Dropdown: Open, Pending, Completed, Closed]
+        - Prepare Time [Time Picker], Party Name [Dropdown], DIS No [Text], Date [Date Picker]
+        - Delivery At [Dropdown], Invoice At [Dropdown], Agent [Dropdown: Agent Master], Comm % [Numeric]
+        - Delivery At (Address) [Text], Delivery SI [Text], Delivery Ins [Text]
+        - Rate/Mtr [Numeric], Due Days [Numeric], Due Date [Date Picker]
+      * Dispatch Detail Grid Table:
+        - S.No, Design No [Dropdown], Design Color [Dropdown], Bale Nos [Text], Pin [Text], Mtr [Numeric], Rate [Numeric], Amount [Numeric]
+      * Dispatch Summary Section:
+        - Total Bales, Total Mtr, Gross Amount, TCS Value, TCS %, TCS Amt, Gross/Net Weight
+      * Transport & Logistics Section:
+        - Transport [Dropdown], Transport Mode [Dropdown: Road, Rail, Air, Sea], Freight Mode [Dropdown: Paid, To Pay, COD, Self]
+        - Vehicle No [Text], LR Team [Text], LR No [Text], LR Date [Date Picker], Narration [Text], Others [Text]
+      * Tax & Discount Section:
+        - Discount % [Numeric], Tax Value [Numeric], Gross Amount [Numeric], TCS Amount [Numeric]
+      * Buttons:
+        - Save, View, Close, Add Row
+
     - Sales Invoice [/sales-invoice]
+      * Invoice Header Fields:
+        - Invoice Type (ID) [Dropdown: Local, Export, Debit Note], Type [Dropdown: Sales, Return, Sample]
+        - Invoice No [Numeric], Invoice Date [Date Picker], GRA No [Dropdown], Date [Date Picker]
+        - DIS No [Text], DIS Date [Date Picker], Pay Name [Dropdown], Delivery [Dropdown]
+        - Invoice Address [Text], Delivery Address [Text], State/Code [Dropdown], Dly State/Code [Dropdown]
+        - PO No [Text], PO Date [Date Picker], Agent Name [Dropdown], Due Days [Numeric], Due Date [Date Picker]
+        - Payment [Dropdown], PMT Ref No [Text]
+      * Transport & Logistics Section:
+        - Transport [Dropdown], Truck No [Text], Transport Mode [Dropdown], Freight Mode [Dropdown], LR No [Text], LR Date [Date Picker], LR Team [Text]
+      * Invoice Item Details Grid Table:
+        - S.No, Design No [Dropdown], HSN Code [Dropdown], Description [Text], Total Bale [Numeric], UOM [Dropdown], Qty [Numeric], Rate [Numeric], Amount [Numeric]
+      * Additional Charges & Summary Section:
+        - Other Char 1 to 4 [Text], Total Qty, Gross Wg, Gross Amt, Dist % [Numeric]
+      * Invoice Calculation Section:
+        - Rate, Amount, Gross Amount, Discount %, Net Amount, Tax Amount, Total Quantity
+      * Buttons:
+        - Save, View, Close, Add Row
+
     - Despatch Planning [/despatch]
+      * Despatch Planning Fields:
+        - IBPO [Dropdown], PO Date [Date Picker], Ref No [Numeric], Date [Date Picker]
+        - Billing Party [Dropdown], Delivery Party [Dropdown], Billing Address [Text], Delivery Address [Text]
+        - State/Code (Billing) [Dropdown], State/Code (Delivery) [Dropdown]
+        - Design No [Dropdown], PINO [Text], Order [Numeric], AMD/FOC Mtr [Numeric], Total [Numeric], UOM [Dropdown]
+        - Delivery Starting [Date Picker], Party Comp Date [Date Picker], Comp Date [Date Picker]
+        - LC No / TT No [Text], LC / TT Date [Date Picker], IBPO Rate [Numeric], Currency [Dropdown]
+        - Certificate Type [Dropdown], Fabric Type [Dropdown], Total Planning [Numeric], Last Desp Date [Date Picker]
+        - Tot Desp Mtrs [Numeric], Balance Mtrs [Numeric]
+      * Customer & Export Info:
+        - Point of Contact/No [Text], Party Style [Text], Buyer PO No [Text], HSN Code [Dropdown]
+        - PO Upload [File Upload], City [Dropdown], Print Name [Text], PAN [Text], Merchant [Dropdown]
+      * Planning & Quantity Control:
+        - Planned Mtrs [Numeric], Tolerance % [Numeric], Max Dispatch Qty [Numeric], Stock [Numeric]
+        - Planning Date [Date Picker], Rate [Numeric], Other Charge [Dropdown], Other Charges Value [Numeric]
+      * Buttons:
+        - New, Save, View, Exit
 
 12. GATE & SECURITY
     - Gate Inward [/gate/inward]
+      * Entry Fields:
+        - Gate No [Numeric], Date [Date Picker], Time [Time Picker]
+        - Party Name [Dropdown: Party Master], Vehicle No [Text], Driver Name [Text], Mobile No [Text]
+        - Inward Type [Dropdown: Grey Inward, Yarn, Consumables, Others]
+        - Challan/Inv No [Text], Challan Date [Date Picker], Quantity [Numeric], UOM [Dropdown: UOM Master]
+        - Material Description [Text], Remarks [Text]
+
     - Gate Outward [/gate/outward]
+      * Entry Fields:
+        - Gate No, Date, Time, Party Name, Vehicle No, Driver Name, Mobile No
+        - Outward Type [Dropdown: Finished Fabric, Grey Delivery, Process Return, Scrap, Others]
+        - Challan/Inv No, Challan Date, Quantity, UOM, Material Description, Remarks
+
     - Gate Pass Creation [/gate/pass]
+      * Pass Fields:
+        - Pass No [Numeric], Date [Date Picker], Time [Time Picker], Party/Vendor [Dropdown]
+        - Vehicle No [Text], Driver Name [Text], Mobile No [Text], Purpose [Text], Material Details [Text]
+        - Returnable [Dropdown: Yes, No], Due Date [Date Picker], Approved By [Dropdown], Remarks [Text]
+
     - Gate Reports [/gate/reports]
+      * Report Filters:
+        - From Date [Date Picker], To Date [Date Picker]
+        - Gate Type [Dropdown: Inward, Outward, Pass], Party Name [Dropdown], Vehicle No [Text], Status [Dropdown]
 
 13. EXPORT & LOGISTICS
     - E-Way Bill [/eway-bill]
+      * Header Fields:
+        - Supply Type [Dropdown: Outward, Inward]
+        - Sub Type [Dropdown: B2B, B2C, Export, Import, Job Work]
+        - Document Type [Dropdown: Invoice, Delivery Challan, Bill of Entry]
+        - Token Expiry Date [Date Picker], Invoice Type [Dropdown: Regular, Bill To - Ship To]
+        - Org Name [Text], DC No./Date [Text + Date Picker], Token No [Text], Result / Error [Text]
+      * Billing From:
+        - Bill From [Text], Address [Text], GSTIN / PIN Code [Text], PIN Code [Numeric], Bill State / Code [Dropdown]
+      * Dispatch From:
+        - Goods From [Text], Good From Address [Text], Good From Pin [Numeric], From Place [Text], State / Code [Dropdown]
+      * Billing To:
+        - Bill To [Text], Bill Address [Text], GSTIN / Pin [Text], State / Code [Dropdown]
+      * Dispatch To:
+        - Goods To [Text], Good To Address [Text], Good To Pin [Numeric], To Place [Text], State / Code [Dropdown], Distance [Numeric]
+      * Item Details Section:
+        - Item Description [Text], HSN Code [Text], Quantity [Numeric], Unit [Dropdown], Value [Numeric], Tax Details [CGST, SGST, IGST, Cess]
 
 14. REPORTS & MIS
     - Reports Dashboard [/reports-dashboard]
+      * Filter Fields:
+        - Date Range [Date Picker], Module / Report Category [Dropdown: Yarn, Production, Sales, Finance]
+
     - Log Report [/log-report]
+      * Audit Filters:
+        - Module [Dropdown: Fabric Delivery, Production, Accounts, Buyer Order]
+        - Type/Mode [Dropdown: Save, Update, Delete, Approval, Edit, Print]
+        - Detail's/Remarks [Text: Search keyword]
+        - From Date [Date Picker], To Date [Date Picker], Given Period [Checkbox], UserID [Dropdown]
+      * Grid Details:
+        - Date, User Name, User ID, Mode, Module, Remarks
 
 15. ACCOUNTS & FINANCE (under Finance dropdown)
     * HOME:
       - Dashboard [/cubebook/dashboard]
+        * Fields: Financial KPI Cards (Receivables, Payables, Net Profit, Cash Balance), charts for Ledger Trends.
     * MASTERS:
       - Create [/cubebook/masters]
+        * Fields: Group Name [Dropdown: Primary Groups], Ledger Name [Text], Opening Balance [Numeric], Debit/Credit Type [Dropdown]
       - Alter [/cubebook/masters/alter]
+        * Fields: Master Type [Dropdown], Ledger Selection [Dropdown], Modify details
       - Chart of Accounts [/cubebook/masters/chart]
+        * Fields: Account Tree Structure view (Asset, Liability, Income, Expense hierarchy)
     * TRANSACTIONS:
       - Vouchers [/cubebook/vouchers]
+        * Fields: Voucher Type [Dropdown: Payment, Receipt, Contra, Journal, Sales, Purchase], Voucher No [Numeric], Date [Date Picker], Debit Account [Dropdown: Ledger Master], Credit Account [Dropdown: Ledger Master], Amount [Numeric], Narration [Text]
       - Day Book [/cubebook/day-book]
+        * Fields: Date [Date Picker], Filter Voucher Type [Dropdown]
     * REPORTS:
       - Trial Balance [/cubebook/reports/trial-balance]
+        * Fields: As On Date [Date Picker], Group-wise summary
       - Profit & Loss [/cubebook/reports/profit-loss]
+        * Fields: From / To Date [Date Picker], Net Profit Calculation
       - Balance Sheet [/cubebook/reports/balance-sheet]
+        * Fields: As On Date [Date Picker], Liability vs Assets statement
       - Ledger Report [/cubebook/reports/ledger]
+        * Fields: Select Ledger [Dropdown], From / To Date [Date Picker]
       - Bank Book [/cubebook/reports/bank-book]
+        * Fields: Bank Ledger [Dropdown], From / To Date [Date Picker]
       - Outstanding [/cubebook/reports/outstanding]
+        * Fields: Ledger Group [Dropdown: Debtors, Creditors], Outstanding Type [Dropdown: Receivables, Payables]
       - Sales Register [/cubebook/reports/sales-register]
+        * Fields: From / To Date [Date Picker], Invoice-wise total sales
       - Ratio Analysis [/cubebook/reports/ratio-analysis]
+        * Fields: Financial Ratios (Current Ratio, Quick Ratio, Debt-Equity Ratio, GP %, NP %)
 
 16. PRODUCTION PLANNING (PPC) (under Production Management dropdown)
     * OVERVIEW:
       - Dashboard [/ppc/tracking/live-dashboard]
+        * Fields: Active loom running status, RPM dials, Efficiency gauge (Target vs Actual)
     * MODULES:
       - Master Setup [/ppc/master/loom-master]
+        * Fields: Loom Number [Text], Loom ID [Text], Location / Shed [Text], Loom Width [Numeric]
       - Loom Planning [/ppc/planning/availability]
+        * Fields: Plan ID [Numeric], Loom No [Dropdown: Loom Master], Design No [Dropdown: Design Master], Warp Beam Lot [Dropdown], Planned Start [Date Picker]
       - Scheduling [/ppc/scheduling/start-end]
+        * Fields: Schedule ID [Numeric], Order Ref [Dropdown: Buyer Order], Warp Setup [Text], Estimated End Date [Date Picker]
       - Execution [/ppc/execution/loom-start]
+        * Fields: Loom ID [Dropdown: Loom Master], Start Date [Date Picker], Operator Name [Dropdown], RPM [Numeric]
       - Daily Monitor [/ppc/monitoring/target-actual]
+        * Fields: Monitor Date [Date Picker], Shed No [Dropdown], Target Production [Numeric], Actual Production [Numeric]
       - Progress [/ppc/tracking/order-progress]
+        * Fields: IBPO No [Dropdown: Buyer Order], Progress % [Numeric: System calculated]
       - Problems [/ppc/problem/breakdown-entry]
+        * Fields: Breakdown No [Numeric], Loom No [Dropdown], Problem Type [Dropdown: Mechanical, Electrical, Warp Out], Action Taken [Text]
       - ETA Engine [/ppc/alerts/eta-calc]
+        * Fields: Select Order [Dropdown], Current Loom Speed [Numeric], Estimated Completion [Date Picker: Calculated]
       - Alerts [/ppc/alerts/low-efficiency]
+        * Fields: Threshold Efficiency % [Numeric], Active Loom List [Read only]
       - Reports [/ppc/reports/loom-wise]
+        * Fields: Loom No [Dropdown], From / To Date [Date Picker], Shift [Dropdown]
 
 17. HUMAN RESOURCES (under HR Management dropdown)
     * DASHBOARDS:
       - HR Dashboard [/hr]
+        * Fields: Total Employees Counter, Departmental Headcount charts, Present/Absent status
     * MASTER:
       - Departments [/hr/departments]
+        * Fields: Department Name [Text], Department Code [Text], Department Head [Dropdown: Employee list]
       - Designations [/hr/designations]
+        * Fields: Designation Title [Text], Grade Level [Dropdown: Grade Master]
       - Shifts [/hr/shifts]
+        * Fields: Shift Name [Text], Start Time [Time Picker], End Time [Time Picker], Grace Period [Minutes]
       - Holidays [/hr/holidays]
+        * Fields: Holiday Name [Text], Holiday Date [Date Picker], Holiday Type [Dropdown: National, Regional, Restricted]
       - Employee Master [/hr/employees]
+        * Fields: Employee ID [Text], Full Name [Text], Date of Birth [Date Picker], Contact No [Text], Email ID [Text], Joining Date [Date Picker], Department [Dropdown], Designation [Dropdown], Shift [Dropdown], Monthly Salary [Numeric], Bank Account No [Text], IFSC Code [Text], PAN Number [Text], Aadhaar Number [Text], Status [Dropdown: Active, Suspended, Resigned]
     * ATTENDANCE:
       - Attendance & Leave [/hr/attendance]
+        * Fields: Employee ID [Dropdown], Date [Date Picker], Clock In [Time Picker], Clock Out [Time Picker], Attendance Status [Dropdown], Leave Type [Dropdown: SL, CL, EL]
       - Payroll [/hr/payroll]
+        * Fields: Payroll Month [Dropdown], Basic Salary [Numeric], Allowances [Numeric], Deductions [PF, ESI, Tax], Net Salary [Numeric: Calculated]
     * COMPENSATION:
       - Loans [/hr/loans]
+        * Fields: Employee ID [Dropdown], Loan Amount [Numeric], Interest Rate % [Numeric], Repayment Months [Numeric], EMI [Numeric: Calculated]
       - Benefits [/hr/benefits]
+        * Fields: Benefit Type [Dropdown: Insurance, PF, Bonus], Amount [Numeric]
       - Travel Requests [/hr/travel]
+        * Fields: Employee ID [Dropdown], Source/Destination [Text], Travel Mode [Dropdown], Estimate Cost [Numeric]
       - Expense Claims [/hr/expenses]
+        * Fields: Employee ID [Dropdown], Claim Date [Date Picker], Expense Type [Dropdown: Food, Lodging, Fuel], Amount [Numeric], Upload Receipt [File Upload]
     * REPORTS:
       - Reports [/hr/reports]
+        * Fields: From / To Date [Date Picker], Department [Dropdown], Report Category [Dropdown: Attendance, Payroll, Leaves]
 
 18. VEHICLE MANAGEMENT (under Vehicle Management dropdown)
     - Dashboard [/fleet/dashboard]
+      * Fields: Active Fleet count, Fuel efficiency averages, Total maintenance expense
     - Vehicles [/fleet/vehicles]
+      * Fields: Vehicle Number [Text], Model Name [Text], Vehicle Type [Dropdown: Truck, Lorry, Car], Fuel Type [Dropdown: Diesel, Petrol, Electric]
     - Vehicle Assignment [/fleet/drivers]
+      * Fields: Vehicle No [Dropdown], Driver Name [Dropdown: Employee Master], Assignment Date [Date Picker]
     - Service Schedule [/fleet/service-schedule]
+      * Fields: Vehicle No [Dropdown], Service Category [Dropdown], Scheduled Date [Date Picker]
     - Breakdown Entry [/fleet/breakdown-entry]
+      * Fields: Vehicle No [Dropdown], Breakdown Location [Text], Failure Description [Text], Date & Time [Date Picker]
     - Maintenance Log [/fleet/maintenance-log]
+      * Fields: Vehicle No [Dropdown], Service Date [Date Picker], Cost Incurred [Numeric], Vendor Name [Text], Work Description [Text]
     - RC / Insurance / Permit [/fleet/documents]
+      * Fields: Vehicle No [Dropdown], Document Type [Dropdown: RC, Insurance, Permit, Tax], Expiry Date [Date Picker], Upload File [File Upload]
     - Expiry Alerts [/fleet/expiry-alerts]
+      * Fields: Alerts Filter Days [Dropdown: 15, 30, 90 days]
     - Fuel Consumption Report [/fleet/fuel-consumption]
+      * Fields: Vehicle No [Dropdown], Refuel Date [Date Picker], Liters Filled [Numeric], Amount Paid [Numeric], Odometer Reading [Numeric]
     - Driver Report [/fleet/driver-performance]
+      * Fields: Driver Name [Dropdown], Period From / To Date [Date Picker]
 
 19. STORES & CONSUMABLES (under Stores & Consumables dropdown)
     * HOME:
       - Dashboard [/stores-consumables/dashboard]
+        * Fields: Low Stock Alert panel, Pending Requisitions counter, Monthly consumption charts
     * MASTERS:
       - Category Master [/stores-consumables/category]
+        * Fields: Category Name [Text], Category Code [Text]
       - UOM Master [/stores-consumables/uom]
+        * Fields: Unit Name [Text], Short Code [Text]
       - Item Master [/stores-consumables/item]
+        * Fields: Item Name [Text], Item Code [Text], Category [Dropdown], UOM [Dropdown], Reorder Level [Numeric], Minimum Stock [Numeric]
       - Vendor Master [/stores-consumables/vendor]
+        * Fields: Vendor Name [Text], Vendor Code [Text], Contact Details [Text], GSTIN [Text]
       - Department Master [/stores-consumables/department]
+        * Fields: Department Name [Text], Department Code [Text]
     * TRANSACTIONS:
       - Department Request [/stores-consumables/request]
+        * Fields: Request ID [Numeric], Date [Date Picker], Department [Dropdown], Item Grid (Item [Dropdown], Required Qty [Numeric], Purpose [Text])
       - Purchase Requisition [/stores-consumables/requisition]
+        * Fields: Requisition ID [Numeric], Date [Date Picker], Item Grid (Item, Stock level, Reqd Qty, Approved Qty)
       - Vendor Quotation [/stores-consumables/quotation]
+        * Fields: Quotation ID [Numeric], Vendor Name [Dropdown], Item Grid (Item, Rate, Lead Time, Tax %, Discount %)
       - Purchase Order [/stores-consumables/po]
+        * Fields: PO Number [Numeric], PO Date [Date Picker], Vendor Name [Dropdown], Item Grid (Item, Quantity, Rate, GST %, Amount)
       - Stock Inward (GRN) [/stores-consumables/grn]
+        * Fields: GRN Number [Numeric], GRN Date [Date Picker], Vendor Name [Dropdown], PO Number [Dropdown], Item Grid (Item, Ordered Qty, Received Qty, Accepted Qty, Lot No)
       - Issue to Dept [/stores-consumables/issue]
+        * Fields: Issue ID [Numeric], Date [Date Picker], Request ID [Dropdown], Department [Dropdown], Item Grid (Item, Stock Available, Issued Qty)
       - Return to Store [/stores-consumables/return]
+        * Fields: Return ID [Numeric], Date [Date Picker], Department [Dropdown], Item Grid (Item, Return Qty, Reason)
       - Store Transfer [/stores-consumables/transfer]
+        * Fields: Transfer ID [Numeric], Date [Date Picker], From Location [Dropdown], To Location [Dropdown], Item Grid (Item, Transfer Qty)
       - Stock Adjustment [/stores-consumables/adjustment]
+        * Fields: Adjustment ID [Numeric], Date [Date Picker], Item Name [Dropdown], Adjustment Type [Dropdown: Add, Reduce], Quantity [Numeric], Reason [Text]
       - Returnable DC [/stores-consumables/returnable-dc]
+        * Fields: DC Number [Numeric], DC Date [Date Picker], Vendor Name [Dropdown], Item Grid (Item, Sent Qty, Expected Return Date)
     * REPORTS & ANALYTICS:
       - Stock Inventory [/stores-consumables/report-stock]
+        * Fields: Category [Dropdown], Low Stock Filter [Checkbox]
       - Stock Ledger [/stores-consumables/report-ledger]
+        * Fields: Item Name [Dropdown], From / To Date [Date Picker]
       - Consumption Analysis [/stores-consumables/report-consumption]
+        * Fields: Department [Dropdown], From / To Date [Date Picker]
       - Purchase Analysis [/stores-consumables/report-purchase]
+        * Fields: Vendor Name [Dropdown], From / To Date [Date Picker]
       - Low Stock Alerts [/stores-consumables/report-reorder]
+        * Fields: Alert List (Items with stock below reorder level)
       - Audit Trail [/stores-consumables/report-audit]
+        * Fields: From / To Date [Date Picker], Action Category [Dropdown]
 
 20. ADMINISTRATION & SECURITY
     - User Management [/user-management]
+      * Form Fields:
+        - User ID [Text], User Name [Text], User Type [Dropdown: Admin, Manager, Staff], Status [Dropdown: Enabled, Disabled]
+        - Access Permissions Checklist (Masters, Order Management, Warping/Sizing, Production, Processing, Fabric, Yarn, Accounts, Reports)
 
 21. SYSTEM
     - Company [/company-settings]
+      * Form Fields:
+        - Company Name [Text], Registration No [Text], Address [Text], GSTIN [Text], Contact Email/Phone
     - About [/about]
+      * Fields:
+        - Application Version, Release Date, Developers Info
 ================================================================================
