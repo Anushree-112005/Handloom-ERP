@@ -16,6 +16,7 @@ router = APIRouter()
 class YarnDyeingPOItemBase(BaseModel):
     sp_no: Optional[str] = None
     lot_no: Optional[str] = None
+    stock_qty: Optional[float] = 0
     dsn_count: Optional[str] = None
     yarn_count: Optional[str] = None
     color: Optional[str] = None

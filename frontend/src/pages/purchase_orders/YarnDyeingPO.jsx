@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Palette, FileText, Layers, IndianRupee, Download, Table } from 'lucide-react';
-import { yarnDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
+import { yarnDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI, yarnInwardAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
 
@@ -66,7 +66,7 @@ export default function YarnDyeingPO() {
     ],
 
     items: [{
-      sp_no: '', lot_no: '', dsn_count: '', yarn_count: '', color: '', uom: '', warp_qty: 0, weft_qty: 0, tot_qty: 0, tole_pct: 0, wrp_order: 0, wft_order: 0, rate: 0, amount: 0
+      sp_no: '', lot_no: '', stock_qty: 0, dsn_count: '', yarn_count: '', color: '', uom: '', warp_qty: 0, weft_qty: 0, tot_qty: 0, tole_pct: 0, wrp_order: 0, wft_order: 0, rate: 0, amount: 0
     }]
   };
 
@@ -80,22 +80,25 @@ export default function YarnDyeingPO() {
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
+  const [yarnInwards, setYarnInwards] = useState([]);
   
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes, inwardRes] = await Promise.all([
         yarnDyeingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
         buyerOrderAPI.list(),
-        designEntryAPI.list()
+        designEntryAPI.list(),
+        yarnInwardAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
       setDesignEntries(dsRes.data || []);
+      setYarnInwards(inwardRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,6 +172,232 @@ export default function YarnDyeingPO() {
     };
   };
 
+  const getDesignRequirementItems = (de) => {
+    if (!de) return [];
+    let fabricDesignRows = [];
+    try {
+      fabricDesignRows = de.fabric_design_details ? JSON.parse(de.fabric_design_details) : [];
+    } catch (e) {
+      console.error("Error parsing fabric_design_details", e);
+    }
+    
+    const warpRows = fabricDesignRows.filter(r => r.type && !r.type.toLowerCase().includes('weft'));
+    const weftRows = fabricDesignRows.filter(r => r.type && r.type.toLowerCase().includes('weft'));
+
+    const calculateRepeatSize = (rows) => {
+      let total = 0;
+      let i = 0;
+      while (i < rows.length) {
+        const r = rows[i];
+        const val = r.times;
+        const type = r.type;
+        if (!val || val === '1' || val === '') {
+          total += parseInt(r.threads) || 0;
+          i++;
+          continue;
+        }
+        let count = 1;
+        let groupThreads = parseInt(r.threads) || 0;
+        while (
+          i + count < rows.length && 
+          rows[i + count].type === type &&
+          rows[i + count].times === val
+        ) {
+          groupThreads += parseInt(rows[i + count].threads) || 0;
+          count++;
+        }
+        const timesMultiplier = parseInt(val) || 1;
+        total += groupThreads * timesMultiplier;
+        i += count;
+      }
+      return total;
+    };
+
+    const warpRepeatSize = calculateRepeatSize(warpRows);
+    const weftRepeatSize = calculateRepeatSize(weftRows);
+
+    const totalEnds = parseFloat(de.total_ends) || 0;
+    const selvage = parseFloat(de.selvage_waste) || 0;
+    const reed = parseFloat(de.reed) || 0;
+    const reedOl = Math.max(0, reed - 8);
+    const grayWidthVal = parseFloat(de.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
+    const pickOl = Math.max(0, (parseFloat(de.pick_ot) || 0) - 4);
+    const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
+    const repeatEnds = warpRepeatSize * noD;
+    const balance = totalEnds - repeatEnds - selvage;
+
+    const extraEnds = warpRows.map(() => 0);
+    let remaining = balance;
+    let idx = 0;
+    while (remaining > 0 && warpRows.length > 0) {
+      const item = warpRows[idx % warpRows.length];
+      const take = Math.min(remaining, parseInt(item.threads) || 1);
+      extraEnds[idx % warpRows.length] += take;
+      remaining -= take;
+      idx++;
+    }
+
+    const totalMtr = parseFloat(de.total_mtr) || 0;
+    const crimpPct = parseFloat(de.crimp_pct) || 0;
+    const skgPct = parseFloat(de.skg_pct) || 0;
+    const dyeingPct = parseFloat(de.dyeing_loss_pct) || 0;
+    const warpLength = parseFloat(de.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
+    const weftProMtrVal = parseFloat(de.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+
+    const parseEqCount = (lbl) => {
+      const YARN_COUNTS = {
+        "10S CTN": 10.0, "20S CTN": 20.0, "30S CTN": 30.0, "40S CTN": 40.0,
+        "60S CTN": 60.0, "80S CTN": 80.0, "2/20S CTN": 10.0, "2/40S CTN": 20.0,
+        "2/60S CTN": 30.0, "2/80S CTN": 40.0
+      };
+      if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+      if (!lbl) return 20.0;
+      let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+      if (cleaned.includes('/')) {
+        const parts = cleaned.split('/');
+        const ply = parseFloat(parts[0]) || 1.0;
+        const countPart = parts[1].match(/\d+/);
+        const count = countPart ? parseFloat(countPart[0]) : 40.0;
+        return count / ply;
+      } else {
+        const match = cleaned.match(/\d+/);
+        return match ? parseFloat(match[0]) : 20.0;
+      }
+    };
+
+    // Aggregate Warp
+    const warpColorAgg = {};
+    warpRows.forEach((item, index) => {
+      const cname = item.color || 'White';
+      const yc = item.yarn_count || '40S CTN';
+      const key = `${yc}_${cname}`;
+      const itemEnds = parseInt(item.threads) || 0;
+      const itemExtra = extraEnds[index] || 0;
+      const itemTotalEnds = (itemEnds * noD) + itemExtra;
+
+      if (warpColorAgg[key]) {
+        warpColorAgg[key].ends += itemEnds;
+        warpColorAgg[key].extra += itemExtra;
+        warpColorAgg[key].total_ends += itemTotalEnds;
+      } else {
+        warpColorAgg[key] = {
+          beam_type: item.type || 'Warp',
+          count: yc,
+          color: cname,
+          ends: itemEnds,
+          noD: noD,
+          extra: itemExtra,
+          total_ends: itemTotalEnds
+        };
+      }
+    });
+
+    const warpSummary = Object.values(warpColorAgg).map(row => {
+      const eqCount = parseEqCount(row.count);
+      const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      return { ...row, req_kg };
+    });
+
+    // Weft Design
+    const pick = parseFloat(de.pick_ot) || 0;
+    const finishWidth = parseFloat(de.finish_width) || 0;
+    const weftWidth = finishWidth + selvage;
+    const weftColorAgg = {};
+    weftRows.forEach(item => {
+      const cname = item.color || 'White';
+      const yc = item.yarn_count || '40S CTN';
+      const key = `${yc}_${cname}`;
+      const itemEnds = parseInt(item.threads) || 0;
+
+      if (weftColorAgg[key]) {
+        weftColorAgg[key].ends += itemEnds;
+      } else {
+        weftColorAgg[key] = {
+          beam_type: 'Weft',
+          count: yc,
+          color: cname,
+          ends: itemEnds,
+          noD: 1,
+          extra: 0,
+          total_ends: 0
+        };
+      }
+    });
+
+    const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
+    const totalWeftEndsCalculated = Math.round(pick * weftWidth);
+
+    const weftSummary = Object.values(weftColorAgg).map(row => {
+      const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
+      const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
+      const eqCount = parseEqCount(row.count);
+      const req_kg_raw = eqCount > 0 ? (ratio * pickOl * grayWidthVal * weftProMtrVal) / (1690 * eqCount) : 0;
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      return { ...row, total_ends: groupEnds, req_kg };
+    });
+
+    // Query stock & lot_no from yarn inwards
+    const allInwardItems = (yarnInwards || []).flatMap(yi => yi.items || []);
+    const cleanStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const findMatchingInward = (count, color) => {
+      const match = allInwardItems.find(item => 
+        cleanStr(item.yarn_count) === cleanStr(count) && 
+        cleanStr(item.colour) === cleanStr(color)
+      );
+      return match ? { lot_no: match.lot_no || '', stock_qty: match.kgs || 0 } : { lot_no: '', stock_qty: 0 };
+    };
+
+    let newItems = [];
+    
+    warpSummary.forEach(row => {
+      const stockMatch = findMatchingInward(row.count, row.color);
+      newItems.push({
+        sp_no: de.ds_ref_no || '',
+        lot_no: stockMatch.lot_no,
+        stock_qty: stockMatch.stock_qty,
+        dsn_count: row.count || '',
+        yarn_count: row.count || '',
+        color: row.color || '',
+        uom: 'Kgs',
+        warp_qty: row.req_kg,
+        weft_qty: 0,
+        tot_qty: row.req_kg,
+        tole_pct: de.toie_pct || 0,
+        wrp_order: row.req_kg,
+        wft_order: 0,
+        rate: 0,
+        amount: 0
+      });
+    });
+
+    weftSummary.forEach(row => {
+      const stockMatch = findMatchingInward(row.count, row.color);
+      newItems.push({
+        sp_no: de.ds_ref_no || '',
+        lot_no: stockMatch.lot_no,
+        stock_qty: stockMatch.stock_qty,
+        dsn_count: row.count || '',
+        yarn_count: row.count || '',
+        color: row.color || '',
+        uom: 'Kgs',
+        warp_qty: 0,
+        weft_qty: row.req_kg,
+        tot_qty: row.req_kg,
+        tole_pct: de.toie_pct || 0,
+        wrp_order: 0,
+        wft_order: row.req_kg,
+        rate: 0,
+        amount: 0
+      });
+    });
+
+    return newItems;
+  };
+
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
@@ -186,54 +415,11 @@ export default function YarnDyeingPO() {
       return;
     }
 
-    if (name === 'design_no') {
-      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+    if (name === 'po_no') {
+      const selectedBo = buyerOrders.find(bo => bo.ibpo_number === value);
+      const de = designEntries.find(d => d.ibpo_no === value);
       if (de) {
-        let newItems = [];
-        try {
-          const fdd = JSON.parse(de.fabric_design_details || '[]');
-          if (fdd.length > 0) {
-            fdd.forEach(row => {
-              if (row.yarn_count) {
-                newItems.push({
-                  ...initialForm.items[0],
-                  sp_no: de.ds_ref_no || '',
-                  dsn_count: row.yarn_count || '',
-                  yarn_count: row.yarn_count || '',
-                  color: row.color || '',
-                  uom: 'Kgs',
-                  warp_qty: row.type === 'Warp' ? (de.warp_mtr || 0) : 0,
-                  weft_qty: row.type === 'Weft' ? (de.weft_pro_mtr || 0) : 0,
-                  tot_qty: row.type === 'Warp' ? (de.warp_mtr || 0) : (row.type === 'Weft' ? (de.weft_pro_mtr || 0) : (de.total_mtr || 0)),
-                  tole_pct: de.toie_pct || 0,
-                  wrp_order: de.warp_mtr || 0,
-                  wft_order: de.weft_pro_mtr || 0
-                });
-              }
-            });
-          } else {
-            const yd = JSON.parse(de.yarn_details || '[]');
-            yd.forEach(row => {
-              if (row.yarn_count) {
-                newItems.push({
-                  ...initialForm.items[0],
-                  sp_no: de.ds_ref_no || '',
-                  dsn_count: row.yarn_count || '',
-                  yarn_count: row.yarn_count || '',
-                  color: '',
-                  uom: 'Kgs',
-                  warp_qty: row.type === 'Warp' ? (de.warp_mtr || 0) : 0,
-                  weft_qty: row.type === 'Weft' ? (de.weft_pro_mtr || 0) : 0,
-                  tot_qty: row.type === 'Warp' ? (de.warp_mtr || 0) : (row.type === 'Weft' ? (de.weft_pro_mtr || 0) : (de.total_mtr || 0)),
-                  tole_pct: de.toie_pct || 0,
-                  wrp_order: de.warp_mtr || 0,
-                  wft_order: de.weft_pro_mtr || 0
-                });
-              }
-            });
-          }
-        } catch (err) {}
-        
+        let newItems = getDesignRequirementItems(de);
         if (newItems.length === 0) {
           newItems = [{
             ...initialForm.items[0],
@@ -241,7 +427,35 @@ export default function YarnDyeingPO() {
             uom: 'Kgs'
           }];
         }
+        setForm(recalculate({
+          ...form,
+          po_no: value,
+          design_no: de.ds_ref_no || de.design_no || '',
+          buyer_name: de.buyer_name || (selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : ''),
+          items: newItems
+        }));
+        return;
+      } else {
+        setForm(recalculate({
+          ...form,
+          po_no: value,
+          buyer_name: selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : ''
+        }));
+        return;
+      }
+    }
 
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      if (de) {
+        let newItems = getDesignRequirementItems(de);
+        if (newItems.length === 0) {
+          newItems = [{
+            ...initialForm.items[0],
+            sp_no: de.ds_ref_no || '',
+            uom: 'Kgs'
+          }];
+        }
         setForm(recalculate({
           ...form,
           design_no: value,
@@ -394,7 +608,7 @@ export default function YarnDyeingPO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <button className="btn btn-primary" onClick={() => { setForm(initialForm); setShowForm(true); }}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -508,11 +722,11 @@ export default function YarnDyeingPO() {
               payment_terms: selectedViewOrder?.payment_terms || "-"
             }}
             tableHeaders={[
-              { label: 'SP No.', align: 'left', width: '10%' },
-              { label: 'Lot No.', align: 'left', width: '10%' },
-              { label: 'Dsn Count', align: 'left', width: '15%' },
-              { label: 'Yarn Count', align: 'left', width: '15%' },
-              { label: 'Color', align: 'left', width: '15%' },
+              { label: 'SP No.', align: 'left', width: '12%' },
+              { label: 'Lot No.', align: 'left', width: '12%' },
+              { label: 'Dsn Count', align: 'left', width: '12%' },
+              { label: 'Yarn Count', align: 'left', width: '12%' },
+              { label: 'Color', align: 'left', width: '12%' },
               { label: 'Unit', align: 'center', width: '5%' },
               { label: 'Tot Qty', align: 'right', width: '10%' },
               { label: 'Rate', align: 'right', width: '10%' },
@@ -538,7 +752,7 @@ export default function YarnDyeingPO() {
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setForm(initialForm); }}><X size={16} /> Close</button>
               <button type="submit" form="yd-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
             </div>
           </div>
@@ -636,8 +850,8 @@ export default function YarnDyeingPO() {
                   ))}
                 </select>
               </div>
-              <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Merchandiser</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
-              
+              <div className="form-group"><label>Merchandiser</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
+              <div className="form-group"><label>Lot No.</label><input type="text" className="form-control" name="lot_no" value={form.lot_no || ''} onChange={handleChange} /></div>
               <div className="form-group"><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms || ''} onChange={handleChange} /></div>
               <div className="form-group">
                 <label>Tax Type</label>
@@ -666,12 +880,13 @@ export default function YarnDyeingPO() {
 
             {/* Yarn Details Table */}
             <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 24, width: '100%', border: '1px solid var(--border)' }}>
-              <table className="data-table" style={{ minWidth: '1500px' }}>
+              <table className="data-table" style={{ minWidth: '1600px' }}>
                 <thead>
                   <tr style={{ background: '#e2e8f0', color: '#1e293b' }}>
                     <th>S.No</th>
                     <th>SP No.</th>
                     <th>Lot No.</th>
+                    <th>Stock Qty</th>
                     <th>Dsn Count</th>
                     <th>Yarn Count</th>
                     <th>Color</th>
@@ -690,9 +905,10 @@ export default function YarnDyeingPO() {
                   {form.items.map((item, idx) => (
                     <tr key={idx}>
                       <td>{idx + 1}</td>
-                      <td><input type="text" className="form-control" style={{ width: 90, padding: 6, margin: 0 }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
-                      <td><input type="text" className="form-control" style={{ width: 100, padding: 6, margin: 0 }} value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                      <td><input type="text" className="form-control" style={{ width: 90, padding: 6, margin: 0 }} value={item.dsn_count} onChange={e => updateItem(idx, 'dsn_count', e.target.value)} /></td>
+                      <td><input type="text" className="form-control" style={{ width: 150, padding: 6, margin: 0 }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
+                      <td><input type="text" className="form-control" style={{ width: 140, padding: 6, margin: 0 }} value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                      <td><input type="number" className="form-control" style={{ width: 80, padding: 6, margin: 0 }} value={item.stock_qty || 0} onChange={e => updateItem(idx, 'stock_qty', e.target.value)} /></td>
+                      <td><input type="text" className="form-control" style={{ width: 110, padding: 6, margin: 0 }} value={item.dsn_count} onChange={e => updateItem(idx, 'dsn_count', e.target.value)} /></td>
                       <td>
                         <select className="form-control" style={{ width: 120, padding: 6, margin: 0 }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
                           <option value="">-</option>

@@ -1,0 +1,57 @@
+import asyncio
+import uuid
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.core.database import engine
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.yarn_dyeing_po import YarnDyeingPO, YarnDyeingPOItem
+
+async def test_create_and_fetch():
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        unique_po_no = f"TEST-YPO-{uuid.uuid4().hex[:8].upper()}"
+        print("Using PO Number:", unique_po_no)
+
+        # Create a new PO
+        po = YarnDyeingPO(
+            po_no=unique_po_no,
+            supplier_dyeing_unit="Test Supplier Unit",
+            certificate_type="BCI Cotton",
+        )
+        session.add(po)
+        await session.commit()
+
+        # Create PO Item with stock_qty
+        item = YarnDyeingPOItem(
+            order_id=po.id,
+            sp_no="SP-9999",
+            lot_no="LOT-12345-TEST",
+            stock_qty=75.5,
+            dsn_count="40s",
+            yarn_count="40s",
+            color="Red",
+            uom="KGS",
+            tot_qty=100.5,
+            rate=150.0,
+            amount=15075.0,
+        )
+        session.add(item)
+        await session.commit()
+
+        # Query back to verify
+        stmt = select(YarnDyeingPO).options(selectinload(YarnDyeingPO.items)).where(YarnDyeingPO.id == po.id)
+        result = await session.execute(stmt)
+        fetched_po = result.scalars().first()
+
+        print("Fetched PO NO:", fetched_po.po_no)
+        print("Items Count:", len(fetched_po.items))
+        if fetched_po.items:
+            print("Item Lot No:", fetched_po.items[0].lot_no)
+            print("Item Stock Qty:", fetched_po.items[0].stock_qty)
+
+        # Cleanup
+        await session.delete(fetched_po)
+        await session.commit()
+        print("Cleanup completed successfully.")
+
+if __name__ == "__main__":
+    asyncio.run(test_create_and_fetch())
