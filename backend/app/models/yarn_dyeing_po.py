@@ -32,6 +32,7 @@ class YarnDyeingPO(Base):
     pcp_free = Column(String(100))
     staining_on_cotton = Column(String(50))
     design_no = Column(String(100))
+    lot_no = Column(String(100))
 
     tax_type = Column(String(100))
     certificate_type = Column(String(100))
@@ -72,6 +73,7 @@ class YarnDyeingPOItem(Base):
     order_id = Column(Integer, ForeignKey("yarn_dyeing_pos.id"), nullable=False)
     
     sp_no = Column(String(100))
+    lot_no = Column(String(100))
     dsn_count = Column(String(100))
     yarn_count = Column(String(100))
     color = Column(String(100))

@@ -69,18 +69,24 @@ async def list_design_entries(skip: int = 0, limit: int = 100, db: AsyncSession 
 
 @router.post("/", response_model=DesignEntryOut, status_code=201)
 async def create_design_entry(data: DesignEntryCreate, db: AsyncSession = Depends(get_db)):
-    res = await db.execute(select(DesignEntry.ds_ref_no))
-    ref_numbers = res.scalars().all()
-    max_val = 0
-    for ref in ref_numbers:
-        if ref and ref.startswith("REF-DE-"):
-            try:
-                num = int(ref.replace("REF-DE-", ""))
-                if num > max_val:
-                    max_val = num
-            except ValueError:
-                pass
-    ds_ref = f"REF-DE-{max_val + 1:05d}"
+    import re
+    match = re.search(r'\d+', data.design_no)
+    if match:
+        suffix_num = int(match.group())
+        ds_ref = f"REF-DE-{suffix_num:05d}"
+    else:
+        res = await db.execute(select(DesignEntry.ds_ref_no))
+        ref_numbers = res.scalars().all()
+        max_val = 0
+        for ref in ref_numbers:
+            if ref and ref.startswith("REF-DE-"):
+                try:
+                    num = int(ref.replace("REF-DE-", ""))
+                    if num > max_val:
+                        max_val = num
+                except ValueError:
+                    pass
+        ds_ref = f"REF-DE-{max_val + 1:05d}"
     
     entry = DesignEntry(**data.model_dump(), ds_ref_no=ds_ref)
     db.add(entry)
@@ -103,10 +109,27 @@ async def update_design_entry(entry_id: int, data: DesignEntryCreate, db: AsyncS
     if not entry:
         raise HTTPException(status_code=404, detail="Design Entry not found")
 
+    import re
+    from sqlalchemy import text
+    old_ref = entry.ds_ref_no
+    new_ref = None
+    if entry.design_no != data.design_no:
+        match = re.search(r'\d+', data.design_no)
+        if match:
+            suffix_num = int(match.group())
+            new_ref = f"REF-DE-{suffix_num:05d}"
+            setattr(entry, "ds_ref_no", new_ref)
+
     for key, value in data.model_dump().items():
         setattr(entry, key, value)
         
     await db.commit()
+
+    if new_ref and old_ref:
+        await db.execute(text("UPDATE yarn_dyeing_pos SET design_no = :new_ref WHERE design_no = :old_ref"), {"new_ref": new_ref, "old_ref": old_ref})
+        await db.execute(text("UPDATE yarn_dyeing_po_items SET sp_no = :new_ref WHERE sp_no = :old_ref"), {"new_ref": new_ref, "old_ref": old_ref})
+        await db.commit()
+
     await db.refresh(entry)
     return entry
 

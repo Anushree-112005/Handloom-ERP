@@ -109,9 +109,19 @@ async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depend
 
 @router.post("/", response_model=YarnPurchaseOrderOut, status_code=201)
 async def create_order(data: YarnPurchaseOrderCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(YarnPurchaseOrder.id)))
-    max_id = max_id_q.scalar() or 0
-    po_no = f"YPO-{max_id + 1:05d}"
+    result = await db.execute(select(YarnPurchaseOrder.po_number))
+    po_numbers = result.scalars().all()
+    max_num = 0
+    for po in po_numbers:
+        if po and po.upper().startswith("YPO-"):
+            try:
+                num_part = int(po.split("-")[1])
+                if num_part > max_num:
+                    max_num = num_part
+            except (ValueError, IndexError):
+                pass
+    po_no = f"YPO-{max_num + 1:05d}"
+
 
     counts_data = data.count_details or []
     indents_data = data.indent_details or []
