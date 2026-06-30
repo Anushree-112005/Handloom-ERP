@@ -150,6 +150,32 @@ const A4DocumentPreview = ({
                       </table>
                     </div>
                   )}
+
+                  {section.type === 'image' && (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 8, padding: '10px 0' }}>
+                      <img 
+                        src={section.imageUrl.startsWith('http') ? section.imageUrl : `http://localhost:8000${section.imageUrl}`} 
+                        alt={section.title} 
+                        style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', border: '1px solid #e2e8f0', borderRadius: 6 }} 
+                      />
+                    </div>
+                  )}
+
+                  {section.type === 'design_images' && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 8 }}>
+                      {section.images.map((imgData, i) => (
+                        <div key={i} style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, textAlign: 'center', background: '#fafafa', flex: '1 1 200px', maxWidth: '300px' }}>
+                          <img 
+                            src={imgData.url.startsWith('http') ? imgData.url : `http://localhost:8000${imgData.url}`} 
+                            alt={imgData.label} 
+                            style={{ width: '100%', height: '150px', objectFit: 'contain', borderRadius: 4, cursor: 'pointer' }} 
+                            onClick={() => window.open(imgData.url.startsWith('http') ? imgData.url : `http://localhost:8000${imgData.url}`, '_blank')}
+                          />
+                          <div style={{ fontSize: 10, fontWeight: 600, color: '#475569', marginTop: 8 }}>{imgData.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
 

@@ -33,6 +33,11 @@ const getColorHex = (colorName, colorMastersList) => {
     'navy': '#000080',
     'navy blue': '#000080',
     'red': '#ff0000',
+    'd.blue': '#0047ab',
+    'd. blue': '#0047ab',
+    'dark blue': '#0047ab',
+    'h.white': '#f5f5f5',
+    'half white': '#f5f5f5',
     'scarlet red': '#ff2400',
     'grey': '#808080',
     'gray': '#808080',
@@ -264,6 +269,10 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
 
   const totalEnds = parseFloat(design.total_ends) || 0;
   const selvage = parseFloat(design.selvage_waste) || 0;
+  const reed = parseFloat(design.reed) || 0;
+  const reedOl = Math.max(0, reed - 8);
+  const grayWidthVal = parseFloat(design.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
+  const pickOl = Math.max(0, (parseFloat(design.pick_ot) || 0) - 4);
   const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
   const repeatEnds = warpRepeatSize * noD;
   const balance = totalEnds - repeatEnds - selvage;
@@ -281,10 +290,11 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
   }
 
   const totalMtr = parseFloat(design.total_mtr) || 0;
-  const warpLength = totalMtr + 30;
   const crimpPct = parseFloat(design.crimp_pct) || 0;
   const skgPct = parseFloat(design.skg_pct) || 0;
   const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
+  const warpLength = parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
+  const weftProMtrVal = parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
   const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
   const warpWastage = Math.max(1.0, wastageFactor - 0.015);
 
@@ -333,7 +343,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
     } else {
       const colorCode = getColorHex(cname, colorMasters);
       warpColorAgg[key] = {
-        beam_type: 'Warp Beam1',
+        beam_type: item.type || 'Warp',
         count: yc,
         color: cname,
         hex: colorCode,
@@ -347,8 +357,9 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
 
   const warpSummary = Object.values(warpColorAgg).map(row => {
     const eqCount = parseEqCount(row.count);
-    const lengthYards = warpLength * 1.09361;
-    const req_kg = Math.ceil((row.total_ends * lengthYards) / (eqCount * 840) * warpWastage * 0.45359237);
+    const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
+    const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+    const req_kg = Math.ceil(req_kg_raw / lossFactor);
     return { ...row, req_kg };
   });
 
@@ -389,10 +400,10 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
     const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
     const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
     const eqCount = parseEqCount(row.count);
-    const lengthYards = totalMtr * 1.09361;
-    const totalPicks = pick * weftWidth * lengthYards;
-    const groupPicks = totalPicks * ratio;
-    const req_kg = Math.ceil(groupPicks / (eqCount * 840) * weftWastage * 0.45359237);
+    
+    const req_kg_raw = eqCount > 0 ? (ratio * pickOl * grayWidthVal * weftProMtrVal) / (1690 * eqCount) : 0;
+    const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+    const req_kg = Math.ceil(req_kg_raw / lossFactor);
 
     return {
       ...row,
@@ -790,6 +801,7 @@ export default function DesignEntry() {
   const [viewModalDesign, setViewModalDesign] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [searchTerm, setSearchTerm] = useState('');
+  const [manuallyEditedFields, setManuallyEditedFields] = useState({});
 
   const [colorMasters, setColorMasters] = useState([]);
   const [yarnCountMasters, setYarnCountMasters] = useState([]);
@@ -952,7 +964,7 @@ export default function DesignEntry() {
     finish_width: 0, reed_ol: 0, pick_ot: 0, reed: 0, fabric: 'Cotton',
     total_ends: 0, warp_width: 0, qlm: 0, toie_pct: 0, selvage_waste: 0,
     weaving: 'Plain', design_type: 'Normal', packing_less: 0, weight_grm: 0, dyeing_loss_pct: 0,
-    book_no: '', page_no: ''
+    book_no: '', page_no: '', ibpo_image: ''
   };
 
   const [form, setForm] = useState(initialForm);
@@ -1003,6 +1015,122 @@ export default function DesignEntry() {
       }
     }
   }, [queryId, entries]);
+
+  const parseYarnCountValue = (lbl) => {
+    const YARN_COUNTS = {
+      "10S CTN": 10.0,
+      "20S CTN": 20.0,
+      "30S CTN": 30.0,
+      "40S CTN": 40.0,
+      "60S CTN": 60.0,
+      "80S CTN": 80.0,
+      "2/20S CTN": 10.0,
+      "2/40S CTN": 20.0,
+      "2/60S CTN": 30.0,
+      "2/80S CTN": 40.0,
+    };
+    if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+    if (!lbl) return 20.0;
+    let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+    if (cleaned.includes('/')) {
+      const parts = cleaned.split('/');
+      const ply = parseFloat(parts[0]) || 1.0;
+      const countPart = parts[1].match(/\d+/);
+      const count = countPart ? parseFloat(countPart[0]) : 40.0;
+      return count / ply;
+    } else {
+      const match = cleaned.match(/\d+/);
+      return match ? parseFloat(match[0]) : 20.0;
+    }
+  };
+
+  const recalculateForm = (currentForm, currentYarnRows) => {
+    const orderMtr = parseFloat(currentForm.order_mtr) || 0;
+    const exMtr = parseFloat(currentForm.ex_mtr) || 0;
+    const totalMtr = orderMtr + exMtr;
+
+    const crimpPct = parseFloat(currentForm.crimp_pct) || 0;
+    const skgPct = parseFloat(currentForm.skg_pct) || 0;
+
+    const weftProMtr = parseFloat((totalMtr * (1 + skgPct / 100)).toFixed(2));
+    const warpMtr = parseFloat((weftProMtr * (1 + crimpPct / 100)).toFixed(2));
+
+    const reed = parseFloat(currentForm.reed) || 0;
+    const reedOl = Math.max(0, reed - 8);
+
+    const finishWidth = parseFloat(currentForm.finish_width) || 0;
+    const totalEnds = Math.round(reed * finishWidth);
+
+    const warpWidth = reedOl > 0 ? parseFloat((totalEnds / reedOl).toFixed(2)) : 0;
+    const grayWidth = (reedOl + 4) > 0 ? parseFloat((totalEnds / (reedOl + 4)).toFixed(2)) : 0;
+
+    const warpRow = (currentYarnRows || []).find(y => y.type && !y.type.toLowerCase().includes('weft'));
+    const weftRow = (currentYarnRows || []).find(y => y.type && y.type.toLowerCase().includes('weft'));
+    
+    const warpCount = warpRow ? (parseFloat(warpRow.act_count) || parseYarnCountValue(warpRow.yarn_count)) : 40.0;
+    const weftCount = weftRow ? (parseFloat(weftRow.act_count) || parseYarnCountValue(weftRow.yarn_count)) : 20.0;
+
+    const gsm = (warpCount > 0 && weftCount > 0)
+      ? parseFloat((((reed / warpCount) + (parseFloat(currentForm.pick_ot) || 0) / weftCount) * 25.4).toFixed(2))
+      : 0;
+
+    const glm = parseFloat((gsm * (finishWidth / 39.37)).toFixed(2));
+
+    return {
+      ...currentForm,
+      total_mtr: totalMtr,
+      weft_pro_mtr: weftProMtr,
+      warp_mtr: warpMtr,
+      reed_ol: reedOl,
+      total_ends: totalEnds,
+      warp_width: warpWidth,
+      gray_width: grayWidth,
+      weight_grm: gsm,
+      qlm: glm
+    };
+  };
+
+  useEffect(() => {
+    setForm(prev => {
+      const recalculated = recalculateForm(prev, yarnRows);
+      const updated = { ...prev };
+      let changed = false;
+
+      const calcFields = [
+        'total_mtr',
+        'weft_pro_mtr',
+        'warp_mtr',
+        'reed_ol',
+        'total_ends',
+        'warp_width',
+        'gray_width',
+        'weight_grm',
+        'qlm'
+      ];
+
+      calcFields.forEach(field => {
+        if (!manuallyEditedFields[field] && recalculated[field] !== prev[field]) {
+          updated[field] = recalculated[field];
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        return updated;
+      }
+      return prev;
+    });
+  }, [
+    form.order_mtr,
+    form.ex_mtr,
+    form.crimp_pct,
+    form.skg_pct,
+    form.reed,
+    form.finish_width,
+    form.pick_ot,
+    yarnRows,
+    manuallyEditedFields
+  ]);
 
   const handleUploadImageOnly = async () => {
     let fileToUpload = selectedFile;
@@ -1093,6 +1221,7 @@ export default function DesignEntry() {
       setShowForm(false);
       setEditingId(null);
       setForm(initialForm);
+      setManuallyEditedFields({});
       setSelectedFile(null);
       setSelectedFiles([]);
       setImagePreviewUrl(null);
@@ -1125,7 +1254,22 @@ export default function DesignEntry() {
       setSelectedFile(null);
       setSelectedFiles([]);
 
-      setForm({ ...initialForm, ...data });
+      const matchedOrder = orders.find(o => o.ibpo_number === data.ibpo_no);
+      const ibpoImg = matchedOrder?.items?.[0]?.image_design_path || '';
+
+      setManuallyEditedFields({
+        total_mtr: true,
+        weft_pro_mtr: true,
+        warp_mtr: true,
+        reed_ol: true,
+        total_ends: true,
+        warp_width: true,
+        gray_width: true,
+        weight_grm: true,
+        qlm: true
+      });
+
+      setForm({ ...initialForm, ...data, ibpo_image: ibpoImg });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
       setActiveTab('basic');
@@ -1178,7 +1322,8 @@ export default function DesignEntry() {
           order_mtr: 0,
           ex_mtr: 0,
           total_mtr: 0,
-          reed: 0
+          reed: 0,
+          ibpo_image: ''
         }));
         return;
       }
@@ -1210,10 +1355,15 @@ export default function DesignEntry() {
             reed: firstItem.finish_reed || prev.reed,
             count_rxpxw: firstItem.construction || prev.count_rxpxw,
             toie_pct: firstItem.tolerance_pct || prev.toie_pct,
+            ibpo_image: firstItem.image_design_path || ''
           };
         });
         return;
       }
+    }
+
+    if (['total_mtr', 'weft_pro_mtr', 'warp_mtr', 'reed_ol', 'total_ends', 'warp_width', 'gray_width', 'weight_grm', 'qlm'].includes(name)) {
+      setManuallyEditedFields(prev => ({ ...prev, [name]: true }));
     }
 
     if (name === 'order_mtr') {
@@ -1364,7 +1514,7 @@ export default function DesignEntry() {
                   </div>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); setYarnRows([]); setFabricDesignRows([]); setSelectedFile(null); setSelectedFiles([]); setImagePreviewUrl(null); }}>
+              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setManuallyEditedFields({}); setIsReadOnly(false); setActiveTab('basic'); setShowForm(true); setYarnRows([]); setFabricDesignRows([]); setSelectedFile(null); setSelectedFiles([]); setImagePreviewUrl(null); }}>
                 <Plus size={16} /> New Design
               </button>
             </div>
@@ -1516,42 +1666,66 @@ export default function DesignEntry() {
                   {/* Top section: Basic & Buyer Info */}
                   <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic & Buyer Info</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                      <div className="form-group"><label>DS RefNo</label><input className="form-control" value={form.ds_ref_no || 'AUTO-GENERATED'} disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600, color: 'var(--primary)' }} /></div>
-                      <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
-                      <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
-                      <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
-                    </div>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
-                      <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Created By</label>
-                        <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
-                          <option value="">Select Employee...</option>
-                          {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-group"><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} /></div>
-                    </div>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                      {/* Left Side: Form Details */}
+                      <div style={{ flex: 1, maxWidth: 'calc(100% - 500px)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                          <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
+                          <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
+                          <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
+                          <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Created By</label>
+                            <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
+                              <option value="">Select Employee...</option>
+                              {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="form-group"><label>Gry Const</label><input className="form-control" name="gry_const" value={form.gry_const} onChange={handleChange} /></div>
+                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 16 }}>
-                      <div className="form-group"><label>Buyer Name</label>
-                        <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
-                          <option value="">Select Buyer...</option>
-                          {buyers.map(b => <option key={b.id} value={b.company_name}>{b.company_name}</option>)}
-                          {form.buyer_name && !buyers.some(b => b.company_name === form.buyer_name) && (
-                            <option value={form.buyer_name}>{form.buyer_name}</option>
-                          )}
-                        </select>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 16 }}>
+                          <div className="form-group"><label>Buyer Name</label>
+                            <select className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange}>
+                              <option value="">Select Buyer...</option>
+                              {buyers.map(b => <option key={b.id} value={b.company_name}>{b.company_name}</option>)}
+                              {form.buyer_name && !buyers.some(b => b.company_name === form.buyer_name) && (
+                                <option value={form.buyer_name}>{form.buyer_name}</option>
+                              )}
+                            </select>
+                          </div>
+                          <div className="form-group"><label>IBPO No</label>
+                            <select className="form-control" name="ibpo_no" value={form.ibpo_no} onChange={handleChange}>
+                              <option value="">Select Order...</option>
+                              {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
+                            </select>
+                          </div>
+                          <div className="form-group"><label>Book No</label><input className="form-control" name="book_no" value={form.book_no || ''} onChange={handleChange} /></div>
+                          <div className="form-group"><label>Page No</label><input className="form-control" name="page_no" value={form.page_no || ''} onChange={handleChange} /></div>
+                        </div>
                       </div>
-                      <div className="form-group"><label>IBPO No</label>
-                        <select className="form-control" name="ibpo_no" value={form.ibpo_no} onChange={handleChange}>
-                          <option value="">Select Order...</option>
-                          {orders.map(o => <option key={o.id} value={o.ibpo_number}>{o.ibpo_number} ({o.party_name})</option>)}
-                        </select>
+
+                      {/* Right Side: Saved IBPO Image (Larger View) */}
+                      <div style={{ width: 470, flexShrink: 0, border: '1px dashed #cbd5e1', borderRadius: 8, padding: 16, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 250, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, alignSelf: 'flex-start' }}>IBPO Design Image</span>
+                        {form.ibpo_image ? (
+                          <img 
+                            src={form.ibpo_image.startsWith('http') ? form.ibpo_image : `http://localhost:8000${form.ibpo_image}`} 
+                            alt="IBPO Design" 
+                            style={{ width: '100%', maxHeight: 230, objectFit: 'contain', borderRadius: 6, border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'transform 0.2s' }}
+                            onClick={() => window.open(form.ibpo_image.startsWith('http') ? form.ibpo_image : `http://localhost:8000${form.ibpo_image}`, '_blank')}
+                            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                            onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
+                          />
+                        ) : (
+                          <div style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center', padding: '40px 10px' }}>
+                            No Image Found for Selected IBPO
+                          </div>
+                        )}
                       </div>
-                      <div className="form-group"><label>Book No</label><input className="form-control" name="book_no" value={form.book_no || ''} onChange={handleChange} /></div>
-                      <div className="form-group"><label>Page No</label><input className="form-control" name="page_no" value={form.page_no || ''} onChange={handleChange} /></div>
                     </div>
                   </div>
 

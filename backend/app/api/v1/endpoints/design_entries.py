@@ -177,60 +177,43 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                         continue
                 raise e
 
-    # Step 1: Try local aspect-ratio classification to avoid LLM API calls for standard templates
-    template_type = None
-    try:
-        from PIL import Image
-        import io
-        img = Image.open(io.BytesIO(content))
-        w, h = img.size
-        aspect_ratio = w / h
-        if 0.62 <= aspect_ratio <= 0.66:
-            template_type = "olive_white"
-        elif 0.54 <= aspect_ratio <= 0.58:
-            template_type = "navy_red"
-    except Exception:
-        pass
-
-    if not template_type:
-        classification_prompt = """
-Analyze this yarn allotment sheet.
-Identify the color of the yarn written on the sheet.
-Choose one of the following:
-- If the sheet contains "OLIVE" yarn, return {"type": "olive_white"}.
-- If the sheet contains "NAVY" or "RED" yarn, return {"type": "navy_red"}.
-- Otherwise, return {"type": "other"}.
+    # Step 1: LLM classification for standard templates
+    template_type = "other"
+    classification_prompt = """
+Analyze this image of a textile design sheet.
+Classify it into one of the following categories:
+1. "olive_white" if it contains an "OLIVE" and "WHITE" yarn repeat table (typically alternating White and Olive in the warp, whether handwritten in a notebook or pre-printed on a card).
+2. "navy_red" if it contains a "NAVY", "RED", and "WHITE" yarn repeat table (typically handwritten in a notebook or pre-printed on a card).
+3. "other" if it is a custom handwritten paper, notebook page, or other general design sheet with a different color/pattern layout.
 
 Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
 """
-        try:
-            completion = call_llm_with_retry(
-                client,
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": classification_prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoded}",
-                                },
+    try:
+        completion = call_llm_with_retry(
+            client,
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": classification_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{encoded}",
                             },
-                        ],
-                    }
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.0
-            )
-            if completion and hasattr(completion, 'choices') and completion.choices:
-                res_data = json.loads(completion.choices[0].message.content or "{}")
-                template_type = res_data.get("type", "other")
-            else:
-                template_type = "other"
-        except Exception:
-            template_type = "other"
+                        },
+                    ],
+                }
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0
+        )
+        if completion and hasattr(completion, 'choices') and completion.choices:
+            res_data = json.loads(completion.choices[0].message.content or "{}")
+            template_type = res_data.get("type", "other")
+    except Exception:
+        template_type = "other"
 
     combined_warp = []
     combined_weft = []
@@ -303,78 +286,50 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
         ]
 
     else:
-        try:
-            from PIL import Image
-            import io
-            img = Image.open(io.BytesIO(content))
-            width, height = img.size
-            
-            # Crop left and right halves
-            left_half = img.crop((0, 0, int(width * 0.50), height))
-            right_half = img.crop((int(width * 0.42), 0, width, height))
-            
-            left_buffer = io.BytesIO()
-            left_half.save(left_buffer, format="JPEG")
-            left_encoded = base64.b64encode(left_buffer.getvalue()).decode("utf-8")
-            
-            right_buffer = io.BytesIO()
-            right_half.save(right_buffer, format="JPEG")
-            right_encoded = base64.b64encode(right_buffer.getvalue()).decode("utf-8")
-        except Exception as img_err:
-            raise HTTPException(status_code=500, detail=f"Image crop preprocessing failed: {str(img_err)}")
+        # General handwritten design sheet
+        extraction_prompt = """
+Analyze this handwritten textile design sheet.
+Extract all yarn specification entries for BOTH the Warp and Weft design sections.
 
-        warp_prompt = """
-Analyze this handwritten textile design sheet (Warp section on the left).
-There are NO yarn count specifications or fabric types written on this page. The handwritten entries only show color names and thread numbers (e.g., "Navy - 68", "White - 3").
-Extract all lines in order from top to bottom.
-
-For each line, extract:
-- color: Standardize to "Navy", "White", "Red", "Olive".
+Warp Design section:
+Look for entries under headings like "WARP DESIGN", "WARP", etc.
+Extract each entry in order. For each warp entry, extract:
+- yarn_count: e.g. "40s", "20s", "2/40s". If a yarn count is not written on a line but is written above it or in the section header, carry it down.
+- color: e.g. "D.Blue", "H.White", "Navy", "Red", "Olive".
 - threads: The number of threads/ends (integer).
-- times: If there is a bracket/brace grouping multiple rows with a repeat multiplier (e.g. "} 17" or "} 4 times"), extract the multiplier number (e.g. "17" or "4") for all rows inside that bracket. If no bracket/multiplier applies to the row, default to "1".
+- times: If multiple rows are grouped with a repeat multiplier, extract the multiplier. Default to "1".
+
+Weft Design section:
+Look for entries under headings like "WEFT DESIGN", "WEFT", etc.
+Extract each entry in order. For each weft entry, extract:
+- yarn_count: e.g. "20s", "40s".
+- color: e.g. "H.White", "Navy", "Red", "Olive".
+- threads: The number of threads/ends/picks (integer).
 
 Return ONLY a JSON object of this structure:
 {
   "warp": [
-    {"color": "Navy", "threads": 68, "times": "1"},
+    {"yarn_count": "40s", "color": "D.Blue", "threads": 8, "times": "1"},
     ...
-  ]
-}
-"""
-
-        weft_prompt = """
-Analyze this handwritten textile design sheet (Weft section on the right).
-There are NO yarn count specifications or fabric types written on this page. The handwritten entries only show color names and thread/pick numbers (e.g., "Navy - 84", "Red - 13").
-Extract all lines in order from top to bottom.
-
-For each line, extract:
-- color: Standardize to "Navy", "White", "Red", "Olive".
-- threads: The number of threads/ends (integer).
-- times: If there is a bracket/brace grouping multiple rows with a repeat multiplier (e.g. "} 17" or "} 4 times"), extract the multiplier number (e.g. "17" or "4") for all rows inside that bracket. If no bracket/multiplier applies to the row, default to "1".
-
-Return ONLY a JSON object of this structure:
-{
+  ],
   "weft": [
-    {"color": "Navy", "threads": 84, "times": "1"},
-    ...
+    {"yarn_count": "20s", "color": "H.White", "threads": 3245}
   ]
 }
 """
-
         try:
-            # Extract Warp
-            warp_completion = call_llm_with_retry(
+            completion = call_llm_with_retry(
                 client,
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=[
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": warp_prompt},
+                            {"type": "text", "text": extraction_prompt},
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": f"data:image/jpeg;base64,{left_encoded}",
+                                    "url": f"data:image/jpeg;base64,{encoded}",
                                 },
                             },
                         ],
@@ -383,34 +338,10 @@ Return ONLY a JSON object of this structure:
                 response_format={"type": "json_object"},
                 temperature=0.0
             )
-            if warp_completion and hasattr(warp_completion, 'choices') and warp_completion.choices:
-                warp_data = json.loads(warp_completion.choices[0].message.content or "{}")
-                combined_warp.extend(warp_data.get("warp", []))
-
-            # Extract Weft
-            weft_completion = call_llm_with_retry(
-                client,
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": weft_prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{right_encoded}",
-                                },
-                            },
-                        ],
-                    }
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.0
-            )
-            if weft_completion and hasattr(weft_completion, 'choices') and weft_completion.choices:
-                weft_data = json.loads(weft_completion.choices[0].message.content or "{}")
-                combined_weft.extend(weft_data.get("weft", []))
+            if completion and hasattr(completion, 'choices') and completion.choices:
+                res_data = json.loads(completion.choices[0].message.content or "{}")
+                combined_warp.extend(res_data.get("warp", []))
+                combined_weft.extend(res_data.get("weft", []))
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI extraction failed for file {file.filename}: {str(e)}")
 
@@ -446,7 +377,7 @@ Return ONLY a JSON object of this structure:
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": str(item.get("times") or "1"),
+            "times": str(item.get("times") or "1") if template_type in ["olive_white", "navy_red"] else "1",
             "line": "",
             "pick": "",
             "drawing_order": "",
