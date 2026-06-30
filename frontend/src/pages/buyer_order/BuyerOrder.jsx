@@ -740,11 +740,20 @@ export default function BuyerOrder() {
     }
     newItems[index][field] = val;
 
-    if (field === 'order_mtrs' || field === 'rate') {
-      const mtrs = field === 'order_mtrs' ? val : (newItems[index].order_mtrs || 0);
-      const rate = field === 'rate' ? val : (newItems[index].rate || 0);
-      newItems[index].amount = mtrs * rate;
-    }
+    // Recalculate computed fields automatically
+    const orderMtrs = parseFloat(newItems[index].order_mtrs) || 0;
+    const tolerance = parseFloat(newItems[index].tolerance_pct) || 0;
+    newItems[index].total_mtr_yard = parseFloat((orderMtrs * (1 + tolerance / 100)).toFixed(2));
+
+    const priceVal = parseFloat(newItems[index].price) || 0;
+    const gstPct = parseFloat(newItems[index].gst_pct) || 0;
+    const gstRateVal = parseFloat((priceVal * gstPct / 100).toFixed(2));
+    newItems[index].gst_rate = gstRateVal;
+    
+    // Rate is Price + GST Rate
+    newItems[index].rate = parseFloat((priceVal + gstRateVal).toFixed(2));
+    newItems[index].amount = parseFloat((orderMtrs * newItems[index].rate).toFixed(2));
+
     setForm({ ...form, items: newItems });
   };
 
@@ -818,6 +827,187 @@ export default function BuyerOrder() {
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderPOItemFields = (item, index) => {
+    return (
+      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+        {/* ROW 1 */}
+        <div className="form-group">
+          <label>Party PO No</label>
+          <input className="form-control" value={item.party_po_no || ''} onChange={e => updateItem(index, 'party_po_no', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>PO Date</label>
+          <input type="date" className="form-control" value={item.po_date || ''} onChange={e => updateItem(index, 'po_date', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Point of Contact</label>
+          <input className="form-control" value={item.point_of_contact || ''} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Order Mtr/Yard</label>
+          <input type="number" className="form-control" value={item.order_mtrs || 0} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} />
+        </div>
+        {renderItemDropdown('UOM', 'uom', 'uom_master', index, item)}
+
+        {/* ROW 2 */}
+        <div className="form-group">
+          <label>Tolerance %</label>
+          <input type="number" className="form-control" value={item.tolerance_pct || 0} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Total Mtr/Yard</label>
+          <input type="number" className="form-control" value={item.total_mtr_yard || 0} disabled style={{ background: '#f1f5f9', fontWeight: 'bold' }} />
+        </div>
+        {renderItemDropdown('HSN Code', 'hsn_code', 'hsn_code_master', index, item)}
+        <div className="form-group">
+          <label>Sample Mtr</label>
+          <input type="number" className="form-control" value={item.sample_mtr || 0} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Party Style</label>
+          <input className="form-control" value={item.buyer_style || ''} onChange={e => updateItem(index, 'buyer_style', e.target.value)} />
+        </div>
+
+        {/* ROW 3 */}
+        {renderItemDropdown('Short No', 'short_no', 'short_no_master', index, item)}
+        <div className="form-group">
+          <label>Design No</label>
+          <input className="form-control" value={item.design_no || ''} onChange={e => updateItem(index, 'design_no', e.target.value)} />
+        </div>
+        {renderItemDropdown('Gry Construction', 'gry_construction', 'gry_construction_master', index, item)}
+        {renderItemDropdown('Fabric Type', 'fabric_type', 'fabric_type_master', index, item)}
+        {renderItemDropdown('Color', 'color', 'color_master', index, item)}
+
+        {/* ROW 4 */}
+        <div className="form-group">
+          <label>Construction</label>
+          <input className="form-control" value={item.construction || ''} onChange={e => updateItem(index, 'construction', e.target.value)} />
+        </div>
+        {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
+        <div className="form-group">
+          <label>Pick on Table</label>
+          <input type="number" className="form-control" value={item.pick_on_table || 0} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} />
+        </div>
+        <div className="form-group" style={{ backgroundColor: 'rgba(236, 72, 153, 0.1)', padding: '2px', borderRadius: '4px' }}>
+          <label style={{ color: '#db2777', fontWeight: 'bold' }}>Print Name</label>
+          <input className="form-control" value={item.print_name || ''} onChange={e => updateItem(index, 'print_name', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Finish Reed</label>
+          <input type="number" className="form-control" value={item.finish_reed || 0} onChange={e => updateItem(index, 'finish_reed', e.target.value)} />
+        </div>
+
+        {/* ROW 5 */}
+        <div className="form-group">
+          <label>Finish Pick</label>
+          <input type="number" className="form-control" value={item.finish_pick || 0} onChange={e => updateItem(index, 'finish_pick', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Finish Width</label>
+          <input type="number" className="form-control" value={item.finish_width || 0} onChange={e => updateItem(index, 'finish_width', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Cuttable Width</label>
+          <input type="number" className="form-control" value={item.cuttable_width || 0} onChange={e => updateItem(index, 'cuttable_width', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Pattern</label>
+          <input className="form-control" value={item.pattern || ''} onChange={e => updateItem(index, 'pattern', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Fabric Content</label>
+          <input className="form-control" value={item.fabric_content || ''} onChange={e => updateItem(index, 'fabric_content', e.target.value)} />
+        </div>
+
+        {/* ROW 6 */}
+        {renderItemDropdown('Loom Type', 'loom_type', 'loom_type_master', index, item)}
+        {renderItemDropdown('Development ID', 'development_id', 'development_id_master', index, item)}
+        <div className="form-group">
+          <label>Combo</label>
+          <input className="form-control" value={item.combo || ''} onChange={e => updateItem(index, 'combo', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Insurance</label>
+          <select className="form-control" value={item.insurance || 'No'} onChange={e => updateItem(index, 'insurance', e.target.value)}>
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Packing Charge</label>
+          <input type="number" className="form-control" value={item.packing_charge || 0} onChange={e => updateItem(index, 'packing_charge', e.target.value)} />
+        </div>
+
+        {/* ROW 7 */}
+        {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
+        {renderItemDropdown('Season', 'season', 'season_master', index, item)}
+        <div className="form-group">
+          <label>Country</label>
+          <input className="form-control" value={item.country || 'India'} onChange={e => updateItem(index, 'country', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Currency</label>
+          <select className="form-control" value={item.currency || 'INR'} onChange={e => updateItem(index, 'currency', e.target.value)}>
+            <option>INR</option>
+            <option>USD</option>
+            <option>EUR</option>
+            <option>GBP</option>
+          </select>
+        </div>
+        {renderItemDropdown('PC Type', 'pc_type', 'pc_type_master', index, item)}
+
+        {/* ROW 8 */}
+        <div className="form-group">
+          <label>GSM</label>
+          <input type="number" className="form-control" value={item.gsm || 0} onChange={e => updateItem(index, 'gsm', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Price</label>
+          <input type="number" className="form-control" value={item.price || 0} onChange={e => updateItem(index, 'price', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>GST %</label>
+          <input type="number" className="form-control" value={item.gst_pct || 0} onChange={e => updateItem(index, 'gst_pct', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>GST Rate</label>
+          <input type="number" className="form-control" value={item.gst_rate || 0} disabled style={{ background: '#f1f5f9', fontWeight: 'bold' }} />
+        </div>
+        <div className="form-group">
+          <label>Rate</label>
+          <input type="number" className="form-control" value={item.rate || 0} disabled style={{ background: '#f1f5f9', fontWeight: 'bold' }} />
+        </div>
+
+        {/* ROW 9 */}
+        <div className="form-group">
+          <label>Amount</label>
+          <input type="number" className="form-control" value={item.amount || 0} disabled style={{ background: '#e2e8f0', fontWeight: 'bold' }} />
+        </div>
+        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+          <label>Upload Design File</label>
+          <input 
+            type="file" 
+            className="form-control" 
+            style={{ padding: '6px' }} 
+            onChange={(e) => handleDesignFileChange(index, e)}
+          />
+          {item.image_design_path && (
+            <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
+              Uploaded: <a href={`http://localhost:8000${item.image_design_path}`} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
+            </div>
+          )}
+        </div>
+        {renderPackingTypeCheckboxes(index, item)}
+
+        {/* ROW 10 */}
+        <div className="form-group" style={{ gridColumn: 'span 5' }}>
+          <label>Party Comment</label>
+          <textarea className="form-control" value={item.party_comment || ''} onChange={e => updateItem(index, 'party_comment', e.target.value)} rows={2} placeholder="Add comments..." />
+        </div>
       </div>
     );
   };
@@ -1340,51 +1530,7 @@ export default function BuyerOrder() {
                     <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
                       <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
                       <h5 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)', fontSize: 14, fontWeight: 600 }}>Item #{index + 1} Details</h5>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                        <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
-                        <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
-                        <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
-                        {renderItemDropdown('Fabric Type', 'fabric_type', 'fabric_type_master', index, item)}
-                        {renderItemDropdown('Color', 'color', 'color_master', index, item)}
-
-                        <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
-                        {renderItemDropdown('UOM', 'uom', 'uom_master', index, item)}
-                        <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
-                        <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
-                        {renderItemDropdown('HSN Code', 'hsn_code', 'hsn_code_master', index, item)}
-
-                        <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
-                        <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
-                        <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
-                        <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
-                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
-
-                        <div className="form-group"><label>Finished Construction</label><input className="form-control" value={item.construction} onChange={e => updateItem(index, 'construction', e.target.value)} /></div>
-                        <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
-                        {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
-                        <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
-                        <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-
-                        <div className="form-group"><label>Pattern</label><input className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)} /></div>
-                        {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
-                        {renderItemDropdown('Season', 'season', 'season_master', index, item)}
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                          <label>Upload Design File</label>
-                          <input 
-                            type="file" 
-                            className="form-control" 
-                            style={{ padding: '6px' }} 
-                            onChange={(e) => handleDesignFileChange(index, e)}
-                          />
-                          {item.image_design_path && (
-                            <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
-                              Uploaded: <a href={`http://localhost:8000${item.image_design_path}`} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
-                            </div>
-                          )}
-                        </div>
-
-                        {renderPackingTypeCheckboxes(index, item)}
-                      </div>
+                      {renderPOItemFields(item, index)}
                     </div>
                   ))}
 
@@ -1626,59 +1772,7 @@ export default function BuyerOrder() {
                     <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
                       <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
                       <h4 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)' }}>Item #{index + 1} Details</h4>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                        <div className="form-group"><label>Party PO No</label><input className="form-control" value={item.party_po_no} onChange={e => updateItem(index, 'party_po_no', e.target.value)} /></div>
-                        <div className="form-group"><label>PO Date</label><input type="date" className="form-control" value={item.po_date} onChange={e => updateItem(index, 'po_date', e.target.value)} /></div>
-                        <div className="form-group"><label>Design No</label><input className="form-control" value={item.design_no} onChange={e => updateItem(index, 'design_no', e.target.value)} /></div>
-                        <div className="form-group"><label>Fabric Type</label>
-                          <select className="form-control" value={item.fabric_type} onChange={e => updateItem(index, 'fabric_type', e.target.value)}>
-                            <option>Cotton</option><option>Polyester</option><option>Blended</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Color</label><input className="form-control" value={item.color} onChange={e => updateItem(index, 'color', e.target.value)} /></div>
-
-                        <div className="form-group"><label>Order Qty</label><input type="number" className="form-control" value={item.order_mtrs} onChange={e => updateItem(index, 'order_mtrs', e.target.value)} /></div>
-                        <div className="form-group"><label>UOM</label>
-                          <select className="form-control" value={item.uom} onChange={e => updateItem(index, 'uom', e.target.value)}>
-                            <option>MTR</option><option>YARD</option><option>PCS</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Rate</label><input type="number" className="form-control" value={item.rate} onChange={e => updateItem(index, 'rate', e.target.value)} /></div>
-                        <div className="form-group"><label>Amount</label><input type="number" className="form-control" value={item.amount} disabled style={{ background: '#e5e7eb' }} /></div>
-                        <div className="form-group"><label>HSN Code</label><input className="form-control" value={item.hsn_code} onChange={e => updateItem(index, 'hsn_code', e.target.value)} /></div>
-
-                        <div className="form-group"><label>Point of Contact</label><input className="form-control" value={item.point_of_contact} onChange={e => updateItem(index, 'point_of_contact', e.target.value)} /></div>
-                        <div className="form-group"><label>Tolerance %</label><input type="number" className="form-control" value={item.tolerance_pct} onChange={e => updateItem(index, 'tolerance_pct', e.target.value)} /></div>
-                        <div className="form-group"><label>Sample Qty</label><input type="number" className="form-control" value={item.sample_mtr} onChange={e => updateItem(index, 'sample_mtr', e.target.value)} /></div>
-                        <div className="form-group"><label>Party Style</label><input className="form-control" value={item.buyer_style} onChange={e => updateItem(index, 'buyer_style', e.target.value)} /></div>
-                        <div className="form-group"><label>Country</label><input className="form-control" value={item.country} onChange={e => updateItem(index, 'country', e.target.value)} /></div>
-
-                        <div className="form-group"><label>Finished Construction</label><input className="form-control" value={item.construction} onChange={e => updateItem(index, 'construction', e.target.value)} /></div>
-                        <div className="form-group"><label>Gry Construction</label><input className="form-control" value={item.gry_construction} onChange={e => updateItem(index, 'gry_construction', e.target.value)} /></div>
-                        {renderItemDropdown('Weaving Type', 'weaving_type', 'weaving_type_master', index, item)}
-                        <div className="form-group"><label>Pick on Table</label><input type="number" className="form-control" value={item.pick_on_table} onChange={e => updateItem(index, 'pick_on_table', e.target.value)} /></div>
-                        <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" value={item.finish_width} onChange={e => updateItem(index, 'finish_width', e.target.value)} /></div>
-
-                        <div className="form-group"><label>Pattern</label><input className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)} /></div>
-                        {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
-                        {renderItemDropdown('Season', 'season', 'season_master', index, item)}
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                          <label>Upload Design File</label>
-                          <input 
-                            type="file" 
-                            className="form-control" 
-                            style={{ padding: '6px' }} 
-                            onChange={(e) => handleDesignFileChange(index, e)}
-                          />
-                          {item.image_design_path && (
-                            <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
-                              Uploaded: <a href={`http://localhost:8000${item.image_design_path}`} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
-                            </div>
-                          )}
-                        </div>
-
-                        {renderPackingTypeCheckboxes(index, item)}
-                      </div>
+                      {renderPOItemFields(item, index)}
                     </div>
                   ))}
                 </div>

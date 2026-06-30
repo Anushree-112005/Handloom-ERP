@@ -16,6 +16,248 @@ const DetailRow = ({ label, value }) => (
   </div>
 );
 
+const calculateRepeatSize = (rows) => {
+  let total = 0;
+  let i = 0;
+  while (i < rows.length) {
+    const r = rows[i];
+    const val = r.times;
+    const type = r.type;
+    
+    if (!val || val === '1' || val === '') {
+      total += parseInt(r.threads) || 0;
+      i++;
+      continue;
+    }
+    
+    let count = 1;
+    let groupThreads = parseInt(r.threads) || 0;
+    while (
+      i + count < rows.length && 
+      rows[i + count].type === type &&
+      rows[i + count].times === val
+    ) {
+      groupThreads += parseInt(rows[i + count].threads) || 0;
+      count++;
+    }
+    
+    const timesMultiplier = parseInt(val) || 1;
+    total += groupThreads * timesMultiplier;
+    i += count;
+  }
+  return total;
+};
+
+const parseEqCount = (lbl) => {
+  const YARN_COUNTS = {
+    "10S CTN": 10.0,
+    "20S CTN": 20.0,
+    "30S CTN": 30.0,
+    "40S CTN": 40.0,
+    "60S CTN": 60.0,
+    "80S CTN": 80.0,
+    "2/20S CTN": 10.0,
+    "2/40S CTN": 20.0,
+    "2/60S CTN": 30.0,
+    "2/80S CTN": 40.0,
+  };
+  if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+  if (!lbl) return 20.0;
+  let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+  if (cleaned.includes('/')) {
+    const parts = cleaned.split('/');
+    const ply = parseFloat(parts[0]) || 1.0;
+    const countPart = parts[1].match(/\d+/);
+    const count = countPart ? parseFloat(countPart[0]) : 40.0;
+    return count / ply;
+  } else {
+    const match = cleaned.match(/\d+/);
+    return match ? parseFloat(match[0]) : 20.0;
+  }
+};
+
+const calculateDesignYarnRequirements = (design) => {
+  if (!design) return [];
+
+  let yarnRows = [];
+  try {
+    yarnRows = design.yarn_details ? JSON.parse(design.yarn_details) : [];
+  } catch (e) {
+    console.error("Error parsing yarn_details", e);
+  }
+
+  let fabricDesignRows = [];
+  try {
+    fabricDesignRows = design.fabric_design_details ? JSON.parse(design.fabric_design_details) : [];
+  } catch (e) {
+    console.error("Error parsing fabric_design_details", e);
+  }
+
+  const warpRows = fabricDesignRows.filter(r => r.type && !r.type.toLowerCase().includes('weft'));
+  const weftRows = fabricDesignRows.filter(r => r.type && r.type.toLowerCase().includes('weft'));
+
+  const warpRepeatSize = calculateRepeatSize(warpRows);
+  const weftRepeatSize = calculateRepeatSize(weftRows);
+
+  const totalEnds = parseFloat(design.total_ends) || 0;
+  const selvage = parseFloat(design.selvage_waste) || 0;
+  const reed = parseFloat(design.reed) || 0;
+  const reedOl = Math.max(0, reed - 8);
+  const grayWidthVal = parseFloat(design.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
+  const pickOl = Math.max(0, (parseFloat(design.pick_ot) || 0) - 4);
+  const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
+  const repeatEnds = warpRepeatSize * noD;
+  const balance = totalEnds - repeatEnds - selvage;
+
+  // Extra ends distribution
+  const extraEnds = warpRows.map(() => 0);
+  let remaining = balance;
+  let idx = 0;
+  while (remaining > 0 && warpRows.length > 0) {
+    const item = warpRows[idx % warpRows.length];
+    const take = Math.min(remaining, parseInt(item.threads) || 1);
+    extraEnds[idx % warpRows.length] += take;
+    remaining -= take;
+    idx++;
+  }
+
+  const totalMtr = parseFloat(design.total_mtr) || 0;
+  const crimpPct = parseFloat(design.crimp_pct) || 0;
+  const skgPct = parseFloat(design.skg_pct) || 0;
+  const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
+  const warpLength = parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
+  const weftProMtrVal = parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+  const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
+
+  // Aggregate Warp
+  const warpColorAgg = {};
+  warpRows.forEach((item, index) => {
+    const cname = item.color || 'White';
+    const yc = item.yarn_count || '40S CTN';
+    const key = `${yc}_${cname}`;
+    const itemEnds = parseInt(item.threads) || 0;
+    const itemExtra = extraEnds[index] || 0;
+    const itemTotalEnds = (itemEnds * noD) + itemExtra;
+
+    if (warpColorAgg[key]) {
+      warpColorAgg[key].ends += itemEnds;
+      warpColorAgg[key].extra += itemExtra;
+      warpColorAgg[key].total_ends += itemTotalEnds;
+    } else {
+      warpColorAgg[key] = {
+        beam_type: item.type || 'Warp',
+        count: yc,
+        color: cname,
+        ends: itemEnds,
+        noD: noD,
+        extra: itemExtra,
+        total_ends: itemTotalEnds
+      };
+    }
+  });
+
+  const warpSummary = Object.values(warpColorAgg).map(row => {
+    const eqCount = parseEqCount(row.count);
+    const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
+    const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+    const req_kg = Math.ceil(req_kg_raw / lossFactor);
+    return { ...row, req_kg };
+  });
+
+  // Weft Design
+  const pick = parseFloat(design.pick_ot) || 0;
+  const finishWidth = parseFloat(design.finish_width) || 0;
+  const weftWidth = finishWidth + selvage;
+
+  const weftColorAgg = {};
+  weftRows.forEach(item => {
+    const cname = item.color || 'White';
+    const yc = item.yarn_count || '40S CTN';
+    const key = `${yc}_${cname}`;
+    const itemEnds = parseInt(item.threads) || 0;
+
+    if (weftColorAgg[key]) {
+      weftColorAgg[key].ends += itemEnds;
+    } else {
+      weftColorAgg[key] = {
+        beam_type: 'Weft',
+        count: yc,
+        color: cname,
+        ends: itemEnds,
+        noD: 1,
+        extra: 0,
+        total_ends: 0
+      };
+    }
+  });
+
+  const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
+  const totalWeftEndsCalculated = Math.round(pick * weftWidth);
+
+  const weftSummary = Object.values(weftColorAgg).map(row => {
+    const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
+    const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
+    const eqCount = parseEqCount(row.count);
+    
+    const req_kg_raw = eqCount > 0 ? (ratio * pickOl * grayWidthVal * weftProMtrVal) / (1690 * eqCount) : 0;
+    const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+    const req_kg = Math.ceil(req_kg_raw / lossFactor);
+
+    return {
+      ...row,
+      total_ends: groupEnds,
+      req_kg
+    };
+  });
+
+  const finalAgg = {};
+  const add = (count, color, req_kg) => {
+    const key = `${count}_${color}`;
+    if (finalAgg[key]) {
+      finalAgg[key].order_qty += req_kg;
+    } else {
+      finalAgg[key] = {
+        design_no: design.design_no || '',
+        yarn_count: count,
+        colour: color,
+        order_qty: req_kg,
+        uom: 'KGS',
+        delivery_date: design.ds_date ? design.ds_date.substring(0, 10) : '',
+        rate: 0,
+        amount: 0,
+        packing_type: '',
+        labeling: ''
+      };
+    }
+  };
+
+  warpSummary.forEach(r => add(r.count, r.color, r.req_kg));
+  weftSummary.forEach(r => add(r.count, r.color, r.req_kg));
+
+  const itemsList = Object.values(finalAgg);
+  if (itemsList.length === 0) {
+    yarnRows.forEach(yr => {
+      const key = `${yr.yarn_count}_${yr.color || ''}`;
+      if (!finalAgg[key]) {
+        finalAgg[key] = {
+          design_no: design.design_no || '',
+          yarn_count: yr.yarn_count || '',
+          colour: yr.color || '',
+          order_qty: 0,
+          uom: 'KGS',
+          delivery_date: design.ds_date ? design.ds_date.substring(0, 10) : '',
+          rate: 0,
+          amount: 0,
+          packing_type: '',
+          labeling: ''
+        };
+      }
+    });
+  }
+
+  return Object.values(finalAgg);
+};
+
 export default function YarnPurchaseOrder() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryId = searchParams.get('id');
@@ -191,7 +433,7 @@ export default function YarnPurchaseOrder() {
     
     count_details: [],
     indent_details: [{
-      yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: ''
+      yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: '', design_no: ''
     }]
   };
 
@@ -552,27 +794,17 @@ export default function YarnPurchaseOrder() {
         const matchingDesigns = designEntries.filter(de => de.ibpo_no === value);
         
         if (matchingDesigns.length > 0) {
-          const newIndentDetails = matchingDesigns.map(de => {
-            let yCount = de.count_rxpxw || '';
-            try {
-              if (de.yarn_details) {
-                const parsed = JSON.parse(de.yarn_details);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  yCount = parsed[0].yarn_count || yCount;
-                }
-              }
-            } catch (e) {
-              console.error("Failed to parse design entry yarn details", e);
-            }
-            return {
-              yarn_count: yCount,
-              colour: de.color || '',
-              order_qty: parseFloat(de.order_mtr) || 0,
-              delivery_date: de.ds_date ? de.ds_date.substring(0, 10) : '',
-              rate: 0,
-              amount: 0
-            };
+          let newIndentDetails = [];
+          matchingDesigns.forEach(de => {
+            const reqs = calculateDesignYarnRequirements(de);
+            newIndentDetails.push(...reqs);
           });
+          
+          if (newIndentDetails.length === 0) {
+            newIndentDetails = [{
+              yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: '', design_no: ''
+            }];
+          }
 
           const supplierName = selectedOrder?.party_name || form.supplier_name || '';
           const selectedParty = parties.find(p => p.company_name === supplierName);
@@ -606,7 +838,10 @@ export default function YarnPurchaseOrder() {
               order_qty: parseFloat(item.order_mtrs) || 0,
               delivery_date: item.po_date ? item.po_date.substring(0, 10) : '',
               rate: parseFloat(item.rate) || 0,
-              amount: parseFloat(item.amount) || 0
+              amount: parseFloat(item.amount) || 0,
+              packing_type: item.packing_type || '',
+              labeling: '',
+              design_no: item.design_no || ''
             };
           });
 
@@ -720,7 +955,7 @@ export default function YarnPurchaseOrder() {
 
   const addIndentDetail = () => {
     const newRow = {
-      yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: ''
+      yarn_count: '', colour: '', order_qty: 0, uom: 'KGS', delivery_date: '', rate: 0, amount: 0, packing_type: '', labeling: '', design_no: ''
     };
     setForm(recalculate({ ...form, indent_details: [...form.indent_details, newRow] }));
   };
@@ -1032,8 +1267,9 @@ export default function YarnPurchaseOrder() {
                 title: "INDENT DETAILS",
                 icon: "Layers",
                 type: "table",
-                headers: ["Yarn Count", "Color", "Order Qty", "Rate", "Amount"],
+                headers: ["Design No", "Yarn Count", "Color", "Order Qty", "Rate", "Amount"],
                 rows: (selectedViewOrder.indent_details || []).map(i => [
+                  i.design_no || '-',
                   i.yarn_count || '-',
                   i.colour || '-',
                   i.order_qty || 0,
@@ -1210,7 +1446,10 @@ export default function YarnPurchaseOrder() {
                                 <tr style={{ borderBottom: '1px solid #000' }}>
                                   <td style={{ borderRight: '1px solid #000', padding: '10px', fontSize: '12px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                                      <span>{item.yarn_count || 'YARN'}</span>
+                                      <span>
+                                        {item.yarn_count || 'YARN'}
+                                        {item.design_no && <span style={{ color: '#4b5563', fontWeight: 'normal', marginLeft: 8 }}>({item.design_no})</span>}
+                                      </span>
                                       <span style={{ marginRight: '20px' }}>{item.colour || '-'}</span>
                                     </div>
                                   </td>
@@ -1513,13 +1752,23 @@ export default function YarnPurchaseOrder() {
                     <table className="data-table" style={{ minWidth: '1100px' }}>
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Unit</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
+                          <th>SNo</th><th>Design No</th><th>Count</th><th>Color</th><th>Qty</th><th>Unit</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
                         {form.indent_details.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
+                            <td>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                style={{ width: 120 }} 
+                                placeholder="Design No" 
+                                value={item.design_no || ''} 
+                                onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} 
+                              />
+                            </td>
                             <td>
                               {customYarnCountIdx === idx ? (
                                 <div style={{ display: 'flex', gap: 4 }}>
@@ -1713,13 +1962,23 @@ export default function YarnPurchaseOrder() {
                     <table className="data-table" style={{ minWidth: '1100px' }}>
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th><th>Qty</th><th>Unit</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
+                          <th>SNo</th><th>Design No</th><th>Count</th><th>Color</th><th>Qty</th><th>Unit</th><th>Date</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
                       <tbody>
                         {form.indent_details.map((item, idx) => (
                           <tr key={idx}>
                             <td>{idx + 1}</td>
+                            <td>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                style={{ width: 120 }} 
+                                placeholder="Design No" 
+                                value={item.design_no || ''} 
+                                onChange={e => updateIndentDetail(idx, 'design_no', e.target.value)} 
+                              />
+                            </td>
                             <td>
                               {customYarnCountIdx === idx ? (
                                 <div style={{ display: 'flex', gap: 4 }}>

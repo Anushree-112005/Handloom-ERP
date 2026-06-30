@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Palette, FileText, Layers, IndianRupee, Download, Table } from 'lucide-react';
 import { yarnDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
+import SubMasterDropdown from '../../components/SubMasterDropdown';
 
 export default function YarnDyeingPO() {
   const title = 'Yarn Dyeing PO';
@@ -38,15 +39,16 @@ export default function YarnDyeingPO() {
     staining_on_cotton: '4',
     design_no: '',
     buyer_name: '',
+    lot_no: '',
 
-    tax_type: 'GST 5% - INTRA STATE',
-    certificate_type: '100% BCI Cotton',
+    tax_type: '',
+    certificate_type: '',
     gross_amt: 0,
     transport_charge: 0,
     packing_charge: 0,
-    cgst_pct: 2.5,
+    cgst_pct: 0,
     cgst_amount: 0,
-    sgst_pct: 2.5,
+    sgst_pct: 0,
     sgst_amount: 0,
     igst_pct: 0,
     igst_amount: 0,
@@ -54,8 +56,6 @@ export default function YarnDyeingPO() {
     payment_terms: '',
     remarks: '',
     net_amount: 0,
-    design_wise_details: '',
-    color_wise_details: '',
     terms_conditions: [
       "Material not meeting our specification and standards will be returned",
       "Demanded Qty to be supplied in whole and excess/short supply will not be accepted.",
@@ -66,7 +66,7 @@ export default function YarnDyeingPO() {
     ],
 
     items: [{
-      sp_no: '', dsn_count: '', yarn_count: '', color: '', uom: '', warp_qty: 0, weft_qty: 0, tot_qty: 0, tole_pct: 0, wrp_order: 0, wft_order: 0, rate: 0, amount: 0
+      sp_no: '', lot_no: '', dsn_count: '', yarn_count: '', color: '', uom: '', warp_qty: 0, weft_qty: 0, tot_qty: 0, tole_pct: 0, wrp_order: 0, wft_order: 0, rate: 0, amount: 0
     }]
   };
 
@@ -106,6 +106,19 @@ export default function YarnDyeingPO() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleRefreshOptions = async () => {
+    try {
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleFieldChange = (name, val) => {
+    setForm(prev => recalculate({ ...prev, [name]: val }));
+  };
 
   const recalculate = (updatedForm) => {
     let totalKgs = 0;
@@ -159,6 +172,19 @@ export default function YarnDyeingPO() {
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+
+    if (name === 'tax_type') {
+      let taxUpdates = { tax_type: value };
+      if (value === 'GST 5% - INTRA STATE' || value === 'GST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+      } else if (value === 'IGST 5% - INTER STATE' || value === 'IGST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+      } else if (value === 'Exempt') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
+      }
+      setForm(recalculate({ ...form, ...taxUpdates }));
+      return;
+    }
 
     if (name === 'design_no') {
       const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
@@ -462,10 +488,10 @@ export default function YarnDyeingPO() {
             deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
             supplierName={selectedViewOrder?.supplier_dyeing_unit}
             agentName=""
-            designNo={selectedViewOrder?.sales_order_no || '-'}
+            designNo={selectedViewOrder?.design_no || '-'}
             commission="0.00"
-            designWiseDetails={selectedViewOrder?.design_wise_details}
-            colorWiseDetails={selectedViewOrder?.color_wise_details}
+            designWiseDetails={[selectedViewOrder?.lot_no && `Lot No: ${selectedViewOrder.lot_no}`, selectedViewOrder?.certificate_type && `Certificate: ${selectedViewOrder.certificate_type}`].filter(Boolean).join(' | ')}
+            colorWiseDetails={selectedViewOrder?.remarks && `Remarks: ${selectedViewOrder.remarks}`}
             terms={selectedViewOrder?.terms_conditions || []}
             taxes={{
               cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
@@ -483,17 +509,19 @@ export default function YarnDyeingPO() {
             }}
             tableHeaders={[
               { label: 'SP No.', align: 'left', width: '10%' },
+              { label: 'Lot No.', align: 'left', width: '10%' },
               { label: 'Dsn Count', align: 'left', width: '15%' },
               { label: 'Yarn Count', align: 'left', width: '15%' },
               { label: 'Color', align: 'left', width: '15%' },
               { label: 'Unit', align: 'center', width: '5%' },
               { label: 'Tot Qty', align: 'right', width: '10%' },
               { label: 'Rate', align: 'right', width: '10%' },
-              { label: 'Amount', align: 'right', width: '20%' }
+              { label: 'Amount', align: 'right', width: '15%' }
             ]}
             tableRows={(selectedViewOrder?.items || []).map(i => ({
               rowData: [
                 i.sp_no || '-',
+                i.lot_no || '-',
                 i.dsn_count || '-',
                 i.yarn_count || '-',
                 i.color || '-',
@@ -610,19 +638,30 @@ export default function YarnDyeingPO() {
               </div>
               <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Merchandiser</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
               
-              <div style={{ gridColumn: 'span 2', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-                 <div style={{ background: 'var(--bg-secondary)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>DESIGN WISE DETAILS</span>
-                 </div>
-                 <textarea className="form-control" name="design_wise_details" value={form.design_wise_details} onChange={handleChange} style={{ height: 80, border: 'none', resize: 'vertical', margin: 0, padding: '12px' }} placeholder="Enter design details..." />
+              <div className="form-group"><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms || ''} onChange={handleChange} /></div>
+              <div className="form-group">
+                <label>Tax Type</label>
+                <select className="form-control" name="tax_type" value={form.tax_type || ''} onChange={handleChange}>
+                  <option value="">-- Select Tax Type --</option>
+                  <option value="GST 5% - INTRA STATE">GST 5% - INTRA STATE</option>
+                  <option value="IGST 5% - INTER STATE">IGST 5% - INTER STATE</option>
+                  <option value="Exempt">Exempt</option>
+                </select>
               </div>
-              
-              <div style={{ gridColumn: 'span 2', border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
-                 <div style={{ background: 'var(--bg-secondary)', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>COLOR WISE DETAILS</span>
-                 </div>
-                 <textarea className="form-control" name="color_wise_details" value={form.color_wise_details} onChange={handleChange} style={{ height: 80, border: 'none', resize: 'vertical', margin: 0, padding: '12px' }} placeholder="Enter color details..." />
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Certificate Type</label>
+                <SubMasterDropdown
+                  name="certificate_type"
+                  value={form.certificate_type}
+                  entity="certificate_type_master"
+                  category="certificate_type"
+                  options={options}
+                  onChange={handleFieldChange}
+                  onOptionsRefresh={handleRefreshOptions}
+                  placeholder="-- Select Certificate --"
+                />
               </div>
+              <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks || ''} onChange={handleChange} /></div>
             </div>
 
             {/* Yarn Details Table */}
@@ -632,6 +671,7 @@ export default function YarnDyeingPO() {
                   <tr style={{ background: '#e2e8f0', color: '#1e293b' }}>
                     <th>S.No</th>
                     <th>SP No.</th>
+                    <th>Lot No.</th>
                     <th>Dsn Count</th>
                     <th>Yarn Count</th>
                     <th>Color</th>
@@ -651,6 +691,7 @@ export default function YarnDyeingPO() {
                     <tr key={idx}>
                       <td>{idx + 1}</td>
                       <td><input type="text" className="form-control" style={{ width: 90, padding: 6, margin: 0 }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
+                      <td><input type="text" className="form-control" style={{ width: 100, padding: 6, margin: 0 }} value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
                       <td><input type="text" className="form-control" style={{ width: 90, padding: 6, margin: 0 }} value={item.dsn_count} onChange={e => updateItem(idx, 'dsn_count', e.target.value)} /></td>
                       <td>
                         <select className="form-control" style={{ width: 120, padding: 6, margin: 0 }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>

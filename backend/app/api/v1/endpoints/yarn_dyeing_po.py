@@ -15,6 +15,7 @@ router = APIRouter()
 
 class YarnDyeingPOItemBase(BaseModel):
     sp_no: Optional[str] = None
+    lot_no: Optional[str] = None
     dsn_count: Optional[str] = None
     yarn_count: Optional[str] = None
     color: Optional[str] = None
@@ -61,6 +62,7 @@ class YarnDyeingPOCreate(BaseModel):
     pcp_free: Optional[str] = None
     staining_on_cotton: Optional[str] = None
     design_no: Optional[str] = None
+    lot_no: Optional[str] = None
 
     tax_type: Optional[str] = None
     certificate_type: Optional[str] = None
@@ -130,6 +132,7 @@ async def create_yarn_dyeing_po(data: YarnDyeingPOCreate, db: AsyncSession = Dep
         pcp_free=data.pcp_free,
         staining_on_cotton=data.staining_on_cotton,
         design_no=data.design_no,
+        lot_no=data.lot_no,
 
         tax_type=data.tax_type,
         certificate_type=data.certificate_type,

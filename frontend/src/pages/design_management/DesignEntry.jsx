@@ -1733,21 +1733,21 @@ export default function DesignEntry() {
                   <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics, Weaving & Allowances</h4>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                        <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
+                        {/* ROW 1: Ex Mtr / Total Mtr | Crmp % / SKG % */}
                         <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
-                        
                         <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Crmp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
+                        <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
                         
+                        {/* ROW 2: Warp Mtr / Weft (Pro) Mtr | Gray Width / Finish Width */}
+                        <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
-                        
                         <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
                         
+                        {/* ROW 3: Reed OL / Pick OT | Reed / Fabric */}
                         <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
                         <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
-                        
                         <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
                         <div className="form-group"><label>Fabric</label>
                           <select className="form-control" name="fabric" value={form.fabric} onChange={handleChange}>
@@ -1759,19 +1759,15 @@ export default function DesignEntry() {
                           </select>
                         </div>
                         
+                        {/* ROW 4: Total Ends / Warp Width | GLM / Tole % */}
                         <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
                         <div className="form-group"><label>GLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Tole %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
                         
-                        <div className="form-group"><label>Crimp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
-                        <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
-                        
-                        <div className="form-group"><label>Toie %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
-                        
+                        {/* ROW 5: Order Mtr | Selvage Waste | Weaving | Design Type */}
+                        <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
-                        
-                        <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
                         <div className="form-group"><label>Weaving</label>
                           <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
                             <option value="">Select Weaving...</option>
@@ -1781,12 +1777,17 @@ export default function DesignEntry() {
                             )}
                           </select>
                         </div>
-                        
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Design Type</label>
+                        <div className="form-group"><label>Design Type</label>
                           <select className="form-control" name="design_type" value={form.design_type} onChange={handleChange}>
                             <option>Normal</option><option>Special</option><option>Sample</option>
                           </select>
                         </div>
+                        
+                        {/* ROW 6: Packing Less | Weight Grm | Dyeing Loss % */}
+                        <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
+                        <div className="form-group"></div>
                       </div>
                     </div>
 
