@@ -57,6 +57,11 @@ export const buyerOrderAPI = {
   create: (data) => api.post('/buyer-orders/', data),
   update: (id, data) => api.put(`/buyer-orders/${id}`, data),
   delete: (id) => api.delete(`/buyer-orders/${id}`),
+  uploadFile: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post('/buyer-orders/upload-file', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
   
   // Schedules
   listSchedules: () => api.get('/buyer-orders/schedules/'),

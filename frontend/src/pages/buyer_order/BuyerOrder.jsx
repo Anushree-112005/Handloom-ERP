@@ -36,6 +36,23 @@ export default function BuyerOrder() {
   // Custom Inline Add States
   const [isCustomOrderType, setIsCustomOrderType] = useState(false);
   const [customOrderTypeVal, setCustomOrderTypeVal] = useState('');
+
+  const getNextIbpoNumber = () => {
+    let maxNum = 0;
+    orders.forEach(o => {
+      const val = o.ibpo_number;
+      if (val && val.startsWith("IBPO-")) {
+        try {
+          const num = parseInt(val.split("-")[1], 10);
+          if (num > maxNum) {
+            maxNum = num;
+          }
+        } catch (e) {}
+      }
+    });
+    const nextNumStr = String(maxNum + 1).padStart(5, '0');
+    return `IBPO-${nextNumStr}`;
+  };
   
   const [isCustomCertifiedType, setIsCustomCertifiedType] = useState(false);
   const [customCertifiedTypeVal, setCustomCertifiedTypeVal] = useState('');
@@ -301,6 +318,28 @@ export default function BuyerOrder() {
           if (fallback) fallback.focus();
         }
       }, 100);
+    }
+  };
+
+  const handleSupportingDocChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const res = await buyerOrderAPI.uploadFile(file);
+      setForm(prev => ({ ...prev, payment_file_path: res.data.file_path }));
+    } catch (err) {
+      alert("Error uploading file: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handleDesignFileChange = async (index, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const res = await buyerOrderAPI.uploadFile(file);
+      updateItem(index, 'image_design_path', res.data.file_path);
+    } catch (err) {
+      alert("Error uploading design file: " + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -1114,7 +1153,7 @@ export default function BuyerOrder() {
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
                       <label>IBPO Number</label>
-                      <input type="text" className="form-control" value={form.ibpo_number || 'AUTO-GENERATED'} disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600, color: 'var(--primary)' }} />
+                      <input type="text" className="form-control" value={form.ibpo_number || (editingId ? 'AUTO-GENERATED' : getNextIbpoNumber())} disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600, color: 'var(--primary)' }} />
                     </div>
                     <div className="form-group">
                       <label>Order Date *</label>
@@ -1276,7 +1315,20 @@ export default function BuyerOrder() {
                     />
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
-                    <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                    <div className="form-group">
+                      <label>Upload Supporting Doc</label>
+                      <input 
+                        type="file" 
+                        className="form-control" 
+                        style={{ padding: '6px' }} 
+                        onChange={handleSupportingDocChange}
+                      />
+                      {form.payment_file_path && (
+                        <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
+                          Uploaded: <a href={`http://localhost:8000${form.payment_file_path}`} target="_blank" rel="noopener noreferrer">{form.payment_file_path.split('/').pop()}</a>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Section 3: Party PO Details */}
@@ -1316,7 +1368,20 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Pattern</label><input className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)} /></div>
                         {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
                         {renderItemDropdown('Season', 'season', 'season_master', index, item)}
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                          <label>Upload Design File</label>
+                          <input 
+                            type="file" 
+                            className="form-control" 
+                            style={{ padding: '6px' }} 
+                            onChange={(e) => handleDesignFileChange(index, e)}
+                          />
+                          {item.image_design_path && (
+                            <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
+                              Uploaded: <a href={`http://localhost:8000${item.image_design_path}`} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
+                            </div>
+                          )}
+                        </div>
 
                         {renderPackingTypeCheckboxes(index, item)}
                       </div>
@@ -1439,7 +1504,20 @@ export default function BuyerOrder() {
                     />
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
-                    <div className="form-group"><label>Upload Supporting Doc</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                    <div className="form-group">
+                      <label>Upload Supporting Doc</label>
+                      <input 
+                        type="file" 
+                        className="form-control" 
+                        style={{ padding: '6px' }} 
+                        onChange={handleSupportingDocChange}
+                      />
+                      {form.payment_file_path && (
+                        <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
+                          Uploaded: <a href={`http://localhost:8000${form.payment_file_path}`} target="_blank" rel="noopener noreferrer">{form.payment_file_path.split('/').pop()}</a>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1584,7 +1662,20 @@ export default function BuyerOrder() {
                         <div className="form-group"><label>Pattern</label><input className="form-control" value={item.pattern} onChange={e => updateItem(index, 'pattern', e.target.value)} /></div>
                         {renderItemDropdown('End Use', 'end_use', 'end_use_master', index, item)}
                         {renderItemDropdown('Season', 'season', 'season_master', index, item)}
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Upload Design File</label><input type="file" className="form-control" style={{ padding: '6px' }} /></div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                          <label>Upload Design File</label>
+                          <input 
+                            type="file" 
+                            className="form-control" 
+                            style={{ padding: '6px' }} 
+                            onChange={(e) => handleDesignFileChange(index, e)}
+                          />
+                          {item.image_design_path && (
+                            <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
+                              Uploaded: <a href={`http://localhost:8000${item.image_design_path}`} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
+                            </div>
+                          )}
+                        </div>
 
                         {renderPackingTypeCheckboxes(index, item)}
                       </div>
@@ -1611,7 +1702,7 @@ export default function BuyerOrder() {
             type: "grid",
             data: [
               { label: "IBPO Number", value: viewModalOrder.ibpo_number },
-              { label: "Order Date", value: viewModalOrder.ibpo_date },
+              { label: "Order Date", value: viewModalOrder.order_date },
               { label: "Buyer Name", value: viewModalOrder.party_name },
               { label: "Expected Delivery", value: viewModalOrder.expected_del_date || '-' },
               { label: "Total Target Mtr", value: `${viewModalOrder.total_target_mtr || 0} Mtr` }
@@ -1632,17 +1723,45 @@ export default function BuyerOrder() {
             title: "ORDER ITEMS",
             icon: "Box",
             type: "table",
-            headers: ["S.No", "Design No", "Color", "Fabric", "Order Mtrs", "Rate", "Amount"],
+            headers: ["S.No", "Image", "Design No", "Color", "Fabric", "Order Mtrs", "Rate", "Amount"],
             rows: (viewModalOrder.items || []).map((item, idx) => [
               idx + 1,
-              item.design_no,
-              item.color,
-              item.fabric_type,
-              item.order_mtrs,
-              `₹ ${item.rate}`,
-              `₹ ${Number(item.amount).toFixed(2)}`
+              item.image_design_path ? (
+                <img 
+                  src={item.image_design_path.startsWith('http') ? item.image_design_path : `http://localhost:8000${item.image_design_path}`} 
+                  alt="Design" 
+                  style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 4, border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(item.image_design_path.startsWith('http') ? item.image_design_path : `http://localhost:8000${item.image_design_path}`, '_blank');
+                  }}
+                />
+              ) : '-',
+              item.design_no || '-',
+              item.color || '-',
+              item.fabric_type || '-',
+              item.order_mtrs || 0,
+              `₹ ${item.rate || 0}`,
+              `₹ ${Number(item.amount || 0).toFixed(2)}`
             ])
-          }
+          },
+          ...(viewModalOrder.payment_file_path ? [{
+            title: "SUPPORTING DOCUMENT",
+            icon: "FileText",
+            type: "image",
+            imageUrl: viewModalOrder.payment_file_path
+          }] : []),
+          ...((viewModalOrder.items || []).some(item => item.image_design_path) ? [{
+            title: "DESIGN ATTACHMENTS",
+            icon: "FileText",
+            type: "design_images",
+            images: (viewModalOrder.items || [])
+              .filter(item => item.image_design_path)
+              .map((item, idx) => ({
+                label: `Item #${idx + 1} (Design: ${item.design_no || 'N/A'})`,
+                url: item.image_design_path
+              }))
+          }] : [])
         ] : []}
       />
 

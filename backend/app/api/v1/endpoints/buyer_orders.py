@@ -1,16 +1,35 @@
 """Buyer Order CRUD endpoints."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, datetime
+import os
+import uuid
 
 from app.core.database import get_db
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
 
 router = APIRouter(prefix="/buyer-orders", tags=["Buyer Orders"])
+
+
+@router.post("/upload-file")
+async def upload_file(file: UploadFile = File(...)):
+    UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "uploads", "buyer_orders")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    filename_str = file.filename or "file.png"
+    ext = os.path.splitext(filename_str)[1] or ".png"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    content = await file.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    return {"file_path": f"/uploads/buyer_orders/{filename}"}
+
 
 
 class OrderItemIn(BaseModel):
