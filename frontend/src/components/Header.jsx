@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Bell, Search, Box, CheckSquare, Truck, Wrench, ShoppingCart } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { companySettingAPI, partyAPI, salesInvoiceAPI, yarnInwardAPI } from '../services/api';
+import { companySettingAPI, partyAPI, salesInvoiceAPI, yarnInwardAPI, buyerOrderAPI, yarnPurchaseOrderAPI, designEntryAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
 
 const PAGES = [
@@ -64,7 +64,14 @@ export default function Header() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [searchData, setSearchData] = useState({ parties: [], invoices: [], inwards: [] });
+  const [searchData, setSearchData] = useState({ 
+    parties: [], 
+    invoices: [], 
+    inwards: [], 
+    buyerOrders: [], 
+    yarnPurchaseOrders: [], 
+    designEntries: [] 
+  });
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   const [notifications, setNotifications] = useState([
@@ -137,15 +144,21 @@ export default function Header() {
     // Fetch search database records once on mount
     const fetchSearchData = async () => {
       try {
-        const [partiesRes, invoicesRes, inwardsRes] = await Promise.all([
+        const [partiesRes, invoicesRes, inwardsRes, buyerOrdersRes, yarnPosRes, designEntriesRes] = await Promise.all([
           partyAPI.list().catch(() => ({ data: [] })),
           salesInvoiceAPI.list().catch(() => ({ data: [] })),
-          yarnInwardAPI.list().catch(() => ({ data: [] }))
+          yarnInwardAPI.list().catch(() => ({ data: [] })),
+          buyerOrderAPI.list().catch(() => ({ data: [] })),
+          yarnPurchaseOrderAPI.list().catch(() => ({ data: [] })),
+          designEntryAPI.list().catch(() => ({ data: [] }))
         ]);
         setSearchData({
           parties: partiesRes.data || [],
           invoices: invoicesRes.data || [],
-          inwards: inwardsRes.data || []
+          inwards: inwardsRes.data || [],
+          buyerOrders: buyerOrdersRes.data || [],
+          yarnPurchaseOrders: yarnPosRes.data || [],
+          designEntries: designEntriesRes.data || []
         });
       } catch (err) {
         console.error("Failed to load search data:", err);
@@ -203,22 +216,50 @@ export default function Header() {
   ).slice(0, 5) : [];
 
   const filteredParties = searchQuery.trim().length >= 2 ? searchData.parties.filter(p => 
+    String(p.id).toLowerCase() === searchQuery.toLowerCase().trim() ||
+    (p.customer_code || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (p.company_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (p.gst_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (p.city || '').toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5) : [];
 
   const filteredInvoices = searchQuery.trim().length >= 2 ? searchData.invoices.filter(i => 
+    String(i.id).toLowerCase() === searchQuery.toLowerCase().trim() ||
     (i.invoice_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (i.party_name || '').toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5) : [];
 
   const filteredInwards = searchQuery.trim().length >= 2 ? searchData.inwards.filter(iw => 
+    String(iw.id).toLowerCase() === searchQuery.toLowerCase().trim() ||
     (iw.ref_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (iw.received_from || '').toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5) : [];
 
-  const showTotalResults = filteredPages.length + filteredParties.length + filteredInvoices.length + filteredInwards.length > 0;
+  const filteredBuyerOrders = searchQuery.trim().length >= 2 ? (searchData.buyerOrders || []).filter(bo => 
+    String(bo.id).toLowerCase() === searchQuery.toLowerCase().trim() ||
+    (bo.ibpo_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (bo.party_name || bo.buyer_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (bo.order_type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (bo.items || []).some(item => (item.design_no || '').toLowerCase().includes(searchQuery.toLowerCase()))
+  ).slice(0, 5) : [];
+
+  const filteredYarnPurchaseOrders = searchQuery.trim().length >= 2 ? (searchData.yarnPurchaseOrders || []).filter(ypo => 
+    String(ypo.id).toLowerCase() === searchQuery.toLowerCase().trim() ||
+    (ypo.po_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (ypo.internal_po_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (ypo.supplier_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (ypo.indent_details || []).some(item => (item.yarn_count || '').toLowerCase().includes(searchQuery.toLowerCase()) || (item.colour || '').toLowerCase().includes(searchQuery.toLowerCase()))
+  ).slice(0, 5) : [];
+
+  const filteredDesignEntries = searchQuery.trim().length >= 2 ? (searchData.designEntries || []).filter(de => 
+    String(de.id).toLowerCase() === searchQuery.toLowerCase().trim() ||
+    (de.ds_ref_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (de.design_no || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (de.buyer_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (de.fabric_type || '').toLowerCase().includes(searchQuery.toLowerCase())
+  ).slice(0, 5) : [];
+
+  const showTotalResults = filteredPages.length + filteredParties.length + filteredInvoices.length + filteredInwards.length + filteredBuyerOrders.length + filteredYarnPurchaseOrders.length + filteredDesignEntries.length > 0;
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
@@ -314,25 +355,72 @@ export default function Header() {
                     key={p.id || p.company_name} 
                     onMouseDown={() => {
                       setSearchQuery(p.company_name);
-                      setSelectedRecord({
-                        type: 'Party',
-                        details: {
-                          name: p.company_name,
-                          type: p.party_type,
-                          gstin: p.gst_no,
-                          pan: p.pan_no,
-                          address: p.address,
-                          city: p.city,
-                          state: p.state,
-                          phone: p.phone,
-                          email: p.email
-                        }
-                      });
+                      navigate(`/party-master?id=${p.id}`);
                     }} 
                     style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}
                     className="search-item"
                   >
-                    <span>{p.company_name} ({p.party_type})</span>
+                    <span>[ID: {p.customer_code || p.id}] {p.company_name} ({p.party_type})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Buyer Orders Category */}
+            {filteredBuyerOrders.length > 0 && (
+              <div>
+                <div style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>Buyer Orders</div>
+                {filteredBuyerOrders.map(bo => (
+                  <div 
+                    key={bo.id} 
+                    onMouseDown={() => {
+                      setSearchQuery(bo.ibpo_number);
+                      navigate(`/buyer-order?id=${bo.id}`);
+                    }} 
+                    style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}
+                    className="search-item"
+                  >
+                    <span>[ID: {bo.ibpo_number || bo.id}] {bo.party_name || bo.buyer_name} ({bo.order_type || 'Regular'})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Yarn Purchase Orders Category */}
+            {filteredYarnPurchaseOrders.length > 0 && (
+              <div>
+                <div style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>Yarn Purchase Orders</div>
+                {filteredYarnPurchaseOrders.map(ypo => (
+                  <div 
+                    key={ypo.id} 
+                    onMouseDown={() => {
+                      setSearchQuery(ypo.po_number || ypo.internal_po_no);
+                      navigate(`/yarn/purchase-order?id=${ypo.id}`);
+                    }} 
+                    style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}
+                    className="search-item"
+                  >
+                    <span>[ID: {ypo.po_number || ypo.internal_po_no || ypo.id}] {ypo.supplier_name} (₹{parseFloat(ypo.net_amount || 0).toLocaleString()})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Design Entries Category */}
+            {filteredDesignEntries.length > 0 && (
+              <div>
+                <div style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>Design Entries</div>
+                {filteredDesignEntries.map(de => (
+                  <div 
+                    key={de.id} 
+                    onMouseDown={() => {
+                      setSearchQuery(de.design_no);
+                      navigate(`/design-entry?id=${de.id}`);
+                    }} 
+                    style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}
+                    className="search-item"
+                  >
+                    <span>[ID: {de.ds_ref_no || de.id}] {de.design_no} ({de.buyer_name})</span>
                   </div>
                 ))}
               </div>
@@ -347,25 +435,12 @@ export default function Header() {
                     key={i.id || i.invoice_no} 
                     onMouseDown={() => {
                       setSearchQuery(i.invoice_no);
-                      setSelectedRecord({
-                        type: 'Sales Invoice',
-                        details: {
-                          invoice_no: i.invoice_no,
-                          date: i.invoice_date,
-                          party: i.party_name,
-                          gross_amount: i.gross_amount,
-                          cgst: i.cgst,
-                          sgst: i.sgst,
-                          igst: i.igst,
-                          net_amount: i.net_amount,
-                          vehicle_no: i.vehicle_no
-                        }
-                      });
+                      navigate(`/sales-invoice?id=${i.id}`);
                     }} 
                     style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}
                     className="search-item"
                   >
-                    <span>{i.invoice_no} - {i.party_name} (₹{parseFloat(i.net_amount).toLocaleString()})</span>
+                    <span>[ID: {i.invoice_no || i.id}] {i.party_name} (₹{parseFloat(i.net_amount).toLocaleString()})</span>
                   </div>
                 ))}
               </div>
@@ -380,23 +455,12 @@ export default function Header() {
                     key={iw.id || iw.ref_no} 
                     onMouseDown={() => {
                       setSearchQuery(iw.ref_no);
-                      setSelectedRecord({
-                        type: 'Yarn Inward',
-                        details: {
-                          reference_no: iw.ref_no,
-                          inward_date: iw.inward_date,
-                          received_from: iw.received_from,
-                          gross_amount: iw.gross_amount,
-                          net_amount: iw.net_amount,
-                          vehicle_no: iw.veh_no,
-                          remarks: iw.remarks
-                        }
-                      });
+                      navigate(`/yarn/inward?id=${iw.id}`);
                     }} 
                     style={{ padding: '8px 12px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155' }}
                     className="search-item"
                   >
-                    <span>{iw.ref_no} - {iw.received_from} (₹{parseFloat(iw.net_amount).toLocaleString()})</span>
+                    <span>[ID: {iw.ref_no || iw.id}] {iw.received_from} (₹{parseFloat(iw.net_amount).toLocaleString()})</span>
                   </div>
                 ))}
               </div>
@@ -616,7 +680,24 @@ export default function Header() {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              {selectedRecord.path && (
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    navigate(selectedRecord.path);
+                    setSelectedRecord(null);
+                  }}
+                  style={{
+                    padding: '6px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  Go to Page
+                </button>
+              )}
               <button 
                 className="btn btn-secondary" 
                 onClick={() => setSelectedRecord(null)}

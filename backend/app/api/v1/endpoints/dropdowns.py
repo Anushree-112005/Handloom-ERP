@@ -1,15 +1,52 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import pycountry
 
 from app.core.database import get_db
-from app.models.general_master import GeneralMaster
 from app.models.party_master import PartyMaster
 from app.models.employee import Employee
+from app.models.sub_master import SubMaster
 
 router = APIRouter(prefix="/dropdowns", tags=["Dropdowns"])
 
-DEFAULT_MASTERS = {
+INDIAN_STATES = [
+    "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", 
+    "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", 
+    "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", 
+    "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", 
+    "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", 
+    "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", 
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+]
+
+WORLD_COUNTRIES = ["India"] + sorted([c.name for c in pycountry.countries if c.name != "India"])
+
+TAMIL_NADU_DISTRICTS = [
+    "Ariyalur", "Chengalpattu", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", 
+    "Dindigul", "Erode", "Kallakurichi", "Kanchipuram", "Kanyakumari", "Karur", 
+    "Krishnagiri", "Madurai", "Mayiladuthurai", "Nagapattinam", "Namakkal", "Nilgiris", 
+    "Perambalur", "Pudukkottai", "Ramanathapuram", "Ranipet", "Salem", "Sivaganga", 
+    "Tenkasi", "Thanjavur", "Theni", "Thoothukudi", "Tiruchirappalli", "Tirunelveli", 
+    "Tirupathur", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", 
+    "Viluppuram", "Virudhunagar"
+]
+
+OTHER_DISTRICTS = {
+    "Mumbai": "Maharashtra",
+    "Pune": "Maharashtra",
+    "Nagpur": "Maharashtra",
+    "Surat": "Gujarat",
+    "Ahmedabad": "Gujarat",
+    "Vadodara": "Gujarat",
+    "Bangalore": "Karnataka",
+    "Mysore": "Karnataka",
+    "Kochi": "Kerala",
+    "Trivandrum": "Kerala",
+    "New Delhi": "Delhi"
+}
+
+DEFAULT_SUB_MASTERS = {
     "party_type": [
         "Sales", "Purchase", "Sales Party", "Purchase Party", "Delivery Party",
         "Logistics", "Agent", "Postage/Courier",
@@ -21,19 +58,21 @@ DEFAULT_MASTERS = {
         "Washing/Finishing", "Spares Supplier", "JobWorker"
     ],
     "customer_grade": ["A", "B", "C"],
-    "party_group": [
+    "party_type_group": [
         "Domestic Customer", "Export Customer", "Yarn Supplier", "Chemical Supplier"
     ],
-    "state": ["Tamil Nadu", "Maharashtra", "Karnataka", "Gujarat", "Kerala", "Delhi"],
-    "district": ["Erode", "Namakkal", "Coimbatore", "Tiruppur", "Salem"],
-    "city": ["Tiruchengodu", "Erode", "Coimbatore", "Mumbai", "Surat", "Ahmedabad"],
-    "sales_region": ["South Zone", "North Zone", "Export", "Local"],
-    "country": ["India", "Bangladesh", "USA", "UAE"],
-    "currency": ["INR", "USD", "EUR"],
-    "gst_type": ["With GST", "Without GST"],
-    "tds": ["None", "194C", "194Q"],
+    "state_master": INDIAN_STATES,
+    "district_city_master": TAMIL_NADU_DISTRICTS + list(OTHER_DISTRICTS.keys()),
+    "sales_region_master": ["South Zone", "North Zone", "Export", "Local"],
+    "country_master": WORLD_COUNTRIES,
+    "currency_master": ["INR", "USD", "EUR"],
+    "gst_type_master": ["With GST", "Without GST"],
+    "tds_master": ["None", "194C", "194Q"],
+    "tcs_master": ["Yes", "No"],
     "uom_master": ["Meters", "Yards", "Kgs", "Rolls", "Pieces"],
-
+    "payment_terms_master": ["30 Days", "45 Days", "60 Days", "90 Days", "Cash"],
+    "agent_master": ["Self", "Local Agent", "Direct Agent"],
+    "yarn_spec_type_master": ["Warp", "Weft"]
 }
 
 @router.get("/")
@@ -50,200 +89,226 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     emp_req = await db.execute(select(Employee.id, Employee.name, Employee.department))
     employees = [{"id": e.id, "name": e.name, "department": e.department} for e in emp_req.all()]
 
-    # 3. Fetch General Masters
-    gm_req = await db.execute(select(GeneralMaster.category, GeneralMaster.value))
-    gm_rows = gm_req.all()
+    # 3. Auto-seed missing sub-masters if not already seeded
+    seeded_check = await db.execute(select(SubMaster).where(SubMaster.entity == "system_seeded"))
+    has_seeded = seeded_check.scalars().first() is not None
     
-    # Auto-seed if empty or check and seed missing defaults
-    existing_gm = {}
-    for row in gm_rows:
-        if row.category not in existing_gm:
-            existing_gm[row.category] = set()
-        existing_gm[row.category].add(row.value)
+    if not has_seeded:
+        added_any = False
+        for entity, values in DEFAULT_SUB_MASTERS.items():
+            check_req = await db.execute(select(SubMaster).where(SubMaster.entity == entity))
+            existing_rows = check_req.scalars().all()
+            if not existing_rows:
+                for val in values:
+                    extra_1 = None
+                    if entity == "district_city_master":
+                        if val in TAMIL_NADU_DISTRICTS:
+                            extra_1 = "Tamil Nadu"
+                        elif val in OTHER_DISTRICTS:
+                            extra_1 = OTHER_DISTRICTS[val]
+                    db.add(SubMaster(entity=entity, name=val, is_active=True, extra_field_1=extra_1))
+                    added_any = True
+        
+        # Add metadata row to indicate system has seeded defaults
+        db.add(SubMaster(entity="system_seeded", name="initialized", is_active=True))
+        db.add(SubMaster(entity="system_seeded", name="states_countries_seeded", is_active=True))
+        db.add(SubMaster(entity="system_seeded", name="districts_seeded", is_active=True))
+        added_any = True
+        
+        if added_any:
+            await db.commit()
+    else:
+        # One-time migration for existing databases: check if states/countries have been seeded
+        states_countries_check = await db.execute(
+            select(SubMaster).where(SubMaster.entity == "system_seeded", SubMaster.name == "states_countries_seeded")
+        )
+        has_seeded_states_countries = states_countries_check.scalars().first() is not None
+        
+        if not has_seeded_states_countries:
+            added_any = False
+            for entity in ["state_master", "country_master"]:
+                check_req = await db.execute(select(SubMaster).where(SubMaster.entity == entity))
+                existing_rows = check_req.scalars().all()
+                if not existing_rows:
+                    for val in DEFAULT_SUB_MASTERS[entity]:
+                        db.add(SubMaster(entity=entity, name=val, is_active=True))
+                        added_any = True
+            
+            db.add(SubMaster(entity="system_seeded", name="states_countries_seeded", is_active=True))
+            added_any = True
+            
+            if added_any:
+                await db.commit()
 
-    added_any = False
-    for category, values in DEFAULT_MASTERS.items():
-        existing_vals = existing_gm.get(category, set())
-        for val in values:
-            if val not in existing_vals:
-                db.add(GeneralMaster(category=category, value=val))
-                added_any = True
-                
-    if added_any:
-        await db.commit()
-        gm_req = await db.execute(select(GeneralMaster.category, GeneralMaster.value))
-        gm_rows = gm_req.all()
+        # One-time migration for existing databases: check if districts have been seeded
+        districts_seeded_check = await db.execute(
+            select(SubMaster).where(SubMaster.entity == "system_seeded", SubMaster.name == "districts_seeded")
+        )
+        has_seeded_districts = districts_seeded_check.scalars().first() is not None
+        
+        if not has_seeded_districts:
+            added_any = False
+            for val in TAMIL_NADU_DISTRICTS + list(OTHER_DISTRICTS.keys()):
+                check_exist = await db.execute(
+                    select(SubMaster).where(SubMaster.entity == "district_city_master", SubMaster.name == val)
+                )
+                if not check_exist.scalars().first():
+                    extra_1 = "Tamil Nadu" if val in TAMIL_NADU_DISTRICTS else OTHER_DISTRICTS[val]
+                    db.add(SubMaster(entity="district_city_master", name=val, is_active=True, extra_field_1=extra_1))
+                    added_any = True
+            
+            db.add(SubMaster(entity="system_seeded", name="districts_seeded", is_active=True))
+            added_any = True
+            
+            if added_any:
+                await db.commit()
 
-    # Group General Masters
-    masters = {}
-    for row in gm_rows:
-        if row.category not in masters:
-            masters[row.category] = []
-        masters[row.category].append(row.value)
+        # One-time migration for existing databases: check if yarn_spec_type_master has been seeded
+        yarn_spec_check = await db.execute(
+            select(SubMaster).where(SubMaster.entity == "system_seeded", SubMaster.name == "yarn_spec_type_seeded")
+        )
+        has_seeded_yarn_spec = yarn_spec_check.scalars().first() is not None
+        
+        if not has_seeded_yarn_spec:
+            added_any = False
+            for val in ["Warp", "Weft"]:
+                check_exist = await db.execute(
+                    select(SubMaster).where(SubMaster.entity == "yarn_spec_type_master", SubMaster.name == val)
+                )
+                if not check_exist.scalars().first():
+                    db.add(SubMaster(entity="yarn_spec_type_master", name=val, is_active=True))
+                    added_any = True
+            db.add(SubMaster(entity="system_seeded", name="yarn_spec_type_seeded", is_active=True))
+            added_any = True
+            if added_any:
+                await db.commit()
 
-    # 4. Override with SubMasters (Core System Basic)
-    from app.models.sub_master import SubMaster
-    sm_req = await db.execute(select(SubMaster.entity, SubMaster.name, SubMaster.code, SubMaster.extra_field_1).where(SubMaster.is_active == True))
+    # 4. Fetch all active sub-masters (excluding system markers)
+    sm_req = await db.execute(
+        select(SubMaster.id, SubMaster.entity, SubMaster.name, SubMaster.code, SubMaster.extra_field_1)
+        .where(SubMaster.is_active == True, SubMaster.entity != "system_seeded")
+    )
     sm_rows = sm_req.all()
-    
-    district_cities = [r.name for r in sm_rows if r.entity == "district_city_master"]
-    states = list(set([r.extra_field_1 for r in sm_rows if r.entity == "district_city_master" and r.extra_field_1]))
-    regions = [r.name for r in sm_rows if r.entity == "sales_region_master"]
-    custom_currencies = [r.name for r in sm_rows if r.entity == "currency_master"]
-    party_groups = [r.name for r in sm_rows if r.entity == "party_type_group"]
-    custom_party_types = [r.name for r in sm_rows if r.entity == "party_type"]
-    custom_customer_grades = [r.name for r in sm_rows if r.entity == "customer_grade"]
-    custom_countries = [r.name for r in sm_rows if r.entity == "country_master"]
-    custom_states = [r.name for r in sm_rows if r.entity == "state_master"]
-    custom_gst_types = [r.name for r in sm_rows if r.entity == "gst_type_master"]
-    custom_tds = [r.name for r in sm_rows if r.entity == "tds_master"]
-    custom_tcs = [r.name for r in sm_rows if r.entity == "tcs_master"]
-    custom_address_sno = [r.name for r in sm_rows if r.entity == "address_sno_master"]
-    custom_payment_terms = [r.name for r in sm_rows if r.entity == "payment_terms_master"]
-    custom_order_types = [r.name for r in sm_rows if r.entity == "order_type_master"]
-    custom_certified_types = [r.name for r in sm_rows if r.entity == "certified_type"]
-    custom_commission_types = [r.name for r in sm_rows if r.entity == "commission_type_master"]
-    custom_regular_special = [r.name for r in sm_rows if r.entity == "regular_special_master"]
-    custom_statuses = [r.name for r in sm_rows if r.entity == "status_master"]
-    custom_fabric_types = [r.name for r in sm_rows if r.entity == "fabric_type_master"]
-    custom_uom = [r.name for r in sm_rows if r.entity == "uom_master"]
-    custom_weaving_types = [r.name for r in sm_rows if r.entity == "weaving_type_master"]
-    custom_patterns = [r.name for r in sm_rows if r.entity == "pattern_master"]
-    custom_packing_types = [r.name for r in sm_rows if r.entity == "packing_type_master"]
-    custom_end_uses = [r.name for r in sm_rows if r.entity == "end_use_master"]
-    custom_seasons = [r.name for r in sm_rows if r.entity == "season_master"]
-    custom_transport_modes = [r.name for r in sm_rows if r.entity == "transport_mode_master"]
-    custom_transport_names = [r.name for r in sm_rows if r.entity == "transport_name_master"]
-    custom_process_sequences = [r.name for r in sm_rows if r.entity == "process_sequence_master"]
-    custom_colors = [r.name for r in sm_rows if r.entity == "color_master"]
-    custom_hsn_codes = [r.code if r.code else r.name for r in sm_rows if r.entity == "hsn_code_master"]
-    custom_lr_types = [r.name for r in sm_rows if r.entity == "lr_type_master"]
-    custom_lr_terms = [r.name for r in sm_rows if r.entity == "lr_terms"]
-    custom_buyers = [r.name for r in sm_rows if r.entity == "buyer"]
-    custom_party_terms = [r.name for r in sm_rows if r.entity == "party_terms_master"]
-    custom_org_names = [r.name for r in sm_rows if r.entity == "organization_name_master"]
-    custom_against_refs = [r.name for r in sm_rows if r.entity == "against_reference_master"]
-    custom_freight_types = [r.name for r in sm_rows if r.entity == "freight_type_master"]
-    custom_mill_names = [r.name for r in sm_rows if r.entity == "mill_name_master"]
-    custom_yarn_counts = [r.name for r in sm_rows if r.entity == "yarn_count_master"]
-    custom_cone_types = [r.name for r in sm_rows if r.entity == "cone_type_master"]
-    custom_received_types = [r.name for r in sm_rows if r.entity == "received_type_master"]
-    custom_yarn_types = [r.name for r in sm_rows if r.entity == "yarn_type_master"]
-    custom_design_nos = [r.name for r in sm_rows if r.entity == "design_no_master"]
 
-    custom_inv_modes = [r.name for r in sm_rows if r.entity == "inv_mode_master"]
-    custom_approval_statuses = [r.name for r in sm_rows if r.entity == "approval_status_master"]
-    custom_dis_nos = [r.name for r in sm_rows if r.entity == "dis_no_master"]
-    custom_delivery_ats = [r.name for r in sm_rows if r.entity == "delivery_at_master"]
-    custom_agents = [r.name for r in sm_rows if r.entity == "agent_master"]
-    custom_freight_modes = [r.name for r in sm_rows if r.entity == "freight_mode_master"]
-    custom_bale_types = [r.name for r in sm_rows if r.entity == "bale_type_master"]
-    custom_payment_modes = [r.name for r in sm_rows if r.entity == "payment_mode_master"]
-    custom_invoice_types = [r.name for r in sm_rows if r.entity == "invoice_type_master"]
-    custom_units = [r.name for r in sm_rows if r.entity == "unit_master"]
-    custom_pins = [r.name for r in sm_rows if r.entity == "pin_master"]
-    custom_bale_lists = [r.name for r in sm_rows if r.entity == "bale_list_master"]
-    custom_stock_types = [r.name for r in sm_rows if r.entity == "stock_type_master"]
-    custom_godowns = [r.name for r in sm_rows if r.entity == "godown_master"]
+    # Build masters_with_ids: { entity: [{id, name, code, extra_field_1}, ...] }
+    masters_with_ids = {}
+    for r in sm_rows:
+        if r.entity not in masters_with_ids:
+            masters_with_ids[r.entity] = []
+        masters_with_ids[r.entity].append({
+            "id": r.id,
+            "name": r.name,
+            "code": r.code or "",
+            "extra_field_1": r.extra_field_1 or ""
+        })
 
-    if district_cities:
-        masters["city"] = district_cities
-        masters["district"] = district_cities
-        
-    # Combine default Party Groups with those fetched from SubMaster
-    masters["party_group"] = list(dict.fromkeys(masters.get("party_group", []) + party_groups))
-    
-    masters["party_type"] = list(dict.fromkeys(masters.get("party_type", []) + custom_party_types))
-    
-    if custom_customer_grades:
-        combined_grades = masters.get("customer_grade", []) + custom_customer_grades
-        masters["customer_grade"] = list(dict.fromkeys(combined_grades))
-        
-    masters["gst_type"] = list(dict.fromkeys(masters.get("gst_type", []) + custom_gst_types))
-    masters["tds"] = list(dict.fromkeys(masters.get("tds", []) + custom_tds))
-    masters["tcs_applicable"] = list(dict.fromkeys(masters.get("tcs_applicable", ["Yes", "No"]) + custom_tcs))
-    masters["address_sno"] = list(dict.fromkeys(masters.get("address_sno", []) + custom_address_sno))
-    masters["payment_terms"] = custom_payment_terms
-    masters["order_type_master"] = list(dict.fromkeys(custom_order_types))
-    masters["certified_type"] = list(dict.fromkeys(custom_certified_types))
-    masters["commission_type_master"] = list(dict.fromkeys(custom_commission_types))
-    masters["regular_special_master"] = list(dict.fromkeys(custom_regular_special))
-    masters["status_master"] = list(dict.fromkeys(custom_statuses))
-    masters["fabric_type_master"] = list(dict.fromkeys(custom_fabric_types))
-    masters["uom_master"] = list(dict.fromkeys(masters.get("uom_master", []) + custom_uom))
-    masters["weaving_type_master"] = list(dict.fromkeys(custom_weaving_types))
-    masters["pattern_master"] = list(dict.fromkeys(custom_patterns))
-    masters["packing_type_master"] = list(dict.fromkeys(custom_packing_types))
-    masters["end_use_master"] = list(dict.fromkeys(custom_end_uses))
-    masters["season_master"] = list(dict.fromkeys(custom_seasons))
-    masters["transport_mode_master"] = list(dict.fromkeys(custom_transport_modes))
-    masters["transport_name_master"] = list(dict.fromkeys(custom_transport_names))
-    masters["process_sequence_master"] = list(dict.fromkeys(custom_process_sequences))
-    masters["color_master"] = list(dict.fromkeys(custom_colors))
-    masters["hsn_code_master"] = list(dict.fromkeys(custom_hsn_codes))
-    masters["lr_type_master"] = list(dict.fromkeys(custom_lr_types))
-    masters["lr_terms"] = list(dict.fromkeys(custom_lr_terms))
-    masters["buyer"] = list(dict.fromkeys(custom_buyers))
-    masters["party_terms_master"] = list(dict.fromkeys(custom_party_terms))
-    masters["organization_name_master"] = list(dict.fromkeys(custom_org_names))
-    masters["against_reference_master"] = list(dict.fromkeys(custom_against_refs))
-    masters["freight_type_master"] = list(dict.fromkeys(custom_freight_types))
-    masters["mill_name_master"] = list(dict.fromkeys(custom_mill_names))
-    masters["yarn_count_master"] = list(dict.fromkeys(custom_yarn_counts))
-    masters["cone_type_master"] = list(dict.fromkeys(custom_cone_types))
-    masters["received_type_master"] = list(dict.fromkeys(custom_received_types))
-    masters["yarn_type_master"] = list(dict.fromkeys(custom_yarn_types))
-    masters["design_no_master"] = list(dict.fromkeys(custom_design_nos))
+    # Categories mapping to build simple list masters for frontend backwards compatibility
+    categories_mapping = {
+        "party_type": "party_type",
+        "customer_grade": "customer_grade",
+        "party_type_group": "party_group",
+        "state_master": "state",
+        "district_city_master": "district",  # maps to both district and city
+        "sales_region_master": "sales_region",
+        "country_master": "country",
+        "currency_master": "currency",
+        "gst_type_master": "gst_type",
+        "tds_master": "tds",
+        "tcs_master": "tcs_applicable",
+        "uom_master": "uom_master",
+        "payment_terms_master": "payment_terms",
+        "transport_name_master": "transport_name_master",
+        "agent_master": "agent_master",
+        "address_sno_master": "address_sno",
+        "order_type_master": "order_type_master",
+        "certified_type": "certified_type",
+        "commission_type_master": "commission_type_master",
+        "regular_special_master": "regular_special_master",
+        "status_master": "status_master",
+        "fabric_type_master": "fabric_type_master",
+        "weaving_type_master": "weaving_type_master",
+        "pattern_master": "pattern_master",
+        "packing_type_master": "packing_type_master",
+        "end_use_master": "end_use_master",
+        "season_master": "season_master",
+        "transport_mode_master": "transport_mode_master",
+        "process_sequence_master": "process_sequence_master",
+        "color_master": "color_master",
+        "hsn_code_master": "hsn_code_master",
+        "lr_type_master": "lr_type_master",
+        "lr_terms": "lr_terms",
+        "buyer": "buyer",
+        "party_terms_master": "party_terms_master",
+        "organization_name_master": "organization_name_master",
+        "against_reference_master": "against_reference_master",
+        "freight_type_master": "freight_type_master",
+        "mill_name_master": "mill_name_master",
+        "yarn_count_master": "yarn_count_master",
+        "cone_type_master": "cone_type_master",
+        "received_type_master": "received_type_master",
+        "yarn_type_master": "yarn_type_master",
+        "design_no_master": "design_no_master",
+        "inv_mode_master": "inv_mode_master",
+        "approval_status_master": "approval_status_master",
+        "dis_no_master": "dis_no_master",
+        "delivery_at_master": "delivery_at_master",
+        "freight_mode_master": "freight_mode_master",
+        "bale_type_master": "bale_type_master",
+        "payment_mode_master": "payment_mode_master",
+        "invoice_type_master": "invoice_type_master",
+        "pin_master": "pin_master",
+        "bale_list_master": "bale_list_master",
+        "stock_type_master": "stock_type_master",
+        "godown_master": "godown_master",
+        "unit_master": "unit_master",
+        "yarn_spec_type_master": "yarn_spec_type_master"
+    }
 
-    masters["inv_mode_master"] = list(dict.fromkeys(custom_inv_modes))
-    masters["approval_status_master"] = list(dict.fromkeys(custom_approval_statuses))
-    masters["dis_no_master"] = list(dict.fromkeys(custom_dis_nos))
-    masters["delivery_at_master"] = list(dict.fromkeys(custom_delivery_ats))
-    masters["agent_master"] = list(dict.fromkeys(custom_agents))
-    masters["freight_mode_master"] = list(dict.fromkeys(custom_freight_modes))
-    masters["bale_type_master"] = list(dict.fromkeys(custom_bale_types))
-    masters["payment_mode_master"] = list(dict.fromkeys(custom_payment_modes))
-    masters["invoice_type_master"] = list(dict.fromkeys(custom_invoice_types))
-    masters["pin_master"] = list(dict.fromkeys(custom_pins))
-    masters["bale_list_master"] = list(dict.fromkeys(custom_bale_lists))
-    masters["stock_type_master"] = list(dict.fromkeys(custom_stock_types))
-    masters["godown_master"] = list(dict.fromkeys(custom_godowns))
-        
-    INDIAN_STATES = [
-        "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", 
-        "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", 
-        "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", 
-        "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", 
-        "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", 
-        "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", 
-        "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
-    ]
-    
-    # Combine states from submaster with standard Indian states
-    all_states = list(set(states + custom_states + INDIAN_STATES))
-    masters["state"] = sorted(all_states)
-    if regions:
-        combined_regions = masters.get("sales_region", []) + regions
-        masters["sales_region"] = list(dict.fromkeys(combined_regions))
-        
-    # 5. Add all world countries and currencies using pycountry package
-    import pycountry
-    # Put India first, then the rest
-    all_countries = ["India"] + sorted([c.name for c in pycountry.countries if c.name != "India"])
-    masters["country"] = list(dict.fromkeys(all_countries + custom_countries))
-    
-    # Extract alpha_3 currencies (e.g. INR, USD)
-    standard_currencies = [c.alpha_3 for c in pycountry.currencies if hasattr(c, 'alpha_3')]
-    all_currencies = list(set(standard_currencies + custom_currencies))
-    
-    # Sort and put INR, USD, EUR at the top
-    all_currencies = sorted([c for c in all_currencies if c not in ["INR", "USD", "EUR"]])
-    masters["currency"] = ["INR", "USD", "EUR"] + all_currencies
+    masters = {}
+    for cat in categories_mapping.values():
+        masters[cat] = []
+    masters["city"] = []
+    masters["district"] = []
+
+    for r in sm_rows:
+        cat = categories_mapping.get(r.entity)
+        if cat:
+            val = r.name
+            if r.entity == "hsn_code_master":
+                val = r.code if r.code else r.name
+            
+            if r.entity == "district_city_master":
+                masters["city"].append(val)
+                masters["district"].append(val)
+            else:
+                masters[cat].append(val)
+
+    # Sort everything unique (India first for country)
+    for cat in list(masters.keys()):
+        if cat == "country":
+            countries_list = list(set(masters[cat]))
+            has_india = "India" in countries_list
+            other_countries = sorted([c for c in countries_list if c != "India"])
+            masters[cat] = ["India"] + other_countries if has_india else other_countries
+        else:
+            masters[cat] = sorted(list(set(masters[cat])))
+
+    # Make sure masters_with_ids has all entities defined as lists and sort them
+    for entity in DEFAULT_SUB_MASTERS.keys():
+        if entity not in masters_with_ids:
+            masters_with_ids[entity] = []
+
+    for entity, item_list in masters_with_ids.items():
+        if entity == "country_master":
+            item_list.sort(key=lambda x: (0 if x["name"] == "India" else 1, x["name"]))
+        else:
+            item_list.sort(key=lambda x: x["name"])
 
     return {
         "agents": agents,
         "transporters": transporters,
         "all_parties": all_parties,
         "employees": employees,
-        "masters": masters
+        "masters": masters,
+        "masters_with_ids": masters_with_ids
     }

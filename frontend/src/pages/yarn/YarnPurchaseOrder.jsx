@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Truck, FileText, IndianRupee, Layers, Download, ChevronDown, Printer } from 'lucide-react';
 import { yarnPurchaseOrderAPI, partyAPI, dropdownAPI, subMasterAPI, buyerOrderAPI, designEntryAPI, companySettingAPI } from '../../services/api';
 import defaultLogo from '../../assets/logo.svg';
@@ -6,6 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
+import SubMasterDropdown from '../../components/SubMasterDropdown';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -15,6 +17,9 @@ const DetailRow = ({ label, value }) => (
 );
 
 export default function YarnPurchaseOrder() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryId = searchParams.get('id');
+
   const [orders, setOrders] = useState([]);
   const [parties, setParties] = useState([]);
   const [options, setOptions] = useState({});
@@ -259,6 +264,32 @@ export default function YarnPurchaseOrder() {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (queryId && orders.length > 0) {
+      const matched = orders.find(o => String(o.id) === String(queryId));
+      if (matched) {
+        handleOpenForm(matched, true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [queryId, orders]);
+
+  const refreshDropdownOptions = async () => {
+    try {
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+    } catch (err) {
+      console.error('Error refreshing options:', err);
+    }
+  };
+
+  const handleDropdownChange = (name, value) => {
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSaveCustomOrg = async () => {
     if (!customOrgVal.trim()) return;
@@ -748,7 +779,7 @@ export default function YarnPurchaseOrder() {
     const rows = filteredOrders.map(o => [
       o.po_number || '-',
       o.po_date || '-',
-      o.supplier_name || o.org_name || '-',
+      o.supplier_name || '-',
       `Rs. ${o.net_amount?.toFixed(2) || '0.00'}`,
       o.status || '-'
     ]);
@@ -761,7 +792,6 @@ export default function YarnPurchaseOrder() {
       "PO No": o.po_number,
       "Date": o.po_date,
       "Internal PO No": o.internal_po_no,
-      "Org Name": o.org_name,
       "Supplier": o.supplier_name,
       "Agent Name": o.agent_name,
       "Amount": o.net_amount,
@@ -771,6 +801,73 @@ export default function YarnPurchaseOrder() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Yarn POs");
     XLSX.writeFile(wb, `Yarn_POs_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const isPurchaseParty = (p) => {
+    if (!p) return false;
+    const type = (p.party_type || '').toLowerCase();
+    const group = (p.party_group || '').toLowerCase();
+
+    // Exclude service providers (job workers, processors, logistics, agents, etc.)
+    const excludeTerms = [
+      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+      'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
+      'lab', 'washing', 'service'
+    ];
+
+    if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
+      return false;
+    }
+
+    return (
+      type.includes('purchase') ||
+      type.includes('supplier') ||
+      type.includes('vendor') ||
+      group.includes('supplier') ||
+      group.includes('vendor')
+    );
+  };
+
+  const isJobWorkParty = (p) => {
+    if (!p) return false;
+    const type = (p.party_type || '').toLowerCase();
+    const group = (p.party_group || '').toLowerCase();
+
+    const jobTerms = [
+      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+      'coverter', 'loom', 'service'
+    ];
+
+    return jobTerms.some(term => type.includes(term) || group.includes(term));
+  };
+
+  const getDeliveryOptions = () => {
+    const list = [
+      {
+        company_name: companyProfile.company_name || 'Dinesh Exports Private Limited',
+        address: companyProfile.address || '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
+        phone: companyProfile.phone || '',
+        gst_no: '33AAACD0905A1ZG'
+      }
+    ];
+
+    parties.filter(isJobWorkParty).forEach(p => {
+      list.push({
+        company_name: p.company_name,
+        address: p.address || '',
+        phone: p.phone || p.mobile || '',
+        gst_no: p.gst_no || ''
+      });
+    });
+
+    return list;
+  };
+
+  const getFormattedAddress = (opt) => {
+    if (!opt) return '';
+    return `${opt.company_name}\n${opt.address}${opt.phone ? `\nPhone: ${opt.phone}` : ''}${opt.gst_no ? `\nGST: ${opt.gst_no}` : ''}`;
   };
 
   const tabs = [
@@ -872,7 +969,7 @@ export default function YarnPurchaseOrder() {
                       <tr key={o.id} onClick={() => handleRowClick(o)} style={{ cursor: 'pointer', background: selectedViewOrder?.id === o.id ? 'var(--bg-secondary)' : 'transparent' }}>
                         <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{o.po_number}</td>
                         <td>{o.po_date}</td>
-                        <td style={{ fontWeight: 500 }}>{o.supplier_name || o.org_name || '-'}</td>
+                        <td style={{ fontWeight: 500 }}>{o.supplier_name || '-'}</td>
                         <td style={{ fontWeight: 600 }}>₹{o.net_amount?.toFixed(2) || '0.00'}</td>
                         <td><span className={`badge ${o.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{o.status}</span></td>
                         <td onClick={evt => evt.stopPropagation()}>
@@ -913,7 +1010,6 @@ export default function YarnPurchaseOrder() {
                 data: [
                   { label: "Date", value: selectedViewOrder.po_date },
                   { label: "Internal PO No", value: selectedViewOrder.internal_po_no || '-' },
-                  { label: "Org Name", value: selectedViewOrder.org_name || '-' },
                   { label: "Supplier", value: selectedViewOrder.supplier_name || '-' }
                 ]
               },
@@ -1051,11 +1147,19 @@ export default function YarnPurchaseOrder() {
                   <tr>
                     <td style={{ width: '55%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
                       <div style={{ textAlign: 'center', textDecoration: 'underline', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>Delivery At</div>
-                      <div style={{ fontWeight: 'bold', fontSize: '13px' }}>DINESH EXPORTS PRIVATE LIMITED</div>
-                      <div style={{ fontSize: '11px', lineLine: '1.4', margin: '4px 0', color: '#1e293b' }}>
-                        {form.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
-                      </div>
-                      <div style={{ fontWeight: 'bold', fontSize: '11px', marginTop: '4px' }}>GST : 33AAACD0905A1ZG</div>
+                      {form.delivery_at && form.delivery_at.includes('\n') ? (
+                        <div style={{ fontSize: '12px', lineHeight: '1.5', color: '#1e293b', whiteSpace: 'pre-line' }}>
+                          {form.delivery_at}
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ fontWeight: 'bold', fontSize: '13px' }}>DINESH EXPORTS PRIVATE LIMITED</div>
+                          <div style={{ fontSize: '11px', lineHeight: '1.4', margin: '4px 0', color: '#1e293b' }}>
+                            {form.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
+                          </div>
+                          <div style={{ fontWeight: 'bold', fontSize: '11px', marginTop: '4px' }}>GST : 33AAACD0905A1ZG</div>
+                        </>
+                      )}
                     </td>
                     <td style={{ width: '45%', border: '1px solid #000', padding: '12px', verticalAlign: 'top' }}>
                       <div style={{ textAlign: 'center', textDecoration: 'underline', fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>Agent / Mill Name and Address</div>
@@ -1290,28 +1394,9 @@ export default function YarnPurchaseOrder() {
               
               {activeTab === 'main' && (
                 <div className="animate-fade">
-                  {/* Section 1: Order Info */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Info</h4>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className="form-group"><label>Order Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-                    <div className="form-group"><label>Org. Name</label>
-                      {isCustomOrg ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Org Name..." value={customOrgVal} onChange={e => setCustomOrgVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomOrg}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomOrg(false); setCustomOrgVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="org_name" value={form.org_name || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomOrg(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select Org...</option>
-                          {options.masters?.organization_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Org...</option>
-                        </select>
-                      )}
-                    </div>
                     <div className="form-group"><label>Internal PO No</label><input className="form-control" name="internal_po_no" value={form.internal_po_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Used For</label><input className="form-control" name="used_for" value={form.used_for} onChange={handleChange} /></div>
                     <div className="form-group"><label>Against Reference</label>
@@ -1365,35 +1450,55 @@ export default function YarnPurchaseOrder() {
                       ) : (
                         <select className="form-control" name="supplier_name" value={form.supplier_name} onChange={handleChange}>
                           <option value="">Select Supplier...</option>
-                          {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                          {parties.filter(isPurchaseParty).map(p => (
+                            <option key={p.id} value={p.company_name}>
+                              {p.company_name} ({p.customer_code})
+                            </option>
+                          ))}
                           <option value="custom_add_new" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom...</option>
                         </select>
                       )}
                     </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Delivery At</label>
+                      <select 
+                        className="form-control" 
+                        name="delivery_at" 
+                        value={form.delivery_at} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setForm(prev => ({ ...prev, delivery_at: val }));
+                        }}
+                      >
+                        <option value="">Select Delivery Location...</option>
+                        {form.delivery_at && !getDeliveryOptions().some(opt => getFormattedAddress(opt) === form.delivery_at) && (
+                          <option value={form.delivery_at}>{form.delivery_at.replace(/\n/g, ', ')}</option>
+                        )}
+                        {getDeliveryOptions().map((opt, idx) => {
+                          const formatted = getFormattedAddress(opt);
+                          const displayLabel = `${opt.company_name} - ${opt.address}${opt.phone ? `, Phone: ${opt.phone}` : ''}${opt.gst_no ? `, GST: ${opt.gst_no}` : ''}`;
+                          return (
+                            <option key={idx} value={formatted}>
+                              {displayLabel}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
                     <div className="form-group"><label>Status</label>
                       <select className="form-control" name="status" value={form.status} onChange={handleChange}>
                         <option>Active</option><option>Closed</option>
                       </select>
                     </div>
-                    <div className="form-group"><label>Packing Type</label>
-                      {isCustomPackingType ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" autoFocus placeholder="Enter Packing Type..." value={customPackingTypeVal} onChange={e => setCustomPackingTypeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomPackingType}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomPackingType(false); setCustomPackingTypeVal(''); }}><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <select className="form-control" name="packing_type" value={form.packing_type || ''} onChange={e => {
-                          if (e.target.value === 'custom') setIsCustomPackingType(true);
-                          else handleChange(e);
-                        }}>
-                          <option value="">Select...</option>
-                          {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Packing...</option>
-                        </select>
-                      )}
-                    </div>
+                    <SubMasterDropdown
+                      label="Packing Type"
+                      name="packing_type"
+                      value={form.packing_type || ''}
+                      entity="packing_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <div className="form-group"><label>Labeling</label>
                       <input className="form-control" name="labeling" value={form.labeling} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'indent', 'req_ind_no')} />
                     </div>
@@ -1688,45 +1793,27 @@ export default function YarnPurchaseOrder() {
                       </div>
                       <div style={{ padding: '16px 18px' }}>
                         <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)', margin: 0 }}>
-                          <div className="form-group"><label>Freight Type</label>
-                            {isCustomFreightType ? (
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <input type="text" className="form-control" autoFocus placeholder="Enter Freight Type..." value={customFreightTypeVal} onChange={e => setCustomFreightTypeVal(e.target.value)} />
-                                <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomFreightType}><CheckCircle size={16} /></button>
-                                <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomFreightType(false); setCustomFreightTypeVal(''); }}><X size={16} /></button>
-                              </div>
-                            ) : (
-                              <select className="form-control" name="freight_type" value={form.freight_type || ''} onChange={e => {
-                                if (e.target.value === 'custom') setIsCustomFreightType(true);
-                                else handleChange(e);
-                              }}>
-                                <option value="">Select...</option>
-                                {options.masters?.freight_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Freight Type...</option>
-                              </select>
-                            )}
-                          </div>
+                          <SubMasterDropdown
+                            label="Freight Type"
+                            name="freight_type"
+                            value={form.freight_type || ''}
+                            entity="freight_type_master"
+                            options={options}
+                            onChange={handleDropdownChange}
+                            onOptionsRefresh={refreshDropdownOptions}
+                          />
                           <div className="form-group"><label>Total Order Kgs</label><input type="number" className="form-control" name="total_order_kgs" value={form.total_order_kgs} onChange={handleChange} /></div>
                         </div>
                         <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', margin: 0, marginTop: 12 }}>
-                          <div className="form-group"><label>Transport</label>
-                            {isCustomTransport ? (
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <input type="text" className="form-control" autoFocus placeholder="Enter Transport..." value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
-                                <button type="button" className="btn btn-primary" style={{ padding: '8px' }} onClick={handleSaveCustomTransport}><CheckCircle size={16} /></button>
-                                <button type="button" className="btn btn-secondary" style={{ padding: '8px' }} onClick={() => { setIsCustomTransport(false); setCustomTransportVal(''); }}><X size={16} /></button>
-                              </div>
-                            ) : (
-                              <select className="form-control" name="transport" value={form.transport || ''} onChange={e => {
-                                if (e.target.value === 'custom') setIsCustomTransport(true);
-                                else handleChange(e);
-                              }}>
-                                <option value="">Select...</option>
-                                {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom Transport...</option>
-                              </select>
-                            )}
-                          </div>
+                          <SubMasterDropdown
+                            label="Transport"
+                            name="transport"
+                            value={form.transport || ''}
+                            entity="transport_name_master"
+                            options={options}
+                            onChange={handleDropdownChange}
+                            onOptionsRefresh={refreshDropdownOptions}
+                          />
                           <div className="form-group"><label>Dispatch Date</label><input type="date" className="form-control" name="dispatch_date" value={form.dispatch_date} onChange={handleChange} /></div>
                           <div className="form-group"><label>Due Days</label><input type="number" className="form-control" name="due_days" value={form.due_days} onChange={handleChange} /></div>
                           <div className="form-group" />
