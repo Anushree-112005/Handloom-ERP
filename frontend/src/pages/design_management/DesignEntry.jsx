@@ -16,7 +16,7 @@ const DetailRow = ({ label, value }) => (
 );
 
 const getColorHex = (colorName, colorMastersList) => {
-  if (!colorName) return '#cbd5e1';
+  if (!colorName || typeof colorName !== 'string') return '#cbd5e1';
   const cname = colorName.trim().toLowerCase();
   const colorMap = {
     'white': '#ffffff',
@@ -62,11 +62,13 @@ const getColorHex = (colorName, colorMastersList) => {
 
   if (colorMastersList && colorMastersList.length > 0) {
     const match = colorMastersList.find(c => 
-      c.name.toLowerCase() === cname || 
-      c.name.toLowerCase().includes(cname) || 
-      cname.includes(c.name.toLowerCase())
+      c && c.name && (
+        c.name.toLowerCase() === cname || 
+        c.name.toLowerCase().includes(cname) || 
+        cname.includes(c.name.toLowerCase())
+      )
     );
-    if (match) {
+    if (match && match.code && typeof match.code === 'string') {
       const code = match.code.trim();
       if (code.startsWith('#') || colorMap[code.toLowerCase()]) {
         return code;
@@ -114,6 +116,34 @@ const getRowSpans = (rows, key) => {
     i += count;
   }
   return spans;
+};
+
+const parseEqCount = (lbl) => {
+  const YARN_COUNTS = {
+    "10S CTN": 10.0,
+    "20S CTN": 20.0,
+    "30S CTN": 30.0,
+    "40S CTN": 40.0,
+    "60S CTN": 60.0,
+    "80S CTN": 80.0,
+    "2/20S CTN": 10.0,
+    "2/40S CTN": 20.0,
+    "2/60S CTN": 30.0,
+    "2/80S CTN": 40.0,
+  };
+  if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+  if (!lbl) return 20.0;
+  let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+  if (cleaned.includes('/')) {
+    const parts = cleaned.split('/');
+    const ply = parseFloat(parts[0]) || 1.0;
+    const countPart = parts[1].match(/\d+/);
+    const count = countPart ? parseFloat(countPart[0]) : 40.0;
+    return count / ply;
+  } else {
+    const match = cleaned.match(/\d+/);
+    return match ? parseFloat(match[0]) : 20.0;
+  }
 };
 
 const calculateRepeatSize = (rows) => {
@@ -298,33 +328,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
   const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
   const warpWastage = Math.max(1.0, wastageFactor - 0.015);
 
-  const parseEqCount = (lbl) => {
-    const YARN_COUNTS = {
-      "10S CTN": 10.0,
-      "20S CTN": 20.0,
-      "30S CTN": 30.0,
-      "40S CTN": 40.0,
-      "60S CTN": 60.0,
-      "80S CTN": 80.0,
-      "2/20S CTN": 10.0,
-      "2/40S CTN": 20.0,
-      "2/60S CTN": 30.0,
-      "2/80S CTN": 40.0,
-    };
-    if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
-    if (!lbl) return 20.0;
-    let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
-    if (cleaned.includes('/')) {
-      const parts = cleaned.split('/');
-      const ply = parseFloat(parts[0]) || 1.0;
-      const countPart = parts[1].match(/\d+/);
-      const count = countPart ? parseFloat(countPart[0]) : 40.0;
-      return count / ply;
-    } else {
-      const match = cleaned.match(/\d+/);
-      return match ? parseFloat(match[0]) : 20.0;
-    }
-  };
+
 
   // Aggregate Warp
   const warpColorAgg = {};
@@ -355,13 +359,19 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
     }
   });
 
-  const warpSummary = Object.values(warpColorAgg).map(row => {
-    const eqCount = parseEqCount(row.count);
-    const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
-    const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-    const req_kg = Math.ceil(req_kg_raw / lossFactor);
-    return { ...row, req_kg };
-  });
+  let warpSummary = [];
+  try {
+    warpSummary = design.warp_summary ? JSON.parse(design.warp_summary) : [];
+  } catch (e) { }
+  if (!Array.isArray(warpSummary) || warpSummary.length === 0) {
+    warpSummary = Object.values(warpColorAgg).map(row => {
+      const eqCount = parseEqCount(row.count);
+      const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      return { ...row, req_kg };
+    });
+  }
 
   // Weft Design
   const pick = parseFloat(design.pick_ot) || 0;
@@ -394,23 +404,34 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
   });
 
   const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
-  const totalWeftEndsCalculated = Math.round(pick * weftWidth);
+  const reedVal = parseFloat(design.reed) || 0;
+  const reedOlVal = Math.max(0, reedVal - 8);
+  const totalEndsVal = parseFloat(design.total_ends) || 0;
+  const reedSpaceVal = reedOlVal > 0 ? (totalEndsVal / reedOlVal) : 0;
+  const pickOlVal = Math.max(0, pick - 4);
+  const totalWeftEndsCalculated = Math.round(pickOlVal * (reedSpaceVal + selvage));
 
-  const weftSummary = Object.values(weftColorAgg).map(row => {
-    const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
-    const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
-    const eqCount = parseEqCount(row.count);
-    
-    const req_kg_raw = eqCount > 0 ? (ratio * pickOl * grayWidthVal * weftProMtrVal) / (1690 * eqCount) : 0;
-    const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-    const req_kg = Math.ceil(req_kg_raw / lossFactor);
+  let weftSummary = [];
+  try {
+    weftSummary = design.weft_summary ? JSON.parse(design.weft_summary) : [];
+  } catch (e) { }
+  if (!Array.isArray(weftSummary) || weftSummary.length === 0) {
+    weftSummary = Object.values(weftColorAgg).map(row => {
+      const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
+      const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
+      const eqCount = parseEqCount(row.count);
+      
+      const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+      const req_kg = Math.ceil(req_kg_raw / lossFactor);
 
-    return {
-      ...row,
-      total_ends: groupEnds,
-      req_kg
-    };
-  });
+      return {
+        ...row,
+        total_ends: groupEnds,
+        req_kg
+      };
+    });
+  }
 
   const warpTotalEnds = warpSummary.reduce((sum, r) => sum + r.total_ends, 0);
   const warpTotalKg = warpSummary.reduce((sum, r) => sum + r.req_kg, 0);
@@ -807,6 +828,9 @@ export default function DesignEntry() {
   const [yarnCountMasters, setYarnCountMasters] = useState([]);
   const [yarnRows, setYarnRows] = useState([]);
   const [fabricDesignRows, setFabricDesignRows] = useState([]);
+  const [warpSummary, setWarpSummary] = useState([]);
+  const [weftSummary, setWeftSummary] = useState([]);
+  const [isSummaryManuallyEdited, setIsSummaryManuallyEdited] = useState(false);
   const [newYarnRow, setNewYarnRow] = useState({
     type: 'Warp',
     yarn_count: '',
@@ -949,6 +973,29 @@ export default function DesignEntry() {
     setFabricDesignRows(fabricDesignRows.filter((_, i) => i !== idx));
   };
 
+  const handleWarpSummaryChange = (index, field, value) => {
+    setIsSummaryManuallyEdited(true);
+    const updated = [...warpSummary];
+    const parsedVal = field === 'ends' || field === 'noD' || field === 'extra' || field === 'total_ends' ? (parseInt(value) || 0) : field === 'req_kg' ? (parseFloat(value) || 0) : value;
+    updated[index] = { ...updated[index], [field]: parsedVal };
+    
+    if (field === 'ends' || field === 'noD' || field === 'extra') {
+      const ends = parseInt(field === 'ends' ? value : updated[index].ends) || 0;
+      const noD = parseInt(field === 'noD' ? value : updated[index].noD) || 0;
+      const extra = parseInt(field === 'extra' ? value : updated[index].extra) || 0;
+      updated[index].total_ends = ends * noD + extra;
+    }
+    setWarpSummary(updated);
+  };
+
+  const handleWeftSummaryChange = (index, field, value) => {
+    setIsSummaryManuallyEdited(true);
+    const updated = [...weftSummary];
+    const parsedVal = field === 'ends' || field === 'total_ends' ? (parseInt(value) || 0) : field === 'req_kg' ? (parseFloat(value) || 0) : value;
+    updated[index] = { ...updated[index], [field]: parsedVal };
+    setWeftSummary(updated);
+  };
+
   // Filters
   const [fabricFilter, setFabricFilter] = useState('All Fabrics');
   const [weavingFilter, setWeavingFilter] = useState('All Weaves');
@@ -1016,33 +1063,143 @@ export default function DesignEntry() {
     }
   }, [queryId, entries]);
 
-  const parseYarnCountValue = (lbl) => {
-    const YARN_COUNTS = {
-      "10S CTN": 10.0,
-      "20S CTN": 20.0,
-      "30S CTN": 30.0,
-      "40S CTN": 40.0,
-      "60S CTN": 60.0,
-      "80S CTN": 80.0,
-      "2/20S CTN": 10.0,
-      "2/40S CTN": 20.0,
-      "2/60S CTN": 30.0,
-      "2/80S CTN": 40.0,
-    };
-    if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
-    if (!lbl) return 20.0;
-    let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
-    if (cleaned.includes('/')) {
-      const parts = cleaned.split('/');
-      const ply = parseFloat(parts[0]) || 1.0;
-      const countPart = parts[1].match(/\d+/);
-      const count = countPart ? parseFloat(countPart[0]) : 40.0;
-      return count / ply;
-    } else {
-      const match = cleaned.match(/\d+/);
-      return match ? parseFloat(match[0]) : 20.0;
+  useEffect(() => {
+    if (isSummaryManuallyEdited) return;
+
+    const warpRows = fabricDesignRows.filter(r => r.type && !r.type.toLowerCase().includes('weft'));
+    const weftRows = fabricDesignRows.filter(r => r.type && r.type.toLowerCase().includes('weft'));
+
+    const warpRepeatSize = calculateRepeatSize(warpRows);
+    const weftRepeatSize = calculateRepeatSize(weftRows);
+
+    const totalEnds = parseFloat(form.total_ends) || 0;
+    const selvage = parseFloat(form.selvage_waste) || 0;
+    const reed = parseFloat(form.reed) || 0;
+    const reedOl = Math.max(0, reed - 8);
+    const grayWidthVal = parseFloat(form.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
+    const pickOl = Math.max(0, (parseFloat(form.pick_ot) || 0) - 4);
+    const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
+    const repeatEnds = warpRepeatSize * noD;
+    const balance = totalEnds - repeatEnds - selvage;
+
+    const extraEnds = warpRows.map(() => 0);
+    let remaining = balance;
+    let idx = 0;
+    while (remaining > 0 && warpRows.length > 0) {
+      const item = warpRows[idx % warpRows.length];
+      const take = Math.min(remaining, parseInt(item.threads) || 1);
+      extraEnds[idx % warpRows.length] += take;
+      remaining -= take;
+      idx++;
     }
-  };
+
+    const totalMtr = parseFloat(form.total_mtr) || 0;
+    const crimpPct = parseFloat(form.crimp_pct) || 0;
+    const skgPct = parseFloat(form.skg_pct) || 0;
+    const dyeingPct = parseFloat(form.dyeing_loss_pct) || 0;
+    const warpLength = parseFloat(form.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
+    const weftProMtrVal = parseFloat(form.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+
+    // Aggregate Warp
+    const warpColorAgg = {};
+    warpRows.forEach((item, index) => {
+      const cname = item.color || 'White';
+      const yc = item.yarn_count || '40S CTN';
+      const key = `${yc}_${cname}`;
+      const itemEnds = parseInt(item.threads) || 0;
+      const itemExtra = extraEnds[index] || 0;
+      const itemTotalEnds = (itemEnds * noD) + itemExtra;
+
+      if (warpColorAgg[key]) {
+        warpColorAgg[key].ends += itemEnds;
+        warpColorAgg[key].extra += itemExtra;
+        warpColorAgg[key].total_ends += itemTotalEnds;
+      } else {
+        const colorCode = getColorHex(cname, colorMasters);
+        warpColorAgg[key] = {
+          beam_type: item.type || 'Warp',
+          count: yc,
+          color: cname,
+          hex: colorCode,
+          ends: itemEnds,
+          noD: noD,
+          extra: itemExtra,
+          total_ends: itemTotalEnds
+        };
+      }
+    });
+
+    const computedWarpSummary = Object.values(warpColorAgg).map(row => {
+      const eqCount = parseEqCount(row.count);
+      const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      return { ...row, req_kg };
+    });
+
+    // Aggregate Weft
+    const weftColorAgg = {};
+    weftRows.forEach(item => {
+      const cname = item.color || 'White';
+      const yc = item.yarn_count || '40S CTN';
+      const key = `${yc}_${cname}`;
+      const itemEnds = parseInt(item.threads) || 0;
+
+      if (weftColorAgg[key]) {
+        weftColorAgg[key].ends += itemEnds;
+      } else {
+        const colorCode = getColorHex(cname, colorMasters);
+        weftColorAgg[key] = {
+          beam_type: 'Weft',
+          count: yc,
+          color: cname,
+          hex: colorCode,
+          ends: itemEnds,
+          noD: 1,
+          extra: 0,
+          total_ends: 0
+        };
+      }
+    });
+
+    const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
+    const reedSpaceVal = reedOl > 0 ? (totalEnds / reedOl) : 0;
+    const totalWeftEndsCalculated = Math.round(pickOl * (reedSpaceVal + selvage));
+
+    const computedWeftSummary = Object.values(weftColorAgg).map(row => {
+      const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
+      const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
+      const eqCount = parseEqCount(row.count);
+      
+      const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+
+      return {
+        ...row,
+        total_ends: groupEnds,
+        req_kg
+      };
+    });
+
+    setWarpSummary(computedWarpSummary);
+    setWeftSummary(computedWeftSummary);
+  }, [
+    isSummaryManuallyEdited,
+    fabricDesignRows,
+    form.total_ends,
+    form.selvage_waste,
+    form.reed,
+    form.gray_width,
+    form.pick_ot,
+    form.total_mtr,
+    form.crimp_pct,
+    form.skg_pct,
+    form.dyeing_loss_pct,
+    form.warp_mtr,
+    form.weft_pro_mtr,
+    colorMasters
+  ]);
 
   const recalculateForm = (currentForm, currentYarnRows) => {
     const orderMtr = parseFloat(currentForm.order_mtr) || 0;
@@ -1067,8 +1224,8 @@ export default function DesignEntry() {
     const warpRow = (currentYarnRows || []).find(y => y.type && !y.type.toLowerCase().includes('weft'));
     const weftRow = (currentYarnRows || []).find(y => y.type && y.type.toLowerCase().includes('weft'));
     
-    const warpCount = warpRow ? (parseFloat(warpRow.act_count) || parseYarnCountValue(warpRow.yarn_count)) : 40.0;
-    const weftCount = weftRow ? (parseFloat(weftRow.act_count) || parseYarnCountValue(weftRow.yarn_count)) : 20.0;
+    const warpCount = warpRow ? (parseFloat(warpRow.act_count) || parseEqCount(warpRow.yarn_count)) : 40.0;
+    const weftCount = weftRow ? (parseFloat(weftRow.act_count) || parseEqCount(weftRow.yarn_count)) : 20.0;
 
     const gsm = (warpCount > 0 && weftCount > 0)
       ? parseFloat((((reed / warpCount) + (parseFloat(currentForm.pick_ot) || 0) / weftCount) * 25.4).toFixed(2))
@@ -1199,7 +1356,9 @@ export default function DesignEntry() {
       const payload = {
         ...form,
         yarn_details: JSON.stringify(yarnRows),
-        fabric_design_details: JSON.stringify(fabricDesignRows)
+        fabric_design_details: JSON.stringify(fabricDesignRows),
+        warp_summary: JSON.stringify(warpSummary),
+        weft_summary: JSON.stringify(weftSummary)
       };
       let savedEntry = null;
       if (editingId) {
@@ -1227,6 +1386,9 @@ export default function DesignEntry() {
       setImagePreviewUrl(null);
       setYarnRows([]);
       setFabricDesignRows([]);
+      setWarpSummary([]);
+      setWeftSummary([]);
+      setIsSummaryManuallyEdited(false);
       loadData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving design entry');
@@ -1248,8 +1410,20 @@ export default function DesignEntry() {
         if (data.fabric_design_details) fdDetails = JSON.parse(data.fabric_design_details);
       } catch (e) { }
 
+      let wSummary = [];
+      let wfSummary = [];
+      try {
+        if (data.warp_summary) wSummary = JSON.parse(data.warp_summary);
+      } catch (e) { }
+      try {
+        if (data.weft_summary) wfSummary = JSON.parse(data.weft_summary);
+      } catch (e) { }
+
       setYarnRows(yDetails);
       setFabricDesignRows(fdDetails);
+      setWarpSummary(wSummary);
+      setWeftSummary(wfSummary);
+      setIsSummaryManuallyEdited(wSummary.length > 0 || wfSummary.length > 0);
       setImagePreviewUrl(data.image_path || null);
       setSelectedFile(null);
       setSelectedFiles([]);
@@ -1471,6 +1645,17 @@ export default function DesignEntry() {
     XLSX.utils.book_append_sheet(wb, ws, "Design Entries");
     XLSX.writeFile(wb, `Design_Entries_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
+
+  const warpSubtotalEnds = warpSummary.reduce((sum, r) => sum + (parseInt(r.ends) || 0), 0);
+  const warpSubtotalExtra = warpSummary.reduce((sum, r) => sum + (parseInt(r.extra) || 0), 0);
+  const warpSubtotalTotalEnds = warpSummary.reduce((sum, r) => sum + (parseInt(r.total_ends) || 0), 0);
+  const warpSubtotalKg = warpSummary.reduce((sum, r) => sum + (parseFloat(r.req_kg) || 0), 0);
+
+  const weftSubtotalEnds = weftSummary.reduce((sum, r) => sum + (parseInt(r.ends) || 0), 0);
+  const weftSubtotalTotalEnds = weftSummary.reduce((sum, r) => sum + (parseInt(r.total_ends) || 0), 0);
+  const weftSubtotalKg = weftSummary.reduce((sum, r) => sum + (parseFloat(r.req_kg) || 0), 0);
+
+  const grandTotalKg = warpSubtotalKg + weftSubtotalKg;
 
   return (
     <div className="animate-fade">
@@ -2609,6 +2794,232 @@ export default function DesignEntry() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Design Requirement - Summary Section */}
+                {form.ibpo_no && (
+                  <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)', marginTop: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>
+                      <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>Design Requirement - Summary</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {isSummaryManuallyEdited ? (
+                          <>
+                            <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, background: '#fef3c7', padding: '2px 8px', borderRadius: 4 }}>Manually Overridden</span>
+                            {!isReadOnly && (
+                              <button 
+                                type="button" 
+                                className="btn btn-secondary" 
+                                style={{ padding: '2px 8px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+                                onClick={() => setIsSummaryManuallyEdited(false)}
+                              >
+                                Reset to Auto-calculated
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <span style={{ fontSize: 12, color: '#10b981', fontWeight: 600, background: '#ecfdf5', padding: '2px 8px', borderRadius: 4 }}>Auto-calculated</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="table table-bordered" style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--bg-secondary)', fontWeight: 700 }}>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', width: 120 }}>Beam Type</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', width: 120 }}>Count</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', width: 120 }}>Color</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right', width: 90 }}>Ends</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right', width: 90 }}>No D</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right', width: 90 }}>Extra</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right', width: 110 }}>Total End</th>
+                            <th style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right', width: 110 }}>Req kg</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Warp Summary Rows */}
+                          {warpSummary.map((row, index) => {
+                            const colorCode = getColorHex(row.color, colorMasters);
+                            return (
+                              <tr key={`warp-sum-${index}`}>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)', fontWeight: 600 }}>{row.beam_type || 'Warp'}</td>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.count}</td>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: colorCode, border: '1px solid #999' }} />
+                                    {row.color}
+                                  </div>
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.ends || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.ends ?? ''}
+                                      onChange={e => handleWarpSummaryChange(index, 'ends', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.noD || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.noD ?? ''}
+                                      onChange={e => handleWarpSummaryChange(index, 'noD', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.extra || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.extra ?? ''}
+                                      onChange={e => handleWarpSummaryChange(index, 'extra', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.total_ends || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.total_ends ?? ''}
+                                      onChange={e => handleWarpSummaryChange(index, 'total_ends', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.req_kg || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.req_kg ?? ''}
+                                      onChange={e => handleWarpSummaryChange(index, 'req_kg', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          
+                          {/* Warp Subtotal Row */}
+                          {warpSummary.length > 0 && (
+                            <tr style={{ background: '#f1f5f9', fontWeight: 600 }}>
+                              <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>Warp Subtotal</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{warpSubtotalEnds}</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>-</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{warpSubtotalExtra}</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{warpSubtotalTotalEnds}</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{warpSubtotalKg}</td>
+                            </tr>
+                          )}
+
+                          {/* Weft Summary Rows */}
+                          {weftSummary.map((row, index) => {
+                            const colorCode = getColorHex(row.color, colorMasters);
+                            return (
+                              <tr key={`weft-sum-${index}`}>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)', fontWeight: 600 }}>{row.beam_type || 'Weft'}</td>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>{row.count}</td>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: colorCode, border: '1px solid #999' }} />
+                                    {row.color}
+                                  </div>
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.ends || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.ends ?? ''}
+                                      onChange={e => handleWeftSummaryChange(index, 'ends', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>-</td>
+                                <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>-</td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.total_ends || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.total_ends ?? ''}
+                                      onChange={e => handleWeftSummaryChange(index, 'total_ends', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>
+                                  {isReadOnly ? (
+                                    row.req_kg || 0
+                                  ) : (
+                                    <input 
+                                      type="number" 
+                                      className="form-control" 
+                                      style={{ padding: '2px 6px', fontSize: 12, height: 26, width: '100%', textAlign: 'right', margin: 0 }}
+                                      value={row.req_kg ?? ''}
+                                      onChange={e => handleWeftSummaryChange(index, 'req_kg', e.target.value)}
+                                    />
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+                          {/* Weft Subtotal Row */}
+                          {weftSummary.length > 0 && (
+                            <tr style={{ background: '#f1f5f9', fontWeight: 600 }}>
+                              <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid var(--border)' }}>Weft Subtotal</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{weftSubtotalEnds}</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>-</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>-</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{weftSubtotalTotalEnds}</td>
+                              <td style={{ padding: '8px 12px', border: '1px solid var(--border)', textAlign: 'right' }}>{weftSubtotalKg}</td>
+                            </tr>
+                          )}
+
+                          {/* Grand Total Row */}
+                          {(warpSummary.length > 0 || weftSummary.length > 0) && (
+                            <tr style={{ background: '#e2e8f0', fontWeight: 700, fontSize: 14 }}>
+                              <td colSpan={7} style={{ padding: '10px 12px', border: '1px solid var(--border)', color: 'var(--primary)' }}>GRAND TOTAL REQUIREMENT</td>
+                              <td style={{ padding: '10px 12px', border: '1px solid var(--border)', textAlign: 'right', color: 'var(--primary)' }}>{grandTotalKg} kg</td>
+                            </tr>
+                          )}
+                          
+                          {warpSummary.length === 0 && weftSummary.length === 0 && (
+                            <tr>
+                              <td colSpan={8} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                                No fabric design specifications added yet. Add rows above to generate summary.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </form>
             </fieldset>
           </div>
