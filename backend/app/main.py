@@ -21,7 +21,7 @@ from app.api.v1.router import api_router
 import app.models  # noqa: F401
     
 
-RESET_DATABASE = False  # Change to True to clear all data from tables on restart
+RESET_DATABASE = False    # Change to True to clear all data from tables on restart
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

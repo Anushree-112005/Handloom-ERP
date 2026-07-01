@@ -72,44 +72,7 @@ export default function GatePass() {
         const fetchedBOs = boRes.data || [];
         const fetchedParties = partRes.data || [];
 
-        // Check and seed local storage if empty
-        const savedPass = localStorage.getItem('gate_pass_data');
-        if (!savedPass || JSON.parse(savedPass).length === 0) {
-          const seedData = [];
-          for (let i = 0; i < 10; i++) {
-            const vehicle = fetchedVehicles[(i + 4) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[(i + 2) % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
-            const party = fetchedParties[(i + 2) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
-            
-            seedData.push({
-              id: `GP-${String(i + 1).padStart(5, '0')}`,
-              passDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-              passType: i % 2 === 0 ? "Returnable" : "Non-Returnable",
-              partyName: party.company_name,
-              partyAddress: party.address || party.billing_address || "123 Textile Zone, Coimbatore",
-              contactPerson: party.contact_person || `Contact ${i + 1}`,
-              mobileNo: party.mobile || party.phone || `987654322${i}`,
-              vehicleNo: vehicle.vehicle_number,
-              items: [
-                {
-                  name: i % 2 === 0 ? "Warping Beam Shell" : "Cardboard Packing Cones",
-                  qty: 10 + i,
-                  unit: "Nos",
-                  returnable: i % 2 === 0 ? "Yes" : "No",
-                  expectedReturn: i % 2 === 0 ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10) : ""
-                }
-              ],
-              authorizedBy: "Manager A",
-              validTill: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-              purpose: i % 2 === 0 ? "Material Return" : "Sample Dispatch",
-              remarks: `Authorized gate pass for order ${bo.ibpo_number}`,
-              status: i % 3 === 0 ? "Open" : "Used",
-              printedBy: "Security Desk Admin"
-            });
-          }
-          localStorage.setItem('gate_pass_data', JSON.stringify(seedData));
-          setPasses(seedData);
-        }
+        // No auto-seeding — start with empty data if localStorage is empty
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }

@@ -44,40 +44,7 @@ export default function GateInward() {
         const fetchedBOs = boRes.data || [];
         const fetchedParties = partRes.data || [];
 
-        // Check and seed local storage if empty
-        const saved = localStorage.getItem('gate_inward_data');
-        if (!saved || JSON.parse(saved).length === 0) {
-          const seedData = [];
-          for (let i = 0; i < 10; i++) {
-            const vehicle = fetchedVehicles[i % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[i % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
-            const party = fetchedParties[i % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
-            
-            seedData.push({
-              id: `GIN-${String(i + 1).padStart(5, '0')}`,
-              dateTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-              vehicleNo: vehicle.vehicle_number,
-              driverName: `Driver ${i + 1}`,
-              driverMobile: `987654300${i}`,
-              partyName: party.company_name,
-              materialType: i % 2 === 0 ? "Yarn" : "Fabric / Cloth",
-              purpose: "Material Delivery",
-              dcNo: `DC-IN-00${i + 1}`,
-              dcDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-              itemDesc: i % 2 === 0 ? "40s Cotton Weft Combed Cones" : "Finished Cotton Fabric Rolls",
-              qty: 1000 + i * 200,
-              unit: i % 2 === 0 ? "Kg" : "Meter",
-              weight: 1050 + i * 200,
-              packages: 20 + i * 2,
-              guardName: "S. Rajendran",
-              inTime: `09:${30 + i}`,
-              remarks: `Seeded entry for order ${bo.ibpo_number}`,
-              status: i % 3 === 0 ? "Open" : "Closed"
-            });
-          }
-          localStorage.setItem('gate_inward_data', JSON.stringify(seedData));
-          setInwards(seedData);
-        }
+        // No auto-seeding — start with empty data if localStorage is empty
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }

@@ -1,37 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Layers, PieChart, Search, Download, Database, MapPin, IndianRupee, ShieldCheck } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import api from '../../services/api';
 
 export default function StockSummary() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
+  const [stockData, setStockData] = useState([]);
 
-  const MOCK_STOCK = [
-    { id: 'INV-001', category: 'Yarn', itemName: '40s Karded Cotton Yarn', qty: 5400, unit: 'Kgs', value: 1431000, godown: 'Main Warehouse', lastUpdated: '2026-06-20' },
-    { id: 'INV-002', category: 'Yarn', itemName: '60s Combed Cotton Yarn', qty: 3825, unit: 'Kgs', value: 1185750, godown: 'Main Warehouse', lastUpdated: '2026-06-20' },
-    { id: 'INV-003', category: 'Greige Fabric', itemName: 'Cotton Greige Fabric 40x40 100x80 63"', qty: 15400, unit: 'Mtrs', value: 1155000, godown: 'Greige Shed', lastUpdated: '2026-06-19' },
-    { id: 'INV-004', category: 'Finished Fabric', itemName: 'Printed Cotton Satin (Design 4091)', qty: 8300, unit: 'Mtrs', value: 1494000, godown: 'Finished Goods Godown', lastUpdated: '2026-06-20' },
-    { id: 'INV-005', category: 'Finished Fabric', itemName: 'Dyed Linen Blend - Forest Green', qty: 1500, unit: 'Mtrs', value: 412500, godown: 'Finished Goods Godown', lastUpdated: '2026-06-18' },
-    { id: 'INV-006', category: 'Stores & Spares', itemName: 'Weaving Shuttle Spares (Type-A)', qty: 120, unit: 'Pcs', value: 54000, godown: 'Store Room 1', lastUpdated: '2026-06-15' },
-    { id: 'INV-007', category: 'Chemicals & Dye', itemName: 'Reactive Indigo Dyeing Powder', qty: 450, unit: 'Kgs', value: 157500, godown: 'Chemical Store', lastUpdated: '2026-06-20' }
-  ];
-
-  const categories = useMemo(() => {
-    return ['All Categories', ...new Set(MOCK_STOCK.map(item => item.category))];
+  useEffect(() => {
+    // Fetch real stock data from backend API
+    api.get('/inventory/stock-summary')
+      .then(res => setStockData(res.data || []))
+      .catch(() => setStockData([]));
   }, []);
 
+  const categories = useMemo(() => {
+    return ['All Categories', ...new Set(stockData.map(item => item.category))];
+  }, [stockData]);
+
   const filteredStock = useMemo(() => {
-    return MOCK_STOCK.filter(item => {
-      const matchesSearch = item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            item.godown.toLowerCase().includes(searchTerm.toLowerCase());
+    return stockData.filter(item => {
+      const matchesSearch = (item.itemName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (item.godown || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'All Categories' || item.category === categoryFilter;
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, categoryFilter]);
+  }, [searchTerm, categoryFilter, stockData]);
 
   const totals = useMemo(() => {
     const totalItems = filteredStock.length;
-    const totalValuation = filteredStock.reduce((acc, item) => acc + item.value, 0);
+    const totalValuation = filteredStock.reduce((acc, item) => acc + (item.value || 0), 0);
     return { totalItems, totalValuation };
   }, [filteredStock]);
 
@@ -127,10 +126,10 @@ export default function StockSummary() {
                   </span>
                 </td>
                 <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.itemName}</td>
-                <td style={{ textAlign: 'right', fontWeight: 650 }}>{item.qty.toLocaleString()}</td>
+                <td style={{ textAlign: 'right', fontWeight: 650 }}>{(item.qty || 0).toLocaleString()}</td>
                 <td>{item.unit}</td>
-                <td style={{ textAlign: 'right' }}>₹{(item.value / item.qty).toFixed(2)}</td>
-                <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{item.value.toLocaleString()}</td>
+                <td style={{ textAlign: 'right' }}>₹{item.qty ? ((item.value || 0) / item.qty).toFixed(2) : '0.00'}</td>
+                <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{(item.value || 0).toLocaleString()}</td>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <MapPin size={14} color="var(--text-muted)" />

@@ -47,20 +47,9 @@ OTHER_DISTRICTS = {
 }
 
 DEFAULT_SUB_MASTERS = {
-    "party_type": [
-        "Sales", "Purchase", "Sales Party", "Purchase Party", "Delivery Party",
-        "Logistics", "Agent", "Postage/Courier",
-        "Processor", "Weaving vendor", "Warping/Sizing",
-        "Yarn Dyeing", "Bit Loom Weaver", "General",
-        "Yarn Coverter", "Doubling", "Chemical Supplier",
-        "Exports party", "Weaving Unit", "Printing",
-        "Own Shed", "Testing Lab", "Fabric Dyeing",
-        "Washing/Finishing", "Spares Supplier", "JobWorker"
-    ],
+    "party_type": [],
     "customer_grade": ["A", "B", "C"],
-    "party_type_group": [
-        "Domestic Customer", "Export Customer", "Yarn Supplier", "Chemical Supplier"
-    ],
+    "party_type_group": [],
     "state_master": INDIAN_STATES,
     "district_city_master": TAMIL_NADU_DISTRICTS + list(OTHER_DISTRICTS.keys()),
     "sales_region_master": ["South Zone", "North Zone", "Export", "Local"],

@@ -793,7 +793,7 @@ export default function YarnDyeingPO() {
           </div>
 
           <form id="yd-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
-            <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
+            <div id="section-info" className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
               <div className="form-group"><label>Org.Name</label><input type="text" className="form-control" value="DEPL" disabled /></div>
               <div className="form-group"><label>Ref No</label>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -826,7 +826,7 @@ export default function YarnDyeingPO() {
                 </select>
               </div>
 
-              <div className="form-group"><label>AZO Free</label>
+              <div id="section-ref" className="form-group"><label>AZO Free</label>
                 <select className="form-control" name="azo_free" value={form.azo_free} onChange={handleChange}><option>Yes</option><option>No</option></select>
               </div>
               <div className="form-group"><label>APEo,NPEo</label>
@@ -879,7 +879,7 @@ export default function YarnDyeingPO() {
             </div>
 
             {/* Yarn Details Table */}
-            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 24, width: '100%', border: '1px solid var(--border)' }}>
+            <div id="section-items" className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 24, width: '100%', border: '1px solid var(--border)' }}>
               <table className="data-table" style={{ minWidth: '1600px' }}>
                 <thead>
                   <tr style={{ background: '#e2e8f0', color: '#1e293b' }}>
