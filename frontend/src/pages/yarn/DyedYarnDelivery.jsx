@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Send, CheckCircle } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Send, CheckCircle, FileText, Package, IndianRupee } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { dyedYarnDeliveryAPI, partyAPI, dropdownAPI, yarnDyeingPOAPI, subMasterAPI } from '../../services/api';
 
@@ -54,6 +54,13 @@ export default function DyedYarnDelivery() {
   };
 
   const [form, setForm] = useState(initialForm);
+  const [activeTab, setActiveTab] = useState('general');
+
+  const tabs = [
+    { id: 'general', label: 'Delivery & Logistics', icon: FileText },
+    { id: 'items', label: 'Yarn Details', icon: Package },
+    { id: 'financials', label: 'Financial Summary', icon: IndianRupee }
+  ];
 
   const loadData = async () => {
     try {
@@ -169,7 +176,7 @@ export default function DyedYarnDelivery() {
       } else {
         await dyedYarnDeliveryAPI.create(payload);
       }
-      setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
+      setShowForm(false); setEditingId(null); setForm(initialForm); setActiveTab('general'); loadData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving delivery');
     }
@@ -276,6 +283,7 @@ export default function DyedYarnDelivery() {
 
   const handleOpenForm = (entry = null, readOnly = false) => {
     setIsReadOnly(readOnly);
+    setActiveTab('general');
     if (entry) {
       setEditingId(entry.id);
       dyedYarnDeliveryAPI.get(entry.id).then(res => {
@@ -287,6 +295,12 @@ export default function DyedYarnDelivery() {
       setForm(initialForm);
       setShowForm(true);
     }
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setForm(initialForm);
+    setActiveTab('general');
   };
 
   const handleChange = (e) => {
@@ -329,7 +343,7 @@ export default function DyedYarnDelivery() {
   });
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: 24 }}>
       {!showForm ? (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -439,276 +453,487 @@ export default function DyedYarnDelivery() {
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><Send size={20} color="var(--primary)" /> {isReadOnly ? 'View Delivery Details' : editingId ? 'Edit Delivery' : 'New Dyed Yarn Delivery'}</h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
+              <button type="button" className="btn btn-secondary" onClick={handleCloseForm}><X size={16} /> Close</button>
               {!isReadOnly && (
                 <button type="submit" form="delivery-form" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}</button>
               )}
             </div>
           </div>
 
-          <form id="delivery-form" onSubmit={handleCreate} style={{ display: 'flex', gap: 24, padding: 24, alignItems: 'flex-start' }}>
-            {/* MAIN CONTENT COLUMN */}
-            <fieldset disabled={isReadOnly} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0, border: 'none', padding: 0, margin: 0 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+            {tabs.map(tab => (
+              <button 
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
+                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
+                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <tab.icon size={16}/> {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <form id="delivery-form" onSubmit={handleCreate} style={{ padding: 24 }}>
+            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
               
-              {/* Delivery Info */}
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY INFO</span>
-                </div>
-                <div style={{ padding: '20px 18px' }}>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
-                    <div className="form-group"><label>Delivery No</label><input className="form-control" name="delivery_no" value={form.delivery_no} onChange={handleChange} placeholder="Auto Generated" disabled /></div>
-                    <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
-                    
-                    <div className="form-group"><label>Delivery Type</label>
-                      <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
-                        <option>Direct</option><option>Against PO</option>
-                      </select>
+              {activeTab === 'general' && (
+                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  {/* Delivery Info */}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY INFO</span>
                     </div>
-                    <div className="form-group"><label>Delivery Mode</label>
-                      {isCustomDeliveryMode ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input type="text" className="form-control" placeholder="New Mode" value={customDeliveryModeVal} onChange={e => setCustomDeliveryModeVal(e.target.value)} />
-                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomDeliveryMode} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
-                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomDeliveryMode(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                    <div style={{ padding: '20px 18px' }}>
+                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+                        <div className="form-group"><label>Delivery No</label><input className="form-control" name="delivery_no" value={form.delivery_no} onChange={handleChange} placeholder="Auto Generated" disabled /></div>
+                        <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} /></div>
+                        <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
+                        
+                        <div className="form-group"><label>Delivery Type</label>
+                          <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
+                            <option>Direct</option><option>Against PO</option>
+                          </select>
                         </div>
-                      ) : (
-                        <select className="form-control" name="delivery_mode" value={form.delivery_mode || ''} onChange={handleChange}>
-                          <option value="">Select...</option>
-                          {options.masters?.transport_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                        </select>
-                      )}
+                        <div className="form-group"><label>Delivery Mode</label>
+                          {isCustomDeliveryMode ? (
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <input type="text" className="form-control" placeholder="New Mode" value={customDeliveryModeVal} onChange={e => setCustomDeliveryModeVal(e.target.value)} />
+                              <button type="button" className="btn btn-primary" onClick={handleSaveCustomDeliveryMode} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                              <button type="button" className="btn btn-secondary" onClick={() => setIsCustomDeliveryMode(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
+                            </div>
+                          ) : (
+                            <select className="form-control" name="delivery_mode" value={form.delivery_mode || ''} onChange={handleChange}>
+                              <option value="">Select...</option>
+                              {options.masters?.transport_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                              <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                            </select>
+                          )}
+                        </div>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing PO No</label>
+                          <select className="form-control" name="yarn_dyeing_po_no" value={form.yarn_dyeing_po_no || ''} onChange={(e) => handleFetchFromYarnDyeingPO(e.target.value)}>
+                            <option value="">Select PO...</option>
+                            {yarnDyeingPOs.map(po => <option key={po.id} value={po.po_no}>{po.po_no} - {po.supplier_dyeing_unit}</option>)}
+                          </select>
+                        </div>
+                        
+                        <div className="form-group"><label>Processor Name</label><input className="form-control" name="processor_name" value={form.processor_name} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Party Name</label>
+                          <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
+                            <option value="">Select Party...</option>
+                            {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} /></div>
+                        
+                        <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Merchandiser</label><input className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Delivery Status</label>
+                          <select className="form-control" name="delivery_status" value={form.delivery_status} onChange={handleChange}>
+                            <option>Pending</option><option>Partially Delivered</option><option>Fully Delivered</option><option>Closed</option>
+                          </select>
+                        </div>
+                        <div className="form-group"><label>Dispatch Godown</label><input className="form-control" name="dispatch_from_godown" value={form.dispatch_from_godown} onChange={handleChange} /></div>
+                        
+                        <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} rows={2} /></div>
+                      </div>
                     </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing PO No</label>
-                      <select className="form-control" name="yarn_dyeing_po_no" value={form.yarn_dyeing_po_no || ''} onChange={(e) => handleFetchFromYarnDyeingPO(e.target.value)}>
-                        <option value="">Select PO...</option>
-                        {yarnDyeingPOs.map(po => <option key={po.id} value={po.po_no}>{po.po_no} - {po.supplier_dyeing_unit}</option>)}
-                      </select>
+                  </div>
+
+                  {/* Logistics */}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>LOGISTICS</span>
                     </div>
-                    
-                    <div className="form-group"><label>Processor Name</label><input className="form-control" name="processor_name" value={form.processor_name} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Party Name</label>
-                      <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
-                        <option value="">Select Party...</option>
-                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                      </select>
+                    <div style={{ padding: '20px 18px' }}>
+                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+                        <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Driver Mobile</label><input className="form-control" name="driver_mobile" value={form.driver_mobile} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
+                        <div className="form-group"><label>LR No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
+                        <div className="form-group"><label>Gate Pass No</label><input className="form-control" name="gate_pass_no" value={form.gate_pass_no} onChange={handleChange} /></div>
+                        <div className="form-group"><label>E-Way Bill No</label><input className="form-control" name="eway_bill_no" value={form.eway_bill_no} onChange={handleChange} /></div>
+                      </div>
                     </div>
-                    <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} /></div>
-                    
-                    <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Merchandiser</label><input className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Delivery Status</label>
-                      <select className="form-control" name="delivery_status" value={form.delivery_status} onChange={handleChange}>
-                        <option>Pending</option><option>Partially Delivered</option><option>Fully Delivered</option><option>Closed</option>
-                      </select>
+                  </div>
+
+                  {/* Yarn Details (First page summary) */}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>YARN DETAILS</span>
+                      {!isReadOnly && <button type="button" className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}><Plus size={14} /> Add Row</button>}
                     </div>
-                    <div className="form-group"><label>Dispatch Godown</label><input className="form-control" name="dispatch_from_godown" value={form.dispatch_from_godown} onChange={handleChange} /></div>
-                    
-                    <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} rows={2} /></div>
+                    <div style={{ padding: '20px 18px' }}>
+                      <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                        <table className="data-table" style={{ minWidth: '2200px' }}>
+                          <thead>
+                            <tr>
+                              <th>S.No</th><th>SP No</th><th>Design No</th><th>Yarn Type</th><th>Yarn Count</th><th>Ply</th><th>Colour</th>
+                              <th>Shade No</th><th>Lot No</th><th>Batch No</th><th>Unit</th><th>Ord Qty</th><th>Prev Delv Qty</th>
+                              <th>Bal Qty</th><th>Curr Delv Qty</th><th>Bags</th><th>Cones</th><th>Gross Wt</th><th>Tare Wt</th>
+                              <th>Net Wt</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {form.items.map((item, idx) => (
+                              <tr key={idx}>
+                                <td>{idx + 1}</td>
+                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
+                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.design_no} onChange={e => updateItem(idx, 'design_no', e.target.value)} /></td>
+                                <td>
+                                  {customYarnTypeIdx === idx ? (
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                      <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Yarn" value={customYarnTypeVal} onChange={e => setCustomYarnTypeVal(e.target.value)} />
+                                      <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnType} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                      <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnTypeIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                    </div>
+                                  ) : (
+                                    <select className="form-control" style={{ width: 120 }} value={item.yarn_type || ''} onChange={e => updateItem(idx, 'yarn_type', e.target.value)}>
+                                      <option value="">Select...</option>
+                                      {options.masters?.yarn_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                    </select>
+                                  )}
+                                </td>
+                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
+                                <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.ply} onChange={e => updateItem(idx, 'ply', e.target.value)} /></td>
+                                <td>
+                                  {customColourIdx === idx ? (
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                      <input type="text" className="form-control" style={{ width: 90 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                      <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                      <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                    </div>
+                                  ) : (
+                                    <select className="form-control" style={{ width: 90 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
+                                      <option value="">Select...</option>
+                                      {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                    </select>
+                                  )}
+                                </td>
+                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
+                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
+                                <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} /></td>
+                                
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.ordered_qty} onChange={e => updateItem(idx, 'ordered_qty', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.prev_delivered_qty} onChange={e => updateItem(idx, 'prev_delivered_qty', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.balance_qty} readOnly /></td>
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.current_delivery_qty} onChange={e => updateItem(idx, 'current_delivery_qty', e.target.value)} /></td>
+                                
+                                <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_bags} onChange={e => updateItem(idx, 'no_of_bags', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_cones} onChange={e => updateItem(idx, 'no_of_cones', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.gross_weight} onChange={e => updateItem(idx, 'gross_weight', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.tare_weight} onChange={e => updateItem(idx, 'tare_weight', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.net_weight} onChange={e => updateItem(idx, 'net_weight', e.target.value)} /></td>
+                                
+                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                                <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
+                                <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
+                                <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quantity & Financials Summaries */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
+                    {/* QUANTITY SUMMARY */}
+                    <div style={{ flex: 1, minWidth: 300 }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>QUANTITY SUMMARY</span>
+                        </div>
+                        <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <DetailRow label="Ordered Qty" value={`${form.total_ordered_qty} Kg`} />
+                          <DetailRow label="Prev Delv Qty" value={`${form.total_prev_delivered_qty} Kg`} />
+                          <DetailRow label="Curr Delv Qty" value={`${form.total_current_delivery_qty} Kg`} />
+                          <DetailRow label="Balance Qty" value={`${form.total_balance_qty} Kg`} />
+                          <DetailRow label="Total Bags" value={form.total_bags} />
+                          <DetailRow label="Total Cones" value={form.total_cones} />
+                          <DetailRow label="Gross Weight" value={`${form.total_gross_weight} Kg`} />
+                          <DetailRow label="Net Weight" value={`${form.total_net_weight} Kg`} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* FINANCIAL SUMMARY */}
+                    <div style={{ flex: '0 0 350px', minWidth: 320 }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>FINANCIAL SUMMARY</span>
+                        </div>
+                        <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Chg</span>
+                            <input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Chg</span>
+                            <input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Chg</span>
+                            <input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
+                            <input type="number" className="form-control" name="insurance_charges" value={form.insurance_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Chg</span>
+                            <input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+
+                          <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
+
+                          <DetailRow label="Gross Amount" value={`₹${parseFloat(form.gross_amount).toFixed(2)}`} />
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount</span>
+                            <input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+
+                          <DetailRow label="Taxable Amount" value={`₹${parseFloat(form.taxable_amount).toFixed(2)}`} />
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                            <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                            <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                            <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+
+                          <DetailRow label="Total GST" value={`₹${parseFloat(form.total_gst).toFixed(2)}`} />
+                          <DetailRow label="Round Off" value={`₹${parseFloat(form.round_off).toFixed(2)}`} />
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>GRAND TOTAL</span>
+                            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
+                              INR {parseFloat(form.grand_total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Advance</span>
+                            <input type="number" className="form-control" name="advance" value={form.advance} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>BALANCE</span>
+                            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary-dark)' }}>
+                              INR {parseFloat(form.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Logistics */}
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>LOGISTICS</span>
-                </div>
-                <div style={{ padding: '20px 18px' }}>
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
-                    <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Driver Mobile</label><input className="form-control" name="driver_mobile" value={form.driver_mobile} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
-                    <div className="form-group"><label>LR No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Gate Pass No</label><input className="form-control" name="gate_pass_no" value={form.gate_pass_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>E-Way Bill No</label><input className="form-control" name="eway_bill_no" value={form.eway_bill_no} onChange={handleChange} /></div>
+              {activeTab === 'items' && (
+                <div className="animate-fade" style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                  <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>YARN DETAILS</span>
+                    {!isReadOnly && <button type="button" className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}><Plus size={14} /> Add Row</button>}
                   </div>
-                </div>
-              </div>
-
-              {/* Items Block */}
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>YARN DETAILS</span>
-                  {!isReadOnly && <button type="button" className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}><Plus size={14} /> Add Row</button>}
-                </div>
-                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>S.No</th><th>SP No</th><th>Design No</th><th>Yarn Type</th><th>Yarn Count</th><th>Ply</th><th>Colour</th>
-                          <th>Shade No</th><th>Lot No</th><th>Batch No</th><th>Unit</th><th>Ord Qty</th><th>Prev Delv Qty</th>
-                          <th>Bal Qty</th><th>Curr Delv Qty</th><th>Bags</th><th>Cones</th><th>Gross Wt</th><th>Tare Wt</th>
-                          <th>Net Wt</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.design_no} onChange={e => updateItem(idx, 'design_no', e.target.value)} /></td>
-                            <td>
-                              {customYarnTypeIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Yarn" value={customYarnTypeVal} onChange={e => setCustomYarnTypeVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnType} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnTypeIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 120 }} value={item.yarn_type || ''} onChange={e => updateItem(idx, 'yarn_type', e.target.value)}>
-                                  <option value="">Select...</option>
-                                  {options.masters?.yarn_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.ply} onChange={e => updateItem(idx, 'ply', e.target.value)} /></td>
-                            <td>
-                              {customColourIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 90 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 90 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
-                                  <option value="">Select...</option>
-                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} /></td>
-                            
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.ordered_qty} onChange={e => updateItem(idx, 'ordered_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.prev_delivered_qty} onChange={e => updateItem(idx, 'prev_delivered_qty', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.balance_qty} readOnly /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.current_delivery_qty} onChange={e => updateItem(idx, 'current_delivery_qty', e.target.value)} /></td>
-                            
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_bags} onChange={e => updateItem(idx, 'no_of_bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_cones} onChange={e => updateItem(idx, 'no_of_cones', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.gross_weight} onChange={e => updateItem(idx, 'gross_weight', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.tare_weight} onChange={e => updateItem(idx, 'tare_weight', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.net_weight} onChange={e => updateItem(idx, 'net_weight', e.target.value)} /></td>
-                            
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                  <div style={{ padding: '20px 18px' }}>
+                    <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                      <table className="data-table" style={{ minWidth: '2200px' }}>
+                        <thead>
+                          <tr>
+                            <th>S.No</th><th>SP No</th><th>Design No</th><th>Yarn Type</th><th>Yarn Count</th><th>Ply</th><th>Colour</th>
+                            <th>Shade No</th><th>Lot No</th><th>Batch No</th><th>Unit</th><th>Ord Qty</th><th>Prev Delv Qty</th>
+                            <th>Bal Qty</th><th>Curr Delv Qty</th><th>Bags</th><th>Cones</th><th>Gross Wt</th><th>Tare Wt</th>
+                            <th>Net Wt</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {form.items.map((item, idx) => (
+                            <tr key={idx}>
+                              <td>{idx + 1}</td>
+                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
+                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.design_no} onChange={e => updateItem(idx, 'design_no', e.target.value)} /></td>
+                              <td>
+                                {customYarnTypeIdx === idx ? (
+                                  <div style={{ display: 'flex', gap: 4 }}>
+                                    <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Yarn" value={customYarnTypeVal} onChange={e => setCustomYarnTypeVal(e.target.value)} />
+                                    <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnType} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnTypeIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                  </div>
+                                ) : (
+                                  <select className="form-control" style={{ width: 120 }} value={item.yarn_type || ''} onChange={e => updateItem(idx, 'yarn_type', e.target.value)}>
+                                    <option value="">Select...</option>
+                                    {options.masters?.yarn_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                    <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                  </select>
+                                )}
+                              </td>
+                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
+                              <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.ply} onChange={e => updateItem(idx, 'ply', e.target.value)} /></td>
+                              <td>
+                                {customColourIdx === idx ? (
+                                  <div style={{ display: 'flex', gap: 4 }}>
+                                    <input type="text" className="form-control" style={{ width: 90 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                    <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                  </div>
+                                ) : (
+                                  <select className="form-control" style={{ width: 90 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
+                                    <option value="">Select...</option>
+                                    {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                    <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                  </select>
+                                )}
+                              </td>
+                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
+                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
+                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
+                              <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} /></td>
+                              
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.ordered_qty} onChange={e => updateItem(idx, 'ordered_qty', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.prev_delivered_qty} onChange={e => updateItem(idx, 'prev_delivered_qty', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.balance_qty} readOnly /></td>
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.current_delivery_qty} onChange={e => updateItem(idx, 'current_delivery_qty', e.target.value)} /></td>
+                              
+                              <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_bags} onChange={e => updateItem(idx, 'no_of_bags', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_cones} onChange={e => updateItem(idx, 'no_of_cones', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.gross_weight} onChange={e => updateItem(idx, 'gross_weight', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.tare_weight} onChange={e => updateItem(idx, 'tare_weight', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.net_weight} onChange={e => updateItem(idx, 'net_weight', e.target.value)} /></td>
+                              
+                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                              <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
+                              <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
+                              <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'financials' && (
+                <div className="animate-fade" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
+                  {/* QUANTITY SUMMARY */}
+                  <div style={{ flex: 1, minWidth: 300 }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>QUANTITY SUMMARY</span>
+                      </div>
+                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <DetailRow label="Ordered Qty" value={`${form.total_ordered_qty} Kg`} />
+                        <DetailRow label="Prev Delv Qty" value={`${form.total_prev_delivered_qty} Kg`} />
+                        <DetailRow label="Curr Delv Qty" value={`${form.total_current_delivery_qty} Kg`} />
+                        <DetailRow label="Balance Qty" value={`${form.total_balance_qty} Kg`} />
+                        <DetailRow label="Total Bags" value={form.total_bags} />
+                        <DetailRow label="Total Cones" value={form.total_cones} />
+                        <DetailRow label="Gross Weight" value={`${form.total_gross_weight} Kg`} />
+                        <DetailRow label="Net Weight" value={`${form.total_net_weight} Kg`} />
+                      </div>
+                    </div>
                   </div>
 
-              </div>
+                  {/* FINANCIAL SUMMARY */}
+                  <div style={{ flex: '0 0 350px', minWidth: 320 }}>
+                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>FINANCIAL SUMMARY</span>
+                      </div>
+                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Chg</span>
+                          <input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Chg</span>
+                          <input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Chg</span>
+                          <input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
+                          <input type="number" className="form-control" name="insurance_charges" value={form.insurance_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Chg</span>
+                          <input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+
+                        <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
+
+                        <DetailRow label="Gross Amount" value={`₹${parseFloat(form.gross_amount).toFixed(2)}`} />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount</span>
+                          <input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+
+                        <DetailRow label="Taxable Amount" value={`₹${parseFloat(form.taxable_amount).toFixed(2)}`} />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                          <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                          <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                          <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+
+                        <DetailRow label="Total GST" value={`₹${parseFloat(form.total_gst).toFixed(2)}`} />
+                        <DetailRow label="Round Off" value={`₹${parseFloat(form.round_off).toFixed(2)}`} />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>GRAND TOTAL</span>
+                          <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
+                            INR {parseFloat(form.grand_total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Advance</span>
+                          <input type="number" className="form-control" name="advance" value={form.advance} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>BALANCE</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary-dark)' }}>
+                            INR {parseFloat(form.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </fieldset>
-
-            {/* STICKY SUMMARY COLUMN */}
-            <div style={{ flex: '0 0 320px', position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>QUANTITY SUMMARY</span>
-                </div>
-                <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <DetailRow label="Ordered Qty" value={`${form.total_ordered_qty} Kg`} />
-                  <DetailRow label="Prev Delv Qty" value={`${form.total_prev_delivered_qty} Kg`} />
-                  <DetailRow label="Curr Delv Qty" value={`${form.total_current_delivery_qty} Kg`} />
-                  <DetailRow label="Balance Qty" value={`${form.total_balance_qty} Kg`} />
-                  <DetailRow label="Total Bags" value={form.total_bags} />
-                  <DetailRow label="Total Cones" value={form.total_cones} />
-                  <DetailRow label="Gross Weight" value={`${form.total_gross_weight} Kg`} />
-                  <DetailRow label="Net Weight" value={`${form.total_net_weight} Kg`} />
-                </div>
-              </div>
-
-              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>FINANCIAL SUMMARY</span>
-                </div>
-                <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Chg</span>
-                    <input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Chg</span>
-                    <input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Chg</span>
-                    <input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
-                    <input type="number" className="form-control" name="insurance_charges" value={form.insurance_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Chg</span>
-                    <input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-
-                  <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
-
-                  <DetailRow label="Gross Amount" value={`₹${parseFloat(form.gross_amount).toFixed(2)}`} />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount</span>
-                    <input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-
-                  <DetailRow label="Taxable Amount" value={`₹${parseFloat(form.taxable_amount).toFixed(2)}`} />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
-                    <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
-                    <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
-                    <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-
-                  <DetailRow label="Total GST" value={`₹${parseFloat(form.total_gst).toFixed(2)}`} />
-                  <DetailRow label="Round Off" value={`₹${parseFloat(form.round_off).toFixed(2)}`} />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>GRAND TOTAL</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
-                      INR {parseFloat(form.grand_total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Advance</span>
-                    <input type="number" className="form-control" name="advance" value={form.advance} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>BALANCE</span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary-dark)' }}>
-                      INR {parseFloat(form.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
           </form>
         </div>
       )}

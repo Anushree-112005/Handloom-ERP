@@ -20,10 +20,7 @@ export default function BudgetsList() {
     status: "Active"
   });
 
-  const defaultBudgets = [
-    { name: "Q1 Marketing Budget", from: "2026-04-01", to: "2026-06-30", amount: 150000, status: "Active" },
-    { name: "Office Operations FY26", from: "2026-04-01", to: "2027-03-31", amount: 300000, status: "Active" },
-  ];
+  const defaultBudgets = [];
 
   const [budgets, setBudgets] = useState(() => {
     const saved = localStorage.getItem(MOCK_BUDGETS_KEY);

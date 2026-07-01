@@ -7,13 +7,7 @@ export default function JobWorkStatus() {
   const [workerFilter, setWorkerFilter] = useState('All Workers');
   const [typeFilter, setTypeFilter] = useState('All Types');
 
-  const MOCK_JOBS = [
-    { id: 'JW-00101', date: '2026-06-10', workerName: 'Standard Dyeing Mills', type: 'Yarn Dyeing', details: '60s Combed Cotton - Navy Blue', qtySent: 5000, qtyReceived: 4950, loss: 50, status: 'Completed', progress: 100 },
-    { id: 'JW-00102', date: '2026-06-12', workerName: 'Sri Balaji Sizing Unit', type: 'Sizing', details: 'Sizing on Beam B-891', qtySent: 1200, qtyReceived: 1200, loss: 0, status: 'Completed', progress: 100 },
-    { id: 'JW-00103', date: '2026-06-15', workerName: 'Premium Textile Printers', type: 'Printing', details: 'Rotary Print Design DES-4091', qtySent: 8500, qtyReceived: 8300, loss: 200, status: 'Partially Received', progress: 97.6 },
-    { id: 'JW-00104', date: '2026-06-17', workerName: 'United finishing Sheds', type: 'Finishing', details: 'Sanforizing & Zero-Zero finish', qtySent: 4200, qtyReceived: 0, loss: 0, status: 'Sent', progress: 0 },
-    { id: 'JW-00105', date: '2026-06-18', workerName: 'Standard Dyeing Mills', type: 'Fabric Dyeing', details: 'Linen blend dyeing - Emerald Green', qtySent: 3100, qtyReceived: 1500, loss: 10, status: 'Partially Received', progress: 48.4 }
-  ];
+  const MOCK_JOBS = [];
 
   const workersList = useMemo(() => {
     return ['All Workers', ...new Set(MOCK_JOBS.map(job => job.workerName))];

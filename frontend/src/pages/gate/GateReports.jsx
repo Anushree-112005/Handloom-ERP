@@ -9,13 +9,26 @@ import * as XLSX from 'xlsx';
 import { partyAPI } from '../../services/api';
 
 export default function GateReports() {
-  // KPI summary state
-  const kpis = [
-    { label: "Today's Inwards", value: "48 Vehicles", change: "↑ 8% vs yesterday", color: "#10b981" },
-    { label: "Active Inside Yard", value: "6 Vehicles", change: "Current weight logs", color: "#f59e0b" },
-    { label: "Open Gate Passes", value: "14 Passes", change: "9 Returnable pending", color: "#4f46e5" },
-    { label: "Overdue Returnables", value: "2 Material Items", change: "Action required", color: "#ef4444" }
-  ];
+  // Compute KPIs dynamically from localStorage data
+  const computeKpis = () => {
+    const inwardData = JSON.parse(localStorage.getItem('gate_inward_data') || '[]');
+    const outwardData = JSON.parse(localStorage.getItem('gate_outward_data') || '[]');
+    const passData = JSON.parse(localStorage.getItem('gate_pass_data') || '[]');
+    const today = new Date().toISOString().substring(0, 10);
+
+    const todayInwards = inwardData.filter(i => i.dateTime === today).length;
+    const activeInYard = inwardData.filter(i => i.status === 'Open').length;
+    const openPasses = passData.filter(p => p.status === 'Open').length;
+    const returnablePending = passData.filter(p => p.passType === 'Returnable' && p.status === 'Open').length;
+
+    return [
+      { label: "Today's Inwards", value: `${todayInwards} Vehicles`, change: `Total: ${inwardData.length}`, color: "#10b981" },
+      { label: "Active Inside Yard", value: `${activeInYard} Vehicles`, change: "Current open inwards", color: "#f59e0b" },
+      { label: "Open Gate Passes", value: `${openPasses} Passes`, change: `${returnablePending} Returnable pending`, color: "#4f46e5" },
+      { label: "Total Outwards", value: `${outwardData.length} Records`, change: "All dispatched outwards", color: "#ef4444" }
+    ];
+  };
+  const kpis = computeKpis();
 
   const [partiesList, setPartiesList] = useState([]);
 

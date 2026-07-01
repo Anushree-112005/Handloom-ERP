@@ -1,27 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FileText, Search, Download, ArrowUpRight, ArrowDownLeft, Filter, Calendar } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import api from '../../services/api';
 
 export default function StockLedger() {
   const [searchTerm, setSearchTerm] = useState('');
   const [txnTypeFilter, setTxnTypeFilter] = useState('All Transactions');
+  const [ledgerData, setLedgerData] = useState([]);
 
-  const MOCK_LEDGER = [
-    { id: 'TXN-9021', date: '2026-06-20', sku: '40s Karded Cotton Yarn', type: 'Inward', ref: 'GRN-4091', qtyIn: 5000, qtyOut: 0, balance: 5400, godown: 'Main Warehouse', operator: 'Mani Bharathi' },
-    { id: 'TXN-9018', date: '2026-06-19', sku: '60s Combed Cotton Yarn', type: 'Outward', ref: 'GP-7729', qtyIn: 0, qtyOut: 1200, balance: 3825, godown: 'Main Warehouse', operator: 'Senthil Kumar' },
-    { id: 'TXN-9015', date: '2026-06-19', sku: 'Cotton Greige Fabric 40x40', type: 'Inward', ref: 'GRN-3012', qtyIn: 15400, qtyOut: 0, balance: 15400, godown: 'Greige Shed', operator: 'Murugan Swamy' },
-    { id: 'TXN-9012', date: '2026-06-18', sku: 'Printed Cotton Satin (Design 4091)', type: 'Inward', ref: 'GRN-3001', qtyIn: 8300, qtyOut: 0, balance: 8300, godown: 'Finished Goods Godown', operator: 'Mani Bharathi' },
-    { id: 'TXN-9009', date: '2026-06-17', sku: '40s Karded Cotton Yarn', type: 'Outward', ref: 'Loom-Issue-12', qtyIn: 0, qtyOut: 1500, balance: 400, godown: 'Main Warehouse', operator: 'Senthil Kumar' }
-  ];
+  useEffect(() => {
+    // Fetch real ledger data from backend API
+    api.get('/inventory/stock-ledger')
+      .then(res => setLedgerData(res.data || []))
+      .catch(() => setLedgerData([]));
+  }, []);
 
   const filteredLedger = useMemo(() => {
-    return MOCK_LEDGER.filter(item => {
-      const matchesSearch = item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            item.ref.toLowerCase().includes(searchTerm.toLowerCase());
+    return ledgerData.filter(item => {
+      const matchesSearch = (item.sku || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (item.ref || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = txnTypeFilter === 'All Transactions' || item.type === txnTypeFilter;
       return matchesSearch && matchesType;
     });
-  }, [searchTerm, txnTypeFilter]);
+  }, [searchTerm, txnTypeFilter, ledgerData]);
 
   const exportExcel = () => {
     const ws = XLSX.utils.json_to_sheet(filteredLedger);
@@ -107,7 +108,7 @@ export default function StockLedger() {
                 <td style={{ textAlign: 'right', color: item.qtyOut > 0 ? 'var(--danger)' : 'inherit', fontWeight: item.qtyOut > 0 ? 600 : 'normal' }}>
                   {item.qtyOut > 0 ? `- ${item.qtyOut.toLocaleString()}` : '-'}
                 </td>
-                <td style={{ textAlign: 'right', fontWeight: 700 }}>{item.balance.toLocaleString()}</td>
+                <td style={{ textAlign: 'right', fontWeight: 700 }}>{(item.balance || 0).toLocaleString()}</td>
                 <td>{item.godown}</td>
                 <td>{item.operator}</td>
               </tr>

@@ -27,10 +27,7 @@ export default function CurrenciesList() {
     currency_amount_words_decimal: "Paise",
   });
 
-  const defaultCurrencies = [
-    { symbol: "$", name: "USD Dollar", iso: "USD", decimals: 2 },
-    { symbol: "€", name: "Euro", iso: "EUR", decimals: 2 }
-  ];
+  const defaultCurrencies = [];
 
   const [foreignCurrencies, setForeignCurrencies] = useState(() => {
     const saved = localStorage.getItem(MOCK_CURRENCIES_KEY);

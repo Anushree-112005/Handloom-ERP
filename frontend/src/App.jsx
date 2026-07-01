@@ -177,6 +177,40 @@ export default function App() {
       return obj;
     }
 
+    // One-time clear of all legacy mock data keys to give the user a fresh slate
+    if (localStorage.getItem('fresh_clear_done') !== 'true') {
+      const keysToClean = [
+        'gate_pass_data',
+        'gate_inward_data',
+        'gate_outward_data',
+        'gate_transaction_data',
+        'fleet_dispatches',
+        'consumables_pos',
+        'consumables_items',
+        'consumables_stock',
+        'consumables_indent',
+        'consumables_po',
+        'consumables_grn',
+        'consumables_issue',
+        'consumables_dept',
+        'consumables_vendors',
+        'consumables_categories',
+        'consumables_uoms',
+        'consumables_requests',
+        'consumables_requisitions',
+        'consumables_adjustments',
+        'consumables_transfers',
+        'consumables_returns',
+        'consumables_physical',
+        'consumables_quotations',
+        'consumables_swatch_cards',
+        'consumables_returnable_dc',
+        'consumables_fabric_inspection'
+      ];
+      keysToClean.forEach(key => localStorage.removeItem(key));
+      localStorage.setItem('fresh_clear_done', 'true');
+    }
+
     keysToMigrate.forEach(key => {
       const saved = localStorage.getItem(key);
       if (saved) {

@@ -45,42 +45,7 @@ export default function GateOutward() {
         const fetchedBOs = boRes.data || [];
         const fetchedParties = partRes.data || [];
 
-        // Check and seed local storage if empty
-        const savedOut = localStorage.getItem('gate_outward_data');
-        if (!savedOut || JSON.parse(savedOut).length === 0) {
-          const seedData = [];
-          for (let i = 0; i < 10; i++) {
-            const vehicle = fetchedVehicles[(i + 2) % fetchedVehicles.length] || { vehicle_number: `TN-33-AA-100${i+1}` };
-            const bo = fetchedBOs[(i + 1) % fetchedBOs.length] || { ibpo_number: `IBPO-${String(i+1).padStart(5, '0')}`, buyer_name: 'HM Sweden' };
-            const party = fetchedParties[(i + 1) % fetchedParties.length] || { company_name: bo.buyer_name || 'Raymond Ltd' };
-            
-            seedData.push({
-              id: `GOT-${String(i + 1).padStart(5, '0')}`,
-              dateTime: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().substring(0, 10),
-              inwardRef: `GIN-${String(i + 1).padStart(5, '0')}`,
-              vehicleNo: vehicle.vehicle_number,
-              driverName: `Driver ${i + 5}`,
-              driverMobile: `987654311${i}`,
-              partyName: party.company_name,
-              materialType: i % 2 === 0 ? "Fabric / Cloth" : "Yarn",
-              purpose: "Sales Delivery",
-              dcNo: `DC-OUT-00${i + 1}`,
-              invoiceNo: bo.ibpo_number, // Link directly to IBPO order number
-              itemDesc: i % 2 === 0 ? "Finished Cotton Fabric Rolls" : "40s Cotton Weft Combed Cones",
-              qty: 800 + i * 150,
-              unit: i % 2 === 0 ? "Meter" : "Kg",
-              weight: 850 + i * 150,
-              packages: 15 + i,
-              gatePassNo: `GP-${String(i + 1).padStart(5, '0')}`,
-              guardName: "K. Palanisamy",
-              outTime: `17:${10 + i}`,
-              remarks: `Sales delivery clearance for order ${bo.ibpo_number}`,
-              status: i % 4 === 0 ? "Open" : "Closed"
-            });
-          }
-          localStorage.setItem('gate_outward_data', JSON.stringify(seedData));
-          setOutwards(seedData);
-        }
+        // No auto-seeding — start with empty data if localStorage is empty
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }

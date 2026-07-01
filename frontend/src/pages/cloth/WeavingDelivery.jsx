@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Truck, Plus, Search, Eye, Trash2, Save, X, Edit2, FileText, Database, Settings } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -6,11 +6,14 @@ import autoTable from 'jspdf-autotable';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 export default function WeavingDelivery() {
-  const [records, setRecords] = useState([
-    { id: 'WD-00001', date: '2026-06-18', loomNo: 'Loom-12 (Airjet)', beamNo: 'B-891', operator: 'Senthil Kumar', width: '2200 mm', length: 1200, weight: 345, status: 'Completed', remarks: 'Issued for Design DES-4091' },
-    { id: 'WD-00002', date: '2026-06-19', loomNo: 'Loom-05 (Rapier)', beamNo: 'B-302', operator: 'Murugan Swamy', width: '1800 mm', length: 950, weight: 290, status: 'In-Process', remarks: 'Standard Cotton Warp' },
-    { id: 'WD-00003', date: '2026-06-20', loomNo: 'Loom-18 (Airjet)', beamNo: 'B-772', operator: 'Mani Bharathi', width: '2200 mm', length: 1500, weight: 410, status: 'Pending', remarks: 'High density set' }
-  ]);
+  const [records, setRecords] = useState(() => {
+    const saved = localStorage.getItem('dt_weaving_delivery_records');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dt_weaving_delivery_records', JSON.stringify(records));
+  }, [records]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);

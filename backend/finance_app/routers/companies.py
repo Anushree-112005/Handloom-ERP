@@ -168,14 +168,14 @@ def seed_textile_company(db: Session = Depends(get_db)):
 
     # Create textile ledgers
     ledgers_to_create = [
-        ("HDFC Current Account", "Bank Accounts", "Dr", 750000.0, None),
-        ("ICICI Savings Account", "Bank Accounts", "Dr", 250000.0, None),
-        ("FabIndia Retail Ltd.", "Sundry Debtors", "Dr", 140000.0, "27AAFCK1234B1ZC"),
-        ("Bombay Dyeing & Mfg.", "Sundry Debtors", "Dr", 95000.0, "27AABCB5678P1Z0"),
+        ("HDFC Current Account", "Bank Accounts", "Dr", 0.0, None),
+        ("ICICI Savings Account", "Bank Accounts", "Dr", 0.0, None),
+        ("FabIndia Retail Ltd.", "Sundry Debtors", "Dr", 0.0, "27AAFCK1234B1ZC"),
+        ("Bombay Dyeing & Mfg.", "Sundry Debtors", "Dr", 0.0, "27AABCB5678P1Z0"),
         ("Sunrise Garments", "Sundry Debtors", "Dr", 0.0, None),
-        ("Arvind Mills Ltd.", "Sundry Creditors", "Cr", 180000.0, "24AABCA8910F1Z4"),
-        ("Raymond Fabrics Co.", "Sundry Creditors", "Cr", 120000.0, "27AAFCR5678C1ZD"),
-        ("Vardhman Threads", "Sundry Creditors", "Cr", 45000.0, None),
+        ("Arvind Mills Ltd.", "Sundry Creditors", "Cr", 0.0, "24AABCA8910F1Z4"),
+        ("Raymond Fabrics Co.", "Sundry Creditors", "Cr", 0.0, "27AAFCR5678C1ZD"),
+        ("Vardhman Threads", "Sundry Creditors", "Cr", 0.0, None),
         ("Textile Sales", "Sales Accounts", "Cr", 0.0, None),
         ("Yarn & Fibre Purchase", "Purchase Accounts", "Dr", 0.0, None),
         ("CGST Payable", "Duties & Taxes", "Cr", 0.0, None),
@@ -427,14 +427,14 @@ def seed_company_vouchers(company_id: int, db: Session = Depends(get_db)):
     
     # Check what ledgers exist or create them
     ledgers_to_ensure = [
-        ("HDFC Current Account", "Bank Accounts", "Dr", 750000.0, None),
-        ("ICICI Savings Account", "Bank Accounts", "Dr", 250000.0, None),
-        ("FabIndia Retail Ltd.", "Sundry Debtors", "Dr", 140000.0, "27AAFCK1234B1ZC"),
-        ("Bombay Dyeing & Mfg.", "Sundry Debtors", "Dr", 95000.0, "27AABCB5678P1Z0"),
+        ("HDFC Current Account", "Bank Accounts", "Dr", 0.0, None),
+        ("ICICI Savings Account", "Bank Accounts", "Dr", 0.0, None),
+        ("FabIndia Retail Ltd.", "Sundry Debtors", "Dr", 0.0, "27AAFCK1234B1ZC"),
+        ("Bombay Dyeing & Mfg.", "Sundry Debtors", "Dr", 0.0, "27AABCB5678P1Z0"),
         ("Sunrise Garments", "Sundry Debtors", "Dr", 0.0, None),
-        ("Arvind Mills Ltd.", "Sundry Creditors", "Cr", 180000.0, "24AABCA8910F1Z4"),
-        ("Raymond Fabrics Co.", "Sundry Creditors", "Cr", 120000.0, "27AAFCR5678C1ZD"),
-        ("Vardhman Threads", "Sundry Creditors", "Cr", 45000.0, None),
+        ("Arvind Mills Ltd.", "Sundry Creditors", "Cr", 0.0, "24AABCA8910F1Z4"),
+        ("Raymond Fabrics Co.", "Sundry Creditors", "Cr", 0.0, "27AAFCR5678C1ZD"),
+        ("Vardhman Threads", "Sundry Creditors", "Cr", 0.0, None),
         ("Textile Sales", "Sales Accounts", "Cr", 0.0, None),
         ("Yarn & Fibre Purchase", "Purchase Accounts", "Dr", 0.0, None),
         ("CGST Payable", "Duties & Taxes", "Cr", 0.0, None),
