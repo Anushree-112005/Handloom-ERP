@@ -174,6 +174,76 @@ export default function YarnDyeingPO() {
 
   const getDesignRequirementItems = (de) => {
     if (!de) return [];
+
+    let warpSummary = [];
+    try {
+      warpSummary = de.warp_summary ? JSON.parse(de.warp_summary) : [];
+    } catch (e) {}
+
+    let weftSummary = [];
+    try {
+      weftSummary = de.weft_summary ? JSON.parse(de.weft_summary) : [];
+    } catch (e) {}
+
+    // Query stock & lot_no from yarn inwards
+    const allInwardItems = (yarnInwards || []).flatMap(yi => yi.items || []);
+    const cleanStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const findMatchingInward = (count, color) => {
+      const match = allInwardItems.find(item => 
+        cleanStr(item.yarn_count) === cleanStr(count) && 
+        cleanStr(item.colour) === cleanStr(color)
+      );
+      return match ? { lot_no: match.lot_no || '', stock_qty: match.kgs || 0 } : { lot_no: '', stock_qty: 0 };
+    };
+
+    if (warpSummary.length > 0 || weftSummary.length > 0) {
+      let newItems = [];
+      warpSummary.forEach(row => {
+        const stockMatch = findMatchingInward(row.count, row.color);
+        newItems.push({
+          sp_no: de.ds_ref_no || '',
+          lot_no: stockMatch.lot_no,
+          stock_qty: stockMatch.stock_qty,
+          dsn_count: row.count || '',
+          yarn_count: row.count || '',
+          color: row.color || '',
+          uom: 'Kgs',
+          warp_qty: row.req_kg,
+          weft_qty: 0,
+          tot_qty: row.req_kg,
+          tole_pct: de.toie_pct || 0,
+          wrp_order: row.req_kg,
+          wft_order: 0,
+          rate: 0,
+          amount: 0
+        });
+      });
+
+      weftSummary.forEach(row => {
+        const stockMatch = findMatchingInward(row.count, row.color);
+        newItems.push({
+          sp_no: de.ds_ref_no || '',
+          lot_no: stockMatch.lot_no,
+          stock_qty: stockMatch.stock_qty,
+          dsn_count: row.count || '',
+          yarn_count: row.count || '',
+          color: row.color || '',
+          uom: 'Kgs',
+          warp_qty: 0,
+          weft_qty: row.req_kg,
+          tot_qty: row.req_kg,
+          tole_pct: de.toie_pct || 0,
+          wrp_order: 0,
+          wft_order: row.req_kg,
+          rate: 0,
+          amount: 0
+        });
+      });
+
+      return newItems;
+    }
+
     let fabricDesignRows = [];
     try {
       fabricDesignRows = de.fabric_design_details ? JSON.parse(de.fabric_design_details) : [];
@@ -220,7 +290,6 @@ export default function YarnDyeingPO() {
     const selvage = parseFloat(de.selvage_waste) || 0;
     const reed = parseFloat(de.reed) || 0;
     const reedOl = Math.max(0, reed - 8);
-    const grayWidthVal = parseFloat(de.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
     const pickOl = Math.max(0, (parseFloat(de.pick_ot) || 0) - 4);
     const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
     const repeatEnds = warpRepeatSize * noD;
@@ -292,7 +361,7 @@ export default function YarnDyeingPO() {
       }
     });
 
-    const warpSummary = Object.values(warpColorAgg).map(row => {
+    const warpSummaryCalculated = Object.values(warpColorAgg).map(row => {
       const eqCount = parseEqCount(row.count);
       const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
@@ -302,8 +371,6 @@ export default function YarnDyeingPO() {
 
     // Weft Design
     const pick = parseFloat(de.pick_ot) || 0;
-    const finishWidth = parseFloat(de.finish_width) || 0;
-    const weftWidth = finishWidth + selvage;
     const weftColorAgg = {};
     weftRows.forEach(item => {
       const cname = item.color || 'White';
@@ -327,33 +394,22 @@ export default function YarnDyeingPO() {
     });
 
     const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
-    const totalWeftEndsCalculated = Math.round(pick * weftWidth);
+    const reedSpaceVal = reedOl > 0 ? (totalEnds / reedOl) : 0;
+    const totalWeftEndsCalculated = Math.round(pickOl * (reedSpaceVal + selvage));
 
-    const weftSummary = Object.values(weftColorAgg).map(row => {
+    const weftSummaryCalculated = Object.values(weftColorAgg).map(row => {
       const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
       const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
       const eqCount = parseEqCount(row.count);
-      const req_kg_raw = eqCount > 0 ? (ratio * pickOl * grayWidthVal * weftProMtrVal) / (1690 * eqCount) : 0;
+      const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
       const req_kg = Math.ceil(req_kg_raw / lossFactor);
       return { ...row, total_ends: groupEnds, req_kg };
     });
 
-    // Query stock & lot_no from yarn inwards
-    const allInwardItems = (yarnInwards || []).flatMap(yi => yi.items || []);
-    const cleanStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    const findMatchingInward = (count, color) => {
-      const match = allInwardItems.find(item => 
-        cleanStr(item.yarn_count) === cleanStr(count) && 
-        cleanStr(item.colour) === cleanStr(color)
-      );
-      return match ? { lot_no: match.lot_no || '', stock_qty: match.kgs || 0 } : { lot_no: '', stock_qty: 0 };
-    };
-
     let newItems = [];
     
-    warpSummary.forEach(row => {
+    warpSummaryCalculated.forEach(row => {
       const stockMatch = findMatchingInward(row.count, row.color);
       newItems.push({
         sp_no: de.ds_ref_no || '',
@@ -374,7 +430,7 @@ export default function YarnDyeingPO() {
       });
     });
 
-    weftSummary.forEach(row => {
+    weftSummaryCalculated.forEach(row => {
       const stockMatch = findMatchingInward(row.count, row.color);
       newItems.push({
         sp_no: de.ds_ref_no || '',

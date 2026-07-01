@@ -101,6 +101,7 @@ import QuotationEntry from './pages/stationary and consumptions/QuotationEntry';
 // Core Yarn & Warping Imports
 import DesignEntry from './pages/design_management/DesignEntry';
 import DesignAI from './pages/design_management/DesignAI';
+import WeavingCalculator from './pages/design_management/WeavingCalculator';
 import YarnPurchaseOrder from './pages/yarn/YarnPurchaseOrder';
 import YarnInward from './pages/yarn/YarnInward';
 import YarnStock from './pages/yarn/YarnStock';
@@ -264,6 +265,7 @@ export default function App() {
 
         <Route path="design-entry" element={<DesignEntry />} />
         <Route path="design-ai" element={<DesignAI />} />
+        <Route path="weaving-calculator" element={<WeavingCalculator />} />
 
         <Route path="yarn/purchase-order" element={<YarnPurchaseOrder />} />
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
+  Calculator, LayoutDashboard, PieChart, Users, ShoppingCart, Package, Truck, Scissors,
   Factory, CheckSquare, Box, FileText, ClipboardList, Receipt,
   MapPin, Shield, Activity, Layers, ArrowRightLeft, Palette, Info, Settings,
   Lock, Wrench, ArrowDownLeft, ArrowUpRight, ChevronDown, ChevronRight, Edit, Globe,
@@ -177,6 +177,7 @@ const modules = [
   { section: 'Design Management' },
   { path: '/design-entry', label: 'Design Entry', icon: Palette },
   { path: '/design-ai', label: 'Design AI', icon: Sparkles },
+  // { path: '/weaving-calculator', label: 'Weaving Calculator', icon: Calculator },
 
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },

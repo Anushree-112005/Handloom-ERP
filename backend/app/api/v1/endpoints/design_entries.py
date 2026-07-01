@@ -45,6 +45,8 @@ class DesignEntryBase(BaseModel):
     dyeing_loss_pct: Optional[float] = 0.0
     yarn_details: Optional[str] = None
     fabric_design_details: Optional[str] = None
+    warp_summary: Optional[str] = None
+    weft_summary: Optional[str] = None
     image_path: Optional[str] = None
     book_no: Optional[str] = None
     page_no: Optional[str] = None
@@ -88,6 +90,18 @@ async def create_design_entry(data: DesignEntryCreate, db: AsyncSession = Depend
                     pass
         ds_ref = f"REF-DE-{max_val + 1:05d}"
     
+    # Ensure ds_ref is unique
+    existing = await db.execute(select(DesignEntry).where(DesignEntry.ds_ref_no == ds_ref))
+    if existing.scalar_one_or_none():
+        counter = 1
+        while True:
+            candidate_ref = f"{ds_ref}-{counter}"
+            check_exist = await db.execute(select(DesignEntry).where(DesignEntry.ds_ref_no == candidate_ref))
+            if not check_exist.scalar_one_or_none():
+                ds_ref = candidate_ref
+                break
+            counter += 1
+
     entry = DesignEntry(**data.model_dump(), ds_ref_no=ds_ref)
     db.add(entry)
     await db.commit()
@@ -118,6 +132,23 @@ async def update_design_entry(entry_id: int, data: DesignEntryCreate, db: AsyncS
         if match:
             suffix_num = int(match.group())
             new_ref = f"REF-DE-{suffix_num:05d}"
+            # Ensure new_ref is unique among other entries
+            existing = await db.execute(select(DesignEntry).where(
+                DesignEntry.ds_ref_no == new_ref,
+                DesignEntry.id != entry_id
+            ))
+            if existing.scalar_one_or_none():
+                counter = 1
+                while True:
+                    candidate_ref = f"{new_ref}-{counter}"
+                    check_exist = await db.execute(select(DesignEntry).where(
+                        DesignEntry.ds_ref_no == candidate_ref,
+                        DesignEntry.id != entry_id
+                    ))
+                    if not check_exist.scalar_one_or_none():
+                        new_ref = candidate_ref
+                        break
+                    counter += 1
             setattr(entry, "ds_ref_no", new_ref)
 
     for key, value in data.model_dump().items():
@@ -205,9 +236,9 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     classification_prompt = """
 Analyze this image of a textile design sheet.
 Classify it into one of the following categories:
-1. "olive_white" if it contains an "OLIVE" and "WHITE" yarn repeat table (typically alternating White and Olive in the warp, whether handwritten in a notebook or pre-printed on a card).
-2. "navy_red" if it contains a "NAVY", "RED", and "WHITE" yarn repeat table (typically handwritten in a notebook or pre-printed on a card).
-3. "other" if it is a custom handwritten paper, notebook page, or other general design sheet with a different color/pattern layout.
+1. "olive_white" if it contains ONLY "OLIVE" (or Greenish-Olive) and "WHITE" (or H.White) yarn repeat tables.
+2. "navy_red" if it contains ONLY "NAVY", "RED", and "WHITE" (or H.White) yarn repeat tables (strictly no other colors like brown, blue, yellow, etc.).
+3. "other" if it is a custom handwritten paper, notebook page, or other general design sheet with a different color/pattern layout (such as containing brown, black, grey, etc., or having a different structure).
 
 Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
 """
@@ -314,29 +345,25 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
 Analyze this handwritten textile design sheet.
 Extract all yarn specification entries for BOTH the Warp and Weft design sections.
 
-Warp Design section:
-Look for entries under headings like "WARP DESIGN", "WARP", etc.
-Extract each entry in order. For each warp entry, extract:
-- yarn_count: e.g. "40s", "20s", "2/40s". If a yarn count is not written on a line but is written above it or in the section header, carry it down.
-- color: e.g. "D.Blue", "H.White", "Navy", "Red", "Olive".
-- threads: The number of threads/ends (integer).
-- times: If multiple rows are grouped with a repeat multiplier, extract the multiplier. Default to "1".
-
-Weft Design section:
-Look for entries under headings like "WEFT DESIGN", "WEFT", etc.
-Extract each entry in order. For each weft entry, extract:
-- yarn_count: e.g. "20s", "40s".
-- color: e.g. "H.White", "Navy", "Red", "Olive".
-- threads: The number of threads/ends/picks (integer).
+Strict Rules:
+1. Only extract entries from the "WARP DESIGN" (or "WARP DESIGN:-") and "WEFT DESIGN" (or "WEFT DESIGN:-") sections.
+2. Do NOT extract any entries from the subsequent "WARP:" or "WEFT:" sections (which list calculated values like "1512", "189.000", "216.000", "kgs" or totals). Those are calculations/ratios and must be completely ignored.
+3. For individual rows, the "times" field is the sub-repeat/bracket multiplier. Set "times" to "1" for all rows unless there are explicit brackets grouping specific rows with a multiplier (e.g. "[ Navy - 3, White - 2 ] x 17" would have a multiplier of "17").
+4. Note: If there is a multiplier written at the bottom of the section (such as "81 x 56 = 4536" or similar), this is a block-level repeat count (the number of repeats of the entire warp pattern) and is NOT a row-level repeat multiplier. In this case, there are no brackets, so the "times" field for ALL rows (including L.Brown, Navy, H.White) MUST strictly be "1". Under no circumstances should "56" (or the block-level repeat count) be assigned to the "times" field of any row.
+5. For each entry, extract:
+   - yarn_count: e.g. "40s", "20s", "2/40s". If the yarn count is only written at the top of the column or on the first item, apply/carry it down to subsequent items in that block.
+   - color: e.g. "H.White", "Navy", "L.Brown", "Olive", "Red".
+   - threads: The number of threads/ends/picks (integer).
+   - times: The sub-repeat/bracket multiplier (string, default to "1").
 
 Return ONLY a JSON object of this structure:
 {
   "warp": [
-    {"yarn_count": "40s", "color": "D.Blue", "threads": 8, "times": "1"},
+    {"yarn_count": "20s", "color": "H.White", "threads": 27, "times": "1"},
     ...
   ],
   "weft": [
-    {"yarn_count": "20s", "color": "H.White", "threads": 3245}
+    {"yarn_count": "20s", "color": "H.White", "threads": 23}
   ]
 }
 """
@@ -400,7 +427,7 @@ Return ONLY a JSON object of this structure:
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": str(item.get("times") or "1") if template_type in ["olive_white", "navy_red"] else "1",
+            "times": str(item.get("times") or "1"),
             "line": "",
             "pick": "",
             "drawing_order": "",

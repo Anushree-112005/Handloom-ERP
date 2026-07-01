@@ -79,6 +79,43 @@ const parseEqCount = (lbl) => {
 const calculateDesignYarnRequirements = (design) => {
   if (!design) return [];
 
+  let warpSummary = [];
+  try {
+    warpSummary = design.warp_summary ? JSON.parse(design.warp_summary) : [];
+  } catch (e) {}
+
+  let weftSummary = [];
+  try {
+    weftSummary = design.weft_summary ? JSON.parse(design.weft_summary) : [];
+  } catch (e) {}
+
+  const finalAgg = {};
+  const add = (count, color, req_kg) => {
+    const key = `${count}_${color}`;
+    if (finalAgg[key]) {
+      finalAgg[key].order_qty += req_kg;
+    } else {
+      finalAgg[key] = {
+        design_no: design.design_no || '',
+        yarn_count: count,
+        colour: color,
+        order_qty: req_kg,
+        uom: 'KGS',
+        delivery_date: design.ds_date ? design.ds_date.substring(0, 10) : '',
+        rate: 0,
+        amount: 0,
+        packing_type: '',
+        labeling: ''
+      };
+    }
+  };
+
+  if (warpSummary.length > 0 || weftSummary.length > 0) {
+    warpSummary.forEach(r => add(r.count, r.color, r.req_kg));
+    weftSummary.forEach(r => add(r.count, r.color, r.req_kg));
+    return Object.values(finalAgg);
+  }
+
   let yarnRows = [];
   try {
     yarnRows = design.yarn_details ? JSON.parse(design.yarn_details) : [];
@@ -103,7 +140,6 @@ const calculateDesignYarnRequirements = (design) => {
   const selvage = parseFloat(design.selvage_waste) || 0;
   const reed = parseFloat(design.reed) || 0;
   const reedOl = Math.max(0, reed - 8);
-  const grayWidthVal = parseFloat(design.gray_width) || (reedOl + 4 > 0 ? (totalEnds / (reedOl + 4)) : 0);
   const pickOl = Math.max(0, (parseFloat(design.pick_ot) || 0) - 4);
   const noD = warpRepeatSize > 0 ? Math.floor(totalEnds / warpRepeatSize) : 0;
   const repeatEnds = warpRepeatSize * noD;
@@ -127,7 +163,6 @@ const calculateDesignYarnRequirements = (design) => {
   const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
   const warpLength = parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
   const weftProMtrVal = parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
-  const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
 
   // Aggregate Warp
   const warpColorAgg = {};
@@ -156,7 +191,7 @@ const calculateDesignYarnRequirements = (design) => {
     }
   });
 
-  const warpSummary = Object.values(warpColorAgg).map(row => {
+  const warpSummaryCalculated = Object.values(warpColorAgg).map(row => {
     const eqCount = parseEqCount(row.count);
     const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
     const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
@@ -165,10 +200,6 @@ const calculateDesignYarnRequirements = (design) => {
   });
 
   // Weft Design
-  const pick = parseFloat(design.pick_ot) || 0;
-  const finishWidth = parseFloat(design.finish_width) || 0;
-  const weftWidth = finishWidth + selvage;
-
   const weftColorAgg = {};
   weftRows.forEach(item => {
     const cname = item.color || 'White';
@@ -192,14 +223,15 @@ const calculateDesignYarnRequirements = (design) => {
   });
 
   const totalWeftThreads = weftRows.reduce((sum, r) => sum + (parseInt(r.threads) || 0), 0);
-  const totalWeftEndsCalculated = Math.round(pick * weftWidth);
+  const reedSpaceVal = reedOl > 0 ? (totalEnds / reedOl) : 0;
+  const totalWeftEndsCalculated = Math.round(pickOl * (reedSpaceVal + selvage));
 
-  const weftSummary = Object.values(weftColorAgg).map(row => {
+  const weftSummaryCalculated = Object.values(weftColorAgg).map(row => {
     const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
     const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
     const eqCount = parseEqCount(row.count);
     
-    const req_kg_raw = eqCount > 0 ? (ratio * pickOl * grayWidthVal * weftProMtrVal) / (1690 * eqCount) : 0;
+    const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
     const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
     const req_kg = Math.ceil(req_kg_raw / lossFactor);
 
@@ -210,29 +242,8 @@ const calculateDesignYarnRequirements = (design) => {
     };
   });
 
-  const finalAgg = {};
-  const add = (count, color, req_kg) => {
-    const key = `${count}_${color}`;
-    if (finalAgg[key]) {
-      finalAgg[key].order_qty += req_kg;
-    } else {
-      finalAgg[key] = {
-        design_no: design.design_no || '',
-        yarn_count: count,
-        colour: color,
-        order_qty: req_kg,
-        uom: 'KGS',
-        delivery_date: design.ds_date ? design.ds_date.substring(0, 10) : '',
-        rate: 0,
-        amount: 0,
-        packing_type: '',
-        labeling: ''
-      };
-    }
-  };
-
-  warpSummary.forEach(r => add(r.count, r.color, r.req_kg));
-  weftSummary.forEach(r => add(r.count, r.color, r.req_kg));
+  warpSummaryCalculated.forEach(r => add(r.count, r.color, r.req_kg));
+  weftSummaryCalculated.forEach(r => add(r.count, r.color, r.req_kg));
 
   const itemsList = Object.values(finalAgg);
   if (itemsList.length === 0) {
