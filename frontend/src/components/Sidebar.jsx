@@ -183,9 +183,9 @@ const modules = [
   { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
   { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
   { path: '/purchase-order/twisting-doubling', label: 'Twisting / Doubling PO', icon: Layers },
-  { path: '/purchase-order/fabric-dyeing', label: 'Fabric Dyeing PO', icon: Palette },
   { path: '/purchase-order/warping-sizing', label: 'Warping / Sizing PO', icon: Factory },
   { path: '/purchase-order/weaving', label: 'Weaving PO', icon: Layers },
+  { path: '/purchase-order/fabric-dyeing', label: 'Fabric Dyeing PO', icon: Palette },
   { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
   { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
@@ -312,7 +312,7 @@ const modules = [
       { path: '/ppc/alerts/eta-calc', label: 'ETA Engine', icon: Clock },
       { path: '/ppc/alerts/low-efficiency', label: 'Alerts', icon: Bell, badge: '3', badgeColor: '#e11d48' },
       { path: '/ppc/reports/loom-wise', label: 'Reports', icon: FileText }
-    ]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+    ]
   },
 
   { section: 'Human Resources' },
@@ -401,7 +401,7 @@ const modules = [
 
       { section: 'REPORTS & ANALYTICS' },
       { path: '/stores-consumables/report-stock', label: 'Stock Inventory', icon: PieChart },
-  
+
       { section: 'APPROVALS' },
       { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },
       { path: '/stores-consumables/approve-po', label: 'PO Approval', icon: Shield },
@@ -425,8 +425,8 @@ const jobWorkRoutes = [
   { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
   { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
   { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
-  { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
-  { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
+  // { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
+  // { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
   { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
   { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
   { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },

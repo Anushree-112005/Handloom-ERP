@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Send, CheckCircle, FileText, Package, IndianRupee } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, FileText, Package, IndianRupee, Download, ChevronDown, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { dyedYarnDeliveryAPI, partyAPI, dropdownAPI, yarnDyeingPOAPI, subMasterAPI } from '../../services/api';
+import { dyedYarnDeliveryAPI, partyAPI, dropdownAPI, subMasterAPI, designEntryAPI, yarnDyeingPOAPI } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -13,67 +16,180 @@ const DetailRow = ({ label, value }) => (
 export default function DyedYarnDelivery() {
   const [deliveries, setDeliveries] = useState([]);
   const [parties, setParties] = useState([]);
+  const [designs, setDesigns] = useState([]);
   const [yarnDyeingPOs, setYarnDyeingPOs] = useState([]);
   const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
   const [editingId, setEditingId] = useState(null);
   const [selectedViewEntry, setSelectedViewEntry] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [viewModalDelivery, setViewModalDelivery] = useState(null);
 
+  // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Status');
   const [typeFilter, setTypeFilter] = useState('All Types');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  // Custom Options triggers
+  const [isCustomTransport, setIsCustomTransport] = useState(false);
+  const [customTransportVal, setCustomTransportVal] = useState('');
+  const [isCustomCertificateType, setIsCustomCertificateType] = useState(false);
+  const [customCertificateTypeVal, setCustomCertificateTypeVal] = useState('');
   const [isCustomDeliveryMode, setIsCustomDeliveryMode] = useState(false);
   const [customDeliveryModeVal, setCustomDeliveryModeVal] = useState('');
-  const [customYarnTypeIdx, setCustomYarnTypeIdx] = useState(null);
-  const [customYarnTypeVal, setCustomYarnTypeVal] = useState('');
+
   const [customColourIdx, setCustomColourIdx] = useState(null);
   const [customColourVal, setCustomColourVal] = useState('');
 
   const initialForm = {
-    delivery_no: '', dc_no: '', dc_date: new Date().toISOString().split('T')[0], delivery_date: new Date().toISOString().split('T')[0],
-    delivery_type: 'Direct', delivery_mode: '', yarn_dyeing_po_no: '', processor_name: '', party_name: '',
-    order_no: '', ref_no: '', design_no: '', merchandiser: '', vehicle_no: '', driver_name: '',
-    driver_mobile: '', transport_name: '', lr_no: '', gate_pass_no: '', eway_bill_no: '', dispatch_from_godown: '',
-    remarks: '', delivery_status: 'Pending',
-    total_ordered_qty: 0, total_prev_delivered_qty: 0, total_current_delivery_qty: 0, total_balance_qty: 0,
-    total_bags: 0, total_cones: 0, total_gross_weight: 0, total_net_weight: 0,
-    freight_charges: 0, loading_charges: 0, unloading_charges: 0, insurance_charges: 0, other_charges: 0, transport_remarks: '',
-    taxable_amount: 0, sgst_pct: 0, sgst_amount: 0, cgst_pct: 0, cgst_amount: 0, igst_pct: 0, igst_amount: 0, total_gst: 0,
-    gross_amount: 0, discount: 0, round_off: 0, grand_total: 0, advance: 0, balance: 0,
+    delivery_no: '',
+    dc_no: '',
+    dc_date: new Date().toISOString().split('T')[0],
+    ref_date: new Date().toISOString().split('T')[0],
+    stock_godown: '',
+    delivery_type: 'Direct',
+    party_name: '',
+    delivery_mode: '',
+    delivery_address: '',
+    design_no: '',
+    order_no: '',
+    yarn_dyeing_po_no: '',
+    transport: '',
+    vehicle_no: '',
+    delivery_name: '',
+    delivery_time: '',
+    certificate_type: '',
+    design_count: '',
+    order_kgs: 0,
+    total_dely_kgs: 0,
+    total_rtn_kgs: 0,
+    balance_kgs: 0,
+    status: 'Delivered',
+    remarks: '',
+
+    // Financial / Logistics Details
+    freight_charges: 0,
+    loading_charges: 0,
+    unloading_charges: 0,
+    insurance_charges: 0,
+    other_charges: 0,
+    transport_remarks: '',
+    taxable_amount: 0,
+    sgst_pct: 0,
+    sgst_amount: 0,
+    cgst_pct: 0,
+    cgst_amount: 0,
+    igst_pct: 0,
+    igst_amount: 0,
+    total_gst: 0,
+    gross_amount: 0,
+    discount: 0,
+    round_off: 0,
+    grand_total: 0,
+    advance: 0,
+    balance: 0,
+
+    terms_conditions: [
+      "Material not meeting our specification and standards will be returned",
+      "Demanded Qty to be supplied in whole and excess/short supply will not be accepted.",
+      "Send Invoice along with Material.",
+      "Defective and damage pieces will not be accepted.",
+      "Start bulk production only after getting the sample Approval.",
+      "Subject to Namakkal Jurisdiction."
+    ],
+
     items: [{
-      sp_no: '', design_no: '', yarn_type: '', yarn_count: '', ply: '', colour: '', shade_no: '', lot_no: '', batch_no: '', unit: 'KGS',
-      ordered_qty: 0, prev_delivered_qty: 0, balance_qty: 0, current_delivery_qty: 0,
-      no_of_bags: 0, no_of_cones: 0, gross_weight: 0, tare_weight: 0, net_weight: 0,
-      rate: 0, amount: 0, remarks: ''
+      cone_type: 'Full Cone',
+      count: '',
+      our_lot_no: '',
+      color: '',
+      stock: 0,
+      bags: 0,
+      cones: 0,
+      total_kgs: 0,
+      rate: 0,
+      amount: 0
     }]
   };
 
   const [form, setForm] = useState(initialForm);
-  const [activeTab, setActiveTab] = useState('general');
 
-  const tabs = [
-    { id: 'general', label: 'Delivery & Logistics', icon: FileText },
-    { id: 'items', label: 'Yarn Details', icon: Package },
-    { id: 'financials', label: 'Financial Summary', icon: IndianRupee }
-  ];
+  const [newTerm, setNewTerm] = useState('');
+  const [editingTermIdx, setEditingTermIdx] = useState(null);
+  const [editingTermVal, setEditingTermVal] = useState('');
+
+  const addTerm = () => {
+    if (!newTerm.trim()) return;
+    setForm(prev => ({ ...prev, terms_conditions: [...(prev.terms_conditions || []), newTerm.trim()] }));
+    setNewTerm('');
+  };
+
+  const removeTerm = (idx) => {
+    setForm(prev => {
+      const updated = [...(prev.terms_conditions || [])];
+      updated.splice(idx, 1);
+      return { ...prev, terms_conditions: updated };
+    });
+  };
+
+  const isJobWorkParty = (p) => {
+    if (!p) return false;
+    const type = (p.party_type || '').toLowerCase();
+    const group = (p.party_group || '').toLowerCase();
+    const jobTerms = [
+      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+      'coverter', 'loom', 'service'
+    ];
+    return jobTerms.some(term => type.includes(term) || group.includes(term));
+  };
+
+  const getDeliveryOptions = () => {
+    const list = [
+      {
+        company_name: 'Dinesh Exports Private Limited',
+        address: '1/6-A, AIYNDHUPANAL KADACHANALLUR POST, OPP. TO SPK SCHOOL, KOMARAPALAYAM TALUK, Namakkal, Tamil Nadu, 638183',
+        phone: '',
+        gst_no: '33AAACD0905A1ZG'
+      }
+    ];
+
+    (parties || []).filter(isJobWorkParty).forEach(p => {
+      list.push({
+        company_name: p.company_name,
+        address: p.address || '',
+        phone: p.phone || p.mobile || '',
+        gst_no: p.gst_no || ''
+      });
+    });
+
+    return list;
+  };
+
+  const getFormattedAddress = (opt) => {
+    if (!opt) return '';
+    return `${opt.company_name} - ${opt.address}${opt.phone ? `, Phone: ${opt.phone}` : ''}${opt.gst_no ? `, GST: ${opt.gst_no}` : ''}`;
+  };
 
   const loadData = async () => {
     try {
-      const [delvRes, partRes, dropRes, ydPORes] = await Promise.all([
+      const [delRes, partRes, dropRes, ydPORes, dsnRes] = await Promise.all([
         dyedYarnDeliveryAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
-        yarnDyeingPOAPI.list()
+        yarnDyeingPOAPI.list(),
+        designEntryAPI.list()
       ]);
-      setDeliveries(delvRes.data);
-      setParties(partRes.data);
-      setOptions(dropRes.data);
-      setYarnDyeingPOs(ydPORes.data);
+      setDeliveries(delRes.data || []);
+      setParties(partRes.data || []);
+      setOptions(dropRes.data || {});
+      setYarnDyeingPOs(ydPORes.data || []);
+      setDesigns(dsnRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -86,37 +202,23 @@ export default function DyedYarnDelivery() {
   // Auto Calculations Hook
   useEffect(() => {
     if (!showForm) return;
-    
-    let totalOrdered = 0;
-    let totalPrev = 0;
-    let totalCurr = 0;
-    let totalBal = 0;
+
+    let totalKgs = 0;
     let tBags = 0;
     let tCones = 0;
-    let tGrossW = 0;
-    let tNetW = 0;
     let tAmount = 0;
 
     const newItems = form.items.map(item => {
-      const curr = parseFloat(item.current_delivery_qty) || 0;
-      const prev = parseFloat(item.prev_delivered_qty) || 0;
-      const ordered = parseFloat(item.ordered_qty) || 0;
-      const bal = ordered - prev - curr;
-      
+      const kgs = parseFloat(item.total_kgs) || 0;
       const rate = parseFloat(item.rate) || 0;
-      const amount = curr * rate;
+      const amount = kgs * rate;
 
-      totalOrdered += ordered;
-      totalPrev += prev;
-      totalCurr += curr;
-      totalBal += bal;
-      tBags += parseInt(item.no_of_bags) || 0;
-      tCones += parseInt(item.no_of_cones) || 0;
-      tGrossW += parseFloat(item.gross_weight) || 0;
-      tNetW += parseFloat(item.net_weight) || 0;
+      totalKgs += kgs;
+      tBags += parseInt(item.bags) || 0;
+      tCones += parseInt(item.cones) || 0;
       tAmount += amount;
 
-      return { ...item, balance_qty: bal, amount };
+      return { ...item, amount };
     });
 
     const fr = parseFloat(form.freight_charges) || 0;
@@ -137,13 +239,13 @@ export default function DyedYarnDelivery() {
     const grand = taxable + totGst;
     const rounded = Math.round(grand);
     const roundOff = rounded - grand;
-    
+
     const adv = parseFloat(form.advance) || 0;
     const balFin = rounded - adv;
 
     setForm(prev => {
       if (
-        prev.total_ordered_qty === totalOrdered && prev.total_current_delivery_qty === totalCurr &&
+        prev.total_dely_kgs === totalKgs &&
         prev.gross_amount === gross && prev.grand_total === rounded &&
         JSON.stringify(prev.items) === JSON.stringify(newItems)
       ) {
@@ -152,12 +254,16 @@ export default function DyedYarnDelivery() {
       return {
         ...prev,
         items: newItems,
-        total_ordered_qty: totalOrdered, total_prev_delivered_qty: totalPrev,
-        total_current_delivery_qty: totalCurr, total_balance_qty: totalBal,
-        total_bags: tBags, total_cones: tCones, total_gross_weight: tGrossW, total_net_weight: tNetW,
-        gross_amount: gross, taxable_amount: taxable,
-        sgst_amount: sgstAmt, cgst_amount: cgstAmt, igst_amount: igstAmt, total_gst: totGst,
-        round_off: roundOff, grand_total: rounded, balance: balFin
+        total_dely_kgs: totalKgs,
+        gross_amount: gross,
+        taxable_amount: taxable,
+        sgst_amount: sgstAmt,
+        cgst_amount: cgstAmt,
+        igst_amount: igstAmt,
+        total_gst: totGst,
+        round_off: roundOff,
+        grand_total: rounded,
+        balance: balFin
       };
     });
 
@@ -171,62 +277,35 @@ export default function DyedYarnDelivery() {
     e.preventDefault();
     try {
       const payload = { ...form };
+      if (!payload.ref_date) payload.ref_date = null;
+      if (!payload.dc_date) payload.dc_date = null;
+
       if (editingId) {
         await dyedYarnDeliveryAPI.update(editingId, payload);
       } else {
         await dyedYarnDeliveryAPI.create(payload);
       }
-      setShowForm(false); setEditingId(null); setForm(initialForm); setActiveTab('general'); loadData();
+
+      setShowForm(false);
+      setEditingId(null);
+      setForm(initialForm);
+      loadData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving delivery');
+      console.error(err);
     }
   };
 
-  const handleFetchFromYarnDyeingPO = (po_no) => {
-    if (!po_no) {
-      setForm(prev => ({ ...prev, yarn_dyeing_po_no: po_no }));
-      return;
-    }
-    const po = yarnDyeingPOs.find(p => p.po_no === po_no);
-    if (po) {
-      setForm(prev => {
-        const newForm = { ...prev, yarn_dyeing_po_no: po_no };
-        newForm.processor_name = po.supplier_dyeing_unit || prev.processor_name;
-        newForm.party_name = po.supplier_dyeing_unit || prev.party_name;
-        newForm.order_no = po.po_no || prev.order_no;
-        newForm.ref_no = po.ref_no_1 || prev.ref_no;
-        newForm.design_no = po.design_no || prev.design_no;
-        newForm.merchandiser = po.buyer_name || prev.merchandiser;
-        
-        let prevDeliveredItemsMap = {}; // Ideally fetch previous deliveries to compute this
-
-        if (po.items && po.items.length > 0) {
-          newForm.items = po.items.map(item => {
-            const ordQty = parseFloat(item.tot_qty) || 0;
-            const prevQty = prevDeliveredItemsMap[item.id] || 0;
-            const bal = ordQty - prevQty;
-            
-            return {
-              ...initialForm.items[0],
-              sp_no: item.sp_no || '',
-              design_no: item.design_no || po.design_no || '',
-              yarn_type: item.yarn_type || '',
-              yarn_count: item.yarn_count || item.dsn_count || '',
-              colour: item.color || item.colour || '',
-              unit: item.uom || 'KGS',
-              ordered_qty: ordQty,
-              prev_delivered_qty: prevQty,
-              balance_qty: bal,
-              current_delivery_qty: bal > 0 ? bal : 0,
-              rate: parseFloat(item.rate) || 0,
-            };
-          });
-        }
-        return newForm;
-      });
-    } else {
-      setForm(prev => ({ ...prev, yarn_dyeing_po_no: po_no }));
-    }
+  const handleSaveCustomTransport = async () => {
+    if (!customTransportVal.trim()) return;
+    try {
+      await subMasterAPI.create('transport_name_master', { entity: 'transport_name_master', name: customTransportVal.trim(), is_active: true });
+      const dropRes = await dropdownAPI.getAll();
+      setOptions(dropRes.data);
+      setForm({ ...form, transport: customTransportVal.trim() });
+      setIsCustomTransport(false);
+      setCustomTransportVal('');
+    } catch (err) { alert('Error saving custom transport'); }
   };
 
   const handleSaveCustomDeliveryMode = async () => {
@@ -241,16 +320,16 @@ export default function DyedYarnDelivery() {
     } catch (err) { alert('Error saving custom delivery mode'); }
   };
 
-  const handleSaveCustomYarnType = async () => {
-    if (!customYarnTypeVal.trim() || customYarnTypeIdx === null) return;
+  const handleSaveCustomCertificateType = async () => {
+    if (!customCertificateTypeVal.trim()) return;
     try {
-      await subMasterAPI.create('yarn_type_master', { entity: 'yarn_type_master', name: customYarnTypeVal.trim(), is_active: true });
+      await subMasterAPI.create('certified_type', { entity: 'certified_type', name: customCertificateTypeVal.trim(), is_active: true });
       const dropRes = await dropdownAPI.getAll();
       setOptions(dropRes.data);
-      updateItem(customYarnTypeIdx, 'yarn_type', customYarnTypeVal.trim());
-      setCustomYarnTypeIdx(null);
-      setCustomYarnTypeVal('');
-    } catch (err) { alert('Error saving yarn type'); }
+      setForm({ ...form, certificate_type: customCertificateTypeVal.trim() });
+      setIsCustomCertificateType(false);
+      setCustomCertificateTypeVal('');
+    } catch (err) { alert('Error saving custom certificate type'); }
   };
 
   const handleSaveCustomColour = async () => {
@@ -259,103 +338,319 @@ export default function DyedYarnDelivery() {
       await subMasterAPI.create('color_master', { entity: 'color_master', name: customColourVal.trim(), is_active: true });
       const dropRes = await dropdownAPI.getAll();
       setOptions(dropRes.data);
-      updateItem(customColourIdx, 'colour', customColourVal.trim());
+      const newItems = [...form.items];
+      newItems[customColourIdx].color = customColourVal.trim();
+      setForm({ ...form, items: newItems });
       setCustomColourIdx(null);
       setCustomColourVal('');
     } catch (err) { alert('Error saving custom color'); }
   };
 
-  const handleDelete = async (id, dc_no, evt) => {
-    evt.stopPropagation();
-    if (!window.confirm(`Delete Delivery ${dc_no}?`)) return;
-    try {
-      await dyedYarnDeliveryAPI.delete(id);
-      loadData();
-      if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
-    } catch (err) {
-      alert('Error deleting delivery');
+  const handleFetchFromYarnDyeingPO = (po_no) => {
+    if (!po_no) {
+      setForm(prev => ({ ...prev, order_no: '', yarn_dyeing_po_no: '' }));
+      return;
     }
-  };
+    const po = yarnDyeingPOs.find(p => p.po_no === po_no);
+    if (po) {
+      setForm(prev => {
+        const newForm = {
+          ...prev,
+          order_no: po_no,
+          yarn_dyeing_po_no: po_no,
+          delivery_type: 'Against Order'
+        };
+        newForm.party_name = po.supplier_dyeing_unit || prev.party_name;
+        newForm.design_no = po.design_no || prev.design_no;
+        newForm.sgst_pct = po.sgst_pct !== undefined ? po.sgst_pct : prev.sgst_pct;
+        newForm.cgst_pct = po.cgst_pct !== undefined ? po.cgst_pct : prev.cgst_pct;
+        newForm.igst_pct = po.igst_pct !== undefined ? po.igst_pct : prev.igst_pct;
+        
+        const firstItem = po.items?.[0];
+        newForm.design_count = firstItem?.yarn_count || firstItem?.dsn_count || po.dsn_count || prev.design_count;
 
-  const handleRowClick = (entry) => {
-    setSelectedViewEntry(entry);
-  };
+        let prevDeliveredItemsMap = {};
 
-  const handleOpenForm = (entry = null, readOnly = false) => {
-    setIsReadOnly(readOnly);
-    setActiveTab('general');
-    if (entry) {
-      setEditingId(entry.id);
-      dyedYarnDeliveryAPI.get(entry.id).then(res => {
-        setForm(res.data);
-        setShowForm(true);
+        if (po.items && po.items.length > 0) {
+          let sumOrderKgs = 0;
+          newForm.items = po.items.map(item => {
+            const ordQty = parseFloat(item.tot_qty) || 0;
+            sumOrderKgs += ordQty;
+            const prevQty = prevDeliveredItemsMap[item.id] || 0;
+            const bal = ordQty - prevQty;
+
+            return {
+              cone_type: 'Full Cone',
+              count: item.yarn_count || item.dsn_count || '',
+              our_lot_no: item.lot_no || '',
+              color: item.color || item.colour || '',
+              stock: 0,
+              bags: parseInt(item.no_of_bags) || 0,
+              cones: parseInt(item.no_of_cones) || 0,
+              total_kgs: bal > 0 ? bal : 0,
+              rate: parseFloat(item.rate) || 0,
+              amount: (bal > 0 ? bal : 0) * (parseFloat(item.rate) || 0)
+            };
+          });
+          newForm.order_kgs = sumOrderKgs;
+        }
+        return newForm;
       });
     } else {
-      setEditingId(null);
-      setForm(initialForm);
-      setShowForm(true);
+      setForm(prev => ({ ...prev, order_no: po_no, yarn_dyeing_po_no: po_no }));
     }
   };
 
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setForm(initialForm);
-    setActiveTab('general');
+  const handleOpenNewForm = () => {
+    setEditingId(null);
+    setIsReadOnly(false);
+    let maxNum = 0;
+    deliveries.forEach(d => {
+      if (d.dc_no && d.dc_no.toUpperCase().startsWith("YDD-")) {
+        const parts = d.dc_no.split("-");
+        if (parts.length > 1) {
+          const num = parseInt(parts[1]);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    });
+    const nextDcNo = `YDD-${String(maxNum + 1).padStart(5, '0')}`;
+    setForm({
+      ...initialForm,
+      dc_no: nextDcNo,
+      dc_date: new Date().toISOString().split('T')[0],
+      ref_date: new Date().toISOString().split('T')[0]
+    });
+    setShowForm(true);
+  };
+
+  const handleOpenForm = async (entry, readOnly = false) => {
+    try {
+      const { data } = await dyedYarnDeliveryAPI.get(entry.id);
+      if (data.dc_date) data.dc_date = data.dc_date.substring(0, 10);
+      if (data.ref_date) data.ref_date = data.ref_date.substring(0, 10);
+
+      const dataWithCalculatedAmounts = {
+        ...data,
+        terms_conditions: (data.terms_conditions && data.terms_conditions.length > 0) ? data.terms_conditions : initialForm.terms_conditions,
+        items: (data.items || []).map(item => ({
+          ...item,
+          amount: (parseFloat(item.total_kgs) || 0) * (parseFloat(item.rate) || 0)
+        }))
+      };
+
+      setForm({ ...initialForm, ...dataWithCalculatedAmounts });
+      setEditingId(data.id);
+      setIsReadOnly(readOnly);
+      setActiveTab('general');
+      setShowForm(true);
+      setSelectedViewEntry(null);
+    } catch (err) {
+      alert("Error loading delivery details.");
+    }
+  };
+
+  const handleDelete = async (id, dc, e) => {
+    if (e) e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete ${dc}?`)) {
+      try {
+        await dyedYarnDeliveryAPI.delete(id);
+        if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
+        loadData();
+      } catch (err) {
+        alert('Error deleting');
+      }
+    }
+  };
+
+  const handleRowClick = async (entry) => {
+    try {
+      const { data } = await dyedYarnDeliveryAPI.get(entry.id);
+      setSelectedViewEntry(data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+
+    if (name === 'transport' && value === 'custom') {
+      setIsCustomTransport(true); setCustomTransportVal(''); return;
+    }
     if (name === 'delivery_mode' && value === 'custom') {
       setIsCustomDeliveryMode(true); setCustomDeliveryModeVal(''); return;
     }
-    setForm({ ...form, [name]: value });
+    if (name === 'certificate_type' && value === 'custom') {
+      setIsCustomCertificateType(true); setCustomCertificateTypeVal(''); return;
+    }
+
+    if (name === 'order_no') {
+      handleFetchFromYarnDyeingPO(value);
+      return;
+    }
+
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const addItem = () => setForm(prev => ({ ...prev, items: [...prev.items, initialForm.items[0]] }));
-  const removeItem = (index) => setForm(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== index) }));
+  const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
+  const removeItem = (index) => setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   const updateItem = (index, field, value) => {
-    if (field === 'yarn_type' && value === 'custom') {
-      setCustomYarnTypeIdx(index); setCustomYarnTypeVal(''); return;
+    if (field === 'color' && value === 'custom') {
+      setCustomColourIdx(index);
+      setCustomColourVal('');
+      return;
     }
-    if (field === 'colour' && value === 'custom') {
-      setCustomColourIdx(index); setCustomColourVal(''); return;
+    const newItems = [...form.items];
+    let val = value;
+    if (['stock', 'bags', 'cones', 'total_kgs', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
+    newItems[index][field] = val;
+
+    if (field === 'total_kgs' || field === 'rate') {
+      newItems[index].amount = (parseFloat(newItems[index].total_kgs) || 0) * (parseFloat(newItems[index].rate) || 0);
     }
-    setForm(prev => {
-      const newItems = [...prev.items];
-      newItems[index][field] = value;
-      return { ...prev, items: newItems };
-    });
+
+    setForm({ ...form, items: newItems });
   };
 
-  const filteredDeliveries = deliveries.filter(r => {
+  const filteredDeliveries = deliveries.filter(d => {
     const matchesSearch = searchTerm === '' ||
-      r.dc_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.party_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'All Types' || r.delivery_type === typeFilter;
+      d.dc_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.party_name?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === 'All Status' || d.status === statusFilter;
+    const matchesType = typeFilter === 'All Types' || d.delivery_type === typeFilter;
+
     let matchesDate = true;
-    if (r.dc_date) {
-      const entryDate = new Date(r.dc_date);
+    if (d.dc_date) {
+      const entryDate = new Date(d.dc_date);
       if (fromDate) matchesDate = matchesDate && entryDate >= new Date(fromDate);
-      if (toDate) matchesDate = matchesDate && entryDate <= new Date(toDate);
+      if (toDate) {
+        const tDate = new Date(toDate);
+        tDate.setHours(23, 59, 59);
+        matchesDate = matchesDate && entryDate <= tDate;
+      }
     }
-    return matchesSearch && matchesType && matchesDate;
+    return matchesSearch && matchesStatus && matchesType && matchesDate;
   });
 
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Dinesh Textile - Dyed Yarn Deliveries", 14, 15);
+    const headers = [["DC No", "DC Date", "Party Name", "Delivery Type", "Status"]];
+    const rows = filteredDeliveries.map(d => [
+      d.dc_no || '-',
+      d.dc_date || '-',
+      d.party_name || '-',
+      d.delivery_type || '-',
+      d.status || '-'
+    ]);
+    autoTable(doc, { head: headers, body: rows, startY: 20 });
+    doc.save(`Dyed_Yarn_Delivery_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportExcel = () => {
+    const data = filteredDeliveries.map(d => ({
+      "DC No": d.dc_no,
+      "DC Date": d.dc_date,
+      "Party Name": d.party_name,
+      "Delivery Type": d.delivery_type,
+      "Mode": d.delivery_mode,
+      "Vehicle No": d.vehicle_no,
+      "Total Dely Kgs": d.total_dely_kgs,
+      "Status": d.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dyed Yarn Deliveries");
+    XLSX.writeFile(wb, `Dyed_Yarn_Delivery_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const tabs = [
+    { id: 'general', label: 'Delivery Information', icon: FileText },
+    { id: 'yarn', label: 'Yarn Delivery Table', icon: Package }
+  ];
+
+  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      setActiveTab(nextTab);
+      setTimeout(() => {
+        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
+        if (nextInput) {
+          nextInput.focus();
+        } else {
+          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+          if (fallback) fallback.focus();
+        }
+      }, 100);
+    }
+  };
+
   return (
-    <div style={{ padding: 24 }}>
+    <div className="animate-fade">
       {!showForm ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Send size={32} color="var(--primary)" /> Dyed Yarn Delivery
-              </h1>
-              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 15 }}>Manage outgoing dyed yarn dispatches and challans</p>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Truck size={24} color="var(--primary)" /> Dyed Yarn Delivery
+              </h2>
+              <p style={{ color: 'var(--text-muted)' }}>Manage dispatch of dyed yarn.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => handleOpenForm(null, false)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Plus size={18} /> New Delivery
-            </button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Download size={16} /> Export <ChevronDown size={14} />
+                </button>
+
+                {showExportMenu && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                    <button
+                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <FileText size={16} color="#ef4444" /> PDF Report
+                    </button>
+                    <button
+                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                    >
+                      <Download size={16} color="#10b981" /> Excel Sheet
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button className="btn btn-primary" onClick={handleOpenNewForm}>
+                <Plus size={18} /> New Delivery
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
+            <div className="card stat-card" onClick={() => setTypeFilter('All Types')} style={{ cursor: 'pointer', border: typeFilter === 'All Types' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+              <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}><Truck size={24} /></div>
+              <div className="stat-details"><h3>Total Deliveries</h3><div className="value">{deliveries.length}</div></div>
+            </div>
+            <div className="card stat-card" onClick={() => setTypeFilter('Direct')} style={{ cursor: 'pointer', border: typeFilter === 'Direct' ? '2px solid #10b981' : '1px solid transparent' }}>
+              <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}><Truck size={24} /></div>
+              <div className="stat-details"><h3>Direct</h3><div className="value">{deliveries.filter(d => d.delivery_type === 'Direct').length}</div></div>
+            </div>
+            <div className="card stat-card" onClick={() => setTypeFilter('Against Order')} style={{ cursor: 'pointer', border: typeFilter === 'Against Order' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+              <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}><FileText size={24} /></div>
+              <div className="stat-details"><h3>Against PO</h3><div className="value">{deliveries.filter(d => d.delivery_type === 'Against Order').length}</div></div>
+            </div>
           </div>
 
           <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
@@ -365,7 +660,7 @@ export default function DyedYarnDelivery() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <select className="form-control" style={{ width: 150, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+              <select className="form-control" style={{ width: 130, margin: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
                 <option>All Types</option><option>Direct</option><option>Against Order</option>
               </select>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>From:</span><input type="date" className="form-control" style={{ width: 130, margin: 0 }} value={fromDate} onChange={e => setFromDate(e.target.value)} /></div>
@@ -379,7 +674,7 @@ export default function DyedYarnDelivery() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>DC No</th><th>Date</th><th>Party</th><th>Type</th><th>Total Rs.</th><th>Actions</th>
+                      <th>DC No</th><th>DC Date</th><th>Party</th><th>Type</th><th>Items</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -387,18 +682,25 @@ export default function DyedYarnDelivery() {
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredDeliveries.length === 0 ? (
                       <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No deliveries found.</td></tr>
-                    ) : filteredDeliveries.map(r => (
-                      <tr key={r.id} onClick={() => handleRowClick(r)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === r.id ? 'var(--bg-secondary)' : 'transparent' }}>
-                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.dc_no}</td>
-                        <td>{r.dc_date}</td>
-                        <td style={{ fontWeight: 500 }}>{r.party_name || '-'}</td>
-                        <td><span className={`badge ${r.delivery_type === 'Direct' ? 'badge-completed' : 'badge-active'}`}>{r.delivery_type}</span></td>
-                        <td>₹{parseFloat(r.grand_total || 0).toFixed(2)}</td>
+                    ) : filteredDeliveries.map(d => (
+                      <tr key={d.id} onClick={() => handleRowClick(d)} style={{ cursor: 'pointer', background: selectedViewEntry?.id === d.id ? 'var(--bg-secondary)' : 'transparent' }}>
+                        <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{d.dc_no}</td>
+                        <td>{d.dc_date}</td>
+                        <td style={{ fontWeight: 500 }}>{d.party_name || '-'}</td>
+                        <td><span className={`badge ${d.delivery_type === 'Direct' ? 'badge-draft' : 'badge-active'}`}>{d.delivery_type}</span></td>
+                        <td>{d.items?.length || 0}</td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(evt) => { evt.stopPropagation(); setViewModalDelivery(r); }}><Eye size={16} color="var(--primary)" /></button>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(r, false)} title="Edit"><Edit2 size={14} /></button>
-                            <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(r.id, r.dc_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={() => { setViewModalDelivery(d); }}
+                              title="Invoice PDF Preview"
+                            >
+                              <FileText size={16} color="var(--primary)" />
+                            </button>
+                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(d, false)} title="Edit"><Edit2 size={14} /></button>
+                            <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(evt) => handleDelete(d.id, d.dc_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
                           </div>
                         </td>
                       </tr>
@@ -413,35 +715,43 @@ export default function DyedYarnDelivery() {
                 <div className="card animate-slide" style={{ position: 'sticky', top: 24, padding: '24px 20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
                     <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 700 }}>
-                      <Send size={18} /> {selectedViewEntry.dc_no}
+                      <Truck size={18} /> {selectedViewEntry.dc_no}
                     </h3>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => setViewModalDelivery(selectedViewEntry)}><Eye size={16} color="var(--primary)" /></button>
-                      <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={() => { setViewModalDelivery(selectedViewEntry); }}
+                        title="Invoice PDF Preview"
+                      >
+                        <FileText size={16} color="var(--primary)" />
+                      </button>
+                      <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(selectedViewEntry, false)} title="Edit"><Edit2 size={14} /></button>
                       <button onClick={() => setSelectedViewEntry(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}><X size={18} /></button>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, maxHeight: '65vh', overflowY: 'auto', paddingRight: 8 }}>
-                    <DetailRow label="Date" value={selectedViewEntry.dc_date} />
+                    <DetailRow label="DC Date" value={selectedViewEntry.dc_date} />
                     <DetailRow label="Type" value={selectedViewEntry.delivery_type} />
-                    <DetailRow label="Party" value={selectedViewEntry.party_name} />
-                    
+                    <DetailRow label="Party Name" value={selectedViewEntry.party_name} />
+                    <DetailRow label="Mode" value={selectedViewEntry.delivery_mode} />
+                    <DetailRow label="Vehicle No" value={selectedViewEntry.vehicle_no} />
+
+                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Metrics</h4>
+                    <DetailRow label="Total Kgs Dely" value={`${selectedViewEntry.total_dely_kgs} kg`} />
+                    <DetailRow label="Balance Kgs" value={`${selectedViewEntry.balance_kgs} kg`} />
+
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items ({selectedViewEntry.items?.length || 0})</h4>
                     {selectedViewEntry.items?.map((c, idx) => (
                       <div key={idx} style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 6, marginBottom: 8, border: '1px solid var(--border)' }}>
-                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Yarn: {c.yarn_type || 'N/A'} - {c.colour}</div>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Count: {c.count}</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                          <span>Total Kgs: {c.current_delivery_qty}</span>
-                          <span>₹{parseFloat(c.amount || 0).toFixed(2)}</span>
+                          <span>Bags: {c.bags}</span>
+                          <span>Total Kgs: {c.total_kgs}</span>
                         </div>
                       </div>
                     ))}
-                    
-                    <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Summary</h4>
-                    <DetailRow label="Gross Amount" value={`₹${selectedViewEntry.gross_amount}`} />
-                    <DetailRow label="Total GST" value={`₹${selectedViewEntry.total_gst}`} />
-                    <DetailRow label="Grand Total" value={`₹${selectedViewEntry.grand_total}`} />
                   </div>
                 </div>
               </div>
@@ -449,280 +759,329 @@ export default function DyedYarnDelivery() {
           </div>
         </>
       ) : (
-        <div className="card" style={{ padding: 0, background: '#f8fafc', border: 'none' }}>
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)', borderTopLeftRadius: 10, borderTopRightRadius: 10 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><Send size={20} color="var(--primary)" /> {isReadOnly ? 'View Delivery Details' : editingId ? 'Edit Delivery' : 'New Dyed Yarn Delivery'}</h2>
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Delivery Details' : editingId ? 'Edit Delivery' : 'New Dyed Yarn Delivery'}</h2>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={handleCloseForm}><X size={16} /> Close</button>
+              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
               {!isReadOnly && (
-                <button type="submit" form="delivery-form" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}</button>
+                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}</button>
               )}
             </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {tabs.map(tab => (
-              <button 
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <tab.icon size={16}/> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Delivery Details
+            </button>
           </div>
 
-          <form id="delivery-form" onSubmit={handleCreate} style={{ padding: 24 }}>
-            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
-              
-              {activeTab === 'general' && (
-                <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {/* Delivery Info */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY INFO</span>
+          <div style={{ padding: 24, background: '#fff' }}>
+            <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
+
+              <div className="animate-fade">
+                  {/* Section 1: Delivery Information */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery Information</h4>
+                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                    <div className="form-group"><label>DC No</label><input type="text" className="form-control" name="dc_no" value={form.dc_no} disabled style={{ fontWeight: 'bold', color: 'var(--primary)' }} /></div>
+                    <div className="form-group"><label>DC Date *</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} required /></div>
+                    <div className="form-group"><label>Acl Date</label><input type="date" className="form-control" name="ref_date" value={form.ref_date} onChange={handleChange} /></div>
+                    <div className="form-group">
+                      <label>Stock Godown</label>
+                      <input className="form-control" name="stock_godown" value={form.stock_godown} onChange={handleChange} />
                     </div>
-                    <div style={{ padding: '20px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
-                        <div className="form-group"><label>Delivery No</label><input className="form-control" name="delivery_no" value={form.delivery_no} onChange={handleChange} placeholder="Auto Generated" disabled /></div>
-                        <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} /></div>
-                        <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
-                        
-                        <div className="form-group"><label>Delivery Type</label>
-                          <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
-                            <option>Direct</option><option>Against PO</option>
-                          </select>
+                    <div className="form-group"><label>Delivery Type</label>
+                      <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
+                        <option>Direct</option><option>Against Order</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
+                      <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
+                        <option value="">Select Party...</option>
+                        {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group"><label>Delivery Mode</label>
+                      {isCustomDeliveryMode ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Mode" value={customDeliveryModeVal} onChange={e => setCustomDeliveryModeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomDeliveryMode} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomDeliveryMode(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
                         </div>
-                        <div className="form-group"><label>Delivery Mode</label>
-                          {isCustomDeliveryMode ? (
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <input type="text" className="form-control" placeholder="New Mode" value={customDeliveryModeVal} onChange={e => setCustomDeliveryModeVal(e.target.value)} />
-                              <button type="button" className="btn btn-primary" onClick={handleSaveCustomDeliveryMode} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
-                              <button type="button" className="btn btn-secondary" onClick={() => setIsCustomDeliveryMode(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
-                            </div>
-                          ) : (
-                            <select className="form-control" name="delivery_mode" value={form.delivery_mode || ''} onChange={handleChange}>
-                              <option value="">Select...</option>
-                              {options.masters?.transport_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                              <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                            </select>
-                          )}
+                      ) : (
+                        <select className="form-control" name="delivery_mode" value={form.delivery_mode || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.transport_mode_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label>Design No</label>
+                      <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange}>
+                        <option value="">Select Design No...</option>
+                        {designs.map(d => (
+                          <option key={d.id} value={d.ds_ref_no || d.design_no}>
+                            {d.ds_ref_no || d.design_no} {d.design_no ? `(${d.design_no})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ gridColumn: 'span 4' }}>
+                      <label>Delivery Address</label>
+                      <select 
+                        className="form-control" 
+                        name="delivery_address" 
+                        value={form.delivery_address || ''} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setForm(prev => ({ ...prev, delivery_address: val }));
+                        }}
+                      >
+                        <option value="">Select Delivery Location...</option>
+                        {form.delivery_address && !getDeliveryOptions().some(opt => getFormattedAddress(opt) === form.delivery_address) && (
+                          <option value={form.delivery_address}>{form.delivery_address}</option>
+                        )}
+                        {getDeliveryOptions().map((opt, idx) => {
+                          const formatted = getFormattedAddress(opt);
+                          const displayLabel = `${opt.company_name} - ${opt.address}${opt.phone ? `, Phone: ${opt.phone}` : ''}${opt.gst_no ? `, GST: ${opt.gst_no}` : ''}`;
+                          return (
+                            <option key={idx} value={formatted}>
+                              {displayLabel}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Order No (Yarn Dyeing PO)</label>
+                      <select className="form-control" name="order_no" value={form.order_no} onChange={handleChange}>
+                        <option value="">Select PO...</option>
+                        {yarnDyeingPOs.map(po => <option key={po.id} value={po.po_no}>{po.po_no} - {po.supplier_dyeing_unit}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Transport</label>
+                      {isCustomTransport ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Transport" value={customTransportVal} onChange={e => setCustomTransportVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomTransport} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomTransport(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
                         </div>
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Yarn Dyeing PO No</label>
-                          <select className="form-control" name="yarn_dyeing_po_no" value={form.yarn_dyeing_po_no || ''} onChange={(e) => handleFetchFromYarnDyeingPO(e.target.value)}>
-                            <option value="">Select PO...</option>
-                            {yarnDyeingPOs.map(po => <option key={po.id} value={po.po_no}>{po.po_no} - {po.supplier_dyeing_unit}</option>)}
-                          </select>
+                      ) : (
+                        <select className="form-control" name="transport" value={form.transport || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
+                    </div>
+                    <div className="form-group"><label>Vechile No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Driver Name</label><input className="form-control" name="delivery_name" value={form.delivery_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Time</label><input className="form-control" name="delivery_time" value={form.delivery_time} onChange={handleChange} /></div>
+
+                    <div className="form-group"><label>Certificate Type</label>
+                      {isCustomCertificateType ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" className="form-control" placeholder="New Certificate" value={customCertificateTypeVal} onChange={e => setCustomCertificateTypeVal(e.target.value)} />
+                          <button type="button" className="btn btn-primary" onClick={handleSaveCustomCertificateType} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
+                          <button type="button" className="btn btn-secondary" onClick={() => setIsCustomCertificateType(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
                         </div>
-                        
-                        <div className="form-group"><label>Processor Name</label><input className="form-control" name="processor_name" value={form.processor_name} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Party Name</label>
-                          <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
-                            <option value="">Select Party...</option>
-                            {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} /></div>
-                        
-                        <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Merchandiser</label><input className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Delivery Status</label>
-                          <select className="form-control" name="delivery_status" value={form.delivery_status} onChange={handleChange}>
-                            <option>Pending</option><option>Partially Delivered</option><option>Fully Delivered</option><option>Closed</option>
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Dispatch Godown</label><input className="form-control" name="dispatch_from_godown" value={form.dispatch_from_godown} onChange={handleChange} /></div>
-                        
-                        <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} rows={2} /></div>
-                      </div>
+                      ) : (
+                        <select className="form-control" name="certificate_type" value={form.certificate_type || ''} onChange={handleChange}>
+                          <option value="">Select...</option>
+                          {options.masters?.certified_type?.map(o => <option key={o} value={o}>{o}</option>)}
+                          <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                        </select>
+                      )}
+                    </div>
+                    <div className="form-group"><label>Design Count</label><input className="form-control" name="design_count" value={form.design_count} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Order Kgs / Total Kgs</label><input type="number" className="form-control" name="order_kgs" value={form.order_kgs} onChange={handleChange} /></div>
+
+                    <div className="form-group"><label>Total Dely Kgs</label><input type="number" className="form-control" name="total_dely_kgs" value={form.total_dely_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Total Rtn Kgs</label><input type="number" className="form-control" name="total_rtn_kgs" value={form.total_rtn_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Status</label><input className="form-control" name="status" value={form.status} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Remarks</label>
+                      <textarea className="form-control" name="remarks" value={form.remarks || ''} onChange={handleChange} rows={2} style={{ resize: 'vertical', margin: 0 }} />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Transport Remarks</label>
+                      <textarea className="form-control" name="transport_remarks" value={form.transport_remarks || ''} onChange={handleChange} rows={2} style={{ resize: 'vertical', margin: 0 }} />
                     </div>
                   </div>
+                </div>
 
-                  {/* Logistics */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>LOGISTICS</span>
-                    </div>
-                    <div style={{ padding: '20px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
-                        <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Driver Mobile</label><input className="form-control" name="driver_mobile" value={form.driver_mobile} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Transport Name</label><input className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange} /></div>
-                        <div className="form-group"><label>LR No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Gate Pass No</label><input className="form-control" name="gate_pass_no" value={form.gate_pass_no} onChange={handleChange} /></div>
-                        <div className="form-group"><label>E-Way Bill No</label><input className="form-control" name="eway_bill_no" value={form.eway_bill_no} onChange={handleChange} /></div>
-                      </div>
-                    </div>
+                <div className="animate-fade" style={{ marginTop: 32 }}>
+                  {/* Section 2: Yarn Delivery Table */}
+                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Yarn Delivery Table</h4>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
                   </div>
-
-                  {/* Yarn Details (First page summary) */}
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>YARN DETAILS</span>
-                      {!isReadOnly && <button type="button" className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}><Plus size={14} /> Add Row</button>}
-                    </div>
-                    <div style={{ padding: '20px 18px' }}>
-                      <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-                        <table className="data-table" style={{ minWidth: '2200px' }}>
-                          <thead>
-                            <tr>
-                              <th>S.No</th><th>SP No</th><th>Design No</th><th>Yarn Type</th><th>Yarn Count</th><th>Ply</th><th>Colour</th>
-                              <th>Shade No</th><th>Lot No</th><th>Batch No</th><th>Unit</th><th>Ord Qty</th><th>Prev Delv Qty</th>
-                              <th>Bal Qty</th><th>Curr Delv Qty</th><th>Bags</th><th>Cones</th><th>Gross Wt</th><th>Tare Wt</th>
-                              <th>Net Wt</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {form.items.map((item, idx) => (
-                              <tr key={idx}>
-                                <td>{idx + 1}</td>
-                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
-                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.design_no} onChange={e => updateItem(idx, 'design_no', e.target.value)} /></td>
-                                <td>
-                                  {customYarnTypeIdx === idx ? (
-                                    <div style={{ display: 'flex', gap: 4 }}>
-                                      <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Yarn" value={customYarnTypeVal} onChange={e => setCustomYarnTypeVal(e.target.value)} />
-                                      <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnType} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                      <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnTypeIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                    </div>
-                                  ) : (
-                                    <select className="form-control" style={{ width: 120 }} value={item.yarn_type || ''} onChange={e => updateItem(idx, 'yarn_type', e.target.value)}>
-                                      <option value="">Select...</option>
-                                      {options.masters?.yarn_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                    </select>
+                  <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>SNo</th><th>Cone Type</th><th>Count</th><th>Our Lot No</th><th>Color</th>
+                          <th>Stock</th><th>Bag</th><th>Cones</th><th>Tot Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {form.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td>{idx + 1}</td>
+                            <td>
+                              <select className="form-control" style={{ width: 110 }} value={item.cone_type} onChange={e => updateItem(idx, 'cone_type', e.target.value)}>
+                                <option>Full Cone</option><option>Half Cone</option>
+                              </select>
+                            </td>
+                            <td><input className="form-control" style={{ width: 110 }} value={item.count} onChange={e => updateItem(idx, 'count', e.target.value)} /></td>
+                            <td><input className="form-control" style={{ width: 110 }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
+                            <td>
+                              {customColourIdx === idx ? (
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Color" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
+                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
+                                </div>
+                              ) : (
+                                <select className="form-control" style={{ width: 110 }} value={item.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)}>
+                                  <option value="">Select...</option>
+                                  {item.color && !options.masters?.color_master?.includes(item.color) && (
+                                    <option value={item.color}>{item.color}</option>
                                   )}
-                                </td>
-                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                                <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.ply} onChange={e => updateItem(idx, 'ply', e.target.value)} /></td>
-                                <td>
-                                  {customColourIdx === idx ? (
-                                    <div style={{ display: 'flex', gap: 4 }}>
-                                      <input type="text" className="form-control" style={{ width: 90 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                                      <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                      <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                    </div>
-                                  ) : (
-                                    <select className="form-control" style={{ width: 90 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
-                                      <option value="">Select...</option>
-                                      {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                      <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                    </select>
-                                  )}
-                                </td>
-                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
-                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                                <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
-                                <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} /></td>
-                                
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.ordered_qty} onChange={e => updateItem(idx, 'ordered_qty', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.prev_delivered_qty} onChange={e => updateItem(idx, 'prev_delivered_qty', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.balance_qty} readOnly /></td>
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.current_delivery_qty} onChange={e => updateItem(idx, 'current_delivery_qty', e.target.value)} /></td>
-                                
-                                <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_bags} onChange={e => updateItem(idx, 'no_of_bags', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_cones} onChange={e => updateItem(idx, 'no_of_cones', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.gross_weight} onChange={e => updateItem(idx, 'gross_weight', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.tare_weight} onChange={e => updateItem(idx, 'tare_weight', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.net_weight} onChange={e => updateItem(idx, 'net_weight', e.target.value)} /></td>
-                                
-                                <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                                <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
-                                <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
-                                <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
+                                </select>
+                              )}
+                            </td>
+                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 90 }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 90 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.amount} disabled /></td>
+                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16} /></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
-                  {/* Quantity & Financials Summaries */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
-                    {/* QUANTITY SUMMARY */}
+                  {/* Financial & Logistics Summary below table */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start', marginTop: 24 }}>
+                    {/* Left side: Terms & Conditions */}
                     <div style={{ flex: 1, minWidth: 300 }}>
                       <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
                         <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>QUANTITY SUMMARY</span>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
                         </div>
-                        <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                          <DetailRow label="Ordered Qty" value={`${form.total_ordered_qty} Kg`} />
-                          <DetailRow label="Prev Delv Qty" value={`${form.total_prev_delivered_qty} Kg`} />
-                          <DetailRow label="Curr Delv Qty" value={`${form.total_current_delivery_qty} Kg`} />
-                          <DetailRow label="Balance Qty" value={`${form.total_balance_qty} Kg`} />
-                          <DetailRow label="Total Bags" value={form.total_bags} />
-                          <DetailRow label="Total Cones" value={form.total_cones} />
-                          <DetailRow label="Gross Weight" value={`${form.total_gross_weight} Kg`} />
-                          <DetailRow label="Net Weight" value={`${form.total_net_weight} Kg`} />
+                        <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {(form.terms_conditions || []).map((term, idx) => (
+                              <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                {editingTermIdx === idx ? (
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'green' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={16} /></button>
+                                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--text-muted)' }} onClick={() => setEditingTermIdx(null)}><X size={16} /></button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                                    <span>{term}</span>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                      <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--primary)' }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }}><Edit2 size={14} /></button>
+                                      <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#ef4444' }} onClick={() => removeTerm(idx)}><Trash2 size={14} /></button>
+                                    </div>
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                            <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
+                            <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
+                              <Plus size={16} /> Add
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* FINANCIAL SUMMARY */}
-                    <div style={{ flex: '0 0 350px', minWidth: 320 }}>
+                    {/* Right side: Financial Summary Card */}
+                    <div style={{ flex: '0 0 380px', minWidth: 320 }}>
                       <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
                         <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
                           <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>FINANCIAL SUMMARY</span>
                         </div>
                         <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Chg</span>
-                            <input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
+                            <input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Chg</span>
-                            <input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charges</span>
+                            <input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Chg</span>
-                            <input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charges</span>
+                            <input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
-                            <input type="number" className="form-control" name="insurance_charges" value={form.insurance_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <input type="number" className="form-control" name="insurance_charges" value={form.insurance_charges} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Chg</span>
-                            <input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Others</span>
+                            <input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
 
                           <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
 
-                          <DetailRow label="Gross Amount" value={`₹${parseFloat(form.gross_amount).toFixed(2)}`} />
+                          <DetailRow label="Gross Amount" value={`₹${parseFloat(form.gross_amount || 0).toFixed(2)}`} />
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount</span>
-                            <input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
 
-                          <DetailRow label="Taxable Amount" value={`₹${parseFloat(form.taxable_amount).toFixed(2)}`} />
+                          <DetailRow label="Taxable Amount" value={`₹${parseFloat(form.taxable_amount || 0).toFixed(2)}`} />
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
-                            <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
-                            <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
-                            <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
 
-                          <DetailRow label="Total GST" value={`₹${parseFloat(form.total_gst).toFixed(2)}`} />
-                          <DetailRow label="Round Off" value={`₹${parseFloat(form.round_off).toFixed(2)}`} />
+                          <DetailRow label="Total GST" value={`₹${parseFloat(form.total_gst || 0).toFixed(2)}`} />
+                          <DetailRow label="Round Off" value={`₹${parseFloat(form.round_off || 0).toFixed(2)}`} />
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
                             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>GRAND TOTAL</span>
@@ -733,7 +1092,7 @@ export default function DyedYarnDelivery() {
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Advance</span>
-                            <input type="number" className="form-control" name="advance" value={form.advance} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
+                            <input type="number" className="form-control" name="advance" value={form.advance} onChange={handleChange} style={{ width: 120, padding: '4px 8px', margin: 0, textAlign: 'right' }} />
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -747,194 +1106,8 @@ export default function DyedYarnDelivery() {
                     </div>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'items' && (
-                <div className="animate-fade" style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                  <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>YARN DETAILS</span>
-                    {!isReadOnly && <button type="button" className="btn btn-secondary" onClick={addItem} style={{ padding: '4px 12px', fontSize: 12 }}><Plus size={14} /> Add Row</button>}
-                  </div>
-                  <div style={{ padding: '20px 18px' }}>
-                    <div style={{ overflowX: 'auto', marginBottom: 16 }}>
-                      <table className="data-table" style={{ minWidth: '2200px' }}>
-                        <thead>
-                          <tr>
-                            <th>S.No</th><th>SP No</th><th>Design No</th><th>Yarn Type</th><th>Yarn Count</th><th>Ply</th><th>Colour</th>
-                            <th>Shade No</th><th>Lot No</th><th>Batch No</th><th>Unit</th><th>Ord Qty</th><th>Prev Delv Qty</th>
-                            <th>Bal Qty</th><th>Curr Delv Qty</th><th>Bags</th><th>Cones</th><th>Gross Wt</th><th>Tare Wt</th>
-                            <th>Net Wt</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>X</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {form.items.map((item, idx) => (
-                            <tr key={idx}>
-                              <td>{idx + 1}</td>
-                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.sp_no} onChange={e => updateItem(idx, 'sp_no', e.target.value)} /></td>
-                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.design_no} onChange={e => updateItem(idx, 'design_no', e.target.value)} /></td>
-                              <td>
-                                {customYarnTypeIdx === idx ? (
-                                  <div style={{ display: 'flex', gap: 4 }}>
-                                    <input type="text" className="form-control" style={{ width: 120 }} placeholder="New Yarn" value={customYarnTypeVal} onChange={e => setCustomYarnTypeVal(e.target.value)} />
-                                    <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnType} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                    <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnTypeIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                  </div>
-                                ) : (
-                                  <select className="form-control" style={{ width: 120 }} value={item.yarn_type || ''} onChange={e => updateItem(idx, 'yarn_type', e.target.value)}>
-                                    <option value="">Select...</option>
-                                    {options.masters?.yarn_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                    <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                  </select>
-                                )}
-                              </td>
-                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                              <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.ply} onChange={e => updateItem(idx, 'ply', e.target.value)} /></td>
-                              <td>
-                                {customColourIdx === idx ? (
-                                  <div style={{ display: 'flex', gap: 4 }}>
-                                    <input type="text" className="form-control" style={{ width: 90 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                                    <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                    <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                  </div>
-                                ) : (
-                                  <select className="form-control" style={{ width: 90 }} value={item.colour || ''} onChange={e => updateItem(idx, 'colour', e.target.value)}>
-                                    <option value="">Select...</option>
-                                    {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                    <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                  </select>
-                                )}
-                              </td>
-                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.shade_no} onChange={e => updateItem(idx, 'shade_no', e.target.value)} /></td>
-                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.lot_no} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                              <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.batch_no} onChange={e => updateItem(idx, 'batch_no', e.target.value)} /></td>
-                              <td><input className="form-control" style={{ width: 60, padding: '6px' }} value={item.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} /></td>
-                              
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.ordered_qty} onChange={e => updateItem(idx, 'ordered_qty', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.prev_delivered_qty} onChange={e => updateItem(idx, 'prev_delivered_qty', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.balance_qty} readOnly /></td>
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.current_delivery_qty} onChange={e => updateItem(idx, 'current_delivery_qty', e.target.value)} /></td>
-                              
-                              <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_bags} onChange={e => updateItem(idx, 'no_of_bags', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 60, padding: '6px' }} value={item.no_of_cones} onChange={e => updateItem(idx, 'no_of_cones', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.gross_weight} onChange={e => updateItem(idx, 'gross_weight', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.tare_weight} onChange={e => updateItem(idx, 'tare_weight', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.net_weight} onChange={e => updateItem(idx, 'net_weight', e.target.value)} /></td>
-                              
-                              <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                              <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.amount} readOnly /></td>
-                              <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
-                              <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'financials' && (
-                <div className="animate-fade" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
-                  {/* QUANTITY SUMMARY */}
-                  <div style={{ flex: 1, minWidth: 300 }}>
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>QUANTITY SUMMARY</span>
-                      </div>
-                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <DetailRow label="Ordered Qty" value={`${form.total_ordered_qty} Kg`} />
-                        <DetailRow label="Prev Delv Qty" value={`${form.total_prev_delivered_qty} Kg`} />
-                        <DetailRow label="Curr Delv Qty" value={`${form.total_current_delivery_qty} Kg`} />
-                        <DetailRow label="Balance Qty" value={`${form.total_balance_qty} Kg`} />
-                        <DetailRow label="Total Bags" value={form.total_bags} />
-                        <DetailRow label="Total Cones" value={form.total_cones} />
-                        <DetailRow label="Gross Weight" value={`${form.total_gross_weight} Kg`} />
-                        <DetailRow label="Net Weight" value={`${form.total_net_weight} Kg`} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* FINANCIAL SUMMARY */}
-                  <div style={{ flex: '0 0 350px', minWidth: 320 }}>
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>FINANCIAL SUMMARY</span>
-                      </div>
-                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Chg</span>
-                          <input type="number" className="form-control" name="freight_charges" value={form.freight_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Chg</span>
-                          <input type="number" className="form-control" name="loading_charges" value={form.loading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Chg</span>
-                          <input type="number" className="form-control" name="unloading_charges" value={form.unloading_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Insurance</span>
-                          <input type="number" className="form-control" name="insurance_charges" value={form.insurance_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Chg</span>
-                          <input type="number" className="form-control" name="other_charges" value={form.other_charges} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-
-                        <hr style={{ margin: '4px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
-
-                        <DetailRow label="Gross Amount" value={`₹${parseFloat(form.gross_amount).toFixed(2)}`} />
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Discount</span>
-                          <input type="number" className="form-control" name="discount" value={form.discount} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-
-                        <DetailRow label="Taxable Amount" value={`₹${parseFloat(form.taxable_amount).toFixed(2)}`} />
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
-                          <input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
-                          <input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
-                          <input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-
-                        <DetailRow label="Total GST" value={`₹${parseFloat(form.total_gst).toFixed(2)}`} />
-                        <DetailRow label="Round Off" value={`₹${parseFloat(form.round_off).toFixed(2)}`} />
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>GRAND TOTAL</span>
-                          <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--primary)' }}>
-                            INR {parseFloat(form.grand_total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Advance</span>
-                          <input type="number" className="form-control" name="advance" value={form.advance} onChange={handleChange} style={{ width: 100, padding: '4px 8px', margin: 0, textAlign: 'right' }} disabled={isReadOnly} />
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>BALANCE</span>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary-dark)' }}>
-                            INR {parseFloat(form.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
             </fieldset>
-          </form>
+          </div>
         </div>
       )}
 
@@ -942,20 +1115,22 @@ export default function DyedYarnDelivery() {
         isOpen={!!viewModalDelivery}
         onClose={() => setViewModalDelivery(null)}
         title="YARN DYEING DELIVERY"
-        documentNumber={viewModalDelivery?.delivery_no}
-        status={viewModalDelivery?.delivery_status}
+        documentNumber={viewModalDelivery?.dc_no}
+        status={viewModalDelivery?.status}
         onDownloadPdf={() => alert('PDF Download for Yarn Dyeing Delivery triggered')}
         sections={viewModalDelivery ? [
           {
-            title: "DISPATCH LOGISTICS",
+            title: "DELIVERY INFORMATION",
             icon: "Briefcase",
             type: "grid",
             data: [
-              { label: "Delivery Number", value: viewModalDelivery.delivery_no },
-              { label: "Delivery Date", value: viewModalDelivery.delivery_date },
+              { label: "DC Number", value: viewModalDelivery.dc_no },
+              { label: "DC Date", value: viewModalDelivery.dc_date },
               { label: "Party Name", value: viewModalDelivery.party_name },
               { label: "Vehicle Number", value: viewModalDelivery.vehicle_no || '-' },
-              { label: "Driver Name", value: viewModalDelivery.driver_name || '-' }
+              { label: "Driver Name", value: viewModalDelivery.delivery_name || '-' },
+              { label: "Remarks", value: viewModalDelivery.remarks || '-' },
+              { label: "Transport Remarks", value: viewModalDelivery.transport_remarks || '-' }
             ]
           },
           {
@@ -963,13 +1138,20 @@ export default function DyedYarnDelivery() {
             icon: "Box",
             type: "grid",
             data: [
-              { label: "Total Bags", value: viewModalDelivery.total_bags || 0 },
-              { label: "Total Kgs", value: `${viewModalDelivery.total_net_weight || 0} Kg` }
+              { label: "Total Kgs", value: `${viewModalDelivery.total_dely_kgs || 0} Kg` }
             ]
+          },
+          {
+            title: "TERMS & CONDITIONS",
+            icon: "FileText",
+            type: "list",
+            data: (viewModalDelivery.terms_conditions || []).map((term, i) => ({
+              label: `${i + 1}`,
+              value: term
+            }))
           }
         ] : []}
       />
-
     </div>
   );
 }

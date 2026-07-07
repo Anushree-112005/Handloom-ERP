@@ -1317,27 +1317,31 @@ export default function BuyerOrder() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
-                }}
-              >
-                <tab.icon size={16} /> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Order Details
+            </button>
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               {/* MAIN DETAILS */}
-              {activeTab === 'main' && (
-                <div className="animate-fade">
+              <div className="animate-fade">
                   {/* Section 1: Main Details */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Main Details</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -1616,167 +1620,7 @@ export default function BuyerOrder() {
                     <div className="form-group"><label>Delivery Instruction</label><textarea className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>General Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
-                </div>
-              )}
-
-              {/* PAYMENT DETAILS */}
-              {activeTab === 'payment' && (
-                <div className="animate-fade">
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group"><label>Outstanding</label><input type="number" className="form-control" name="outstanding" value={form.outstanding} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Over Due</label><input type="number" className="form-control" name="overdue" value={form.overdue} onChange={handleChange} /></div>
-                    <div className="form-group"><label>30 Days+ Due</label><input type="number" className="form-control" name="due_30_days" value={form.due_30_days} onChange={handleChange} /></div>
-                    <SubMasterDropdown
-                      label="Status"
-                      name="status"
-                      value={form.status || ''}
-                      entity="status_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <div className="form-group"><label>Max Crd Days</label><input type="number" className="form-control" name="max_crd_days" value={form.max_crd_days} onChange={handleChange} /></div>
-                    <div className="form-group"><label>PO Credit Days</label><input type="number" className="form-control" name="po_credit" value={form.po_credit} onChange={handleChange} /></div>
-                    <div className="form-group"><label>PO Max Crd</label><input type="number" className="form-control" name="po_max_crd" value={form.po_max_crd} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Bill Credit</label><input type="number" className="form-control" name="bill_credit" value={form.bill_credit} onChange={handleChange} /></div>
-                    <SubMasterDropdown
-                      label="Payment Terms"
-                      name="payment_terms"
-                      value={form.payment_terms || ''}
-                      entity="payment_terms_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Status Remark</label><input className="form-control" name="status_remark" value={form.status_remark} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Payment Detail Notes</label><input className="form-control" name="payment_detail" value={form.payment_detail} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'design_no')} /></div>
-                    <div className="form-group">
-                      <label>Upload Supporting Doc</label>
-                      <input 
-                        type="file" 
-                        className="form-control" 
-                        style={{ padding: '6px' }} 
-                        onChange={handleSupportingDocChange}
-                      />
-                      {form.payment_file_path && (
-                        <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
-                          Uploaded: <a href={`http://localhost:8000${form.payment_file_path}`} target="_blank" rel="noopener noreferrer">{form.payment_file_path.split('/').pop()}</a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TRANSPORT & DELIVERY */}
-              {activeTab === 'transport' && (
-                <div className="animate-fade">
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                    <SubMasterDropdown
-                      label="Transport Mode"
-                      name="transport_mode"
-                      value={form.transport_mode || ''}
-                      entity="transport_mode_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <SubMasterDropdown
-                      label="Transport Name"
-                      name="transport_name"
-                      value={form.transport_name || ''}
-                      entity="transport_name_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <SubMasterDropdown
-                      label="Party Terms"
-                      name="party_terms"
-                      value={form.party_terms || ''}
-                      entity="party_terms_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <SubMasterDropdown
-                      label="LR Type"
-                      name="lr_type"
-                      value={form.lr_type || ''}
-                      entity="lr_type_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <SubMasterDropdown
-                      label="LR Terms"
-                      name="lr_terms"
-                      value={form.lr_terms || ''}
-                      entity="lr_terms"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
-                    <div className="form-group"><label>Party Comp Date</label><input type="date" className="form-control" name="party_comp_date" value={form.party_comp_date} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Exfactory Date</label><input type="date" className="form-control" name="exfactory_date" value={form.exfactory_date} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Delivery Starting</label><input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Delivery At</label><input className="form-control" name="delivery_at" value={form.delivery_at} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Desp Mtr Min</label><input type="number" className="form-control" name="desp_mtr_min" value={form.desp_mtr_min} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Desp Mtr Max</label><input type="number" className="form-control" name="desp_mtr_max" value={form.desp_mtr_max} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Delivery Place</label><input className="form-control" name="delivery_place" value={form.delivery_place} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Address</label><input className="form-control" name="delivery_address" value={form.delivery_address} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'process', 'process_sequence')} /></div>
-                  </div>
-                </div>
-              )}
-
-              {/* PROCESS FOLLOW & INSTRUCTIONS */}
-              {activeTab === 'process' && (
-                <div className="animate-fade">
-                  <div className="form-group">
-                    <SubMasterDropdown
-                      label="Process Follow Sequence"
-                      name="process_sequence"
-                      value={form.process_sequence || ''}
-                      entity="process_sequence_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                      onKeyDown={(e) => handleKeyDownTabTransition(e, 'instructions', 'email_to')}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'instructions' && (
-                <div className="animate-fade">
-                  <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                    <div className="form-group"><label>Email TO</label><input className="form-control" name="email_to" value={form.email_to} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Email CC</label><input className="form-control" name="email_cc" value={form.email_cc} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Process Instruction</label><textarea className="form-control" name="process_instruction" value={form.process_instruction} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Yarn Instruction</label><textarea className="form-control" name="yarn_instruction" value={form.yarn_instruction} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Production Instruction</label><textarea className="form-control" name="prod_instruction" value={form.prod_instruction} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Delivery Instruction</label><textarea className="form-control" name="delivery_instruction" value={form.delivery_instruction} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>General Remarks</label><textarea className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-                  </div>
-                </div>
-              )}
-
-              {/* PARTY PO DETAILS (LINE ITEMS) */}
-              {activeTab === 'items' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-primary" onClick={addItem}><Plus size={16} /> Add Another PO Item</button>
-                  </div>
-
-                  {form.items.map((item, index) => (
-                    <div key={index} style={{ border: '1px solid var(--border)', padding: 20, marginBottom: 20, borderRadius: 8, background: '#fafafa', position: 'relative' }}>
-                      <button type="button" onClick={() => removeItem(index)} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14} /></button>
-                      <h4 style={{ marginTop: 0, marginBottom: 16, color: 'var(--primary)' }}>Item #{index + 1} Details</h4>
-                      {renderPOItemFields(item, index)}
-                    </div>
-                  ))}
-                </div>
-              )}
+              </div>
             </fieldset>
           </div>
         </div>

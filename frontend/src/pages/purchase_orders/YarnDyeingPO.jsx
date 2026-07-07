@@ -81,6 +81,63 @@ export default function YarnDyeingPO() {
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
   const [yarnInwards, setYarnInwards] = useState([]);
+
+  const allInwardColors = React.useMemo(() => {
+    const colors = new Set();
+    
+    // Colors from Yarn Inwards
+    yarnInwards.forEach(yi => {
+      if (yi.items && Array.isArray(yi.items)) {
+        yi.items.forEach(item => {
+          if (item.colour) {
+            colors.add(item.colour);
+          }
+        });
+      }
+    });
+
+    // Colors from Design Entries
+    designEntries.forEach(de => {
+      if (de.fabric_design_details) {
+        try {
+          const details = JSON.parse(de.fabric_design_details);
+          if (Array.isArray(details)) {
+            details.forEach(item => {
+              if (item.color) {
+                colors.add(item.color);
+              }
+            });
+          }
+        } catch (e) {}
+      }
+      if (de.warp_summary) {
+        try {
+          const ws = JSON.parse(de.warp_summary);
+          if (Array.isArray(ws)) {
+            ws.forEach(item => {
+              if (item.color) {
+                colors.add(item.color);
+              }
+            });
+          }
+        } catch (e) {}
+      }
+      if (de.weft_summary) {
+        try {
+          const ws = JSON.parse(de.weft_summary);
+          if (Array.isArray(ws)) {
+            ws.forEach(item => {
+              if (item.color) {
+                colors.add(item.color);
+              }
+            });
+          }
+        } catch (e) {}
+      }
+    });
+
+    return Array.from(colors);
+  }, [yarnInwards, designEntries]);
   
   const loadData = async () => {
     try {
@@ -138,7 +195,7 @@ export default function YarnDyeingPO() {
     const insurance = parseFloat(updatedForm.packing_charge) || 0;
     
     const taxableValue = grossAmt + freight + insurance;
-    const taxType = updatedForm.tax_type || 'GST';
+    const taxType = updatedForm.tax_type || '';
 
     const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
     const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
@@ -198,50 +255,73 @@ export default function YarnDyeingPO() {
     };
 
     if (warpSummary.length > 0 || weftSummary.length > 0) {
-      let newItems = [];
+      const aggregated = {};
+
       warpSummary.forEach(row => {
-        const stockMatch = findMatchingInward(row.count, row.color);
-        newItems.push({
-          sp_no: de.ds_ref_no || '',
-          lot_no: stockMatch.lot_no,
-          stock_qty: stockMatch.stock_qty,
-          dsn_count: row.count || '',
-          yarn_count: row.count || '',
-          color: row.color || '',
-          uom: 'Kgs',
-          warp_qty: row.req_kg,
-          weft_qty: 0,
-          tot_qty: row.req_kg,
-          tole_pct: de.toie_pct || 0,
-          wrp_order: row.req_kg,
-          wft_order: 0,
-          rate: 0,
-          amount: 0
-        });
+        const yc = row.count || '';
+        const col = row.color || '';
+        const key = `${yc.toLowerCase().trim()}_${col.toLowerCase().trim()}`;
+        const stockMatch = findMatchingInward(yc, col);
+        const reqKg = parseFloat(row.req_kg) || 0;
+
+        if (!aggregated[key]) {
+          aggregated[key] = {
+            sp_no: de.ds_ref_no || '',
+            lot_no: stockMatch.lot_no,
+            stock_qty: stockMatch.stock_qty,
+            dsn_count: yc,
+            yarn_count: yc,
+            color: col,
+            uom: 'Kgs',
+            warp_qty: reqKg,
+            weft_qty: 0,
+            tot_qty: reqKg,
+            tole_pct: de.toie_pct || 0,
+            wrp_order: reqKg,
+            wft_order: 0,
+            rate: 0,
+            amount: 0
+          };
+        } else {
+          aggregated[key].warp_qty += reqKg;
+          aggregated[key].tot_qty += reqKg;
+          aggregated[key].wrp_order += reqKg;
+        }
       });
 
       weftSummary.forEach(row => {
-        const stockMatch = findMatchingInward(row.count, row.color);
-        newItems.push({
-          sp_no: de.ds_ref_no || '',
-          lot_no: stockMatch.lot_no,
-          stock_qty: stockMatch.stock_qty,
-          dsn_count: row.count || '',
-          yarn_count: row.count || '',
-          color: row.color || '',
-          uom: 'Kgs',
-          warp_qty: 0,
-          weft_qty: row.req_kg,
-          tot_qty: row.req_kg,
-          tole_pct: de.toie_pct || 0,
-          wrp_order: 0,
-          wft_order: row.req_kg,
-          rate: 0,
-          amount: 0
-        });
+        const yc = row.count || '';
+        const col = row.color || '';
+        const key = `${yc.toLowerCase().trim()}_${col.toLowerCase().trim()}`;
+        const stockMatch = findMatchingInward(yc, col);
+        const reqKg = parseFloat(row.req_kg) || 0;
+
+        if (!aggregated[key]) {
+          aggregated[key] = {
+            sp_no: de.ds_ref_no || '',
+            lot_no: stockMatch.lot_no,
+            stock_qty: stockMatch.stock_qty,
+            dsn_count: yc,
+            yarn_count: yc,
+            color: col,
+            uom: 'Kgs',
+            warp_qty: 0,
+            weft_qty: reqKg,
+            tot_qty: reqKg,
+            tole_pct: de.toie_pct || 0,
+            wrp_order: 0,
+            wft_order: reqKg,
+            rate: 0,
+            amount: 0
+          };
+        } else {
+          aggregated[key].weft_qty += reqKg;
+          aggregated[key].tot_qty += reqKg;
+          aggregated[key].wft_order += reqKg;
+        }
       });
 
-      return newItems;
+      return Object.values(aggregated);
     }
 
     let fabricDesignRows = [];
@@ -407,51 +487,73 @@ export default function YarnDyeingPO() {
       return { ...row, total_ends: groupEnds, req_kg };
     });
 
-    let newItems = [];
-    
+    const aggregatedCalculated = {};
+
     warpSummaryCalculated.forEach(row => {
-      const stockMatch = findMatchingInward(row.count, row.color);
-      newItems.push({
-        sp_no: de.ds_ref_no || '',
-        lot_no: stockMatch.lot_no,
-        stock_qty: stockMatch.stock_qty,
-        dsn_count: row.count || '',
-        yarn_count: row.count || '',
-        color: row.color || '',
-        uom: 'Kgs',
-        warp_qty: row.req_kg,
-        weft_qty: 0,
-        tot_qty: row.req_kg,
-        tole_pct: de.toie_pct || 0,
-        wrp_order: row.req_kg,
-        wft_order: 0,
-        rate: 0,
-        amount: 0
-      });
+      const yc = row.count || '';
+      const col = row.color || '';
+      const key = `${yc.toLowerCase().trim()}_${col.toLowerCase().trim()}`;
+      const stockMatch = findMatchingInward(yc, col);
+      const reqKg = parseFloat(row.req_kg) || 0;
+
+      if (!aggregatedCalculated[key]) {
+        aggregatedCalculated[key] = {
+          sp_no: de.ds_ref_no || '',
+          lot_no: stockMatch.lot_no,
+          stock_qty: stockMatch.stock_qty,
+          dsn_count: yc,
+          yarn_count: yc,
+          color: col,
+          uom: 'Kgs',
+          warp_qty: reqKg,
+          weft_qty: 0,
+          tot_qty: reqKg,
+          tole_pct: de.toie_pct || 0,
+          wrp_order: reqKg,
+          wft_order: 0,
+          rate: 0,
+          amount: 0
+        };
+      } else {
+        aggregatedCalculated[key].warp_qty += reqKg;
+        aggregatedCalculated[key].tot_qty += reqKg;
+        aggregatedCalculated[key].wrp_order += reqKg;
+      }
     });
 
     weftSummaryCalculated.forEach(row => {
-      const stockMatch = findMatchingInward(row.count, row.color);
-      newItems.push({
-        sp_no: de.ds_ref_no || '',
-        lot_no: stockMatch.lot_no,
-        stock_qty: stockMatch.stock_qty,
-        dsn_count: row.count || '',
-        yarn_count: row.count || '',
-        color: row.color || '',
-        uom: 'Kgs',
-        warp_qty: 0,
-        weft_qty: row.req_kg,
-        tot_qty: row.req_kg,
-        tole_pct: de.toie_pct || 0,
-        wrp_order: 0,
-        wft_order: row.req_kg,
-        rate: 0,
-        amount: 0
-      });
+      const yc = row.count || '';
+      const col = row.color || '';
+      const key = `${yc.toLowerCase().trim()}_${col.toLowerCase().trim()}`;
+      const stockMatch = findMatchingInward(yc, col);
+      const reqKg = parseFloat(row.req_kg) || 0;
+
+      if (!aggregatedCalculated[key]) {
+        aggregatedCalculated[key] = {
+          sp_no: de.ds_ref_no || '',
+          lot_no: stockMatch.lot_no,
+          stock_qty: stockMatch.stock_qty,
+          dsn_count: yc,
+          yarn_count: yc,
+          color: col,
+          uom: 'Kgs',
+          warp_qty: 0,
+          weft_qty: reqKg,
+          tot_qty: reqKg,
+          tole_pct: de.toie_pct || 0,
+          wrp_order: 0,
+          wft_order: reqKg,
+          rate: 0,
+          amount: 0
+        };
+      } else {
+        aggregatedCalculated[key].weft_qty += reqKg;
+        aggregatedCalculated[key].tot_qty += reqKg;
+        aggregatedCalculated[key].wft_order += reqKg;
+      }
     });
 
-    return newItems;
+    return Object.values(aggregatedCalculated);
   };
 
   const handleChange = (e) => {
@@ -464,14 +566,31 @@ export default function YarnDyeingPO() {
         taxUpdates = { ...taxUpdates, sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
       } else if (value === 'IGST 5% - INTER STATE' || value === 'IGST') {
         taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
-      } else if (value === 'Exempt') {
+      } else if (value === 'Exempt' || value === '') {
         taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
       }
       setForm(recalculate({ ...form, ...taxUpdates }));
       return;
     }
 
-    if (name === 'po_no') {
+    if (name === 'supplier_dyeing_unit') {
+      const selectedParty = parties.find(p => p.company_name === value);
+      let taxUpdates = {};
+      if (selectedParty) {
+        const stateLower = (selectedParty.state || '').toLowerCase().trim();
+        const gstCode = (selectedParty.gst_no || '').trim().substring(0, 2);
+        const isTN = stateLower.includes('tamil') || gstCode === '33';
+        if (!isTN && (stateLower !== '' || gstCode !== '')) {
+          taxUpdates = { tax_type: 'IGST 5% - INTER STATE', sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+        } else {
+          taxUpdates = { tax_type: 'GST 5% - INTRA STATE', sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+        }
+      }
+      setForm(recalculate({ ...form, supplier_dyeing_unit: value, ...taxUpdates }));
+      return;
+    }
+
+    if (name === 'ref_no_1') {
       const selectedBo = buyerOrders.find(bo => bo.ibpo_number === value);
       const de = designEntries.find(d => d.ibpo_no === value);
       if (de) {
@@ -485,7 +604,7 @@ export default function YarnDyeingPO() {
         }
         setForm(recalculate({
           ...form,
-          po_no: value,
+          ref_no_1: value,
           design_no: de.ds_ref_no || de.design_no || '',
           buyer_name: de.buyer_name || (selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : ''),
           items: newItems
@@ -494,7 +613,7 @@ export default function YarnDyeingPO() {
       } else {
         setForm(recalculate({
           ...form,
-          po_no: value,
+          ref_no_1: value,
           buyer_name: selectedBo ? (selectedBo.party_name || selectedBo.buyer_name || '') : ''
         }));
         return;
@@ -530,6 +649,11 @@ export default function YarnDyeingPO() {
     let val = value;
     if (['warp_qty', 'weft_qty', 'tot_qty', 'tole_pct', 'wrp_order', 'wft_order', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
     newItems[index][field] = val;
+    if (field === 'warp_qty' || field === 'weft_qty') {
+      const wQty = field === 'warp_qty' ? val : (parseFloat(newItems[index].warp_qty) || 0);
+      const wfQty = field === 'weft_qty' ? val : (parseFloat(newItems[index].weft_qty) || 0);
+      newItems[index].tot_qty = wQty + wfQty;
+    }
     setForm(recalculate({ ...form, items: newItems }));
   };
 
@@ -565,6 +689,28 @@ export default function YarnDyeingPO() {
     } catch (err) {
       alert("Error saving order: " + (err.response?.data?.detail ? JSON.stringify(err.response.data.detail) : err.message));
     }
+  };
+
+  const handleOpenNewForm = () => {
+    let maxNum = 0;
+    orders.forEach(o => {
+      if (o.po_no && o.po_no.toUpperCase().startsWith("YDP-")) {
+        const parts = o.po_no.split("-");
+        if (parts.length > 1) {
+          const num = parseInt(parts[1]);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    });
+    const nextPoNo = `YDP-${String(maxNum + 1).padStart(5, '0')}`;
+    setForm({
+      ...initialForm,
+      po_no: nextPoNo,
+      po_date: new Date().toISOString().split('T')[0]
+    });
+    setShowForm(true);
   };
 
   const handleEdit = (order) => {
@@ -664,7 +810,7 @@ export default function YarnDyeingPO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setForm(initialForm); setShowForm(true); }}>
+              <button className="btn btn-primary" onClick={handleOpenNewForm}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -814,59 +960,49 @@ export default function YarnDyeingPO() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[
-              { id: 'info', label: 'Order Info', icon: FileText }, 
-              { id: 'ref', label: 'Reference Info', icon: Layers }, 
-              { id: 'items', label: 'Yarn Details', icon: Package }, 
-              { id: 'tax', label: 'Tax & Charges', icon: IndianRupee }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActiveSection(tab.id);
-                  const el = document.getElementById(`section-${tab.id}`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                style={{
-                  padding: '16px 24px', 
-                  background: activeSection === tab.id ? '#fff' : 'transparent',
-                  border: 'none', 
-                  borderBottom: activeSection === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, 
-                  color: activeSection === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8, 
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <tab.icon size={18} /> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Order Details
+            </button>
           </div>
 
-          <form id="yd-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
+           <form id="yd-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
             <div id="section-info" className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
-              <div className="form-group"><label>Org.Name</label><input type="text" className="form-control" value="DEPL" disabled /></div>
-              <div className="form-group"><label>Ref No</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="text" className="form-control" name="ref_no_1" value={form.ref_no_1} onChange={handleChange} style={{ width: '50%' }} />
-                  <input type="text" className="form-control" name="ref_no_2" value={form.ref_no_2} onChange={handleChange} style={{ width: '50%' }} />
-                </div>
-              </div>
+              <div className="form-group"><label>PO No</label><input type="text" className="form-control" name="po_no" value={form.po_no} disabled style={{ fontWeight: 'bold', color: 'var(--primary)' }} /></div>
+              <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
               <div className="form-group">
-                <label>Order No. *</label>
-                <select className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required>
+                <label>Order No. (Buyer Order) *</label>
+                <select className="form-control" name="ref_no_1" value={form.ref_no_1 || ''} onChange={handleChange} required>
                   <option value="">Select Order No...</option>
                   {buyerOrders.map(bo => (
                     <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
                   ))}
                 </select>
               </div>
-              <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
+              <div className="form-group">
+                <label>Design No. *</label>
+                <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required>
+                  <option value="">Select Design No...</option>
+                  {designEntries.map(de => (
+                    <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
+                  ))}
+                </select>
+              </div>
 
               <div className="form-group"><label>Order Type</label>
                 <select className="form-control" name="order_type" value={form.order_type} onChange={handleChange}>
@@ -897,15 +1033,6 @@ export default function YarnDyeingPO() {
               <div className="form-group"><label>PCP Free</label><input type="text" className="form-control" name="pcp_free" value={form.pcp_free} onChange={handleChange} /></div>
 
               <div className="form-group"><label>Staining on Cotton</label><input type="text" className="form-control" name="staining_on_cotton" value={form.staining_on_cotton} onChange={handleChange} /></div>
-              <div className="form-group">
-                <label>Design No. *</label>
-                <select className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required>
-                  <option value="">Select Design No...</option>
-                  {designEntries.map(de => (
-                    <option key={de.id} value={de.ds_ref_no}>{de.ds_ref_no} ({de.design_no})</option>
-                  ))}
-                </select>
-              </div>
               <div className="form-group"><label>Merchandiser</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
               <div className="form-group"><label>Lot No.</label><input type="text" className="form-control" name="lot_no" value={form.lot_no || ''} onChange={handleChange} /></div>
               <div className="form-group"><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms || ''} onChange={handleChange} /></div>
@@ -954,6 +1081,7 @@ export default function YarnDyeingPO() {
                     <th>Wrp Order</th>
                     <th>Wft Order</th>
                     <th>Rate</th>
+                    <th>Amount</th>
                     <th style={{ width: 60 }}><button type="button" className="btn btn-secondary btn-sm" onClick={addItem} style={{ padding: '4px 8px' }}>Add</button></th>
                   </tr>
                 </thead>
@@ -968,6 +1096,9 @@ export default function YarnDyeingPO() {
                       <td>
                         <select className="form-control" style={{ width: 120, padding: 6, margin: 0 }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)}>
                           <option value="">-</option>
+                          {item.yarn_count && !options.masters?.yarn_count_master?.includes(item.yarn_count) && !options.masters?.count_master?.includes(item.yarn_count) && (
+                            <option value={item.yarn_count}>{item.yarn_count}</option>
+                          )}
                           {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
                           {options.masters?.count_master?.map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
@@ -975,6 +1106,12 @@ export default function YarnDyeingPO() {
                       <td>
                         <select className="form-control" style={{ width: 120, padding: 6, margin: 0 }} value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)}>
                           <option value="">-</option>
+                          {item.color && !options.masters?.color_master?.includes(item.color) && !allInwardColors.includes(item.color) && (
+                            <option value={item.color}>{item.color}</option>
+                          )}
+                          {allInwardColors.map(c => !options.masters?.color_master?.includes(c) && (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
                           {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
                       </td>
@@ -986,6 +1123,7 @@ export default function YarnDyeingPO() {
                       <td><input type="number" className="form-control" style={{ width: 80, padding: 6, margin: 0 }} value={item.wrp_order} onChange={e => updateItem(idx, 'wrp_order', e.target.value)} /></td>
                       <td><input type="number" className="form-control" style={{ width: 80, padding: 6, margin: 0 }} value={item.wft_order} onChange={e => updateItem(idx, 'wft_order', e.target.value)} /></td>
                       <td><input type="number" className="form-control" style={{ width: 80, padding: 6, margin: 0 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
+                      <td><input type="number" className="form-control" style={{ width: 100, padding: 6, margin: 0, background: '#f1f5f9', fontWeight: 'bold' }} value={item.amount || 0} disabled /></td>
                       <td><button type="button" className="icon-btn" onClick={() => removeItem(idx)} style={{ color: 'red' }}><Trash2 size={16} /></button></td>
                     </tr>
                   ))}

@@ -9,6 +9,7 @@ export default function YarnStock() {
   const [searchTerm, setSearchTerm] = useState('');
   const [countFilter, setCountFilter] = useState('All Counts');
   const [godownFilter, setGodownFilter] = useState('All Godowns');
+  const [colorFilter, setColorFilter] = useState('All Colors');
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +27,7 @@ export default function YarnStock() {
                 return;
               }
 
-              const key = `${item.lot_no}-${item.yarn_count}`;
+              const key = `${item.lot_no}-${item.yarn_count}-${item.colour || ''}`;
               if (!lotMap[key]) {
                 lotMap[key] = {
                   id: item.id,
@@ -67,16 +68,22 @@ export default function YarnStock() {
     return ['All Godowns', ...new Set(stock.map(item => item.godown))];
   }, [stock]);
 
+  const colorsList = useMemo(() => {
+    return ['All Colors', ...new Set(stock.map(item => item.colour).filter(Boolean))];
+  }, [stock]);
+
   const filteredStock = useMemo(() => {
     return stock.filter(item => {
       const matchesSearch = item.mill.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             item.lotNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            item.count.toLowerCase().includes(searchTerm.toLowerCase());
+                            item.count.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (item.colour && item.colour.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesCount = countFilter === 'All Counts' || item.count === countFilter;
       const matchesGodown = godownFilter === 'All Godowns' || item.godown === godownFilter;
-      return matchesSearch && matchesCount && matchesGodown;
+      const matchesColor = colorFilter === 'All Colors' || item.colour === colorFilter;
+      return matchesSearch && matchesCount && matchesGodown && matchesColor;
     });
-  }, [stock, searchTerm, countFilter, godownFilter]);
+  }, [stock, searchTerm, countFilter, godownFilter, colorFilter]);
 
   const stats = useMemo(() => {
     const totalBags = filteredStock.reduce((acc, item) => acc + item.bags, 0);
@@ -89,6 +96,7 @@ export default function YarnStock() {
     const data = filteredStock.map(item => ({
       'Yarn Count': item.count,
       'Mill Name': item.mill,
+      'Color': item.colour || '-',
       'Lot No': item.lotNo,
       'Bags': item.bags,
       'Net Weight (Kgs)': item.netWeight,
@@ -106,10 +114,11 @@ export default function YarnStock() {
   const exportPDF = () => {
     const doc = new jsPDF('portrait');
     doc.text('Dinesh Exports - Yarn Stock Summary', 14, 15);
-    const headers = [['Yarn Count', 'Mill', 'Lot No', 'Bags', 'Net Wt (Kgs)', 'Godown']];
+    const headers = [['Yarn Count', 'Mill', 'Color', 'Lot No', 'Bags', 'Net Wt (Kgs)', 'Godown']];
     const rows = filteredStock.map(item => [
       item.count,
       item.mill,
+      item.colour || '-',
       item.lotNo,
       item.bags,
       `${item.netWeight} Kg`,
@@ -188,16 +197,19 @@ export default function YarnStock() {
           <input 
             type="text" 
             className="form-control" 
-            placeholder="Search by Lot No, Count, Mill..." 
+            placeholder="Search by Lot No, Count, Mill, Color..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
           />
         </div>
-        <select className="form-control" style={{ width: 200, margin: 0 }} value={countFilter} onChange={e => setCountFilter(e.target.value)}>
+        <select className="form-control" style={{ width: 180, margin: 0 }} value={countFilter} onChange={e => setCountFilter(e.target.value)}>
           {countsList.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <select className="form-control" style={{ width: 200, margin: 0 }} value={godownFilter} onChange={e => setGodownFilter(e.target.value)}>
+        <select className="form-control" style={{ width: 180, margin: 0 }} value={colorFilter} onChange={e => setColorFilter(e.target.value)}>
+          {colorsList.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select className="form-control" style={{ width: 180, margin: 0 }} value={godownFilter} onChange={e => setGodownFilter(e.target.value)}>
           {godownsList.map(g => <option key={g} value={g}>{g}</option>)}
         </select>
       </div>
@@ -209,6 +221,7 @@ export default function YarnStock() {
              <tr>
               <th>Yarn Count</th>
               <th>Mill Name</th>
+              <th>Color</th>
               <th>Lot Number</th>
               <th style={{ textAlign: 'right' }}>Bags</th>
               <th style={{ textAlign: 'right' }}>Net Weight (Kgs)</th>
@@ -223,6 +236,15 @@ export default function YarnStock() {
               <tr key={item.id}>
                 <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.count}</td>
                 <td>{item.mill}</td>
+                <td>
+                  {item.colour ? (
+                    <span className="badge badge-secondary" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                      {item.colour}
+                    </span>
+                  ) : (
+                    '-'
+                  )}
+                </td>
                 <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{item.lotNo}</td>
                 <td style={{ textAlign: 'right' }}>{item.bags}</td>
                 <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.netWeight} Kg</td>
@@ -238,7 +260,7 @@ export default function YarnStock() {
             ))}
             {filteredStock.length === 0 && (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                <td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                   No stock records match the selection.
                 </td>
               </tr>

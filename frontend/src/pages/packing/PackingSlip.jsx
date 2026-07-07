@@ -492,23 +492,24 @@ export default function PackingSlip() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'Reference Info' }, { id: 'specs', label: 'Technical & Lot Info' }, { id: 'items', label: 'Despatch Details' }, { id: 'weights', label: 'Weights & Summary' }].map(tab => (
-              <button
-                type="button"
-                key={tab.id} onClick={() => {
-                  setActiveTab(tab.id);
-                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <button 
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              <FileText size={18} /> Packing Details
+            </button>
           </div>
 
           <div style={{ padding: 32, background: '#fff' }}>

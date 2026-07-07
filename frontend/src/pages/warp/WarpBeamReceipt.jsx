@@ -387,25 +387,29 @@ export default function WarpBeamReceipt() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'Top Section Fields' }, { id: 'items', label: 'Warp Beam Details' }].map(tab => (
-              <button
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap'
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <button 
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              <FileText size={18} /> Receipt Details
+            </button>
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
 
-              {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Top Section Fields */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
@@ -435,7 +439,7 @@ export default function WarpBeamReceipt() {
 
                     <div className="form-group"><label>Set No</label><input className="form-control" name="set_no" value={form.set_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Siz DC No</label><input className="form-control" name="siz_dc_no" value={form.siz_dc_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Siz DC Date</label><input type="date" className="form-control" name="siz_dc_date" value={form.siz_dc_date} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'beam_no')} /></div>
+                    <div className="form-group"><label>Siz DC Date</label><input type="date" className="form-control" name="siz_dc_date" value={form.siz_dc_date} onChange={handleChange} /></div>
                   </div>
 
                   {/* Section 2: Warp Beam Details */}
@@ -471,42 +475,6 @@ export default function WarpBeamReceipt() {
                     </table>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'items' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Beam No</th><th>Warp Mtrs</th><th>Type</th><th>Delivery To Weaver</th>
-                          <th>Order No</th><th>DC No</th><th>DC Date</th><th>Loom No</th><th>Loading Date</th><th>Total Meters</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.beams.map((item, idx) => (
-                          <tr key={idx}>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.beam_no} onChange={e => updateItem(idx, 'beam_no', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80, padding: '6px' }} value={item.warp_mtrs} onChange={e => updateItem(idx, 'warp_mtrs', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.beam_type} onChange={e => updateItem(idx, 'beam_type', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 140, padding: '6px' }} value={item.delivery_to_weaver} onChange={e => updateItem(idx, 'delivery_to_weaver', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.order_no} onChange={e => updateItem(idx, 'order_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 90, padding: '6px' }} value={item.dc_no} onChange={e => updateItem(idx, 'dc_no', e.target.value)} /></td>
-                            <td><input type="date" className="form-control" style={{ width: 120, padding: '6px' }} value={item.dc_date} onChange={e => updateItem(idx, 'dc_date', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 80, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
-                            <td><input type="date" className="form-control" style={{ width: 120, padding: '6px' }} value={item.loading_date} onChange={e => updateItem(idx, 'loading_date', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.total_meters} onChange={e => updateItem(idx, 'total_meters', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </fieldset>
           </div>
         </div>

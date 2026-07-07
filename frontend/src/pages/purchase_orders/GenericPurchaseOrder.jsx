@@ -264,24 +264,25 @@ export default function GenericPurchaseOrder({ title, description, icon: Icon = 
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'main', label: 'Order Info', icon: Package }, { id: 'items', label: 'Indent / Design', icon: Package }, { id: 'tax', label: 'Tax & Logistics', icon: IndianRupee }].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  const el = document.getElementById(`section-${tab.id}`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                style={{
-                  padding: '16px 24px', background: 'transparent',
-                  border: 'none', borderBottom: '3px solid transparent',
-                  fontWeight: 600, color: 'var(--primary)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
-                }}
-              >
-                <tab.icon size={16} /> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Package size={16} /> Order Details
+            </button>
           </div>
 
           <form id="generic-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>

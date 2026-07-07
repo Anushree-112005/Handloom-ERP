@@ -1,5 +1,5 @@
 """Dyed Yarn Received & Delivery models."""
-from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey, func, Float, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -50,6 +50,48 @@ class DyedYarnReceived(Base):
     
     remarks = Column(Text)
     status = Column(String(30), default="Received")
+
+    # Added columns to match YarnInward
+    entry_date = Column(Date)
+    inward_date = Column(Date)
+    po_no_dt = Column(String(100))
+    agent_name = Column(String(255))
+    stock_godown = Column(String(255))
+    godown_id = Column(Integer)
+    cone_type = Column(String(50))
+    order_kgs = Column(Float, default=0.0)
+    received_kgs = Column(Float, default=0.0)
+    balance_kgs = Column(Float, default=0.0)
+    pc_id = Column(String(100))
+    tolerance_pct = Column(Float, default=0.0)
+    bill_no = Column(String(100))
+    bill_amount = Column(Float, default=0.0)
+    gross_kgs = Column(Float, default=0.0)
+    net_kgs = Column(Float, default=0.0)
+    chipnam = Column(String(100))
+    due_days = Column(Integer, default=0)
+    veh_no = Column(String(100))
+    eway_bill = Column(String(100))
+    org_grn_no = Column(String(100))
+    gate_no = Column(String(100))
+    wbridge_no = Column(String(100))
+    w_weight = Column(Float, default=0.0)
+    other_remarks = Column(Text)
+    packing = Column(String(100))
+    freight = Column(Float, default=0.0)
+    gross_amount = Column(Float, default=0.0)
+    tax_type = Column(String(100))
+    cgst_pct = Column(Float, default=0.0)
+    sgst_pct = Column(Float, default=0.0)
+    igst_pct = Column(Float, default=0.0)
+    tax_value = Column(Float, default=0.0)
+    tcs_value = Column(Float, default=0.0)
+    tds_pct = Column(Float, default=0.0)
+    total_tax = Column(Float, default=0.0)
+    round_off = Column(Float, default=0.0)
+    net_amount = Column(Float, default=0.0)
+    ref_no = Column(String(50))
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     items = relationship("DyedYarnReceivedItem", back_populates="receipt", cascade="all, delete-orphan")
@@ -62,6 +104,7 @@ class DyedYarnReceivedItem(Base):
     receipt_id = Column(Integer, ForeignKey("dyed_yarn_received.id"), nullable=False)
     cone_type = Column(String(20))
     yarn_count = Column(String(50))
+    received_count = Column(String(50))
     shade_no = Column(String(50))
     our_lot_no = Column(String(50))
     color = Column(String(50))
@@ -83,6 +126,14 @@ class DyedYarnReceivedItem(Base):
     accepted_qty = Column(Numeric(10, 2), default=0)
     rejected_qty = Column(Numeric(10, 2), default=0)
     qc_remarks = Column(Text)
+
+    # Added columns to match YarnInwardItem
+    rate = Column(Float, default=0.0)
+    amount = Column(Float, default=0.0)
+    mill_name = Column(String(255))
+    color_code = Column(String(100))
+    our_id = Column(String(100))
+    kgs = Column(Float, default=0.0)
 
     receipt = relationship("DyedYarnReceived", back_populates="items")
 
@@ -114,6 +165,21 @@ class DyedYarnDelivery(Base):
     eway_bill_no = Column(String(50))
     dispatch_from_godown = Column(String(150))
     remarks = Column(Text)
+
+    # Added columns to match GreyYarnDelivery
+    ref_date = Column(Date)
+    stock_godown = Column(String(255))
+    delivery_address = Column(Text)
+    transport = Column(String(255))
+    delivery_name = Column(String(255))
+    delivery_time = Column(String(20))
+    certificate_type = Column(String(100))
+    design_count = Column(String(100))
+    order_kgs = Column(Float, default=0.0)
+    total_dely_kgs = Column(Float, default=0.0)
+    total_rtn_kgs = Column(Float, default=0.0)
+    balance_kgs = Column(Float, default=0.0)
+    status = Column(String(30), default="Delivered")
 
     # Quantity Summary
     total_ordered_qty = Column(Numeric(10, 2), default=0)
@@ -152,6 +218,7 @@ class DyedYarnDelivery(Base):
     balance = Column(Numeric(14, 2), default=0)
 
     delivery_status = Column(String(50), default="Pending")
+    terms_conditions = Column(JSON, default=list)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     items = relationship("DyedYarnDeliveryItem", back_populates="delivery", cascade="all, delete-orphan")
@@ -188,5 +255,15 @@ class DyedYarnDeliveryItem(Base):
     rate = Column(Numeric(10, 2), default=0)
     amount = Column(Numeric(12, 2), default=0)
     remarks = Column(Text)
+
+    # Added columns to match GreyYarnDeliveryItem
+    cone_type = Column(String(50))
+    count = Column(String(100))
+    our_lot_no = Column(String(100))
+    color = Column(String(100))
+    stock = Column(Float, default=0.0)
+    bags = Column(Integer, default=0)
+    cones = Column(Integer, default=0)
+    total_kgs = Column(Float, default=0.0)
 
     delivery = relationship("DyedYarnDelivery", back_populates="items")
