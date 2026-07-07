@@ -473,39 +473,25 @@ export default function WeavingPO() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[
-              { id: 'info', label: 'Order Info', icon: FileText },
-              { id: 'ref', label: 'Reference Info', icon: Layers },
-              { id: 'delivery', label: 'Delivery Details', icon: Clock },
-              { id: 'items', label: 'Fabric Details', icon: Package },
-              { id: 'tax', label: 'Tax & Logistics', icon: IndianRupee }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActiveSection(tab.id);
-                  const el = document.getElementById(`section-${tab.id}`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                style={{
-                  padding: '16px 24px',
-                  background: activeSection === tab.id ? '#fff' : 'transparent',
-                  border: 'none',
-                  borderBottom: activeSection === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600,
-                  color: activeSection === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <tab.icon size={18} /> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Order Details
+            </button>
           </div>
 
           <form id="weaving-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>

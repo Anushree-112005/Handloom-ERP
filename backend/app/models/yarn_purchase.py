@@ -14,6 +14,7 @@ class YarnPurchaseOrder(Base):
     internal_po_no = Column(String(100))
     used_for = Column(String(100))
     against_ref = Column(String(100))
+    design_no = Column(String(100))
     agent_name = Column(String(255))
     supplier_name = Column(String(255))
     delivery_at = Column(String(255))

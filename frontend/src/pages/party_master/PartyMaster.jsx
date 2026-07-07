@@ -753,10 +753,7 @@ export default function PartyMaster() {
 
         <div className="card" style={{ padding: 0 }}>
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'basic', label: 'Basic Information' },
-            { id: 'location', label: 'Location & Address' },
-            { id: 'tax', label: 'Tax & Legal Info' },
-            { id: 'financial', label: 'Financial & Logistics' }
+            {[{ id: 'basic', label: 'Basic Information' }
             ].map(tab => (
               <button
                 key={tab.id} onClick={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
@@ -826,7 +823,7 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Mail ID</label>
-                        <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'location', 'address')} />
+                        <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} />
                       </div>
                     </div>
 
@@ -933,7 +930,6 @@ export default function PartyMaster() {
                         onOptionsRefresh={handleRefreshOptions}
                         disabled={isReadOnly}
                         placeholder="-- Select Country --"
-                        onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gst_no')}
                       />
                     </div>
 
@@ -1007,7 +1003,7 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Pc ID</label>
-                        <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'financial', 'currency')} />
+                        <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} />
                       </div>
                     </div>
 
@@ -1112,287 +1108,7 @@ export default function PartyMaster() {
                   </div>
                 )}
 
-                {/* Group 2: Location & Address */}
-                {activeTab === 'location' && (
-                  <div className="animate-fade">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-                      <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-                        Location & Address
-                      </h4>
-                      {!isReadOnly && (
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          style={{ padding: '4px 12px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
-                          onClick={() => {
-                            const newAddress = {
-                              address: '', city: '', district: '', state: '', state_code: '', pin_code: '', country: 'India', sales_region: '', address_type: 'Delivery'
-                            };
-                            setFormData(prev => ({
-                              ...prev,
-                              addresses: [...(prev.addresses || []), newAddress]
-                            }));
-                          }}
-                        >
-                          <Plus size={14} /> Add Address
-                        </button>
-                      )}
-                    </div>
-                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                      <div className="form-group">
-                        <label>Address Type</label>
-                        <select className="form-control" name="address_type" value={formData.address_type || 'Bill'} onChange={handleChange}>
-                          <option value="Bill">Bill</option>
-                          <option value="Ship">Ship</option>
-                          <option value="Branch">Branch</option>
-                          <option value="Head Office">Head Office</option>
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                        <label>Complete Address</label>
-                        <input className="form-control" name="address" value={formData.address} onChange={handleChange} />
-                      </div>
-                      <SubMasterDropdown
-                        label="State"
-                        name="state"
-                        value={formData.state}
-                        entity="state_master"
-                        category="state"
-                        options={options}
-                        onChange={handleFieldChange}
-                        onOptionsRefresh={handleRefreshOptions}
-                        disabled={isReadOnly}
-                        placeholder="-- Select State --"
-                      />
-                      <div className="form-group">
-                        <label>City</label>
-                        <input
-                          className="form-control"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          placeholder="Enter City"
-                        />
-                      </div>
-                      <SubMasterDropdown
-                        label="District"
-                        name="district"
-                        value={formData.district}
-                        entity="district_city_master"
-                        category="district"
-                        options={options}
-                        onChange={handleFieldChange}
-                        onOptionsRefresh={handleRefreshOptions}
-                        disabled={isReadOnly}
-                        placeholder="-- Select District --"
-                        filterFn={(item) => {
-                          if (!formData.state) return true;
-                          return item.extra_field_1 === formData.state;
-                        }}
-                      />
-                      <div className="form-group">
-                        <label>Pincode</label>
-                        <input className="form-control" name="pin_code" value={formData.pin_code} onChange={handleChange} />
-                      </div>
-                      <SubMasterDropdown
-                        label="Sales Region"
-                        name="sales_region"
-                        value={formData.sales_region}
-                        entity="sales_region_master"
-                        category="sales_region"
-                        options={options}
-                        onChange={handleFieldChange}
-                        onOptionsRefresh={handleRefreshOptions}
-                        disabled={isReadOnly}
-                        placeholder="-- Select Zone --"
-                      />
-                      <SubMasterDropdown
-                        label="Country"
-                        name="country"
-                        value={formData.country}
-                        entity="country_master"
-                        category="country"
-                        options={options}
-                        onChange={handleFieldChange}
-                        onOptionsRefresh={handleRefreshOptions}
-                        disabled={isReadOnly}
-                        placeholder="-- Select Country --"
-                        onKeyDown={(e) => handleKeyDownTabTransition(e, 'tax', 'gst_no')}
-                      />
-                    </div>
-                    {renderMultipleAddressesSection()}
-                  </div>
-                )}
 
-                {/* Group 3: Tax & Legal Info */}
-                {activeTab === 'tax' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group">
-                      <label>GSTIN</label>
-                      <input className="form-control" name="gst_no" value={formData.gst_no} onChange={handleChange} />
-                    </div>
-                    <SubMasterDropdown
-                      label="GST Type"
-                      name="gst_type"
-                      value={formData.gst_type}
-                      entity="gst_type_master"
-                      category="gst_type"
-                      options={options}
-                      onChange={handleFieldChange}
-                      onOptionsRefresh={handleRefreshOptions}
-                      disabled={isReadOnly}
-                      placeholder="-- Select GST Type --"
-                    />
-                    <div className="form-group">
-                      <label>PAN No</label>
-                      <input className="form-control" name="pan_no" value={formData.pan_no} onChange={handleChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>Tally No</label>
-                      <input className="form-control" name="tally_no" value={formData.tally_no} onChange={handleChange} />
-                    </div>
-                    <SubMasterDropdown
-                      label="TDS"
-                      name="tds"
-                      value={formData.tds}
-                      entity="tds_master"
-                      category="tds"
-                      options={options}
-                      onChange={handleFieldChange}
-                      onOptionsRefresh={handleRefreshOptions}
-                      disabled={isReadOnly}
-                      placeholder="-- Select TDS --"
-                    />
-                    <div className="form-group">
-                      <label>TDS %</label>
-                      <input type="number" step="0.1" className="form-control" name="tds_percent" value={formData.tds_percent} onChange={handleChange} />
-                    </div>
-                    <SubMasterDropdown
-                      label="TCS Applicable"
-                      name="tcs_applicable"
-                      value={formData.tcs_applicable}
-                      entity="tcs_master"
-                      category="tcs_applicable"
-                      options={options}
-                      onChange={handleFieldChange}
-                      onOptionsRefresh={handleRefreshOptions}
-                      disabled={isReadOnly}
-                      placeholder="-- Select --"
-                    />
-
-                    <div className="form-group">
-                      <label>TIN No</label>
-                      <input className="form-control" name="tin_no" value={formData.tin_no} onChange={handleChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>CST No</label>
-                      <input className="form-control" name="cst_no" value={formData.cst_no} onChange={handleChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>Pc ID</label>
-                      <input className="form-control" name="pc_id" value={formData.pc_id} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'financial', 'currency')} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Group 4: Account & Logistics */}
-                {activeTab === 'financial' && (
-                  <div className="animate-fade form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                    <div className="form-group">
-                      <SubMasterDropdown
-                        label="Currency"
-                        name="currency"
-                        value={formData.currency}
-                        entity="currency_master"
-                        category="currency"
-                        options={options}
-                        onChange={handleFieldChange}
-                        onOptionsRefresh={handleRefreshOptions}
-                        disabled={isReadOnly}
-                        placeholder="-- Select Currency --"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Bill Credit Days</label>
-                      <input type="number" className="form-control" name="credit_days" value={formData.credit_days} onChange={handleChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>Credit Limit Rs.</label>
-                      <input type="number" className="form-control" name="credit_limit" value={formData.credit_limit} onChange={handleChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>Merchandiser</label>
-                      <select className="form-control" name="merchandiser" value={formData.merchandiser} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        {options.employees.filter(emp => emp.department?.toLowerCase().includes('merchandis')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label>Manager</label>
-                      <select className="form-control" name="manager" value={formData.manager} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        {options.employees.filter(emp => emp.department?.toLowerCase().includes('manag')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label>A/c Incharge</label>
-                      <select className="form-control" name="account_incharge" value={formData.account_incharge} onChange={handleChange}>
-                        <option value="">-- Select --</option>
-                        {options.employees.filter(emp => emp.department?.toLowerCase().includes('account')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                      </select>
-                    </div>
-                    <SubMasterDropdown
-                      label="Agent Name"
-                      name="agent_name"
-                      value={formData.agent_name}
-                      entity="agent_master"
-                      category="agent_master"
-                      options={options}
-                      onChange={handleFieldChange}
-                      onOptionsRefresh={handleRefreshOptions}
-                      disabled={isReadOnly}
-                      placeholder="-- Select --"
-                    />
-                    <SubMasterDropdown
-                      label="Payment Terms"
-                      name="payment_terms"
-                      value={formData.payment_terms}
-                      entity="payment_terms_master"
-                      category="payment_terms"
-                      options={options}
-                      onChange={handleFieldChange}
-                      onOptionsRefresh={handleRefreshOptions}
-                      disabled={isReadOnly}
-                      placeholder="-- Select Terms --"
-                    />
-                    <SubMasterDropdown
-                      label="Transport Name"
-                      name="transport_name"
-                      value={formData.transport_name}
-                      entity="transport_name_master"
-                      category="transport_name_master"
-                      options={options}
-                      onChange={handleFieldChange}
-                      onOptionsRefresh={handleRefreshOptions}
-                      disabled={isReadOnly}
-                      placeholder="-- Select --"
-                    />
-                    <div className="form-group">
-                      <label>Deliver Party Name</label>
-                      <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
-                        <option value="">-- Same as Business Name --</option>
-                        {formData.deliver_party_name && !options.all_parties.some(p => p.name === formData.deliver_party_name) && (
-                          <option value={formData.deliver_party_name}>{formData.deliver_party_name}</option>
-                        )}
-                        {options.all_parties.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                      <label>Delivery Address</label>
-                      <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} />
-                    </div>
-                  </div>
-                )}
               </fieldset>
             </form>
           </div>

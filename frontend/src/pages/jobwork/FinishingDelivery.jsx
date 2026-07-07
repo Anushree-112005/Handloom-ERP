@@ -327,27 +327,31 @@ export default function FinishingDelivery() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'General Info' }, { id: 'specs', label: 'Fabrication Specs' }, { id: 'items', label: 'Pieces Grid' }, { id: 'logistics', label: 'Vouchers & Logistics' }].map(tab => (
-              <button 
-                type="button"
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Challan Details
+            </button>
           </div>
 
           <div style={{ padding: 32, background: '#fff' }}>
             <form id="finishingDeliveryForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-                {activeTab === 'general' && (
-                  <div className="animate-fade">
+                <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Finishing Delivery & Party Information</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
                       <div className="form-group">
@@ -396,10 +400,8 @@ export default function FinishingDelivery() {
                       </div>
                     </div>
                   </div>
-                )}
 
-                {activeTab === 'specs' && (
-                  <div className="animate-fade">
+                  <div className="animate-fade" style={{ marginTop: 32 }}>
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Finishing Specifications</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
@@ -435,10 +437,8 @@ export default function FinishingDelivery() {
                       </div>
                     </div>
                   </div>
-                )}
 
-                {activeTab === 'items' && (
-                  <div className="animate-fade">
+                  <div className="animate-fade" style={{ marginTop: 32 }}>
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Finishing Pieces Grid</h4>
                     <div style={{ overflowX: 'auto', marginBottom: 20 }}>
                       <table className="data-table" style={{ width: '100%' }}>
@@ -482,10 +482,8 @@ export default function FinishingDelivery() {
                       <button type="button" onClick={addItemRow} className="btn btn-secondary" style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer' }}>+ Add Piece</button>
                     )}
                   </div>
-                )}
 
-                {activeTab === 'logistics' && (
-                  <div className="animate-fade">
+                  <div className="animate-fade" style={{ marginTop: 32 }}>
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Voucher & Logistics Info</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
                       <div className="form-group">
@@ -521,7 +519,6 @@ export default function FinishingDelivery() {
                       </div>
                     </div>
                   </div>
-                )}
               </fieldset>
             </form>
           </div>

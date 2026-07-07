@@ -485,27 +485,31 @@ export default function GreyYarnDelivery() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
-                }}
-              >
-                <tab.icon size={16} /> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Delivery Details
+            </button>
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
 
-              {activeTab === 'general' && (
-                <div className="animate-fade">
+              <div className="animate-fade">
                   {/* Section 1: Delivery Information */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery Information</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -582,7 +586,7 @@ export default function GreyYarnDelivery() {
                     <div className="form-group"><label>Total Dely Kgs</label><input type="number" className="form-control" name="total_dely_kgs" value={form.total_dely_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Rtn Kgs</label><input type="number" className="form-control" name="total_rtn_kgs" value={form.total_rtn_kgs} onChange={handleChange} /></div>
                     <div className="form-group"><label>Balance Kgs</label><input type="number" className="form-control" name="balance_kgs" value={form.balance_kgs} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Status</label><input className="form-control" name="status" value={form.status} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'yarn', 'yarn_count')} /></div>
+                    <div className="form-group"><label>Status</label><input className="form-control" name="status" value={form.status} onChange={handleChange} /></div>
                   </div>
 
                   {/* Section 2: Yarn Delivery Table */}
@@ -637,62 +641,6 @@ export default function GreyYarnDelivery() {
                     </table>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'yarn' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
-                  </div>
-
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>SNo</th><th>Cone Type</th><th>Count</th><th>Our Lot No</th><th>Color</th>
-                          <th>Stock</th><th>Bag</th><th>Cones</th><th>Tot Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              <select className="form-control" style={{ width: 100 }} value={item.cone_type} onChange={e => updateItem(idx, 'cone_type', e.target.value)}>
-                                <option>Full Cone</option><option>Half Cone</option>
-                              </select>
-                            </td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.count} onChange={e => updateItem(idx, 'count', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100 }} value={item.our_lot_no} onChange={e => updateItem(idx, 'our_lot_no', e.target.value)} /></td>
-                            <td>
-                              {customColourIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Color" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 100 }} value={item.color || ''} onChange={e => updateItem(idx, 'color', e.target.value)}>
-                                  <option value="">Select...</option>
-                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.stock} onChange={e => updateItem(idx, 'stock', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 70 }} value={item.cones} onChange={e => updateItem(idx, 'cones', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.total_kgs} onChange={e => updateItem(idx, 'total_kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 80 }} value={item.amount} onChange={e => updateItem(idx, 'amount', e.target.value)} disabled /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}><X size={16} /></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </fieldset>
           </div>
         </div>
