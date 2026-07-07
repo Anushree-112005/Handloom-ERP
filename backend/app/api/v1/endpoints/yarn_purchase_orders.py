@@ -50,6 +50,7 @@ class YarnPurchaseOrderBase(BaseModel):
     internal_po_no: Optional[str] = None
     used_for: Optional[str] = None
     against_ref: Optional[str] = None
+    design_no: Optional[str] = None
     agent_name: Optional[str] = None
     supplier_name: Optional[str] = None
     delivery_at: Optional[str] = None

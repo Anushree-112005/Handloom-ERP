@@ -13,6 +13,7 @@ router = APIRouter(prefix="/dyed-yarn-receipts", tags=["Dyed Yarn Receipts"])
 class DyedYarnReceivedItemBase(BaseModel):
     cone_type: Optional[str] = None
     yarn_count: Optional[str] = None
+    received_count: Optional[str] = None
     shade_no: Optional[str] = None
     our_lot_no: Optional[str] = None
     color: Optional[str] = None
@@ -34,6 +35,14 @@ class DyedYarnReceivedItemBase(BaseModel):
     accepted_qty: Optional[float] = 0
     rejected_qty: Optional[float] = 0
     qc_remarks: Optional[str] = None
+    
+    # New fields to match YarnInwardItem
+    rate: Optional[float] = 0.0
+    amount: Optional[float] = 0.0
+    mill_name: Optional[str] = None
+    color_code: Optional[str] = None
+    our_id: Optional[str] = None
+    kgs: Optional[float] = 0.0
 
 class DyedYarnReceivedCreate(BaseModel):
     inv_no: Optional[str] = None
@@ -75,51 +84,54 @@ class DyedYarnReceivedCreate(BaseModel):
     total_cones: Optional[float] = 0
     total_gross_weight: Optional[float] = 0
     total_net_weight: Optional[float] = 0
+
+    # New fields to match YarnInward
+    entry_date: Optional[date] = None
+    inward_date: Optional[date] = None
+    po_no_dt: Optional[str] = None
+    agent_name: Optional[str] = None
+    stock_godown: Optional[str] = None
+    godown_id: Optional[int] = None
+    cone_type: Optional[str] = None
+    order_kgs: Optional[float] = 0.0
+    received_kgs: Optional[float] = 0.0
+    balance_kgs: Optional[float] = 0.0
+    pc_id: Optional[str] = None
+    tolerance_pct: Optional[float] = 0.0
+    bill_no: Optional[str] = None
+    bill_amount: Optional[float] = 0.0
+    gross_kgs: Optional[float] = 0.0
+    net_kgs: Optional[float] = 0.0
+    chipnam: Optional[str] = None
+    due_days: Optional[int] = 0
+    veh_no: Optional[str] = None
+    eway_bill: Optional[str] = None
+    org_grn_no: Optional[str] = None
+    gate_no: Optional[str] = None
+    wbridge_no: Optional[str] = None
+    w_weight: Optional[float] = 0.0
+    other_remarks: Optional[str] = None
+    packing: Optional[str] = None
+    freight: Optional[float] = 0.0
+    gross_amount: Optional[float] = 0.0
+    tax_type: Optional[str] = None
+    cgst_pct: Optional[float] = 0.0
+    sgst_pct: Optional[float] = 0.0
+    igst_pct: Optional[float] = 0.0
+    tax_value: Optional[float] = 0.0
+    tcs_value: Optional[float] = 0.0
+    tds_pct: Optional[float] = 0.0
+    total_tax: Optional[float] = 0.0
+    round_off: Optional[float] = 0.0
+    net_amount: Optional[float] = 0.0
+    ref_no: Optional[str] = None
+
     items: List[DyedYarnReceivedItemBase] = []
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def create_dyed_yarn_receipt(receipt_in: DyedYarnReceivedCreate, db: AsyncSession = Depends(get_db)):
-    db_receipt = DyedYarnReceived(
-        inv_no=receipt_in.inv_no,
-        inv_date=receipt_in.inv_date,
-        received_type=receipt_in.received_type,
-        receive_mode=receipt_in.receive_mode,
-        party_name=receipt_in.party_name,
-        design_no=receipt_in.design_no,
-        design_count=receipt_in.design_count,
-        order_no=receipt_in.order_no,
-        our_dc_no=receipt_in.our_dc_no,
-        party_dc_no=receipt_in.party_dc_no,
-        dc_date=receipt_in.dc_date,
-        vehicle_no=receipt_in.vehicle_no,
-        transport=receipt_in.transport,
-        driver_name=receipt_in.driver_name,
-        lr_no=receipt_in.lr_no,
-        received_by=receipt_in.received_by,
-        received_time=receipt_in.received_time,
-        godown=receipt_in.godown,
-        remarks=receipt_in.remarks,
-        status=receipt_in.status,
-        receipt_no=receipt_in.receipt_no,
-        receipt_date=receipt_in.receipt_date,
-        yarn_dyeing_po_no=receipt_in.yarn_dyeing_po_no,
-        yarn_dyeing_delivery_no=receipt_in.yarn_dyeing_delivery_no,
-        processor_name=receipt_in.processor_name,
-        buyer_name=receipt_in.buyer_name,
-        party_invoice_no=receipt_in.party_invoice_no,
-        driver_mobile=receipt_in.driver_mobile,
-        checked_by=receipt_in.checked_by,
-        qc_status=receipt_in.qc_status,
-        receipt_status=receipt_in.receipt_status,
-        total_taken_qty=receipt_in.total_taken_qty,
-        total_received_qty=receipt_in.total_received_qty,
-        total_short_qty=receipt_in.total_short_qty,
-        total_excess_qty=receipt_in.total_excess_qty,
-        total_bags=receipt_in.total_bags,
-        total_cones=receipt_in.total_cones,
-        total_gross_weight=receipt_in.total_gross_weight,
-        total_net_weight=receipt_in.total_net_weight
-    )
+    receipt_data = receipt_in.dict(exclude={"items"})
+    db_receipt = DyedYarnReceived(**receipt_data)
     
     if not db_receipt.receipt_no:
         q = select(DyedYarnReceived).order_by(desc(DyedYarnReceived.id))
@@ -159,6 +171,9 @@ async def list_dyed_yarn_receipts(db: AsyncSession = Depends(get_db)):
                 "inv_date": r.inv_date,
                 "party_name": r.party_name,
                 "received_type": r.received_type,
+                "receive_mode": r.receive_mode,
+                "total_bags": r.total_bags,
+                "total_received_qty": float(r.total_received_qty) if r.total_received_qty else 0.0,
                 "status": r.status,
                 "items": [{"color": i.color, "rcvd_kgs": float(i.rcvd_kgs) if i.rcvd_kgs else 0.0} for i in r.items]
             })

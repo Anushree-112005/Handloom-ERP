@@ -321,6 +321,27 @@ export default function YarnInward() {
     }
   };
 
+  const getAlreadyInwardedQty = (poNumber, yarnCount, colour, excludeInwardId = null) => {
+    let totalInwarded = 0;
+    inwards.forEach(inw => {
+      if (excludeInwardId && inw.id === excludeInwardId) return;
+      if (inw.po_no_dt) {
+        const inwPoNum = inw.po_no_dt.split(' / ')[0].trim();
+        if (inwPoNum === poNumber) {
+          (inw.items || []).forEach(item => {
+            if (
+              (item.yarn_count || '').trim().toLowerCase() === (yarnCount || '').trim().toLowerCase() &&
+              (item.colour || '').trim().toLowerCase() === (colour || '').trim().toLowerCase()
+            ) {
+              totalInwarded += parseFloat(item.kgs) || 0;
+            }
+          });
+        }
+      }
+    });
+    return totalInwarded;
+  };
+
   const handleChange = (e) => {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
@@ -395,6 +416,10 @@ export default function YarnInward() {
               : {};
             const millName = item.mill_name || countDetail.mill_name || '';
 
+            const originalQty = item.order_qty || item.order_kgs || 0;
+            const alreadyInwarded = getAlreadyInwardedQty(selectedPo.po_number, item.yarn_count, itemColour, editingId);
+            const remainingQty = Math.max(0, originalQty - alreadyInwarded);
+
             return {
               yarn_count: item.yarn_count || '',
               mill_name: millName,
@@ -403,9 +428,9 @@ export default function YarnInward() {
               lot_no: '',
               our_id: '',
               bags: 0,
-              kgs: item.order_qty || item.order_kgs || 0,
+              kgs: remainingQty,
               rate: item.rate || 0,
-              amount: item.amount || (parseFloat(item.order_qty || 0) * parseFloat(item.rate || 0)) || 0
+              amount: remainingQty * (item.rate || 0)
             };
           });
 
@@ -424,9 +449,9 @@ export default function YarnInward() {
             agent_name: selectedPo.agent_name || '',
             transport: selectedPo.transport || '',
             due_days: selectedPo.due_days || 0,
-            order_kgs: selectedPo.total_order_kgs || totalKgs || 0,
+            order_kgs: totalKgs,
             received_kgs: totalKgs,
-            balance_kgs: (selectedPo.total_order_kgs || totalKgs || 0) - totalKgs,
+            balance_kgs: 0,
             gross_kgs: totalKgs,
             net_kgs: totalKgs,
             tax_type: selectedPo.tax_type || 'GST',
@@ -820,27 +845,31 @@ export default function YarnInward() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {tabs.map(tab => (
-              <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap'
-                }}
-              >
-                <tab.icon size={16}/> {tab.label}
-              </button>
-            ))}
+            <button 
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18}/> Inward Details
+            </button>
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               
-              {activeTab === 'general' && (
-                <div className="animate-fade">
+              <div className="animate-fade">
                   {/* Section 1: General Info */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>General Info</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -1158,222 +1187,6 @@ export default function YarnInward() {
 
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'yarn' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Row</button>
-                  </div>
-                  
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th>
-                          <th>Bags</th><th>Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>{idx + 1}</td>
-                            <td>
-                              {customYarnCountIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Count" value={customYarnCountVal} onChange={e => setCustomYarnCountVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomYarnCount} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomYarnCountIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" name="yarn_count" style={{ width: 130 }} value={item.yarn_count || ''} onChange={e => {
-                                  if (e.target.value === 'custom') setCustomYarnCountIdx(idx);
-                                  else updateItem(idx, 'yarn_count', e.target.value);
-                                }}>
-                                  <option value="">Select Count...</option>
-                                  {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  {item.yarn_count && !options.masters?.yarn_count_master?.includes(item.yarn_count) && (
-                                    <option value={item.yarn_count}>{item.yarn_count}</option>
-                                  )}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td>
-                              {customColourIdx === idx ? (
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                  <input type="text" className="form-control" style={{ width: 100 }} placeholder="New Colour" value={customColourVal} onChange={e => setCustomColourVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomColour} style={{ padding: '0 8px' }}><CheckCircle size={14} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setCustomColourIdx(null)} style={{ padding: '0 8px' }}><X size={14} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" style={{ width: 130 }} value={item.colour || ''} onChange={e => {
-                                  if (e.target.value === 'custom') {
-                                    setCustomColourIdx(idx);
-                                    setCustomColourVal('');
-                                  } else {
-                                    updateItem(idx, 'colour', e.target.value);
-                                  }
-                                }}>
-                                  <option value="">Select Color...</option>
-                                  {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  {item.colour && !options.masters?.color_master?.includes(item.colour) && (
-                                    <option value={item.colour}>{item.colour}</option>
-                                  )}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add...</option>
-                                </select>
-                              )}
-                            </td>
-                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Color Code" value={item.color_code || ''} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
-                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Lot No" value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
-                            <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Our ID" value={item.our_id || ''} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 90 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 110 }} value={item.amount} disabled /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16}/></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'tax' && (
-                <div className="animate-fade" style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                    
-                    {/* ── Logistics & Packing ── */}
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Logistics & Packing</span>
-                      </div>
-                      <div style={{ padding: '16px 18px' }}>
-                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
-                          <div className="form-group"><label>Packing</label>
-                            {isCustomPacking ? (
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
-                                <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
-                                <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
-                              </div>
-                            ) : (
-                              <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
-                                <option value="">Select...</option>
-                                {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
-                                  <option value={form.packing}>{form.packing}</option>
-                                )}
-                                <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                              </select>
-                            )}
-                          </div>
-                          <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
-                          <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ── Tax & TDS/TCS Details ── */}
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                      <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Tax & TDS/TCS Details</span>
-                      </div>
-                      <div style={{ padding: '16px 18px' }}>
-                        <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
-                          <div className="form-group"><label>TAX Type</label>
-                            <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                              <option>GST</option><option>IGST</option><option>Exempt</option>
-                            </select>
-                          </div>
-                          {form.tax_type === 'GST' && (
-                            <>
-                              <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                              <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                            </>
-                          )}
-                          {form.tax_type === 'IGST' && (
-                            <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                          )}
-                          <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} readOnly /></div>
-                          <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
-                          <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
-                          <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} readOnly /></div>
-                          <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* RIGHT SIDE — Order Summary */}
-                  <div style={{ flex: '0 0 300px', position: 'sticky', top: 24 }}>
-                    <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                      <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Order Summary</span>
-                      </div>
-                      <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Amount</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.gross_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Freight Charges</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.freight || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-
-                          {form.tax_type === 'GST' && (
-                            <>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST ({form.sgst_pct || 0}%)</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.sgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                              </div>
-
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST ({form.cgst_pct || 0}%)</span>
-                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.cgst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                              </div>
-                            </>
-                          )}
-
-                          {form.tax_type === 'IGST' && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST ({form.igst_pct || 0}%)</span>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(((parseFloat(form.gross_amount) || 0) + (parseFloat(form.freight) || 0)) * (form.igst_pct || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                          )}
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>TCS Value</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.tcs_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.round_off || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Bags</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.total_bags || 0}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Received Kgs</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.received_kgs || 0).toLocaleString('en-IN')}</span>
-                        </div>
-
-                        <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Grand Total</span>
-                          <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </fieldset>
           </div>
         </div>

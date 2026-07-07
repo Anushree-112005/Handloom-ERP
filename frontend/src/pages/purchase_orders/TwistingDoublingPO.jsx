@@ -488,64 +488,68 @@ export default function TwistingDoublingPO() {
             </div>
 
             {/* Middle Section: Yarn Count Details */}
-            <div style={{ border: '1px solid #fbcfe8', padding: '16px 24px', marginBottom: 24, background: '#fff' }}>
-              <h4 style={{ margin: '0 0 20px 0', color: '#831843', fontWeight: 'bold', fontSize: 14 }}>Yarn Count Details</h4>
-              <div style={{ display: 'flex' }}>
-                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '130px 1fr 100px 1fr', gap: '14px 16px', alignItems: 'center' }}>
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>FIBRE GROUP</label>
-                  <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.fibre_group || ''} onChange={e => updateItem(0, 'fibre_group', e.target.value)}>
-                    <option value="-">-</option>
-                    {options.masters?.department?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>YARN COUNT</label>
-                  <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.yarn_count || ''} onChange={e => updateItem(0, 'yarn_count', e.target.value)}>
-                    <option value="-">-</option>
-                    {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                    {options.masters?.count_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>MILL NAME</label>
-                  <input type="text" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.mill_name || ''} onChange={e => updateItem(0, 'mill_name', e.target.value)} />
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>DESIGN NO</label>
-                  <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.design_no || ''} onChange={e => updateItem(0, 'design_no', e.target.value)}>
-                    <option value="-">-</option>
-                    {options.masters?.design_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>COLOUR</label>
-                  <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.colour || ''} onChange={e => updateItem(0, 'colour', e.target.value)}>
-                    <option value="-">-</option>
-                    {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>CONVERSION<br/>COUNT</label>
-                  <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.conversion_count || ''} onChange={e => updateItem(0, 'conversion_count', e.target.value)}>
-                    <option value="-">-</option>
-                    {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                    {options.masters?.count_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>ORDER KGS</label>
-                  <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.order_kgs || ''} onChange={e => updateItem(0, 'order_kgs', e.target.value)} />
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>JOBWORK<br/>CHARGE</label>
-                  <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.job_work_charge || ''} onChange={e => updateItem(0, 'job_work_charge', e.target.value)} />
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>TOLERENCE %</label>
-                  <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.tolerance_pct || ''} onChange={e => updateItem(0, 'tolerance_pct', e.target.value)} />
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px' }}>AMOUNT</label>
-                  <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, background: '#f1f5f9' }} value={form.items[0]?.amount || ''} disabled />
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px', lineHeight: 1.2 }}>TOTAL STOCK KGS</label>
-                  <input type="text" className="form-control" style={{ margin: 0, padding: '8px', background: '#fbcfe8', border: 'none', borderRadius: 4 }} disabled />
-                  
-                  <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: '#334155', letterSpacing: '0.5px', lineHeight: 1.2 }}>ENTRY AGAINST</label>
-                  <select className="form-control" name="entry_against" value={form.entry_against} onChange={handleChange} style={{ margin: 0, padding: '6px 12px', fontSize: 13 }}>
-                    <option value="-">-</option>
-                  </select>
+            <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff', marginBottom: 24 }}>
+              <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Yarn Count Details</span>
+              </div>
+              <div style={{ padding: '16px 24px' }}>
+                <div style={{ display: 'flex' }}>
+                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '130px 1fr 100px 1fr', gap: '14px 16px', alignItems: 'center' }}>
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>FIBRE GROUP</label>
+                    <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.fibre_group || ''} onChange={e => updateItem(0, 'fibre_group', e.target.value)}>
+                      <option value="-">-</option>
+                      {options.masters?.department?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>YARN COUNT</label>
+                    <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.yarn_count || ''} onChange={e => updateItem(0, 'yarn_count', e.target.value)}>
+                      <option value="-">-</option>
+                      {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                      {options.masters?.count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>MILL NAME</label>
+                    <input type="text" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.mill_name || ''} onChange={e => updateItem(0, 'mill_name', e.target.value)} />
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>DESIGN NO</label>
+                    <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.design_no || ''} onChange={e => updateItem(0, 'design_no', e.target.value)}>
+                      <option value="-">-</option>
+                      {options.masters?.design_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>COLOUR</label>
+                    <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.colour || ''} onChange={e => updateItem(0, 'colour', e.target.value)}>
+                      <option value="-">-</option>
+                      {options.masters?.color_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>CONVERSION<br/>COUNT</label>
+                    <select className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, gridColumn: 'span 3' }} value={form.items[0]?.conversion_count || ''} onChange={e => updateItem(0, 'conversion_count', e.target.value)}>
+                      <option value="-">-</option>
+                      {options.masters?.yarn_count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                      {options.masters?.count_master?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>ORDER KGS</label>
+                    <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.order_kgs || ''} onChange={e => updateItem(0, 'order_kgs', e.target.value)} />
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>JOBWORK<br/>CHARGE</label>
+                    <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.job_work_charge || ''} onChange={e => updateItem(0, 'job_work_charge', e.target.value)} />
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>TOLERENCE %</label>
+                    <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13 }} value={form.items[0]?.tolerance_pct || ''} onChange={e => updateItem(0, 'tolerance_pct', e.target.value)} />
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>AMOUNT</label>
+                    <input type="number" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, background: '#f1f5f9' }} value={form.items[0]?.amount || ''} disabled />
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px', lineHeight: 1.2 }}>TOTAL STOCK KGS</label>
+                    <input type="text" className="form-control" style={{ margin: 0, padding: '6px 12px', fontSize: 13, background: '#f1f5f9' }} disabled />
+                    
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: 11, color: 'var(--text-secondary)', letterSpacing: '0.5px', lineHeight: 1.2 }}>ENTRY AGAINST</label>
+                    <select className="form-control" name="entry_against" value={form.entry_against} onChange={handleChange} style={{ margin: 0, padding: '6px 12px', fontSize: 13 }}>
+                      <option value="-">-</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

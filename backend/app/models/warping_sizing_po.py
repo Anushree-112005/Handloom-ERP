@@ -46,6 +46,34 @@ class WarpingSizingPO(Base):
     delivery_instructions = Column(Text)
     terms_conditions = Column(JSON, default=list)
 
+    # Added columns matching database structure
+    tax_type = Column(String(50))
+    org_name = Column(String(150))
+    ref_no_1 = Column(String(50))
+    ref_no_2 = Column(String(50))
+    order_no = Column(String(50))
+    order_date = Column(Date)
+    completion_date = Column(Date)
+    order_type = Column(String(50))
+    party_name = Column(String(150))
+    design_no = Column(String(100))
+    beam_type = Column(String(50))
+    fabric = Column(String(100))
+    reed = Column(String(50))
+    pick = Column(String(50))
+    warp_width = Column(String(50))
+    warp_ends = Column(String(50))
+    warp_meters = Column(String(50))
+    weft_meters = Column(String(50))
+    fabric_width = Column(String(50))
+    finished_width = Column(String(50))
+    wages_input = Column(String(50))
+    wages_type = Column(String(50))
+    selected_count = Column(String(100))
+    merchandiser = Column(String(150))
+    gross_amt = Column(Numeric(12, 2), default=0)
+    total_beam_kgs = Column(String(50))
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     items = relationship("WarpingSizingPOItem", back_populates="po", cascade="all, delete-orphan")
@@ -67,5 +95,9 @@ class WarpingSizingPOItem(Base):
     qty_kg = Column(Numeric(12, 3), default=0)
     rate_per_kg = Column(Numeric(12, 2), default=0)
     amount = Column(Numeric(12, 2), default=0)
+
+    # Added columns matching database structure
+    weaver_name = Column(String(150))
+    no_of_beam = Column(Numeric(12, 2), default=0)
 
     po = relationship("WarpingSizingPO", back_populates="items")
