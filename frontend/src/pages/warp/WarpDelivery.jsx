@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, Package, Factory, Download, ChevronDown, FileText } from 'lucide-react';
-import { warpDeliveryAPI, partyAPI, dyedYarnReceiptAPI } from '../../services/api';
+import { warpDeliveryAPI, partyAPI, warpingSizingPOAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -16,7 +16,7 @@ const DetailRow = ({ label, value }) => (
 export default function WarpDelivery() {
   const [deliveries, setDeliveries] = useState([]);
   const [parties, setParties] = useState([]);
-  const [dyedYarnReceipts, setDyedYarnReceipts] = useState([]);
+  const [warpingSizingPOs, setWarpingSizingPOs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -32,7 +32,7 @@ export default function WarpDelivery() {
   const [toDate, setToDate] = useState('');
 
   const initialForm = {
-    dyed_yarn_receipt_no: '',
+    po_no_base: '',
     dc_no: '', ref_no: '', dc_date: new Date().toISOString().split('T')[0], delivery_type: 'Direct',
     sizing_name: '', party_name: '', entry_type: '', bpo_no: '', design_no: '', order_no: '',
     address: '', set_id: '', warp_ends: 0, yarn_count: '', vendor_po_no: '', po_date: new Date().toISOString().split('T')[0],
@@ -52,12 +52,12 @@ export default function WarpDelivery() {
 
   const loadData = async () => {
     try {
-      const [delvRes, partRes, dyedRes] = await Promise.all([
-        warpDeliveryAPI.list(), partyAPI.list(), dyedYarnReceiptAPI.list()
+      const [delvRes, partRes, poRes] = await Promise.all([
+        warpDeliveryAPI.list(), partyAPI.list(), warpingSizingPOAPI.list()
       ]);
       setDeliveries(delvRes.data);
       setParties(partRes.data);
-      setDyedYarnReceipts(dyedRes.data);
+      setWarpingSizingPOs(poRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -71,6 +71,7 @@ export default function WarpDelivery() {
     e.preventDefault();
     try {
       const payload = { ...form };
+      delete payload.po_no_base;
       delete payload.dyed_yarn_receipt_no;
       
       const dateFields = ['dc_date', 'po_date'];
@@ -97,7 +98,7 @@ export default function WarpDelivery() {
       if (data.dc_date) data.dc_date = data.dc_date.substring(0, 10);
       if (data.po_date) data.po_date = data.po_date.substring(0, 10);
 
-      setForm({ ...initialForm, ...data });
+      setForm({ ...initialForm, ...data, po_no_base: data.vendor_po_no || '' });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
       setActiveTab('general');
@@ -130,79 +131,90 @@ export default function WarpDelivery() {
     }
   };
 
-  const handleFetchFromDyedYarnReceipt = (inv_no) => {
-    if (!inv_no) {
-      setForm(prev => ({ ...prev, dyed_yarn_receipt_no: inv_no }));
+  const handleFetchFromWarpingSizingPO = (poNo) => {
+    if (!poNo) {
+      setForm(prev => ({ ...prev, po_no_base: poNo }));
       return;
     }
-    const receipt = dyedYarnReceipts.find(r => r.inv_no === inv_no);
-    if (receipt) {
+    const po = warpingSizingPOs.find(p => p.po_no === poNo);
+    if (po) {
       setForm(prev => {
-        const newForm = { ...prev, dyed_yarn_receipt_no: inv_no, ref_no: inv_no };
-        newForm.party_name = receipt.party_name || prev.party_name;
-        newForm.sizing_name = receipt.processor_name || prev.sizing_name;
-        newForm.order_no = receipt.order_no || prev.order_no;
-        newForm.design_no = receipt.design_no || prev.design_no;
-        newForm.vendor_po_no = receipt.yarn_dyeing_po_no || prev.vendor_po_no;
+        const newForm = { ...prev, po_no_base: poNo, ref_no: poNo };
+        newForm.party_name = po.supplier_job_worker || prev.party_name;
+        newForm.sizing_name = po.supplier_job_worker || prev.sizing_name;
+        newForm.order_no = po.order_no || prev.order_no;
+        newForm.bpo_no = po.buyer_order_no || po.order_no || prev.bpo_no;
+        newForm.design_no = po.design_no || prev.design_no;
+        newForm.vendor_po_no = po.po_no || prev.vendor_po_no;
+        newForm.po_date = po.po_date || prev.po_date;
+        newForm.warp_ends = parseInt(po.warp_ends) || prev.warp_ends;
+        newForm.yarn_count = po.selected_count || prev.yarn_count;
+        newForm.order_mtrs = parseFloat(po.warp_meters) || prev.order_mtrs;
+        newForm.remarks = po.remarks || prev.remarks;
         
-        // Additional general mappings
-        newForm.party_po_no = receipt.party_invoice_no || prev.party_po_no;
-        newForm.dc_date = receipt.dc_date || prev.dc_date;
-        newForm.address = receipt.godown || prev.address;
-        newForm.remarks = receipt.remarks || prev.remarks;
+        // Calculate items
+        const newItems = [];
+        let beamCounter = 1;
+        let totalBeams = 0;
         
-        // Logistics
-        newForm.vehicle_no = receipt.vehicle_no || prev.vehicle_no;
-        newForm.transport = receipt.transport || prev.transport;
-        newForm.driver_name = receipt.driver_name || prev.driver_name;
-        newForm.mobile_no = receipt.driver_mobile || prev.mobile_no;
-        newForm.lr_no = receipt.lr_no || prev.lr_no;
-        newForm.delivery_time = receipt.received_time || prev.delivery_time;
-        
-        if (receipt.items && receipt.items.length > 0) {
-          const firstItem = receipt.items[0];
-          const yarnCount = firstItem.yarn_count || receipt.design_count || prev.yarn_count;
-          newForm.yarn_count = yarnCount;
-          
-          newForm.items = newForm.items.map(item => ({
-            ...item,
-            yarn_count: yarnCount,
-            weight_kgs: firstItem.rcvd_kgs || item.weight_kgs,
-            remarks: firstItem.remarks || item.remarks
-          }));
-        } else if (receipt.design_count) {
-          newForm.yarn_count = receipt.design_count;
+        if (po.items && po.items.length > 0) {
+          po.items.forEach(poItem => {
+            const noOfBeams = parseInt(poItem.no_of_beam) || 1;
+            totalBeams += noOfBeams;
+            for (let i = 0; i < noOfBeams; i++) {
+              newItems.push({
+                beam_no: `${po.po_no}-B${beamCounter++}`,
+                beam_type: po.beam_type || 'Warping',
+                yarn_count: poItem.yarn_count || po.selected_count || '',
+                warp_ends: parseInt(po.warp_ends) || 0,
+                reed_width: parseFloat(po.warp_width) || 0,
+                warp_mtrs: po.warp_meters ? (parseFloat(po.warp_meters) / noOfBeams) : 0,
+                weight_kgs: po.total_beam_kgs ? (parseFloat(po.total_beam_kgs) / noOfBeams) : 0,
+                loom_no: '',
+                beam_status: 'Delivered',
+                remarks: ''
+              });
+            }
+          });
         }
+        
+        if (newItems.length === 0) {
+          totalBeams = 1;
+          newItems.push({
+            beam_no: `${po.po_no}-B1`,
+            beam_type: po.beam_type || 'Warping',
+            yarn_count: po.selected_count || '',
+            warp_ends: parseInt(po.warp_ends) || 0,
+            reed_width: parseFloat(po.warp_width) || 0,
+            warp_mtrs: parseFloat(po.warp_meters) || 0,
+            weight_kgs: parseFloat(po.total_beam_kgs) || 0,
+            loom_no: '',
+            beam_status: 'Delivered',
+            remarks: ''
+          });
+        }
+        
+        newForm.total_beams = totalBeams;
+        newForm.items = newItems;
+        
+        // Sum total warp meters
+        newForm.total_meters = newItems.reduce((acc, curr) => acc + (curr.warp_mtrs || 0), 0);
+        newForm.delivered_mtrs = newForm.total_meters;
+        newForm.balance_meters = Math.max(0, newForm.order_mtrs - newForm.delivered_mtrs);
+        
         return newForm;
       });
     } else {
-      setForm(prev => ({ ...prev, dyed_yarn_receipt_no: inv_no }));
+      setForm(prev => ({ ...prev, po_no_base: poNo }));
     }
   };
 
   const handleChange = (e) => {
-    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-      if (e.key === 'Tab' && !e.shiftKey) {
-        e.preventDefault();
-        setActiveTab(nextTab);
-        setTimeout(() => {
-          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-          if (nextInput) {
-            nextInput.focus();
-          } else {
-            // Fallback to first focusable element
-            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-            if (fallback) fallback.focus();
-          }
-        }, 100);
-      }
-    };
-
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
     
-    if (name === 'dyed_yarn_receipt_no') {
-      handleFetchFromDyedYarnReceipt(value);
+    if (name === 'po_no_base') {
+      handleFetchFromWarpingSizingPO(value);
       return;
     }
     
@@ -459,33 +471,37 @@ export default function WarpDelivery() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'Top Section Fields' }, { id: 'items', label: 'Table Section (Beams)' }].map(tab => (
-              <button
-                key={tab.id} onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap'
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <button 
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              <FileText size={18} /> Delivery Details
+            </button>
           </div>
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
 
-              {activeTab === 'general' && (
                 <div className="animate-fade">
                   {/* Section 1: Top Section Fields */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Dyed Yarn Receipt No (Auto-fill Base)</label>
-                      <select className="form-control" name="dyed_yarn_receipt_no" value={form.dyed_yarn_receipt_no || ''} onChange={handleChange}>
-                        <option value="" disabled hidden>Select Receipt...</option>
-                        {dyedYarnReceipts.filter(r => r.inv_no).map(r => <option key={r.id} value={r.inv_no}>{r.inv_no}</option>)}
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>PO NO (Auto-fill Base)</label>
+                      <select className="form-control" name="po_no_base" value={form.po_no_base || ''} onChange={handleChange}>
+                        <option value="" disabled hidden>Select PO...</option>
+                        {warpingSizingPOs.filter(p => p.po_no).map(p => <option key={p.id} value={p.po_no}>{p.po_no} ({p.supplier_job_worker || p.party_name || 'No Vendor'})</option>)}
                       </select>
                     </div>
                     <div className="form-group"><label>Ref No / DC SNo</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} /></div>
@@ -535,7 +551,7 @@ export default function WarpDelivery() {
                     <div className="form-group"><label>Total Warp Mtrs</label><input type="number" className="form-control" name="total_meters" value={form.total_meters} onChange={handleChange} /></div>
                     
                     <div className="form-group"><label>Total Exptd Mtrs</label><input type="number" className="form-control" name="total_exptd_mtrs" value={form.total_exptd_mtrs} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'beam_no')} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
 
                   {/* Section 2: Table Section (Beams) */}
@@ -571,42 +587,6 @@ export default function WarpDelivery() {
                     </table>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'items' && (
-                <div className="animate-fade">
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                    <button type="button" className="btn btn-secondary" onClick={addItem}><Plus size={16} /> Add Beam</button>
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Beam No</th><th>Beam Type</th><th>Yarn Count</th><th>Warp Ends</th><th>Reed Width</th>
-                          <th>Warp Mtrs</th><th>Weight (Kgs)</th><th>Loom No</th><th>Beam Status</th><th>Remarks</th><th>X</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.beam_no} onChange={e => updateItem(idx, 'beam_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120, padding: '6px' }} value={item.beam_type} onChange={e => updateItem(idx, 'beam_type', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 100, padding: '6px' }} value={item.yarn_count} onChange={e => updateItem(idx, 'yarn_count', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.warp_ends} onChange={e => updateItem(idx, 'warp_ends', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.reed_width} onChange={e => updateItem(idx, 'reed_width', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.warp_mtrs} onChange={e => updateItem(idx, 'warp_mtrs', e.target.value)} /></td>
-                            <td><input type="number" className="form-control" style={{ width: 100, padding: '6px' }} value={item.weight_kgs} onChange={e => updateItem(idx, 'weight_kgs', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120, padding: '6px' }} value={item.loom_no} onChange={e => updateItem(idx, 'loom_no', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 120, padding: '6px' }} value={item.beam_status} onChange={e => updateItem(idx, 'beam_status', e.target.value)} /></td>
-                            <td><input className="form-control" style={{ width: 140, padding: '6px' }} value={item.remarks} onChange={e => updateItem(idx, 'remarks', e.target.value)} /></td>
-                            <td><button type="button" onClick={() => removeItem(idx)} style={{ color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </fieldset>
           </div>
         </div>

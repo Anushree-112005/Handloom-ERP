@@ -106,6 +106,44 @@ export default function WarpingSizingPO() {
       return;
     }
 
+    if (name === 'order_no') {
+      const bo = buyerOrders.find(b => b.ibpo_number === value);
+      const de = designEntries.find(d => d.ibpo_no === value || d.design_no === bo?.design_no);
+      
+      let yarnCountVal = '';
+      if (de && de.yarn_details) {
+        try {
+          const parsedYarn = typeof de.yarn_details === 'string'
+            ? JSON.parse(de.yarn_details)
+            : de.yarn_details;
+          if (Array.isArray(parsedYarn) && parsedYarn.length > 0) {
+            yarnCountVal = parsedYarn[0].yarn_count || '';
+          }
+        } catch (e) {
+          console.error("Error parsing yarn_details", e);
+        }
+      }
+
+      setForm(recalculate({
+        ...form,
+        order_no: value,
+        party_name: bo?.party_name || bo?.buyer_name || form.party_name,
+        design_no: de?.ds_ref_no || form.design_no,
+        fabric: de?.fabric || form.fabric,
+        reed: de?.reed || form.reed,
+        pick: de?.pick_ot || de?.pick || form.pick,
+        warp_width: de?.warp_width || form.warp_width,
+        warp_ends: de?.total_ends || form.warp_ends,
+        warp_meters: de?.warp_mtr || form.warp_meters,
+        weft_meters: de?.weft_pro_mtr || form.weft_meters,
+        fabric_width: de?.gray_width || de?.fabric_width_grey || form.fabric_width,
+        finished_width: de?.finish_width || form.finished_width,
+        selected_count: yarnCountVal || de?.count_rxpxw || form.selected_count,
+        merchandiser: de?.buyer_name || form.merchandiser
+      }));
+      return;
+    }
+
     if (name === 'design_no') {
       const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
       setForm(recalculate({
@@ -400,37 +438,25 @@ export default function WarpingSizingPO() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[
-              { id: 'info', label: 'Order Info', icon: FileText },
-              { id: 'items', label: 'Weaver Details', icon: Package },
-              { id: 'tax', label: 'Tax & Logistics', icon: IndianRupee }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActiveSection(tab.id);
-                  const el = document.getElementById(`section-${tab.id}`);
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                style={{
-                  padding: '16px 24px',
-                  background: activeSection === tab.id ? '#fff' : 'transparent',
-                  border: 'none',
-                  borderBottom: activeSection === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600,
-                  color: activeSection === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <tab.icon size={18} /> {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Order Details
+            </button>
           </div>
 
           <form id="warping-sizing-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
@@ -438,7 +464,6 @@ export default function WarpingSizingPO() {
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group"><label>Org.Name</label><input type="text" className="form-control" name="org_name" value={form.org_name} onChange={handleChange} /></div>
                 <div className="form-group"><label>Ref No</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input type="text" className="form-control" name="ref_no_1" value={form.ref_no_1} onChange={handleChange} style={{ width: '50%' }} />
@@ -546,6 +571,9 @@ export default function WarpingSizingPO() {
                         <td>
                           <select className="form-control" style={{ margin: 0 }} value={item.weaver_name} onChange={e => updateItem(idx, 'weaver_name', e.target.value)}>
                             <option value="">Select...</option>
+                            {parties.filter(p => p.party_type?.toLowerCase() === 'job worker').map(p => (
+                              <option key={p.id} value={p.company_name}>{p.company_name}</option>
+                            ))}
                           </select>
                         </td>
                         <td><input type="number" className="form-control" style={{ width: 120, margin: 0 }} value={item.no_of_beam} onChange={e => updateItem(idx, 'no_of_beam', e.target.value)} /></td>
@@ -573,15 +601,15 @@ export default function WarpingSizingPO() {
                             {editingTermIdx === idx ? (
                               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                 <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
-                                <button type="button" className="icon-btn" onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }} style={{ color: 'green' }}><CheckCircle size={16} /></button>
-                                <button type="button" className="icon-btn" onClick={() => setEditingTermIdx(null)} style={{ color: 'var(--text-muted)' }}><X size={16} /></button>
+                                <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'green' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={16} /></button>
+                                <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--text-muted)' }} onClick={() => setEditingTermIdx(null)}><X size={16} /></button>
                               </div>
                             ) : (
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                                 <span>{term}</span>
                                 <div style={{ display: 'flex', gap: 6 }}>
-                                  <button type="button" className="icon-btn" onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} style={{ color: 'var(--primary)' }}><Edit2 size={14} /></button>
-                                  <button type="button" className="icon-btn" onClick={() => removeTerm(idx)} style={{ color: '#ef4444' }}><Trash2 size={14} /></button>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--primary)' }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }}><Edit2 size={14} /></button>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#ef4444' }} onClick={() => removeTerm(idx)}><Trash2 size={14} /></button>
                                 </div>
                               </div>
                             )}

@@ -37,6 +37,16 @@ class DyedYarnDeliveryItemBase(BaseModel):
     amount: Optional[float] = 0
     remarks: Optional[str] = None
 
+    # Matching fields from GreyYarnDeliveryItem
+    cone_type: Optional[str] = None
+    count: Optional[str] = None
+    our_lot_no: Optional[str] = None
+    color: Optional[str] = None
+    stock: Optional[float] = 0.0
+    bags: Optional[int] = 0
+    cones: Optional[int] = 0
+    total_kgs: Optional[float] = 0.0
+
 class DyedYarnDeliveryCreate(BaseModel):
     delivery_no: Optional[str] = None
     dc_no: Optional[str] = None
@@ -61,6 +71,21 @@ class DyedYarnDeliveryCreate(BaseModel):
     eway_bill_no: Optional[str] = None
     dispatch_from_godown: Optional[str] = None
     remarks: Optional[str] = None
+
+    # Matching fields from GreyYarnDelivery
+    ref_date: Optional[date] = None
+    stock_godown: Optional[str] = None
+    delivery_address: Optional[str] = None
+    transport: Optional[str] = None
+    delivery_name: Optional[str] = None
+    delivery_time: Optional[str] = None
+    certificate_type: Optional[str] = None
+    design_count: Optional[str] = None
+    order_kgs: Optional[float] = 0.0
+    total_dely_kgs: Optional[float] = 0.0
+    total_rtn_kgs: Optional[float] = 0.0
+    balance_kgs: Optional[float] = 0.0
+    status: Optional[str] = "Delivered"
 
     # Quantity Summary
     total_ordered_qty: Optional[float] = 0
@@ -99,6 +124,7 @@ class DyedYarnDeliveryCreate(BaseModel):
     balance: Optional[float] = 0
 
     delivery_status: Optional[str] = "Pending"
+    terms_conditions: Optional[List[str]] = []
     items: List[DyedYarnDeliveryItemBase] = []
 
 @router.post("", response_model=dict, status_code=status.HTTP_201_CREATED)
@@ -111,6 +137,13 @@ async def create_dyed_yarn_delivery(data: DyedYarnDeliveryCreate, db: AsyncSessi
         last_rec = result.scalars().first()
         new_id = (last_rec.id + 1) if last_rec else 1
         db_delivery.delivery_no = f"DYD-{new_id:05d}"
+
+    if not db_delivery.dc_no:
+        q = select(DyedYarnDelivery).order_by(desc(DyedYarnDelivery.id))
+        result = await db.execute(q)
+        last_rec = result.scalars().first()
+        new_id = (last_rec.id + 1) if last_rec else 1
+        db_delivery.dc_no = f"YDD-{new_id:05d}"
 
     db.add(db_delivery)
     await db.commit()

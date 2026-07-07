@@ -378,18 +378,31 @@ export default function PrintedFabricReceipt() {
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'Receipt Reference Info' }, { id: 'specs', label: 'Fabric Specs' }, { id: 'items', label: 'Pieces Grid' }].map(tab => (
-              <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} style={{ padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent', border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent', fontWeight: 600, cursor: 'pointer' }}>
-                {tab.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              style={{
+                padding: '16px 24px',
+                background: '#fff',
+                border: 'none',
+                borderBottom: '3px solid var(--primary)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FileText size={18} /> Receipt Details
+            </button>
           </div>
 
           <div style={{ padding: 32, background: '#fff' }}>
             <form id="printedReceiptForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0 }}>
-                {activeTab === 'general' && (
-                  <div className="animate-fade">
+                <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Receipt Reference</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
@@ -437,10 +450,8 @@ export default function PrintedFabricReceipt() {
                       </div>
                     </div>
                   </div>
-                )}
 
-                {activeTab === 'specs' && (
-                  <div className="animate-fade">
+                  <div className="animate-fade" style={{ marginTop: 32 }}>
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Fabric Specifications</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       <div className="form-group">
@@ -461,10 +472,8 @@ export default function PrintedFabricReceipt() {
                       </div>
                     </div>
                   </div>
-                )}
 
-                {activeTab === 'items' && (
-                  <div className="animate-fade">
+                  <div className="animate-fade" style={{ marginTop: 32 }}>
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Printed Pieces Grid</h4>
                     <table className="data-table">
                       <thead>
@@ -492,7 +501,6 @@ export default function PrintedFabricReceipt() {
                     </table>
                     {!isReadOnly && <button type="button" onClick={addItemRow} className="btn btn-secondary" style={{ background: 'var(--primary)', color: '#fff', marginTop: 12 }}>+ Add Piece</button>}
                   </div>
-                )}
               </fieldset>
             </form>
           </div>
