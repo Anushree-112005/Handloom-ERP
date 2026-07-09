@@ -289,18 +289,23 @@ export default function WeavingDelivery() {
 
         // Find matching stock items from the stockList
         const matchedWeftItems = [];
+        const matchedKeys = new Set();
         uniqueDesignYarns.forEach(dy => {
           stockList.forEach(stockItem => {
             if (stockItem.count.toLowerCase() === dy.count.toLowerCase() && 
                 (stockItem.colour.toLowerCase() === dy.color.toLowerCase() || !dy.color)) {
-              matchedWeftItems.push({
-                yarn_count: stockItem.count,
-                lot_no: stockItem.lotNo,
-                color: stockItem.colour,
-                bags: stockItem.bags,
-                kgs: stockItem.netWeight,
-                cone_type: 'Full Cone'
-              });
+              const itemKey = `${stockItem.lotNo}||${stockItem.count}||${stockItem.colour}`;
+              if (!matchedKeys.has(itemKey)) {
+                matchedKeys.add(itemKey);
+                matchedWeftItems.push({
+                  yarn_count: stockItem.count,
+                  lot_no: stockItem.lotNo,
+                  color: stockItem.colour,
+                  bags: stockItem.bags,
+                  kgs: stockItem.netWeight,
+                  cone_type: 'Full Cone'
+                });
+              }
             }
           });
         });
