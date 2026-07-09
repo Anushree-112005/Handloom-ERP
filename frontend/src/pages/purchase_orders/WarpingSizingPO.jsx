@@ -128,7 +128,7 @@ export default function WarpingSizingPO() {
       setForm(recalculate({
         ...form,
         order_no: value,
-        party_name: bo?.party_name || bo?.buyer_name || form.party_name,
+        party_name: form.party_name,
         design_no: de?.ds_ref_no || form.design_no,
         fabric: de?.fabric || form.fabric,
         reed: de?.reed || form.reed,
