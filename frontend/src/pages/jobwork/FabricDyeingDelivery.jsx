@@ -166,7 +166,26 @@ export default function FabricDyeingDelivery() {
         setItems([{ piece_no: '', lot_no: '', ok_mtr: 0, fold_mtr: 0, design_no: '', color: '', rate: 0, amount: 0 }]);
       }
     } else {
-      setFormData(initialForm);
+      let maxNum = 0;
+      deliveries.forEach(d => {
+        if (d.dc_no && d.dc_no.toUpperCase().startsWith("CD-")) {
+          const parts = d.dc_no.split("-");
+          if (parts.length > 1) {
+            const num = parseInt(parts[1]);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        }
+      });
+      const nextNum = maxNum > 0 ? maxNum + 1 : 5001;
+      const nextDcNo = `CD-${nextNum}`;
+
+      setFormData({
+        ...initialForm,
+        dc_no: nextDcNo,
+        dc_date: new Date().toISOString().split('T')[0]
+      });
       setEditingId(null);
       setItems([{ piece_no: '', lot_no: '', ok_mtr: 0, fold_mtr: 0, design_no: '', color: '', rate: 0, amount: 0 }]);
     }
@@ -353,11 +372,7 @@ export default function FabricDyeingDelivery() {
                 <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Dyeing Delivery & Party Information</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
-                      <div className="form-group">
-                        <label>DC No *</label>
-                        <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>DC Date *</label>
                         <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} required />
                       </div>

@@ -323,8 +323,8 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
   const crimpPct = parseFloat(design.crimp_pct) || 0;
   const skgPct = parseFloat(design.skg_pct) || 0;
   const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
-  const warpLength = parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-  const weftProMtrVal = parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+  const warpLength = Math.round(parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+  const weftProMtrVal = Math.round(parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
   const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
   const warpWastage = Math.max(1.0, wastageFactor - 0.015);
 
@@ -423,7 +423,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
       
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
 
       return {
         ...row,
@@ -1097,8 +1097,8 @@ export default function DesignEntry() {
     const crimpPct = parseFloat(form.crimp_pct) || 0;
     const skgPct = parseFloat(form.skg_pct) || 0;
     const dyeingPct = parseFloat(form.dyeing_loss_pct) || 0;
-    const warpLength = parseFloat(form.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-    const weftProMtrVal = parseFloat(form.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+    const warpLength = Math.round(parseFloat(form.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+    const weftProMtrVal = Math.round(parseFloat(form.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
 
     // Aggregate Warp
     const warpColorAgg = {};
@@ -1173,7 +1173,7 @@ export default function DesignEntry() {
       
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
 
       return {
         ...row,
@@ -1209,8 +1209,8 @@ export default function DesignEntry() {
     const crimpPct = parseFloat(currentForm.crimp_pct) || 0;
     const skgPct = parseFloat(currentForm.skg_pct) || 0;
 
-    const weftProMtr = parseFloat((totalMtr * (1 + skgPct / 100)).toFixed(2));
-    const warpMtr = parseFloat((weftProMtr * (1 + crimpPct / 100)).toFixed(2));
+    const weftProMtr = Math.round(totalMtr * (1 + skgPct / 100));
+    const warpMtr = Math.round(weftProMtr * (1 + crimpPct / 100));
 
     const reed = parseFloat(currentForm.reed) || 0;
     const reedOl = Math.max(0, reed - 8);

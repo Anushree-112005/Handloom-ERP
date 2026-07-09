@@ -257,20 +257,6 @@ export default function Login() {
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
-
-          <div className="mt-6 pt-5 border-t border-white/10">
-            <p className="text-slate-500 text-xs text-center mb-2 font-medium">Default credentials</p>
-            <div className="flex gap-2">
-              <div className="flex-1 bg-white/5 rounded-lg p-2.5 text-center">
-                <p className="text-[10px] text-slate-500 mb-0.5">CubeBook</p>
-                <p className="text-xs text-slate-300 font-mono">admin / CubeBook@2026</p>
-              </div>
-              <div className="flex-1 bg-white/5 rounded-lg p-2.5 text-center">
-                <p className="text-[10px] text-slate-500 mb-0.5">Dinesh ERP</p>
-                <p className="text-xs text-slate-300 font-mono">admin / admin123</p>
-              </div>
-            </div>
-          </div>
         </form>
       </div>
     </div>

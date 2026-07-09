@@ -502,9 +502,8 @@ export default function ProcessingPO() {
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                <div className="form-group"><label>PO S.No</label><input type="text" className="form-control" name="po_s_no" value={form.po_s_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-                <div className="form-group"><label>Party Name</label>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
                   <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
                     <option value="">Select...</option>
                     {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}

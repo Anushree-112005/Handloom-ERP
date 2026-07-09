@@ -1346,14 +1346,10 @@ export default function BuyerOrder() {
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Main Details</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
-                      <label>IBPO Number</label>
-                      <input type="text" className="form-control" value={form.ibpo_number || (editingId ? 'AUTO-GENERATED' : getNextIbpoNumber())} disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600, color: 'var(--primary)' }} />
-                    </div>
-                    <div className="form-group">
                       <label>Order Date *</label>
                       <input type="date" className="form-control" name="order_date" value={form.order_date} onChange={handleChange} required />
                     </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}>
                       <label>Party Name *</label>
                       <select className="form-control" required value={form.party_id} onChange={handlePartyChange}>
                         <option value="">Select Party...</option>

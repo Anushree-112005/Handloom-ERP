@@ -45,6 +45,7 @@ class ClothInwardItemBase(BaseModel):
     vloom: Optional[str] = None
     vpc_no: Optional[str] = None
     meters: Optional[Decimal] = Decimal("0.0")
+    width: Optional[str] = None
     
     # Old fields for compatibility
     design_no: Optional[str] = None
@@ -97,6 +98,16 @@ class ClothInwardBase(BaseModel):
     remarks: Optional[str] = None
     process_type: Optional[str] = None
     process_remarks: Optional[str] = None
+    
+    # New fields for Weaving Grey Fabric Receipt & Reconciliation
+    our_delivery_ref: Optional[str] = None
+    total_weight: Optional[Decimal] = Decimal("0.0")
+    weaving_waste_kgs: Optional[Decimal] = Decimal("0.0")
+    weaving_waste_pct: Optional[Decimal] = Decimal("0.0")
+    warp_issued_kgs: Optional[Decimal] = Decimal("0.0")
+    weft_issued_kgs: Optional[Decimal] = Decimal("0.0")
+    weft_return_kgs: Optional[Decimal] = Decimal("0.0")
+    beam_return_kgs: Optional[Decimal] = Decimal("0.0")
     
     # Old fields for compatibility
     inv_no: Optional[str] = None

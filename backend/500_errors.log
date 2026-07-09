@@ -234528,3 +234528,329 @@ HINT:  You will need to rewrite or cast the expression.
 (Background on this error at: https://sqlalche.me/e/20/f405)
 
 
+Global Error on http://testserver/api/v1/warping-sizing-po/: Task <Task pending name='starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro' coro=<BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro() running at /home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py:149> cb=[TaskGroup._spawn.<locals>.task_done() at /home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py:803]> got Future <Future pending cb=[Protocol._on_waiter_completed()]> attached to a different loop
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 309, in dispatch
+    |     response = await call_next(request)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    |     raise app_exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    |     raise exc
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    |     response = await f(request)
+    |                ^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    |     raw_response = await run_endpoint_function(
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    |     return await dependant.call(**values)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/warping_sizing_po.py", line 220, in create_warping_sizing_po
+    |     await db.commit()
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    |     await greenlet_spawn(self.sync_session.commit)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    |     result = context.throw(*sys.exc_info())
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    |     trans.commit(_to_root=True)
+    |   File "<string>", line 2, in commit
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    |     self._prepare_impl()
+    |   File "<string>", line 2, in _prepare_impl
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    |     self.session.flush()
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    |     self._flush(objects)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    |     with util.safe_reraise():
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    |     raise exc_value.with_traceback(exc_tb)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    |     flush_context.execute()
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    |     rec.execute(self)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    |     util.preloaded.orm_persistence.save_obj(
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 60, in save_obj
+    |     for (
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 223, in _organize_states_for_save
+    |     for state, dict_, mapper, connection in _connections_for_states(
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1753, in _connections_for_states
+    |     connection = uowtransaction.transaction.connection(base_mapper)
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in connection
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1039, in connection
+    |     return self._connection_for_bind(bind, execution_options)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in _connection_for_bind
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1175, in _connection_for_bind
+    |     conn = self._parent._connection_for_bind(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "<string>", line 2, in _connection_for_bind
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    |     ret_value = fn(self, *arg, **kw)
+    |                 ^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    |     conn = bind.connect()
+    |            ^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3278, in connect
+    |     return self._connection_cls(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 146, in __init__
+    |     self._dbapi_connection = engine.raw_connection()
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3302, in raw_connection
+    |     return self.pool.connect()
+    |            ^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    |     return _ConnectionFairy._checkout(self)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1362, in _checkout
+    |     with util.safe_reraise():
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    |     raise exc_value.with_traceback(exc_tb)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1300, in _checkout
+    |     result = pool._dialect._do_ping_w_event(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 716, in _do_ping_w_event
+    |     return self.do_ping(dbapi_connection)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 1154, in do_ping
+    |     dbapi_connection.ping()
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 805, in ping
+    |     self._handle_exception(error)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 786, in _handle_exception
+    |     raise error
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 803, in ping
+    |     _ = self.await_(self._async_ping())
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    |     value = await result
+    |             ^^^^^^^^^^^^
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 812, in _async_ping
+    |     await tr.start()
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/transaction.py", line 146, in start
+    |     await self._connection.execute(query)
+    |   File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 350, in execute
+    |     result = await self._protocol.query(query, timeout)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "asyncpg/protocol/protocol.pyx", line 374, in query
+    | RuntimeError: Task <Task pending name='starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro' coro=<BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro() running at /home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py:149> cb=[TaskGroup._spawn.<locals>.task_done() at /home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py:803]> got Future <Future pending cb=[Protocol._on_waiter_completed()]> attached to a different loop
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 85, in __call__
+    await self.app(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/main.py", line 309, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 163, in call_next
+    raise app_exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+    await route.handle(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+    await self.app(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
+    raise exc
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/Videos/Dinesh Export Textile /Dinesh_Textile(may 26)/backend/app/api/v1/endpoints/warping_sizing_po.py", line 220, in create_warping_sizing_po
+    await db.commit()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 1009, in commit
+    await greenlet_spawn(self.sync_session.commit)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2028, in commit
+    trans.commit(_to_root=True)
+  File "<string>", line 2, in commit
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1313, in commit
+    self._prepare_impl()
+  File "<string>", line 2, in _prepare_impl
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1288, in _prepare_impl
+    self.session.flush()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4352, in flush
+    self._flush(objects)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4487, in _flush
+    with util.safe_reraise():
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4448, in _flush
+    flush_context.execute()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 60, in save_obj
+    for (
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 223, in _organize_states_for_save
+    for state, dict_, mapper, connection in _connections_for_states(
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1753, in _connections_for_states
+    connection = uowtransaction.transaction.connection(base_mapper)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in connection
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1039, in connection
+    return self._connection_for_bind(bind, execution_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1175, in _connection_for_bind
+    conn = self._parent._connection_for_bind(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1189, in _connection_for_bind
+    conn = bind.connect()
+           ^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3278, in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 146, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3302, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1362, in _checkout
+    with util.safe_reraise():
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1300, in _checkout
+    result = pool._dialect._do_ping_w_event(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 716, in _do_ping_w_event
+    return self.do_ping(dbapi_connection)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 1154, in do_ping
+    dbapi_connection.ping()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 805, in ping
+    self._handle_exception(error)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 786, in _handle_exception
+    raise error
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 803, in ping
+    _ = self.await_(self._async_ping())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/cubeai/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 812, in _async_ping
+    await tr.start()
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/transaction.py", line 146, in start
+    await self._connection.execute(query)
+  File "/home/cubeai/.local/lib/python3.12/site-packages/asyncpg/connection.py", line 350, in execute
+    result = await self._protocol.query(query, timeout)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 374, in query
+RuntimeError: Task <Task pending name='starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro' coro=<BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro() running at /home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py:149> cb=[TaskGroup._spawn.<locals>.task_done() at /home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py:803]> got Future <Future pending cb=[Protocol._on_waiter_completed()]> attached to a different loop
+
+

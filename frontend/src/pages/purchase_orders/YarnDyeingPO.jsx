@@ -390,8 +390,8 @@ export default function YarnDyeingPO() {
     const crimpPct = parseFloat(de.crimp_pct) || 0;
     const skgPct = parseFloat(de.skg_pct) || 0;
     const dyeingPct = parseFloat(de.dyeing_loss_pct) || 0;
-    const warpLength = parseFloat(de.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-    const weftProMtrVal = parseFloat(de.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+    const warpLength = Math.round(parseFloat(de.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+    const weftProMtrVal = Math.round(parseFloat(de.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
 
     const parseEqCount = (lbl) => {
       const YARN_COUNTS = {
@@ -483,7 +483,7 @@ export default function YarnDyeingPO() {
       const eqCount = parseEqCount(row.count);
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
       return { ...row, total_ends: groupEnds, req_kg };
     });
 
@@ -983,9 +983,8 @@ export default function YarnDyeingPO() {
 
            <form id="yd-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
             <div id="section-info" className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
-              <div className="form-group"><label>PO No</label><input type="text" className="form-control" name="po_no" value={form.po_no} disabled style={{ fontWeight: 'bold', color: 'var(--primary)' }} /></div>
               <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-              <div className="form-group">
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
                 <label>Order No. (Buyer Order) *</label>
                 <select className="form-control" name="ref_no_1" value={form.ref_no_1 || ''} onChange={handleChange} required>
                   <option value="">Select Order No...</option>
