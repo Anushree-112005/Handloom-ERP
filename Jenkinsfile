@@ -168,7 +168,7 @@ pipeline {
                             
                             echo "Waiting for backend container to start..." &&
                             sleep 5 &&
-                            (docker compose exec -T backend python migrate_delete_checking_data.py || docker-compose exec -T backend python migrate_delete_checking_data.py || echo "Migration command failed but proceeding") &&
+                            (docker compose exec -T backend python recreate_tables.py || docker-compose exec -T backend python recreate_tables.py || echo "Recreate database command failed but proceeding") &&
 
                             docker image prune -af --filter 'until=12h' &&
                             docker ps
