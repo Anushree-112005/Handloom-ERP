@@ -739,16 +739,6 @@ export default function PartyMaster() {
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
             {isReadOnly ? 'View Party Details' : editingId ? 'Edit Party Details' : 'Add New Party'}
           </h2>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn btn-secondary" onClick={() => setView('list')}>
-              <X size={16} /> Close
-            </button>
-            {!isReadOnly && (
-              <button type="submit" form="partyForm" className="btn btn-primary">
-                <Save size={16} /> Save Party
-              </button>
-            )}
-          </div>
         </div>
 
         <div className="card" style={{ padding: 0 }}>
@@ -1110,6 +1100,17 @@ export default function PartyMaster() {
 
 
               </fieldset>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> Save Party
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>
