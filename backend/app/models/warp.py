@@ -1,5 +1,5 @@
 """Warp Beam Receipt & Warp Delivery models."""
-from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey, func, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -84,6 +84,17 @@ class WarpDelivery(Base):
     total_meters = Column(Numeric(10, 2), default=0)
     total_exptd_mtrs = Column(Numeric(10, 2), default=0)
     balance_meters = Column(Numeric(10, 2), default=0)
+    
+    terms_conditions = Column(JSON, default=list)
+    gross_amt = Column(Numeric(10, 2), default=0)
+    tax_type = Column(String(50))
+    cgst_pct = Column(Numeric(5, 2), default=0)
+    cgst_amount = Column(Numeric(10, 2), default=0)
+    sgst_pct = Column(Numeric(5, 2), default=0)
+    sgst_amount = Column(Numeric(10, 2), default=0)
+    igst_pct = Column(Numeric(5, 2), default=0)
+    igst_amount = Column(Numeric(10, 2), default=0)
+    net_amount = Column(Numeric(10, 2), default=0)
     
     remarks = Column(Text)
     status = Column(String(30), default="Delivered")

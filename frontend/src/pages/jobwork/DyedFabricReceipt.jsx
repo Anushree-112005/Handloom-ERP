@@ -149,6 +149,18 @@ export default function DyedFabricReceipt() {
     }));
   }, [items, formData.gry_delivery_mtr, formData.received_mtr, formData.order_mtr]);
 
+  const generateNextDFRNo = (existingInwards) => {
+    const dfrNums = existingInwards
+      .map(e => e.ref_no)
+      .filter(ref => ref && ref.toUpperCase().startsWith('DFR-'))
+      .map(ref => {
+        const num = parseInt(ref.replace(/DFR-/i, ''));
+        return isNaN(num) ? 0 : num;
+      });
+    const maxNum = dfrNums.length > 0 ? Math.max(...dfrNums) : 0;
+    return `DFR-${(maxNum + 1).toString().padStart(5, '0')}`;
+  };
+
   const handleOpenForm = (inward = null, readOnly = false) => {
     if (inward) {
       setEditingId(inward.id);
@@ -205,7 +217,11 @@ export default function DyedFabricReceipt() {
         setItems([{ piece_no: '', weight: '', v_loom: '', v_pc_no: '', meters: '' }]);
       }
     } else {
-      setFormData(initialForm);
+      const nextRef = generateNextDFRNo(inwards);
+      setFormData({
+        ...initialForm,
+        ref_no: nextRef
+      });
       setEditingId(null);
       setItems([{ piece_no: '', weight: '', v_loom: '', v_pc_no: '', meters: '' }]);
     }
@@ -405,11 +421,7 @@ export default function DyedFabricReceipt() {
                 <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Receipt Reference</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                      <div className="form-group">
-                        <label>Receipt ID *</label>
-                        <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>Receipt Date *</label>
                         <input type="date" className="form-control" name="inv_date" value={formData.inv_date} onChange={handleInputChange} required />
                       </div>

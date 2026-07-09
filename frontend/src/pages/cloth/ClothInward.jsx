@@ -46,9 +46,11 @@ export default function ClothInward() {
     masters: {}
   });
 
+  const [weavingDeliveries, setWeavingDeliveries] = useState([]);
+
   const initialForm = {
     ref_no: '',
-    inward_type: 'Vendor Inward',
+    inward_type: 'Grey Inward',
     inw_date: new Date().toISOString().split('T')[0],
     vendor_order: '',
     party_name: '',
@@ -68,7 +70,7 @@ export default function ClothInward() {
     warp_mtr: 0,
     inward_mtr: 0,
     shed_no: 'Shed A',
-    loom_no: 'Loom 1',
+    loom_no: '',
     attn_no: '1',
     beam_no: '',
     szt_no: '',
@@ -79,34 +81,105 @@ export default function ClothInward() {
     remarks: '',
     process_type: 'Dyeing',
     process_remarks: '',
+    our_delivery_ref: '',
+    total_weight: 0,
+    weaving_waste_kgs: 0,
+    weaving_waste_pct: 0,
+    warp_issued_kgs: 0,
+    weft_issued_kgs: 0,
+    weft_return_kgs: 0,
+    beam_return_kgs: 0,
     items: []
   };
 
   const [formData, setFormData] = useState(initialForm);
 
+  const generateNextGFRNo = (existingInwards) => {
+    const gfrNums = existingInwards
+      .map(e => e.ref_no)
+      .filter(ref => ref && ref.startsWith('GFR-'))
+      .map(ref => {
+        const num = parseInt(ref.replace('GFR-', ''));
+        return isNaN(num) ? 0 : num;
+      });
+    const maxNum = gfrNums.length > 0 ? Math.max(...gfrNums) : 0;
+    return `GFR-${(maxNum + 1).toString().padStart(5, '0')}`;
+  };
+
   useEffect(() => {
     fetchInwards();
     fetchOptions();
+    // Fetch weaving delivery records from localStorage
+    const saved = localStorage.getItem('dt_weaving_delivery_records');
+    if (saved) {
+      try {
+        setWeavingDeliveries(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   // Update calculations when values or grid items change
   useEffect(() => {
     const totalPcs = formData.items ? formData.items.length : 0;
     const totalMtr = formData.items ? formData.items.reduce((acc, curr) => acc + (Number(curr.meters) || 0), 0) : 0;
+    const totalWt = formData.items ? formData.items.reduce((acc, curr) => acc + (Number(curr.weight) || 0), 0) : 0;
+    
+    const warpIssued = Number(formData.warp_issued_kgs) || 0;
+    const weftIssued = Number(formData.weft_issued_kgs) || 0;
+    const totalIssued = warpIssued + weftIssued;
+    
+    const weftReturn = Number(formData.weft_return_kgs) || 0;
+    const beamReturn = Number(formData.beam_return_kgs) || 0;
+
+    let wasteKgs = Number(formData.weaving_waste_kgs) || 0;
+    // Default waste calculation: Issued - Fabric Received - Weft Return - Beam Return
+    if (!formData.weaving_waste_kgs && totalIssued > 0) {
+      wasteKgs = Math.max(0, totalIssued - totalWt - weftReturn - beamReturn);
+    }
+    const wastePct = totalIssued > 0 ? (wasteKgs / totalIssued) * 100 : 0;
+
     const orderMtrPlus10 = (Number(formData.vendor_order_mtr) || 0) * 1.1;
     const firstBalanceMtr = (Number(formData.vendor_order_mtr) || 0) - (Number(formData.received_mtr) || 0);
-    const secondBalanceMtr = (Number(formData.order_mtr) || 0) - totalMtr;
 
-    setFormData(prev => ({
-      ...prev,
-      total_pieces: totalPcs,
-      total_meters: Number(totalMtr.toFixed(2)),
-      order_mtr_plus_10: Number(orderMtrPlus10.toFixed(2)),
-      received_mtr: Number(totalMtr.toFixed(2)), // Automatically tie received mtr to total grid mtrs
-      balance_mtr: Number(firstBalanceMtr.toFixed(2)),
-      inward_mtr: Number(totalMtr.toFixed(2))
-    }));
-  }, [formData.items, formData.vendor_order_mtr, formData.order_mtr]);
+    setFormData(prev => {
+      if (
+        prev.total_pieces === totalPcs &&
+        prev.total_meters === Number(totalMtr.toFixed(2)) &&
+        prev.total_weight === Number(totalWt.toFixed(2)) &&
+        prev.weaving_waste_pct === Number(wastePct.toFixed(2)) &&
+        prev.weaving_waste_kgs === Number(wasteKgs.toFixed(2)) &&
+        prev.order_mtr_plus_10 === Number(orderMtrPlus10.toFixed(2)) &&
+        prev.received_mtr === Number(totalMtr.toFixed(2)) &&
+        prev.balance_mtr === Number(firstBalanceMtr.toFixed(2)) &&
+        prev.inward_mtr === Number(totalMtr.toFixed(2))
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        total_pieces: totalPcs,
+        total_meters: Number(totalMtr.toFixed(2)),
+        total_weight: Number(totalWt.toFixed(2)),
+        weaving_waste_pct: Number(wastePct.toFixed(2)),
+        weaving_waste_kgs: Number(wasteKgs.toFixed(2)),
+        order_mtr_plus_10: Number(orderMtrPlus10.toFixed(2)),
+        received_mtr: Number(totalMtr.toFixed(2)),
+        balance_mtr: Number(firstBalanceMtr.toFixed(2)),
+        inward_mtr: Number(totalMtr.toFixed(2))
+      };
+    });
+  }, [
+    formData.items, 
+    formData.vendor_order_mtr, 
+    formData.order_mtr,
+    formData.warp_issued_kgs,
+    formData.weft_issued_kgs,
+    formData.weft_return_kgs,
+    formData.beam_return_kgs,
+    formData.weaving_waste_kgs
+  ]);
 
   const fetchInwards = async () => {
     try {
@@ -140,10 +213,11 @@ export default function ClothInward() {
       setFormData(formatted);
       setEditingId(inward.id);
     } else {
-      const randomID = Math.floor(10000 + Math.random() * 90000).toString();
+      const nextRef = generateNextGFRNo(inwards);
       setFormData({
         ...initialForm,
-        ref_no: randomID,
+        ref_no: nextRef,
+        inward_type: 'Grey Inward',
         party_name: options.all_parties?.[0]?.name || ''
       });
       setEditingId(null);
@@ -187,6 +261,34 @@ export default function ClothInward() {
 
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleWeavingDeliveryChange = (e) => {
+    const val = e.target.value;
+    const selected = weavingDeliveries.find(wd => wd.id === val);
+    if (selected) {
+      setFormData(prev => ({
+        ...prev,
+        our_delivery_ref: val,
+        party_name: selected.party_name || prev.party_name,
+        design_no: selected.design_no || prev.design_no,
+        loom_no: selected.loomNo || prev.loom_no,
+        beam_no: selected.items?.[0]?.beamNo || prev.beam_no,
+        szt_no: selected.items?.[0]?.setNo || prev.szt_no,
+        warp_issued_kgs: selected.total_beam_weight || 0,
+        weft_issued_kgs: selected.total_weft_weight || 0,
+        weft_return_kgs: 0,
+        beam_return_kgs: 0
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        our_delivery_ref: val
+      }));
+    }
+  };
+
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
@@ -204,18 +306,39 @@ export default function ClothInward() {
     }
   };
 
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   // Grid row modifications
   const handleAddItemRow = () => {
-    const nextPcNo = `PC-${(formData.items.length + 1).toString().padStart(3, '0')}`;
+    let nextNum = formData.items.length + 1;
+    if (formData.items.length > 0) {
+      const lastPc = formData.items[formData.items.length - 1].piece_no;
+      const match = lastPc.match(/PC-(\d+)/);
+      if (match) {
+        nextNum = parseInt(match[1]) + 1;
+      }
+    }
+    const nextPcNo = `PC-${nextNum.toString().padStart(3, '0')}`;
+    
+    let nextVpc = '';
+    if (formData.items.length > 0) {
+      const lastVpc = formData.items[formData.items.length - 1].vpc_no;
+      const matchVpc = lastVpc.match(/M-(\d+)/);
+      if (matchVpc) {
+        const nextVpcNum = parseInt(matchVpc[1]) + 1;
+        nextVpc = `M-${nextVpcNum.toString().padStart(4, '0')}`;
+      } else {
+        nextVpc = lastVpc || '';
+      }
+    } else {
+      nextVpc = 'M-0301';
+    }
+
     const newItem = {
       piece_no: nextPcNo,
+      vpc_no: nextVpc,
       weight: 0,
-      vloom: '',
-      vpc_no: '',
-      meters: 0
+      meters: 0,
+      width: '56.7"',
+      vloom: formData.loom_no || ''
     };
     setFormData(prev => ({ ...prev, items: [...prev.items, newItem] }));
   };
@@ -559,7 +682,8 @@ export default function ClothInward() {
                   { label: "Vendor", value: viewModalInward.party_name },
                   { label: "DC Number", value: viewModalInward.dc_no || '-' },
                   { label: "Inward Type", value: viewModalInward.inward_type || '-' },
-                  { label: "Process", value: viewModalInward.process_type || '-' }
+                  { label: "Process", value: viewModalInward.process_type || '-' },
+                  { label: "Our Delivery Ref", value: viewModalInward.our_delivery_ref || '-' }
                 ]
               },
               {
@@ -570,20 +694,37 @@ export default function ClothInward() {
                   { label: "Design No", value: viewModalInward.design_no || '-' },
                   { label: "Fabric Const", value: viewModalInward.const_fabric_type || '-' },
                   { label: "Width", value: viewModalInward.width || '-' },
-                  { label: "Total Pieces", value: viewModalInward.total_pieces || 0 },
+                  { label: "Total Pieces", value: `${viewModalInward.total_pieces} Rolls` },
+                  { label: "Total Weight", value: `${Number(viewModalInward.total_weight || 0).toFixed(2)} Kgs` },
                   { label: "Total Meters", value: `${Number(viewModalInward.total_meters || 0).toFixed(2)} Mtr` }
+                ]
+              },
+              {
+                title: "MATERIAL RECONCILIATION",
+                icon: "Activity",
+                type: "grid",
+                data: [
+                  { label: "Warp Issued (Kg)", value: `${Number(viewModalInward.warp_issued_kgs || 0).toFixed(2)} Kgs` },
+                  { label: "Weft Issued (Kg)", value: `${Number(viewModalInward.weft_issued_kgs || 0).toFixed(2)} Kgs` },
+                  { label: "Total Raw Material", value: `${(Number(viewModalInward.warp_issued_kgs || 0) + Number(viewModalInward.weft_issued_kgs || 0)).toFixed(2)} Kgs` },
+                  { label: "Weft Return (Kg)", value: `${Number(viewModalInward.weft_return_kgs || 0).toFixed(2)} Kgs` },
+                  { label: "Beam Return (Kg)", value: `${Number(viewModalInward.beam_return_kgs || 0).toFixed(2)} Kgs` },
+                  { label: "Weaving Waste (Kg)", value: `${Number(viewModalInward.weaving_waste_kgs || 0).toFixed(2)} Kgs` },
+                  { label: "Weaving Waste (%)", value: `${Number(viewModalInward.weaving_waste_pct || 0).toFixed(2)}%` }
                 ]
               },
               {
                 title: "PIECE DETAILS",
                 icon: "Columns",
                 type: "table",
-                headers: ["Piece No", "VLoom", "Weight (Kg)", "Meters"],
+                headers: ["Piece No", "VPC No", "Weight (Kg)", "Meters", "Width", "VLoom"],
                 rows: (viewModalInward.items || []).map((b) => [
                   b.piece_no || '-',
-                  b.vloom || '-',
+                  b.vpc_no || '-',
                   b.weight || 0,
-                  b.meters || 0
+                  b.meters || 0,
+                  b.width || '-',
+                  b.vloom || '-'
                 ])
               }
             ] : []}
@@ -619,41 +760,31 @@ export default function ClothInward() {
               <div className="animate-fade">
                   {/* Section 1: General Spec & Headers */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>General Spec & Headers</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', marginBottom: 32 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px 24px', marginBottom: 32 }}>
                     <div className="form-group">
                       <label>Inward Type *</label>
                       <select className="form-control" name="inward_type" value={formData.inward_type} onChange={handleHeaderChange} required>
+                        <option>Grey Inward</option>
                         <option>Vendor Inward</option>
                         <option>Purchase Inward</option>
-                        <option>Grey Inward</option>
                         <option>Process Inward</option>
                       </select>
                     </div>
 
                     <div className="form-group">
-                      <label>Inw ID (Ref) *</label>
-                      <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleHeaderChange} required disabled />
+                      <label>Ref No</label>
+                      <input className="form-control" name="ref_no" value={formData.ref_no} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 600 }} />
                     </div>
 
                     <div className="form-group">
-                      <label>Inw Date *</label>
+                      <label>Inward Date *</label>
                       <input type="date" className="form-control" name="inw_date" value={formData.inw_date} onChange={handleHeaderChange} required />
                     </div>
 
                     <div className="form-group">
-                      <label>Vendor Order</label>
-                      <select className="form-control" name="vendor_order" value={formData.vendor_order} onChange={handleHeaderChange}>
-                        <option value="">-- Select Order --</option>
-                        <option value="VO-001">VO-001 (Dinesh Mill)</option>
-                        <option value="VO-002">VO-002 (Bala Weavers)</option>
-                        <option value="VO-003">VO-003 (Saroja Textiles)</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                      <label>Vendor Name *</label>
+                      <label>Party (Weaver) *</label>
                       <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
-                        <option value="">-- Select Vendor --</option>
+                        <option value="">-- Select Weaver --</option>
                         {options.all_parties.map(p => (
                           <option key={p.id} value={p.name}>{p.name}</option>
                         ))}
@@ -661,200 +792,47 @@ export default function ClothInward() {
                     </div>
 
                     <div className="form-group">
-                      <label>Vendor DC No *</label>
+                      <label>Weaver DC No *</label>
                       <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleHeaderChange} required />
                     </div>
 
                     <div className="form-group">
-                      <label>DC Date *</label>
-                      <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleHeaderChange} required />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Vendor Order Mtr</label>
-                      <input type="number" className="form-control" name="vendor_order_mtr" value={formData.vendor_order_mtr} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Order Mtr + 10% (Calculated)</label>
-                      <input type="number" className="form-control" name="order_mtr_plus_10" value={formData.order_mtr_plus_10} readOnly style={{ background: 'var(--bg-secondary)', fontWeight: 600 }} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Received Mtr (Calculated)</label>
-                      <input type="number" className="form-control" name="received_mtr" value={formData.received_mtr} readOnly style={{ background: 'var(--bg-secondary)', fontWeight: 600 }} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Balance Mtr (Calculated)</label>
-                      <input type="number" className="form-control" name="balance_mtr" value={formData.balance_mtr} readOnly style={{ background: 'var(--bg-secondary)' }} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>IBPO No</label>
-                      <select className="form-control" name="ibpo" value={formData.ibpo} onChange={handleHeaderChange}>
-                        <option value="">-- Select IBPO --</option>
-                        <option>IBPO-100</option>
-                        <option>IBPO-200</option>
-                        <option>IBPO-300</option>
+                      <label>Our Delivery Ref (Weaving Delivery)</label>
+                      <select 
+                        className="form-control" 
+                        name="our_delivery_ref" 
+                        value={formData.our_delivery_ref} 
+                        onChange={handleWeavingDeliveryChange}
+                      >
+                        <option value="">-- Select Weaving Delivery --</option>
+                        {weavingDeliveries.map(wd => (
+                          <option key={wd.id} value={wd.id}>{wd.id} ({wd.party_name})</option>
+                        ))}
                       </select>
                     </div>
 
                     <div className="form-group">
                       <label>Design No</label>
-                      <select className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange}>
-                        <option value="">-- Select Design --</option>
-                        <option>D-2051</option>
-                        <option>D-4902</option>
-                        <option>D-9005</option>
-                        <option>D-8891</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                      <label>Const / Fabric Type</label>
-                      <input className="form-control" name="const_fabric_type" value={formData.const_fabric_type} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Reed</label>
-                      <input className="form-control" name="reed" value={formData.reed} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Pick</label>
-                      <input className="form-control" name="pick" value={formData.pick} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Width</label>
-                      <input className="form-control" name="width" value={formData.width} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Order Mtr</label>
-                      <input type="number" className="form-control" name="order_mtr" value={formData.order_mtr} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Warp Mtr</label>
-                      <input type="number" className="form-control" name="warp_mtr" value={formData.warp_mtr} onChange={handleHeaderChange} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Inward Mtr (Calculated)</label>
-                      <input type="number" className="form-control" name="inward_mtr" value={formData.inward_mtr} readOnly style={{ background: 'var(--bg-secondary)' }} />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Shed No</label>
-                      <select className="form-control" name="shed_no" value={formData.shed_no} onChange={handleHeaderChange}>
-                        <option>Shed A</option>
-                        <option>Shed B</option>
-                        <option>Shed C</option>
-                        <option>Shed D</option>
-                      </select>
-                    </div>
-
-                    {/* GREEN HIGHLIGHT BALANCE MTR FROM PHOTO */}
-                    <div className="form-group">
-                      <label>Balance Mtr (Order - Inward)</label>
-                      <input 
-                        type="number" 
-                        className="form-control" 
-                        readOnly 
-                        value={(Number(formData.order_mtr) - Number(formData.total_meters)).toFixed(2)}
-                        style={{ 
-                          backgroundColor: '#10b981', 
-                          color: '#ffffff', 
-                          fontWeight: 700, 
-                          border: 'none',
-                          textAlign: 'center'
-                        }} 
-                      />
+                      <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} placeholder="e.g. DEPL-00003" />
                     </div>
 
                     <div className="form-group">
                       <label>Loom No</label>
-                      <select className="form-control" name="loom_no" value={formData.loom_no} onChange={handleHeaderChange}>
-                        <option>Loom 1</option>
-                        <option>Loom 2</option>
-                        <option>Loom 3</option>
-                        <option>Loom 4</option>
-                        <option>Loom 5</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Attn No</label>
-                      <input className="form-control" name="attn_no" value={formData.attn_no} onChange={handleHeaderChange} />
+                      <input className="form-control" name="loom_no" value={formData.loom_no} onChange={handleHeaderChange} placeholder="e.g. Loom-08" />
                     </div>
 
                     <div className="form-group">
                       <label>Beam No</label>
-                      <select className="form-control" name="beam_no" value={formData.beam_no} onChange={handleHeaderChange}>
-                        <option value="">-- Select Beam --</option>
-                        <option>BM-800</option>
-                        <option>BM-801</option>
-                        <option>BM-802</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Sizing (Szt) No</label>
-                      <input className="form-control" name="szt_no" value={formData.szt_no} onChange={handleHeaderChange} />
-                    </div>
-                  </div>
-
-                  {/* Section 2: Processing Steps */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Processing Steps</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', marginBottom: 32 }}>
-                    <div className="form-group">
-                      <label>Process Type</label>
-                      <select className="form-control" name="process_type" value={formData.process_type} onChange={handleHeaderChange}>
-                        <option>Dyeing</option>
-                        <option>Bleaching</option>
-                        <option>Sanforizing</option>
-                        <option>Finishing</option>
-                      </select>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Inspection Type</label>
-                      <select className="form-control" name="inspection_type" value={formData.inspection_type} onChange={handleHeaderChange}>
-                        <option>Standard Check</option>
-                        <option>Full Table Checking</option>
-                        <option>AQL 2.5 Audit</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Inv Pin</label>
-                      <input className="form-control" name="inv_pin" value={formData.inv_pin} onChange={handleHeaderChange} />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Process Remarks</label>
-                      <input className="form-control" name="process_remarks" value={formData.process_remarks} onChange={handleHeaderChange} />
-                    </div>
-                    
-                    <div className="form-group" style={{ gridColumn: 'span 4' }}>
-                      <label>General Remarks</label>
-                      <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
+                      <input className="form-control" name="beam_no" value={formData.beam_no} onChange={handleHeaderChange} placeholder="e.g. BM-00301" />
                     </div>
                   </div>
 
                   {/* Section 3: Piece-wise Inward Grid */}
                   <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Piece-wise Inward Grid</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ marginBottom: 16 }}>
                     <h5 style={{ color: 'var(--text-primary)', margin: 0, fontSize: 14, fontWeight: 600 }}>
                       Piece-wise Inward Details
                     </h5>
-                    {!isReadOnly && (
-                      <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
-                        <Plus size={16} /> Add Piece
-                      </button>
-                    )}
                   </div>
 
                   <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24 }}>
@@ -862,19 +840,20 @@ export default function ClothInward() {
                       <thead>
                         <tr>
                           <th style={{ width: 60 }}>S.No</th>
-                          <th>Pcno *</th>
-                          <th>Weight (kg)</th>
+                          <th>Piece No *</th>
+                          <th>VPC No</th>
+                          <th>Weight (kg) *</th>
+                          <th>Meters *</th>
+                          <th>Width</th>
                           <th>VLoom</th>
-                          <th>VPc No</th>
-                          <th>Mtr *</th>
-                          {!isReadOnly && <th style={{ width: 50 }}></th>}
+                          {!isReadOnly && <th style={{ width: 120, textAlign: 'center' }}>Actions</th>}
                         </tr>
                       </thead>
                       <tbody>
                         {formData.items.length === 0 ? (
                           <tr>
-                            <td colSpan={isReadOnly ? 6 : 7} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                              No cloth pieces added yet. Click "Add Piece" to insert piece specifications.
+                            <td colSpan={isReadOnly ? 7 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                              No cloth pieces added yet. Click <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13, marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={handleAddItemRow}><Plus size={14} /> Add</button> to insert piece specifications.
                             </td>
                           </tr>
                         ) : (
@@ -892,28 +871,21 @@ export default function ClothInward() {
                               </td>
                               <td>
                                 <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.vpc_no}
+                                  onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
+                                />
+                              </td>
+                              <td>
+                                <input
                                   type="number"
                                   step="0.01"
                                   className="form-control"
                                   style={{ width: '100%', margin: 0, padding: '6px' }}
                                   value={item.weight}
                                   onChange={e => handleGridCellChange(index, 'weight', Number(e.target.value))}
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '6px' }}
-                                  value={item.vloom}
-                                  onChange={e => handleGridCellChange(index, 'vloom', e.target.value)}
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '6px' }}
-                                  value={item.vpc_no}
-                                  onChange={e => handleGridCellChange(index, 'vpc_no', e.target.value)}
+                                  required
                                 />
                               </td>
                               <td>
@@ -927,15 +899,42 @@ export default function ClothInward() {
                                   required
                                 />
                               </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.width}
+                                  onChange={e => handleGridCellChange(index, 'width', e.target.value)}
+                                  placeholder='e.g. 56.7"'
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control"
+                                  style={{ width: '100%', margin: 0, padding: '6px' }}
+                                  value={item.vloom}
+                                  onChange={e => handleGridCellChange(index, 'vloom', e.target.value)}
+                                />
+                              </td>
                               {!isReadOnly && (
                                 <td style={{ textAlign: 'center' }}>
-                                  <button
-                                    type="button"
-                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
-                                    onClick={() => handleRemoveItemRow(index)}
-                                  >
-                                    <Trash2 size={16} color="#ef4444" />
-                                  </button>
+                                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
+                                      onClick={handleAddItemRow}
+                                    >
+                                      <Plus size={14} /> Add
+                                    </button>
+                                    <button
+                                      type="button"
+                                      style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
+                                      onClick={() => handleRemoveItemRow(index)}
+                                    >
+                                      <Trash2 size={16} color="#ef4444" />
+                                    </button>
+                                  </div>
                                 </td>
                               )}
                             </tr>
@@ -948,12 +947,113 @@ export default function ClothInward() {
                   {/* SUMMARY SECTION */}
                   <div style={{ marginTop: 24, padding: '16px 24px', background: 'var(--bg-secondary)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Pieces</span>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{formData.total_pieces} Pcs</div>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Pieces Received</span>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>{formData.total_pieces} Rolls</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Weight</span>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>{Number(formData.total_weight || 0).toFixed(2)} Kgs</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Meters</span>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{formData.total_meters} Mtr</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{Number(formData.total_meters || 0).toFixed(2)} Mtr</div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Material Reconciliation */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Material Reconciliation</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 24px', marginBottom: 32 }}>
+                    <div className="form-group">
+                      <label>Warp Issued (Kgs)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="form-control" 
+                        name="warp_issued_kgs" 
+                        value={formData.warp_issued_kgs} 
+                        onChange={handleHeaderChange} 
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Weft Issued (Kgs)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="form-control" 
+                        name="weft_issued_kgs" 
+                        value={formData.weft_issued_kgs} 
+                        onChange={handleHeaderChange} 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Total Raw Material Issued (Kgs)</label>
+                      <input 
+                        type="number" 
+                        className="form-control" 
+                        readOnly 
+                        value={(Number(formData.warp_issued_kgs || 0) + Number(formData.weft_issued_kgs || 0)).toFixed(2)} 
+                        style={{ background: 'var(--bg-secondary)', fontWeight: 600 }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Fabric Received (Kgs)</label>
+                      <input 
+                        type="number" 
+                        className="form-control" 
+                        readOnly 
+                        value={Number(formData.total_weight || 0).toFixed(2)} 
+                        style={{ background: 'var(--bg-secondary)', fontWeight: 600 }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Weft Return (Kgs)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="form-control" 
+                        name="weft_return_kgs" 
+                        value={formData.weft_return_kgs} 
+                        onChange={handleHeaderChange} 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Beam Return (Kgs)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="form-control" 
+                        name="beam_return_kgs" 
+                        value={formData.beam_return_kgs} 
+                        onChange={handleHeaderChange} 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Weaving Waste (Kgs)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        className="form-control" 
+                        name="weaving_waste_kgs" 
+                        value={formData.weaving_waste_kgs} 
+                        onChange={handleHeaderChange} 
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Weaving Waste (%)</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        readOnly 
+                        value={`${Number(formData.weaving_waste_pct || 0).toFixed(2)}%`} 
+                        style={{ background: 'var(--bg-secondary)', fontWeight: 600, color: '#ef4444' }}
+                      />
                     </div>
                   </div>
                 </div>

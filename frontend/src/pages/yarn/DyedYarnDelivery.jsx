@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, FileText, Package, IndianRupee, Download, ChevronDown, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { dyedYarnDeliveryAPI, partyAPI, dropdownAPI, subMasterAPI, designEntryAPI, yarnDyeingPOAPI } from '../../services/api';
+import { dyedYarnDeliveryAPI, partyAPI, dropdownAPI, subMasterAPI, designEntryAPI, yarnDyeingPOAPI, yarnInwardAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -19,6 +19,7 @@ export default function DyedYarnDelivery() {
   const [designs, setDesigns] = useState([]);
   const [yarnDyeingPOs, setYarnDyeingPOs] = useState([]);
   const [options, setOptions] = useState({});
+  const [yarnInwards, setYarnInwards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
@@ -178,18 +179,20 @@ export default function DyedYarnDelivery() {
 
   const loadData = async () => {
     try {
-      const [delRes, partRes, dropRes, ydPORes, dsnRes] = await Promise.all([
+      const [delRes, partRes, dropRes, ydPORes, dsnRes, inwardRes] = await Promise.all([
         dyedYarnDeliveryAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
         yarnDyeingPOAPI.list(),
-        designEntryAPI.list()
+        designEntryAPI.list(),
+        yarnInwardAPI.list()
       ]);
       setDeliveries(delRes.data || []);
       setParties(partRes.data || []);
       setOptions(dropRes.data || {});
       setYarnDyeingPOs(ydPORes.data || []);
       setDesigns(dsnRes.data || []);
+      setYarnInwards(inwardRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -339,7 +342,29 @@ export default function DyedYarnDelivery() {
       const dropRes = await dropdownAPI.getAll();
       setOptions(dropRes.data);
       const newItems = [...form.items];
-      newItems[customColourIdx].color = customColourVal.trim();
+      const col = customColourVal.trim();
+      newItems[customColourIdx].color = col;
+      
+      const c = newItems[customColourIdx].count;
+      const l = newItems[customColourIdx].our_lot_no;
+      let itemStock = 0;
+      let itemBags = 0;
+      (yarnInwards || []).forEach(inward => {
+        if (inward.items && Array.isArray(inward.items)) {
+          inward.items.forEach(inwItem => {
+            const matchCount = String(inwItem.yarn_count || '').trim().toLowerCase() === String(c).trim().toLowerCase();
+            const matchLot = String(inwItem.lot_no || '').trim().toLowerCase() === String(l).trim().toLowerCase();
+            const matchColor = !col || !inwItem.colour || String(inwItem.colour || '').trim().toLowerCase() === String(col || '').trim().toLowerCase();
+            if (matchCount && matchLot && matchColor) {
+              itemStock += parseFloat(inwItem.kgs) || 0;
+              itemBags += parseInt(inwItem.bags) || 0;
+            }
+          });
+        }
+      });
+      newItems[customColourIdx].stock = itemStock;
+      newItems[customColourIdx].bags = itemBags;
+
       setForm({ ...form, items: newItems });
       setCustomColourIdx(null);
       setCustomColourVal('');
@@ -379,13 +404,33 @@ export default function DyedYarnDelivery() {
             const prevQty = prevDeliveredItemsMap[item.id] || 0;
             const bal = ordQty - prevQty;
 
+            const c = item.yarn_count || item.dsn_count || '';
+            const l = item.lot_no || '';
+            const col = item.color || item.colour || '';
+
+            let itemStock = 0;
+            let itemBags = 0;
+            (yarnInwards || []).forEach(inward => {
+              if (inward.items && Array.isArray(inward.items)) {
+                inward.items.forEach(inwItem => {
+                  const matchCount = String(inwItem.yarn_count || '').trim().toLowerCase() === String(c).trim().toLowerCase();
+                  const matchLot = String(inwItem.lot_no || '').trim().toLowerCase() === String(l).trim().toLowerCase();
+                  const matchColor = !col || !inwItem.colour || String(inwItem.colour || '').trim().toLowerCase() === String(col || '').trim().toLowerCase();
+                  if (matchCount && matchLot && matchColor) {
+                    itemStock += parseFloat(inwItem.kgs) || 0;
+                    itemBags += parseInt(inwItem.bags) || 0;
+                  }
+                });
+              }
+            });
+
             return {
               cone_type: 'Full Cone',
-              count: item.yarn_count || item.dsn_count || '',
-              our_lot_no: item.lot_no || '',
-              color: item.color || item.colour || '',
-              stock: 0,
-              bags: parseInt(item.no_of_bags) || 0,
+              count: c,
+              our_lot_no: l,
+              color: col,
+              stock: itemStock,
+              bags: itemBags,
               cones: parseInt(item.no_of_cones) || 0,
               total_kgs: bal > 0 ? bal : 0,
               rate: parseFloat(item.rate) || 0,
@@ -511,6 +556,29 @@ export default function DyedYarnDelivery() {
 
     if (field === 'total_kgs' || field === 'rate') {
       newItems[index].amount = (parseFloat(newItems[index].total_kgs) || 0) * (parseFloat(newItems[index].rate) || 0);
+    }
+
+    if (field === 'count' || field === 'our_lot_no' || field === 'color') {
+      const c = newItems[index].count;
+      const l = newItems[index].our_lot_no;
+      const col = newItems[index].color;
+      let itemStock = 0;
+      let itemBags = 0;
+      (yarnInwards || []).forEach(inward => {
+        if (inward.items && Array.isArray(inward.items)) {
+          inward.items.forEach(inwItem => {
+            const matchCount = String(inwItem.yarn_count || '').trim().toLowerCase() === String(c).trim().toLowerCase();
+            const matchLot = String(inwItem.lot_no || '').trim().toLowerCase() === String(l).trim().toLowerCase();
+            const matchColor = !col || !inwItem.colour || String(inwItem.colour || '').trim().toLowerCase() === String(col || '').trim().toLowerCase();
+            if (matchCount && matchLot && matchColor) {
+              itemStock += parseFloat(inwItem.kgs) || 0;
+              itemBags += parseInt(inwItem.bags) || 0;
+            }
+          });
+        }
+      });
+      newItems[index].stock = itemStock;
+      newItems[index].bags = itemBags;
     }
 
     setForm({ ...form, items: newItems });
@@ -799,8 +867,7 @@ export default function DyedYarnDelivery() {
                   {/* Section 1: Delivery Information */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery Information</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group"><label>DC No</label><input type="text" className="form-control" name="dc_no" value={form.dc_no} disabled style={{ fontWeight: 'bold', color: 'var(--primary)' }} /></div>
-                    <div className="form-group"><label>DC Date *</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} required /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>DC Date *</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} required /></div>
                     <div className="form-group"><label>Acl Date</label><input type="date" className="form-control" name="ref_date" value={form.ref_date} onChange={handleChange} /></div>
                     <div className="form-group">
                       <label>Stock Godown</label>

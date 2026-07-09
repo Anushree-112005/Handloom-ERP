@@ -34,7 +34,15 @@ async def run_migration():
         ("inspection_type", "VARCHAR(100)"),
         ("inv_pin", "VARCHAR(100)"),
         ("process_type", "VARCHAR(100)"),
-        ("process_remarks", "TEXT")
+        ("process_remarks", "TEXT"),
+        ("our_delivery_ref", "VARCHAR(100)"),
+        ("total_weight", "NUMERIC(10, 2) DEFAULT 0"),
+        ("weaving_waste_kgs", "NUMERIC(10, 2) DEFAULT 0"),
+        ("weaving_waste_pct", "NUMERIC(10, 2) DEFAULT 0"),
+        ("warp_issued_kgs", "NUMERIC(10, 2) DEFAULT 0"),
+        ("weft_issued_kgs", "NUMERIC(10, 2) DEFAULT 0"),
+        ("weft_return_kgs", "NUMERIC(10, 2) DEFAULT 0"),
+        ("beam_return_kgs", "NUMERIC(10, 2) DEFAULT 0")
     ]
     
     for col_name, col_type in inward_columns:
@@ -50,7 +58,8 @@ async def run_migration():
         ("piece_no", "VARCHAR(100)"),
         ("weight", "NUMERIC(10, 2) DEFAULT 0"),
         ("vloom", "VARCHAR(100)"),
-        ("vpc_no", "VARCHAR(100)")
+        ("vpc_no", "VARCHAR(100)"),
+        ("width", "VARCHAR(50)")
     ]
     
     for col_name, col_type in item_columns:

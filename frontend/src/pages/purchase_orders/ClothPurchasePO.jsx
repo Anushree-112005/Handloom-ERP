@@ -87,6 +87,29 @@ export default function ClothPurchasePO() {
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
+
+  const handleNewOrder = () => {
+    let maxNum = 0;
+    const prefix = 'CPP-';
+    (orders || []).forEach(o => {
+      const poStr = o.po_no || '';
+      if (poStr.toUpperCase().startsWith(prefix)) {
+        const numPart = poStr.substring(prefix.length);
+        const num = parseInt(numPart, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    const nextNum = maxNum + 1;
+    const padded = String(nextNum).padStart(4, '0');
+    const nextPoNo = `${prefix}${padded}`;
+    setForm({
+      ...initialForm,
+      po_no: nextPoNo
+    });
+    setShowForm(true);
+  };
   
   const loadData = async () => {
     try {
@@ -340,7 +363,7 @@ export default function ClothPurchasePO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <button className="btn btn-primary" onClick={handleNewOrder}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -510,8 +533,7 @@ export default function ClothPurchasePO() {
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                <div className="form-group"><label>PO No *</label><input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required /></div>
-                <div className="form-group"><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier Name</label>
                   <select className="form-control" name="supplier_name" value={form.supplier_name} onChange={handleChange}>
                     <option value="">Select Supplier...</option>

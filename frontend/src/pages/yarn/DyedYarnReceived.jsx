@@ -337,7 +337,23 @@ export default function DyedYarnReceived() {
         setForm({ ...initialForm, ...sanitizedData });
         setEditingId(sanitizedData.id);
       } else {
-        setForm(initialForm);
+        let maxNum = 0;
+        receipts.forEach(r => {
+          if (r.inv_no && r.inv_no.toUpperCase().startsWith("DYR-")) {
+            const parts = r.inv_no.split("-");
+            if (parts.length > 1) {
+              const num = parseInt(parts[1]);
+              if (!isNaN(num) && num > maxNum) {
+                maxNum = num;
+              }
+            }
+          }
+        });
+        const nextInvNo = `DYR-${String(maxNum + 1).padStart(5, '0')}`;
+        setForm({
+          ...initialForm,
+          inv_no: nextInvNo
+        });
         setEditingId(null);
       }
       setIsReadOnly(readOnly);
@@ -581,11 +597,7 @@ export default function DyedYarnReceived() {
                 <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Receipt Information</h4>
                 
                 <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                  <div className="form-group">
-                    <label style={{ fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Inw No *</label>
-                    <input className="form-control" name="inv_no" value={form.inv_no} onChange={handleChange} required />
-                  </div>
-                  <div className="form-group">
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
                     <label style={{ fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Inw Date *</label>
                     <input type="date" className="form-control" name="inv_date" value={form.inv_date} onChange={handleChange} required />
                   </div>

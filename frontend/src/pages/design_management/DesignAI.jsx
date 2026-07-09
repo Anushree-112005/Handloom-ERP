@@ -344,7 +344,8 @@ export default function DesignAI() {
       weftDesign = [{ color_name: dom.color_name, threads: totalWeftEnds, hex: dom.hex }];
       
       const weft_wastage = wastage - 0.085;
-      const req_kg = Math.ceil((totalWeftEnds * sizedLength) / (weftEqCount * 1693.6) * weft_wastage);
+      const req_kg_raw = (totalWeftEnds * sizedLength) / (weftEqCount * 1693.6) * weft_wastage;
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw)) : 0;
       weftSummary = [{
         beam_type: 'Weft',
         count: weftCountLabel,
@@ -404,7 +405,8 @@ export default function DesignAI() {
 
       weftSummary = Object.values(weftColorAgg).map(row => {
         const weft_wastage = wastage - 0.085;
-        const req_kg = Math.ceil((row.total_ends * sizedLength) / (weftEqCount * 1693.6) * weft_wastage);
+        const req_kg_raw = (row.total_ends * sizedLength) / (weftEqCount * 1693.6) * weft_wastage;
+        const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw)) : 0;
         return {
           ...row,
           req_kg: req_kg

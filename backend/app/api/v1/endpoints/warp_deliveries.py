@@ -57,6 +57,17 @@ class WarpDeliveryCreate(BaseModel):
     total_exptd_mtrs: Optional[float] = 0
     balance_meters: Optional[float] = 0
     
+    terms_conditions: Optional[List[str]] = []
+    gross_amt: Optional[float] = 0
+    tax_type: Optional[str] = None
+    cgst_pct: Optional[float] = 0
+    cgst_amount: Optional[float] = 0
+    sgst_pct: Optional[float] = 0
+    sgst_amount: Optional[float] = 0
+    igst_pct: Optional[float] = 0
+    igst_amount: Optional[float] = 0
+    net_amount: Optional[float] = 0
+    
     remarks: Optional[str] = None
     status: Optional[str] = "Delivered"
     items: List[WarpDeliveryItemBase] = []

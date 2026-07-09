@@ -161,8 +161,8 @@ const calculateDesignYarnRequirements = (design) => {
   const crimpPct = parseFloat(design.crimp_pct) || 0;
   const skgPct = parseFloat(design.skg_pct) || 0;
   const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
-  const warpLength = parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-  const weftProMtrVal = parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+  const warpLength = Math.round(parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+  const weftProMtrVal = Math.round(parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
 
   // Aggregate Warp
   const warpColorAgg = {};
@@ -233,7 +233,7 @@ const calculateDesignYarnRequirements = (design) => {
     
     const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
     const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-    const req_kg = Math.ceil(req_kg_raw / lossFactor);
+    const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
 
     return {
       ...row,

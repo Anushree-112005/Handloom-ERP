@@ -41,6 +41,16 @@ class ClothInward(Base):
     process_type = Column(String(100))
     process_remarks = Column(Text)
     
+    # New columns for Weaving Grey Fabric Receipt & Reconciliation
+    our_delivery_ref = Column(String(100))
+    total_weight = Column(Numeric(10, 2), default=0)
+    weaving_waste_kgs = Column(Numeric(10, 2), default=0)
+    weaving_waste_pct = Column(Numeric(10, 2), default=0)
+    warp_issued_kgs = Column(Numeric(10, 2), default=0)
+    weft_issued_kgs = Column(Numeric(10, 2), default=0)
+    weft_return_kgs = Column(Numeric(10, 2), default=0)
+    beam_return_kgs = Column(Numeric(10, 2), default=0)
+    
     # Keeping old columns for compatibility
     inv_no = Column(String(50))
     inv_date = Column(Date)
@@ -64,6 +74,7 @@ class ClothInwardItem(Base):
     vloom = Column(String(100))
     vpc_no = Column(String(100))
     meters = Column(Numeric(10, 2), default=0) # Maps to Mtr
+    width = Column(String(50))
     
     # Keeping old columns for compatibility
     design_no = Column(String(50))

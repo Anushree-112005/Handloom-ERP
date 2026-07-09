@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, Barcode, HelpCircle, Check, AlertTriangle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { onTableCheckingAPI, dropdownAPI } from '../../services/api';
+import { onTableCheckingAPI, dropdownAPI, clothInwardAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -37,6 +37,8 @@ export default function OnTableChecking() {
     all_parties: [],
     masters: {}
   });
+
+  const [gfrList, setGfrList] = useState([]);
 
   // Barcode simulation state
   const [barcodeInput, setBarcodeInput] = useState('');
@@ -109,6 +111,9 @@ export default function OnTableChecking() {
     try {
       const { data } = await dropdownAPI.getAll();
       setOptions(data);
+      
+      const { data: gfrData } = await clothInwardAPI.list();
+      setGfrList(gfrData || []);
     } catch (err) {
       console.error("Error fetching dropdowns:", err);
     }
@@ -125,12 +130,10 @@ export default function OnTableChecking() {
       setFormData(formattedEntry);
       setEditingId(entry.id);
     } else {
-      // Auto-generate reference number
-      const autoRef = `QC-${Date.now().toString().slice(-6)}`;
       setFormData({
         ...initialForm,
-        ref_no: autoRef,
-        party_name: options.all_parties?.[0]?.name || ''
+        ref_no: '',
+        party_name: ''
       });
       setEditingId(null);
     }
@@ -175,6 +178,52 @@ export default function OnTableChecking() {
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGfrChange = (e) => {
+    const selectedRef = e.target.value;
+    const gfr = gfrList.find(g => g.ref_no === selectedRef);
+    if (gfr) {
+      const newItems = (gfr.items || []).map((item, idx) => ({
+        piece_no: item.piece_no || `PC-${(idx + 1).toString().padStart(3, '0')}`,
+        vpc_no: item.vpc_no || '',
+        inv_pin: 'PIN-100',
+        checking_pin: 'CP-200',
+        pc_type: 'Pass',
+        defect_type: '',
+        grade: 'A',
+        meters: Number(item.meters) || 0,
+        pc_1: '',
+        pc_2: '',
+        pc_3: '',
+        pc_4: '',
+        pc_5: '',
+        pc_6: '',
+        pc_7: '',
+        swex: '',
+        remarks: ''
+      }));
+
+      setFormData(prev => ({
+        ...prev,
+        ref_no: selectedRef,
+        party_name: gfr.party_name || '',
+        design_no: gfr.design_no || '',
+        order_no: gfr.vendor_order || gfr.order_no || '',
+        lot_no: gfr.dc_no || '',
+        items: newItems
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        ref_no: '',
+        party_name: '',
+        design_no: '',
+        order_no: '',
+        lot_no: '',
+        items: []
+      }));
+    }
   };
 
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
@@ -673,8 +722,30 @@ export default function OnTableChecking() {
                   </h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
-                      <label>Ref No *</label>
-                      <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleHeaderChange} required disabled />
+                      <label>Grey Fabric Receipt No *</label>
+                      {!editingId ? (
+                        <select
+                          className="form-control"
+                          name="ref_no"
+                          value={formData.ref_no}
+                          onChange={handleGfrChange}
+                          required
+                        >
+                          <option value="">-- Select GFR No --</option>
+                          {gfrList.map(gfr => (
+                            <option key={gfr.id} value={gfr.ref_no}>
+                              {gfr.ref_no}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          className="form-control"
+                          name="ref_no"
+                          value={formData.ref_no}
+                          disabled
+                        />
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Checking Date *</label>
@@ -758,19 +829,14 @@ export default function OnTableChecking() {
 
                 <div id="items-section" className="animate-fade" style={{ marginBottom: 32, width: '100%' }}>
                   {/* SECTION 2: GRID ITEMS TABLE */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
+                  <div style={{ marginBottom: 16 }}>
                     <h4 style={{ color: 'var(--text-primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
                       Inspected Pieces / Rolls Grid
                     </h4>
-                    {!isReadOnly && (
-                      <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
-                        <Plus size={14} /> Add Raw Row
-                      </button>
-                    )}
                   </div>
 
                   <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24, width: '100%' }}>
-                    <table className="data-table" style={{ margin: 0, minWidth: 1800, tableLayout: 'fixed' }}>
+                    <table className="data-table" style={{ margin: 0, minWidth: 1200, tableLayout: 'fixed' }}>
                       <thead>
                         <tr>
                           <th style={{ width: 50 }}>S.No</th>
@@ -782,18 +848,15 @@ export default function OnTableChecking() {
                           <th style={{ width: 140 }}>Inspection QC *</th>
                           <th style={{ width: 150 }}>Defect Type</th>
                           <th style={{ width: 110 }}>Grade *</th>
-                          <th style={{ width: 140 }}>SWEX (Special)</th>
-                          <th style={{ width: 180 }}>QC Checks (PC 1 to PC 4)</th>
-                          <th style={{ width: 180 }}>QC Checks (PC 5 to PC 7)</th>
                           <th style={{ width: 150 }}>Item Remarks</th>
-                          {!isReadOnly && <th style={{ width: 60 }}>Action</th>}
+                          {!isReadOnly && <th style={{ width: 120, textAlign: 'center' }}>Action</th>}
                         </tr>
                       </thead>
                       <tbody>
                         {formData.items.length === 0 ? (
                           <tr>
-                            <td colSpan={isReadOnly ? 13 : 14} style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-muted)' }}>
-                              No pieces checked yet. Use the barcode scanner simulation box above or click "Add Raw Row" to start adding inspection pieces.
+                            <td colSpan={isReadOnly ? 10 : 11} style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-muted)' }}>
+                              No pieces checked yet. Use the barcode scanner simulation box above or click <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13, marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={handleAddItemRow}><Plus size={14} /> Add</button> to start adding inspection pieces.
                             </td>
                           </tr>
                         ) : (
@@ -871,7 +934,6 @@ export default function OnTableChecking() {
                                   style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                                   value={item.defect_type}
                                   onChange={e => handleGridCellChange(index, 'defect_type', e.target.value)}
-                                  disabled={item.pc_type === 'Pass'}
                                 />
                               </td>
                               <td>
@@ -891,77 +953,29 @@ export default function OnTableChecking() {
                                 <input
                                   className="form-control"
                                   style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                                  value={item.swex}
-                                  onChange={e => handleGridCellChange(index, 'swex', e.target.value)}
-                                />
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_1}
-                                    onChange={e => handleGridCellChange(index, 'pc_1', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_2}
-                                    onChange={e => handleGridCellChange(index, 'pc_2', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_3}
-                                    onChange={e => handleGridCellChange(index, 'pc_3', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_4}
-                                    onChange={e => handleGridCellChange(index, 'pc_4', e.target.value)}
-                                  />
-                                </div>
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_5}
-                                    onChange={e => handleGridCellChange(index, 'pc_5', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_6}
-                                    onChange={e => handleGridCellChange(index, 'pc_6', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_7}
-                                    onChange={e => handleGridCellChange(index, 'pc_7', e.target.value)}
-                                  />
-                                </div>
-                              </td>
-                              <td>
-                                <input
-                                  className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                                   value={item.remarks}
                                   onChange={e => handleGridCellChange(index, 'remarks', e.target.value)}
                                 />
                               </td>
                               {!isReadOnly && (
                                 <td style={{ textAlign: 'center' }}>
-                                  <button
-                                    type="button"
-                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
-                                    onClick={() => handleRemoveItemRow(index)}
-                                  >
-                                    <Trash2 size={16} color="#ef4444" />
-                                  </button>
+                                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
+                                      onClick={handleAddItemRow}
+                                    >
+                                      <Plus size={14} /> Add
+                                    </button>
+                                    <button
+                                      type="button"
+                                      style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
+                                      onClick={() => handleRemoveItemRow(index)}
+                                    >
+                                      <Trash2 size={16} color="#ef4444" />
+                                    </button>
+                                  </div>
                                 </td>
                               )}
                             </tr>
