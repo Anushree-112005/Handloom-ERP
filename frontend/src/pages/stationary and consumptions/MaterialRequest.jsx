@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Plus, Save, Trash2, X, PlusCircle, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function MaterialRequest() {
@@ -11,10 +12,20 @@ export default function MaterialRequest() {
     department: '', requestedBy: '', priority: 'Medium', remarks: '', items: []
   });
 
+  const fetchItems = async () => {
+    try {
+      const res = await stationaryService.getMaterials();
+      setItemsList(res.data || []);
+    } catch (e) {
+      console.error(e);
+      setItemsList(mockDb.get('consumables_items'));
+    }
+  };
+
   useEffect(() => {
     setRequests(mockDb.get('consumables_requests'));
-    setItemsList(mockDb.get('consumables_items'));
     setDepartments(mockDb.get('consumables_departments'));
+    fetchItems();
   }, [view]);
 
   const handleAddField = () => {
@@ -283,7 +294,8 @@ export default function MaterialRequest() {
                           onChange={(e) => handleItemChange(idx, 'itemId', e.target.value)} 
                           className="form-control"
                         >
-                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.name} (Stock: {i.currentStock || 0})</option>)}
+                          <option value="">Select Item</option>
+                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.item_name || i.name} (Stock: {i.current_stock || i.currentStock || 0})</option>)}
                         </select>
                       </div>
                       <div className="form-group" style={{ width: '150px', margin: 0 }}>

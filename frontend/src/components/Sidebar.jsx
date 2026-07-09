@@ -357,11 +357,14 @@ const modules = [
       { path: '/fleet/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/fleet/vehicles', label: 'Vehicles', icon: Truck },
       { path: '/fleet/drivers', label: 'Vehicle Assignment', icon: Users },
+      { path: '/fleet/routes', label: 'Routes', icon: MapIcon },
+      { path: '/fleet/trip-planning', label: 'Trip Planning', icon: Calendar },
       { path: '/fleet/service-schedule', label: 'Service Schedule', icon: Calendar },
       { path: '/fleet/breakdown-entry', label: 'Breakdown Entry', icon: AlertTriangle },
       { path: '/fleet/maintenance-log', label: 'Maintenance Log', icon: Wrench },
       { path: '/fleet/documents', label: 'RC / Insurance / Permit', icon: FileText },
       { path: '/fleet/expiry-alerts', label: 'Expiry Alerts', icon: Bell },
+      // { path: '/fleet/fuel-entry', label: 'Fuel Entry', icon: Activity },
       { path: '/fleet/fuel-consumption', label: 'Fuel Consumption Report', icon: Activity },
       { path: '/fleet/driver-performance', label: 'Driver Report', icon: Users }
     ]

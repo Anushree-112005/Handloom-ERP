@@ -229,7 +229,7 @@ export default function FleetExpiryAlerts() {
         <div 
           className="card stat-card" 
           onClick={() => setFilters(prev => ({ ...prev, status: '' }))} 
-          style={{ cursor: 'pointer', border: filters.status === '' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(79,70,229,0.1)', color: 'var(--primary)' }}>
             <Bell size={24} />
@@ -243,7 +243,7 @@ export default function FleetExpiryAlerts() {
         <div 
           className="card stat-card" 
           onClick={() => setFilters(prev => ({ ...prev, status: 'Expired' }))} 
-          style={{ cursor: 'pointer', border: filters.status === 'Expired' ? '2px solid #ef4444' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
             <AlertCircle size={24} />
@@ -257,7 +257,7 @@ export default function FleetExpiryAlerts() {
         <div 
           className="card stat-card" 
           onClick={() => setFilters(prev => ({ ...prev, status: 'Expiring Soon' }))} 
-          style={{ cursor: 'pointer', border: filters.status === 'Expiring Soon' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <Clock size={24} />
@@ -271,7 +271,7 @@ export default function FleetExpiryAlerts() {
         <div 
           className="card stat-card" 
           onClick={() => setFilters(prev => ({ ...prev, status: 'Valid' }))} 
-          style={{ cursor: 'pointer', border: filters.status === 'Valid' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}
+          style={{ cursor: 'pointer', transition: 'all 0.2s' }}
         >
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <CheckCircle size={24} />

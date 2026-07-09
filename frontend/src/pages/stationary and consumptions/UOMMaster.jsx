@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Plus, Save, Edit2, Trash2, Search, X } from 'lucide-react';
 
 export default function UOMMaster() {
@@ -7,52 +7,67 @@ export default function UOMMaster() {
   const [uoms, setUoms] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ name: '', description: '', active: 'Yes' });
+  const [formData, setFormData] = useState({ name: '', decimal_precision: 2, is_active: true });
+
+  const fetchUOMs = async () => {
+    try {
+      const res = await stationaryService.getUOMs();
+      setUoms(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    setUoms(mockDb.get('consumables_uoms'));
+    if (view === 'list') {
+      fetchUOMs();
+    }
   }, [view]);
 
   const handleOpenForm = (uom = null) => {
     if (uom) {
-      setFormData(uom);
+      setFormData({ 
+        name: uom.name, 
+        decimal_precision: uom.decimal_precision ?? 2,
+        is_active: uom.is_active 
+      });
       setEditingId(uom.id);
     } else {
-      setFormData({ name: '', description: '', active: 'Yes' });
+      setFormData({ name: '', decimal_precision: 2, is_active: true });
       setEditingId(null);
     }
     setView('form');
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this UOM?')) {
-      mockDb.delete('consumables_uoms', id);
-      setUoms(mockDb.get('consumables_uoms'));
+      try {
+        await stationaryService.deleteUOM(id);
+        fetchUOMs();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to delete UOM');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      mockDb.update('consumables_uoms', editingId, formData);
-    } else {
-      const currentData = mockDb.get('consumables_uoms');
-      const maxIdNum = currentData.reduce((max, item) => {
-        const numMatch = item.id.match(/\d+/);
-        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
-      }, 0);
-      const nextId = 'UOM' + String(maxIdNum + 1).padStart(3, '0');
-      mockDb.add('consumables_uoms', {
-        id: nextId,
-        ...formData
-      });
+    try {
+      if (editingId) {
+        await stationaryService.updateUOM(editingId, formData);
+      } else {
+        await stationaryService.createUOM(formData);
+      }
+      setView('list');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save UOM');
     }
-    setView('list');
   };
 
   const filtered = uoms.filter(u => 
-    (u?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (u?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -86,22 +101,22 @@ export default function UOMMaster() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th >UOM ID</th>
-                  <th >UOM Name</th>
-                  <th >Description</th>
-                  <th >Active</th>
+                  <th>UOM ID</th>
+                  <th>UOM Name</th>
+                  <th>Precision</th>
+                  <th>Active</th>
                   <th style={{ textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
-              <tbody >
+              <tbody>
                 {filtered.map(uom => (
-                  <tr key={uom?.id} >
-                    <td style={{ fontFamily: "monospace" }}>{uom?.id}</td>
-                    <td style={{ fontWeight: 600 }}>{uom?.name || ''}</td>
-                    <td >{uom?.description || ''}</td>
-                    <td >
-                      <span className={`badge ${(uom?.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
-                        {uom?.active || 'No'}
+                  <tr key={uom.id}>
+                    <td style={{ fontFamily: "monospace" }}>{uom.id}</td>
+                    <td style={{ fontWeight: 600 }}>{uom.name}</td>
+                    <td>{uom.decimal_precision}</td>
+                    <td>
+                      <span className={`badge ${(uom.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
+                        {uom.is_active ? 'Yes' : 'No'}
                       </span>
                     </td>
                     <td style={{ textAlign: "center" }}>
@@ -109,7 +124,7 @@ export default function UOMMaster() {
                         <button onClick={() => handleOpenForm(uom)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDelete(uom?.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
+                        <button onClick={() => handleDelete(uom.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -156,24 +171,24 @@ export default function UOMMaster() {
               <div className="form-group">
                 <label>Active *</label>
                 <select 
-                  value={formData.active} 
-                  onChange={(e) => setFormData({...formData, active: e.target.value})} 
+                  value={formData.is_active ? 'Yes' : 'No'} 
+                  onChange={(e) => setFormData({...formData, is_active: e.target.value === 'Yes'})} 
                   className="form-control"
                 >
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
                 </select>
               </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                <label>Description</label>
-                <textarea 
-                  value={formData.description} 
-                  onChange={(e) => setFormData({...formData, description: e.target.value})} 
+              <div className="form-group">
+                <label>Decimal Precision *</label>
+                <input 
+                  type="number" 
+                  min="0"
+                  max="4"
+                  required 
+                  value={formData.decimal_precision} 
+                  onChange={(e) => setFormData({...formData, decimal_precision: parseInt(e.target.value)})} 
                   className="form-control" 
-                  rows="3"
                 />
               </div>
             </div>
