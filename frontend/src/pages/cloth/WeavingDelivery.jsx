@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Truck, Plus, Search, Eye, Trash2, Save, X, Edit2, FileText, Database, Settings, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { weavingPOAPI, partyAPI } from '../../services/api';
+import { weavingPOAPI, partyAPI, designEntryAPI, yarnInwardAPI } from '../../services/api';
 
 export default function WeavingDelivery() {
   const [records, setRecords] = useState(() => {
@@ -12,6 +12,8 @@ export default function WeavingDelivery() {
 
   const [weavingPOs, setWeavingPOs] = useState([]);
   const [parties, setParties] = useState([]);
+  const [designEntries, setDesignEntries] = useState([]);
+  const [yarnInwards, setYarnInwards] = useState([]);
 
   useEffect(() => {
     localStorage.setItem('dt_weaving_delivery_records', JSON.stringify(records));
@@ -20,14 +22,18 @@ export default function WeavingDelivery() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [poRes, partRes] = await Promise.all([
+        const [poRes, partRes, deRes, yiRes] = await Promise.all([
           weavingPOAPI.list(),
-          partyAPI.list()
+          partyAPI.list(),
+          designEntryAPI.list(),
+          yarnInwardAPI.list()
         ]);
         setWeavingPOs(poRes.data || []);
         setParties(partRes.data || []);
+        setDesignEntries(deRes.data || []);
+        setYarnInwards(yiRes.data || []);
       } catch (err) {
-        console.error('Error fetching weaving POs or parties:', err);
+        console.error('Error fetching data:', err);
       }
     };
     fetchData();
@@ -202,12 +208,113 @@ export default function WeavingDelivery() {
           taxType = 'IGST';
         }
 
+        // Build yarn stock list from yarnInwards
+        const lotMap = {};
+        (yarnInwards || []).forEach(inward => {
+          if (inward.items && Array.isArray(inward.items)) {
+            inward.items.forEach(item => {
+              if (!item.yarn_count || !item.lot_no) return;
+              const key = `${item.lot_no}-${item.yarn_count}-${item.colour || ''}`;
+              if (!lotMap[key]) {
+                lotMap[key] = {
+                  count: item.yarn_count,
+                  lotNo: item.lot_no,
+                  colour: item.colour || '',
+                  bags: 0,
+                  netWeight: 0
+                };
+              }
+              lotMap[key].bags += item.bags || 0;
+              lotMap[key].netWeight += item.kgs || 0;
+            });
+          }
+        });
+        const stockList = Object.values(lotMap);
+
+        // Find design-based yarns
+        const designYarns = [];
+        const designNo = po.design_no || (po.items && po.items[0] && po.items[0].design_no);
+        const de = designEntries.find(d => d.ds_ref_no === designNo || d.design_no === designNo);
+        if (de) {
+          let weftSum = [];
+          try {
+            weftSum = typeof de.weft_summary === 'string' ? JSON.parse(de.weft_summary) : (de.weft_summary || []);
+          } catch(e){}
+          if (Array.isArray(weftSum)) {
+            weftSum.forEach(item => {
+              const cnt = item.count || item.yarn_count;
+              const col = item.color || item.shade || item.colour;
+              if (cnt) designYarns.push({ count: cnt, color: col || '' });
+            });
+          }
+
+          let warpSum = [];
+          try {
+            warpSum = typeof de.warp_summary === 'string' ? JSON.parse(de.warp_summary) : (de.warp_summary || []);
+          } catch(e){}
+          if (Array.isArray(warpSum)) {
+            warpSum.forEach(item => {
+              const cnt = item.count || item.yarn_count;
+              const col = item.color || item.shade || item.colour;
+              if (cnt) designYarns.push({ count: cnt, color: col || '' });
+            });
+          }
+
+          let yarnDet = [];
+          try {
+            yarnDet = typeof de.yarn_details === 'string' ? JSON.parse(de.yarn_details) : (de.yarn_details || []);
+          } catch(e){}
+          if (Array.isArray(yarnDet)) {
+            yarnDet.forEach(item => {
+              const cnt = item.yarn_count || item.count;
+              const col = item.color || item.shade || item.colour;
+              if (cnt) designYarns.push({ count: cnt, color: col || '' });
+            });
+          }
+        }
+        if (po.selected_count) {
+          designYarns.push({ count: po.selected_count, color: po.design_color || '' });
+        }
+
+        // Deduplicate designYarns
+        const uniqueKeys = new Set();
+        const uniqueDesignYarns = [];
+        designYarns.forEach(dy => {
+          const k = `${dy.count.toLowerCase()}||${dy.color.toLowerCase()}`;
+          if (!uniqueKeys.has(k)) {
+            uniqueKeys.add(k);
+            uniqueDesignYarns.push(dy);
+          }
+        });
+
+        // Find matching stock items from the stockList
+        const matchedWeftItems = [];
+        uniqueDesignYarns.forEach(dy => {
+          stockList.forEach(stockItem => {
+            if (stockItem.count.toLowerCase() === dy.count.toLowerCase() && 
+                (stockItem.colour.toLowerCase() === dy.color.toLowerCase() || !dy.color)) {
+              matchedWeftItems.push({
+                yarn_count: stockItem.count,
+                lot_no: stockItem.lotNo,
+                color: stockItem.colour,
+                bags: stockItem.bags,
+                kgs: stockItem.netWeight,
+                cone_type: 'Full Cone'
+              });
+            }
+          });
+        });
+
+        const finalWeftItems = matchedWeftItems.length > 0 
+          ? matchedWeftItems 
+          : [{ yarn_count: po.selected_count || '', lot_no: '', color: po.design_color || '', bags: '', kgs: '', cone_type: 'Full Cone' }];
+
         const updatedForm = {
           ...prev,
           weaving_po_no: poNo,
           delivery_type: 'Against PO',
           party_name: po.supplier_weaver || '',
-          design_no: po.design_no || (po.items && po.items[0] && po.items[0].design_no) || '',
+          design_no: designNo || '',
           remarks: po.remarks || '',
           terms_conditions: po.terms_conditions || [],
           gross_amt: parseFloat(po.taxable_value) || parseFloat(po.weaving_charge) || 0,
@@ -216,7 +323,7 @@ export default function WeavingDelivery() {
           sgst_pct: parseFloat(po.sgst_pct) || 0,
           igst_pct: parseFloat(po.igst_pct) || 0,
           items: newItems.length > 0 ? newItems : [{ beamNo: `${po.po_no}-B1`, setNo: '', ends: '', length: '', weight: '', type: 'Sized Beam', status: 'Pending', remarks: '' }],
-          weft_items: prev.weft_items?.length > 0 && prev.weft_items[0].yarn_count !== '' ? prev.weft_items : [{ yarn_count: po.selected_count || '', lot_no: '', color: po.design_color || '', bags: '', kgs: '', cone_type: 'Full Cone' }]
+          weft_items: finalWeftItems
         };
 
         return recalculate(updatedForm);
