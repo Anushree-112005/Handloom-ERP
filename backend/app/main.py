@@ -343,6 +343,138 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 async def root():
     return {"message": "Dinesh Textile ERP API", "version": "1.0.0", "docs": "/docs"}
 
+
+@app.post("/api/v1/reset-deployment-database")
+async def reset_deployment_database():
+    import os
+    import json
+    import sqlite3
+    from sqlalchemy import select
+    from app.core.database import engine, Base, AsyncSessionLocal
+    import app.models
+    from app.models.employee import Employee
+    from app.models.sub_master import SubMaster
+    from app.core.security import get_password_hash
+
+    # 1. Wipe all PostgreSQL/SQLite tables registered in Base.metadata
+    async with engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            try:
+                await conn.execute(table.delete())
+            except Exception as e:
+                logger.error(f"Failed to delete table {table.name}: {e}")
+
+    # 2. Wipe SQLite databases (e.g. cubebook.db and others)
+    sqlite_files = ["cubebook.db", "db.sqlite", "dinesh_exports.db", "dinesh_textile.db", "erp.db", "textile_erp.db"]
+    for f_name in sqlite_files:
+        if os.path.exists(f_name):
+            try:
+                conn = sqlite3.connect(f_name)
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = [row[0] for row in cursor.fetchall() if not row[0].startswith("sqlite_")]
+                for table in tables:
+                    cursor.execute(f"DELETE FROM {table};")
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.error(f"Failed to wipe SQLite file {f_name}: {e}")
+
+    # 3. Seed default admin user and master details back so they can log in and use the app
+    async with AsyncSessionLocal() as session:
+        # Admin user
+        admin = Employee(
+            employee_code="admin",
+            name="Administrator",
+            user_type="Admin",
+            email="admin@dinesh-textile.com",
+            department="IT",
+            designation="System Admin",
+            status="Active",
+            web_access="Allow",
+            password_hash=get_password_hash("admin123"),
+            module_permissions={
+                "master": True, "buyer_order": True, "work_order": True,
+                "warping_sizing": True, "production": True, "processing": True,
+                "fabric": True, "yarn": True, "account": True, "report": True,
+            },
+        )
+        session.add(admin)
+
+        # Departments
+        default_departments = [
+            "Management", "Merchandising", "Design", "Purchase", "Stores", 
+            "Inventory", "Production", "Weaving", "Dyeing", "Quality", 
+            "Dispatch", "Export Documentation", "Logistics", "Accounts", 
+            "HR", "Payroll", "Maintenance", "IT", "Admin"
+        ]
+        for dept_name in default_departments:
+            code = "".join([w[0] for w in dept_name.split() if w]).upper()[:6]
+            if len(code) < 2:
+                code = dept_name[:3].upper()
+            session.add(SubMaster(
+                entity="department",
+                name=dept_name,
+                code=code,
+                is_active=True
+            ))
+
+        # Designations
+        default_designations = [
+            "Managing Director", "CEO", "General Manager", "AGM", "Manager", 
+            "Assistant Manager", "Team Leader", "Senior Executive", "Executive", 
+            "Coordinator", "Supervisor", "Incharge", "Officer", "Senior Officer", 
+            "Assistant", "Operator", "Technician", "Worker", "Trainee", "Driver"
+        ]
+        for desg_title in default_designations:
+            code = "".join([w[0] for w in desg_title.split() if w]).upper()[:6]
+            if len(code) < 2:
+                code = desg_title[:3].upper()
+            grade = "L1" if "Operator" in desg_title or "Worker" in desg_title else "M1" if "Manager" in desg_title else "E1"
+            dept = "Management" if "Manager" in desg_title else "Production"
+            extra_data = {
+                "min_salary": 200000 if grade == "L1" else 600000,
+                "max_salary": 400000 if grade == "L1" else 1200000,
+                "experience": "1+ Years" if grade == "L1" else "5+ Years",
+                "skill_category": "Operations" if grade == "L1" else "Management"
+            }
+            session.add(SubMaster(
+                entity="designation",
+                name=desg_title,
+                code=code,
+                is_active=True,
+                extra_field_1=dept,
+                extra_field_2=grade,
+                extra_field_3=json.dumps(extra_data)
+            ))
+
+        # Yarn counts
+        default_counts = [
+            {"name": "10S CTN", "code": "10S CTN", "ply": "1 Ply"},
+            {"name": "20S CTN", "code": "20S CTN", "ply": "1 Ply"},
+            {"name": "30S CTN", "code": "30S CTN", "ply": "1 Ply"},
+            {"name": "40S CTN", "code": "40S CTN", "ply": "1 Ply"},
+            {"name": "60S CTN", "code": "60S CTN", "ply": "1 Ply"},
+            {"name": "80S CTN", "code": "80S CTN", "ply": "1 Ply"},
+            {"name": "2/20S CTN", "code": "2/20S CTN", "ply": "2 Ply"},
+            {"name": "2/40S CTN", "code": "2/40S CTN", "ply": "2 Ply"},
+            {"name": "2/60S CTN", "code": "2/60S CTN", "ply": "2 Ply"},
+            {"name": "2/80S CTN", "code": "2/80S CTN", "ply": "2 Ply"},
+        ]
+        for item in default_counts:
+            session.add(SubMaster(
+                entity="yarn_count_master",
+                name=item["name"],
+                code=item["code"],
+                extra_field_1=item["ply"],
+                is_active=True
+            ))
+
+        await session.commit()
+
+    return {"status": "success", "message": "Database wiped and re-seeded successfully!"}
+
+
 import os, shutil, sys
 
 # MIGRATION LOGIC (Runs once during Uvicorn reload)
