@@ -165,6 +165,11 @@ pipeline {
                             export FRONTEND_IMAGE=$FRONTEND_IMAGE &&
                             
                             (docker compose up -d --force-recreate || docker-compose up -d --force-recreate) &&
+                            
+                            echo "Waiting for backend container to start..." &&
+                            sleep 5 &&
+                            (docker compose exec -T backend python migrate_delete_checking_data.py || docker-compose exec -T backend python migrate_delete_checking_data.py || echo "Migration command failed but proceeding") &&
+
                             docker image prune -af --filter 'until=12h' &&
                             docker ps
                         "
