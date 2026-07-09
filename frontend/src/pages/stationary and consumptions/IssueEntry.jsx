@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Plus, Save, Trash2, X, PlusCircle, FileText, Layers, Users, CheckCircle } from 'lucide-react';
 
 export default function IssueEntry() {
@@ -12,17 +13,27 @@ export default function IssueEntry() {
     department: '', employee: '', purpose: '', items: []
   });
 
+  const fetchItems = async () => {
+    try {
+      const res = await stationaryService.getMaterials();
+      setItemsList(res.data || []);
+    } catch (e) {
+      console.error(e);
+      setItemsList(mockDb.get('consumables_items') || []);
+    }
+  };
+
   useEffect(() => {
     setIssues(mockDb.get('consumables_issues'));
-    setItemsList(mockDb.get('consumables_items'));
     setDepartments(mockDb.get('consumables_departments'));
+    fetchItems();
   }, [view]);
 
   const handleAddField = () => {
     const itm = itemsList[0];
     setFormData({
       ...formData,
-      items: [...formData.items, { itemId: itm?.id || '', qty: 1, rate: itm?.rate || 0 }]
+      items: [...formData.items, { itemId: itm?.id || '', qty: 1, rate: itm?.purchase_rate || itm?.rate || 0 }]
     });
   };
 
@@ -32,7 +43,7 @@ export default function IssueEntry() {
     updated[index] = {
       ...updated[index],
       itemId: selected.id,
-      rate: selected.rate || 0
+      rate: selected.purchase_rate || selected.rate || 0
     };
     setFormData({ ...formData, items: updated });
   };
@@ -59,8 +70,9 @@ export default function IssueEntry() {
     // Check availability
     for (let item of formData.items) {
       const dbItem = itemsList.find(x => x.id === item.itemId);
-      if ((dbItem?.currentStock || 0) < item.qty) {
-        alert(`Insufficient stock for ${dbItem?.name || 'item'}. Available: ${dbItem?.currentStock || 0}`);
+      const stock = dbItem?.current_stock ?? dbItem?.currentStock ?? 0;
+      if (stock < item.qty) {
+        alert(`Insufficient stock for ${dbItem?.item_name || dbItem?.name || 'item'}. Available: ${stock}`);
         return;
       }
     }
@@ -278,17 +290,17 @@ export default function IssueEntry() {
                             onChange={(e) => handleItemChange(idx, e.target.value)} 
                             className="form-control"
                           >
-                            {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                            {itemsList.map(i => <option key={i.id} value={i.id}>{i.item_name || i.name}</option>)}
                           </select>
                         </div>
                         <div className="form-group" style={{ flex: 1, margin: 0 }}>
                           <label>Available Stock</label>
-                          <input type="text" readOnly value={dbItem?.currentStock || 0} className="form-control" style={{ background: '#f8fafc', color: dbItem?.currentStock > 0 ? '#10b981' : '#ef4444', fontWeight: 600 }} />
+                          <input type="text" readOnly value={dbItem?.current_stock ?? dbItem?.currentStock ?? 0} className="form-control" style={{ background: '#f8fafc', color: (dbItem?.current_stock ?? dbItem?.currentStock ?? 0) > 0 ? '#10b981' : '#ef4444', fontWeight: 600 }} />
                         </div>
                         <div className="form-group" style={{ flex: 1, margin: 0 }}>
                           <label>Issue Qty</label>
                           <input 
-                            type="number" required min="1" max={dbItem?.currentStock || 1} value={field.qty} 
+                            type="number" required min="1" max={dbItem?.current_stock ?? dbItem?.currentStock ?? 1} value={field.qty} 
                             onChange={(e) => handleQtyChange(idx, Number(e.target.value))} 
                             className="form-control" 
                           />
