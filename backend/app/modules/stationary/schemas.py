@@ -3,15 +3,50 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import date, datetime
 
-class StationaryItemBase(BaseModel):
-    category: str
-    data: Dict[str, Any]
+class CategoryBase(BaseModel):
+    name: str
+    parent_id: Optional[int] = None
+    is_active: bool = True
 
-class StationaryItemCreate(StationaryItemBase):
+class CategoryCreate(CategoryBase):
     pass
 
-class StationaryItemResponse(StationaryItemBase):
+class CategoryResponse(CategoryBase):
     id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class UOMBase(BaseModel):
+    name: str
+    decimal_precision: int = 2
+    is_active: bool = True
+
+class UOMCreate(UOMBase):
+    pass
+
+class UOMResponse(UOMBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class MaterialBase(BaseModel):
+    item_code: str
+    item_name: str
+    short_name: Optional[str] = None
+    category_id: Optional[int] = None
+    base_uom_id: Optional[int] = None
+    min_stock: float = 0.0
+    purchase_rate: float = 0.0
+    is_active: bool = True
+
+class MaterialCreate(MaterialBase):
+    pass
+
+class MaterialResponse(MaterialBase):
+    id: int
+    created_at: datetime
     class Config:
         from_attributes = True
 

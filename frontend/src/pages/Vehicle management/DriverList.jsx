@@ -163,34 +163,15 @@ export default function DriverList() {
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 <div className="form-group">
                   <label>Driver Name *</label>
-                  <select
+                  <input
+                    type="text"
                     className="form-control"
                     name="driver_name"
                     value={formData.driver_name}
-                    onChange={(e) => {
-                      const selectedName = e.target.value;
-                      const selectedEmp = employees.find(emp => emp.name === selectedName);
-                      setFormData(prev => ({
-                        ...prev,
-                        driver_name: selectedName,
-                        phone_number: selectedEmp ? (selectedEmp.phone || prev.phone_number) : prev.phone_number
-                      }));
-                    }}
+                    placeholder="Enter driver name"
+                    onChange={handleInputChange}
                     required
-                  >
-                    <option value="">Select Driver</option>
-                    {employees
-                      .filter(emp => emp.designation && emp.designation.toLowerCase() === 'driver')
-                      .map(emp => (
-                        <option key={emp.id} value={emp.name}>
-                          {emp.name}
-                        </option>
-                      ))
-                    }
-                    {formData.driver_name && !employees.some(emp => emp.name === formData.driver_name) && (
-                      <option value={formData.driver_name}>{formData.driver_name}</option>
-                    )}
-                  </select>
+                  />
                 </div>
                 <div className="form-group">
                   <label>Phone Number *</label>
@@ -268,7 +249,7 @@ export default function DriverList() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => setStatusFilter('Active')} style={{ cursor: 'pointer', border: statusFilter === 'Active' ? '2px solid #10b981' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('Active')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <Users size={24} />
           </div>
@@ -278,7 +259,7 @@ export default function DriverList() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => setStatusFilter('Inactive')} style={{ cursor: 'pointer', border: statusFilter === 'Inactive' ? '2px solid #ef4444' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('Inactive')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
             <Users size={24} />
           </div>

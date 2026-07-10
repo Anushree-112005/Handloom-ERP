@@ -118,6 +118,92 @@ export default function LossAnalysis() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#ef4444' }}>
+                <TrendingDown size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Record Production Loss</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Translate downtime hours into meter and financial losses</p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Date</label>
+                <input type="date" className="form-control" value={formData.date} onChange={e => handleRecalc('date', e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Loom ID</label>
+                <select className="form-control" value={formData.loom_id} onChange={(e) => handleRecalc('loom_id', e.target.value)} required>
+                  <option value="">-- Select Loom --</option>
+                  {looms.map(l => (
+                    <option key={l.id} value={l.id}>{l.loom_name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Loss Reason</label>
+                <select className="form-control" value={formData.loss_reason} onChange={e => handleRecalc('loss_reason', e.target.value)} required>
+                  <option value="Yarn Break">Yarn Break</option>
+                  <option value="Power Failure">Power Failure</option>
+                  <option value="Needle Damage">Needle Damage</option>
+                  <option value="Mechanical Breakdown">Mechanical Breakdown</option>
+                  <option value="Mechanical Failure">Mechanical Failure</option>
+                  <option value="Bobbin Change Delay">Bobbin Change Delay</option>
+                  <option value="Fabric Tear">Fabric Tear</option>
+                  <option value="Operator Error">Operator Error</option>
+                  <option value="Operator Absence">Operator Absence</option>
+                  <option value="Lubrication Issue">Lubrication Issue</option>
+                  <option value="Sensor Fault">Sensor Fault</option>
+                  <option value="Scheduled Maintenance">Scheduled Maintenance</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Downtime Hours</label>
+                <input type="number" step="0.1" className="form-control" value={formData.downtime_hours} onChange={e => handleRecalc('downtime_hours', e.target.value)} required placeholder="e.g. 0.4" />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Total Loss (meters) (Auto-calc)</label>
+                <input type="text" className="form-control" value={`${formData.total_loss_meters.toFixed(1)} m`} readOnly style={{ backgroundColor: formData.total_loss_meters > 0 ? '#ef444418' : 'var(--bg-secondary)', color: formData.total_loss_meters > 0 ? '#b91c1c' : 'inherit', fontWeight: 600 }} />
+              </div>
+              <div className="form-group">
+                <label>Loss Value (₹) (Auto-calc)</label>
+                <input type="text" className="form-control" value={`₹${formData.loss_value.toFixed(0)}`} readOnly style={{ backgroundColor: formData.loss_value > 0 ? '#ef444418' : 'var(--bg-secondary)', borderColor: formData.loss_value > 0 ? '#ef4444' : 'var(--border)', color: formData.loss_value > 0 ? '#b91c1c' : 'inherit', fontWeight: 700 }} />
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: 16 }}>
+              <label>Action Taken</label>
+              <input type="text" className="form-control" value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Yarn replaced, maintenance called" required />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Log Financial Loss
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -174,79 +260,7 @@ export default function LossAnalysis() {
         </div>
       )}
 
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#ef4444' }}>
-                <TrendingDown size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Record Production Loss</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Translate downtime hours into meter and financial losses</p>
-              </div>
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" className="form-control" value={formData.date} onChange={e => handleRecalc('date', e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label>Loom ID</label>
-                <select className="form-control" value={formData.loom_id} onChange={(e) => handleRecalc('loom_id', e.target.value)} required>
-                  <option value="">-- Select Loom --</option>
-                  {looms.map(l => (
-                    <option key={l.id} value={l.id}>{l.loom_name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Loss Reason</label>
-                <select className="form-control" value={formData.loss_reason} onChange={e => handleRecalc('loss_reason', e.target.value)} required>
-                  <option value="Yarn Break">Yarn Break</option>
-                  <option value="Power Failure">Power Failure</option>
-                  <option value="Mechanical Breakdown">Mechanical Breakdown</option>
-                  <option value="Scheduled Maintenance">Scheduled Maintenance</option>
-                  <option value="Operator Absence">Operator Absence</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Downtime Hours</label>
-                <input type="number" step="0.1" className="form-control" value={formData.downtime_hours} onChange={e => handleRecalc('downtime_hours', e.target.value)} required placeholder="e.g. 0.4" />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Total Loss (meters) (Auto-calc)</label>
-                <input type="text" className="form-control" value={`${formData.total_loss_meters.toFixed(1)} m`} readOnly style={{ backgroundColor: formData.total_loss_meters > 0 ? '#ef444418' : 'var(--bg-secondary)', color: formData.total_loss_meters > 0 ? '#b91c1c' : 'inherit', fontWeight: 600 }} />
-              </div>
-              <div className="form-group">
-                <label>Loss Value (₹) (Auto-calc)</label>
-                <input type="text" className="form-control" value={`₹${formData.loss_value.toFixed(0)}`} readOnly style={{ backgroundColor: formData.loss_value > 0 ? '#ef444418' : 'var(--bg-secondary)', borderColor: formData.loss_value > 0 ? '#ef4444' : 'var(--border)', color: formData.loss_value > 0 ? '#b91c1c' : 'inherit', fontWeight: 700 }} />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginTop: 16 }}>
-              <label>Action Taken</label>
-              <input type="text" className="form-control" value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Yarn replaced, maintenance called" required />
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Log Financial Loss
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Loss Logs ({filteredRecords.length})</h3>
@@ -329,7 +343,7 @@ export default function LossAnalysis() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

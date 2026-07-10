@@ -124,38 +124,9 @@ export default function FinishAlert() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Bell style={{ color: '#f59e0b' }} /> Finish Alert Configuration
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Configure and track automated completion warnings</p>
-        </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({...formData, alert_id: `FA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`});
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#f59e0b', borderColor: '#f59e0b', color: 'white' }}
-          >
-            <Plus size={16} /> Setup New Alert
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to Log
-          </button>
-        )}
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -280,7 +251,43 @@ export default function FinishAlert() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Bell style={{ color: '#f59e0b' }} /> Finish Alert Configuration
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Configure and track automated completion warnings</p>
+        </div>
+        {!isFormOpen ? (
+          <button 
+            className="btn btn-primary" 
+            onClick={() => {
+              setFormData({...formData, alert_id: `FA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`});
+              setIsFormOpen(true);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#f59e0b', borderColor: '#f59e0b', color: 'white' }}
+          >
+            <Plus size={16} /> Setup New Alert
+          </button>
+        ) : (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to Log
+          </button>
+        )}
+      </div>
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Alert History & Configurations ({filteredRecords.length})</h3>
@@ -330,7 +337,7 @@ export default function FinishAlert() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

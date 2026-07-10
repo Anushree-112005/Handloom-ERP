@@ -124,6 +124,107 @@ export default function BreakdownEntry() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#ef4444' }}>
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Log Maintenance Incident</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Tracks machine halts for OEE calculations</p>
+              </div>
+            </div>
+            <div style={{ padding: '4px 12px', background: '#ef444418', color: '#b91c1c', borderRadius: 12, fontWeight: 600, fontSize: 13 }}>
+              {formData.breakdown_id}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>1. Incident Details</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Date</label>
+                <input type="date" className="form-control" name="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
+              </div>
+              <div className="form-group">
+                <label>Loom ID</label>
+                <select className="form-control" name="loom_id" value={formData.loom_id} onChange={e => setFormData({...formData, loom_id: e.target.value})} required>
+                  <option value="">-- Select Loom --</option>
+                  {looms.map(l => (
+                    <option key={l.id} value={l.id}>{l.loom_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Status</label>
+                <select className="form-control" name="status" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} required>
+                  <option value="Open">Open</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>2. Downtime Calculation</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Breakdown Start Time</label>
+                <input type="time" className="form-control" name="start_time" value={formData.start_time} onChange={handleTimeChange} required />
+              </div>
+              <div className="form-group">
+                <label>Breakdown End Time</label>
+                <input type="time" className="form-control" name="end_time" value={formData.end_time} onChange={handleTimeChange} required={formData.status === 'Resolved'} />
+              </div>
+              <div className="form-group">
+                <label>Total Downtime (hrs) (Auto-calc)</label>
+                <input type="text" className="form-control" value={formData.total_downtime ? `${formData.total_downtime} hrs` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>3. Root Cause & Action</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Reason Category</label>
+                <select className="form-control" name="reason_category" value={formData.reason_category} onChange={e => setFormData({...formData, reason_category: e.target.value})} required>
+                  <option value="Mechanical">Mechanical</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Yarn">Yarn</option>
+                  <option value="Power">Power</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Reason Details</label>
+                <input type="text" className="form-control" name="reason_details" value={formData.reason_details} onChange={e => setFormData({...formData, reason_details: e.target.value})} placeholder="e.g. Reed wire broken" required />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Attended By</label>
+                <input type="text" className="form-control" name="attended_by" value={formData.attended_by} onChange={e => setFormData({...formData, attended_by: e.target.value})} placeholder="e.g. Maintenance team" />
+              </div>
+              <div className="form-group">
+                <label>Action Taken</label>
+                <input type="text" className="form-control" name="action_taken" value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Reed replaced" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Save Incident
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -180,101 +281,7 @@ export default function BreakdownEntry() {
         </div>
       )}
 
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#ef4444' }}>
-                <AlertTriangle size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Log Maintenance Incident</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Tracks machine halts for OEE calculations</p>
-              </div>
-            </div>
-            <div style={{ padding: '4px 12px', background: '#ef444418', color: '#b91c1c', borderRadius: 12, fontWeight: 600, fontSize: 13 }}>
-              {formData.breakdown_id}
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>1. Incident Details</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" className="form-control" name="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
-              </div>
-              <div className="form-group">
-                <label>Loom ID</label>
-                <select className="form-control" name="loom_id" value={formData.loom_id} onChange={e => setFormData({...formData, loom_id: e.target.value})} required>
-                  <option value="">-- Select Loom --</option>
-                  {looms.map(l => (
-                    <option key={l.id} value={l.id}>{l.loom_name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Status</label>
-                <select className="form-control" name="status" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} required>
-                  <option value="Open">Open</option>
-                  <option value="Resolved">Resolved</option>
-                </select>
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>2. Downtime Calculation</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Breakdown Start Time</label>
-                <input type="time" className="form-control" name="start_time" value={formData.start_time} onChange={handleTimeChange} required />
-              </div>
-              <div className="form-group">
-                <label>Breakdown End Time</label>
-                <input type="time" className="form-control" name="end_time" value={formData.end_time} onChange={handleTimeChange} required={formData.status === 'Resolved'} />
-              </div>
-              <div className="form-group">
-                <label>Total Downtime (hrs) (Auto-calc)</label>
-                <input type="text" className="form-control" value={formData.total_downtime ? `${formData.total_downtime} hrs` : ''} readOnly style={{ backgroundColor: '#ef444418', color: '#b91c1c', fontWeight: 700 }} />
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>3. Root Cause & Action</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Reason Category</label>
-                <select className="form-control" name="reason_category" value={formData.reason_category} onChange={e => setFormData({...formData, reason_category: e.target.value})} required>
-                  <option value="Mechanical">Mechanical</option>
-                  <option value="Electrical">Electrical</option>
-                  <option value="Yarn">Yarn</option>
-                  <option value="Power">Power</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Reason Details</label>
-                <input type="text" className="form-control" name="reason_details" value={formData.reason_details} onChange={e => setFormData({...formData, reason_details: e.target.value})} placeholder="e.g. Reed wire broken" required />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Attended By</label>
-                <input type="text" className="form-control" name="attended_by" value={formData.attended_by} onChange={e => setFormData({...formData, attended_by: e.target.value})} placeholder="e.g. Maintenance team" />
-              </div>
-              <div className="form-group">
-                <label>Action Taken</label>
-                <input type="text" className="form-control" name="action_taken" value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Reed replaced" />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Save Incident
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Incident Logs ({filteredRecords.length})</h3>
@@ -359,7 +366,7 @@ export default function BreakdownEntry() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

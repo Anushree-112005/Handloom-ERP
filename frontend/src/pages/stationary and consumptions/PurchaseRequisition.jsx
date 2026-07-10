@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Save, PlusCircle, Trash2, Settings, ShoppingCart, Clock, CheckCircle, FileText, Layers } from 'lucide-react';
 
 export default function PurchaseRequisition() {
@@ -11,8 +12,18 @@ export default function PurchaseRequisition() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const fetchItems = async () => {
+    try {
+      const res = await stationaryService.getMaterials();
+      setItemsList(res.data || []);
+    } catch (e) {
+      console.error(e);
+      setItemsList(mockDb.get('consumables_items') || []);
+    }
+  };
+
   useEffect(() => {
-    setItemsList(mockDb.get('consumables_items') || []);
+    fetchItems();
     setRequisitions(mockDb.get('consumables_requisitions') || []);
   }, []);
 
@@ -24,10 +35,10 @@ export default function PurchaseRequisition() {
     }
     const newItems = lowStock.map(i => ({
       itemId: i.id,
-      name: i.name,
-      currentStock: i.currentStock || 0,
-      minStock: i.minStock,
-      qty: i.reorderQty || 50
+      name: i.item_name || i.name,
+      currentStock: i.current_stock || i.currentStock || 0,
+      minStock: i.min_stock || i.minStock || 0,
+      qty: i.reorder_qty || i.reorderQty || 50
     }));
     setGridItems(newItems);
   };
@@ -37,10 +48,10 @@ export default function PurchaseRequisition() {
     const defaultItem = itemsList[0];
     setGridItems([...gridItems, {
       itemId: defaultItem.id,
-      name: defaultItem.name,
-      currentStock: defaultItem.currentStock || 0,
-      minStock: defaultItem.minStock,
-      qty: defaultItem.reorderQty || 20
+      name: defaultItem.item_name || defaultItem.name,
+      currentStock: defaultItem.current_stock || defaultItem.currentStock || 0,
+      minStock: defaultItem.min_stock || defaultItem.minStock || 0,
+      qty: defaultItem.reorder_qty || defaultItem.reorderQty || 20
     }]);
   };
 
@@ -50,10 +61,10 @@ export default function PurchaseRequisition() {
     updated[index] = {
       ...updated[index],
       itemId: selected.id,
-      name: selected.name,
-      currentStock: selected.currentStock || 0,
-      minStock: selected.minStock,
-      qty: selected.reorderQty || 20
+      name: selected.item_name || selected.name,
+      currentStock: selected.current_stock || selected.currentStock || 0,
+      minStock: selected.min_stock || selected.minStock || 0,
+      qty: selected.reorder_qty || selected.reorderQty || 20
     };
     setGridItems(updated);
   };
@@ -169,7 +180,7 @@ export default function PurchaseRequisition() {
                           onChange={(e) => handleItemChange(idx, e.target.value)} 
                           className="form-control"
                         >
-                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.item_name || i.name}</option>)}
                         </select>
                       </div>
                       <div className="form-group" style={{ flex: 1, margin: 0 }}>

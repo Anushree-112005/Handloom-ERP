@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Plus, Save, Edit2, Trash2, Search, X, Box } from 'lucide-react';
 
 export default function ItemMaster() {
@@ -7,69 +7,98 @@ export default function ItemMaster() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [uoms, setUoms] = useState([]);
-  const [vendors, setVendors] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState({
-    name: '', code: '', category: '', uom: '', brand: '', hsnCode: '', gstPercent: 18, status: 'Active',
-    minStock: 10, maxStock: 100, safetyStock: 5, reorderQty: 20, vendor: '', rate: 0
+    item_name: '', item_code: '', category_id: '', base_uom_id: '',
+    min_stock: 10, purchase_rate: 0, is_active: true
   });
 
+  const fetchData = async () => {
+    try {
+      const [matRes, catRes, uomRes] = await Promise.all([
+        stationaryService.getMaterials(),
+        stationaryService.getCategories(),
+        stationaryService.getUOMs()
+      ]);
+      setItems(matRes.data || []);
+      setCategories(catRes.data || []);
+      setUoms(uomRes.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    setItems(mockDb.get('consumables_items'));
-    setCategories(mockDb.get('consumables_categories'));
-    setUoms(mockDb.get('consumables_uoms'));
-    setVendors(mockDb.get('consumables_vendors'));
+    if (view === 'list') {
+      fetchData();
+    }
   }, [view]);
 
   const handleOpenForm = (item = null) => {
     if (item) {
-      setFormData(item);
+      setFormData({
+        item_name: item.item_name,
+        item_code: item.item_code,
+        category_id: item.category_id || '',
+        base_uom_id: item.base_uom_id || '',
+        min_stock: item.min_stock || 0,
+        purchase_rate: item.purchase_rate || 0,
+        is_active: item.is_active
+      });
       setEditingId(item.id);
     } else {
       setFormData({
-        name: '', code: '', category: categories[0]?.name || '', uom: uoms[0]?.name || '', brand: '', hsnCode: '', gstPercent: 18, status: 'Active',
-        minStock: 10, maxStock: 100, safetyStock: 5, reorderQty: 20, vendor: vendors[0]?.name || '', rate: 0
+        item_name: '', item_code: '', 
+        category_id: categories[0]?.id || '', 
+        base_uom_id: uoms[0]?.id || '',
+        min_stock: 10, purchase_rate: 0, is_active: true
       });
       setEditingId(null);
     }
     setView('form');
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this item?')) {
-      mockDb.delete('consumables_items', id);
-      setItems(mockDb.get('consumables_items'));
+      try {
+        await stationaryService.deleteMaterial(id);
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to delete item');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const updated = {
-      ...formData,
-      currentStock: editingId ? (items.find(x => x.id === editingId)?.currentStock || 0) : 0
-    };
-    if (editingId) {
-      mockDb.update('consumables_items', editingId, updated);
-    } else {
-      const currentData = mockDb.get('consumables_items');
-      const maxIdNum = currentData.reduce((max, item) => {
-        const numMatch = item.id.match(/\d+/);
-        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
-      }, 0);
-      const nextId = 'ITM' + String(maxIdNum + 1).padStart(3, '0');
-      mockDb.add('consumables_items', {
-        id: nextId,
-        ...updated
-      });
+    try {
+      const payload = {
+        ...formData,
+        category_id: formData.category_id ? parseInt(formData.category_id) : null,
+        base_uom_id: formData.base_uom_id ? parseInt(formData.base_uom_id) : null,
+      };
+
+      if (editingId) {
+        await stationaryService.updateMaterial(editingId, payload);
+      } else {
+        await stationaryService.createMaterial(payload);
+      }
+      setView('list');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || 'Failed to save item');
     }
-    setView('list');
   };
+
+  const getCategoryName = (id) => categories.find(c => c.id === id)?.name || '';
+  const getUOMName = (id) => uoms.find(u => u.id === id)?.name || '';
 
   const filtered = items.filter(itm => 
-    (itm?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (itm?.category || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (itm?.item_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (itm?.item_code || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -117,7 +146,6 @@ export default function ItemMaster() {
                   <th>Item Name</th>
                   <th>Category</th>
                   <th>UOM</th>
-                  <th style={{ textAlign: "right" }}>Stock</th>
                   <th style={{ textAlign: "right" }}>Min Stock</th>
                   <th style={{ textAlign: "right" }}>Rate</th>
                   <th style={{ textAlign: "center" }}>Actions</th>
@@ -125,22 +153,21 @@ export default function ItemMaster() {
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                  ) : filtered.map(itm => (
-                  <tr key={itm?.id}>
-                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{itm?.code || itm?.id}</td>
-                    <td style={{ fontWeight: 600 }}>{itm?.name || ''}</td>
-                    <td>{itm?.category || ''}</td>
-                    <td>{itm?.uom || ''}</td>
-                    <td style={{ textAlign: "right", fontWeight: 700, color: (itm?.currentStock || 0) <= (itm?.minStock || 0) ? '#ef4444' : 'var(--text-primary)' }}>{itm?.currentStock || 0}</td>
-                    <td style={{ textAlign: "right" }}>{itm?.minStock || 0}</td>
-                    <td style={{ textAlign: "right" }}>₹{itm?.rate || 0}</td>
+                  <tr key={itm.id}>
+                    <td style={{ fontFamily: "monospace", color: '#4f46e5', fontWeight: 600 }}>{itm.item_code}</td>
+                    <td style={{ fontWeight: 600 }}>{itm.item_name}</td>
+                    <td>{getCategoryName(itm.category_id)}</td>
+                    <td>{getUOMName(itm.base_uom_id)}</td>
+                    <td style={{ textAlign: "right" }}>{itm.min_stock || 0}</td>
+                    <td style={{ textAlign: "right" }}>₹{itm.purchase_rate || 0}</td>
                     <td style={{ textAlign: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         <button onClick={() => handleOpenForm(itm)} style={{ padding: 6, borderRadius: 8, color: '#4f46e5', background: '#e0e7ff', cursor: "pointer", border: "none" }}>
                           <Edit2 size={14} />
                         </button>
-                        <button onClick={() => handleDelete(itm?.id)} style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }}>
+                        <button onClick={() => handleDelete(itm.id)} style={{ padding: 6, borderRadius: 8, color: '#ef4444', background: '#fef2f2', cursor: "pointer", border: "none" }}>
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -176,71 +203,66 @@ export default function ItemMaster() {
               <div className="form-group">
                 <label>Item Name *</label>
                 <input 
-                  type="text" required value={formData.name} 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                  type="text" required value={formData.item_name} 
+                  onChange={(e) => setFormData({...formData, item_name: e.target.value})} 
                   className="form-control" placeholder="E.g., Packing Tape"
                 />
               </div>
               <div className="form-group">
                 <label>Item Code / Short Name *</label>
                 <input 
-                  type="text" required value={formData.code} 
-                  onChange={(e) => setFormData({...formData, code: e.target.value})} 
+                  type="text" required value={formData.item_code} 
+                  onChange={(e) => setFormData({...formData, item_code: e.target.value})} 
                   className="form-control" placeholder="E.g., PT-001"
                 />
               </div>
               <div className="form-group">
-                <label>Category *</label>
+                <label>Category</label>
                 <select 
-                  value={formData.category} 
-                  onChange={(e) => setFormData({...formData, category: e.target.value})} 
+                  value={formData.category_id} 
+                  onChange={(e) => setFormData({...formData, category_id: e.target.value})} 
                   className="form-control"
                 >
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  <option value="">Select Category</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>UOM *</label>
+                <label>UOM</label>
                 <select 
-                  value={formData.uom} 
-                  onChange={(e) => setFormData({...formData, uom: e.target.value})} 
+                  value={formData.base_uom_id} 
+                  onChange={(e) => setFormData({...formData, base_uom_id: e.target.value})} 
                   className="form-control"
                 >
-                  {uoms.map(u => <option key={u.id} value={u.name}>{u.name}</option>)}
+                  <option value="">Select UOM</option>
+                  {uoms.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label>GST % *</label>
+                <label>Standard Cost / Rate</label>
                 <input 
-                  type="number" required value={formData.gstPercent} 
-                  onChange={(e) => setFormData({...formData, gstPercent: Number(e.target.value)})} 
+                  type="number" required value={formData.purchase_rate} 
+                  onChange={(e) => setFormData({...formData, purchase_rate: Number(e.target.value)})} 
                   className="form-control" 
                 />
               </div>
               <div className="form-group">
-                <label>Standard Cost / Rate *</label>
+                <label>Min Stock Level</label>
                 <input 
-                  type="number" required value={formData.rate} 
-                  onChange={(e) => setFormData({...formData, rate: Number(e.target.value)})} 
+                  type="number" required value={formData.min_stock} 
+                  onChange={(e) => setFormData({...formData, min_stock: Number(e.target.value)})} 
                   className="form-control" 
                 />
               </div>
               <div className="form-group">
-                <label>Min Stock Level *</label>
-                <input 
-                  type="number" required value={formData.minStock} 
-                  onChange={(e) => setFormData({...formData, minStock: Number(e.target.value)})} 
-                  className="form-control" 
-                />
-              </div>
-              <div className="form-group">
-                <label>Preferred Vendor *</label>
+                <label>Active *</label>
                 <select 
-                  value={formData.vendor} 
-                  onChange={(e) => setFormData({...formData, vendor: e.target.value})} 
+                  value={formData.is_active ? 'Yes' : 'No'} 
+                  onChange={(e) => setFormData({...formData, is_active: e.target.value === 'Yes'})} 
                   className="form-control"
                 >
-                  {vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
                 </select>
               </div>
             </div>

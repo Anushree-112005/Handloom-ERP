@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Plus, Save, Trash2, X, PlusCircle, Upload, Download, FileText, Clock, CheckCircle } from 'lucide-react';
 import api from '../../services/api';
 
@@ -19,10 +20,20 @@ export default function PurchaseOrder() {
 
   const [isUploading, setIsUploading] = useState(false);
 
+  const fetchItems = async () => {
+    try {
+      const res = await stationaryService.getMaterials();
+      setItemsList(res.data || []);
+    } catch (e) {
+      console.error(e);
+      setItemsList(mockDb.get('consumables_items') || []);
+    }
+  };
+
   useEffect(() => {
     setPOs(mockDb.get('consumables_pos'));
     setVendors(mockDb.get('consumables_vendors'));
-    setItemsList(mockDb.get('consumables_items'));
+    fetchItems();
   }, [view]);
 
   const handleFileUpload = async (e) => {
@@ -50,7 +61,7 @@ export default function PurchaseOrder() {
     const itm = itemsList[0];
     setFormData({
       ...formData,
-      items: [...formData.items, { itemId: itm?.id || '', qty: 1, rate: itm?.rate || 0, total: itm?.rate || 0 }]
+      items: [...formData.items, { itemId: itm?.id || '', qty: 1, rate: itm?.purchase_rate || itm?.rate || 0, total: itm?.purchase_rate || itm?.rate || 0 }]
     });
   };
 
@@ -60,8 +71,8 @@ export default function PurchaseOrder() {
     updated[index] = {
       ...updated[index],
       itemId: selected.id,
-      rate: selected.rate || 0,
-      total: selected.rate * updated[index].qty
+      rate: selected.purchase_rate || selected.rate || 0,
+      total: (selected.purchase_rate || selected.rate || 0) * updated[index].qty
     };
     setFormData({ ...formData, items: updated });
   };
@@ -338,7 +349,7 @@ export default function PurchaseOrder() {
                           onChange={(e) => handleItemChange(idx, e.target.value)} 
                           className="form-control"
                         >
-                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                          {itemsList.map(i => <option key={i.id} value={i.id}>{i.item_name || i.name}</option>)}
                         </select>
                       </div>
                       <div className="form-group" style={{ flex: 1, margin: 0 }}>
