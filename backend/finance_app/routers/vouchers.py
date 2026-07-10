@@ -100,6 +100,7 @@ def _voucher_out(v: Voucher):
         "status": v.status,
         "total_amount": v.total_amount,
         "company_id": v.company_id,
+        "party_id": v.party_id,
         "fy_id": v.fy_id,
         "entries": [
             {
@@ -136,6 +137,7 @@ def create_voucher(payload: VoucherCreate, db: Session = Depends(get_db)):
         status=payload.status,
         total_amount=total,
         company_id=payload.company_id,
+        party_id=payload.party_id,
         fy_id=payload.fy_id,
     )
     db.add(v)
@@ -203,6 +205,7 @@ def update_voucher(voucher_id: int, payload: VoucherCreate, db: Session = Depend
     v.narration    = payload.narration if payload.narration is not None else v.narration
     v.reference_no = payload.reference_no if payload.reference_no is not None else v.reference_no
     v.date         = payload.date
+    v.party_id     = payload.party_id
     v.total_amount = new_total
     db.commit()
     db.refresh(v)

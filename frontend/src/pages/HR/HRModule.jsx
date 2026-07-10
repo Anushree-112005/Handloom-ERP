@@ -1,4 +1,5 @@
 import React from 'react';
+import './HR.css';
 import { Routes, Route } from 'react-router-dom';
 import HRDashboard from './pages/HRDashboard';
 import AIHRDashboard from './pages/AIHRDashboard';
