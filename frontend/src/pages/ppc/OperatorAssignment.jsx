@@ -238,59 +238,9 @@ export default function OperatorAssignment() {
     r.extra_field_1?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <UserCheck style={{ color: '#10b981' }} /> Operator Assignment
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Assign operators to specific machines and shifts</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <UserCheck size={24} style={{ color: '#10b981' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Assignments</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Clock size={24} style={{ color: '#4f46e5' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Assignments</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.extra_field_2 === 'Active').length || records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <CheckCircle size={24} style={{ color: '#d97706' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Machines Assigned</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{new Set(records.map(r => r.extra_field_1)).size}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -407,7 +357,7 @@ export default function OperatorAssignment() {
               </div>
               <div className="form-group">
                 <label>Target Meters (shift) (Auto-calc)</label>
-                <input type="text" className="form-control" value={formData.target_meters ? `${formData.target_meters} m` : ''} readOnly style={{ backgroundColor: '#10b98118', borderColor: '#10b981', color: '#047857', fontWeight: 600 }} />
+                <input type="text" className="form-control" value={formData.target_meters ? `${formData.target_meters} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
               </div>
             </div>
 
@@ -427,7 +377,7 @@ export default function OperatorAssignment() {
               </div>
               <div className="form-group">
                 <label>Status (Auto)</label>
-                <input type="text" className="form-control" value={formData.status} readOnly style={{ backgroundColor: '#10b98118', color: '#047857', fontWeight: 600 }} />
+                <input type="text" className="form-control" value={formData.status} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
               </div>
             </div>
 
@@ -439,7 +389,64 @@ export default function OperatorAssignment() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserCheck style={{ color: '#10b981' }} /> Operator Assignment
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Assign operators to specific machines and shifts</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <UserCheck size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Assignments</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Clock size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Assignments</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.extra_field_2 === 'Active').length || records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#d97706' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Machines Assigned</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{new Set(records.map(r => r.extra_field_1)).size}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Active Assignments ({filteredRecords.length})</h3>
@@ -517,7 +524,7 @@ export default function OperatorAssignment() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

@@ -123,53 +123,9 @@ export default function ShiftMaster() {
     }
   };
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      
-      {/* Header & Stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Clock size={24} color="var(--primary)" />
-            Shift Master
-          </h3>
-          <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Manage your factory shifts</p>
-        </div>
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Database size={24} color="white" />
-            </div>
-            <div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Total Shifts</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{stats?.total || 0}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ToggleRight size={24} color="#10b981" />
-            </div>
-            <div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Active</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>{stats?.active || 0}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ToggleLeft size={24} color="#ef4444" />
-            </div>
-            <div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Inactive</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>{(stats?.total || 0) - (stats?.active || 0)}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -229,7 +185,58 @@ export default function ShiftMaster() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      
+      {/* Header & Stats */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Clock size={24} color="var(--primary)" />
+            Shift Master
+          </h3>
+          <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Manage your factory shifts</p>
+        </div>
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Database size={24} color="white" />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Total Shifts</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{stats?.total || 0}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ToggleRight size={24} color="#10b981" />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Active</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>{stats?.active || 0}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ToggleLeft size={24} color="#ef4444" />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Inactive</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>{(stats?.total || 0) - (stats?.active || 0)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Configured Shifts</h3>
@@ -321,7 +328,7 @@ export default function ShiftMaster() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

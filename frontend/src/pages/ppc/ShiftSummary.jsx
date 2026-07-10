@@ -204,66 +204,9 @@ export default function ShiftSummary() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Layers style={{ color: '#06b6d4' }} /> Shift Summary
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Comprehensive end-of-shift handover and aggregation report</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#cffafe', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <FileText size={24} style={{ color: '#06b6d4' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Summaries</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <TrendingUp size={24} style={{ color: '#10b981' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Production Logged</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2) || 0), 0).toFixed(0)} m
-              </div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Activity size={24} style={{ color: '#d97706' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Avg Shift Efficiency</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.length ? (records.reduce((sum, r) => {
-                  const val = parseFloat(r.extra_field_1);
-                  return sum + (isNaN(val) ? 0 : val);
-                }, 0) / records.length).toFixed(1) : 0}%
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -295,7 +238,8 @@ export default function ShiftSummary() {
                   {shifts.map(s => (
                     <option key={s.id} value={s.name}>{s.name}</option>
                   ))}
-                  <option value="Day">Day</option>
+                  <option value="Morning">Morning</option>
+                  <option value="Evening">Evening</option>
                   <option value="Night">Night</option>
                 </select>
               </div>
@@ -303,6 +247,8 @@ export default function ShiftSummary() {
                 <label>Supervisor Name</label>
                 <select className="form-control" value={formData.supervisor} onChange={e => handleShiftChange('supervisor', e.target.value, formData)}>
                   <option value="Murugan S">Murugan S</option>
+                  <option value="Ravi K">Ravi K</option>
+                  <option value="Priya M">Priya M</option>
                   <option value="Senthil K">Senthil K</option>
                 </select>
               </div>
@@ -327,7 +273,7 @@ export default function ShiftSummary() {
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Net Work Hrs</label>
-                <input type="text" className="form-control" value={formData.net_working_hours ? `${formData.net_working_hours} hrs` : ''} readOnly style={{ backgroundColor: '#06b6d418', color: '#0891b2', fontWeight: 600 }} />
+                <input type="text" className="form-control" value={formData.net_working_hours ? `${formData.net_working_hours} hrs` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
             </div>
 
@@ -335,15 +281,15 @@ export default function ShiftSummary() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
               <div className="form-group">
                 <label>Looms Running</label>
-                <input type="text" className="form-control" value={formData.total_running} readOnly style={{ backgroundColor: '#10b98118', color: '#047857', fontWeight: 600, fontSize: 18 }} />
+                <input type="text" className="form-control" value={formData.total_running} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600, fontSize: 18 }} />
               </div>
               <div className="form-group">
                 <label>Looms Idle</label>
-                <input type="text" className="form-control" value={formData.total_idle} readOnly style={{ backgroundColor: '#f59e0b18', color: '#b45309', fontWeight: 600, fontSize: 18 }} />
+                <input type="text" className="form-control" value={formData.total_idle} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600, fontSize: 18 }} />
               </div>
               <div className="form-group">
                 <label>Looms Breakdown</label>
-                <input type="text" className="form-control" value={formData.total_breakdown} readOnly style={{ backgroundColor: '#ef444418', color: '#b91c1c', fontWeight: 600, fontSize: 18 }} />
+                <input type="text" className="form-control" value={formData.total_breakdown} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600, fontSize: 18 }} />
               </div>
               <div className="form-group">
                 <label>Breakdown Details</label>
@@ -359,11 +305,11 @@ export default function ShiftSummary() {
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Total Produced</label>
-                <input type="text" className="form-control" value={formData.total_produced ? `${formData.total_produced} m` : ''} readOnly style={{ backgroundColor: '#06b6d418', color: '#0891b2', fontWeight: 700 }} />
+                <input type="text" className="form-control" value={formData.total_produced ? `${formData.total_produced} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 700 }} />
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Variance</label>
-                <input type="text" className="form-control" value={formData.variance ? `${formData.variance > 0 ? '+' : ''}${formData.variance} m` : ''} readOnly style={{ backgroundColor: formData.variance < 0 ? '#ef444418' : '#10b98118', color: formData.variance < 0 ? '#b91c1c' : '#047857', fontWeight: 600 }} />
+                <input type="text" className="form-control" value={formData.variance ? `${formData.variance > 0 ? '+' : ''}${formData.variance} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Shift Efficiency</label>
@@ -423,7 +369,71 @@ export default function ShiftSummary() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Layers style={{ color: '#06b6d4' }} /> Shift Summary
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Comprehensive end-of-shift handover and aggregation report</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#cffafe', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <FileText size={24} style={{ color: '#06b6d4' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Summaries</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <TrendingUp size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Production Logged</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2) || 0), 0).toFixed(0)} m
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Activity size={24} style={{ color: '#d97706' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Avg Shift Efficiency</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.length ? (records.reduce((sum, r) => {
+                  const val = parseFloat(r.extra_field_1);
+                  return sum + (isNaN(val) ? 0 : val);
+                }, 0) / records.length).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Shift Summaries ({filteredRecords.length})</h3>
@@ -499,7 +509,7 @@ export default function ShiftSummary() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }
