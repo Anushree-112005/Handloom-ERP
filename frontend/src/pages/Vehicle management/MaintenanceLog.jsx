@@ -212,7 +212,7 @@ export default function MaintenanceLog() {
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 24 }}>
-        <div className="card stat-card" onClick={() => setStatusFilter('All Status')} style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('All Status')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <Wrench size={24} />
           </div>
@@ -222,7 +222,7 @@ export default function MaintenanceLog() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => setStatusFilter('In Progress')} style={{ cursor: 'pointer', border: statusFilter === 'In Progress' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('In Progress')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <Calendar size={24} />
           </div>
@@ -232,7 +232,7 @@ export default function MaintenanceLog() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => setStatusFilter('Completed')} style={{ cursor: 'pointer', border: statusFilter === 'Completed' ? '2px solid #10b981' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('Completed')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <Wrench size={24} />
           </div>

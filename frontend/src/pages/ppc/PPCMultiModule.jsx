@@ -40,7 +40,7 @@ export default function PPCMultiModule() {
         { id: 'availability', label: 'Loom Availability Check' },
         { id: 'capacity', label: 'Capacity Calculation' },
         { id: 'order-breakdown', label: 'Order Breakdown' },
-        //{ id: 'allocation', label: 'Loom Allocation', component: <OrderAllocation /> }
+        { id: 'allocation', label: 'Loom Allocation', component: <OrderAllocation /> }
       ]
     },
     'scheduling': {
@@ -96,7 +96,6 @@ export default function PPCMultiModule() {
       title: 'Alert & Notification',
       icon: Bell,
       tabs: [
-        { id: 'eta-calc', label: 'ETA Calculation' },
         { id: 'low-efficiency', label: 'Low Efficiency Alert' },
         { id: 'breakdown-alert', label: 'Breakdown Alert' }
       ]

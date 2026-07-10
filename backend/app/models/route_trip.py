@@ -16,6 +16,12 @@ class Route(Base):
     status = Column(String(50), default="Active")
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    
+    # Extra fields for UI parity
+    toll_charges = Column(Float, default=0.0)
+    road_condition = Column(String(50), default="Good")
+    avg_speed = Column(Float, default=0.0)
+    difficulty = Column(String(50), default="Medium")
 
     # Fuel and tracking fields for frontend compatibility
     fuel_cost_estimate = Column(Float, default=0.0)

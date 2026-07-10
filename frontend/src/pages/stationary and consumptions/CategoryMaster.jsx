@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { mockDb } from './mockDb';
+import { stationaryService } from '../../services/stationaryService';
 import { Plus, Save, ArrowLeft, Edit2, Trash2, Search, X } from 'lucide-react';
 
 export default function CategoryMaster() {
@@ -7,52 +7,63 @@ export default function CategoryMaster() {
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ name: '', description: '', active: 'Yes' });
+  const [formData, setFormData] = useState({ name: '', is_active: true });
+
+  const fetchCategories = async () => {
+    try {
+      const res = await stationaryService.getCategories();
+      setCategories(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    setCategories(mockDb.get('consumables_categories'));
+    if (view === 'list') {
+      fetchCategories();
+    }
   }, [view]);
 
   const handleOpenForm = (cat = null) => {
     if (cat) {
-      setFormData(cat);
+      setFormData({ name: cat.name, is_active: cat.is_active });
       setEditingId(cat.id);
     } else {
-      setFormData({ name: '', description: '', active: 'Yes' });
+      setFormData({ name: '', is_active: true });
       setEditingId(null);
     }
     setView('form');
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this category?')) {
-      mockDb.delete('consumables_categories', id);
-      setCategories(mockDb.get('consumables_categories'));
+      try {
+        await stationaryService.deleteCategory(id);
+        fetchCategories();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to delete category');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      mockDb.update('consumables_categories', editingId, formData);
-    } else {
-      const currentData = mockDb.get('consumables_categories');
-      const maxIdNum = currentData.reduce((max, item) => {
-        const numMatch = item.id.match(/\d+/);
-        return numMatch ? Math.max(max, parseInt(numMatch[0], 10)) : max;
-      }, 0);
-      const nextId = 'CAT' + String(maxIdNum + 1).padStart(3, '0');
-      mockDb.add('consumables_categories', {
-        id: nextId,
-        ...formData
-      });
+    try {
+      if (editingId) {
+        await stationaryService.updateCategory(editingId, formData);
+      } else {
+        await stationaryService.createCategory(formData);
+      }
+      setView('list');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save category');
     }
-    setView('list');
   };
 
   const filtered = categories.filter(c => 
-    (c?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (c?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (c?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -86,22 +97,20 @@ export default function CategoryMaster() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th >Category ID</th>
-                  <th >Category Name</th>
-                  <th >Description</th>
-                  <th >Active</th>
+                  <th>Category ID</th>
+                  <th>Category Name</th>
+                  <th>Active</th>
                   <th style={{ textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
-              <tbody >
+              <tbody>
                 {filtered.map(cat => (
-                  <tr key={cat?.id || cat?.item_id} >
-                    <td style={{ fontFamily: "monospace" }}>{cat?.id || cat?.item_id}</td>
-                    <td style={{ fontWeight: 600 }}>{cat?.name || cat?.item_name}</td>
-                    <td >{cat?.description || ''}</td>
-                    <td >
-                      <span className={`badge ${(cat?.active === 'Yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
-                        {cat?.active || 'No'}
+                  <tr key={cat.id}>
+                    <td style={{ fontFamily: "monospace" }}>{cat.id}</td>
+                    <td style={{ fontWeight: 600 }}>{cat.name}</td>
+                    <td>
+                      <span className={`badge ${(cat.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
+                        {cat.is_active ? 'Yes' : 'No'}
                       </span>
                     </td>
                     <td style={{ textAlign: "center" }}>
@@ -109,7 +118,7 @@ export default function CategoryMaster() {
                         <button onClick={() => handleOpenForm(cat)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--primary)", cursor: "pointer", background: "none", border: "none" }}>
                           <Edit2 size={16} />
                         </button>
-                        <button onClick={() => handleDelete(cat?.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
+                        <button onClick={() => handleDelete(cat.id)} style={{ padding: 4, borderRadius: "var(--radius-sm)", color: "var(--danger)", cursor: "pointer", background: "none", border: "none" }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -155,25 +164,13 @@ export default function CategoryMaster() {
               <div className="form-group">
                 <label>Active *</label>
                 <select 
-                  value={formData.active} 
-                  onChange={(e) => setFormData({...formData, active: e.target.value})} 
+                  value={formData.is_active ? 'Yes' : 'No'} 
+                  onChange={(e) => setFormData({...formData, is_active: e.target.value === 'Yes'})} 
                   className="form-control"
                 >
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
                 </select>
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                <label>Description</label>
-                <textarea 
-                  value={formData.description} 
-                  onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                  className="form-control" 
-                  rows="3"
-                />
               </div>
             </div>
           </fieldset>
