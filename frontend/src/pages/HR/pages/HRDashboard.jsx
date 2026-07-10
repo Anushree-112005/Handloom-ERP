@@ -7,16 +7,14 @@ import hrService, {
   fetchHolidays, fetchPayroll, fetchLoans, fetchBenefits, fetchTravelRequests 
 } from '../../../services/hrService';
 
-const StatCard = ({ icon: Icon, label, value, hint, tone = 'indigo', onClick }) => {
+const PremiumStatCard = ({ icon: Icon, label, value, tone = 'indigo', onClick }) => {
   const themes = {
-    blue: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3b82f6', border: '#3b82f6' },
-    emerald: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', border: '#10b981' },
-    amber: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', border: '#f59e0b' },
-    purple: { bg: 'rgba(168, 85, 247, 0.1)', text: '#a855f7', border: '#a855f7' },
-    indigo: { bg: 'rgba(99, 102, 241, 0.1)', text: '#6366f1', border: '#6366f1' },
-    slate: { bg: 'rgba(100, 116, 139, 0.1)', text: '#64748b', border: '#64748b' },
-    teal: { bg: 'rgba(20, 184, 166, 0.1)', text: '#14b8a6', border: '#14b8a6' },
-    rose: { bg: 'rgba(244, 63, 94, 0.1)', text: '#f43f5e', border: '#f43f5e' }
+    blue: { bg: 'linear-gradient(135deg, #eff6ff, #dbeafe)', text: '#2563eb', iconBg: '#bfdbfe' },
+    emerald: { bg: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', text: '#059669', iconBg: '#a7f3d0' },
+    amber: { bg: 'linear-gradient(135deg, #fffbeb, #fef3c7)', text: '#d97706', iconBg: '#fde68a' },
+    purple: { bg: 'linear-gradient(135deg, #faf5ff, #f3e8ff)', text: '#9333ea', iconBg: '#e9d5ff' },
+    indigo: { bg: 'linear-gradient(135deg, #eef2ff, #e0e7ff)', text: '#4f46e5', iconBg: '#c7d2fe' },
+    rose: { bg: 'linear-gradient(135deg, #fff1f2, #ffe4e6)', text: '#e11d48', iconBg: '#fecdd3' }
   };
 
   const theme = themes[tone] || themes.indigo;
@@ -24,27 +22,29 @@ const StatCard = ({ icon: Icon, label, value, hint, tone = 'indigo', onClick }) 
   return (
     <div
       onClick={onClick}
-      className={`card cursor-pointer transition-all hover:-translate-y-1 hover:shadow-md`}
-      style={{
-        padding: '24px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        borderTop: `4px solid ${theme.border}`,
-        backgroundColor: '#fff',
-        borderRadius: '8px'
-      }}
+      className="premium-stat-card cursor-pointer"
+      style={{ background: theme.bg }}
     >
-      <div style={{ width: 56, height: 56, borderRadius: '12px', backgroundColor: theme.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={28} color={theme.text} />
+      <div className="premium-stat-icon" style={{ color: theme.text }}>
+        <Icon size={24} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-          {value}
-        </div>
-        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)', marginTop: '4px' }}>
-          {label}
-        </div>
+      <div>
+        <div className="premium-stat-value">{value}</div>
+        <div className="premium-stat-label">{label}</div>
+      </div>
+    </div>
+  );
+};
+
+const NavTile = ({ icon: Icon, title, desc, onClick }) => {
+  return (
+    <div className="premium-nav-tile" onClick={onClick}>
+      <div className="premium-nav-icon">
+        <Icon size={20} />
+      </div>
+      <div>
+        <div className="premium-nav-title">{title}</div>
+        <div className="premium-nav-desc">{desc}</div>
       </div>
     </div>
   );
@@ -124,32 +124,34 @@ const HRDashboard = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">HR Modules</h1>
-        <p className="text-sm text-slate-500">Manage your workforce lifecycle and operations</p>
+    <div className="flex flex-col gap-8 pb-8">
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">HR Dashboard</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Manage your workforce lifecycle and operations efficiently</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Users} label="Total Employees" value={loading ? '...' : empCount} tone="indigo" onClick={() => navigate('/hr/employee-master')} />
-        <StatCard icon={Building2} label="Departments" value={loading ? '...' : deptCount} tone="purple" onClick={() => navigate('/hr/departments')} />
-        <StatCard icon={Clock} label="Total Shifts" value={loading ? '...' : shiftCount} tone="emerald" onClick={() => navigate('/hr/shifts')} />
-        <StatCard icon={Receipt} label="Pending Claims" value={loading ? '...' : claimsCount} tone="amber" onClick={() => navigate('/hr/expense')} />
+      {/* Top Main Metrics (4 Key Focus Areas) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <PremiumStatCard icon={Users} label="Total Employees" value={loading ? '...' : empCount} tone="indigo" onClick={() => navigate('/hr/employee-master')} />
+        <PremiumStatCard icon={Building2} label="Departments" value={loading ? '...' : deptCount} tone="purple" onClick={() => navigate('/hr/departments')} />
+        <PremiumStatCard icon={Clock} label="Total Shifts" value={loading ? '...' : shiftCount} tone="emerald" onClick={() => navigate('/hr/shifts')} />
+        <PremiumStatCard icon={Receipt} label="Pending Claims" value={loading ? '...' : claimsCount} tone="amber" onClick={() => navigate('/hr/expense')} />
       </div>
 
-      {/* Middle Layout matching the screenshot exactly */}
+      {/* Charts / Data Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Horizontal Progress Bar Chart */}
-        <div className="card lg:col-span-2">
-          <div className="card-header border-b border-slate-100 pb-4 mb-4">
-            <h2 className="card-title text-lg flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-500" /> Headcount by Department
-            </h2>
+        {/* Headcount by Department */}
+        <div className="card lg:col-span-2 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Users size={20} /></div>
+            <h2 className="text-lg font-bold text-slate-800">Headcount by Department</h2>
           </div>
-          <div className="space-y-6 px-2">
+          <div className="space-y-6">
             {loading ? (
-              <p className="text-slate-400 text-sm">Loading...</p>
+              <div className="h-32 flex items-center justify-center text-slate-400">Loading data...</div>
             ) : deptData.length > 0 ? (
               deptData.map((d, i) => {
                 const max = Math.max(...deptData.map(x => x.value)) || 1;
@@ -162,9 +164,9 @@ const HRDashboard = () => {
                       <span className="font-semibold text-slate-700">{d.name}</span>
                       <span className="font-bold text-slate-900">{d.value}</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                       <div 
-                        className="h-2 rounded-full transition-all duration-1000"
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${percentage}%`, backgroundColor: color }}
                       />
                     </div>
@@ -172,54 +174,57 @@ const HRDashboard = () => {
                 );
               })
             ) : (
-              <p className="text-slate-400 text-sm">No department data</p>
+              <p className="text-slate-400 text-sm italic">No department data available</p>
             )}
           </div>
         </div>
 
-        {/* Right Side List */}
-        <div className="card">
-          <div className="card-header border-b border-slate-100 pb-4 mb-4">
-            <h2 className="card-title text-lg flex items-center gap-2">
-              <CalendarCheck className="w-5 h-5 text-purple-500" /> Recent Hires
-            </h2>
+        {/* Recent Hires */}
+        <div className="card p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CalendarCheck size={20} /></div>
+            <h2 className="text-lg font-bold text-slate-800">Recent Hires</h2>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-5">
             {loading ? (
-              <p className="text-slate-400 text-sm">Loading...</p>
+              <div className="h-32 flex items-center justify-center text-slate-400">Loading data...</div>
             ) : recentHires.length > 0 ? (
               recentHires.map((emp, i) => (
-                <div key={i} className="flex justify-between items-start border-b border-slate-50 pb-3 last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{emp.name || emp.employee_id}</p>
-                    <p className="text-xs text-slate-500 mt-1">Status: <span className="text-emerald-600">{emp.employment_status || 'Active'}</span></p>
+                <div key={i} className="flex items-center gap-4 group cursor-pointer" onClick={() => navigate('/hr/employee-master')}>
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                    {emp.name?.charAt(0) || 'U'}
                   </div>
-                  <span className="text-xs text-slate-400">{emp.department || 'Unassigned'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">{emp.name || emp.employee_id}</p>
+                    <p className="text-xs text-slate-500 truncate">{emp.department || 'Unassigned'}</p>
+                  </div>
+                  <div className="text-xs font-medium px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full">
+                    {emp.employment_status || 'Active'}
+                  </div>
                 </div>
               ))
             ) : (
-              <p className="text-slate-400 text-sm">No recent hires</p>
+              <p className="text-slate-400 text-sm italic">No recent hires</p>
             )}
           </div>
         </div>
       </div>
 
-      <div className="space-y-8 mt-8">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-500 mb-4 uppercase tracking-wider">All HR Modules</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <StatCard icon={Building2} label="Departments" value={deptCount} tone="slate" onClick={() => navigate('/hr/departments')} />
-            <StatCard icon={Award} label="Designations" value={desigCount} tone="purple" onClick={() => navigate('/hr/designations')} />
-            <StatCard icon={Clock} label="Shifts" value={shiftCount} tone="blue" onClick={() => navigate('/hr/shifts')} />
-            <StatCard icon={Calendar} label="Holidays" value={holidaysCount} tone="rose" onClick={() => navigate('/hr/holidays')} />
-            <StatCard icon={Users} label="Employees" value={empCount} tone="indigo" onClick={() => navigate('/hr/employee-master')} />
-            <StatCard icon={CalendarCheck} label="Attendance" value={attendanceCount} tone="emerald" onClick={() => navigate('/hr/attendance')} />
-            <StatCard icon={DollarSign} label="Payroll" value={payrollCount} tone="amber" onClick={() => navigate('/hr/payroll')} />
-            <StatCard icon={Landmark} label="Loans" value={loansCount} tone="blue" onClick={() => navigate('/hr/loans')} />
-            <StatCard icon={Heart} label="Benefits" value={benefitsCount} tone="rose" onClick={() => navigate('/hr/benefits')} />
-            <StatCard icon={Plane} label="Travel" value={travelCount} tone="teal" onClick={() => navigate('/hr/travel')} />
-            <StatCard icon={Receipt} label="Expense" value={claimsCount} tone="purple" onClick={() => navigate('/hr/expense')} />
-          </div>
+      {/* Quick Access / App Drawer Navigation */}
+      <div>
+        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">Quick Access</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <NavTile icon={Building2} title="Departments" desc={`${deptCount} Departments`} onClick={() => navigate('/hr/departments')} />
+          <NavTile icon={Award} title="Designations" desc={`${desigCount} Roles`} onClick={() => navigate('/hr/designations')} />
+          <NavTile icon={Clock} title="Shifts" desc={`${shiftCount} Active Shifts`} onClick={() => navigate('/hr/shifts')} />
+          <NavTile icon={Calendar} title="Holidays" desc={`${holidaysCount} Upcoming`} onClick={() => navigate('/hr/holidays')} />
+          <NavTile icon={Users} title="Employees" desc={`${empCount} Staff members`} onClick={() => navigate('/hr/employee-master')} />
+          <NavTile icon={CalendarCheck} title="Attendance" desc="Track daily logs" onClick={() => navigate('/hr/attendance')} />
+          <NavTile icon={DollarSign} title="Payroll" desc="Manage salaries" onClick={() => navigate('/hr/payroll')} />
+          <NavTile icon={Landmark} title="Loans" desc={`${loansCount} Active Loans`} onClick={() => navigate('/hr/loans')} />
+          <NavTile icon={Heart} title="Benefits" desc="Manage perks" onClick={() => navigate('/hr/benefits')} />
+          <NavTile icon={Plane} title="Travel" desc={`${travelCount} Requests`} onClick={() => navigate('/hr/travel')} />
+          <NavTile icon={Receipt} title="Expense Claims" desc={`${claimsCount} Pending`} onClick={() => navigate('/hr/expense')} />
         </div>
       </div>
     </div>

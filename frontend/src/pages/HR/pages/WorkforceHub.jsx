@@ -56,33 +56,33 @@ const WorkforceHub = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Workforce Management</h1>
-        <p className="text-slate-600">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Workforce Management</h1>
+        <p className="text-sm text-slate-500">
           Maintain comprehensive employee data and organizational structure
         </p>
       </div>
 
-      <div className="form-row">
+      <div className="module-grid">
         {sections.map((section) => {
           const Icon = section.icon;
           return (
             <div
               key={section.path}
               onClick={() => navigate(section.path)}
-              className={`${section.color} border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg group`}
+              className="module-card group"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-lg bg-white ${section.iconColor}`}>
+                <div className="icon-box">
                   <Icon className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+              <h3>
                 {section.title}
               </h3>
-              <p className="text-sm text-slate-600">
+              <p>
                 {section.description}
               </p>
             </div>

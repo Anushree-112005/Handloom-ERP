@@ -54,6 +54,19 @@ export default function Shifts() {
     return ((totalMins - breakMins) / 60).toFixed(1);
   };
 
+  const calculateDefaultBreakDuration = (start, end) => {
+    if (!start || !end) return 0;
+    const [startH, startM] = start.split(':').map(Number);
+    const [endH, endM] = end.split(':').map(Number);
+    let totalMins = (endH * 60 + endM) - (startH * 60 + startM);
+    if (totalMins < 0) totalMins += 24 * 60; // overnight shift
+    
+    if (totalMins >= 9 * 60) return 60;
+    if (totalMins >= 6 * 60) return 45;
+    if (totalMins >= 4 * 60) return 30;
+    return 0;
+  };
+
   const handleSubmit = async () => {
     if (!form.name) {
       alert('Please fill required fields');
@@ -410,7 +423,11 @@ export default function Shifts() {
                     <input
                       type="time"
                       value={form.start_time}
-                      onChange={(e) => setForm({ ...form, start_time: e.target.value })}
+                      onChange={(e) => {
+                        const newStart = e.target.value;
+                        const autoBreak = calculateDefaultBreakDuration(newStart, form.end_time);
+                        setForm({ ...form, start_time: newStart, break_duration: autoBreak });
+                      }}
                       className="form-control"
                     />
                   </div>
@@ -419,7 +436,11 @@ export default function Shifts() {
                     <input
                       type="time"
                       value={form.end_time}
-                      onChange={(e) => setForm({ ...form, end_time: e.target.value })}
+                      onChange={(e) => {
+                        const newEnd = e.target.value;
+                        const autoBreak = calculateDefaultBreakDuration(form.start_time, newEnd);
+                        setForm({ ...form, end_time: newEnd, break_duration: autoBreak });
+                      }}
                       className="form-control"
                     />
                   </div>
@@ -427,8 +448,9 @@ export default function Shifts() {
                     <label>Break Duration (mins)</label>
                     <input
                       type="number"
+                      step="any"
                       value={form.break_duration}
-                      onChange={(e) => setForm({ ...form, break_duration: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setForm({ ...form, break_duration: e.target.value === '' ? '' : parseFloat(e.target.value) })}
                       className="form-control"
                     />
                   </div>
