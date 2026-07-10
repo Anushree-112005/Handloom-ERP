@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, Barcode, HelpCircle, Check, AlertTriangle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { onTableCheckingAPI, dropdownAPI, clothInwardAPI } from '../../services/api';
+import { onTableCheckingAPI, dropdownAPI, clothInwardAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -39,6 +39,7 @@ export default function OnTableChecking() {
   });
 
   const [gfrList, setGfrList] = useState([]);
+  const [checkers, setCheckers] = useState([]);
 
   // Barcode simulation state
   const [barcodeInput, setBarcodeInput] = useState('');
@@ -51,6 +52,7 @@ export default function OnTableChecking() {
     order_no: '',
     party_name: '',
     lot_no: '',
+    qc_name: '',
     total_meters: 0,
     total_pieces: 0,
     pass_meters: 0,
@@ -114,6 +116,9 @@ export default function OnTableChecking() {
       
       const { data: gfrData } = await clothInwardAPI.list();
       setGfrList(gfrData || []);
+
+      const { data: chkRes } = await subMasterAPI.list('checker_name_master');
+      setCheckers(chkRes || []);
     } catch (err) {
       console.error("Error fetching dropdowns:", err);
     }
@@ -406,6 +411,13 @@ export default function OnTableChecking() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            {view === 'form' && (
+              <ArrowLeft 
+                size={24} 
+                style={{ cursor: 'pointer', marginRight: 8, color: 'var(--text-primary)' }} 
+                onClick={() => setView('list')} 
+              />
+            )}
             <CheckSquare size={24} color="#eab308" /> ON Table Quality Checking
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Fabric quality inspection with defect tracking, barcode scanning, and grading.</p>
@@ -444,21 +456,10 @@ export default function OnTableChecking() {
             </div>
           )}
 
-          {view === 'list' ? (
+          {view === 'list' && (
             <button className="btn btn-primary" onClick={() => handleOpenForm()}>
               <Plus size={18} /> New QC Entry
             </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}>
-                Cancel
-              </button>
-              {!isReadOnly && (
-                <button type="submit" form="checkingForm" className="btn btn-primary">
-                  <Save size={18} /> Save Record
-                </button>
-              )}
-            </div>
           )}
         </div>
       </div>
@@ -691,31 +692,11 @@ export default function OnTableChecking() {
       ) : (
         /* CREATE / EDIT FORM VIEW */
         <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
-            {[{ id: 'general', label: 'General Info & Barcode' }, { id: 'items', label: 'Inspection Grid' }].map(tab => (
-              <button 
-                type="button"
-                key={tab.id} onClick={() => {
-                  setActiveTab(tab.id);
-                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           <div style={{ padding: 32, background: '#fff' }}>
             <form id="checkingForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
                 
-                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                <div id="general-section" style={{ marginBottom: 32 }}>
                   {/* SECTION 1: HEADER GENERAL INFO */}
                   <h4 style={{ color: 'var(--text-primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
                     General Inspection Info
@@ -760,7 +741,15 @@ export default function OnTableChecking() {
                         <option>Table 4</option>
                       </select>
                     </div>
-                    <div style={{ gridColumn: 'span 1' }}></div>
+                    <div className="form-group">
+                      <label>QC Name *</label>
+                      <select className="form-control" name="qc_name" value={formData.qc_name || ''} onChange={handleHeaderChange} required>
+                        <option value="">-- Select QC Name --</option>
+                        {checkers.map(c => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
                     <div className="form-group">
                       <label>Design Number</label>
                       <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
@@ -769,7 +758,6 @@ export default function OnTableChecking() {
                       <label>Lot Number</label>
                       <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
                     </div>
-                    <div style={{ gridColumn: 'span 2' }}></div>
                     <div className="form-group">
                       <label>Buyer / Party *</label>
                       <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
@@ -794,7 +782,7 @@ export default function OnTableChecking() {
                   </div>
                   <div className="form-group" style={{ marginTop: 12 }}>
                     <label>QC General Remarks / Instructions</label>
-                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
                   </div>
 
                   {/* BARCODE SCAN SIMULATION */}
@@ -1003,6 +991,18 @@ export default function OnTableChecking() {
                       <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QC Rejected Volume</span>
                       <span style={{ fontSize: 18, fontWeight: 700, color: '#ef4444' }}>{formData.reject_meters} Mtr</span>
                     </div>
+                  </div>
+                  
+                  {/* FORM ACTIONS FOOTER */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                      Close
+                    </button>
+                    {!isReadOnly && (
+                      <button type="submit" form="checkingForm" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Save size={18} /> Save Record
+                      </button>
+                    )}
                   </div>
                 </div>
 
