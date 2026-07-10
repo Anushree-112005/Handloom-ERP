@@ -309,7 +309,7 @@ const modules = [
       { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
       { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
-      { path: '/ppc/alerts/eta-calc', label: 'ETA Engine', icon: Clock },
+      { path: '/ppc/eta-engine', label: 'ETA Engine', icon: Clock },
       { path: '/ppc/alerts/low-efficiency', label: 'Alerts', icon: Bell, badge: '3', badgeColor: '#e11d48' },
       { path: '/ppc/reports/loom-wise', label: 'Reports', icon: FileText }
     ]

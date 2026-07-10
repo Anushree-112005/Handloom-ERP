@@ -38,11 +38,7 @@ export default function OrderAllocation() {
       setRecords(allocRes?.data || []);
       
       const fetchedOrders = ordRes?.data || [];
-      if (fetchedOrders.length === 0) {
-        setOrders([{ id: 'ORD-2024-001', order_no: 'ORD-2024-001', fabric_quality: 'Cotton Poplin' }]);
-      } else {
-        setOrders(fetchedOrders);
-      }
+      setOrders(fetchedOrders);
 
       setLooms(loomsRes?.data || []);
     } catch (err) {
@@ -56,12 +52,12 @@ export default function OrderAllocation() {
 
   const handleOrderChange = (e) => {
     const selectedOrderId = e.target.value;
-    const order = orders.find(o => o.order_no === selectedOrderId || o.id.toString() === selectedOrderId);
+    const order = orders.find(o => (o.ibpo_number || o.order_no) === selectedOrderId || o.id.toString() === selectedOrderId);
     
     setFormData(prev => ({
       ...prev,
       order_id: selectedOrderId,
-      fabric_type: order ? (order.fabric_quality || order.quality || 'Cotton Poplin') : ''
+      fabric_type: order ? (order.fabric_quality || order.quality || (order.items && order.items[0] && order.items[0].fabric_type) || 'Cotton Poplin') : ''
     }));
   };
 
@@ -130,63 +126,9 @@ export default function OrderAllocation() {
   const inProgressAllocations = records.filter(r => r.allocation_status === 'In Progress').length;
   const completedAllocations = records.filter(r => r.allocation_status === 'Completed').length;
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      
-      {/* Header (Title Only) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Layers style={{ color: '#10b981' }} /> Loom Allocation
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Assign verified orders directly to specific looms</p>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <Activity size={24} style={{ color: '#4f46e5' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Allocations</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalAllocations}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <AlertTriangle size={24} style={{ color: '#d97706' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Pending</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{pendingAllocations}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#e0f2fe', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <Settings size={24} style={{ color: '#0284c7' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>In Progress</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{inProgressAllocations}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <CheckCircle size={24} style={{ color: '#16a34a' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Completed</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{completedAllocations}</div>
-          </div>
-        </div>
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -211,7 +153,7 @@ export default function OrderAllocation() {
                 <select className="form-control" name="order_id" value={formData.order_id} onChange={handleOrderChange} required>
                   <option value="">-- Select Order --</option>
                   {orders.map(o => (
-                    <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id}</option>
+                    <option key={o.id} value={o.ibpo_number || o.order_no || o.id}>{o.ibpo_number || o.order_no || o.id}</option>
                   ))}
                 </select>
               </div>
@@ -269,7 +211,68 @@ export default function OrderAllocation() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      
+      {/* Header (Title Only) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Layers style={{ color: '#10b981' }} /> Loom Allocation
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Assign verified orders directly to specific looms</p>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Activity size={24} style={{ color: '#4f46e5' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Allocations</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalAllocations}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertTriangle size={24} style={{ color: '#d97706' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Pending</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{pendingAllocations}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0f2fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Settings size={24} style={{ color: '#0284c7' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>In Progress</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{inProgressAllocations}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <CheckCircle size={24} style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Completed</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{completedAllocations}</div>
+          </div>
+        </div>
+      </div>
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Active Allocations ({filteredRecords.length})</h3>
@@ -355,7 +358,7 @@ export default function OrderAllocation() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

@@ -113,51 +113,9 @@ export default function LoomRegistration() {
     }
   };
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb' }}>
-            <Settings2 size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Total Looms</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.length}</div>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Running</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Running').length}</div>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-            <AlertTriangle size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Breakdown</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Breakdown').length}</div>
-          </div>
-        </div>
-        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-            <Settings size={24} />
-          </div>
-          <div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Maintenance</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Maintenance').length}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Inline Form */}
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -280,7 +238,56 @@ export default function LoomRegistration() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+
+      {/* Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb' }}>
+            <Settings2 size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Total Looms</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.length}</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <CheckCircle size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Running</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Running').length}</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Breakdown</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Breakdown').length}</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+            <Settings size={24} />
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>Maintenance</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{looms.filter(l => l.status === 'Maintenance').length}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Form */}
+
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Active Looms Roster</h3>
@@ -360,7 +367,6 @@ export default function LoomRegistration() {
           </div>
         </div>
 
-      )}
     </div>
   );
 }

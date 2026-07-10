@@ -214,69 +214,9 @@ export default function EfficiencyCalculation() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <BarChart2 style={{ color: '#8b5cf6' }} /> Efficiency Calculation (OEE)
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Calculate Availability, Speed, Quality, and OEE metrics</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Activity size={24} style={{ color: '#8b5cf6' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <CheckCircle size={24} style={{ color: '#10b981' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>High Performers (&gt;85% OEE)</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.filter(r => {
-                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
-                  return match && parseFloat(match[1]) >= 85;
-                }).length}
-              </div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Percent size={24} style={{ color: '#4f46e5' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Average OEE</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.length ? (records.reduce((sum, r) => {
-                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
-                  return sum + (match ? parseFloat(match[1]) : 0);
-                }, 0) / records.length).toFixed(1) : 0}%
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -383,11 +323,11 @@ export default function EfficiencyCalculation() {
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>OEE %</label>
-                <input type="text" className="form-control" value={formData.oee ? `${formData.oee}%` : ''} readOnly style={{ backgroundColor: '#8b5cf618', borderColor: '#8b5cf6', color: '#6d28d9', fontWeight: 800, fontSize: 16 }} />
+                <input type="text" className="form-control" value={formData.oee ? `${formData.oee}%` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Status</label>
-                <input type="text" className="form-control" value={formData.efficiency_status} readOnly style={{ backgroundColor: formData.efficiency_status.includes('Good') ? '#10b98118' : formData.efficiency_status.includes('Poor') ? '#ef444418' : '#f59e0b18', color: formData.efficiency_status.includes('Good') ? '#047857' : formData.efficiency_status.includes('Poor') ? '#b91c1c' : '#b45309', fontWeight: 800 }} />
+                <input type="text" className="form-control" value={formData.efficiency_status} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
             </div>
 
@@ -419,7 +359,74 @@ export default function EfficiencyCalculation() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BarChart2 style={{ color: '#8b5cf6' }} /> Efficiency Calculation (OEE)
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Calculate Availability, Speed, Quality, and OEE metrics</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Activity size={24} style={{ color: '#8b5cf6' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>High Performers (&gt;85% OEE)</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => {
+                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
+                  return match && parseFloat(match[1]) >= 85;
+                }).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Percent size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Average OEE</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.length ? (records.reduce((sum, r) => {
+                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
+                  return sum + (match ? parseFloat(match[1]) : 0);
+                }, 0) / records.length).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>OEE Records ({filteredRecords.length})</h3>
@@ -495,7 +502,7 @@ export default function EfficiencyCalculation() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

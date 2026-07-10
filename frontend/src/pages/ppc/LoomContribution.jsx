@@ -45,7 +45,7 @@ export default function LoomContribution() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await buyerOrderAPI.list();
+      const res = await subMasterAPI.list('ppc_order_progress');
       setOrders(res?.data || []);
     } catch (err) {
       console.error(err);
@@ -119,7 +119,7 @@ export default function LoomContribution() {
           <select className="form-control" style={{ flex: 1, padding: '10px 16px', background: 'var(--bg-primary)', borderColor: 'var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }} value={selectedOrder} onChange={handleOrderChange}>
             <option value="">-- Choose Order to Analyze --</option>
             {orders.map(o => (
-              <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id} - {o.party_name}</option>
+              <option key={o.id} value={o.name}>{o.name} - {o.code}</option>
             ))}
           </select>
         </div>

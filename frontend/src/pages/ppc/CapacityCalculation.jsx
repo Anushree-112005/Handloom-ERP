@@ -127,6 +127,79 @@ export default function CapacityCalculation() {
   const breakdownLooms = looms.filter(l => l.status === 'Breakdown').length;
   const maintenanceLooms = looms.filter(l => l.status === 'Maintenance').length;
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#0ea5e918', borderRadius: 10, color: '#0ea5e9' }}>
+                <Activity size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Perform Capacity Calculation</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Analyzes efficiency and working days</p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Loom ID</label>
+                <select className="form-control" name="loom_id" value={formData.loom_id} onChange={handleLoomChange} required>
+                  <option value="">-- Select Loom --</option>
+                  {looms.map(loom => (
+                    <option key={loom.id} value={loom.loom_name}>{loom.loom_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Max Capacity (m/day) (Auto-fill)</label>
+                <input type="text" className="form-control" value={formData.max_capacity} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Efficiency (%) (Auto-fill)</label>
+                <input type="text" className="form-control" value={formData.efficiency} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Effective Capacity (m/day) (Auto-calc)</label>
+                <input type="text" className="form-control" value={formData.effective_capacity} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Working Days</label>
+                <input type="number" className="form-control" name="working_days" value={formData.working_days} onChange={handleInputChange} min="1" max="31" required />
+              </div>
+              <div className="form-group">
+                <label>Shift Hours (Auto-fill)</label>
+                <input type="text" className="form-control" name="shift_hours" value={formData.shift_hours} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Monthly Capacity (m) (Auto-calc)</label>
+              <input type="text" className="form-control" value={formData.monthly_capacity} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+            </div>
+            
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Save Calculation
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       
@@ -184,73 +257,7 @@ export default function CapacityCalculation() {
       </div>
 
       {/* Inline Form */}
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#0ea5e918', borderRadius: 10, color: '#0ea5e9' }}>
-                <Activity size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Perform Capacity Calculation</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Analyzes efficiency and working days</p>
-              </div>
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Loom ID</label>
-                <select className="form-control" name="loom_id" value={formData.loom_id} onChange={handleLoomChange} required>
-                  <option value="">-- Select Loom --</option>
-                  {looms.map(loom => (
-                    <option key={loom.id} value={loom.loom_name}>{loom.loom_name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Max Capacity (m/day) (Auto-fill)</label>
-                <input type="text" className="form-control" value={formData.max_capacity} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Efficiency (%) (Auto-fill)</label>
-                <input type="text" className="form-control" value={formData.efficiency} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-              <div className="form-group">
-                <label>Effective Capacity (m/day) (Auto-calc)</label>
-                <input type="text" className="form-control" value={formData.effective_capacity} readOnly style={{ backgroundColor: '#0ea5e918', borderColor: '#0ea5e9', color: '#0369a1', fontWeight: 600 }} />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Working Days</label>
-                <input type="number" className="form-control" name="working_days" value={formData.working_days} onChange={handleInputChange} min="1" max="31" required />
-              </div>
-              <div className="form-group">
-                <label>Shift Hours (Auto-fill)</label>
-                <input type="text" className="form-control" name="shift_hours" value={formData.shift_hours} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Monthly Capacity (m) (Auto-calc)</label>
-              <input type="text" className="form-control" value={formData.monthly_capacity} readOnly style={{ backgroundColor: '#10b98118', borderColor: '#10b981', color: '#047857', fontWeight: 800, fontSize: 18 }} />
-            </div>
-            
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Save Calculation
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Saved Calculations ({filteredRecords.length})</h3>
@@ -325,7 +332,7 @@ export default function CapacityCalculation() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }
