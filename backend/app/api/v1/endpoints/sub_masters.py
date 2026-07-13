@@ -72,8 +72,9 @@ async def list_sub_masters(
     query = query.order_by(SubMaster.name)
     result = await db.execute(query)
     rows = result.scalars().all()
-    return [
-        {
+    response = []
+    for r in rows:
+        response.append({
             "id": r.id,
             "entity": r.entity,
             "name": r.name,
@@ -85,9 +86,17 @@ async def list_sub_masters(
             "is_active": r.is_active,
             "created_at": str(r.created_at) if r.created_at else None,
             "updated_at": str(r.updated_at) if r.updated_at else None,
-        }
-        for r in rows
-    ]
+        })
+        
+    if entity == "shift":
+        from app.models.employee import Employee
+        emp_query = select(Employee.shift, func.count(Employee.id)).where(Employee.shift.isnot(None)).group_by(Employee.shift)
+        emp_res = await db.execute(emp_query)
+        emp_counts = dict(emp_res.all())
+        for item in response:
+            item["employee_count"] = emp_counts.get(item["name"], 0)
+
+    return response
 
 
 @router.get("/{entity}/stats")

@@ -45,6 +45,16 @@ with engine.begin() as conn:
         except Exception as e:
             print(f"Migration warning: {e}")
 
+    # party_id column on vouchers
+    try:
+        conn.execute(text("SELECT party_id FROM vouchers LIMIT 1"))
+    except Exception:
+        try:
+            conn.execute(text("ALTER TABLE vouchers ADD COLUMN party_id INTEGER"))
+            print("Migrated: added party_id to vouchers.")
+        except Exception as e:
+            print(f"Migration warning: {e}")
+
 app = FastAPI(title="CubeBook API", version="2.0.0")
 
 app.add_middleware(
