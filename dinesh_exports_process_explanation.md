@@ -39,6 +39,10 @@ each stage.
   STEP 27 : Sales Invoice         → Bill the buyer
   STEP 28 : E-Way Bill            → Register transportation transit permit
   STEP 29 : Despatch Planning     → Schedule deliveries and transit route
+  STEP 30 : Gate Inward Register  → Log vehicles and materials entering the factory
+  STEP 31 : Gate Outward Register → Log vehicles and materials exiting the factory
+  STEP 32 : Gate Pass Creation    → Authorize vehicle/material gate pass release
+  STEP 33 : Gate Reports          → Monitor yard visits and vehicle traffic log
 
 ---
 
@@ -216,7 +220,31 @@ each stage.
 * **Menu Path**: SALES & DISPATCH → Despatch
 * **Purpose**: Schedule deliveries and transit route.
 * **Explanation**: Plan delivery schedules for the packed meters and track tolerance margins.
-* **Next Step Link**: Closes the buyer order lifecycle.
+* **Next Step Link**: Connects with physical gate security logs (Gate Outward / Gate Pass).
+
+### STEP 30: Gate Inward Register
+* **Menu Path**: GATE & SECURITY → Gate Inward
+* **Purpose**: Log incoming vehicles and materials.
+* **Explanation**: Security register capturing driver info, vehicle number, party name, challan details, quantity, and weight of incoming yarn, fabric, chemicals, or spares.
+* **Next Step Link**: Cross-referenced during GRN/Receipt entry in warehouse.
+
+### STEP 31: Gate Outward Register
+* **Menu Path**: GATE & SECURITY → Gate Outward
+* **Purpose**: Log outgoing vehicles and materials.
+* **Explanation**: Security register logging vehicle, driver, invoice/DC details, quantity, and authorized Gate Pass number for materials leaving the mill.
+* **Next Step Link**: Closes the outbound transit loop.
+
+### STEP 32: Gate Pass Creation
+* **Menu Path**: GATE & SECURITY → Gate Pass Creation
+* **Purpose**: Authorize material/vehicle clearance.
+* **Explanation**: Supervisors generate returnable (job work) or non-returnable (sales dispatch) passes specifying material details, authorized vehicle, and driver.
+* **Next Step Link**: Verified at the security gate to create a Gate Outward entry.
+
+### STEP 33: Gate Reports
+* **Menu Path**: GATE & SECURITY → Gate Reports
+* **Purpose**: Analytics and yard traffic log.
+* **Explanation**: Provides yard occupancy dashboard, average turnaround time (TAT) per vehicle, and consolidated gate traffic audit registers.
+* **Next Step Link**: Provides operational visibility to plant management.
 
 ---
 
