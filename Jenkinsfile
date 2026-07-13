@@ -57,9 +57,17 @@ pipeline {
         stage('📥 Checkout Code') {
             steps {
                 echo '📥 Fetching source code...'
-                git branch: "${GIT_BRANCH}",
-                    url: "${GIT_URL}",
-                    credentialsId: "${GITHUB_CRED_ID}"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${GIT_BRANCH}"]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30]
+                    ],
+                    userRemoteConfigs: [[
+                        credentialsId: "${GITHUB_CRED_ID}",
+                        url: "${GIT_URL}"
+                    ]]
+                ])
             }
         }
 
