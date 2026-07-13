@@ -743,12 +743,15 @@ export default function OnTableChecking() {
                     </div>
                     <div className="form-group">
                       <label>QC Name *</label>
-                      <select className="form-control" name="qc_name" value={formData.qc_name || ''} onChange={handleHeaderChange} required>
-                        <option value="">-- Select QC Name --</option>
-                        {checkers.map(c => (
-                          <option key={c.id} value={c.name}>{c.name}</option>
-                        ))}
-                      </select>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="qc_name" 
+                        value={formData.qc_name || ''} 
+                        onChange={handleHeaderChange} 
+                        required 
+                        placeholder="Enter QC Name..."
+                      />
                     </div>
                     <div className="form-group">
                       <label>Design Number</label>

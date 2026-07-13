@@ -20,6 +20,7 @@ export default function SubMasterDropdown({
   placeholder = '-- Select --',
   onKeyDown,
   filterFn,
+  allowCustom = true,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -334,51 +335,53 @@ export default function SubMasterDropdown({
                     ) : (
                       <>
                         <span style={{ fontWeight: value === item.name ? 600 : 400 }}>{item.name}</span>
-                        <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-                          <button
-                            type="button"
-                            title="Edit option"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const itemId = item.id;
-                              const itemName = item.name;
-                              setTimeout(() => {
-                                setEditingId(itemId);
-                                setEditingText(itemName);
-                              }, 0);
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: '2px',
-                              cursor: 'pointer',
-                              color: 'var(--primary)',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            type="button"
-                            title="Delete option"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTimeout(() => handleDelete(item), 0);
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: '2px',
-                              cursor: 'pointer',
-                              color: '#ef4444',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        {allowCustom && (
+                          <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                            <button
+                              type="button"
+                              title="Edit option"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const itemId = item.id;
+                                const itemName = item.name;
+                                setTimeout(() => {
+                                  setEditingId(itemId);
+                                  setEditingText(itemName);
+                                }, 0);
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '2px',
+                                cursor: 'pointer',
+                                color: 'var(--primary)',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              title="Delete option"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTimeout(() => handleDelete(item), 0);
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '2px',
+                                cursor: 'pointer',
+                                color: '#ef4444',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -388,60 +391,62 @@ export default function SubMasterDropdown({
           </div>
 
           {/* Add custom action */}
-          {addingMode ? (
-            <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <input
-                  autoFocus
-                  className="form-control"
-                  style={{ flex: 1, height: '28px', fontSize: '13px', padding: '2px 6px' }}
-                  placeholder="New custom option..."
-                  value={addingText}
-                  onChange={(e) => setAddingText(e.target.value)}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === 'Enter') handleSaveNew();
-                    if (e.key === 'Escape') setAddingMode(false);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
-                  onClick={handleSaveNew}
-                >
-                  <CheckCircle size={14} />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
-                  onClick={() => setAddingMode(false)}
-                >
-                  <X size={14} />
-                </button>
+          {allowCustom && (
+            addingMode ? (
+              <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <input
+                    autoFocus
+                    className="form-control"
+                    style={{ flex: 1, height: '28px', fontSize: '13px', padding: '2px 6px' }}
+                    placeholder="New custom option..."
+                    value={addingText}
+                    onChange={(e) => setAddingText(e.target.value)}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter') handleSaveNew();
+                      if (e.key === 'Escape') setAddingMode(false);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
+                    onClick={handleSaveNew}
+                  >
+                    <CheckCircle size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
+                    onClick={() => setAddingMode(false)}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setAddingMode(true);
-                setAddingText('');
-              }}
-              style={{
-                padding: '8px 12px',
-                borderTop: '1px solid var(--border)',
-                color: 'var(--primary)',
-                fontWeight: 'bold',
-                fontSize: '13px',
-                cursor: 'pointer',
-                textAlign: 'center',
-                background: '#f9fafb'
-              }}
-            >
-              + Add Custom...
-            </div>
+            ) : (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAddingMode(true);
+                  setAddingText('');
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderTop: '1px solid var(--border)',
+                  color: 'var(--primary)',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  background: '#f9fafb'
+                }}
+              >
+                + Add Custom...
+              </div>
+            )
           )}
         </div>
       )}

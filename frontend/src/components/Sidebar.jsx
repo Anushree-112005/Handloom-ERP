@@ -223,7 +223,6 @@ const modules = [
 
   { section: 'Reports & MIS' },
   { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
-  { path: '/log-report', label: 'Log Report', icon: Activity },
 
 
 
@@ -417,6 +416,8 @@ const modules = [
 
   { section: 'Administration & Security' },
   { path: '/user-management', label: 'User Management', icon: Users },
+  { path: '/log-report', label: 'Log Report', icon: Activity },
+
 
   { section: 'System' },
   { path: '/company-settings', label: 'Company', icon: Settings },
@@ -434,8 +435,6 @@ const jobWorkRoutes = [
   { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
   { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
   { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/printing-delivery', label: 'Printing Delivery', icon: Truck },
-  { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
   { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
   { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
   { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },

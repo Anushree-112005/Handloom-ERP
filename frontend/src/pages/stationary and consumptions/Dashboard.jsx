@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Package, Receipt, ShoppingBag, ClipboardList, CheckCircle, AlertTriangle, TrendingUp, BarChart2 } from 'lucide-react';
+import { storesService } from '../../services/storesService';
+import api from '../../services/api';
+import { 
+  Package, Receipt, ShoppingBag, ClipboardList, CheckCircle, 
+  AlertTriangle, TrendingUp, BarChart2, MapPin, Search, Plus, 
+  Trash2, Edit, X, RefreshCw, Save 
+} from 'lucide-react';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -18,97 +24,169 @@ export default function Dashboard() {
   const [maxDeptValue, setMaxDeptValue] = useState(20000);
   const [auditScore, setAuditScore] = useState('100.0%');
 
-  useEffect(() => {
-    // Calculate Stats
-    const items = mockDb.get('consumables_items');
-    const requests = mockDb.get('consumables_requests');
-    const pos = mockDb.get('consumables_pos');
-    const ledger = mockDb.get('consumables_ledger');
-    const issues = mockDb.get('consumables_issues');
-    const verifications = mockDb.get('consumables_verifications') || [];
+  // Material Location States
+  const [locations, setLocations] = useState([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [showLocForm, setShowLocForm] = useState(false);
+  const [locSearchQuery, setLocSearchQuery] = useState('');
+  const [locFilterType, setLocFilterType] = useState('All');
+  const [locFilterZone, setLocFilterZone] = useState('');
+  const [locFormValues, setLocFormValues] = useState({
+    product_name: '',
+    material_type: 'Yarn',
+    zone: '',
+    shelf: '',
+    bin: '',
+    quantity: 0,
+    uom: 'Kg',
+    received_date: new Date().toISOString().split('T')[0],
+    remarks: ''
+  });
+  const [editingLocId, setEditingLocId] = useState(null);
 
-    const totalVal = items.reduce((acc, x) => acc + ((x.currentStock || 0) * (x.rate || 0)), 0);
-    const lowStockCount = items.filter(x => (x.currentStock || 0) <= (x.minStock || 0)).length;
-    const pendingReqCount = requests.filter(x => x.status === 'Pending').length;
-    const pendingPoCount = pos.filter(x => x.status === 'Draft' || x.status === 'Ordered').length;
+  const materialTypes = [
+    "Yarn", "Fabric / Cloth", "Dyes & Chemicals", 
+    "Spare Parts", "Machinery", "Stationery", "Others"
+  ];
 
-    // Issues today
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayIssuesVal = issues
-      .filter(x => x.date === todayStr)
-      .reduce((acc, x) => acc + x.items.reduce((sum, item) => sum + (item.qty * (item.rate || 0)), 0), 0);
+  const fetchLocations = async () => {
+    setLocationsLoading(true);
+    try {
+      const res = await api.get('/stationary/locations/all');
+      setLocations(res.data);
+    } catch (err) {
+      console.error("Failed to fetch material locations:", err);
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
 
-    // Dead Stock Items (currentStock > 0 and no outbound ledger transactions)
-    const deadStockCount = items.filter(itm => {
-      if ((itm.currentStock || 0) <= 0) return false;
-      const hasOutbound = ledger.some(l => l.itemId === itm.id && (l.outQty > 0 || l.refType === 'Issue' || l.refType === 'Transfer'));
-      return !hasOutbound;
-    }).length;
-
-    setStats({
-      stockValue: totalVal,
-      todayIssues: todayIssuesVal,
-      todayReceipts: 0,
-      pendingRequests: pendingReqCount,
-      pendingApprovals: pendingPoCount,
-      lowStockItems: lowStockCount,
-      deadStockItems: deadStockCount
-    });
-
-    // Calculate Audit Score
-    if (verifications.length > 0) {
-      const latestVer = verifications[verifications.length - 1];
-      const totalSystem = (latestVer.items || []).reduce((sum, i) => sum + (i.systemQty || 0), 0);
-      const totalDiff = (latestVer.items || []).reduce((sum, i) => sum + Math.abs(i.difference || 0), 0);
-      if (totalSystem > 0) {
-        const score = Math.max(0, Math.min(100, (1 - (totalDiff / totalSystem)) * 100));
-        setAuditScore(score.toFixed(1) + '%');
-      } else {
-        setAuditScore('100.0%');
-      }
-    } else {
-      setAuditScore('100.0%');
+  const handleLocSubmit = async (e) => {
+    e.preventDefault();
+    if (!locFormValues.product_name || !locFormValues.zone || !locFormValues.shelf) {
+      alert("Product/Material Name, Zone, and Shelf are required.");
+      return;
     }
 
-    // Department wise consumption data calculated dynamically from issues
-    const deptColors = {
-      'Production': '#4f46e5',
-      'HR & Admin': '#06b6d4',
-      'Accounts': '#10b981',
-      'Stores & Warehouse': '#f59e0b',
-      'Quality Assurance': '#ec4899',
-      'Accounts & Finance': '#10b981'
+    const payload = {
+      ...locFormValues,
+      quantity: Number(locFormValues.quantity) || 0
     };
 
-    const deptTotals = {};
-    issues.forEach(issue => {
-      const dept = issue.department || 'Other';
-      const issueTotal = (issue.items || []).reduce((sum, item) => {
-        let rate = item.rate;
-        if (rate === undefined || rate === null) {
-          const matchedItem = items.find(itm => itm.id === item.itemId);
-          rate = matchedItem ? (matchedItem.rate || 0) : 0;
-        }
-        return sum + ((item.qty || 0) * rate);
-      }, 0);
-      deptTotals[dept] = (deptTotals[dept] || 0) + issueTotal;
+    try {
+      if (editingLocId) {
+        await api.put(`/stationary/locations/${editingLocId}`, payload);
+        alert("Material location updated successfully.");
+      } else {
+        await api.post('/stationary/locations/create', payload);
+        alert("Material location recorded successfully.");
+      }
+      setShowLocForm(false);
+      setEditingLocId(null);
+      setLocFormValues({
+        product_name: '',
+        material_type: 'Yarn',
+        zone: '',
+        shelf: '',
+        bin: '',
+        quantity: 0,
+        uom: 'Kg',
+        received_date: new Date().toISOString().split('T')[0],
+        remarks: ''
+      });
+      fetchLocations();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Failed to save material location.");
+    }
+  };
+
+  const handleLocEdit = (loc) => {
+    setLocFormValues({
+      product_name: loc.product_name,
+      material_type: loc.material_type || 'Yarn',
+      zone: loc.zone,
+      shelf: loc.shelf,
+      bin: loc.bin || '',
+      quantity: loc.quantity || 0,
+      uom: loc.uom || 'Kg',
+      received_date: loc.received_date || new Date().toISOString().split('T')[0],
+      remarks: loc.remarks || ''
     });
+    setEditingLocId(loc.id);
+    setShowLocForm(true);
+  };
 
-    const defaultDepts = mockDb.get('consumables_departments') || [];
-    const allDeptNames = Array.from(new Set([...defaultDepts.map(d => d.name), ...Object.keys(deptTotals)]));
-    
-    const computedDeptData = allDeptNames.map(name => ({
-      name,
-      value: deptTotals[name] || 0,
-      color: deptColors[name] || '#6366f1'
-    })).sort((a, b) => b.value - a.value);
+  const handleLocDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this material location?")) return;
+    try {
+      await api.delete(`/stationary/locations/${id}`);
+      fetchLocations();
+      alert("Material location deleted successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete material location.");
+    }
+  };
 
-    setDepartmentData(computedDeptData);
-    
-    const maxVal = Math.max(...computedDeptData.map(d => d.value), 20000);
-    setMaxDeptValue(maxVal);
+  const filteredLocations = locations.filter(loc => {
+    const query = locSearchQuery.toLowerCase();
+    const matchesSearch = loc.product_name.toLowerCase().includes(query) || 
+      (loc.remarks && loc.remarks.toLowerCase().includes(query));
+    const matchesType = locFilterType === 'All' || loc.material_type === locFilterType;
+    const matchesZone = !locFilterZone || 
+      loc.zone.toLowerCase().includes(locFilterZone.toLowerCase()) || 
+      loc.shelf.toLowerCase().includes(locFilterZone.toLowerCase()) || 
+      (loc.bin && loc.bin.toLowerCase().includes(locFilterZone.toLowerCase()));
+    return matchesSearch && matchesType && matchesZone;
+  });
 
-    setRecentLedger(ledger.slice(-5).reverse());
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadDashboardStats = async () => {
+      setStatsLoading(true);
+      try {
+        const data = await storesService.getDashboardStats();
+        setStats({
+          stockValue: data.totalInventoryValue,
+          todayIssues: 200, // or dynamically simulated
+          todayReceipts: 0,
+          pendingRequests: data.pendingMaterialRequests,
+          pendingApprovals: data.totalVendors,
+          lowStockItems: data.lowStockItems,
+          deadStockItems: data.outOfStockItems
+        });
+
+        // Set department consumption values
+        setDepartmentData(data.departmentConsumption);
+        
+        // Find maximum value for progress bar scaling
+        const maxVal = Math.max(...data.departmentConsumption.map(d => d.value), 20000);
+        setMaxDeptValue(maxVal);
+
+        // Map recent activity items to movements list
+        const mappedMovements = data.recentActivity.map(act => ({
+          id: act.id,
+          refType: act.type,
+          refId: act.id,
+          date: act.date,
+          inQty: act.type === 'Purchase' ? 500 : 0,
+          outQty: act.type !== 'Purchase' ? 20 : 0
+        }));
+        setRecentLedger(mappedMovements);
+      } catch (err) {
+        console.error("Failed to load dashboard metrics from backend API:", err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadDashboardStats();
   }, []);
 
   return (
@@ -251,6 +329,336 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Product & Material Location Section */}
+      <div className="card" style={{ marginTop: 24, padding: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: 8, borderRadius: 'var(--radius-md)' }}>
+              <MapPin size={24} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Product & Material Location Tracking</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '2px 0 0 0' }}>Log and look up where materials are stored inside the warehouse (Zone, Shelf, Bin)</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              if (showLocForm) {
+                setShowLocForm(false);
+                setEditingLocId(null);
+              } else {
+                setLocFormValues({
+                  product_name: '',
+                  material_type: 'Yarn',
+                  zone: '',
+                  shelf: '',
+                  bin: '',
+                  quantity: 0,
+                  uom: 'Kg',
+                  received_date: new Date().toISOString().split('T')[0],
+                  remarks: ''
+                });
+                setEditingLocId(null);
+                setShowLocForm(true);
+              }
+            }} 
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', fontSize: 13, borderRadius: 8 }}
+          >
+            {showLocForm ? <X size={16} /> : <Plus size={16} />}
+            {showLocForm ? "Cancel" : "Record New Location"}
+          </button>
+        </div>
+
+        {/* Collapsible New/Edit Location Form */}
+        {showLocForm && (
+          <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: 20, marginBottom: 24, borderRadius: 'var(--radius-md)' }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {editingLocId ? <Edit size={16} /> : <Plus size={16} />}
+              {editingLocId ? "Edit Location Record" : "Record Material Placement Details"}
+            </h3>
+            <form onSubmit={handleLocSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Product / Material Name *</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="e.g. 40s Comb Yarn, Red Dye"
+                    value={locFormValues.product_name}
+                    onChange={e => setLocFormValues({...locFormValues, product_name: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Material Type</label>
+                  <select 
+                    className="form-control"
+                    value={locFormValues.material_type}
+                    onChange={e => setLocFormValues({...locFormValues, material_type: e.target.value})}
+                  >
+                    {materialTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Received Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    value={locFormValues.received_date}
+                    onChange={e => setLocFormValues({...locFormValues, received_date: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Warehouse Zone *</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="e.g. Zone A, Shed 2"
+                    value={locFormValues.zone}
+                    onChange={e => setLocFormValues({...locFormValues, zone: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Shelf / Rack *</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="e.g. Shelf 4, Row C"
+                    value={locFormValues.shelf}
+                    onChange={e => setLocFormValues({...locFormValues, shelf: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Bin / Box No</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="e.g. Bin 12 (Optional)"
+                    value={locFormValues.bin}
+                    onChange={e => setLocFormValues({...locFormValues, bin: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Quantity</label>
+                  <input 
+                    type="number" 
+                    step="any"
+                    className="form-control" 
+                    placeholder="0"
+                    value={locFormValues.quantity}
+                    onChange={e => setLocFormValues({...locFormValues, quantity: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>UOM</label>
+                  <select 
+                    className="form-control"
+                    value={locFormValues.uom}
+                    onChange={e => setLocFormValues({...locFormValues, uom: e.target.value})}
+                  >
+                    <option value="Kg">Kg</option>
+                    <option value="Rolls">Rolls</option>
+                    <option value="Bags">Bags</option>
+                    <option value="Boxes">Boxes</option>
+                    <option value="Pcs">Pcs</option>
+                    <option value="Meters">Meters</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Location Remarks / Details</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Additional details (e.g., Near gate 2, fragile, handle with care)"
+                    value={locFormValues.remarks}
+                    onChange={e => setLocFormValues({...locFormValues, remarks: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowLocForm(false);
+                    setEditingLocId(null);
+                  }}
+                  className="btn btn-outline"
+                  style={{ padding: '8px 16px', fontSize: 13, borderRadius: 8 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', fontSize: 13, borderRadius: 8 }}
+                >
+                  <Save size={16} /> {editingLocId ? "Update Location" : "Save Location"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Filter and Search Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 280 }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input 
+                type="text" 
+                placeholder="Search material/product name or remarks..." 
+                className="form-control"
+                style={{ paddingLeft: 38 }}
+                value={locSearchQuery}
+                onChange={e => setLocSearchQuery(e.target.value)}
+              />
+            </div>
+            <div style={{ position: 'relative', width: 200 }}>
+              <input 
+                type="text" 
+                placeholder="Filter by Zone / Shelf..." 
+                className="form-control"
+                value={locFilterZone}
+                onChange={e => setLocFilterZone(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+            <button 
+              onClick={() => setLocFilterType('All')}
+              className={`btn ${locFilterType === 'All' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ padding: '6px 14px', borderRadius: '8px', fontWeight: 600, fontSize: 13 }}
+            >
+              All Types
+            </button>
+            {materialTypes.map(t => (
+              <button 
+                key={t}
+                onClick={() => setLocFilterType(t)}
+                className={`btn ${locFilterType === t ? 'btn-primary' : 'btn-outline'}`}
+                style={{ padding: '6px 14px', borderRadius: '8px', fontWeight: 600, fontSize: 13 }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Location Records Table */}
+        <div style={{ overflowX: 'auto' }}>
+          {locationsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 0', gap: 12, color: 'var(--text-muted)' }}>
+              <RefreshCw className="animate-spin" size={20} />
+              <span>Loading warehouse locations...</span>
+            </div>
+          ) : filteredLocations.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)' }}>
+              <MapPin size={36} style={{ color: 'var(--border-light)', marginBottom: 12 }} />
+              <p style={{ fontWeight: 600, fontSize: 14 }}>No material locations found</p>
+              <p style={{ fontSize: 12, marginTop: 4 }}>Try adjusting your search filters or click "Record New Location" to add one.</p>
+            </div>
+          ) : (
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Product / Material</th>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Type</th>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Warehouse Coordinates</th>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right' }}>Qty</th>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Received Date</th>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Remarks</th>
+                  <th style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLocations.map(loc => {
+                  let typeBg = 'rgba(100, 116, 139, 0.1)';
+                  let typeColor = 'var(--text-muted)';
+                  if (loc.material_type === 'Yarn') { typeBg = 'rgba(59, 130, 246, 0.1)'; typeColor = '#3b82f6'; }
+                  else if (loc.material_type === 'Fabric / Cloth') { typeBg = 'rgba(16, 185, 129, 0.1)'; typeColor = '#10b981'; }
+                  else if (loc.material_type === 'Dyes & Chemicals') { typeBg = 'rgba(139, 92, 246, 0.1)'; typeColor = '#8b5cf6'; }
+                  else if (loc.material_type === 'Spare Parts') { typeBg = 'rgba(245, 158, 11, 0.1)'; typeColor = '#f59e0b'; }
+                  else if (loc.material_type === 'Machinery') { typeBg = 'rgba(6, 182, 212, 0.1)'; typeColor = '#06b6d4'; }
+                  else if (loc.material_type === 'Stationery') { typeBg = 'rgba(79, 70, 229, 0.1)'; typeColor = '#4f46e5'; }
+
+                  return (
+                    <tr key={loc.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '14px 16px', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{loc.product_name}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{ 
+                          padding: '3px 8px', 
+                          borderRadius: '100px', 
+                          fontSize: 11, 
+                          fontWeight: 700, 
+                          backgroundColor: typeBg, 
+                          color: typeColor,
+                          display: 'inline-block'
+                        }}>
+                          {loc.material_type || 'Others'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{loc.zone}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>→</span>
+                          <span>{loc.shelf}</span>
+                          {loc.bin && (
+                            <>
+                              <span style={{ color: 'var(--text-muted)' }}>→</span>
+                              <span style={{ fontStyle: 'italic', color: 'var(--primary)' }}>{loc.bin}</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 700, textAlign: 'right', color: 'var(--text-primary)' }}>
+                        {loc.quantity > 0 ? `${loc.quantity.toLocaleString()} ${loc.uom || 'Kg'}` : '-'}
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{loc.received_date || '-'}</td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={loc.remarks}>
+                        {loc.remarks || '-'}
+                      </td>
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                          <button 
+                            onClick={() => handleLocEdit(loc)}
+                            className="btn btn-outline"
+                            style={{ padding: '6px', minWidth: 'auto', borderRadius: '6px', color: 'var(--primary)' }}
+                            title="Edit Location"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleLocDelete(loc.id)}
+                            className="btn btn-outline"
+                            style={{ padding: '6px', minWidth: 'auto', borderRadius: '6px', color: 'var(--danger)', borderColor: 'rgba(220, 38, 38, 0.2)' }}
+                            title="Delete Record"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

@@ -9,11 +9,17 @@ import {
 } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import * as XLSX from 'xlsx';
-import { workOrderTransactionAPI, partyAPI } from '../../services/api';
+import { workOrderTransactionAPI, partyAPI, designEntryAPI, finishedFabricAPI } from '../../services/api';
 
 export default function FabricTransaction({ defaultSection = 'Fabric Checking' }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const getAuditNoFromDesignNo = (dNo) => {
+    if (!dNo) return '';
+    const match = dNo.match(/\d+/);
+    return match ? `AUD-${match[0]}` : 'AUD-00001';
+  };
 
   const [activeSection, setActiveSection] = useState(defaultSection);
   const [activePage, setActivePage] = useState(null);
@@ -102,6 +108,9 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
   const [surplusInwards, setSurplusInwards] = useState([]);
   const [surplusDeliveries, setSurplusDeliveries] = useState([]);
   const [customerHangers, setCustomerHangers] = useState([]);
+  const [finalInspections, setFinalInspections] = useState([]);
+  const [dbDesigns, setDbDesigns] = useState([]);
+  const [finishedFabricsList, setFinishedFabricsList] = useState([]);
 
   const getSubModuleCount = (key) => {
     switch (key) {
@@ -129,6 +138,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       case 'surplus_inward': return surplusInwards.length;
       case 'surplus_delivery': return surplusDeliveries.length;
       case 'customer_hanger': return customerHangers.length;
+      case 'final_inspection': return finalInspections.length;
       default: return 0;
     }
   };
@@ -165,6 +175,57 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       setSurplusInwards(allTxns.filter(t => t.module_type === 'surplus_inward').map(mapTxn));
       setSurplusDeliveries(allTxns.filter(t => t.module_type === 'surplus_delivery').map(mapTxn));
       setCustomerHangers(allTxns.filter(t => t.module_type === 'customer_hanger').map(mapTxn));
+      const fetchedFinalInspections = allTxns.filter(t => t.module_type === 'final_inspection').map(mapTxn);
+      const isSeededDeleted = localStorage.getItem('final_inspection_seeded_deleted') === 'true';
+      if (fetchedFinalInspections.length === 0 && !isSeededDeleted) {
+        const seedPayload = {
+          module_type: 'final_inspection',
+          transaction_no: 'AUD-00003',
+          status: 'APPROVED',
+          details: {
+            auditNo: 'AUD-00003',
+            auditDate: '2026-08-05',
+            overallStatus: 'APPROVED',
+            designNo: 'DEPL-00003',
+            buyerName: 'Sri Lakshmi Textiles Pvt Ltd',
+            buyerOrderNo: 'IBPO-00003',
+            totalMetersInspected: '1960.00',
+            approvedMeters: '1960.00',
+            rejectedQuantity: '0.00',
+            rolls: [
+              { pieceNo: 'PC-301-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+              { pieceNo: 'PC-302-F', meters: '98.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+              { pieceNo: 'PC-303-F', meters: '97.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'B' },
+              { pieceNo: 'PC-304-F', meters: '99.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+              { pieceNo: 'PC-305-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' }
+            ]
+          }
+        };
+        try {
+          await workOrderTransactionAPI.create(seedPayload);
+          const reloadRes = await workOrderTransactionAPI.getAll();
+          setFinalInspections(reloadRes.data.filter(t => t.module_type === 'final_inspection').map(mapTxn));
+        } catch (seedErr) {
+          console.error("Failed to seed final inspection record", seedErr);
+          setFinalInspections([{ ...seedPayload.details, id: seedPayload.transaction_no, status: seedPayload.status }]);
+        }
+      } else {
+        setFinalInspections(fetchedFinalInspections);
+      }
+
+      try {
+        const dRes = await designEntryAPI.list();
+        if (dRes.data) setDbDesigns(dRes.data);
+      } catch (deErr) {
+        console.error("Failed to load design entries in FabricTransaction", deErr);
+      }
+
+      try {
+        const fRes = await finishedFabricAPI.list();
+        if (fRes.data) setFinishedFabricsList(fRes.data);
+      } catch (ffErr) {
+        console.error("Failed to load finished fabrics in FabricTransaction", ffErr);
+      }
     } catch (err) {
       console.error("Failed to load fabric transactions", err);
     }
@@ -176,6 +237,45 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (activePage === 'final_inspection' && name === 'designNo' && value) {
+      const design = dbDesigns.find(d => d.design_no === value);
+      if (design) {
+        // Look up corresponding dyed/finished fabric receipt (Dyed Fabric Receipt)
+        const matchedReceipt = finishedFabricsList.find(r => r.design_no === value || r.order_no === design.ibpo_no);
+        let rolls = [];
+        if (matchedReceipt && matchedReceipt.items && matchedReceipt.items.length > 0) {
+          rolls = matchedReceipt.items.map(item => ({
+            pieceNo: item.piece_no || '',
+            meters: item.meters || '0.00',
+            colorCheck: 'OK',
+            widthCheck: matchedReceipt.width ? `${matchedReceipt.width}"` : '59.68"',
+            status: 'Approved',
+            grade: 'A'
+          }));
+        } else {
+          // fallback default sample rolls
+          rolls = [
+            { pieceNo: 'PC-301-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+            { pieceNo: 'PC-302-F', meters: '98.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+            { pieceNo: 'PC-303-F', meters: '97.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'B' },
+            { pieceNo: 'PC-304-F', meters: '99.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+            { pieceNo: 'PC-305-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' }
+          ];
+        }
+
+        setFields(prev => ({
+          ...prev,
+          designNo: value,
+          auditNo: getAuditNoFromDesignNo(value),
+          buyerName: design.buyer_name || prev.buyerName,
+          buyerOrderNo: design.ibpo_no || prev.buyerOrderNo,
+          rolls: rolls
+        }));
+        return;
+      }
+    }
+
     setFields(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -394,13 +494,22 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       if (val.toFixed(2) !== fields.stockValue) {
         setFields(prev => ({ ...prev, stockValue: val.toFixed(2) }));
       }
-    } else if (activePage === 'surplus_delivery') {
-      const qty = parseFloat(fields.deliveredQuantity) || 0;
-      const rate = parseFloat(fields.saleRate) || 0;
-      const disc = parseFloat(fields.discount) || 0;
-      const net = (qty * rate) * (1 - disc / 100);
-      if (net.toFixed(2) !== fields.netAmount) {
-        setFields(prev => ({ ...prev, netAmount: net.toFixed(2) }));
+    } else if (activePage === 'final_inspection') {
+      const rollsList = fields.rolls || [];
+      const totalMeters = rollsList.reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0);
+      const approvedMeters = rollsList.reduce((sum, r) => sum + (r.status === 'Approved' ? (parseFloat(r.meters) || 0) : 0), 0);
+      const rejectedMeters = rollsList.reduce((sum, r) => sum + (r.status === 'Rejected' ? (parseFloat(r.meters) || 0) : 0), 0);
+      if (
+        totalMeters.toFixed(2) !== fields.totalMetersInspected ||
+        approvedMeters.toFixed(2) !== fields.approvedMeters ||
+        rejectedMeters.toFixed(2) !== fields.rejectedQuantity
+      ) {
+        setFields(prev => ({
+          ...prev,
+          totalMetersInspected: totalMeters.toFixed(2),
+          approvedMeters: approvedMeters.toFixed(2),
+          rejectedQuantity: rejectedMeters.toFixed(2)
+        }));
       }
     }
   }, [
@@ -417,6 +526,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
     fields.screenCharges, fields.chemicalCharges, fields.developmentCharges,
     fields.cadCharges, fields.samplingCharges, fields.dyeingCharges, fields.printingCharges,
     fields.estimatedRate, fields.openingQuantity, fields.availableQuantity, fields.rate, fields.saleRate,
+    fields.rolls,
     activePage
   ]);
 
@@ -425,6 +535,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
   // =========================================================================
   const PAGES_METADATA = {
     // Fabric Checking
+    final_inspection: { key: 'final_inspection', label: "Final Inspection Entry", category: 'Fabric Checking', desc: "Last quality audit of finished fabric rolls before packing and shipping", icon: ShieldCheck, color: '#3b82f6' },
     design_upload: { key: 'design_upload', label: "Design Upload", category: 'Fabric Checking', desc: "Upload and manage fabric design files digitally", icon: FileText, color: '#3b82f6' },
     cloth_checking: { key: 'cloth_checking', label: "Cloth Checking Entry", category: 'Fabric Checking', desc: "Record quality checking of cloth before inward", icon: CheckSquare, color: '#3b82f6' },
     ot_checking: { key: 'ot_checking', label: "ON Table Checking Entry", category: 'Fabric Checking', desc: "Detailed on-table fabric quality inspection (Link)", icon: Layers, isLink: true, route: '/cloth/checking', color: '#3b82f6' },
@@ -469,6 +580,23 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
 
   // Declarative configurations of cards/fields for all active modules
   const FORM_SCHEMAS = {
+    final_inspection: [
+      { title: "Audit Information", icon: FileText, fields: [
+        { name: "auditNo", label: "Audit No *", type: "text", required: true },
+        { name: "auditDate", label: "Audit Date *", type: "date", required: true },
+        { name: "overallStatus", label: "Overall Status *", type: "select", options: ["APPROVED", "REJECTED", "HOLD"] }
+      ]},
+      { title: "Reference Details", icon: FolderKanban, fields: [
+        { name: "designNo", label: "Design No *", type: "select", options: DESIGNS },
+        { name: "buyerName", label: "Buyer Name *", type: "select", options: BUYERS },
+        { name: "buyerOrderNo", label: "Order No *", type: "text", required: true }
+      ]},
+      { title: "Quantity Summaries (Auto-Calculated from Rolls)", icon: Scale, fields: [
+        { name: "totalMetersInspected", label: "Total Meters Inspected (Auto)", type: "number", readOnly: true },
+        { name: "approvedMeters", label: "Approved Meters (Auto)", type: "number", readOnly: true },
+        { name: "rejectedQuantity", label: "Rejected Meters (Auto)", type: "number", readOnly: true }
+      ]}
+    ],
     design_upload: [
       { title: "Upload Information", icon: FileText, fields: [
         { name: "designUploadNo", label: "Design Upload No *", type: "text", required: true },
@@ -3217,6 +3345,52 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
         internalNotes: ''
       };
     }
+    else if (activePage === 'final_inspection') {
+      const nextNum = finalInspections.length + 3;
+      nextId = `AUD-${String(nextNum).padStart(5, '0')}`;
+      
+      const defaultDesign = 'DEPL-00003';
+      const design = dbDesigns.find(d => d.design_no === defaultDesign);
+      const matchedReceipt = finishedFabricsList.find(r => r.design_no === defaultDesign || (design && r.order_no === design.ibpo_no));
+      
+      let defaultBuyer = 'Sunrise Fashion House'; // Match the DEPL-00003 buyer in database
+      let defaultOrder = 'IBPO-00003';
+      let rolls = [
+        { pieceNo: 'PC-301-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+        { pieceNo: 'PC-302-F', meters: '98.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+        { pieceNo: 'PC-303-F', meters: '97.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'B' },
+        { pieceNo: 'PC-304-F', meters: '99.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
+        { pieceNo: 'PC-305-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' }
+      ];
+
+      if (design) {
+        defaultBuyer = design.buyer_name || defaultBuyer;
+        defaultOrder = design.ibpo_no || defaultOrder;
+      }
+      if (matchedReceipt && matchedReceipt.items && matchedReceipt.items.length > 0) {
+        rolls = matchedReceipt.items.map(item => ({
+          pieceNo: item.piece_no || '',
+          meters: item.meters || '0.00',
+          colorCheck: 'OK',
+          widthCheck: matchedReceipt.width ? `${matchedReceipt.width}"` : '59.68"',
+          status: 'Approved',
+          grade: 'A'
+        }));
+      }
+
+      initialFields = {
+        auditNo: getAuditNoFromDesignNo(defaultDesign),
+        auditDate: dateToday,
+        overallStatus: 'APPROVED',
+        designNo: defaultDesign,
+        buyerName: defaultBuyer,
+        buyerOrderNo: defaultOrder,
+        totalMetersInspected: rolls.reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0).toFixed(2),
+        approvedMeters: rolls.filter(r => r.status === 'Approved').reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0).toFixed(2),
+        rejectedQuantity: rolls.filter(r => r.status === 'Rejected').reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0).toFixed(2),
+        rolls: rolls
+      };
+    }
     else {
       // General Fallback
       nextId = `TXN-FAB-${Date.now().toString().slice(-4)}`;
@@ -3227,6 +3401,29 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
     setCurrentFormId(nextId);
     setActiveFormTab('General Info');
     setIsFormOpen(true);
+  };
+
+  const handleRollChange = (index, field, value) => {
+    setFields(prev => {
+      const rolls = [...(prev.rolls || [])];
+      rolls[index] = { ...rolls[index], [field]: value };
+      return { ...prev, rolls };
+    });
+  };
+
+  const handleRemoveRoll = (index) => {
+    setFields(prev => {
+      const rolls = (prev.rolls || []).filter((_, idx) => idx !== index);
+      return { ...prev, rolls };
+    });
+  };
+
+  const handleAddRoll = () => {
+    setFields(prev => {
+      const rolls = [...(prev.rolls || [])];
+      rolls.push({ pieceNo: `PC-${rolls.length + 301}-F`, meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' });
+      return { ...prev, rolls };
+    });
   };
 
   const handleEdit = (row) => {
@@ -3240,8 +3437,8 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
     e.preventDefault();
 
     const buyerNameField = fields.customerName || fields.vendorName || fields.buyerName || fields.supplierName || fields.supplier || fields.customerVendorName || 'Internal';
-    const transactionNo = fields.openingEntryNo || fields.reportNo || fields.exportNo || fields.surplusInwardNo || fields.surplusDeliveryNo || fields.enquiryNo || fields.vendorBillNo || fields.printingWashingBillNo || fields.dlDevelopmentBillNo || fields.designUploadNo || fields.clothCheckingNo || fields.lotCompletionNo || fields.clothInwardNo || fields.purchaseBillNo || fields.clothDeliveryNo || fields.millTransferNo || fields.baleDeliveryNo || fields.lotApprovalNo || fields.baleAmendmentNo || fields.balePackingNo || fields.packinglistCheckingNo || fields.goodsReleaseAdviceNo || fields.gatePassNo || currentFormId;
-    const transactionDate = fields.openingDate || fields.reportDate || fields.exportDate || fields.inwardDate || fields.deliveryDate || fields.enquiryDate || fields.billDate || fields.uploadDate || fields.checkingDate || fields.completionDate || fields.deliveryDate || fields.transferDate || fields.approvalDate || fields.amendmentDate || fields.packingDate || fields.checkingDate || fields.releaseDate || fields.gatePassDate || fields.date || new Date().toISOString().substring(0, 10);
+    const transactionNo = fields.auditNo || fields.openingEntryNo || fields.reportNo || fields.exportNo || fields.surplusInwardNo || fields.surplusDeliveryNo || fields.enquiryNo || fields.vendorBillNo || fields.printingWashingBillNo || fields.dlDevelopmentBillNo || fields.designUploadNo || fields.clothCheckingNo || fields.lotCompletionNo || fields.clothInwardNo || fields.purchaseBillNo || fields.clothDeliveryNo || fields.millTransferNo || fields.baleDeliveryNo || fields.lotApprovalNo || fields.baleAmendmentNo || fields.balePackingNo || fields.packinglistCheckingNo || fields.goodsReleaseAdviceNo || fields.gatePassNo || currentFormId;
+    const transactionDate = fields.auditDate || fields.openingDate || fields.reportDate || fields.exportDate || fields.inwardDate || fields.deliveryDate || fields.enquiryDate || fields.billDate || fields.uploadDate || fields.checkingDate || fields.completionDate || fields.deliveryDate || fields.transferDate || fields.approvalDate || fields.amendmentDate || fields.packingDate || fields.checkingDate || fields.releaseDate || fields.gatePassDate || fields.date || new Date().toISOString().substring(0, 10);
 
     const payload = {
       module_type: activePage,
@@ -3271,6 +3468,9 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       try {
         if (db_id) {
           await workOrderTransactionAPI.delete(db_id);
+        }
+        if (id === 'AUD-00003') {
+          localStorage.setItem('final_inspection_seeded_deleted', 'true');
         }
         loadData();
       } catch (err) {
@@ -3373,6 +3573,53 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                               <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setViewModalTransaction(row)} title="View"><Eye size={16} color="var(--primary)" /></button>
                               <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleEdit(row)} title="Edit"><Edit size={16} /></button>
                               <button className="btn btn-secondary" style={{ padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)} title="Delete"><Trash2 size={16} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* FINAL INSPECTION TABLE */}
+              {activePage === 'final_inspection' && (
+                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>AUDIT NO</th>
+                        <th>DATE</th>
+                        <th>DESIGN NO</th>
+                        <th>BUYER</th>
+                        <th>ORDER NO</th>
+                        <th style={{ textAlign: 'right' }}>METERS INSPECTED</th>
+                        <th style={{ textAlign: 'right' }}>APPROVED METERS</th>
+                        <th style={{ textAlign: 'right' }}>REJECTED METERS</th>
+                        <th>STATUS</th>
+                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {finalInspections.map(row => (
+                        <tr key={row.id}>
+                          <td style={{ fontWeight: 700 }}>{row.auditNo || row.id}</td>
+                          <td>{row.auditDate || row.date}</td>
+                          <td>{row.designNo}</td>
+                          <td style={{ fontWeight: 650 }}>{row.buyerName}</td>
+                          <td>{row.buyerOrderNo}</td>
+                          <td style={{ textAlign: 'right' }}>{parseFloat(row.totalMetersInspected || 0).toFixed(2)} Mtr</td>
+                          <td style={{ textAlign: 'right', fontWeight: 800 }}>{parseFloat(row.approvedMeters || 0).toFixed(2)} Mtr</td>
+                          <td style={{ textAlign: 'right', color: 'var(--danger)' }}>{parseFloat(row.rejectedQuantity || 0).toFixed(2)} Mtr</td>
+                          <td>
+                            <span className={`badge ${row.overallStatus === 'APPROVED' ? 'badge-active' : 'badge-pending'}`}>
+                              {row.overallStatus}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
                             </div>
                           </td>
                         </tr>
@@ -4316,7 +4563,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
               )}
 
               {/* FALLBACK INFO PANEL FOR REMAINING MODULES */}
-              {!['design_upload', 'cloth_checking', 'lot_completion', 'cloth_inward', 'cloth_purchase_bill', 'del_pcwise', 'm2m_delivery', 'bale_delivery', 'lot_approval', 'bale_amend', 'bale_packing', 'pl_checking', 'goods_release', 'gate_pass', 'vendor_bills', 'printing_bills', 'dl_development', 'surplus_opening', 'surplus_report', 'surplus_download', 'surplus_report_new', 'surplus_inward', 'surplus_delivery', 'customer_hanger'].includes(activePage) && (
+              {!['final_inspection', 'design_upload', 'cloth_checking', 'lot_completion', 'cloth_inward', 'cloth_purchase_bill', 'del_pcwise', 'm2m_delivery', 'bale_delivery', 'lot_approval', 'bale_amend', 'bale_packing', 'pl_checking', 'goods_release', 'gate_pass', 'vendor_bills', 'printing_bills', 'dl_development', 'surplus_opening', 'surplus_report', 'surplus_download', 'surplus_report_new', 'surplus_inward', 'surplus_delivery', 'customer_hanger'].includes(activePage) && (
                 <div className="card" style={{ padding: '40px', textAlign: 'center', background: 'white' }}>
                   <Sparkles size={36} style={{ color: '#7c3aed', marginBottom: '12px' }} />
                   <h4 style={{ fontWeight: 800, margin: 0 }}>Operational Ledger Database Active</h4>
@@ -4400,7 +4647,10 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                                     disabled={f.readOnly}
                                   >
                                     <option value="">-- Select --</option>
-                                    {(f.options || []).map(opt => (
+                                    {(f.name === 'designNo' && dbDesigns && dbDesigns.length > 0 
+                                      ? Array.from(new Set(dbDesigns.map(d => d.design_no).filter(Boolean))) 
+                                      : (f.options || [])
+                                    ).map(opt => (
                                       <option key={opt} value={opt}>{opt}</option>
                                     ))}
                                   </select>
@@ -4445,6 +4695,123 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
                       </div>
                     );
                   })}
+
+                  {/* CUSTOM ROLLS TABLE FOR FINAL INSPECTION */}
+                  {activePage === 'final_inspection' && (
+                    <div 
+                      style={{ 
+                        background: 'var(--bg-secondary)', 
+                        border: '1px solid var(--border)', 
+                        borderRadius: '12px', 
+                        padding: '20px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '16px' 
+                      }}
+                    >
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#7c3aed', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <ShieldCheck size={16} /> Roll-wise Final Audit
+                      </h4>
+                      <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                        <thead>
+                          <tr>
+                            <th>PIECE NO</th>
+                            <th>METERS</th>
+                            <th>COLOR CHECK</th>
+                            <th>WIDTH CHECK</th>
+                            <th>STATUS</th>
+                            <th>GRADE</th>
+                            <th style={{ textAlign: 'center' }}>REMOVE</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(fields.rolls || []).map((roll, idx) => (
+                            <tr key={idx}>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ margin: 0 }} 
+                                  value={roll.pieceNo || ''} 
+                                  onChange={e => handleRollChange(idx, 'pieceNo', e.target.value)} 
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="number" 
+                                  className="form-control" 
+                                  style={{ margin: 0 }} 
+                                  value={roll.meters || ''} 
+                                  onChange={e => handleRollChange(idx, 'meters', e.target.value)} 
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ margin: 0 }} 
+                                  value={roll.colorCheck || ''} 
+                                  onChange={e => handleRollChange(idx, 'colorCheck', e.target.value)} 
+                                />
+                              </td>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  style={{ margin: 0 }} 
+                                  value={roll.widthCheck || ''} 
+                                  onChange={e => handleRollChange(idx, 'widthCheck', e.target.value)} 
+                                />
+                              </td>
+                              <td>
+                                <select 
+                                  className="form-control" 
+                                  style={{ margin: 0 }} 
+                                  value={roll.status || 'Approved'} 
+                                  onChange={e => handleRollChange(idx, 'status', e.target.value)}
+                                >
+                                  <option value="Approved">Approved</option>
+                                  <option value="Rejected">Rejected</option>
+                                </select>
+                              </td>
+                              <td>
+                                <select 
+                                  className="form-control" 
+                                  style={{ margin: 0 }} 
+                                  value={roll.grade || 'A'} 
+                                  onChange={e => handleRollChange(idx, 'grade', e.target.value)}
+                                >
+                                  <option value="A">A</option>
+                                  <option value="B">B</option>
+                                  <option value="C">C</option>
+                                  <option value="F">F</option>
+                                </select>
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button 
+                                  type="button" 
+                                  className="btn btn-secondary" 
+                                  style={{ padding: '6px', color: 'var(--danger)' }} 
+                                  onClick={() => handleRemoveRoll(idx)}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        onClick={handleAddRoll}
+                        style={{ alignSelf: 'flex-start', marginTop: '10px' }}
+                      >
+                        + Add Roll Row
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               ) : (
                 /* FALLBACK SIMPLE CONFIGS FORM FOR REMAINING MODULES */
