@@ -1240,14 +1240,15 @@ export default function HRReports() {
           </div>
 
           {/* Table Element */}
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ width: '100%', margin: 0, minWidth: '800px' }}>
-              <thead>
+          <div className="card overflow-hidden bg-white shadow-xl shadow-slate-200/40 border border-slate-100 rounded-2xl" style={{ overflowX: 'auto', padding: 0 }}>
+            <table className="data-table" style={{ width: '100%', margin: 0, minWidth: '800px', borderCollapse: 'collapse' }}>
+              <thead className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 backdrop-blur-sm">
                 <tr>
                   {reportObj.columns.map(col => (
                     <th 
                       key={col.key} 
                       onClick={() => requestSort(col.key)}
+                      className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500 hover:bg-slate-100/50 transition-colors"
                       style={{ cursor: 'pointer', userSelect: 'none' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1258,7 +1259,7 @@ export default function HRReports() {
                       </div>
                     </th>
                   ))}
-                  <th>
+                  <th className="px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
                   </th>
                 </tr>
