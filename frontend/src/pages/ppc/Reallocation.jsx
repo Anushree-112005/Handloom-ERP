@@ -120,42 +120,9 @@ export default function Reallocation() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ArrowRightLeft style={{ color: '#0ea5e9' }} /> Reallocation Engine
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Shift production loads from broken or delayed looms</p>
-        </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                reallocation_id: `RA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                original_loom: '', remaining_meters: 0, reallocation_reason: 'Breakdown',
-                target_loom: '', meters_to_reallocate: 0, new_eta: '', approved_by: ''
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#0ea5e9', borderColor: '#0ea5e9' }}
-          >
-            <Plus size={16} /> Reallocate Order
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -239,7 +206,47 @@ export default function Reallocation() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ArrowRightLeft style={{ color: '#0ea5e9' }} /> Reallocation Engine
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Shift production loads from broken or delayed looms</p>
+        </div>
+        {!isFormOpen ? (
+          <button 
+            className="btn btn-primary" 
+            onClick={() => {
+              setFormData({
+                reallocation_id: `RA-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                original_loom: '', remaining_meters: 0, reallocation_reason: 'Breakdown',
+                target_loom: '', meters_to_reallocate: 0, new_eta: '', approved_by: ''
+              });
+              setIsFormOpen(true);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#0ea5e9', borderColor: '#0ea5e9' }}
+          >
+            <Plus size={16} /> Reallocate Order
+          </button>
+        ) : (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Reallocation History ({filteredRecords.length})</h3>
@@ -285,7 +292,7 @@ export default function Reallocation() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

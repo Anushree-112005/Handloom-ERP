@@ -326,7 +326,7 @@ export default function VehicleList() {
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
-        <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', border: statusFilter === 'All Status' ? '2px solid var(--primary)' : '1px solid transparent', transition: 'all 0.2s' }}>
+        <div className="card stat-card" onClick={() => handleCardClick('Total')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
             <Truck size={24} />
           </div>
@@ -336,7 +336,7 @@ export default function VehicleList() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => handleCardClick('ACTIVE')} style={{ cursor: 'pointer', border: statusFilter === 'ACTIVE' ? '2px solid #10b981' : '1px solid transparent', transition: 'all 0.2s' }}>
+        <div className="card stat-card" onClick={() => handleCardClick('ACTIVE')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <Truck size={24} />
           </div>
@@ -346,7 +346,7 @@ export default function VehicleList() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => handleCardClick('INACTIVE')} style={{ cursor: 'pointer', border: statusFilter === 'INACTIVE' ? '2px solid #f59e0b' : '1px solid transparent', transition: 'all 0.2s' }}>
+        <div className="card stat-card" onClick={() => handleCardClick('INACTIVE')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <Truck size={24} />
           </div>
@@ -356,7 +356,7 @@ export default function VehicleList() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => handleCardClick('UNDER_MAINTENANCE')} style={{ cursor: 'pointer', border: statusFilter === 'UNDER_MAINTENANCE' ? '2px solid #8b5cf6' : '1px solid transparent', transition: 'all 0.2s' }}>
+        <div className="card stat-card" onClick={() => handleCardClick('UNDER_MAINTENANCE')} style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
           <div className="stat-icon" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
             <Truck size={24} />
           </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet, ClipboardList, CheckCircle, RefreshCw } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { finishedFabricAPI, dropdownAPI } from '../../services/api';
+import { finishedFabricAPI, dropdownAPI, clothDeliveryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -48,6 +48,7 @@ export default function DyedFabricReceipt() {
     employees: [],
     masters: {}
   });
+  const [dyeingDeliveries, setDyeingDeliveries] = useState([]);
 
   const initialForm = {
     received_type: 'Job Inward',
@@ -58,6 +59,7 @@ export default function DyedFabricReceipt() {
     dc_date: new Date().toISOString().split('T')[0],
     design_no: '',
     order_no: '',
+    dyeing_delivery_no: '',
     vendor_order: '',
     gry_dc_no: '',
     vendor_order_mtr: '',
@@ -121,10 +123,15 @@ export default function DyedFabricReceipt() {
 
   const fetchOptions = async () => {
     try {
-      const { data } = await dropdownAPI.getAll();
-      setOptions(data);
+      const [optRes, delRes] = await Promise.all([
+        dropdownAPI.getAll(),
+        clothDeliveryAPI.list()
+      ]);
+      setOptions(optRes.data);
+      const dyeingDels = (delRes.data || []).filter(d => d.process_type === 'Dyeing');
+      setDyeingDeliveries(dyeingDels);
     } catch (err) {
-      console.error("Error fetching dropdowns:", err);
+      console.error("Error fetching options/deliveries:", err);
     }
   };
 
@@ -180,6 +187,7 @@ export default function DyedFabricReceipt() {
         dc_date: inward.dc_date || '',
         design_no: inward.design_no || '',
         order_no: inward.order_no || '',
+        dyeing_delivery_no: remarksParsed.dyeing_delivery_no || '',
         vendor_order: remarksParsed.vendor_order || '',
         gry_dc_no: remarksParsed.gry_dc_no || '',
         vendor_order_mtr: remarksParsed.vendor_order_mtr || '',
@@ -245,6 +253,36 @@ export default function DyedFabricReceipt() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'dyeing_delivery_no') {
+      const del = dyeingDeliveries.find(d => d.dc_no === value);
+      if (del) {
+        setFormData(prev => ({
+          ...prev,
+          dyeing_delivery_no: value,
+          party_name: del.party_name || prev.party_name,
+          design_no: del.design_no || prev.design_no,
+          order_no: del.ibpo || prev.order_no,
+          gry_dc_no: del.dc_no || prev.gry_dc_no,
+          gry_delivery_mtr: del.total_meters || prev.gry_delivery_mtr,
+          fabric_type: del.fabric_detail || prev.fabric_type,
+          width: String(del.fresh_width || prev.width || ''),
+          lot_no: del.lot_no || prev.lot_no
+        }));
+        
+        if (del.items && del.items.length > 0) {
+          setItems(del.items.map(item => ({
+            piece_no: item.piece_no || '',
+            weight: '',
+            v_loom: '',
+            v_pc_no: item.piece_no || '',
+            meters: item.ok_mtr || item.meters || ''
+          })));
+        }
+        return;
+      }
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -278,10 +316,13 @@ export default function DyedFabricReceipt() {
       receipt_process: 'Dyeing', // Identifies this as a Dyed Fabric receipt
       vendor_order: formData.vendor_order,
       gry_dc_no: formData.gry_dc_no,
+      dyeing_delivery_no: formData.dyeing_delivery_no,
       vendor_order_mtr: formData.vendor_order_mtr,
       gry_delivery_mtr: formData.gry_delivery_mtr,
       received_mtr: formData.received_mtr,
       balance_mtr: formData.balance_mtr,
+      shrinkage_mtr: Math.max(0, (Number(formData.gry_delivery_mtr) || 0) - (Number(formData.received_mtr) || 0)).toFixed(2),
+      shrinkage_pct: (Number(formData.gry_delivery_mtr) > 0 ? ((Math.max(0, (Number(formData.gry_delivery_mtr) || 0) - (Number(formData.received_mtr) || 0)) / Number(formData.gry_delivery_mtr)) * 100).toFixed(2) : '0.00'),
       fabric_type: formData.fabric_type,
       reed: formData.reed,
       pick: formData.pick,
@@ -385,12 +426,17 @@ export default function DyedFabricReceipt() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Dyed Fabric Receipt' : editingId ? 'Edit Dyed Fabric Receipt' : 'Add Dyed Fabric Receipt'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && <button type="submit" form="dyedReceiptForm" className="btn btn-primary"><Save size={16} /> Save Receipt</button>}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -421,9 +467,18 @@ export default function DyedFabricReceipt() {
                 <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Receipt Reference</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <div className="form-group">
                         <label>Receipt Date *</label>
                         <input type="date" className="form-control" name="inv_date" value={formData.inv_date} onChange={handleInputChange} required />
+                      </div>
+                      <div className="form-group">
+                        <label>Dyeing Delivery No</label>
+                        <select className="form-control" name="dyeing_delivery_no" value={formData.dyeing_delivery_no || ''} onChange={handleInputChange}>
+                          <option value="">-- Select Delivery --</option>
+                          {dyeingDeliveries.map(d => (
+                            <option key={d.id} value={d.dc_no}>{d.dc_no} ({d.party_name})</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="form-group">
                         <label>Dyeing Vendor</label>
@@ -459,6 +514,16 @@ export default function DyedFabricReceipt() {
                       <div className="form-group">
                         <label>Received Mtr</label>
                         <input className="form-control" type="number" name="received_mtr" value={formData.received_mtr} readOnly style={{ background: '#f1f5f9' }} />
+                      </div>
+                      <div className="form-group">
+                        <label>Shrinkage Loss</label>
+                        <input className="form-control" readOnly style={{ background: '#f1f5f9' }} value={(() => {
+                          const gry = Number(formData.gry_delivery_mtr) || 0;
+                          const rec = Number(formData.received_mtr) || 0;
+                          const diff = Math.max(0, gry - rec);
+                          const pct = gry > 0 ? ((diff / gry) * 100).toFixed(2) : '0.00';
+                          return `${diff.toFixed(2)} Mtr (${pct}%)`;
+                        })()} />
                       </div>
                     </div>
                   </div>
@@ -514,6 +579,16 @@ export default function DyedFabricReceipt() {
                     {!isReadOnly && <button type="button" onClick={addItemRow} className="btn btn-secondary" style={{ background: 'var(--primary)', color: '#fff', marginTop: 12 }}>+ Add Piece</button>}
                   </div>
               </fieldset>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -601,7 +676,19 @@ export default function DyedFabricReceipt() {
               { label: "Date", value: viewModalReceipt.inv_date },
               { label: "Vendor", value: viewModalReceipt.party_name },
               { label: "DC Number", value: viewModalReceipt.dc_no || '-' },
-              { label: "Order Number", value: viewModalReceipt.order_no || '-' }
+              { label: "Order Number", value: viewModalReceipt.order_no || '-' },
+              { label: "Grey Delivery Mtr", value: (() => {
+                try {
+                  const remarks = JSON.parse(viewModalReceipt.remarks || '{}');
+                  return remarks.gry_delivery_mtr ? `${Number(remarks.gry_delivery_mtr).toFixed(2)} Mtr` : '-';
+                } catch { return '-'; }
+              })() },
+              { label: "Shrinkage Loss", value: (() => {
+                try {
+                  const remarks = JSON.parse(viewModalReceipt.remarks || '{}');
+                  return remarks.shrinkage_mtr ? `${remarks.shrinkage_mtr} Mtr (${remarks.shrinkage_pct}%)` : '-';
+                } catch { return '-'; }
+              })() }
             ]
           },
           {

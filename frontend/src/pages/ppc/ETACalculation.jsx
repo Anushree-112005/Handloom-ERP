@@ -19,7 +19,7 @@ export default function ETACalculation() {
         buyerOrderAPI.list()
       ]);
       
-      const activeAllocs = (allocRes?.data || []).filter(a => a.allocation_status === 'Active');
+      const activeAllocs = (allocRes?.data || []).filter(a => a.allocation_status === 'Active' || a.allocation_status === 'Pending');
       const orders = orderRes?.data || [];
       
       // Map data to the ETA fields

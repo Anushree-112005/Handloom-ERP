@@ -439,7 +439,18 @@ export default function ClothInward() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Factory size={24} color="#10b981" /> Cloth Vendor / Purchase Inward Entry
+            {view !== 'list' && (
+              <button 
+                type="button"
+                onClick={() => setView('list')} 
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+                onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+              >
+                <ArrowLeft size={24} />
+              </button>
+            )}
+            <Factory size={24} color="#10b981" /> {view === 'list' ? 'Cloth Vendor / Purchase Inward Entry' : isReadOnly ? 'View Inward Details' : editingId ? 'Edit Inward' : 'New Cloth Inward'}
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Log fabric receipts from weaving mills and vendors with complete loom and sizing specs.</p>
         </div>
@@ -477,21 +488,10 @@ export default function ClothInward() {
             </div>
           )}
 
-          {view === 'list' ? (
+          {view === 'list' && (
             <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-              <Plus size={18} /> + New Entry
+              <Plus size={18} />  New Entry
             </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}>
-                Cancel
-              </button>
-              {!isReadOnly && (
-                <button type="submit" form="inwardForm" className="btn btn-primary">
-                  <Save size={18} /> Save Inward
-                </button>
-              )}
-            </div>
           )}
         </div>
       </div>
@@ -772,28 +772,8 @@ export default function ClothInward() {
                     </div>
 
                     <div className="form-group">
-                      <label>Ref No</label>
-                      <input className="form-control" name="ref_no" value={formData.ref_no} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 600 }} />
-                    </div>
-
-                    <div className="form-group">
                       <label>Inward Date *</label>
                       <input type="date" className="form-control" name="inw_date" value={formData.inw_date} onChange={handleHeaderChange} required />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Party (Weaver) *</label>
-                      <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
-                        <option value="">-- Select Weaver --</option>
-                        {options.all_parties.map(p => (
-                          <option key={p.id} value={p.name}>{p.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Weaver DC No *</label>
-                      <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleHeaderChange} required />
                     </div>
 
                     <div className="form-group">
@@ -809,6 +789,21 @@ export default function ClothInward() {
                           <option key={wd.id} value={wd.id}>{wd.id} ({wd.party_name})</option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Party (Weaver) *</label>
+                      <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
+                        <option value="">-- Select Weaver --</option>
+                        {options.all_parties.map(p => (
+                          <option key={p.id} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Weaver DC No *</label>
+                      <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleHeaderChange} required />
                     </div>
 
                     <div className="form-group">
@@ -1059,6 +1054,17 @@ export default function ClothInward() {
                 </div>
 
             </fieldset>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                Close
+              </button>
+              {!isReadOnly && (
+                <button type="submit" className="btn btn-primary">
+                  <Save size={18} /> {editingId ? 'Update Inward' : 'Save Inward'}
+                </button>
+              )}
+            </div>
           </form>
         </div>
       )}

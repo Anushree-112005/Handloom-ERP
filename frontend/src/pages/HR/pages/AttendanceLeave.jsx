@@ -598,19 +598,19 @@ const AttendanceLeave = () => {
           <>
             {/* Attendance Cards */}
             {viewMode === 'list' && (
-              <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+              <div className="card overflow-hidden bg-white shadow-xl shadow-slate-200/40 border border-slate-100 rounded-2xl" style={{ padding: 0, overflowX: 'auto' }}>
                 <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead className="bg-slate-50/80 border-b border-slate-200">
+                  <thead className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 backdrop-blur-sm">
                     <tr>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Shift & Time</th>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
-                      <th className="px-6 py-4 text-xs uppercase font-bold text-slate-500">
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Employee</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Shift & Time</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Status</th>
+                      <th className="px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-50">
                     {paginatedRows.map(r => (
                       <tr key={r.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
                         <td className="px-6 py-4">
@@ -629,11 +629,11 @@ const AttendanceLeave = () => {
                           <p className="text-xs text-slate-500">Source: {r.source}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold border border-emerald-100">{r.hours?.toFixed(1)}h</span>
-                            {r.ot_hours > 0 && <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-bold border border-indigo-100">OT {r.ot_hours}h</span>}
-                            {r.leave_days > 0 && <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">Leave {r.leave_days}d</span>}
-                            {r.lop_days > 0 && <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded-lg text-xs font-medium border border-red-100">LOP {r.lop_days}d</span>}
+                          <div className="flex flex-wrap gap-2">
+                            <span className="bg-emerald-100/60 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 shadow-sm backdrop-blur-md">{r.hours?.toFixed(1)}h</span>
+                            {r.ot_hours > 0 && <span className="bg-indigo-100/60 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200 shadow-sm backdrop-blur-md">OT {r.ot_hours}h</span>}
+                            {r.leave_days > 0 && <span className="bg-amber-100/60 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 shadow-sm backdrop-blur-md">Leave {r.leave_days}d</span>}
+                            {r.lop_days > 0 && <span className="bg-red-100/60 text-red-700 px-3 py-1 rounded-full text-xs font-bold border border-red-200 shadow-sm backdrop-blur-md">LOP {r.lop_days}d</span>}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -755,20 +755,20 @@ const AttendanceLeave = () => {
           <>
             {/* Leave Cards */}
             {viewMode === 'list' && (
-              <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+              <div className="card overflow-hidden bg-white shadow-xl shadow-slate-200/40 border border-slate-100 rounded-2xl" style={{ padding: 0, overflowX: 'auto' }}>
                 <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead className="bg-slate-50/80 border-b border-slate-200">
+                  <thead className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 backdrop-blur-sm">
                     <tr>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Employee</th>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Leave Details</th>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Approver</th>
-                      <th className="text-left px-6 py-4 text-xs uppercase font-bold text-slate-500">Status</th>
-                      <th className="px-6 py-4 text-xs uppercase font-bold text-slate-500">
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Employee</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Leave Details</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Approver</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Status</th>
+                      <th className="px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>Actions</div>
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-50">
                     {paginatedLeaves.map(l => (
                       <tr key={l.id} className="hover:bg-slate-50 cursor-pointer group transition-colors">
                         <td className="px-6 py-4">

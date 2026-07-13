@@ -258,6 +258,7 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
       narration,
       reference_no: voucherType === "Purchase" ? supplierInvNo : refNo,
       company_id: companyId,
+      party_id: account.id,
       entries: apiEntries,
     };
 

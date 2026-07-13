@@ -44,7 +44,7 @@ export default function FuelEntry() {
     try {
       setLoading(true);
       const [entriesRes, vehiclesRes] = await Promise.all([
-        api.get('/fleet/vehicles'),
+        api.get('/fleet/fuel-entries'),
         api.get('/fleet/vehicles')
       ]);
       setEntries(entriesRes.data || []);
@@ -309,7 +309,7 @@ export default function FuelEntry() {
                           <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(e)}>
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(e.id, e)}>
+                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(evt) => handleDelete(e.id, evt)}>
                             <Trash2 size={16} color="#ef4444" />
                           </button>
                         </div>

@@ -89,59 +89,9 @@ export default function LoomStatusUpdate() {
     r.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Activity style={{ color: '#f97316' }} /> Loom Status Update
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Record machine state changes and breakdowns</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <FileText size={24} style={{ color: '#f97316' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Logs</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Breakdowns</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.code === 'Breakdown').length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Wrench size={24} style={{ color: '#4f46e5' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Maintenance</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.code === 'Maintenance').length}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0, maxWidth: 800 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -207,7 +157,64 @@ export default function LoomStatusUpdate() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Activity style={{ color: '#f97316' }} /> Loom Status Update
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Record machine state changes and breakdowns</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <FileText size={24} style={{ color: '#f97316' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Logs</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Breakdowns</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.code === 'Breakdown').length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Wrench size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Maintenance</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.filter(r => r.code === 'Maintenance').length}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Status Change Log ({filteredRecords.length})</h3>
@@ -282,7 +289,7 @@ export default function LoomStatusUpdate() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

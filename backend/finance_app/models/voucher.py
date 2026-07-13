@@ -26,10 +26,12 @@ class Voucher(Base):
     is_optional: Mapped[bool]           = mapped_column(Boolean, default=False)
     company_id: Mapped[int]             = mapped_column(Integer, ForeignKey("companies.id"), nullable=False)
     fy_id: Mapped[Optional[int]]        = mapped_column(Integer, ForeignKey("financial_years.id"), nullable=True)
+    party_id: Mapped[Optional[int]]     = mapped_column(Integer, ForeignKey("ledgers.id"), nullable=True)
 
     entries: Mapped[List["VoucherEntry"]] = relationship("VoucherEntry", back_populates="voucher",
                            cascade="all, delete-orphan")
     company: Mapped["Company"] = relationship("Company", back_populates="vouchers")
+    party: Mapped[Optional["Ledger"]] = relationship("Ledger", foreign_keys=[party_id])
 
 
 class VoucherEntry(Base):

@@ -133,6 +133,110 @@ export default function AlertLowEfficiency() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#ef4444' }}>
+                <Activity size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Alert Details & Impact</h3>
+              </div>
+            </div>
+            <div style={{ padding: '4px 12px', background: '#ef444418', color: '#b91c1c', borderRadius: 12, fontWeight: 600, fontSize: 13 }}>
+              {formData.alert_id || 'LEA-NEW'}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>1. Alert Trigger</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <div className="form-group">
+                <label>Loom ID</label>
+                <select className="form-control" onChange={handleLoomChange} required>
+                  <option value="">Select Loom</option>
+                  {looms.map(l => <option key={l.id} value={l.id}>{l.loom_name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Order ID</label>
+                <input type="text" className="form-control" value={formData.order_id} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Standard Eff %</label>
+                <input type="text" className="form-control" value={`${formData.std_efficiency}%`} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Current Eff %</label>
+                <input type="text" className="form-control" value={formData.current_efficiency ? `${formData.current_efficiency}%` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>2. Loss Impact</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Target Meters</label>
+                <input type="text" className="form-control" value={formData.target_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Actual Meters</label>
+                <input type="text" className="form-control" value={formData.actual_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)', color: '#b91c1c' }} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Loss Meters</label>
+                <input type="text" className="form-control" value={formData.loss_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Loss Value (₹)</label>
+                <input type="text" className="form-control" value={`₹${formData.loss_value}`} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>ETA Impact</label>
+                <input type="text" className="form-control" value={`+${formData.impact_eta} days`} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>3. Message & Delivery</h4>
+            <div style={{ padding: 16, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <strong style={{ color: 'var(--text-primary)' }}>{formData.alert_title}</strong>
+                <span style={{ fontSize: 12, padding: '2px 8px', background: '#ef4444', color: 'white', borderRadius: 12 }}>{formData.priority}</span>
+              </div>
+              <p style={{ margin: '0 0 8px 0', fontSize: 14, color: 'var(--text-secondary)' }}>{formData.alert_message}</p>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>Suggested Action: {formData.suggested_action}</p>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <div className="form-group">
+                <label>Status</label>
+                <select className="form-control" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} style={{ fontWeight: 600, color: formData.status === 'Resolved' ? '#047857' : '#b91c1c' }}>
+                  <option value="Pending">🕐 Pending</option>
+                  <option value="Resolved">✅ Resolved</option>
+                  <option value="Missed">❌ Missed</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                <label>Action Taken to Resolve</label>
+                <input type="text" className="form-control" value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Yarn replaced, speed restored" />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Save Alert Status
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -189,104 +293,7 @@ export default function AlertLowEfficiency() {
         </div>
       )}
 
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#ef4444' }}>
-                <Activity size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Alert Details & Impact</h3>
-              </div>
-            </div>
-            <div style={{ padding: '4px 12px', background: '#ef444418', color: '#b91c1c', borderRadius: 12, fontWeight: 600, fontSize: 13 }}>
-              {formData.alert_id || 'LEA-NEW'}
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>1. Alert Trigger</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div className="form-group">
-                <label>Loom ID</label>
-                <select className="form-control" onChange={handleLoomChange} required>
-                  <option value="">Select Loom</option>
-                  {looms.map(l => <option key={l.id} value={l.id}>{l.loom_name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Order ID</label>
-                <input type="text" className="form-control" value={formData.order_id} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-              <div className="form-group">
-                <label>Standard Eff %</label>
-                <input type="text" className="form-control" value={`${formData.std_efficiency}%`} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-              <div className="form-group">
-                <label>Current Eff %</label>
-                <input type="text" className="form-control" value={formData.current_efficiency ? `${formData.current_efficiency}%` : ''} readOnly style={{ backgroundColor: '#ef444418', color: '#b91c1c', fontWeight: 700 }} />
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>2. Loss Impact</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Target Meters</label>
-                <input type="text" className="form-control" value={formData.target_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Actual Meters</label>
-                <input type="text" className="form-control" value={formData.actual_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)', color: '#b91c1c' }} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Loss Meters</label>
-                <input type="text" className="form-control" value={formData.loss_meters} readOnly style={{ backgroundColor: '#f59e0b18', color: '#b45309', fontWeight: 600 }} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Loss Value (₹)</label>
-                <input type="text" className="form-control" value={`₹${formData.loss_value}`} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>ETA Impact</label>
-                <input type="text" className="form-control" value={`+${formData.impact_eta} days`} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>3. Message & Delivery</h4>
-            <div style={{ padding: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <strong style={{ color: '#b91c1c' }}>{formData.alert_title}</strong>
-                <span style={{ fontSize: 12, padding: '2px 8px', background: '#ef4444', color: 'white', borderRadius: 12 }}>{formData.priority}</span>
-              </div>
-              <p style={{ margin: '0 0 8px 0', fontSize: 14 }}>{formData.alert_message}</p>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)' }}>Suggested Action: {formData.suggested_action}</p>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div className="form-group">
-                <label>Status</label>
-                <select className="form-control" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} style={{ fontWeight: 600, color: formData.status === 'Resolved' ? '#047857' : '#b91c1c' }}>
-                  <option value="Pending">🕐 Pending</option>
-                  <option value="Resolved">✅ Resolved</option>
-                  <option value="Missed">❌ Missed</option>
-                </select>
-              </div>
-              <div className="form-group" style={{ gridColumn: 'span 3' }}>
-                <label>Action Taken to Resolve</label>
-                <input type="text" className="form-control" value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Yarn replaced, speed restored" />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Save Alert Status
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Alert History ({filteredRecords.length})</h3>
@@ -334,7 +341,7 @@ export default function AlertLowEfficiency() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

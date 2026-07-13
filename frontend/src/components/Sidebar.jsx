@@ -223,7 +223,6 @@ const modules = [
 
   { section: 'Reports & MIS' },
   { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
-  { path: '/log-report', label: 'Log Report', icon: Activity },
 
 
 
@@ -309,7 +308,7 @@ const modules = [
       { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
       { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
-      { path: '/ppc/alerts/eta-calc', label: 'ETA Engine', icon: Clock },
+      { path: '/ppc/eta-engine', label: 'ETA Engine', icon: Clock },
       { path: '/ppc/alerts/low-efficiency', label: 'Alerts', icon: Bell, badge: '3', badgeColor: '#e11d48' },
       { path: '/ppc/reports/loom-wise', label: 'Reports', icon: FileText }
     ]
@@ -357,11 +356,14 @@ const modules = [
       { path: '/fleet/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/fleet/vehicles', label: 'Vehicles', icon: Truck },
       { path: '/fleet/drivers', label: 'Vehicle Assignment', icon: Users },
+      { path: '/fleet/routes', label: 'Routes', icon: MapIcon },
+      { path: '/fleet/trip-planning', label: 'Trip Planning', icon: Calendar },
       { path: '/fleet/service-schedule', label: 'Service Schedule', icon: Calendar },
       { path: '/fleet/breakdown-entry', label: 'Breakdown Entry', icon: AlertTriangle },
       { path: '/fleet/maintenance-log', label: 'Maintenance Log', icon: Wrench },
       { path: '/fleet/documents', label: 'RC / Insurance / Permit', icon: FileText },
       { path: '/fleet/expiry-alerts', label: 'Expiry Alerts', icon: Bell },
+      // { path: '/fleet/fuel-entry', label: 'Fuel Entry', icon: Activity },
       { path: '/fleet/fuel-consumption', label: 'Fuel Consumption Report', icon: Activity },
       { path: '/fleet/driver-performance', label: 'Driver Report', icon: Users }
     ]
@@ -414,6 +416,8 @@ const modules = [
 
   { section: 'Administration & Security' },
   { path: '/user-management', label: 'User Management', icon: Users },
+  { path: '/log-report', label: 'Log Report', icon: Activity },
+
 
   { section: 'System' },
   { path: '/company-settings', label: 'Company', icon: Settings },
@@ -431,8 +435,6 @@ const jobWorkRoutes = [
   { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
   { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
   { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/printing-delivery', label: 'Printing Delivery', icon: Truck },
-  { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
   { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
   { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
   { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },

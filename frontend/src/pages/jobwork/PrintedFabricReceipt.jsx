@@ -385,12 +385,17 @@ export default function PrintedFabricReceipt() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Printed Fabric Receipt' : editingId ? 'Edit Printed Fabric Receipt' : 'Add Printed Fabric Receipt'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && <button type="submit" form="printedReceiptForm" className="btn btn-primary"><Save size={16} /> Save Receipt</button>}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -514,6 +519,16 @@ export default function PrintedFabricReceipt() {
                     {!isReadOnly && <button type="button" onClick={addItemRow} className="btn btn-secondary" style={{ background: 'var(--primary)', color: '#fff', marginTop: 12 }}>+ Add Piece</button>}
                   </div>
               </fieldset>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>

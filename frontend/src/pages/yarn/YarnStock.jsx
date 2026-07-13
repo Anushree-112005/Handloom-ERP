@@ -147,128 +147,123 @@ export default function YarnStock() {
         </div>
       </div>
 
+
       {/* Stats Cards */}
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
           <p>Loading yarn stock data...</p>
         </div>
       ) : (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-            <div className="card stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
-                <Database size={24} />
-              </div>
-              <div className="stat-details">
-                <h3>Total Bags</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800 }}>{stats.totalBags} Bags</div>
-              </div>
-            </div>
-            <div className="card stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(8, 145, 178, 0.1)', color: 'var(--secondary)' }}>
-                <Layers size={24} />
-              </div>
-              <div className="stat-details">
-                <h3>Total Weight</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800 }}>{stats.totalKgs.toLocaleString()} Kgs</div>
-              </div>
-            </div>
-            <div className="card stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)' }}>
-                <ArrowRightLeft size={24} />
-              </div>
-              <div className="stat-details">
-                <h3>Valuation</h3>
-                <div className="value" style={{ fontSize: 24, fontWeight: 800 }}>₹{stats.totalValuation.toLocaleString()}</div>
-              </div>
-            </div>
+      <>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
+            <Database size={24} />
           </div>
+          <div className="stat-details">
+            <h3>Total Bags</h3>
+            <div className="value" style={{ fontSize: 24, fontWeight: 800 }}>{stats.totalBags} Bags</div>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(8, 145, 178, 0.1)', color: 'var(--secondary)' }}>
+            <Layers size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Total Weight</h3>
+            <div className="value" style={{ fontSize: 24, fontWeight: 800 }}>{stats.totalKgs.toLocaleString()} Kgs</div>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)' }}>
+            <ArrowRightLeft size={24} />
+          </div>
+          <div className="stat-details">
+            <h3>Valuation</h3>
+            <div className="value" style={{ fontSize: 24, fontWeight: 800 }}>₹{stats.totalValuation.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
 
-          {/* Filters & Controls */}
-          <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input 
-                type="text" 
-                className="form-control" 
-                placeholder="Search by Lot No, Count, Mill, Color..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: 38, width: '100%', margin: 0 }}
-              />
-            </div>
-            <select className="form-control" style={{ width: 180, margin: 0 }} value={countFilter} onChange={e => setCountFilter(e.target.value)}>
-              {countsList.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className="form-control" style={{ width: 180, margin: 0 }} value={colorFilter} onChange={e => setColorFilter(e.target.value)}>
-              {colorsList.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className="form-control" style={{ width: 180, margin: 0 }} value={godownFilter} onChange={e => setGodownFilter(e.target.value)}>
-              {godownsList.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </div>
+      {/* Filters & Controls */}
+      <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Search by Lot No, Count, Mill, Color..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{ paddingLeft: 38, width: '100%', margin: 0 }}
+          />
+        </div>
+        <select className="form-control" style={{ width: 180, margin: 0 }} value={countFilter} onChange={e => setCountFilter(e.target.value)}>
+          {countsList.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select className="form-control" style={{ width: 180, margin: 0 }} value={colorFilter} onChange={e => setColorFilter(e.target.value)}>
+          {colorsList.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select className="form-control" style={{ width: 180, margin: 0 }} value={godownFilter} onChange={e => setGodownFilter(e.target.value)}>
+          {godownsList.map(g => <option key={g} value={g}>{g}</option>)}
+        </select>
+      </div>
 
-          {/* Data Table */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <table className="data-table">
-              <thead>
-                 <tr>
-                  <th>Yarn Count</th>
-                  <th>Mill Name</th>
-                  <th>Color</th>
-                  <th>Lot Number</th>
-                  <th style={{ textAlign: 'right' }}>Bags</th>
-                  <th style={{ textAlign: 'right' }}>Net Weight (Kgs)</th>
-                  <th style={{ textAlign: 'right' }}>Rate (₹/Kg)</th>
-                  <th style={{ textAlign: 'right' }}>Total Value</th>
-                  <th>Godown</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStock.map(item => (
-                  <tr key={item.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.count}</td>
-                    <td>{item.mill}</td>
-                    <td>
-                      {item.colour ? (
-                        <span className="badge badge-secondary" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
-                          {item.colour}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{item.lotNo}</td>
-                    <td style={{ textAlign: 'right' }}>{item.bags}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.netWeight} Kg</td>
-                    <td style={{ textAlign: 'right' }}>₹{item.rate}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{(item.netWeight * item.rate).toLocaleString()}</td>
-                    <td>{item.godown}</td>
-                    <td>
-                      <span className={`badge ${item.status === 'Available' ? 'badge-active' : 'badge-pending'}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {stock.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                      No stock data available. Record yarn inward receipts first.
-                    </td>
-                  </tr>
-                ) : filteredStock.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                      No stock records match the selection.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </>
+      {/* Data Table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <table className="data-table">
+          <thead>
+             <tr>
+              <th>Yarn Count</th>
+              <th>Mill Name</th>
+              <th>Color</th>
+              <th>Lot Number</th>
+              <th style={{ textAlign: 'right' }}>Bags</th>
+              <th style={{ textAlign: 'right' }}>Net Weight (Kgs)</th>
+              <th style={{ textAlign: 'right' }}>Rate (₹/Kg)</th>
+              <th style={{ textAlign: 'right' }}>Total Value</th>
+              <th>Godown</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredStock.map(item => (
+              <tr key={item.id}>
+                <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.count}</td>
+                <td>{item.mill}</td>
+                <td>
+                  {item.colour ? (
+                    <span className="badge badge-secondary" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}>
+                      {item.colour}
+                    </span>
+                  ) : (
+                    '-'
+                  )}
+                </td>
+                <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{item.lotNo}</td>
+                <td style={{ textAlign: 'right' }}>{item.bags}</td>
+                <td style={{ textAlign: 'right', fontWeight: 600 }}>{item.netWeight} Kg</td>
+                <td style={{ textAlign: 'right' }}>₹{item.rate}</td>
+                <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{(item.netWeight * item.rate).toLocaleString()}</td>
+                <td>{item.godown}</td>
+                <td>
+                  <span className={`badge ${item.status === 'Available' ? 'badge-active' : 'badge-pending'}`}>
+                    {item.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {filteredStock.length === 0 && (
+              <tr>
+                <td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  {stock.length === 0 ? 'No stock data available. Record yarn inward receipts first.' : 'No stock records match the selection.'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      </>
       )}
     </div>
   );
