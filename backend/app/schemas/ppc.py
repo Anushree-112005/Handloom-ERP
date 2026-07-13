@@ -85,3 +85,42 @@ class OperatorMasterResponse(OperatorMasterBase):
     id: int
     class Config:
         from_attributes = True
+
+class LoomBreakdownBase(BaseModel):
+    loom_id: int
+    breakdown_id: str
+    start_time: str
+    end_time: Optional[str] = None
+    total_downtime: Optional[float] = 0.0
+    reason_category: str
+    reason_details: Optional[str] = None
+    reported_by: Optional[str] = None
+    attended_by: Optional[str] = None
+    action_taken: Optional[str] = None
+    status: Optional[str] = "Open"
+
+class LoomBreakdownCreate(LoomBreakdownBase):
+    pass
+
+class LoomBreakdownResponse(LoomBreakdownBase):
+    id: int
+    date: datetime
+    class Config:
+        from_attributes = True
+
+class WarpingDeliveryBase(BaseModel):
+    requisition_id: str
+    order_id: str
+    loom_id: int
+    warp_configuration: str
+    weft_configuration: str
+    status: Optional[str] = "Pending"
+
+class WarpingDeliveryCreate(WarpingDeliveryBase):
+    pass
+
+class WarpingDeliveryResponse(WarpingDeliveryBase):
+    id: int
+    date: datetime
+    class Config:
+        from_attributes = True

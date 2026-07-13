@@ -409,6 +409,20 @@ export const ppcAPI = {
   createOperator: (data) => api.post('/ppc/operators', data),
   updateOperator: (id, data) => api.put(`/ppc/operators/${id}`, data),
   deleteOperator: (id) => api.delete(`/ppc/operators/${id}`),
+  getDashboard: () => api.get('/ppc/dashboard'),
+  getDailyEntries: () => api.get('/ppc/daily-entries'),
+  getEta: () => api.get('/ppc/eta'),
+  getEfficiency: () => api.get('/ppc/efficiency'),
+  getBreakdowns: () => api.get('/ppc/breakdowns'),
+  logBreakdown: (data) => api.post('/ppc/breakdowns', data),
+};
+
+export const ppcWarpDeliveryAPI = {
+  list: () => api.get('/ppc/warping-deliveries/'),
+  create: (data) => api.post('/ppc/warping-deliveries/', data),
+  getById: (id) => api.get(`/ppc/warping-deliveries/${id}`),
+  update: (id, data) => api.put(`/ppc/warping-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/ppc/warping-deliveries/${id}`)
 };
 
 export default api;

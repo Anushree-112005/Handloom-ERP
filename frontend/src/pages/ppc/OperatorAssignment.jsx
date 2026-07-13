@@ -45,18 +45,18 @@ export default function OperatorAssignment() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, ordRes, schedRes, shiftRes, opRes] = await Promise.all([
+      const [recRes, loomRes, ordRes, allocRes, shiftRes, opRes] = await Promise.all([
         subMasterAPI.list('ppc_operator_assignment').catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] })),
         buyerOrderAPI.list().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_start_end_plan').catch(() => ({ data: [] })), // using start-end plan as schedules
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
         subMasterAPI.list('ppc_shift_master').catch(() => ({ data: [] })),
         ppcAPI.getOperators().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
       setOrders(ordRes?.data || []);
-      setSchedules(schedRes?.data || []);
+      setSchedules(allocRes?.data || []); // using allocations as schedules
       setShifts(shiftRes?.data || []);
       setOperators(opRes?.data || []);
     } catch (err) {
@@ -98,31 +98,22 @@ export default function OperatorAssignment() {
 
   const findSchedule = (lId, oId) => {
     if (!lId && !oId) return null;
-    const loom = looms.find(l => l.id.toString() === lId || l.loom_name === lId);
-    const lName = loom ? loom.loom_name : lId;
-    
-    // Attempt to match schedule. code = order, description contains loom name
-    let match = schedules.find(s => 
-      s.code?.toString() === oId?.toString() && 
-      s.description && s.description.includes(lName)
-    );
-
-    // Fallback 1: match by just order id if loom not found
-    if (!match && oId) {
-      match = schedules.find(s => s.code?.toString() === oId?.toString());
+    let match = null;
+    if (lId && oId) {
+      match = schedules.find(s => s.loom_id.toString() === lId && s.order_id === oId);
     }
-    // Fallback 2: match by just loom name if order not found
-    if (!match && lName) {
-      match = schedules.find(s => s.description && s.description.includes(lName));
+    if (!match && oId) {
+      match = schedules.find(s => s.order_id === oId);
+    }
+    if (!match && lId) {
+      match = schedules.find(s => s.loom_id.toString() === lId);
     }
 
     if (match) {
-      // Parse start and end from extra_field_1: "YYYY-MM-DD to YYYY-MM-DD"
-      const dates = match.extra_field_1 ? match.extra_field_1.split(' to ') : [];
       return {
-        name: match.name,
-        planned_start: dates[0] || '',
-        planned_end: dates[1] || ''
+        name: `ALLOC-${match.id}`,
+        planned_start: match.start_time ? match.start_time.split('T')[0] : '',
+        planned_end: match.expected_finish_time ? match.expected_finish_time.split('T')[0] : ''
       };
     }
     return null;

@@ -5,7 +5,8 @@ import { subMasterAPI, ppcAPI } from '../../services/api';
 export default function TargetVsActual() {
   const [records, setRecords] = useState([]);
   const [looms, setLooms] = useState([]);
-  const [reports, setReports] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,14 +28,16 @@ export default function TargetVsActual() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, rptRes] = await Promise.all([
+      const [recRes, loomRes, allocRes, logsRes] = await Promise.all([
         subMasterAPI.list('ppc_target_actual').catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_daily_report').catch(() => ({ data: [] }))
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
-      setReports(rptRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setLogs(logsRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -45,23 +48,20 @@ export default function TargetVsActual() {
   const handleLoomDateChange = (name, value) => {
     const updated = { ...formData, [name]: value };
     
-    if (updated.loom_id && updated.date) {
+    if (updated.loom_id) {
       const loom = looms.find(l => l.id.toString() === updated.loom_id);
-      const lName = loom ? loom.loom_name : updated.loom_id;
-      
-      const rpt = reports.find(r => r.code === updated.loom_id || r.code === lName);
+      const alloc = allocations.find(a => a.loom_id.toString() === updated.loom_id && a.allocation_status !== 'Completed');
       
       let planned = loom ? loom.capacity_per_day * (loom.efficiency_pct / 100) : 425;
       let actual = 0;
 
-      if (rpt && rpt.extra_field_2) {
-         // "415.0 m / 425.0 m"
-         const parts = rpt.extra_field_2.split('/');
-         if (parts[0]) actual = parseFloat(parts[0].replace(' m', '')) || 0;
-         if (parts[1]) planned = parseFloat(parts[1].replace(' m', '')) || planned;
-      } else {
-         // Fallback mock
-         actual = 415;
+      if (updated.date) {
+         // Filter logs for this loom and date
+         const dayLogs = logs.filter(l => 
+             (l.loom_id === parseInt(updated.loom_id) || l.loom_name === updated.loom_id) && 
+             l.timestamp.startsWith(updated.date)
+         );
+         actual = dayLogs.reduce((acc, curr) => acc + (curr.meters_produced || 0), 0);
       }
 
       const shortfall = planned - actual;
@@ -78,45 +78,35 @@ export default function TargetVsActual() {
     setFormData(updated);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const loom = looms.find(l => l.id.toString() === formData.loom_id);
-      const lName = loom ? loom.loom_name : formData.loom_id;
+  const activeAllocs = allocations.filter(a => a.allocation_status === 'Active');
 
-      await subMasterAPI.create('ppc_target_actual', {
-        name: `${formData.date}-${lName}`,
-        code: lName,
-        extra_field_1: `${formData.actual_meters.toFixed(1)} / ${formData.planned_meters.toFixed(1)} m`,
-        extra_field_2: formData.status,
-        description: `Shortfall: ${formData.shortfall.toFixed(1)} m | Eff: ${formData.efficiency.toFixed(1)}%`,
-        is_active: true
-      });
-      setIsFormOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Error saving record.');
-    }
-  };
+  const computedRecords = activeAllocs.map(alloc => {
+    const loom = looms.find(l => l.id === alloc.loom_id);
+    const allocLogs = logs.filter(l => l.allocation_id === alloc.id);
+    const actual = allocLogs.reduce((acc, curr) => acc + (curr.meters_produced || 0), 0);
+    const planned = alloc.assigned_meters || 1;
+    const efficiency = (actual / planned) * 100;
+    const shortfall = planned - actual;
+    
+    // Simulate expected progress based on start_time and loom capacity
+    const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(alloc.start_time).getTime()) / (1000 * 60 * 60 * 24)));
+    const expected = loom ? Math.min(planned, loom.capacity_per_day * (loom.efficiency_pct / 100) * daysElapsed) : actual;
+    
+    let status = 'On Track';
+    if (actual < expected * 0.9) status = 'Delayed';
+    else if (actual >= planned) status = 'Completed';
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this evaluation?')) return;
-    try {
-      await subMasterAPI.delete('ppc_target_actual', id);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete');
-    }
-  };
+    return {
+      id: alloc.id,
+      name: `ALLOC-${alloc.id} (${alloc.order_id})`,
+      code: loom ? loom.loom_name : `Loom ${alloc.loom_id}`,
+      extra_field_1: `${actual.toFixed(1)} / ${planned.toFixed(1)} m`,
+      extra_field_2: status,
+      description: `Shortfall: ${Math.max(0, shortfall).toFixed(1)} m | Eff: ${efficiency.toFixed(1)}%`,
+    };
+  });
 
-  // Remove duplicates based on name (Date + Loom ID), keeping the latest entry
-  const uniqueRecords = Array.from(
-    records.reduce((map, record) => map.set(record.name, record), new Map()).values()
-  );
-
-  const filteredRecords = uniqueRecords.filter(r => 
+  const filteredRecords = computedRecords.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -220,8 +210,8 @@ export default function TargetVsActual() {
               <Target size={24} style={{ color: '#ec4899' }} />
             </div>
             <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Evaluations</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.length}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Active Allocations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.length}</div>
             </div>
           </div>
           <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -230,7 +220,7 @@ export default function TargetVsActual() {
             </div>
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>On Track</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.filter(r => r.extra_field_2 === 'On Track').length}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.filter(r => r.extra_field_2 === 'On Track').length}</div>
             </div>
           </div>
           <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -239,7 +229,7 @@ export default function TargetVsActual() {
             </div>
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Delayed</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.filter(r => r.extra_field_2 === 'Delayed').length}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.filter(r => r.extra_field_2 === 'Delayed').length}</div>
             </div>
           </div>
         </div>

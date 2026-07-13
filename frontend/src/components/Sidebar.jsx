@@ -305,7 +305,7 @@ const modules = [
       { path: '/ppc/planning/availability', label: 'Loom Planning', icon: ClipboardList },
       { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
       //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
-      { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
+      { path: '/ppc/monitoring', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
       { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
       { path: '/ppc/eta-engine', label: 'ETA Engine', icon: Clock },
