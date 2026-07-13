@@ -123,6 +123,94 @@ export default function OrderProgress() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#10b98118', borderRadius: 10, color: '#10b981' }}>
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Order Analysis</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Automated production calculation</p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Order ID</label>
+                <select className="form-control" value={formData.order_id} onChange={handleOrderChange} required>
+                  <option value="">-- Select Order --</option>
+                  {orders.map(o => (
+                    <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Buyer Name (Auto-fill)</label>
+                <input type="text" className="form-control" value={formData.buyer_name} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>Production Status</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Total Ordered Meters</label>
+                <input type="text" className="form-control" value={formData.total_ordered_meters ? `${formData.total_ordered_meters.toLocaleString()} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+              <div className="form-group">
+                <label>Total Produced</label>
+                <input type="text" className="form-control" value={formData.total_produced ? `${formData.total_produced.toLocaleString()} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+              <div className="form-group">
+                <label>Remaining Meters</label>
+                <input type="text" className="form-control" value={formData.remaining_meters ? `${formData.remaining_meters.toLocaleString()} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24, marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>Completion Progress</span>
+                <span style={{ fontWeight: 800, color: '#10b981', fontSize: 16 }}>{formData.completion_pct}%</span>
+              </div>
+              <div style={{ width: '100%', height: 16, backgroundColor: 'var(--bg-secondary)', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ width: `${formData.completion_pct}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 1s ease-in-out' }}></div>
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>Timeline</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Days Elapsed</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--bg-secondary)', borderRadius: 8, fontWeight: 600 }}>
+                  <Clock size={16} className="text-secondary" /> {formData.days_elapsed} days
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Estimated Days Remaining</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--bg-secondary)', borderRadius: 8, fontWeight: 600 }}>
+                  <TrendingUp size={16} className="text-secondary" /> {formData.days_remaining} days
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Save Snapshot
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -179,88 +267,7 @@ export default function OrderProgress() {
         </div>
       )}
 
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#10b98118', borderRadius: 10, color: '#10b981' }}>
-                <TrendingUp size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Order Analysis</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Automated production calculation</p>
-              </div>
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Order ID</label>
-                <select className="form-control" value={formData.order_id} onChange={handleOrderChange} required>
-                  <option value="">-- Select Order --</option>
-                  {orders.map(o => (
-                    <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Buyer Name (Auto-fill)</label>
-                <input type="text" className="form-control" value={formData.buyer_name} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>Production Status</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Total Ordered Meters</label>
-                <input type="text" className="form-control" value={formData.total_ordered_meters ? `${formData.total_ordered_meters.toLocaleString()} m` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
-              </div>
-              <div className="form-group">
-                <label>Total Produced</label>
-                <input type="text" className="form-control" value={formData.total_produced ? `${formData.total_produced.toLocaleString()} m` : ''} readOnly style={{ backgroundColor: '#10b98118', color: '#047857', fontWeight: 700 }} />
-              </div>
-              <div className="form-group">
-                <label>Remaining Meters</label>
-                <input type="text" className="form-control" value={formData.remaining_meters ? `${formData.remaining_meters.toLocaleString()} m` : ''} readOnly style={{ backgroundColor: '#f59e0b18', color: '#b45309', fontWeight: 700 }} />
-              </div>
-            </div>
-
-            <div style={{ marginTop: 24, marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Completion Progress</span>
-                <span style={{ fontWeight: 800, color: '#10b981', fontSize: 16 }}>{formData.completion_pct}%</span>
-              </div>
-              <div style={{ width: '100%', height: 16, backgroundColor: 'var(--bg-secondary)', borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{ width: `${formData.completion_pct}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 1s ease-in-out' }}></div>
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>Timeline</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Days Elapsed</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--bg-secondary)', borderRadius: 8, fontWeight: 600 }}>
-                  <Clock size={16} className="text-secondary" /> {formData.days_elapsed} days
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Estimated Days Remaining</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#3b82f618', color: '#1d4ed8', borderRadius: 8, fontWeight: 700 }}>
-                  <TrendingUp size={16} /> {formData.days_remaining} days
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Save Snapshot
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Tracked Orders ({filteredRecords.length})</h3>
@@ -342,7 +349,7 @@ export default function OrderProgress() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

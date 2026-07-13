@@ -117,6 +117,120 @@ export default function AlertBreakdown() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#b91c1c' }}>
+                <AlertOctagon size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Breakdown Incident Log</h3>
+              </div>
+            </div>
+            <div style={{ padding: '4px 12px', background: '#ef444418', color: '#991b1b', borderRadius: 12, fontWeight: 600, fontSize: 13 }}>
+              {formData.alert_id || 'BDA-NEW'}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>1. Trigger Details</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <div className="form-group">
+                <label>Loom ID</label>
+                <select className="form-control" onChange={handleLoomChange} required>
+                  <option value="">Select Loom</option>
+                  {looms.map(l => <option key={l.id} value={l.id}>{l.loom_name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Order ID</label>
+                <input type="text" className="form-control" value={formData.order_id} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Category</label>
+                <input type="text" className="form-control" value={formData.reason_category} onChange={e => setFormData({...formData, reason_category: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Details</label>
+                <input type="text" className="form-control" value={formData.reason_details} onChange={e => setFormData({...formData, reason_details: e.target.value})} />
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>2. Impact Assessment</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Est Repair (hrs)</label>
+                <input type="number" step="0.1" className="form-control" value={formData.est_repair_time} onChange={e => setFormData({...formData, est_repair_time: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Expected Loss (m)</label>
+                <input type="text" className="form-control" value={formData.expected_lost_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)', color: '#b91c1c' }} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Loss Value (₹)</label>
+                <input type="text" className="form-control" value={`₹${formData.loss_value}`} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Reallocation Needed?</label>
+                <select className="form-control" value={formData.reallocation_needed} onChange={e => setFormData({...formData, reallocation_needed: e.target.value})}>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: 11 }}>Suggested Loom</label>
+                <input type="text" className="form-control" value={formData.suggested_loom} onChange={e => setFormData({...formData, suggested_loom: e.target.value})} />
+              </div>
+            </div>
+
+            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>3. Message & Delivery Log</h4>
+            <div style={{ padding: 16, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <strong style={{ color: 'var(--text-primary)' }}>{formData.alert_title}</strong>
+                <span style={{ fontSize: 12, padding: '2px 8px', background: '#b91c1c', color: 'white', borderRadius: 12 }}>{formData.priority}</span>
+              </div>
+              <p style={{ margin: '0 0 8px 0', fontSize: 14, color: 'var(--text-secondary)' }}>{formData.alert_message}</p>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <div className="form-group">
+                <label>Status</label>
+                <select className="form-control" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} style={{ fontWeight: 600 }}>
+                  <option value="Pending">❌ Pending</option>
+                  <option value="In Progress">🕐 In Progress</option>
+                  <option value="Resolved">✅ Resolved</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Arrived At</label>
+                <input type="text" className="form-control" value={formData.maintenance_arrived_at} onChange={e => setFormData({...formData, maintenance_arrived_at: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Completed At</label>
+                <input type="text" className="form-control" value={formData.repair_completed_at} onChange={e => setFormData({...formData, repair_completed_at: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Acknowledged By</label>
+                <input type="text" className="form-control" value={formData.acknowledged_by} onChange={e => setFormData({...formData, acknowledged_by: e.target.value})} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#b91c1c', borderColor: '#b91c1c' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Update Alert log
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -175,114 +289,7 @@ export default function AlertBreakdown() {
         </div>
       )}
 
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#ef444418', borderRadius: 10, color: '#b91c1c' }}>
-                <AlertOctagon size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Breakdown Incident Log</h3>
-              </div>
-            </div>
-            <div style={{ padding: '4px 12px', background: '#ef444418', color: '#991b1b', borderRadius: 12, fontWeight: 600, fontSize: 13 }}>
-              {formData.alert_id || 'BDA-NEW'}
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 16 }}>1. Trigger Details</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div className="form-group">
-                <label>Loom ID</label>
-                <select className="form-control" onChange={handleLoomChange} required>
-                  <option value="">Select Loom</option>
-                  {looms.map(l => <option key={l.id} value={l.id}>{l.loom_name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Order ID</label>
-                <input type="text" className="form-control" value={formData.order_id} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-              <div className="form-group">
-                <label>Category</label>
-                <input type="text" className="form-control" value={formData.reason_category} onChange={e => setFormData({...formData, reason_category: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Details</label>
-                <input type="text" className="form-control" value={formData.reason_details} onChange={e => setFormData({...formData, reason_details: e.target.value})} />
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>2. Impact Assessment</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Est Repair (hrs)</label>
-                <input type="number" step="0.1" className="form-control" value={formData.est_repair_time} onChange={e => setFormData({...formData, est_repair_time: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Expected Loss (m)</label>
-                <input type="text" className="form-control" value={formData.expected_lost_meters} readOnly style={{ backgroundColor: 'var(--bg-secondary)', color: '#b91c1c' }} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Loss Value (₹)</label>
-                <input type="text" className="form-control" value={`₹${formData.loss_value}`} readOnly style={{ backgroundColor: '#f59e0b18', color: '#b45309', fontWeight: 600 }} />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Reallocation Needed?</label>
-                <select className="form-control" value={formData.reallocation_needed} onChange={e => setFormData({...formData, reallocation_needed: e.target.value})}>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: 11 }}>Suggested Loom</label>
-                <input type="text" className="form-control" value={formData.suggested_loom} onChange={e => setFormData({...formData, suggested_loom: e.target.value})} />
-              </div>
-            </div>
-
-            <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--border)', paddingBottom: 8, margin: '24px 0 16px 0' }}>3. Message & Delivery Log</h4>
-            <div style={{ padding: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <strong style={{ color: '#b91c1c' }}>{formData.alert_title}</strong>
-                <span style={{ fontSize: 12, padding: '2px 8px', background: '#b91c1c', color: 'white', borderRadius: 12 }}>{formData.priority}</span>
-              </div>
-              <p style={{ margin: '0 0 8px 0', fontSize: 14 }}>{formData.alert_message}</p>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-              <div className="form-group">
-                <label>Status</label>
-                <select className="form-control" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} style={{ fontWeight: 600 }}>
-                  <option value="Pending">❌ Pending</option>
-                  <option value="In Progress">🕐 In Progress</option>
-                  <option value="Resolved">✅ Resolved</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Arrived At</label>
-                <input type="text" className="form-control" value={formData.maintenance_arrived_at} onChange={e => setFormData({...formData, maintenance_arrived_at: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Completed At</label>
-                <input type="text" className="form-control" value={formData.repair_completed_at} onChange={e => setFormData({...formData, repair_completed_at: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>Acknowledged By</label>
-                <input type="text" className="form-control" value={formData.acknowledged_by} onChange={e => setFormData({...formData, acknowledged_by: e.target.value})} />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#b91c1c', borderColor: '#b91c1c' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Update Alert log
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Breakdown Escalations ({filteredRecords.length})</h3>
@@ -330,7 +337,7 @@ export default function AlertBreakdown() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

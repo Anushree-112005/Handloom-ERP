@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Search, Filter, CheckCircle, XCircle, Settings, AlertTriangle, Activity, Eye, X } from 'lucide-react';
-import { ppcAPI } from '../../services/api';
+import { ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function LoomAvailability() {
   const [looms, setLooms] = useState([]);
   const [allocations, setAllocations] = useState([]);
+  const [breakdowns, setBreakdowns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoom, setSelectedLoom] = useState(null);
@@ -16,12 +17,14 @@ export default function LoomAvailability() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [loomsRes, allocRes] = await Promise.all([
+      const [loomsRes, allocRes, breakdownRes] = await Promise.all([
         ppcAPI.getLooms(),
-        ppcAPI.getAllocations()
+        ppcAPI.getAllocations(),
+        subMasterAPI.list('ppc_order_breakdown')
       ]);
       setLooms(loomsRes?.data || []);
       setAllocations(allocRes?.data || []);
+      setBreakdowns(breakdownRes?.data || []);
     } catch (err) {
       console.error("Failed to fetch loom availability data", err);
     } finally {
@@ -31,9 +34,27 @@ export default function LoomAvailability() {
 
   const getLoomStats = (loom) => {
     const activeAlloc = allocations.find(a => a.loom_id === loom.id && ['Active', 'Pending'].includes(a.allocation_status));
-    const orderId = activeAlloc ? activeAlloc.order_id : '-';
-    const allocMeters = activeAlloc ? activeAlloc.assigned_meters : 0;
+    let orderId = activeAlloc ? activeAlloc.order_id : '-';
+    let allocMeters = activeAlloc ? activeAlloc.assigned_meters : 0;
     const prodMeters = activeAlloc ? activeAlloc.completed_meters : 0;
+    
+    if (!activeAlloc && breakdowns.length > 0) {
+       const assignedBreakdown = breakdowns.find(b => {
+         try {
+           const data = JSON.parse(b.extra_field_3 || '{}');
+           return (data.allocations || []).some(a => a.loom === loom.loom_name);
+         } catch(e) { return false; }
+       });
+       if (assignedBreakdown) {
+         try {
+           const data = JSON.parse(assignedBreakdown.extra_field_3);
+           const myAlloc = data.allocations.find(a => a.loom === loom.loom_name);
+           orderId = assignedBreakdown.name;
+           allocMeters = parseFloat(myAlloc.qty) || 0;
+         } catch(e) {}
+       }
+    }
+
     const remMeters = Math.max(0, allocMeters - prodMeters);
     
     let finishDate = '-';
@@ -42,7 +63,7 @@ export default function LoomAvailability() {
        const d = new Date();
        d.setDate(d.getDate() + Math.ceil(daysNeeded));
        finishDate = d.toISOString().split('T')[0];
-    } else if (activeAlloc) {
+    } else if (activeAlloc || orderId !== '-') {
        finishDate = new Date().toISOString().split('T')[0];
     }
     

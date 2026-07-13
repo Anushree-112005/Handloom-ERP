@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, Search, AlertCircle, Clock, AlertTriangle, CheckCircle, TrendingDown, ArrowRight, Activity, BellRing } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { buyerOrderAPI, ppcAPI } from '../../services/api';
+import { buyerOrderAPI, ppcAPI, subMasterAPI } from '../../services/api';
 
 export default function MultiLoomView() {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function MultiLoomView() {
 
   const fetchOrders = async () => {
     try {
-      const res = await buyerOrderAPI.list();
+      const res = await subMasterAPI.list('ppc_order_progress');
       setOrders(res?.data || []);
     } catch (err) {
       console.error(err);
@@ -76,7 +76,7 @@ export default function MultiLoomView() {
 
     setLoading(true);
     try {
-      const order = orders.find(o => o.order_no === orderId || o.id.toString() === orderId);
+      const order = orders.find(o => o.name === orderId || o.id.toString() === orderId);
       
       const res = await ppcAPI.getLooms().catch(() => ({ data: [] }));
       const allLooms = res?.data || [];
@@ -147,7 +147,7 @@ export default function MultiLoomView() {
 
       setDashboardData({
         header: {
-          buyer_name: order?.party_name || 'H&M Sweden',
+          buyer_name: order?.code || 'H&M Sweden',
           fabric_type: 'Cotton Poplin',
           total_order_meters: totalOrderMeters,
           total_produced: totalProduced,
@@ -191,7 +191,7 @@ export default function MultiLoomView() {
           <select className="form-control" style={{ flex: 1, padding: '10px 16px', background: 'var(--bg-primary)', borderColor: 'var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }} name="order_id" value={filterState.order_id} onChange={handleFilterChange}>
             <option value="">-- Choose Order to Analyze --</option>
             {orders.map(o => (
-              <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id} - {o.party_name}</option>
+              <option key={o.id} value={o.name}>{o.name} - {o.code}</option>
             ))}
           </select>
         </div>

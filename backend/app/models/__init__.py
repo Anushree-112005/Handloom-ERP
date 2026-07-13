@@ -33,7 +33,19 @@ from app.models.processing_po import ProcessingPO, ProcessingPOItem
 from app.models.cloth_purchase_po import ClothPurchasePO, ClothPurchasePOItem
 from app.modules.hr.models import HRItem
 from app.modules.vehicle_management.models import FleetItem
-from app.modules.stationary.models import StationaryItem, SwatchCard, FabricInspectionRoll, ReturnableDC
+from app.modules.stationary.models import MaterialCategory, UOMMaster, Warehouse, WarehouseRack, WarehouseBin, MaterialMaster, MaterialStock, StockLedger, GoodsReceiptNote, GRNItem, StockIssue, StockIssueItem, SwatchCard, FabricInspectionRoll, ReturnableDC
+from app.modules.stores_consumables.models import (
+    StoresCategory, StoresUOM, StoresVendor, StoresDepartment, StoresItem,
+    StoresMaterialRequest, StoresSubcategory, StoresWarehouse, StoresCostCenter,
+    StoresBudget, StoresPurchaseRequisition, StoresPurchaseRequisitionItem,
+    StoresPRApprovalHistory, StoresVendorQuotation, StoresVendorQuotationItem,
+    StoresPurchaseOrder, StoresPurchaseOrderItem, StoresStockInward,
+    StoresStockInwardItem, StoresIssueToDepartment, StoresIssueToDepartmentItem,
+    StoresReturnToStore, StoresReturnToStoreItem, StoresStoreTransfer,
+    StoresStoreTransferItem, StoresStockAdjustment, StoresStockAdjustmentItem,
+    StoresReturnableDC, StoresReturnableDCItem, ProcurementVendor,
+    ProcurementQuotationHeader, ProcurementQuotationLineItem
+)
 
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver

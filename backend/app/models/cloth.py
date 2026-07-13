@@ -98,6 +98,7 @@ class OnTableChecking(Base):
     order_no = Column(String(50))
     party_name = Column(String(255))
     lot_no = Column(String(50))
+    qc_name = Column(String(255), nullable=True)
     total_meters = Column(Numeric(10, 2), default=0)
     total_pieces = Column(Integer, default=0)
     pass_meters = Column(Numeric(10, 2), default=0)

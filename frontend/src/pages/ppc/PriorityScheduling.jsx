@@ -54,10 +54,12 @@ export default function PriorityScheduling() {
   };
 
   const calculatePosition = (priority, days) => {
-    if (priority === 'High') return '1st in queue';
-    if (days < 10) return '2nd in queue';
-    if (days < 20) return '3rd in queue';
-    return '4th in queue';
+    if (priority === 'Critical') return '1st in queue';
+    if (priority === 'High') return '2nd in queue';
+    if (priority === 'Medium') return '3rd in queue';
+    if (days < 10) return '4th in queue';
+    if (days < 20) return '5th in queue';
+    return '6th in queue';
   };
 
   const handleOrderChange = (e) => {
@@ -138,6 +140,84 @@ export default function PriorityScheduling() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
+        <div className="card animate-fade" style={{ padding: 0 }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ padding: 10, background: '#d946ef18', borderRadius: 10, color: '#d946ef' }}>
+                <Target size={20} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Configure Queue Priority</h3>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Elevate or demote orders in the production queue</p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Order ID</label>
+                <select className="form-control" value={formData.order_id} onChange={handleOrderChange} required>
+                  <option value="">-- Select Order --</option>
+                  {orders.map(o => (
+                    <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Buyer Name (Auto-fill)</label>
+                <input type="text" className="form-control" value={formData.buyer_name} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Delivery Date (Auto-fill)</label>
+                <input type="date" className="form-control" value={formData.delivery_date} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Priority Level</label>
+                <select className="form-control" value={formData.priority_level} onChange={handlePriorityChange} required>
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Normal">Normal</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Priority Reason</label>
+                <input type="text" className="form-control" value={formData.priority_reason} onChange={e => setFormData({...formData, priority_reason: e.target.value})} placeholder="e.g. Urgent shipment" />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label>Scheduled Position (Auto-calc)</label>
+                <input type="text" className="form-control" value={formData.scheduled_position} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+              <div className="form-group">
+                <label>Days to Delivery (Auto-calc)</label>
+                <input type="text" className="form-control" value={formData.days_to_delivery ? `${formData.days_to_delivery} days` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" style={{ background: '#d946ef', borderColor: '#d946ef' }}>
+                <Save size={16} style={{ marginRight: 8 }} /> Save Priority
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -190,76 +270,7 @@ export default function PriorityScheduling() {
         </div>
       )}
 
-      {isFormOpen ? (
-        <div className="card animate-fade" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ padding: 10, background: '#d946ef18', borderRadius: 10, color: '#d946ef' }}>
-                <Target size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Configure Queue Priority</h3>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Elevate or demote orders in the production queue</p>
-              </div>
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} style={{ padding: 24 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Order ID</label>
-                <select className="form-control" value={formData.order_id} onChange={handleOrderChange} required>
-                  <option value="">-- Select Order --</option>
-                  {orders.map(o => (
-                    <option key={o.id} value={o.order_no || o.id}>{o.order_no || o.id}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Buyer Name (Auto-fill)</label>
-                <input type="text" className="form-control" value={formData.buyer_name} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Delivery Date (Auto-fill)</label>
-                <input type="date" className="form-control" value={formData.delivery_date} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
-              </div>
-              <div className="form-group">
-                <label>Priority Level</label>
-                <select className="form-control" value={formData.priority_level} onChange={handlePriorityChange} required>
-                  <option value="High">High</option>
-                  <option value="Normal">Normal</option>
-                  <option value="Low">Low</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Priority Reason</label>
-                <input type="text" className="form-control" value={formData.priority_reason} onChange={e => setFormData({...formData, priority_reason: e.target.value})} placeholder="e.g. Urgent shipment" />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="form-group">
-                <label>Scheduled Position (Auto-calc)</label>
-                <input type="text" className="form-control" value={formData.scheduled_position} readOnly style={{ backgroundColor: formData.priority_level === 'High' ? '#ef444418' : '#d946ef18', borderColor: formData.priority_level === 'High' ? '#ef4444' : '#d946ef', color: formData.priority_level === 'High' ? '#b91c1c' : '#c026d3', fontWeight: 600 }} />
-              </div>
-              <div className="form-group">
-                <label>Days to Delivery (Auto-calc)</label>
-                <input type="text" className="form-control" value={formData.days_to_delivery ? `${formData.days_to_delivery} days` : ''} readOnly style={{ backgroundColor: formData.days_to_delivery < 10 ? '#ef444418' : 'var(--bg-secondary)', color: formData.days_to_delivery < 10 ? '#b91c1c' : 'inherit', fontWeight: 600 }} />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 16 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" style={{ background: '#d946ef', borderColor: '#d946ef' }}>
-                <Save size={16} style={{ marginRight: 8 }} /> Save Priority
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : (
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Active Queue ({filteredRecords.length})</h3>
@@ -313,8 +324,8 @@ export default function PriorityScheduling() {
                     <td style={{ padding: '16px' }}>
                       <span style={{ 
                         padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
-                        backgroundColor: record.code === 'High' ? '#ef444420' : '#3b82f620',
-                        color: record.code === 'High' ? '#b91c1c' : '#1d4ed8'
+                        backgroundColor: record.code === 'Critical' ? '#ef444420' : record.code === 'High' ? '#f9731620' : record.code === 'Medium' ? '#eab30820' : record.code === 'Normal' ? '#3b82f620' : '#64748b20',
+                        color: record.code === 'Critical' ? '#b91c1c' : record.code === 'High' ? '#c2410c' : record.code === 'Medium' ? '#a16207' : record.code === 'Normal' ? '#1d4ed8' : '#475569'
                       }}>
                         {record.code}
                       </span>
@@ -340,7 +351,7 @@ export default function PriorityScheduling() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

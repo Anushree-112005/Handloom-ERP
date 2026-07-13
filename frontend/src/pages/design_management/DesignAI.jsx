@@ -281,8 +281,7 @@ export default function DesignAI() {
 
     const noD = warpRepeatSize > 0 ? Math.floor(totalWarpEnds / warpRepeatSize) : 0;
     const repeatEnds = warpRepeatSize * noD;
-    const selvage = 0;
-    const balance = totalWarpEnds - repeatEnds - selvage;
+    const balance = totalWarpEnds - repeatEnds;
 
     // Distribute balance to extra ends
     const extraEnds = warpDesign.map(() => 0);
@@ -1124,7 +1123,7 @@ export default function DesignAI() {
                   </div>
                   <div className="dai-calc-item">
                     <div className="dai-calc-label">Selvage</div>
-                    <div className="dai-calc-value">{summaryData.selvage}</div>
+                    <div className="dai-calc-value">0</div>
                   </div>
                   <div className="dai-calc-item">
                     <div className="dai-calc-label">Total Ends</div>

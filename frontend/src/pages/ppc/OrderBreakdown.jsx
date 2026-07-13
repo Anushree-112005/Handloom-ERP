@@ -167,64 +167,9 @@ export default function OrderBreakdown() {
   const capacitySplits = records.filter(r => r.extra_field_2 === 'Capacity-based').length;
   const manualSplits = records.filter(r => r.extra_field_2 === 'Manual').length;
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      
-      {/* Header (Title Only) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Factory style={{ color: '#06b6d4' }} /> Order Breakdown
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Split large orders across multiple looms dynamically</p>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <Activity size={24} style={{ color: '#4f46e5' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Breakdowns</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalRecords}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <CheckCircle size={24} style={{ color: '#16a34a' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Equal Splits</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{equalSplits}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <AlertTriangle size={24} style={{ color: '#d97706' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Capacity Splits</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{capacitySplits}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <Settings size={24} style={{ color: '#dc2626' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Manual Splits</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{manualSplits}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Inline Form */}
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -339,7 +284,69 @@ export default function OrderBreakdown() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      
+      {/* Header (Title Only) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Factory style={{ color: '#06b6d4' }} /> Order Breakdown
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Split large orders across multiple looms dynamically</p>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Activity size={24} style={{ color: '#4f46e5' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Breakdowns</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalRecords}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <CheckCircle size={24} style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Equal Splits</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{equalSplits}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertTriangle size={24} style={{ color: '#d97706' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Capacity Splits</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{capacitySplits}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Settings size={24} style={{ color: '#dc2626' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Manual Splits</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{manualSplits}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Form */}
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Saved Breakdowns ({filteredRecords.length})</h3>
@@ -420,7 +427,7 @@ export default function OrderBreakdown() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

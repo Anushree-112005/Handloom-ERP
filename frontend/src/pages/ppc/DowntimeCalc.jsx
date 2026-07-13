@@ -248,63 +248,9 @@ export default function DowntimeCalc() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock style={{ color: '#ec4899' }} /> Downtime Calculation
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Comprehensive downtime analytics, loss tracking, and categorization</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fbcfe8', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <BarChart2 size={24} style={{ color: '#ec4899' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Analytics Run</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Critical Status</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.filter(r => r.description?.includes('Critical')).length}
-              </div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <DollarSign size={24} style={{ color: '#f97316' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Value Lost</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                ₹{records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2?.replace('₹', '')) || 0), 0).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -370,7 +316,7 @@ export default function DowntimeCalc() {
               </div>
               <div className="form-group">
                 <label>Total Downtime (hrs)</label>
-                <input type="text" className="form-control" value={formData.total_downtime ? `${formData.total_downtime.toFixed(2)} hrs` : '0 hrs'} readOnly style={{ backgroundColor: '#ef444418', color: '#b91c1c', fontWeight: 700 }} />
+                <input type="text" className="form-control" value={formData.total_downtime ? `${formData.total_downtime.toFixed(2)} hrs` : '0 hrs'} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
             </div>
 
@@ -383,7 +329,7 @@ export default function DowntimeCalc() {
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Actual Running Hrs</label>
-                <input type="text" className="form-control" value={`${formData.actual_running_hours.toFixed(2)} hrs`} readOnly style={{ backgroundColor: '#10b98118', color: '#047857', fontWeight: 700 }} />
+                <input type="text" className="form-control" value={`${formData.actual_running_hours.toFixed(2)} hrs`} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Availability %</label>
@@ -396,7 +342,7 @@ export default function DowntimeCalc() {
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Downtime Status</label>
                 <div style={{ padding: '8px 12px', borderRadius: 8, fontWeight: 700, display: 'flex', alignItems: 'center', height: 38,
-                  backgroundColor: formData.downtime_status === 'Normal' ? '#10b98120' : formData.downtime_status === 'High' ? '#f59e0b20' : '#ef444420',
+                  backgroundColor: 'var(--bg-secondary)',
                   color: formData.downtime_status === 'Normal' ? '#047857' : formData.downtime_status === 'High' ? '#b45309' : '#b91c1c'
                 }}>
                   {formData.downtime_status === 'Normal' && '✅'}
@@ -453,7 +399,7 @@ export default function DowntimeCalc() {
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Loss Value (₹)</label>
-                <input type="text" className="form-control" value={`₹${formData.loss_value.toFixed(0)}`} readOnly style={{ backgroundColor: '#ef444418', color: '#b91c1c', fontWeight: 800 }} />
+                <input type="text" className="form-control" value={`₹${formData.loss_value.toFixed(0)}`} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Delivery Impact</label>
@@ -469,7 +415,68 @@ export default function DowntimeCalc() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clock style={{ color: '#ec4899' }} /> Downtime Calculation
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Comprehensive downtime analytics, loss tracking, and categorization</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fbcfe8', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <BarChart2 size={24} style={{ color: '#ec4899' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Analytics Run</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Critical Status</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.filter(r => r.description?.includes('Critical')).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <DollarSign size={24} style={{ color: '#f97316' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Value Lost</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                ₹{records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2?.replace('₹', '')) || 0), 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Downtime Analytics Archive ({filteredRecords.length})</h3>
@@ -554,7 +561,7 @@ export default function DowntimeCalc() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

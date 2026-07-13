@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet, RefreshCw, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { packingSlipAPI, dropdownAPI, partyAPI, subMasterAPI } from '../../services/api';
+import { packingSlipAPI, dropdownAPI, partyAPI, subMasterAPI, buyerOrderAPI, workOrderTransactionAPI, designEntryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -40,9 +40,13 @@ export default function PackingSlip() {
     masters: {}
   });
 
+  const [buyerOrders, setBuyerOrders] = useState([]);
+  const [finalInspections, setFinalInspections] = useState([]);
+  const [designs, setDesigns] = useState([]);
+
   // Initial Form State matching first image
   const initialForm = {
-    slip_no: '', // Ref No
+    slip_no: `PS-${Math.floor(100000 + Math.random() * 900000)}`, // Ref No
     slip_date: new Date().toISOString().split('T')[0], // Date
     pack_type: 'Regular',
     no_of_roll: '0',
@@ -135,7 +139,36 @@ export default function PackingSlip() {
   useEffect(() => {
     fetchSlips();
     fetchOptions();
+    fetchExtraData();
   }, []);
+
+  const fetchExtraData = async () => {
+    try {
+      const boRes = await buyerOrderAPI.list();
+      if (boRes.data) setBuyerOrders(boRes.data);
+    } catch (err) {
+      console.error("Error fetching buyer orders:", err);
+    }
+
+    try {
+      const txnRes = await workOrderTransactionAPI.getAll();
+      if (txnRes.data) {
+        const inspections = txnRes.data
+          .filter(t => t.module_type === 'final_inspection')
+          .map(t => ({ ...t.details, id: t.transaction_no, db_id: t.id }));
+        setFinalInspections(inspections);
+      }
+    } catch (err) {
+      console.error("Error fetching final inspections:", err);
+    }
+
+    try {
+      const deRes = await designEntryAPI.list();
+      if (deRes.data) setDesigns(deRes.data);
+    } catch (err) {
+      console.error("Error fetching designs:", err);
+    }
+  };
 
   const fetchSlips = async () => {
     try {
@@ -160,8 +193,15 @@ export default function PackingSlip() {
 
   // Automatically update totals
   useEffect(() => {
-    const totalPcs = items.length;
-    const totalMtr = items.reduce((sum, item) => sum + (Number(item.bale_mtr) || Number(item.pass_mtr) || 0), 0);
+    const validItems = items.filter(item => 
+      (item.piece_no && String(item.piece_no).trim() !== '') || 
+      (item.lot_no && String(item.lot_no).trim() !== '') || 
+      (item.loom_no && String(item.loom_no).trim() !== '') || 
+      (item.pass_mtr && String(item.pass_mtr).trim() !== '') || 
+      (item.bale_mtr && String(item.bale_mtr).trim() !== '')
+    );
+    const totalPcs = validItems.length;
+    const totalMtr = validItems.reduce((sum, item) => sum + (Number(item.bale_mtr) || Number(item.pass_mtr) || 0), 0);
 
     // Auto calculate weights if Auto Weight is checked
     let computedCalWgt = formData.cal_wgt;
@@ -169,7 +209,7 @@ export default function PackingSlip() {
     let computedNetWgt = formData.net_weight;
 
     if (formData.auto_weight) {
-      const computedItemsWgt = items.reduce((sum, item) => sum + (Number(item.weight) || 0), 0);
+      const computedItemsWgt = validItems.reduce((sum, item) => sum + (Number(item.weight) || 0), 0);
       computedCalWgt = computedItemsWgt || (totalMtr * 0.22).toFixed(2); // Mock multiplier if zero
       const packWgt = Number(formData.packing_wgt) || 0;
       computedGrossWgt = (Number(computedCalWgt) + packWgt).toFixed(2);
@@ -187,7 +227,7 @@ export default function PackingSlip() {
 
     // Update the right side preview list
     // Let's create a row for each item showing: Bale No, SPNo (piece_no), Quality (color/design), Total Mtr
-    const summary = items.map((item, idx) => ({
+    const summary = validItems.map((item, idx) => ({
       bale_no: formData.bale_no || `B-${formData.slip_no || 'TEMP'}-${idx + 1}`,
       sp_no: item.piece_no || `P-${idx + 1}`,
       quality: item.color || formData.design_no || 'Cotton Plain',
@@ -287,6 +327,103 @@ export default function PackingSlip() {
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleIbpoChange = (e) => {
+    const selectedIbpo = e.target.value;
+    
+    const order = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    const item = order?.items?.[0];
+    const designNo = item?.design_no || order?.design_no || '';
+    
+    const inspection = finalInspections.find(i => i.buyerOrderNo === selectedIbpo || i.designNo === designNo);
+
+    let updatedFields = {
+      ibpo: selectedIbpo,
+      slip_no: selectedIbpo ? `PS-${selectedIbpo}` : `PS-${Math.floor(100000 + Math.random() * 900000)}`,
+      design_no: designNo,
+      party_name: order ? order.party_name : '',
+      warp_lot: order ? (order.warp_lot || '') : '',
+      weft_lot: order ? (order.weft_lot || '') : '',
+      order_mtr_tole: item ? `${item.order_mtrs || ''} (Tol: ${item.tolerance_pct || '0'}%)` : '',
+      recived_mtr: inspection ? inspection.totalMetersInspected : '',
+      balance: inspection ? inspection.rejectedQuantity : ''
+    };
+
+    if (inspection && inspection.rolls && inspection.rolls.length > 0) {
+      const mappedItems = inspection.rolls.map(roll => ({
+        piece_no: roll.pieceNo || '',
+        lot_no: roll.lotNo || (order ? order.warp_lot || '' : ''),
+        loom_no: roll.loomNo || '',
+        pass_mtr: roll.meters || '',
+        bale_mtr: roll.meters || '',
+        design_no: designNo || roll.designNo || '',
+        color: roll.colorCheck || 'OK',
+        weight: roll.weight || '',
+        grade: roll.grade || 'A'
+      }));
+      setItems(mappedItems);
+    } else {
+      setItems([{ piece_no: '', lot_no: '', loom_no: '', pass_mtr: '', bale_mtr: '', design_no: '', color: '', weight: '', grade: 'A' }]);
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      ...updatedFields
+    }));
+  };
+
+  const handleDesignChange = (e) => {
+    const selectedDesignNo = e.target.value;
+    
+    const de = designs.find(d => d.design_no === selectedDesignNo);
+    const selectedIbpo = de ? de.ibpo_no : '';
+    
+    let order = buyerOrders.find(o => o.ibpo_number === selectedIbpo);
+    if (!order && selectedDesignNo) {
+      order = buyerOrders.find(o => o.items?.some(item => item.design_no === selectedDesignNo) || o.design_no === selectedDesignNo);
+    }
+    
+    const item = order?.items?.find(i => i.design_no === selectedDesignNo) || order?.items?.[0];
+    
+    const inspection = finalInspections.find(i => 
+      (selectedIbpo && i.buyerOrderNo === selectedIbpo) || 
+      i.designNo === selectedDesignNo
+    );
+
+    let updatedFields = {
+      design_no: selectedDesignNo,
+      ibpo: order ? order.ibpo_number : selectedIbpo,
+      slip_no: (order?.ibpo_number || selectedIbpo) ? `PS-${order?.ibpo_number || selectedIbpo}` : `PS-${Math.floor(100000 + Math.random() * 900000)}`,
+      party_name: order ? order.party_name : (de ? de.buyer_name : ''),
+      warp_lot: order ? (order.warp_lot || '') : '',
+      weft_lot: order ? (order.weft_lot || '') : '',
+      order_mtr_tole: item ? `${item.order_mtrs || ''} (Tol: ${item.tolerance_pct || '0'}%)` : '',
+      recived_mtr: inspection ? inspection.totalMetersInspected : '',
+      balance: inspection ? inspection.rejectedQuantity : ''
+    };
+
+    if (inspection && inspection.rolls && inspection.rolls.length > 0) {
+      const mappedItems = inspection.rolls.map(roll => ({
+        piece_no: roll.pieceNo || '',
+        lot_no: roll.lotNo || (order ? order.warp_lot || '' : ''),
+        loom_no: roll.loomNo || '',
+        pass_mtr: roll.meters || '',
+        bale_mtr: roll.meters || '',
+        design_no: selectedDesignNo || roll.designNo || '',
+        color: roll.colorCheck || 'OK',
+        weight: roll.weight || '',
+        grade: roll.grade || 'A'
+      }));
+      setItems(mappedItems);
+    } else {
+      setItems([{ piece_no: '', lot_no: '', loom_no: '', pass_mtr: '', bale_mtr: '', design_no: '', color: '', weight: '', grade: 'A' }]);
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      ...updatedFields
     }));
   };
 
@@ -403,7 +540,7 @@ export default function PackingSlip() {
   const exportPDF = () => {
     const doc = new jsPDF();
     doc.text("Packing Slips Report", 14, 15);
-    const tableColumn = ["Ref No", "Date", "Party Name", "Design No", "Total Meters", "Status"];
+    const tableColumn = ["Packing No", "Date", "Party Name", "Design No", "Total Meters", "Status"];
     const tableRows = [];
 
     filteredSlips.forEach(slip => {
@@ -428,7 +565,7 @@ export default function PackingSlip() {
 
   const exportExcel = () => {
     const data = filteredSlips.map(slip => ({
-      "Ref No": slip.slip_no,
+      "Packing No": slip.slip_no,
       "Date": slip.slip_date,
       "Party Name": slip.party_name,
       "Design No": slip.design_no,
@@ -481,14 +618,16 @@ export default function PackingSlip() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-primary)', padding: 0 }}
+              title="Go back"
+            >
+              <ArrowLeft size={22} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Packing Slip Details' : editingId ? 'Edit Packing Slip' : 'Add New Packing Slip / Bale Entry'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button type="submit" form="packingSlipForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Slip' : 'Save Slip'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -520,10 +659,7 @@ export default function PackingSlip() {
                   {/* Group 1: Packing Advice Headers */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Packing Slip Reference Information</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group">
-                      <label>Ref No *</label>
-                      <input className="form-control" name="slip_no" value={formData.slip_no} onChange={handleInputChange} required />
-                    </div>
+
                     <div className="form-group">
                       <label>Date *</label>
                       <input type="date" className="form-control" name="slip_date" value={formData.slip_date} onChange={handleInputChange} required />
@@ -704,8 +840,35 @@ export default function PackingSlip() {
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Technical & Lot Info</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
+                      <label>IBPO / Order No</label>
+                      <select 
+                        className="form-control" 
+                        name="ibpo" 
+                        value={formData.ibpo || ''} 
+                        onChange={handleIbpoChange}
+                      >
+                        <option value="">-- Select --</option>
+                        {Array.from(new Set(buyerOrders.map(o => o.ibpo_number).filter(Boolean))).map(ibpo => (
+                          <option key={ibpo} value={ibpo}>{ibpo}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
                       <label>Design No</label>
-                      <input className="form-control" name="design_no" value={formData.design_no} onChange={handleInputChange} />
+                      <select 
+                        className="form-control" 
+                        name="design_no" 
+                        value={formData.design_no || ''} 
+                        onChange={handleDesignChange}
+                      >
+                        <option value="">-- Select --</option>
+                        {Array.from(new Set([
+                          ...designs.map(d => d.design_no).filter(Boolean),
+                          formData.design_no
+                        ].filter(Boolean))).map(dNo => (
+                          <option key={dNo} value={dNo}>{dNo}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
                       <label>Warp Lot</label>
@@ -714,10 +877,6 @@ export default function PackingSlip() {
                     <div className="form-group">
                       <label>Weft Lot</label>
                       <input className="form-control" name="weft_lot" value={formData.weft_lot} onChange={handleInputChange} />
-                    </div>
-                    <div className="form-group">
-                      <label>IBPO / Order No</label>
-                      <input className="form-control" name="ibpo" value={formData.ibpo} onChange={handleInputChange} />
                     </div>
                     <div className="form-group">
                       <label>Order Mtr + Tole</label>
@@ -906,7 +1065,7 @@ export default function PackingSlip() {
                 <div id="items-section" className="animate-fade" style={{ marginBottom: 32 }}>
                   {/* Group 3: Split view for Despatch Detail Table & Right preview list */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Despatch Details & Bale Summary</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 24 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
                     {/* Left side: Despatch detail editor */}
                     <div>
@@ -921,7 +1080,7 @@ export default function PackingSlip() {
                               <th>Loom No</th>
                               <th>Pass Mtr</th>
                               <th>Bale Mtr</th>
-                              {!isReadOnly && <th style={{ width: 50, textAlign: 'center' }}></th>}
+                              {!isReadOnly && <th style={{ width: 80, textAlign: 'center' }}></th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -967,11 +1126,20 @@ export default function PackingSlip() {
                                   />
                                 </td>
                                 {!isReadOnly && (
-                                  <td style={{ textAlign: 'center' }}>
+                                  <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                    <button
+                                      type="button"
+                                      onClick={addItemRow}
+                                      style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginRight: 8 }}
+                                      title="Add Row"
+                                    >
+                                      <Plus size={16} />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => removeItemRow(index)}
                                       style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                      title="Remove Row"
                                     >
                                       <X size={16} />
                                     </button>
@@ -982,16 +1150,6 @@ export default function PackingSlip() {
                           </tbody>
                         </table>
                       </div>
-                      {!isReadOnly && (
-                        <button
-                          type="button"
-                          onClick={addItemRow}
-                          className="btn btn-secondary"
-                          style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontWeight: 600, cursor: 'pointer', marginTop: 12 }}
-                        >
-                          + Add Row
-                        </button>
-                      )}
                     </div>
 
                     {/* Right side: Bale summary preview */}
@@ -1069,6 +1227,18 @@ export default function PackingSlip() {
                       <label htmlFor="auto_weight" style={{ margin: 0, fontWeight: 600, cursor: 'pointer' }}>Enable Auto Weight Calculation (Calculated weight + packing weight)</label>
                     </div>
                   </div>
+                </div>
+
+                {/* Bottom Actions Row */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <X size={16} /> Close
+                  </button>
+                  {!isReadOnly && (
+                    <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Save size={16} /> {editingId ? 'Update Slip' : 'Save Slip'}
+                    </button>
+                  )}
                 </div>
 
               </fieldset>
@@ -1197,7 +1367,7 @@ export default function PackingSlip() {
           <input
             type="text"
             className="form-control"
-            placeholder="Search by Ref No, Design or Party..."
+            placeholder="Search by Packing No, Design or Party..."
             style={{ paddingLeft: 38, width: '100%', margin: 0 }}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -1238,7 +1408,7 @@ export default function PackingSlip() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Ref No</th>
+                  <th>Packing No</th>
                   <th>Date</th>
                   <th>Party Name</th>
                   <th>Design No</th>

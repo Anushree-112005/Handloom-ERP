@@ -117,64 +117,9 @@ export default function OperatorMaster() {
   const weavers = operators.filter(o => o.designation === 'Weaver').length;
   const supervisors = operators.filter(o => o.designation === 'Supervisor').length;
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      
-      {/* Header & Stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Users size={24} color="var(--primary)" />
-            Operator Master
-          </h3>
-          <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Manage your workforce and shift assignments</p>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <Activity size={24} style={{ color: '#4f46e5' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Operators</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalOperators}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <CheckCircle size={24} style={{ color: '#16a34a' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Staff</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{activeOperators}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <AlertTriangle size={24} style={{ color: '#d97706' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Weavers</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{weavers}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
-            <Settings size={24} style={{ color: '#dc2626' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Supervisors</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{supervisors}</div>
-          </div>
-        </div>
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -270,7 +215,69 @@ export default function OperatorMaster() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      
+      {/* Header & Stats */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 24, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Users size={24} color="var(--primary)" />
+            Operator Master
+          </h3>
+          <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Manage your workforce and shift assignments</p>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Activity size={24} style={{ color: '#4f46e5' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Operators</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{totalOperators}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <CheckCircle size={24} style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Active Staff</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{activeOperators}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fef3c7', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <AlertTriangle size={24} style={{ color: '#d97706' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Weavers</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{weavers}</div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+            <Settings size={24} style={{ color: '#dc2626' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Supervisors</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{supervisors}</div>
+          </div>
+        </div>
+      </div>
+
+
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <div>
@@ -368,7 +375,7 @@ export default function OperatorMaster() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }
