@@ -58,6 +58,8 @@ const mapBackendToFrontendShift = (item) => {
     half_day_hours: extra.half_day_hours !== undefined ? extra.half_day_hours : 4,
     color: extra.color || '#10B981',
     working_hours: extra.working_hours !== undefined ? extra.working_hours : 8.0,
+    employee_count: item.employee_count || 0,
+    status: item.is_active === false ? 'Inactive' : 'Active',
     description: item.description || ''
   };
 };
