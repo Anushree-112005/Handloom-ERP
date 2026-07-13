@@ -15,6 +15,7 @@ import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
+import DespatchForm from './pages/despatch/DespatchForm';
 import SalesInvoice from './pages/sales_invoice/SalesInvoice';
 import GoodsRelease from './pages/goods_release/GoodsRelease';
 import PackingSlip from './pages/packing/PackingSlip';
@@ -356,6 +357,9 @@ export default function App() {
         <Route path="sales-invoice" element={<SalesInvoice />} />
 
         <Route path="despatch" element={<DespatchPlanning />} />
+        <Route path="despatch/new" element={<DespatchForm />} />
+        <Route path="despatch/edit/:id" element={<DespatchForm />} />
+        <Route path="despatch/view/:id" element={<DespatchForm />} />
 
         <Route path="eway-bill" element={<EwayBill />} />
 
