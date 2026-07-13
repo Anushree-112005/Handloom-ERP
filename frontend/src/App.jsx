@@ -48,6 +48,7 @@ import CubeBookPage from './pages/cubebook/CubeBookPage';
 import HRModule from './pages/HR/HRModule';
 import PPCMultiModule from './pages/ppc/PPCMultiModule';
 import LiveDashboard from './pages/ppc/LiveDashboard';
+import ETACalculation from './pages/ppc/ETACalculation';
 
 // Fleet & Vehicle Management Imports
 import FleetDashboard from './pages/Vehicle management/FleetDashboard';
@@ -328,6 +329,7 @@ export default function App() {
 
         {/* Production Planning & Control (PPC) - Full 10 Module Structure */}
         <Route path="ppc/tracking/live-dashboard" element={<LiveDashboard />} />
+        <Route path="ppc/eta-engine" element={<ETACalculation />} />
         <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
 
         {/* LAB & Shade Management Routes */}

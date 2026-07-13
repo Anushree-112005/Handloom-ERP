@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Box, Download, CheckCircle, Printer, FileText, Package } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Box, Download, CheckCircle, Printer, FileText, Package, ArrowLeft } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { dyedYarnReceiptAPI, partyAPI, dyedYarnDeliveryAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
@@ -543,35 +543,19 @@ export default function DyedYarnReceived() {
         <div className="card" style={{ padding: 0, width: '100%', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', borderRadius: 12, overflow: 'hidden' }}>
           
           {/* Header Actions Row */}
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
               {isReadOnly ? 'View Receipt Details' : editingId ? 'Edit Receipt' : 'New Dyed Yarn Receipt'}
             </h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <X size={16} /> Close
-              </button>
-              
-              <button className="btn" onClick={() => setViewModalReceipt(form)} style={{ background: '#10b981', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Printer size={16} /> Print
-              </button>
-
-              {editingId && (
-                <button className="btn" onClick={(e) => handleDelete(editingId, form.inv_no, e)} style={{ background: '#f97316', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Trash2 size={16} /> Delete
-                </button>
-              )}
-
-              {!isReadOnly ? (
-                <button className="btn btn-primary" onClick={handleCreate} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}
-                </button>
-              ) : (
-                <button className="btn btn-primary" onClick={() => setIsReadOnly(false)} style={{ background: '#06b6d4', borderColor: '#06b6d4', display: 'flex', alignItems: 'center', gap: 8, color: '#fff' }}>
-                  <Edit2 size={16} /> Edit
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Single tab header indicator */}
@@ -893,6 +877,31 @@ export default function DyedYarnReceived() {
               </div>
 
             </fieldset>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              
+              <button type="button" className="btn" onClick={() => setViewModalReceipt(form)} style={{ background: '#10b981', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Printer size={16} /> Print
+              </button>
+
+              {editingId && (
+                <button type="button" className="btn" onClick={(e) => handleDelete(editingId, form.inv_no, e)} style={{ background: '#f97316', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Trash2 size={16} /> Delete
+                </button>
+              )}
+
+              {!isReadOnly ? (
+                <button type="button" className="btn btn-primary" onClick={handleCreate} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary" onClick={() => setIsReadOnly(false)} style={{ background: '#06b6d4', borderColor: '#06b6d4', display: 'flex', alignItems: 'center', gap: 8, color: '#fff' }}>
+                  <Edit2 size={16} /> Edit
+                </button>
+              )}
+            </div>
           </div>
 
         </div>

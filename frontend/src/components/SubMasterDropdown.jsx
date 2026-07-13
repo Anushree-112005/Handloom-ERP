@@ -20,6 +20,7 @@ export default function SubMasterDropdown({
   placeholder = '-- Select --',
   onKeyDown,
   filterFn,
+  allowCustom = true,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,9 +29,15 @@ export default function SubMasterDropdown({
   const [addingMode, setAddingMode] = useState(false);
   const [addingText, setAddingText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef(null);
 
   const withIdsList = options?.masters_with_ids?.[entity] || [];
+
+  // Reset highlighted index when dropdown is toggled or search term changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [isOpen, searchTerm]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -120,15 +127,73 @@ export default function SubMasterDropdown({
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (!isOpen || disabled) return;
+
+    // If in editing or adding mode, let those inputs handle key events
+    if (addingMode || editingId !== null) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      e.stopPropagation();
+      setHighlightedIndex(prev => {
+        if (filteredList.length === 0) return -1;
+        const next = prev + 1;
+        return next >= filteredList.length ? 0 : next;
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      e.stopPropagation();
+      setHighlightedIndex(prev => {
+        if (filteredList.length === 0) return -1;
+        const next = prev - 1;
+        return next < 0 ? filteredList.length - 1 : next;
+      });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (highlightedIndex >= 0 && highlightedIndex < filteredList.length) {
+        onChange(name, filteredList[highlightedIndex].name);
+        setIsOpen(false);
+      }
+    } else if (e.key === ' ') {
+      if (highlightedIndex >= 0 && highlightedIndex < filteredList.length) {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange(name, filteredList[highlightedIndex].name);
+        setIsOpen(false);
+      } else {
+        // If not navigating/highlighting, let the space key type a character but stop propagation
+        e.stopPropagation();
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <div className={label ? "form-group" : ""} ref={containerRef} style={{ position: 'relative', margin: label ? undefined : 0 }}>
+    <div
+      className={label ? "form-group" : ""}
+      ref={containerRef}
+      style={{ position: 'relative', margin: label ? undefined : 0 }}
+      onKeyDown={handleKeyDown}
+    >
       {label && <label>{label}{required ? ' *' : ''}</label>}
       
       {/* Dropdown Trigger */}
       <div
         className="form-control"
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        onKeyDown={onKeyDown}
+        onKeyDown={(e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            if (!disabled) setIsOpen(!isOpen);
+          } else if (onKeyDown) {
+            onKeyDown(e);
+          }
+        }}
         tabIndex={disabled ? -1 : 0}
         style={{
           display: 'flex',
@@ -152,6 +217,12 @@ export default function SubMasterDropdown({
       {/* Floating Dropdown Menu */}
       {isOpen && !disabled && (
         <div
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+              e.preventDefault();
+            }
+          }}
           style={{
             position: 'absolute',
             top: '100%',
@@ -168,6 +239,7 @@ export default function SubMasterDropdown({
         >
           {/* Search bar */}
           <input
+            autoFocus
             type="text"
             className="form-control"
             style={{
@@ -182,6 +254,12 @@ export default function SubMasterDropdown({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              const navKeys = ['ArrowDown', 'ArrowUp', 'Enter', 'Escape', ' '];
+              if (!navKeys.includes(e.key)) {
+                e.stopPropagation();
+              }
+            }}
           />
 
           {/* List items */}
@@ -191,163 +269,184 @@ export default function SubMasterDropdown({
                 No options found
               </div>
             ) : (
-              filteredList.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    if (editingId !== item.id) {
-                      onChange(name, item.name);
-                      setIsOpen(false);
-                    }
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    borderBottom: '1px solid #f3f4f6',
-                    background: value === item.name ? '#f3f4f6' : '#fff'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (value !== item.name) e.currentTarget.style.background = '#f9fafb';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (value !== item.name) e.currentTarget.style.background = '#fff';
-                  }}
-                >
-                  {editingId === item.id ? (
-                    <div style={{ display: 'flex', gap: '4px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        autoFocus
-                        className="form-control"
-                        style={{ flex: 1, height: '28px', fontSize: '13px', padding: '2px 6px' }}
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit(item.id);
-                          if (e.key === 'Escape') setEditingId(null);
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
-                        onClick={() => handleSaveEdit(item.id)}
-                      >
-                        <CheckCircle size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
-                        onClick={() => setEditingId(null)}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <span style={{ fontWeight: value === item.name ? 600 : 400 }}>{item.name}</span>
-                      <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+              filteredList.map((item, index) => {
+                const isHighlighted = index === highlightedIndex;
+                return (
+                  <div
+                    key={item.id}
+                    ref={el => {
+                      if (el && isHighlighted) {
+                        el.scrollIntoView({ block: 'nearest' });
+                      }
+                    }}
+                    onClick={() => {
+                      if (editingId !== item.id) {
+                        onChange(name, item.name);
+                        setIsOpen(false);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      borderBottom: '1px solid #f3f4f6',
+                      background: isHighlighted ? '#e0e7ff' : (value === item.name ? '#f3f4f6' : '#fff')
+                    }}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    onMouseLeave={() => setHighlightedIndex(-1)}
+                  >
+                    {editingId === item.id ? (
+                      <div style={{ display: 'flex', gap: '4px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          autoFocus
+                          className="form-control"
+                          style={{ flex: 1, height: '28px', fontSize: '13px', padding: '2px 6px' }}
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter') handleSaveEdit(item.id);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
+                        />
                         <button
                           type="button"
-                          title="Edit option"
-                          onClick={() => {
-                            setEditingId(item.id);
-                            setEditingText(item.name);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: '2px',
-                            cursor: 'pointer',
-                            color: 'var(--primary)',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}
+                          className="btn btn-primary"
+                          style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
+                          onClick={() => handleSaveEdit(item.id)}
                         >
-                          <Edit2 size={13} />
+                          <CheckCircle size={14} />
                         </button>
-                        <button
+                         <button
                           type="button"
-                          title="Delete option"
-                          onClick={() => handleDelete(item)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: '2px',
-                            cursor: 'pointer',
-                            color: '#ef4444',
-                            display: 'flex',
-                            alignItems: 'center'
+                          className="btn btn-secondary"
+                          style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTimeout(() => setEditingId(null), 0);
                           }}
                         >
-                          <Trash2 size={13} />
+                          <X size={14} />
                         </button>
                       </div>
-                    </>
-                  )}
-                </div>
-              ))
+                    ) : (
+                      <>
+                        <span style={{ fontWeight: value === item.name ? 600 : 400 }}>{item.name}</span>
+                        {allowCustom && (
+                          <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                            <button
+                              type="button"
+                              title="Edit option"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const itemId = item.id;
+                                const itemName = item.name;
+                                setTimeout(() => {
+                                  setEditingId(itemId);
+                                  setEditingText(itemName);
+                                }, 0);
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '2px',
+                                cursor: 'pointer',
+                                color: 'var(--primary)',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              title="Delete option"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTimeout(() => handleDelete(item), 0);
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '2px',
+                                cursor: 'pointer',
+                                color: '#ef4444',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 
           {/* Add custom action */}
-          {addingMode ? (
-            <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <input
-                  autoFocus
-                  className="form-control"
-                  style={{ flex: 1, height: '28px', fontSize: '13px', padding: '2px 6px' }}
-                  placeholder="New custom option..."
-                  value={addingText}
-                  onChange={(e) => setAddingText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveNew();
-                    if (e.key === 'Escape') setAddingMode(false);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
-                  onClick={handleSaveNew}
-                >
-                  <CheckCircle size={14} />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
-                  onClick={() => setAddingMode(false)}
-                >
-                  <X size={14} />
-                </button>
+          {allowCustom && (
+            addingMode ? (
+              <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <input
+                    autoFocus
+                    className="form-control"
+                    style={{ flex: 1, height: '28px', fontSize: '13px', padding: '2px 6px' }}
+                    placeholder="New custom option..."
+                    value={addingText}
+                    onChange={(e) => setAddingText(e.target.value)}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter') handleSaveNew();
+                      if (e.key === 'Escape') setAddingMode(false);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
+                    onClick={handleSaveNew}
+                  >
+                    <CheckCircle size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '0 6px', height: '28px', display: 'flex', alignItems: 'center' }}
+                    onClick={() => setAddingMode(false)}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setAddingMode(true);
-                setAddingText('');
-              }}
-              style={{
-                padding: '8px 12px',
-                borderTop: '1px solid var(--border)',
-                color: 'var(--primary)',
-                fontWeight: 'bold',
-                fontSize: '13px',
-                cursor: 'pointer',
-                textAlign: 'center',
-                background: '#f9fafb'
-              }}
-            >
-              + Add Custom...
-            </div>
+            ) : (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAddingMode(true);
+                  setAddingText('');
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderTop: '1px solid var(--border)',
+                  color: 'var(--primary)',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  background: '#f9fafb'
+                }}
+              >
+                + Add Custom...
+              </div>
+            )
           )}
         </div>
       )}

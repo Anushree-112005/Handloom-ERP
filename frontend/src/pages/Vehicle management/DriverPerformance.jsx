@@ -13,8 +13,8 @@ import {
 import api from '../../services/api';
 import { showError, showSuccess } from '../../utils/notifications';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const DriverPerformance = () => {
   const [data, setData] = useState({ summary: {}, details: [] });
@@ -138,7 +138,7 @@ const DriverPerformance = () => {
       entry.status
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       head: headers,
       body: tableData.length > 0 ? tableData : [['No data', '-', '-', '-', '-', '-', '-', '-', '-']],
       startY: 40,

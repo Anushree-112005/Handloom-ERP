@@ -125,63 +125,9 @@ export default function LostMetersCalc() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Calculator style={{ color: '#8b5cf6' }} /> Lost Meters Calculation
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Translate downtime into exact production loss and delay metrics</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Calculator size={24} style={{ color: '#8b5cf6' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <TrendingDown size={24} style={{ color: '#ef4444' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Lost Meters</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_1?.replace(' m', '')) || 0), 0).toFixed(1)} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>m</span>
-              </div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <DollarSign size={24} style={{ color: '#f97316' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Value Lost</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                ₹{records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2?.replace('₹', '')) || 0), 0).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -242,7 +188,68 @@ export default function LostMetersCalc() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Calculator style={{ color: '#8b5cf6' }} /> Lost Meters Calculation
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Translate downtime into exact production loss and delay metrics</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Calculator size={24} style={{ color: '#8b5cf6' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <TrendingDown size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Lost Meters</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_1?.replace(' m', '')) || 0), 0).toFixed(1)} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>m</span>
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ffedd5', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <DollarSign size={24} style={{ color: '#f97316' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Value Lost</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                ₹{records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2?.replace('₹', '')) || 0), 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Calculated Impacts ({filteredRecords.length})</h3>
@@ -314,7 +321,7 @@ export default function LostMetersCalc() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

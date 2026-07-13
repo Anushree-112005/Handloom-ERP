@@ -126,7 +126,21 @@ async def list_releases(
 
 @router.post("/", response_model=GoodsReleaseOut, status_code=201)
 async def create_release(release_data: GoodsReleaseCreate, db: AsyncSession = Depends(get_db)):
-    if release_data.gra_no:
+    # Auto-generate GRA No if not provided
+    if not release_data.gra_no:
+        q = select(GoodsRelease.gra_no).where(GoodsRelease.gra_no.like("GRA-%"))
+        res = await db.execute(q)
+        existing_nos = res.scalars().all()
+        max_num = 0
+        for no in existing_nos:
+            try:
+                num = int(no.split("-")[-1])
+                if num > max_num:
+                    max_num = num
+            except (ValueError, IndexError):
+                continue
+        release_data.gra_no = f"GRA-{max_num + 1:04d}"
+    else:
         existing = await db.execute(
             select(GoodsRelease).where(GoodsRelease.gra_no == release_data.gra_no)
         )

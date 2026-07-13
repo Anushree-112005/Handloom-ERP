@@ -20,6 +20,7 @@ class FabricDyeingPO(Base):
     sales_order_no = Column(String(50))
     production_order_no = Column(String(50))
     buyer_order_no = Column(String(50))
+    fabric_receipt_id = Column(String(50))
     department = Column(String(100))
 
     taxable_value = Column(Numeric(12, 2), default=0)

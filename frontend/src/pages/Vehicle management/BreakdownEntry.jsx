@@ -218,7 +218,7 @@ export default function BreakdownEntry() {
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 24 }}>
-        <div className="card stat-card" onClick={() => setStatusFilter('All')} style={{ cursor: 'pointer', border: statusFilter === 'All' ? '2px solid var(--primary)' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('All')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
             <AlertTriangle size={24} />
           </div>
@@ -228,7 +228,7 @@ export default function BreakdownEntry() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => setStatusFilter('Reported')} style={{ cursor: 'pointer', border: statusFilter === 'Reported' ? '2px solid #f59e0b' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('Reported')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
             <AlertTriangle size={24} />
           </div>
@@ -238,7 +238,7 @@ export default function BreakdownEntry() {
           </div>
         </div>
 
-        <div className="card stat-card" onClick={() => setStatusFilter('Resolved')} style={{ cursor: 'pointer', border: statusFilter === 'Resolved' ? '2px solid #10b981' : '1px solid transparent' }}>
+        <div className="card stat-card" onClick={() => setStatusFilter('Resolved')} style={{ cursor: 'pointer' }}>
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
             <AlertTriangle size={24} />
           </div>
@@ -316,7 +316,7 @@ export default function BreakdownEntry() {
                           <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={() => handleOpenForm(e)}>
                             <Edit2 size={16} />
                           </button>
-                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(e) => handleDelete(e.id, e)}>
+                          <button className="btn btn-secondary" style={{ padding: '6px' }} onClick={(evt) => handleDelete(e.id, evt)}>
                             <Trash2 size={16} color="#ef4444" />
                           </button>
                         </div>

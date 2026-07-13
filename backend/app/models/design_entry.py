@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, func
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, func, Text
 from app.core.database import Base
 
 class DesignEntry(Base):
@@ -41,10 +41,10 @@ class DesignEntry(Base):
     weight_grm = Column(Float, default=0.0)
     dyeing_loss_pct = Column(Float, default=0.0)
     
-    yarn_details = Column(String(4000), nullable=True)
-    fabric_design_details = Column(String(4000), nullable=True)
-    warp_summary = Column(String(4000), nullable=True)
-    weft_summary = Column(String(4000), nullable=True)
+    yarn_details = Column(Text, nullable=True)
+    fabric_design_details = Column(Text, nullable=True)
+    warp_summary = Column(Text, nullable=True)
+    weft_summary = Column(Text, nullable=True)
     image_path = Column(String(500), nullable=True)
     book_no = Column(String(100), nullable=True)
     page_no = Column(String(100), nullable=True)
