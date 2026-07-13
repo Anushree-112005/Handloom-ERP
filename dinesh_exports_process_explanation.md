@@ -35,7 +35,10 @@ each stage.
   STEP 23 : Processing PO         → (Optional) Printing/finishing contract
   STEP 24 : Final Inspection      → Final quality audit
   STEP 25 : Packing Slip          → Pack fabric into bales
-  STEP 26 : Sales Invoice         → Bill the buyer
+  STEP 26 : Goods Release (GRA)   → Warehouse release authorization
+  STEP 27 : Sales Invoice         → Bill the buyer
+  STEP 28 : E-Way Bill            → Register transportation transit permit
+  STEP 29 : Despatch Planning     → Schedule deliveries and transit route
 
 ---
 
@@ -189,12 +192,30 @@ each stage.
 * **Menu Path**: ORDER MANAGEMENT → Packing Slip
 * **Purpose**: Pack fabric rolls.
 * **Explanation**: Group rolls into bales, recording net weight, gross weight (with packing material), bale numbers, and total meters per bale.
-* **Next Step Link**: Generates packing lists required for the sales invoice.
+* **Next Step Link**: Packed bales are ready for warehouse release. Feeds into Goods Release Advice (GRA).
 
-### STEP 26: Sales Invoice
-* **Menu Path**: INVOICE MANAGEMENT → Sales Invoice
+### STEP 26: Goods Release (GRA)
+* **Menu Path**: SALES & DISPATCH → Goods Release (GRA)
+* **Purpose**: Warehouse release authorization.
+* **Explanation**: Internal authorization for the warehouse to release packed bales to the truck driver, capturing transporter and vehicle/LR details.
+* **Next Step Link**: Once the goods are physically released, feeds into Sales Invoice.
+
+### STEP 27: Sales Invoice
+* **Menu Path**: SALES & DISPATCH → Sales Invoice
 * **Purpose**: Bill the buyer.
-* **Explanation**: Final commercial document listing fabric meters, unit rate, applicable tax rates (CGST+SGST for intra-state, IGST for inter-state), and shipping details.
+* **Explanation**: Final commercial document listing fabric meters, unit rate, applicable tax rates, and shipping details.
+* **Next Step Link**: If invoice amount exceeds ₹50,000, feeds into E-Way Bill registration.
+
+### STEP 28: E-Way Bill
+* **Menu Path**: SALES & DISPATCH → E-Way Bill
+* **Purpose**: Register transportation transit permit.
+* **Explanation**: Statutory government document required for the movement of goods, generated from Sales Invoice and GRA details.
+* **Next Step Link**: Feeds into Despatch Planning.
+
+### STEP 29: Despatch Planning
+* **Menu Path**: SALES & DISPATCH → Despatch
+* **Purpose**: Schedule deliveries and transit route.
+* **Explanation**: Plan delivery schedules for the packed meters and track tolerance margins.
 * **Next Step Link**: Closes the buyer order lifecycle.
 
 ---
