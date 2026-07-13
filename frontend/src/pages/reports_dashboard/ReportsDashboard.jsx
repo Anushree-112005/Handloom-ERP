@@ -18,7 +18,7 @@ import {
   buyerOrderAPI, salesInvoiceAPI, goodsReleaseAPI, packingSlipAPI, 
   yarnPurchaseOrderAPI, clothInwardAPI, clothDeliveryAPI, finishedFabricAPI,
   ppcAPI, warpDeliveryAPI, dyedYarnDeliveryAPI, yarnInwardAPI, 
-  greyYarnDeliveryAPI, onTableCheckingAPI, dashboardAPI
+  greyYarnDeliveryAPI, onTableCheckingAPI, dashboardAPI, partyAPI
 } from '../../services/api';
 
 // ==========================================
@@ -424,11 +424,61 @@ const REPORT_CATEGORIES = [
 export default function ReportsDashboard() {
   const [reportsData, setReportsData] = useState(MOCK_REPORTS_DATA);
   const [stats, setStats] = useState({});
+  const [parties, setParties] = useState([]);
 
   useEffect(() => {
-    dashboardAPI.stats()
-      .then((r) => setStats(r.data || {}))
-      .catch(() => {});
+    const fetchAllStats = async () => {
+      try {
+        const [dashRes, yarnRes, clothRes, packRes, invoiceRes, graRes, partyRes] = await Promise.allSettled([
+          dashboardAPI.stats(),
+          yarnInwardAPI.list(),
+          clothInwardAPI.list(),
+          packingSlipAPI.list(),
+          salesInvoiceAPI.list(),
+          goodsReleaseAPI.list(),
+          partyAPI.list()
+        ]);
+
+        const dash = dashRes.status === 'fulfilled' ? (dashRes.value.data || {}) : {};
+        const yarnList = yarnRes.status === 'fulfilled' ? (yarnRes.value.data || []) : [];
+        const clothList = clothRes.status === 'fulfilled' ? (clothRes.value.data || []) : [];
+        const packList = packRes.status === 'fulfilled' ? (packRes.value.data || []) : [];
+        const invList = invoiceRes.status === 'fulfilled' ? (invoiceRes.value.data || []) : [];
+        const graList = graRes.status === 'fulfilled' ? (graRes.value.data || []) : [];
+        const partyList = partyRes.status === 'fulfilled' ? (partyRes.value.data || []) : [];
+
+        // Compute real totals
+        const totalYarnKgs = yarnList.reduce((s, y) => s + (Number(y.received_kgs) || Number(y.total_qty) || 0), 0);
+        const totalClothMtrs = clothList.reduce((s, c) => s + (Number(c.total_meters) || 0), 0);
+        const totalPackedMtrs = packList.reduce((s, p) => s + (Number(p.total_meters) || 0), 0);
+        const totalSalesAmount = invList.reduce((s, i) => s + (Number(i.net_amount) || Number(i.grand_total) || 0), 0);
+        const pendingGra = graList.filter(g => g.status !== 'Delivered' && g.status !== 'Completed').length;
+        const totalGra = graList.length;
+
+        // Extract unique party names for dropdown
+        const uniqueParties = Array.from(new Set(
+          partyList.map(p => p.name || p.company_name || p.business_name).filter(Boolean)
+        )).sort();
+        setParties(uniqueParties);
+
+        setStats({
+          ...dash,
+          real_total_orders: dash.total_buyer_orders || 0,
+          real_pending_dispatch: pendingGra || totalGra || 0,
+          real_production_mtrs: totalClothMtrs,
+          real_current_stock_mtrs: totalPackedMtrs,
+          real_yarn_stock_kgs: totalYarnKgs,
+          real_sales_amount: totalSalesAmount,
+          real_total_invoices: invList.length,
+          real_cloth_entries: clothList.length,
+          real_yarn_entries: yarnList.length,
+          real_packing_entries: packList.length,
+        });
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    };
+    fetchAllStats();
   }, []);
 
   // Page states
@@ -558,13 +608,13 @@ export default function ReportsDashboard() {
         else if (activeReportId === 'cloth_inward') {
           const res = await clothInwardAPI.list();
           newRows = (res.data || []).map(c => ({
-            inwardNo: c.inward_no,
-            date: c.inward_date ? new Date(c.inward_date).toLocaleDateString() : '-',
+            inwardNo: c.ref_no || '-',
+            date: c.inw_date ? new Date(c.inw_date).toLocaleDateString('en-IN') : '-',
             loomNo: c.loom_no || '-',
-            quality: c.quality || '-',
-            rolls: c.total_rolls || 0,
-            mtrs: c.total_qty || 0,
-            status: c.status || 'Active'
+            quality: c.const_fabric_type || c.design_no || '-',
+            rolls: c.total_pieces || 0,
+            mtrs: Number(c.total_meters) || 0,
+            status: c.status || 'Received'
           }));
           fetched = true;
         }
@@ -638,45 +688,127 @@ export default function ReportsDashboard() {
           }));
           fetched = true;
         }
-        else if (activeReportId === 'yarn_stock' || activeReportId === 'yarn_consumption' || activeReportId === 'stock_summary' || activeReportId === 'material_consumption' || activeReportId === 'inv_aging' || activeReportId === 'warehouse_stock') {
+        else if (activeReportId === 'yarn_stock') {
+          const res = await yarnInwardAPI.list();
+          // Expand items from each inward entry
+          const allItems = [];
+          for (const a of (res.data || [])) {
+            const items = a.items || [];
+            if (items.length > 0) {
+              for (const item of items) {
+                allItems.push({
+                  yarnType: item.yarn_count || 'Unknown',
+                  count: item.yarn_count || '-',
+                  brand: item.mill_name || a.received_from || '-',
+                  inward: Number(item.kgs) || 0,
+                  consumed: 0,
+                  balance: Number(item.kgs) || 0,
+                  val: Number(item.amount) || 0,
+                  date: a.inward_date ? new Date(a.inward_date).toLocaleDateString('en-IN') : '-',
+                  loomNo: '-',
+                  warpLot: a.ref_no || '-',
+                  weftLot: a.bill_no || '-',
+                  consumedQty: 0,
+                  waste: 0,
+                  supplier: a.received_from || '-',
+                  status: a.status || 'Received'
+                });
+              }
+            } else {
+              // Header-only row fallback
+              allItems.push({
+                yarnType: a.cone_type || '-',
+                count: a.cone_type || '-',
+                brand: a.received_from || '-',
+                inward: Number(a.received_kgs) || 0,
+                consumed: 0,
+                balance: Number(a.received_kgs) || 0,
+                val: Number(a.net_amount) || 0,
+                date: a.inward_date ? new Date(a.inward_date).toLocaleDateString('en-IN') : '-',
+                loomNo: '-',
+                warpLot: a.ref_no || '-',
+                weftLot: a.bill_no || '-',
+                consumedQty: 0,
+                waste: 0,
+                supplier: a.received_from || '-',
+                status: a.status || 'Received'
+              });
+            }
+          }
+          newRows = allItems;
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_consumption') {
           const res = await yarnInwardAPI.list();
           newRows = (res.data || []).map(a => ({
-            yarnType: a.quality || 'Cotton Combed',
-            count: '40s Combed',
-            brand: a.party_name || 'Mani Spinners',
-            inward: a.total_qty || 5000,
-            consumed: (a.total_qty || 5000) * 0.8,
-            balance: (a.total_qty || 5000) * 0.2,
-            val: a.grand_total || 24500,
-            // For consumption fields
-            date: a.inward_date ? new Date(a.inward_date).toLocaleDateString() : '-',
-            loomNo: 'Loom-01',
-            warpLot: a.inward_no || 'INW-01',
-            weftLot: a.invoice_no || 'INV-01',
-            consumedQty: a.total_qty || 5000,
-            waste: (a.total_qty || 5000) * 0.02,
-            // For summary/aging/warehouse fields
-            itemCode: a.inward_no || 'ITEM-01',
-            itemName: a.quality || 'Cotton Combed',
-            category: 'Yarn',
-            uom: 'KGS',
-            currentQty: a.total_qty || 5000,
-            reorder: 1000,
-            age0_30: a.total_qty || 5000,
-            age31_90: 0,
-            age91_180: 0,
-            age180plus: 0,
-            warehouse: 'Warehouse A',
-            rackNo: 'Rack 1',
-            binNo: 'Bin 1',
-            available: a.total_qty || 5000,
-            reserved: 0,
-            total: a.total_qty || 5000,
-            qty: a.total_qty || 5000,
-            slipNo: a.inward_no || 'SLIP-01',
-            dept: 'Weaving',
-            user: a.party_name || 'Admin'
+            date: a.inward_date ? new Date(a.inward_date).toLocaleDateString('en-IN') : '-',
+            loomNo: '-',
+            warpLot: a.ref_no || '-',
+            weftLot: a.bill_no || '-',
+            consumed: Number(a.received_kgs) || 0,
+            waste: 0
           }));
+          fetched = true;
+        }
+        else if (activeReportId === 'stock_summary' || activeReportId === 'material_consumption' || activeReportId === 'inv_aging' || activeReportId === 'warehouse_stock') {
+          const res = await yarnInwardAPI.list();
+          const allItems = [];
+          for (const a of (res.data || [])) {
+            const items = a.items || [];
+            if (items.length > 0) {
+              for (const item of items) {
+                allItems.push({
+                  itemCode: a.ref_no || '-',
+                  itemName: item.yarn_count || a.cone_type || '-',
+                  category: 'Yarn',
+                  uom: 'KGS',
+                  currentQty: Number(item.kgs) || 0,
+                  reorder: 1000,
+                  val: Number(item.amount) || 0,
+                  // For consumption
+                  date: a.inward_date ? new Date(a.inward_date).toLocaleDateString('en-IN') : '-',
+                  slipNo: a.ref_no || '-',
+                  dept: 'Weaving',
+                  user: a.received_from || '-',
+                  qty: Number(item.kgs) || 0,
+                  // For aging
+                  age0_30: Number(item.kgs) || 0,
+                  age31_90: 0,
+                  age91_180: 0,
+                  age180plus: 0,
+                  // For warehouse
+                  warehouse: a.stock_godown || 'Main Godown',
+                  rackNo: '-',
+                  binNo: item.lot_no || '-',
+                  available: Number(item.kgs) || 0,
+                  reserved: 0,
+                  total: Number(item.kgs) || 0
+                });
+              }
+            } else {
+              allItems.push({
+                itemCode: a.ref_no || '-',
+                itemName: a.cone_type || '-',
+                category: 'Yarn',
+                uom: 'KGS',
+                currentQty: Number(a.received_kgs) || 0,
+                reorder: 1000,
+                val: Number(a.net_amount) || 0,
+                date: a.inward_date ? new Date(a.inward_date).toLocaleDateString('en-IN') : '-',
+                slipNo: a.ref_no || '-',
+                dept: 'Weaving',
+                user: a.received_from || '-',
+                qty: Number(a.received_kgs) || 0,
+                age0_30: Number(a.received_kgs) || 0,
+                age31_90: 0, age91_180: 0, age180plus: 0,
+                warehouse: a.stock_godown || 'Main Godown',
+                rackNo: '-', binNo: '-',
+                available: Number(a.received_kgs) || 0,
+                reserved: 0, total: Number(a.received_kgs) || 0
+              });
+            }
+          }
+          newRows = allItems;
           fetched = true;
         }
         else if (activeReportId === 'yarn_delivery') {
@@ -1153,11 +1285,11 @@ export default function ReportsDashboard() {
           </div>
           <div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {(stats.total_buyer_orders !== undefined ? stats.total_buyer_orders : 1250).toLocaleString()}
+              {(stats.real_total_orders || stats.total_buyer_orders || 0).toLocaleString()}
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <TrendingUp size={14} style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>+12%</span>
+              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>orders</span>
               <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>this mo</span>
             </div>
           </div>
@@ -1177,12 +1309,12 @@ export default function ReportsDashboard() {
           </div>
           <div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {(stats.total_gra !== undefined ? stats.total_gra : 84).toLocaleString()}
+              {(stats.real_pending_dispatch || stats.total_gra || 0).toLocaleString()}
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <TrendingDown size={14} style={{ color: '#ef4444' }} />
-              <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700 }}>-5%</span>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>vs yesterday</span>
+              <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700 }}>pending</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>dispatches</span>
             </div>
           </div>
           <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '24px' }}>
@@ -1200,12 +1332,12 @@ export default function ReportsDashboard() {
           </div>
           <div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {(stats.vendor_inward_rolls !== undefined ? (stats.vendor_inward_rolls * 245) : 2450).toLocaleString()} m
+              {(stats.real_production_mtrs || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} m
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <TrendingUp size={14} style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>+8%</span>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>avg efficiency</span>
+              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>{stats.real_cloth_entries || 0} entries</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>cloth inward</span>
             </div>
           </div>
           <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '24px' }}>
@@ -1223,12 +1355,12 @@ export default function ReportsDashboard() {
           </div>
           <div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {(stats.total_qty_meters !== undefined ? (stats.total_qty_meters * 3) : 45800).toLocaleString()} m
+              {(stats.real_current_stock_mtrs || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} m
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <TrendingUp size={14} style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>+3%</span>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>inventory aging</span>
+              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>{(stats.real_yarn_stock_kgs || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} kg</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>yarn stock</span>
             </div>
           </div>
           <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '24px' }}>
@@ -1246,12 +1378,12 @@ export default function ReportsDashboard() {
           </div>
           <div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              ₹{stats.total_invoices !== undefined ? (stats.total_invoices * 1.48).toFixed(1) + 'M' : '14.8M'}
+              ₹{stats.real_sales_amount !== undefined ? (stats.real_sales_amount >= 100000 ? (stats.real_sales_amount / 100000).toFixed(1) + 'L' : stats.real_sales_amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })) : '0'}
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <TrendingUp size={14} style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>+18%</span>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>target achieved</span>
+              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>{stats.real_total_invoices || 0} invoices</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>total billed</span>
             </div>
           </div>
           <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '24px' }}>
@@ -1262,19 +1394,19 @@ export default function ReportsDashboard() {
         {/* Card 6: Pending Payments */}
         <div className="card stat-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>Pending Pay</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(220, 38, 38, 0.1)', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Users size={16} />
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>Packing Slips</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={16} />
             </div>
           </div>
           <div>
             <h3 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              ₹{stats.total_gra !== undefined ? (stats.total_gra * 0.24).toFixed(1) + 'M' : '2.4M'}
+              {(stats.real_packing_entries || 0).toLocaleString()}
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
               <TrendingDown size={14} style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>-15%</span>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>overdue reduction</span>
+              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>{(stats.real_yarn_entries || 0)} yarn</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>inward entries</span>
             </div>
           </div>
           <svg style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '24px' }}>
@@ -1329,15 +1461,9 @@ export default function ReportsDashboard() {
               onChange={e => setSelectedParty(e.target.value)}
             >
               <option value="All">All Parties</option>
-              <option value="Reliance Retail">Reliance Retail</option>
-              <option value="Birla Fashion">Birla Fashion</option>
-              <option value="Dinesh Fabrics">Dinesh Fabrics</option>
-              <option value="Raymond Ltd">Raymond Ltd</option>
-              <option value="Standard Weaving">Standard Weaving</option>
-              <option value="Arvind Mills">Arvind Mills</option>
-              <option value="Vardhman Spinning">Vardhman Spinning</option>
-              <option value="KPR Mills">KPR Mills</option>
-              <option value="Birla Acrylic">Birla Acrylic</option>
+              {parties.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
             </select>
           </div>
 
@@ -1381,9 +1507,13 @@ export default function ReportsDashboard() {
               onChange={e => setSelectedFabric(e.target.value)}
             >
               <option value="All">All Fabrics</option>
-              <option value="Cotton">Cotton Base</option>
-              <option value="Polyester">Polyester Blend</option>
-              <option value="Viscose">Viscose Satin</option>
+              {Array.from(new Set(
+                reportObj.rows
+                  .map(r => r.fabricType || r.quality || r.yarnType || r.itemName || '')
+                  .filter(Boolean)
+              )).map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
             </select>
           </div>
 

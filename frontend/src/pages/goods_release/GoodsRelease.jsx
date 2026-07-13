@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ClipboardList, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
-import { goodsReleaseAPI, dropdownAPI, partyAPI, subMasterAPI } from '../../services/api';
+import { goodsReleaseAPI, dropdownAPI, partyAPI, subMasterAPI, packingSlipAPI } from '../../services/api';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -31,6 +31,9 @@ export default function GoodsRelease() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  // Packing Slips for dropdown
+  const [packingSlips, setPackingSlips] = useState([]);
+
   // Dropdown options
   const [options, setOptions] = useState({
     agents: [],
@@ -42,6 +45,7 @@ export default function GoodsRelease() {
 
   // Initial Form State matching first image
   const initialForm = {
+    packing_no_ref: '',
     gra_no: '',
     gra_date: new Date().toISOString().split('T')[0],
     inv_mode: 'Regular',
@@ -134,7 +138,17 @@ export default function GoodsRelease() {
   useEffect(() => {
     fetchReleases();
     fetchOptions();
+    fetchPackingSlips();
   }, []);
+
+  const fetchPackingSlips = async () => {
+    try {
+      const { data } = await packingSlipAPI.list();
+      setPackingSlips(data || []);
+    } catch (err) {
+      console.error('Error fetching packing slips:', err);
+    }
+  };
 
   const fetchReleases = async () => {
     try {
@@ -199,6 +213,51 @@ export default function GoodsRelease() {
     } catch (err) {
       console.error("Error setting party fields:", err);
       setFormData(prev => ({ ...prev, party_name: partyName }));
+    }
+  };
+
+  // Auto-fill from selected Packing Slip
+  const handlePackingSlipSelect = async (slipNo) => {
+    if (!slipNo) return;
+    const slip = packingSlips.find(s => s.slip_no === slipNo);
+    if (!slip) return;
+
+    // Auto-fill party and design
+    await handlePartyChange(slip.party_name || '');
+    setFormData(prev => ({
+      ...prev,
+      packing_no_ref: slipNo,
+    }));
+
+    // Populate items from bale entries of this slip
+    try {
+      const { data: slipDetail } = await packingSlipAPI.get(slip.id);
+      const bales = slipDetail?.bale_entries || slipDetail?.items || [];
+      if (bales.length > 0) {
+        const newItems = bales.map(b => ({
+          design_no: b.design_no || slipDetail.design_no || '',
+          color: b.color || b.shade || '',
+          bale_no: b.bale_no || String(b.sl_no || ''),
+          packing_slip_no: slipNo,
+          meters: b.meters || b.net_mtr || b.length || '',
+          rate: '',
+          amount: 0
+        }));
+        setItems(newItems);
+      } else {
+        // Fallback: single row with slip-level data
+        setItems([{
+          design_no: slipDetail.design_no || '',
+          color: '',
+          bale_no: '',
+          packing_slip_no: slipNo,
+          meters: Number(slipDetail.total_meters) || '',
+          rate: '',
+          amount: 0
+        }]);
+      }
+    } catch (err) {
+      console.error('Error fetching packing slip detail:', err);
     }
   };
 
@@ -558,11 +617,6 @@ export default function GoodsRelease() {
     e.preventDefault();
     if (isReadOnly) return;
 
-    if (!formData.gra_no) {
-      alert("Please enter GRA No");
-      return;
-    }
-
     const extra = {
       inv_mode: formData.inv_mode,
       bale_type: formData.bale_type,
@@ -716,34 +770,18 @@ export default function GoodsRelease() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View GRA Details' : editingId ? 'Edit Goods Release Advice' : 'Add New Goods Release Advice'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button type="submit" form="goodsReleaseForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Advice' : 'Save Advice'}</button>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'GRA Info' }, { id: 'location', label: 'Party & Destinations' }, { id: 'items', label: 'Despatch Grid' }, { id: 'logistics', label: 'Summary & Logistics' }].map(tab => (
-              <button 
-                type="button"
-                key={tab.id} onClick={() => {
-                  setActiveTab(tab.id);
-                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Header with back arrow */}
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-secondary)' }}>
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontWeight: 600, fontSize: 13 }}
+            >
+              <ArrowLeft size={16} /> Back
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {isReadOnly ? 'View GRA Details' : editingId ? 'Edit Goods Release Advice' : 'Add New Goods Release Advice'}
+            </h2>
           </div>
 
           <div style={{ padding: 32, background: '#fff' }}>
@@ -755,8 +793,17 @@ export default function GoodsRelease() {
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Goods Release Advice Basic Info</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
-                      <label>GRA No *</label>
-                      <input className="form-control" name="gra_no" value={formData.gra_no} onChange={handleInputChange} required />
+                      <label>Packing No</label>
+                      <select
+                        className="form-control"
+                        value={formData.packing_no_ref || ''}
+                        onChange={e => handlePackingSlipSelect(e.target.value)}
+                      >
+                        <option value="">-- Select Packing No --</option>
+                        {packingSlips.map(s => (
+                          <option key={s.id} value={s.slip_no}>{s.slip_no}{s.party_name ? ` (${s.party_name})` : ''}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="form-group">
                       <label>GRA Date *</label>
@@ -1237,6 +1284,18 @@ export default function GoodsRelease() {
 
               </fieldset>
             </form>
+
+            {/* Bottom-right action footer */}
+            {!isReadOnly && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)', marginTop: 8 }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} style={{ marginRight: 6 }} />Close
+                </button>
+                <button type="submit" form="goodsReleaseForm" className="btn btn-primary" style={{ background: 'var(--primary)', color: '#fff', fontWeight: 700, padding: '10px 28px', borderRadius: 8 }}>
+                  <Save size={16} style={{ marginRight: 6 }} />{editingId ? 'Update Advice' : 'Save Advice'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -40,6 +40,7 @@ class FabricDyeingPOCreate(BaseModel):
     sales_order_no: Optional[str] = None
     production_order_no: Optional[str] = None
     buyer_order_no: Optional[str] = None
+    fabric_receipt_id: Optional[str] = None
     department: Optional[str] = None
 
     taxable_value: Optional[float] = 0
@@ -88,6 +89,7 @@ async def create_fabric_dyeing_po(data: FabricDyeingPOCreate, db: Session = Depe
         sales_order_no=data.sales_order_no,
         production_order_no=data.production_order_no,
         buyer_order_no=data.buyer_order_no,
+        fabric_receipt_id=data.fabric_receipt_id,
         department=data.department,
         taxable_value=data.taxable_value,
         dyeing_charge=data.dyeing_charge,
@@ -141,6 +143,7 @@ async def update_fabric_dyeing_po(id: int, data: FabricDyeingPOCreate, db: Sessi
     po.sales_order_no = data.sales_order_no
     po.production_order_no = data.production_order_no
     po.buyer_order_no = data.buyer_order_no
+    po.fabric_receipt_id = data.fabric_receipt_id
     po.department = data.department
     po.taxable_value = data.taxable_value
     po.dyeing_charge = data.dyeing_charge

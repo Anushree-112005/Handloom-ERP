@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table } from 'lucide-react';
-import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table, ArrowLeft } from 'lucide-react';
+import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI, clothInwardAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function FabricDyeingPO() {
@@ -35,6 +35,7 @@ export default function FabricDyeingPO() {
     sales_order_no: '',
     production_order_no: '',
     buyer_order_no: '',
+    fabric_receipt_id: '',
     design_no: '',
     department: '',
 
@@ -83,6 +84,7 @@ export default function FabricDyeingPO() {
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
+  const [clothInwards, setClothInwards] = useState([]);
 
   const handleNewOrder = () => {
     let maxNum = 0;
@@ -110,18 +112,20 @@ export default function FabricDyeingPO() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes, clothInwRes] = await Promise.all([
         fabricDyeingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
         buyerOrderAPI.list(),
-        designEntryAPI.list()
+        designEntryAPI.list(),
+        clothInwardAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
       setDesignEntries(dsRes.data || []);
+      setClothInwards(clothInwRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -185,6 +189,40 @@ export default function FabricDyeingPO() {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
 
+    if (name === 'fabric_receipt_id') {
+      const ci = clothInwards.find(c => c.ref_no === value);
+      if (ci) {
+        const bo = buyerOrders.find(b => b.ibpo_number === ci.ibpo);
+        const de = designEntries.find(d => d.ds_ref_no === ci.design_no || d.design_no === ci.design_no || d.ibpo_no === ci.ibpo);
+        
+        const updatedItems = [...(form.items || [])];
+        if (updatedItems[0]) {
+          updatedItems[0].design_no = de?.ds_ref_no || ci.design_no || '';
+          updatedItems[0].fabric_name = de?.fabric || '';
+          updatedItems[0].gsm = String(de?.gsm ?? '');
+          updatedItems[0].width = String(de?.gray_width ?? de?.fabric_width_grey ?? '');
+          updatedItems[0].qty = parseFloat(ci.total_meters) || 0;
+          updatedItems[0].fabric_type = de?.fabric_type || ci.const_fabric_type || '';
+        }
+
+        setForm(recalculate({
+          ...form,
+          fabric_receipt_id: value,
+          buyer_order_no: ci.ibpo || '',
+          design_no: de?.ds_ref_no || ci.design_no || '',
+          buyer_name: bo?.party_name || bo?.buyer_name || de?.buyer_name || form.buyer_name,
+          items: updatedItems
+        }));
+        return;
+      } else {
+        setForm(recalculate({
+          ...form,
+          fabric_receipt_id: value
+        }));
+        return;
+      }
+    }
+
     if (name === 'tax_type') {
       let taxUpdates = { tax_type: value };
       if (value === 'GST') {
@@ -198,13 +236,43 @@ export default function FabricDyeingPO() {
       return;
     }
 
+    if (name === 'buyer_order_no') {
+      const bo = buyerOrders.find(b => b.ibpo_number === value);
+      const de = designEntries.find(d => d.ibpo_no === value || d.design_no === bo?.design_no);
+      
+      const updatedItems = [...(form.items || [])];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = de?.ds_ref_no || '';
+        updatedItems[0].fabric_name = de?.fabric || '';
+        updatedItems[0].gsm = String(de?.gsm ?? '');
+        updatedItems[0].width = String(de?.gray_width ?? de?.fabric_width_grey ?? '');
+      }
+
+      setForm(recalculate({
+        ...form,
+        buyer_order_no: value,
+        buyer_name: bo?.party_name || bo?.buyer_name || de?.buyer_name || form.buyer_name,
+        design_no: de?.ds_ref_no || '',
+        items: updatedItems
+      }));
+      return;
+    }
+
     if (name === 'design_no') {
       const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
       if (de) {
+        const updatedItems = [...(form.items || [])];
+        if (updatedItems[0]) {
+          updatedItems[0].design_no = value;
+          updatedItems[0].fabric_name = de.fabric || '';
+          updatedItems[0].gsm = String(de?.gsm ?? '');
+          updatedItems[0].width = String(de?.gray_width ?? de?.fabric_width_grey ?? '');
+        }
         setForm(recalculate({
           ...form,
           design_no: value,
-          buyer_name: de.buyer_name || form.buyer_name
+          buyer_name: de.buyer_name || form.buyer_name,
+          items: updatedItems
         }));
         return;
       }
@@ -487,12 +555,19 @@ export default function FabricDyeingPO() {
           />
       ) : (
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              <button type="submit" form="fabric-yd-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {form.id ? 'Edit' : 'Create'} {title}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -521,35 +596,23 @@ export default function FabricDyeingPO() {
             {/* Section: Order Info */}
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier / Dyeing Unit</label>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Supplier / Dyeing Unit</label>
                   <select className="form-control" name="supplier_dyeing_unit" value={form.supplier_dyeing_unit} onChange={handleChange}>
                     <option value="">Select Supplier...</option>
                     {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                   </select>
                 </div>
-                <div className="form-group"><label>Supplier Code</label><input type="text" className="form-control" name="supplier_code" value={form.supplier_code} onChange={handleChange} /></div>
-                <div className="form-group"><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
-                <div className="form-group"><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Name</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
-                <div className="form-group"><label>Status</label>
-                  <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                    <option value="Active">Active</option><option value="Closed">Closed</option>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Fabric Receipt ID</label>
+                  <select className="form-control" name="fabric_receipt_id" value={form.fabric_receipt_id || ''} onChange={handleChange}>
+                    <option value="">Select Receipt...</option>
+                    {clothInwards.map(ci => (
+                      <option key={ci.id} value={ci.ref_no}>{ci.ref_no} ({ci.party_name || 'No Weaver'})</option>
+                    ))}
                   </select>
                 </div>
-                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-              </div>
-            </div>
-
-            {/* Section: Reference Info */}
-            <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
-                <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Sales Order No</label><input type="text" className="form-control" name="sales_order_no" value={form.sales_order_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Production Order No</label><input type="text" className="form-control" name="production_order_no" value={form.production_order_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Order No *</label>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Buyer Order No *</label>
                   <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
                     {buyerOrders.map(bo => (
@@ -557,6 +620,26 @@ export default function FabricDyeingPO() {
                     ))}
                   </select>
                 </div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Supplier Code</label><input type="text" className="form-control" name="supplier_code" value={form.supplier_code} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Buyer Name</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Status</label>
+                  <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                    <option value="Active">Active</option><option value="Closed">Closed</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 9' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+              </div>
+            </div>
+
+            {/* Section: Reference Info */}
+            <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
+                <div className="form-group"><label>Sales Order No</label><input type="text" className="form-control" name="sales_order_no" value={form.sales_order_no} onChange={handleChange} /></div>
+                <div className="form-group"><label>Production Order No</label><input type="text" className="form-control" name="production_order_no" value={form.production_order_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Design No *</label>
                   <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
@@ -893,6 +976,14 @@ export default function FabricDyeingPO() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> Save Order
+              </button>
             </div>
           </div>
         </form>

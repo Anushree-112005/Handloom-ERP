@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Factory, Download, Table } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Factory, Download, Table, ArrowLeft } from 'lucide-react';
 import { warpingSizingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
@@ -301,6 +301,7 @@ export default function WarpingSizingPO() {
     try {
       const payload = { ...form };
       if (!payload.delivery_date) payload.delivery_date = null;
+      payload.supplier_job_worker = form.party_name;
 
       payload.items = [
         ...(form.yarn_items || []).map(yi => ({
@@ -379,7 +380,7 @@ export default function WarpingSizingPO() {
     const rows = filteredOrders.map(o => [
       o.po_no || o.po_number || '-',
       o.po_date || '-',
-      o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit || '-',
+      o.party_name || o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit || '-',
       `Rs. ${o.net_amount?.toFixed(2) || '0.00'}`,
       o.status || '-'
     ]);
@@ -391,7 +392,7 @@ export default function WarpingSizingPO() {
     const data = filteredOrders.map(o => ({
       "PO No": o.po_no || o.po_number,
       "Date": o.po_date,
-      "Supplier": o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit,
+      "Supplier": o.party_name || o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit || '-',
       "Amount": o.net_amount,
       "Status": o.status
     }));
@@ -404,7 +405,7 @@ export default function WarpingSizingPO() {
   const filteredOrders = orders.filter(o => {
     const matchesSearch = searchTerm === '' ||
       o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.supplier_job_worker?.toLowerCase().includes(searchTerm.toLowerCase());
+      (o.party_name || o.supplier_job_worker || '')?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'All Status' || o.status === statusFilter;
 
@@ -538,7 +539,7 @@ export default function WarpingSizingPO() {
                     <tr key={order.id}>
                       <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{order.po_no}</td>
                       <td>{order.po_date}</td>
-                      <td style={{ fontWeight: 500 }}>{order.supplier_job_worker}</td>
+                      <td style={{ fontWeight: 500 }}>{order.party_name || order.supplier_job_worker || '-'}</td>
                       <td style={{ fontWeight: 600 }}>₹{order.net_amount?.toFixed(2) || '0.00'}</td>
                       <td>
                         <span className={`badge ${order.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>
@@ -574,7 +575,7 @@ export default function WarpingSizingPO() {
           poNumber={selectedViewOrder?.po_no}
           poDate={selectedViewOrder?.po_date}
           deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
-          supplierName={selectedViewOrder?.supplier_worker}
+          supplierName={selectedViewOrder?.party_name || selectedViewOrder?.supplier_job_worker || '-'}
           agentName=""
           designNo={selectedViewOrder?.sales_order_no || '-'}
           commission="0.00"
@@ -615,12 +616,19 @@ export default function WarpingSizingPO() {
         />
       ) : (
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              <button type="submit" form="warping-sizing-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {form.id ? 'Edit' : 'Create'} {title}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -1090,6 +1098,14 @@ export default function WarpingSizingPO() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> Save Order
+              </button>
             </div>
           </form>
         </div>

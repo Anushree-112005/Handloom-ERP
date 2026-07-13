@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Truck, Plus, Search, Eye, Trash2, Save, X, Edit2, FileText, Database, Settings, CheckCircle } from 'lucide-react';
+import { Truck, Plus, Search, Eye, Trash2, Save, X, Edit2, FileText, Database, Settings, CheckCircle, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { weavingPOAPI, partyAPI, designEntryAPI, yarnInwardAPI } from '../../services/api';
@@ -581,12 +581,17 @@ export default function WeavingDelivery() {
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{editingId ? 'Edit Weaving Delivery' : 'New Weaving Delivery'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              <button type="submit" form="weaving-delivery-form" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}</button>
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -934,8 +939,15 @@ export default function WeavingDelivery() {
               </div>
             </div>
           </div>
-
-        </form>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)', gridColumn: 'span 4' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
