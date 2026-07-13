@@ -1,24 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  MapPin, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, 
-  Download, FileText, Calendar, ShieldCheck, DollarSign, Layers, PlusCircle, CheckCircle
+  MapPin, Plus, Download, FileText, Calendar, ShieldCheck, Layers, Eye, Edit2, Trash2, Search
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { despatchAPI, buyerOrderAPI, subMasterAPI, dropdownAPI, partyAPI } from '../../services/api';
+import { despatchAPI } from '../../services/api';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 
 // Dynamic Date Formatter Utility
-const getFormattedDate = (d = new Date()) => {
-  return d.toISOString().split('T')[0];
-};
-
-const formatForAPI = (dateStr) => {
-  return dateStr || null;
-};
-
 const formatFromAPI = (dateStr) => {
   if (!dateStr) return '';
   return dateStr.split('T')[0];
@@ -87,113 +78,15 @@ const mapRecordToForm = (r) => {
 
 export default function DespatchPlanning() {
   const navigate = useNavigate();
-  const [view, setView] = useState('list'); // 'list' | 'form'
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState('general');
-  const [buyerOrdersList, setBuyerOrdersList] = useState([]);
   const [selectedViewRecord, setSelectedViewRecord] = useState(null);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
-  const [merchandFilter, setMerchandFilter] = useState('All');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-
-  // Dropdown standard mock lists
-  const buyersList = ['SK Textiles', 'Mani Spinners', 'Global Exim', 'A1 Garments', 'Raju Traders'];
-  const designsList = ['D-9012', 'D-5678', 'D-1122', 'D-4455', 'D-8899'];
-  const merchandList = ['ABDUL', 'SUDHAKAR', 'MANOJ', 'RAMESH'];
-
-  // Master & Submaster states
-  const [dropdowns, setDropdowns] = useState({ units: [] });
-  const [certTypes, setCertTypes] = useState([]);
-  const [fabricTypes, setFabricTypes] = useState([]);
-  const [currencies, setCurrencies] = useState([]);
-  const [partiesList, setPartiesList] = useState([]);
-
-  // Custom-Add states
-  const [isCustomUnit, setIsCustomUnit] = useState(false);
-  const [customUnitVal, setCustomUnitVal] = useState('');
-  
-  const [isCustomCert, setIsCustomCert] = useState(false);
-  const [customCertVal, setCustomCertVal] = useState('');
-
-  const [isCustomFabric, setIsCustomFabric] = useState(false);
-  const [customFabricVal, setCustomFabricVal] = useState('');
-
-  const [isCustomCurrency, setIsCustomCurrency] = useState(false);
-  const [customCurrencyVal, setCustomCurrencyVal] = useState('');
-
-  const [isCustomDeliveryParty, setIsCustomDeliveryParty] = useState(false);
-  const [customDeliveryPartyVal, setCustomDeliveryPartyVal] = useState('');
-
-  const [isCustomDesign, setIsCustomDesign] = useState(false);
-  const [customDesignVal, setCustomDesignVal] = useState('');
-
-  const initialForm = {
-    // Green header fields
-    ibpo: '',
-    po_date: '',
-    ref_no: '',
-    date: getFormattedDate(),
-
-    // Left Column
-    billing_party: '',
-    billing_address: '',
-    state_code: '',
-    design_no: '',
-    order_no: '',
-    delivery_starting: '',
-    ibpo_rate: '',
-    certificate_type: '',
-    total_planning: '',
-
-    // Middle Column
-    pino: '',
-    amd_foc_mtr: '',
-    party_comp_date: '',
-    currency: 'INR',
-    last_desp_date: '',
-
-    // Right Column
-    delivery_party: '',
-    delivery_address: '',
-    del_state_code: '',
-    lc_no_tt_no: '',
-    lc_tt_date: '',
-    total: '',
-    uom: 'Meters',
-    comp_date: '',
-    fabric_type: '',
-    tot_desp_mtrs: '',
-    balance_mtrs: '',
-
-    // Yellow Row fields
-    poc_no: '',
-    buyer_po_no: '',
-    qty: '',
-    patten: '',
-    party_style: '',
-    po_upload: '',
-    print_name: '',
-    merchand: '',
-
-    // Blue Row fields
-    planned_mtrs: '',
-    tolerance_percent: '0',
-    max_despatch_qty: '',
-    stock: '',
-    planning_date: getFormattedDate(),
-    rate: '',
-    other_charge: '-',
-    other_charges_value: ''
-  };
-
-  const [formData, setFormData] = useState(initialForm);
 
   const loadRecords = async () => {
     setLoading(true);
@@ -208,75 +101,9 @@ export default function DespatchPlanning() {
     }
   };
 
-  // Load from database on mount
   useEffect(() => {
     loadRecords();
-    loadBuyerOrders();
-    loadDropdowns();
   }, []);
-
-  const loadDropdowns = async () => {
-    try {
-      const dropRes = await dropdownAPI.getAll();
-      if (dropRes.data) {
-        setDropdowns(dropRes.data);
-        if (dropRes.data.masters) {
-          setCertTypes(dropRes.data.masters.certified_type || []);
-          setFabricTypes(dropRes.data.masters.fabric_type_master || []);
-          setCurrencies(dropRes.data.masters.currency || []);
-        }
-      }
-
-      const partyRes = await partyAPI.list();
-      if (partyRes.data) setPartiesList(partyRes.data);
-    } catch (e) {
-      console.error("Error loading masters:", e);
-    }
-  };
-
-  const handleSaveCustom = async (entity, valState, toggleState, fieldName) => {
-    if (!valState.trim()) {
-      toggleState(false);
-      return;
-    }
-    try {
-      await subMasterAPI.create(entity, { entity: entity, name: valState.trim(), is_active: true });
-      setFormData(prev => ({ ...prev, [fieldName]: valState.trim() }));
-      toggleState(false);
-      loadDropdowns();
-    } catch (err) {
-      console.error(`Error saving custom ${entity}:`, err);
-    }
-  };
-
-  const loadBuyerOrders = async () => {
-    try {
-      const res = await buyerOrderAPI.list();
-      setBuyerOrdersList(res.data);
-    } catch (e) {
-      console.error("Error loading buyer orders", e);
-    }
-  };
-
-  const handleOpenForm = (record = null, readOnly = false) => {
-    if (record) {
-      setFormData(record);
-      setEditingId(record.id);
-    } else {
-      // Auto increment ref_no
-      const nextRef = records.length > 0 
-        ? String(Math.max(...records.map(r => Number(r.ref_no) || 0)) + 1)
-        : '16763';
-      setFormData({
-        ...initialForm,
-        ref_no: nextRef,
-        date: getFormattedDate()
-      });
-      setEditingId(null);
-    }
-    setIsReadOnly(readOnly);
-    setView('form');
-  };
 
   const handleDelete = async (id, refNo, e) => {
     if (e) e.stopPropagation();
@@ -291,144 +118,6 @@ export default function DespatchPlanning() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isReadOnly) return;
-
-    const extra = {
-      order_no: formData.order_no,
-      del_state_code: formData.del_state_code,
-      total: formData.total,
-      buyer_po_no: formData.buyer_po_no,
-      patten: formData.patten,
-      party_style: formData.party_style,
-      print_name: formData.print_name,
-      rate: formData.rate,
-      other_charge: formData.other_charge,
-      other_charges_value: formData.other_charges_value,
-    };
-    const payload = {
-      ibpo: formData.ibpo || null,
-      po_date: formatForAPI(formData.po_date),
-      ref_no: formData.ref_no?.trim() || null,
-      planning_date: formatForAPI(formData.planning_date || formData.date),
-      billing_party: formData.billing_party || null,
-      delivery_party: formData.delivery_party || null,
-      billing_address: formData.billing_address || null,
-      delivery_address: formData.delivery_address || null,
-      state_code: formData.state_code || null,
-      design_no: formData.design_no || null,
-      pino: formData.pino || null,
-      order_qty: Number(formData.qty) || 0,
-      amd_foc_mtr: Number(formData.amd_foc_mtr) || 0,
-      total_qty: Number(formData.total_planning) || 0,
-      uom: formData.uom || "MTR",
-      delivery_start: formatForAPI(formData.delivery_starting),
-      party_comp_date: formatForAPI(formData.party_comp_date),
-      comp_date: formatForAPI(formData.comp_date),
-      lc_no: formData.lc_no_tt_no || null,
-      lc_date: formatForAPI(formData.lc_tt_date),
-      ibpo_rate: Number(formData.ibpo_rate) || 0,
-      currency: formData.currency || "INR",
-      certificate_type: formData.certificate_type || null,
-      fabric_type: formData.fabric_type || null,
-      planned_mtrs: Number(formData.planned_mtrs) || 0,
-      tolerance_pct: Number(formData.tolerance_percent) || 0,
-      max_dispatch_qty: Number(formData.max_despatch_qty) || 0,
-      stock: Number(formData.stock) || 0,
-      tot_desp_mtrs: Number(formData.tot_desp_mtrs) || 0,
-      balance_mtrs: Number(formData.balance_mtrs) || 0,
-      last_desp_date: formatForAPI(formData.last_desp_date),
-      merchant: formData.merchand || null,
-      point_of_contact: formData.poc_no || null,
-      remarks: JSON.stringify(extra),
-      status: formData.status || "Planned"
-    };
-
-    try {
-      if (editingId) {
-        await despatchAPI.update(editingId, payload);
-      } else {
-        await despatchAPI.create(payload);
-      }
-      await loadRecords();
-      setView('list');
-    } catch (err) {
-      console.error("Error saving despatch plan:", err);
-      alert(err.response?.data?.detail || "Error saving despatch plan");
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => {
-      const updated = { ...prev, [name]: value };
-      
-      // Auto calculation helper: Max Despatch Qty = Planned Mtrs * (1 + Tolerance%/100)
-      if (name === 'planned_mtrs' || name === 'tolerance_percent') {
-        const planned = Number(updated.planned_mtrs) || 0;
-        const tolerance = Number(updated.tolerance_percent) || 0;
-        updated.max_despatch_qty = String(Math.round(planned * (1 + tolerance / 100)));
-      }
-
-      // Auto calculation: Balance Mtrs = Total Planning - Tot Desp Mtrs
-      if (name === 'total_planning' || name === 'tot_desp_mtrs') {
-        const totalPlan = Number(updated.total_planning) || 0;
-        const totDesp = Number(updated.tot_desp_mtrs) || 0;
-        updated.balance_mtrs = String(totalPlan - totDesp);
-      }
-
-      return updated;
-    });
-  };
-
-  const handleIbpoChange = (e) => {
-    const value = e.target.value;
-    handleChange(e);
-
-    if (!value) return;
-
-    const order = buyerOrdersList.find(o => o.ibpo_number === value);
-    if (order) {
-      setFormData(prev => ({
-        ...prev,
-        ibpo: value,
-        po_date: order.order_date ? formatFromAPI(order.order_date) : prev.po_date,
-        billing_party: order.party_name || prev.billing_party,
-        billing_address: order.billing_address || prev.billing_address,
-        delivery_address: order.delivery_address || prev.delivery_address,
-        state_code: order.state_code || prev.state_code,
-        design_no: order.items && order.items.length > 0 ? order.items[0].design_no : prev.design_no,
-        qty: order.items && order.items.length > 0 ? String(order.items[0].order_mtrs) : prev.qty,
-        buyer_po_no: order.items && order.items.length > 0 ? order.items[0].party_po_no : prev.buyer_po_no,
-        total_planning: order.items && order.items.length > 0 ? String(order.items[0].order_mtrs) : prev.total_planning,
-        merchand: order.order_taken_by || prev.merchand,
-      }));
-    }
-  };
-
-
-
-
-
-  const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-    if (e.key === 'Tab' && !e.shiftKey) {
-      e.preventDefault();
-      setActiveTab(nextTab);
-      document.getElementById(`${nextTab}-section`)?.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => {
-        const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        } else {
-          // Fallback to first focusable element
-          const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-          if (fallback) fallback.focus();
-        }
-      }, 100);
-    }
-  };
-
   // Filter list
   const filteredRecords = records.filter(r => {
     const matchesSearch = searchTerm === '' ||
@@ -438,7 +127,6 @@ export default function DespatchPlanning() {
       r.buyer_po_no?.toLowerCase().includes(searchTerm.toLowerCase());
 
     let matchesDate = true;
-    // Basic date checking
     if (r.date) {
       const recordDate = new Date(r.date);
       if (fromDate) matchesDate = matchesDate && recordDate >= new Date(fromDate);
@@ -541,53 +229,49 @@ export default function DespatchPlanning() {
           <p style={{ color: 'var(--text-muted)' }}>Create, manage, and track buyer order despatch planning specifications</p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          {view === 'list' ? (
-            <>
-              {/* Export Dropdown */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowExportMenu(!showExportMenu)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Download size={16} /> Export
-                </button>
-
-                {showExportMenu && (
-                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
-                    <button
-                      onClick={() => { exportPDF(); setShowExportMenu(false); }}
-                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                    >
-                      <FileText size={16} color="#ef4444" /> PDF Report
-                    </button>
-                    <button
-                      onClick={() => { exportExcel(); setShowExportMenu(false); }}
-                      style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                    >
-                      <Download size={16} color="#10b981" /> Excel Sheet
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <button className="btn btn-primary" onClick={() => handleOpenForm()}>
-                <Plus size={18} /> New Entry
-              </button>
-            </>
-          ) : (
-            <button className="btn btn-secondary" onClick={() => setView('list')}>
-              <ArrowLeft size={18} /> Back to List
+          {/* Export Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={16} /> Export
             </button>
-          )}
+
+            {showExportMenu && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 10, width: 140, overflow: 'hidden' }}>
+                <button
+                  onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <FileText size={16} color="#ef4444" /> PDF Report
+                </button>
+                <button
+                  onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <Download size={16} color="#10b981" /> Excel Sheet
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button className="btn btn-primary" onClick={() => navigate('/despatch/new')}>
+            <Plus size={18} /> New Entry
+          </button>
         </div>
       </div>
 
-      {view === 'list' ? (
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+          <p style={{ color: 'var(--text-muted)' }}>Loading plans...</p>
+        </div>
+      ) : (
         <>
           {/* STATS HIGHLIGHT CARDS */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 24 }}>
@@ -718,7 +402,7 @@ export default function DespatchPlanning() {
                           <button
                             className="btn btn-secondary"
                             style={{ padding: '6px' }}
-                            onClick={() => handleOpenForm(r, false)}
+                            onClick={() => navigate(`/despatch/edit/${r.id}`)}
                             title="Edit Plan"
                           >
                             <Edit2 size={15} />
@@ -785,546 +469,6 @@ export default function DespatchPlanning() {
             />
           )}
         </>
-      ) : (
-        /* INPUT FORM COMPONENT - ACCORDING TO CLIENT PICTURE */
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Despatch Plan' : editingId ? 'Edit Despatch Plan' : 'New Despatch Plan'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button type="submit" form="despatchForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Plan' : 'Save Plan'}</button>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
-            {[{ id: 'general', label: 'Basic Details' }, { id: 'planning', label: 'Planning & Delivery' }, { id: 'order', label: 'Order Info' }, { id: 'logistics', label: 'Logistics & Stock' }].map(tab => (
-              <button 
-                type="button"
-                key={tab.id} onClick={() => {
-                  setActiveTab(tab.id);
-                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ padding: 32, background: '#fff' }}>
-            <form id="despatchForm" onSubmit={handleSubmit}>
-              <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-                
-                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
-                  {/* SECTION 1: GREEN TOP BAR SECTION */}
-                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Basic Details</h4>
-                  <div style={{ 
-                    background: 'rgba(16, 185, 129, 0.08)', 
-                    borderLeft: '4px solid #10b981', 
-                    borderRadius: '8px', 
-                    padding: '16px 20px', 
-                    margin: '0 0 16px 0',
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 16
-                  }}>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>IBPO (Select to Auto-Fill)</label>
-                      <select className="form-control" name="ibpo" value={formData.ibpo} onChange={handleIbpoChange} style={{ borderColor: '#a7f3d0' }}>
-                        <option value="">Select IBPO - Party Name</option>
-                        {buyerOrdersList.map(o => (
-                          <option key={o.id} value={o.ibpo_number}>
-                            {o.ibpo_number} - {o.party_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>PO Date</label>
-                      <input type="date" className="form-control" name="po_date" value={formData.po_date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Ref No</label>
-                      <input type="text" className="form-control" name="ref_no" value={formData.ref_no} onChange={handleChange} required style={{ borderColor: '#a7f3d0' }} />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label style={{ fontWeight: 600, color: '#065f46', fontSize: 12 }}>Date</label>
-                      <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} style={{ borderColor: '#a7f3d0' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'planning', 'billing_party')} />
-                    </div>
-                  </div>
-                </div>
-
-                <div id="planning-section" className="animate-fade" style={{ marginBottom: 32 }}>
-                  {/* SECTION 2: THREE COLUMN GRID SECTION */}
-                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Planning & Delivery</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28, margin: '0 0 16px 0' }}>
-                    
-                    {/* COLUMN 1 */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Billing Party</label>
-                        <select className="form-control" name="billing_party" value={formData.billing_party} onChange={handleChange}>
-                          <option value="">Select Billing Party</option>
-                          {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Billing Address</label>
-                        <textarea className="form-control" name="billing_address" value={formData.billing_address} onChange={handleChange} rows={2} style={{ resize: 'none' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>State/Code</label>
-                        <input className="form-control" name="state_code" value={formData.state_code} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Design No</label>
-                        {isCustomDesign ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input 
-                              autoFocus 
-                              className="form-control" 
-                              style={{ margin: 0, flex: 1 }}
-                              value={customDesignVal} 
-                              onChange={e => setCustomDesignVal(e.target.value)} 
-                              placeholder="Add design no..."
-                            />
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('design_no_master', customDesignVal, setIsCustomDesign, 'design_no')}>
-                              <CheckCircle size={16} color="var(--primary)" />
-                            </button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomDesign(false)}>
-                              <X size={16} color="#ef4444" />
-                            </button>
-                          </div>
-                        ) : (
-                          <select 
-                            className="form-control" 
-                            name="design_no" 
-                            value={formData.design_no} 
-                            onChange={(e) => {
-                              if (e.target.value === '__ADD_NEW__') {
-                                setCustomDesignVal('');
-                                setIsCustomDesign(true);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                          >
-                            <option value="">Select Design No</option>
-                            {dropdowns.masters?.design_no_master?.map(d => <option key={d} value={d}>{d}</option>)}
-                            <option value="__ADD_NEW__">+ Add Custom...</option>
-                          </select>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Order</label>
-                        <input className="form-control" name="order_no" value={formData.order_no} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Delivery Starting</label>
-                        <input type="date" className="form-control" name="delivery_starting" value={formData.delivery_starting} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>IBPO Rate</label>
-                        <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Certificate Type</label>
-                        {isCustomCert ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input 
-                              autoFocus 
-                              className="form-control" 
-                              style={{ margin: 0, flex: 1 }}
-                              value={customCertVal} 
-                              onChange={e => setCustomCertVal(e.target.value)} 
-                              placeholder="Enter custom type..."
-                            />
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('certified_type', customCertVal, setIsCustomCert, 'certificate_type')}>
-                              <CheckCircle size={16} color="var(--primary)" />
-                            </button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomCert(false)}>
-                              <X size={16} color="#ef4444" />
-                            </button>
-                          </div>
-                        ) : (
-                          <select 
-                            className="form-control" 
-                            name="certificate_type" 
-                            value={formData.certificate_type} 
-                            onChange={(e) => {
-                              if (e.target.value === '__ADD_NEW__') {
-                                setCustomCertVal('');
-                                setIsCustomCert(true);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                          >
-                            <option value="">Select Certificate</option>
-                            {certTypes.map(c => <option key={c} value={c}>{c}</option>)}
-                            <option value="__ADD_NEW__">+ Add Custom...</option>
-                          </select>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Total Planning</label>
-                        <input className="form-control" name="total_planning" value={formData.total_planning} onChange={handleChange} />
-                      </div>
-                    </div>
-
-                    {/* COLUMN 2 */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>PINO</label>
-                        <input className="form-control" name="pino" value={formData.pino} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>AMD/FOC Mtr</label>
-                        <input className="form-control" name="amd_foc_mtr" value={formData.amd_foc_mtr} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Party Comp Date</label>
-                        <input type="date" className="form-control" name="party_comp_date" value={formData.party_comp_date} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Currency</label>
-                        {isCustomCurrency ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input 
-                              autoFocus 
-                              className="form-control" 
-                              style={{ margin: 0, flex: 1 }}
-                              value={customCurrencyVal} 
-                              onChange={e => setCustomCurrencyVal(e.target.value)} 
-                              placeholder="Add currency..."
-                            />
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('currency_master', customCurrencyVal, setIsCustomCurrency, 'currency')}>
-                              <CheckCircle size={16} color="var(--primary)" />
-                            </button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomCurrency(false)}>
-                              <X size={16} color="#ef4444" />
-                            </button>
-                          </div>
-                        ) : (
-                          <select 
-                            className="form-control" 
-                            name="currency" 
-                            value={formData.currency} 
-                            onChange={(e) => {
-                              if (e.target.value === '__ADD_NEW__') {
-                                setCustomCurrencyVal('');
-                                setIsCustomCurrency(true);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                          >
-                            <option value="">Select Currency</option>
-                            <option value="INR">INR - Indian Rupee</option>
-                            <option value="USD">USD - US Dollar</option>
-                            <option value="EUR">EUR - Euro</option>
-                            {currencies.filter(c => !["INR", "USD", "EUR"].includes(c)).map(c => <option key={c} value={c}>{c}</option>)}
-                            <option value="__ADD_NEW__">+ Add Custom...</option>
-                          </select>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Last Desp Date</label>
-                        <input type="date" className="form-control" name="last_desp_date" value={formData.last_desp_date} onChange={handleChange} />
-                      </div>
-                    </div>
-
-                    {/* COLUMN 3 */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Delivery Party</label>
-                        {isCustomDeliveryParty ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input 
-                              autoFocus 
-                              className="form-control" 
-                              style={{ margin: 0, flex: 1 }}
-                              value={customDeliveryPartyVal} 
-                              onChange={e => setCustomDeliveryPartyVal(e.target.value)} 
-                              placeholder="Add party name..."
-                            />
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={async () => {
-                              if (!customDeliveryPartyVal.trim()) return setIsCustomDeliveryParty(false);
-                              try {
-                                await partyAPI.create({ party_type: "Sundry Debtors", company_name: customDeliveryPartyVal });
-                                setFormData(prev => ({ ...prev, delivery_party: customDeliveryPartyVal }));
-                                setIsCustomDeliveryParty(false);
-                                loadDropdowns();
-                              } catch(e) { console.error(e); }
-                            }}>
-                              <CheckCircle size={16} color="var(--primary)" />
-                            </button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomDeliveryParty(false)}>
-                              <X size={16} color="#ef4444" />
-                            </button>
-                          </div>
-                        ) : (
-                          <select 
-                            className="form-control" 
-                            name="delivery_party" 
-                            value={formData.delivery_party} 
-                            onChange={(e) => {
-                              if (e.target.value === '__ADD_NEW__') {
-                                setCustomDeliveryPartyVal('');
-                                setIsCustomDeliveryParty(true);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                          >
-                            <option value="">Select Delivery Party</option>
-                            {partiesList.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
-                            <option value="__ADD_NEW__">+ Add Custom...</option>
-                          </select>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Delivery Address</label>
-                        <textarea className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} rows={2} style={{ resize: 'none' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>State/Code</label>
-                        <input className="form-control" name="del_state_code" value={formData.del_state_code} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>LC No / TT No</label>
-                        <input className="form-control" name="lc_no_tt_no" value={formData.lc_no_tt_no} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>LC / TT Date</label>
-                        <input className="form-control" name="ibpo_rate" value={formData.ibpo_rate} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Total</label>
-                        <input className="form-control" name="total" value={formData.total} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>UOM</label>
-                        {isCustomUnit ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input 
-                              autoFocus 
-                              className="form-control" 
-                              style={{ margin: 0, flex: 1 }}
-                              value={customUnitVal} 
-                              onChange={e => setCustomUnitVal(e.target.value)} 
-                              placeholder="Add unit..."
-                            />
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={async () => {
-                              if (!customUnitVal.trim()) return setIsCustomUnit(false);
-                              try {
-                                await subMasterAPI.create('uom_master', { entity: 'uom_master', name: customUnitVal.trim(), is_active: true });
-                                setFormData(prev => ({ ...prev, uom: customUnitVal.trim() }));
-                                setIsCustomUnit(false);
-                                loadDropdowns();
-                              } catch(e) { console.error(e); }
-                            }}>
-                              <CheckCircle size={16} color="var(--primary)" />
-                            </button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomUnit(false)}>
-                              <X size={16} color="#ef4444" />
-                            </button>
-                          </div>
-                        ) : (
-                          <select 
-                            className="form-control" 
-                            name="uom" 
-                            value={formData.uom} 
-                            onChange={(e) => {
-                              if (e.target.value === '__ADD_NEW__') {
-                                setCustomUnitVal('');
-                                setIsCustomUnit(true);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                          >
-                            <option value="">Select Unit</option>
-                            {dropdowns.masters?.uom_master?.map(u => <option key={u} value={u}>{u}</option>)}
-                            <option value="__ADD_NEW__">+ Add Custom...</option>
-                          </select>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Comp Date</label>
-                        <input type="date" className="form-control" name="comp_date" value={formData.comp_date} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Fabric Type</label>
-                        {isCustomFabric ? (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input 
-                              autoFocus 
-                              className="form-control" 
-                              style={{ margin: 0, flex: 1 }}
-                              value={customFabricVal} 
-                              onChange={e => setCustomFabricVal(e.target.value)} 
-                              placeholder="Add fabric..."
-                            />
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('fabric_type_master', customFabricVal, setIsCustomFabric, 'fabric_type')}>
-                              <CheckCircle size={16} color="var(--primary)" />
-                            </button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomFabric(false)}>
-                              <X size={16} color="#ef4444" />
-                            </button>
-                          </div>
-                        ) : (
-                          <select 
-                            className="form-control" 
-                            name="fabric_type" 
-                            value={formData.fabric_type} 
-                            onChange={(e) => {
-                              if (e.target.value === '__ADD_NEW__') {
-                                setCustomFabricVal('');
-                                setIsCustomFabric(true);
-                              } else {
-                                handleChange(e);
-                              }
-                            }}
-                          >
-                            <option value="">Select Fabric Type</option>
-                            {fabricTypes.map(f => <option key={f} value={f}>{f}</option>)}
-                            <option value="__ADD_NEW__">+ Add Custom...</option>
-                          </select>
-                        )}
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Tot Desp Mtrs</label>
-                        <input className="form-control" name="tot_desp_mtrs" value={formData.tot_desp_mtrs} onChange={handleChange} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label>Balance Mtrs</label>
-                        <input className="form-control" name="balance_mtrs" value={formData.balance_mtrs} onChange={handleChange} readOnly style={{ background: 'var(--bg-secondary)' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'order', 'poc_no')} />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                <div id="order-section" className="animate-fade" style={{ marginBottom: 32 }}>
-                  {/* SECTION 3: YELLOW ACCENT BAR */}
-                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Order Info</h4>
-                  <div style={{ 
-                    background: 'rgba(234, 179, 8, 0.08)', 
-                    borderLeft: '4px solid #eab308', 
-                    borderRadius: '8px', 
-                    padding: '20px 24px', 
-                    margin: '0 0 16px 0'
-                  }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Point of Contact/No</label>
-                        <input className="form-control" name="poc_no" value={formData.poc_no} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Buyer PO No</label>
-                        <input className="form-control" name="buyer_po_no" value={formData.buyer_po_no} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Qty</label>
-                        <input className="form-control" name="qty" value={formData.qty} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Patten</label>
-                        <input className="form-control" name="patten" value={formData.patten} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Party Style</label>
-                        <input className="form-control" name="party_style" value={formData.party_style} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>PO Upload</label>
-                        <input type="file" className="form-control" style={{ borderColor: '#fef08a', padding: '4px 12px' }} disabled={isReadOnly} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Print Name</label>
-                        <input className="form-control" name="print_name" value={formData.print_name} onChange={handleChange} style={{ borderColor: '#fef08a' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#854d0e', fontSize: 12 }}>Merchand</label>
-                        <select className="form-control" name="merchand" value={formData.merchand} onChange={handleChange} style={{ borderColor: '#fef08a' }} onKeyDown={(e) => handleKeyDownTabTransition(e, 'logistics', 'planned_mtrs')}>
-                          <option value="">Select Merchandiser</option>
-                          {merchandList.map(m => <option key={m} value={m}>{m}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="logistics-section" className="animate-fade" style={{ marginBottom: 32 }}>
-                  {/* SECTION 4: BLUE ACCENT BAR */}
-                  <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Logistics & Stock</h4>
-                  <div style={{ 
-                    background: 'rgba(59, 130, 246, 0.08)', 
-                    borderLeft: '4px solid #3b82f6', 
-                    borderRadius: '8px', 
-                    padding: '20px 24px', 
-                    margin: '0 0 16px 0'
-                  }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planned Mtrs</label>
-                        <input className="form-control" name="planned_mtrs" value={formData.planned_mtrs} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Tolerance %</label>
-                        <select className="form-control" name="tolerance_percent" value={formData.tolerance_percent} onChange={handleChange} style={{ borderColor: '#bfdbfe' }}>
-                          <option value="0">0%</option>
-                          <option value="5">5%</option>
-                          <option value="10">10%</option>
-                          <option value="15">15%</option>
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Max Despatch Qty</label>
-                        <input className="form-control" name="max_despatch_qty" value={formData.max_despatch_qty} onChange={handleChange} readOnly style={{ borderColor: '#bfdbfe', background: 'var(--bg-secondary)' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Stock</label>
-                        <input className="form-control" name="stock" value={formData.stock} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Planning Date</label>
-                        <input type="date" className="form-control" name="planning_date" value={formData.planning_date} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Rate</label>
-                        <input className="form-control" name="rate" value={formData.rate} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Other Charge</label>
-                        <select className="form-control" name="other_charge" value={formData.other_charge} onChange={handleChange} style={{ borderColor: '#bfdbfe' }}>
-                          <option value="-">-</option>
-                          <option value="Freight">Freight</option>
-                          <option value="Loading">Loading charges</option>
-                          <option value="Insurance">Transit Insurance</option>
-                        </select>
-                      </div>
-                      <div className="form-group" style={{ margin: 0 }}>
-                        <label style={{ fontWeight: 600, color: '#1e40af', fontSize: 12 }}>Other Charges Value</label>
-                        <input className="form-control" name="other_charges_value" value={formData.other_charges_value} onChange={handleChange} style={{ borderColor: '#bfdbfe' }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </fieldset>
-            </form>
-          </div>
-        </div>
-
       )}
     </div>
   );
