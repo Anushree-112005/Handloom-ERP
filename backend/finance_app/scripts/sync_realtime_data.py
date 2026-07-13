@@ -244,6 +244,7 @@ def sync_data():
                     status="Posted",
                     total_amount=net,
                     company_id=company.id,
+                    party_id=sup_id,
                     fy_id=fy.id
                 )
                 db.add(v)
@@ -306,6 +307,7 @@ def sync_data():
                     status="Posted",
                     total_amount=net,
                     company_id=company.id,
+                    party_id=buy_id,
                     fy_id=fy.id
                 )
                 db.add(v)
@@ -358,6 +360,7 @@ def sync_data():
                     status="Posted",
                     total_amount=net,
                     company_id=company.id,
+                    party_id=sup_id,
                     fy_id=fy.id
                 )
                 db.add(v)
@@ -393,6 +396,7 @@ def sync_data():
                     status="Posted",
                     total_amount=net,
                     company_id=company.id,
+                    party_id=buy_id,
                     fy_id=fy.id
                 )
                 db.add(v)

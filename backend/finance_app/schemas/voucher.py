@@ -30,6 +30,7 @@ class VoucherCreate(BaseModel):
     narration:    Optional[str] = None
     reference_no: Optional[str] = None
     company_id:   int
+    party_id:     Optional[int] = None
     entries:      List[VoucherEntryIn]
 
     @field_validator("entries")
