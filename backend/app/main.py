@@ -26,6 +26,22 @@ RESET_DATABASE = False    # Change to True to clear all data from tables on rest
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
+        # Check and create database if missing
+        import asyncpg
+        from app.core.config import settings
+        db_url_str = str(settings.DATABASE_URL)
+        if "dinesh_textile_erp" in db_url_str:
+            sys_url = db_url_str.replace("dinesh_textile_erp", "postgres").replace("postgresql+asyncpg://", "postgresql://")
+            try:
+                sys_conn = await asyncpg.connect(sys_url)
+                exists = await sys_conn.fetchval("SELECT 1 FROM pg_database WHERE datname = 'dinesh_textile_erp'")
+                if not exists:
+                    logger.info("Creating database dinesh_textile_erp...")
+                    await sys_conn.execute('CREATE DATABASE dinesh_textile_erp')
+                await sys_conn.close()
+            except Exception as db_e:
+                logger.error(f"Failed to check/create database: {db_e}")
+
         # Create tables on startup
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)

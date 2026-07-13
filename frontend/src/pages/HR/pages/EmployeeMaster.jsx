@@ -331,353 +331,237 @@ const EmployeeMaster = () => {
     XLSX.writeFile(workbook, `Employees_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const renderBasicSection = () => (
-    <div className="space-y-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Basic Information
-        </h4>
+  const SectionHeader = ({ icon: Icon, title, subtitle, colorClass }) => (
+    <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-200/60">
+      <div className={`p-3 rounded-xl shadow-sm border ${colorClass}`}>
+        <Icon size={22} className="stroke-[2.5]" />
       </div>
-      <div className="form-row">
-        <div className="sm:col-span-2 relative">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={e => {
-              const value = e.target.value;
-              setForm({ ...form, name: value });
-              handleSearchPrefix(value);
-            }}
-            onFocus={() => {
-              if (form.name.length > 0) {
-                handleSearchPrefix(form.name);
-              }
-            }}
-            onBlur={() => setTimeout(() => setShowNameDropdown(false), 150)}
-            className="form-control" placeholder="John Doe" />
+      <div>
+        <h4 className="text-lg font-bold text-slate-800 tracking-tight m-0">{title}</h4>
+        {subtitle && <p className="text-xs font-medium text-slate-500 mt-1">{subtitle}</p>}
+      </div>
+    </div>
+  );
+
+  const renderBasicSection = () => (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionHeader icon={User} title="Basic Information" subtitle="Core employee identity details" colorClass="bg-gradient-to-br from-indigo-50 to-blue-50 text-indigo-600 border-indigo-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="sm:col-span-2 relative group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Full Name *</label>
+          <input type="text" value={form.name} onChange={e => { const value = e.target.value; setForm({ ...form, name: value }); handleSearchPrefix(value); }} onFocus={() => { if (form.name.length > 0) handleSearchPrefix(form.name); }} onBlur={() => setTimeout(() => setShowNameDropdown(false), 150)} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="John Doe" />
           {showNameDropdown && (
-            <ul className="btn btn-secondary">
+            <ul className="absolute z-10 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 max-h-60 overflow-auto">
               {nameSuggestions.map(emp => (
-                <li
-                  key={emp.id}
-                  className="btn btn-primary"
-                  onMouseDown={() => {
-                    setForm({ ...form, name: emp.name });
-                    setShowNameDropdown(false);
-                  }}
-                >
-                  {emp.name}
-                  {emp.employee_id ? <span className="ml-2 text-xs text-slate-400">({emp.employee_id})</span> : null}
+                <li key={emp.id} className="px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b last:border-0 border-slate-100 transition-colors" onMouseDown={() => { setForm({ ...form, name: emp.name }); setShowNameDropdown(false); }}>
+                  <div className="font-semibold text-slate-800">{emp.name}</div>
+                  {emp.employee_id && <div className="text-xs text-slate-500">{emp.employee_id}</div>}
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Work Email *</label>
-          <input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="form-control" placeholder="john@company.com" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Work Email *</label>
+          <input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="john@company.com" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
-          <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="form-control" placeholder="10-digit number" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Phone *</label>
+          <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="10-digit number" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Employee ID</label>
-          <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })}
-            className="form-control" placeholder="Auto-generated if empty" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Employee ID</label>
+          <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="Auto-generated if empty" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Personal Email</label>
-          <input type="email" value={form.personal_email || ''} onChange={(e) => setForm({ ...form, personal_email: e.target.value })}
-            className="form-control" placeholder="john.personal@gmail.com" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Personal Email</label>
+          <input type="email" value={form.personal_email || ''} onChange={(e) => setForm({ ...form, personal_email: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="john.personal@gmail.com" />
         </div>
       </div>
     </div>
   );
 
   const renderPersonalSection = () => (
-    <div className="space-y-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Personal Details
-        </h4>
-      </div>
-      <div className="form-row">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Date of Birth</label>
-          <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })}
-            className="form-control" />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionHeader icon={Users} title="Personal Details" subtitle="Demographics and personal info" colorClass="bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-600 border-emerald-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-emerald-600 transition-colors">Date of Birth</label>
+          <input type="date" value={form.date_of_birth || ''} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} className="form-control hover:border-emerald-300 focus:border-emerald-500 transition-colors" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-          <select value={form.gender || ''} onChange={(e) => setForm({ ...form, gender: e.target.value })}
-            className="form-control">
-            <option value="">Select</option>
-            <option>Male</option><option>Female</option><option>Other</option>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-emerald-600 transition-colors">Gender</label>
+          <select value={form.gender || ''} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="form-control hover:border-emerald-300 focus:border-emerald-500 transition-colors">
+            <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
-          <select value={form.blood_group || ''} onChange={(e) => setForm({ ...form, blood_group: e.target.value })}
-            className="form-control">
-            <option value="">Select</option>
-            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-emerald-600 transition-colors">Blood Group</label>
+          <select value={form.blood_group || ''} onChange={(e) => setForm({ ...form, blood_group: e.target.value })} className="form-control hover:border-emerald-300 focus:border-emerald-500 transition-colors">
+            <option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Marital Status</label>
-          <select value={form.marital_status || ''} onChange={(e) => setForm({ ...form, marital_status: e.target.value })}
-            className="form-control">
-            <option value="">Select</option>
-            <option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-emerald-600 transition-colors">Marital Status</label>
+          <select value={form.marital_status || ''} onChange={(e) => setForm({ ...form, marital_status: e.target.value })} className="form-control hover:border-emerald-300 focus:border-emerald-500 transition-colors">
+            <option value="">Select</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nationality</label>
-          <input type="text" value={form.nationality || ''} onChange={(e) => setForm({ ...form, nationality: e.target.value })}
-            className="form-control" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-emerald-600 transition-colors">Nationality</label>
+          <input type="text" value={form.nationality || ''} onChange={(e) => setForm({ ...form, nationality: e.target.value })} className="form-control hover:border-emerald-300 focus:border-emerald-500 transition-colors" />
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Emergency Contact Details
-        </h4>
-      </div>
-      <div className="p-5 bg-slate-50/50 rounded-xl border border-slate-200/50 mt-4">
-        <div className="form-row">
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Contact Name</label>
-            <input type="text" value={form.emergency_contact_name || ''} onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })}
-              className="form-control" placeholder="Jane Doe" />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Relationship</label>
-            <select value={form.emergency_contact_relation || ''} onChange={(e) => setForm({ ...form, emergency_contact_relation: e.target.value })}
-              className="form-control">
-              <option value="">Select</option>
-              <option>Spouse</option><option>Parent</option><option>Sibling</option><option>Friend</option><option>Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">Phone Number</label>
-            <input type="tel" value={form.emergency_contact_phone || ''} onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
-              className="form-control" placeholder="+91 98765 43210" />
-          </div>
+      <SectionHeader icon={Phone} title="Emergency Contact" subtitle="In case of emergency" colorClass="bg-gradient-to-br from-rose-50 to-pink-50 text-rose-600 border-rose-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-rose-50/30 backdrop-blur-xl border border-rose-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-rose-600 transition-colors">Contact Name</label>
+          <input type="text" value={form.emergency_contact_name || ''} onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })} className="form-control hover:border-rose-300 focus:border-rose-500 transition-colors" placeholder="Jane Doe" />
+        </div>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-rose-600 transition-colors">Relationship</label>
+          <select value={form.emergency_contact_relation || ''} onChange={(e) => setForm({ ...form, emergency_contact_relation: e.target.value })} className="form-control hover:border-rose-300 focus:border-rose-500 transition-colors">
+            <option value="">Select</option><option>Spouse</option><option>Parent</option><option>Sibling</option><option>Friend</option><option>Other</option>
+          </select>
+        </div>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-rose-600 transition-colors">Phone Number</label>
+          <input type="tel" value={form.emergency_contact_phone || ''} onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })} className="form-control hover:border-rose-300 focus:border-rose-500 transition-colors" placeholder="+91 98765 43210" />
         </div>
       </div>
     </div>
   );
 
   const renderAddressSection = () => (
-    <div className="space-y-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Address Details
-        </h4>
-      </div>
-      
-      <div style={{ margin: '16px 0 8px 0', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
-        <h5 style={{ color: 'var(--primary)', margin: 0, fontSize: 14, fontWeight: 600 }}>
-          Current Address
-        </h5>
-      </div>
-      <div>
-        <textarea value={form.current_address || ''} onChange={(e) => setForm({ ...form, current_address: e.target.value })}
-          className="form-control" rows="3" placeholder="Full current address" />
-      </div>
-
-      <div style={{ margin: '24px 0 8px 0', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
-        <h5 style={{ color: 'var(--primary)', margin: 0, fontSize: 14, fontWeight: 600 }}>
-          Permanent Address
-        </h5>
-      </div>
-      <div>
-        <textarea value={form.permanent_address || ''} onChange={(e) => setForm({ ...form, permanent_address: e.target.value })}
-          className="form-control" rows="3" placeholder="Full permanent address" />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionHeader icon={MapPin} title="Address Details" subtitle="Current and permanent residence" colorClass="bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="space-y-4">
+          <h5 className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-2"><MapPin size={16}/> Current Address</h5>
+          <textarea value={form.current_address || ''} onChange={(e) => setForm({ ...form, current_address: e.target.value })} className="form-control hover:border-amber-300 focus:border-amber-500 transition-colors resize-none" rows="4" placeholder="Full current address..." />
+        </div>
+        <div className="space-y-4">
+          <h5 className="text-sm font-bold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-2"><Building size={16}/> Permanent Address</h5>
+          <textarea value={form.permanent_address || ''} onChange={(e) => setForm({ ...form, permanent_address: e.target.value })} className="form-control hover:border-amber-300 focus:border-amber-500 transition-colors resize-none" rows="4" placeholder="Full permanent address..." />
+        </div>
       </div>
     </div>
   );
 
   const renderProfessionalSection = () => (
-    <div className="space-y-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Work / Professional Info
-        </h4>
-      </div>
-      <div className="form-row">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-          <select
-            value={form.department || ''}
-            onChange={(e) => {
-              if (e.target.value === 'add_custom') {
-                navigate('/hr/departments?add=true');
-              } else {
-                setForm({ ...form, department: e.target.value });
-              }
-            }}
-            className="form-control"
-          >
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionHeader icon={Briefcase} title="Work / Professional Info" subtitle="Roles, assignments, and shifts" colorClass="bg-gradient-to-br from-purple-50 to-fuchsia-50 text-purple-600 border-purple-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Department</label>
+          <select value={form.department || ''} onChange={(e) => { if (e.target.value === 'add_custom') navigate('/hr/departments?add=true'); else setForm({ ...form, department: e.target.value }); }} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors">
             <option value="">Select</option>
-            {uniqueDepartments.map(name => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-            <option value="add_custom" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom</option>
+            {uniqueDepartments.map(name => <option key={name} value={name}>{name}</option>)}
+            <option value="add_custom" className="text-purple-600 font-bold bg-purple-50">+ Add Custom</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Designation</label>
-          <select
-            value={form.designation || ''}
-            onChange={(e) => {
-              if (e.target.value === 'add_custom') {
-                navigate('/hr/designations?add=true');
-              } else {
-                setForm({ ...form, designation: e.target.value });
-              }
-            }}
-            className="form-control"
-          >
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Designation</label>
+          <select value={form.designation || ''} onChange={(e) => { if (e.target.value === 'add_custom') navigate('/hr/designations?add=true'); else setForm({ ...form, designation: e.target.value }); }} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors">
             <option value="">Select</option>
-            {uniqueDesignations.map(name => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-            <option value="add_custom" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>+ Add Custom</option>
+            {uniqueDesignations.map(name => <option key={name} value={name}>{name}</option>)}
+            <option value="add_custom" className="text-purple-600 font-bold bg-purple-50">+ Add Custom</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
-          <select value={form.employment_type || 'Full-time'} onChange={(e) => setForm({ ...form, employment_type: e.target.value })}
-            className="form-control">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Employment Type</label>
+          <select value={form.employment_type || 'Full-time'} onChange={(e) => setForm({ ...form, employment_type: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors">
             <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Intern</option><option>Consultant</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-          <select value={form.employment_status || 'Active'} onChange={(e) => setForm({ ...form, employment_status: e.target.value })}
-            className="form-control">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Status</label>
+          <select value={form.employment_status || 'Active'} onChange={(e) => setForm({ ...form, employment_status: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors">
             <option>Active</option><option>Probation</option><option>On Leave</option><option>Notice Period</option><option>Terminated</option><option>Resigned</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Date of Joining</label>
-          <input type="date" value={form.date_of_joining || ''} onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })}
-            className="form-control" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Date of Joining</label>
+          <input type="date" value={form.date_of_joining || ''} onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Reporting Manager</label>
-          <select value={form.reporting_manager_id || ''} onChange={(e) => setForm({ ...form, reporting_manager_id: e.target.value })}
-            className="form-control">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Reporting Manager</label>
+          <select value={form.reporting_manager_id || ''} onChange={(e) => setForm({ ...form, reporting_manager_id: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors">
             <option value="">Select</option>
-            {employees.filter(e => e.id !== editingId).map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.name} - {emp.designation || emp.department}</option>
-            ))}
+            {employees.filter(e => e.id !== editingId).map(emp => <option key={emp.id} value={emp.id}>{emp.name} - {emp.designation || emp.department}</option>)}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Work Location</label>
-          <input type="text" value={form.work_location || ''} onChange={(e) => setForm({ ...form, work_location: e.target.value })}
-            className="form-control" placeholder="Head Office / Remote" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Work Location</label>
+          <input type="text" value={form.work_location || ''} onChange={(e) => setForm({ ...form, work_location: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors" placeholder="Head Office / Remote" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
-          <select value={form.shift_id || ''} onChange={(e) => setForm({ ...form, shift_id: e.target.value })}
-            className="form-control">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Shift</label>
+          <select value={form.shift_id || ''} onChange={(e) => setForm({ ...form, shift_id: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors">
             <option value="">Select</option>
-            {shifts.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
+            {shifts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Confirmation Date</label>
-          <input type="date" value={form.confirmation_date || ''} onChange={(e) => setForm({ ...form, confirmation_date: e.target.value })}
-            className="form-control" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-purple-600 transition-colors">Confirmation Date</label>
+          <input type="date" value={form.confirmation_date || ''} onChange={(e) => setForm({ ...form, confirmation_date: e.target.value })} className="form-control hover:border-purple-300 focus:border-purple-500 transition-colors" />
         </div>
       </div>
     </div>
   );
 
   const renderBankSection = () => (
-    <div className="space-y-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Bank Details
-        </h4>
-      </div>
-      <div className="form-row">
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
-          <input type="text" value={form.bank_name || ''} onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
-            className="form-control" placeholder="HDFC Bank" />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionHeader icon={CreditCard} title="Bank Details" subtitle="Account and transfer info" colorClass="bg-gradient-to-br from-cyan-50 to-blue-50 text-cyan-600 border-cyan-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="sm:col-span-2 group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-cyan-600 transition-colors">Bank Name</label>
+          <input type="text" value={form.bank_name || ''} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} className="form-control hover:border-cyan-300 focus:border-cyan-500 transition-colors" placeholder="e.g., HDFC Bank" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
-          <input type="text" value={form.account_number || ''} onChange={(e) => setForm({ ...form, account_number: e.target.value })}
-            className="form-control" placeholder="XXXXXXXXXX" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-cyan-600 transition-colors">Account Number</label>
+          <input type="text" value={form.account_number || ''} onChange={(e) => setForm({ ...form, account_number: e.target.value })} className="form-control hover:border-cyan-300 focus:border-cyan-500 transition-colors" placeholder="XXXXXXXXXX" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">IFSC Code</label>
-          <input type="text" value={form.ifsc_code || ''} onChange={(e) => setForm({ ...form, ifsc_code: e.target.value })}
-            className="form-control" placeholder="HDFC0001234" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-cyan-600 transition-colors">IFSC Code</label>
+          <input type="text" value={form.ifsc_code || ''} onChange={(e) => setForm({ ...form, ifsc_code: e.target.value })} className="form-control hover:border-cyan-300 focus:border-cyan-500 transition-colors" placeholder="HDFC0001234" />
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Statutory Details
-        </h4>
-      </div>
-      <div className="p-5 bg-slate-50/50 rounded-xl border border-slate-200/50 mt-4">
-        <div className="form-row">
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">PAN Number</label>
-            <input type="text" value={form.pan_number || ''} onChange={(e) => setForm({ ...form, pan_number: e.target.value.toUpperCase() })}
-              className="form-control" placeholder="ABCDE1234F" maxLength={10} />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">UAN Number</label>
-            <input type="text" value={form.uan_number || ''} onChange={(e) => setForm({ ...form, uan_number: e.target.value })}
-              className="form-control" placeholder="123456789012" />
-          </div>
+      <SectionHeader icon={FileText} title="Statutory Details" subtitle="Tax and compliance identifiers" colorClass="bg-gradient-to-br from-slate-50 to-zinc-50 text-slate-600 border-slate-200/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50/50 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-slate-900 transition-colors">PAN Number</label>
+          <input type="text" value={form.pan_number || ''} onChange={(e) => setForm({ ...form, pan_number: e.target.value.toUpperCase() })} className="form-control hover:border-slate-400 focus:border-slate-500 transition-colors uppercase" placeholder="ABCDE1234F" maxLength={10} />
+        </div>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-slate-900 transition-colors">UAN Number</label>
+          <input type="text" value={form.uan_number || ''} onChange={(e) => setForm({ ...form, uan_number: e.target.value })} className="form-control hover:border-slate-400 focus:border-slate-500 transition-colors" placeholder="123456789012" />
         </div>
       </div>
     </div>
   );
 
   const renderDocumentsSection = () => (
-    <div className="space-y-4">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-          Document Details
-        </h4>
-      </div>
-      <div className="form-row">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Aadhaar Number</label>
-          <input type="text" value={form.aadhar_number || ''} onChange={(e) => setForm({ ...form, aadhar_number: e.target.value })}
-            className="form-control" placeholder="XXXX XXXX XXXX" maxLength={14} />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SectionHeader icon={FileText} title="Document Details" subtitle="ID proofs and licenses" colorClass="bg-gradient-to-br from-sky-50 to-blue-50 text-sky-600 border-sky-100/50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-sky-600 transition-colors">Aadhaar Number</label>
+          <input type="text" value={form.aadhar_number || ''} onChange={(e) => setForm({ ...form, aadhar_number: e.target.value })} className="form-control hover:border-sky-300 focus:border-sky-500 transition-colors" placeholder="XXXX XXXX XXXX" maxLength={14} />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Passport Number</label>
-          <input type="text" value={form.passport_number || ''} onChange={(e) => setForm({ ...form, passport_number: e.target.value })}
-            className="form-control" placeholder="A1234567" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-sky-600 transition-colors">Passport Number</label>
+          <input type="text" value={form.passport_number || ''} onChange={(e) => setForm({ ...form, passport_number: e.target.value })} className="form-control hover:border-sky-300 focus:border-sky-500 transition-colors" placeholder="A1234567" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Passport Expiry</label>
-          <input type="date" value={form.passport_expiry || ''} onChange={(e) => setForm({ ...form, passport_expiry: e.target.value })}
-            className="form-control" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-sky-600 transition-colors">Passport Expiry</label>
+          <input type="date" value={form.passport_expiry || ''} onChange={(e) => setForm({ ...form, passport_expiry: e.target.value })} className="form-control hover:border-sky-300 focus:border-sky-500 transition-colors" />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Driving License</label>
-          <input type="text" value={form.driving_license || ''} onChange={(e) => setForm({ ...form, driving_license: e.target.value })}
-            className="form-control" placeholder="DL1234567890" />
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-sky-600 transition-colors">Driving License</label>
+          <input type="text" value={form.driving_license || ''} onChange={(e) => setForm({ ...form, driving_license: e.target.value })} className="form-control hover:border-sky-300 focus:border-sky-500 transition-colors" placeholder="DL1234567890" />
         </div>
       </div>
     </div>
@@ -691,37 +575,36 @@ const EmployeeMaster = () => {
       return b + a - d;
     };
     return (
-      <div className="space-y-4">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-          <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
-            Salary Details
-          </h4>
-        </div>
-        <div className="form-row">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Basic Salary</label>
-            <input type="number" value={form.basic_salary || ''} onChange={(e) => {
-              const val = e.target.value;
-              setForm(prev => ({ ...prev, basic_salary: val, net_salary: (Number(val) || 0) + (Number(prev.allowances) || 0) - (Number(prev.deductions) || 0) }));
-            }} className="form-control" placeholder="e.g. 50000" />
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <SectionHeader icon={IndianRupee} title="Salary Details" subtitle="Compensation breakdown" colorClass="bg-gradient-to-br from-green-50 to-emerald-50 text-green-600 border-green-100/50" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-white/60 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+          <div className="group">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-green-600 transition-colors">Basic Salary</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">₹</span>
+              <input type="number" value={form.basic_salary || ''} onChange={(e) => { const val = e.target.value; setForm(prev => ({ ...prev, basic_salary: val, net_salary: (Number(val) || 0) + (Number(prev.allowances) || 0) - (Number(prev.deductions) || 0) })); }} className="form-control pl-8 hover:border-green-300 focus:border-green-500 transition-colors" placeholder="50000" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Allowances</label>
-            <input type="number" value={form.allowances || ''} onChange={(e) => {
-              const val = e.target.value;
-              setForm(prev => ({ ...prev, allowances: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(val) || 0) - (Number(prev.deductions) || 0) }));
-            }} className="form-control" placeholder="e.g. 10000" />
+          <div className="group">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-green-600 transition-colors">Allowances</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">₹</span>
+              <input type="number" value={form.allowances || ''} onChange={(e) => { const val = e.target.value; setForm(prev => ({ ...prev, allowances: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(val) || 0) - (Number(prev.deductions) || 0) })); }} className="form-control pl-8 hover:border-green-300 focus:border-green-500 transition-colors" placeholder="10000" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deductions</label>
-            <input type="number" value={form.deductions || ''} onChange={(e) => {
-              const val = e.target.value;
-              setForm(prev => ({ ...prev, deductions: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(prev.allowances) || 0) - (Number(val) || 0) }));
-            }} className="form-control" placeholder="e.g. 2000" />
+          <div className="group">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-green-600 transition-colors">Deductions</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold">₹</span>
+              <input type="number" value={form.deductions || ''} onChange={(e) => { const val = e.target.value; setForm(prev => ({ ...prev, deductions: val, net_salary: (Number(prev.basic_salary) || 0) + (Number(prev.allowances) || 0) - (Number(val) || 0) })); }} className="form-control pl-8 hover:border-green-300 focus:border-green-500 transition-colors" placeholder="2000" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Net Salary</label>
-            <input type="number" value={form.net_salary || calcNet() || ''} readOnly className="form-control" placeholder="0" />
+          <div className="group">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Net Salary</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">₹</span>
+              <input type="number" value={form.net_salary || calcNet() || ''} readOnly className="form-control pl-8 bg-green-50/50 border-green-200 text-green-800 font-bold shadow-inner" placeholder="0" />
+            </div>
           </div>
         </div>
       </div>
@@ -977,14 +860,14 @@ const EmployeeMaster = () => {
 
         {/* LIST VIEW (Table format matching Party Master) */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="data-table">
             <thead>
               <tr>
-                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Employee</th>
-                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Department</th>
-                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Designation</th>
-                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>Status</th>
-                <th style={{ padding: '12px 24px', fontWeight: 600, fontSize: 13, color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Status</th>
+                <th>
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>ACTIONS</div>
                 </th>
               </tr>
@@ -998,8 +881,8 @@ const EmployeeMaster = () => {
                 </tr>
               ) : (
                 paginatedEmployees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-slate-50 transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '16px 24px' }}>
+                  <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                    <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontWeight: 600, fontSize: 14, border: '1px solid #e2e8f0' }}>
                           {emp.name?.charAt(0).toUpperCase()}
@@ -1015,15 +898,15 @@ const EmployeeMaster = () => {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-primary)' }}>{emp.department || '—'}</td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-primary)' }}>{emp.designation || '—'}</td>
-                    <td style={{ padding: '16px 24px' }}>
+                    <td>{emp.department || '—'}</td>
+                    <td>{emp.designation || '—'}</td>
+                    <td>
                       <div className="flex items-center gap-1.5">
                         <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: emp.employment_status === 'Active' || !emp.employment_status ? '#10b981' : '#f59e0b' }}></span>
                         <span style={{ fontSize: 13, fontWeight: 500, color: emp.employment_status === 'Active' || !emp.employment_status ? '#10b981' : '#f59e0b' }}>{emp.employment_status || 'Active'}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                    <td style={{ textAlign: 'right' }}>
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => navigate(`/hr/employees/${emp.id}`)} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#fff', border: '1px solid rgba(99, 102, 241, 0.2)', cursor: 'pointer' }} title="View Profile">
                           <Eye size={14} color="#6366f1" />

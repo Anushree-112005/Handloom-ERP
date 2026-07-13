@@ -68,6 +68,7 @@ class OnTableCheckingBase(BaseModel):
     order_no: Optional[str] = None
     party_name: Optional[str] = None
     lot_no: Optional[str] = None
+    qc_name: Optional[str] = None
     total_meters: Optional[Decimal] = Decimal("0.0")
     total_pieces: Optional[int] = 0
     pass_meters: Optional[Decimal] = Decimal("0.0")

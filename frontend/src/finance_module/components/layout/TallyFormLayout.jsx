@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, X, ArrowLeft } from 'lucide-react';
+import { Layers, ArrowLeft, Save } from 'lucide-react';
 
 /**
- * FormLayout – modern modal-card form shell for Create / Alter screens.
- * Renders as an overlay modal inside the Layout (not full-screen takeover).
+ * TallyFormLayout – Inline page layout matching standard Accounting modules
+ * like GroupCreate.jsx. Used for Stock Groups, Items, Units, Locations, etc.
  */
 export default function TallyFormLayout({
   title,
@@ -12,12 +12,15 @@ export default function TallyFormLayout({
   onAccept,
   onQuit,
   isLoading = false,
-  accentColor = '#6366f1',
+  accentColor = 'var(--primary)',
   children,
 }) {
   const navigate = useNavigate();
   const handleQuit = () => (onQuit ? onQuit() : navigate(-1));
-  const modeLabel = mode === 'create' ? 'Creation' : 'Alteration';
+  
+  // Clean titles
+  const pageTitle = title.includes('Creation') || title.includes('Alteration') ? title.split(' ')[0] + ' ' + title.split(' ')[1] : title;
+  const cardTitle = mode === 'create' ? `New ${pageTitle}` : `Alter ${pageTitle}`;
 
   useEffect(() => {
     const handler = (e) => {
@@ -29,64 +32,57 @@ export default function TallyFormLayout({
   }, [onAccept]);
 
   return (
-    <div className="w-full space-y-6">
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      
+      {/* Page Header & Back Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Layers size={24} color="var(--primary)" />
+            {pageTitle}s
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+            Manage {pageTitle.toLowerCase()} classification categories
+          </p>
+        </div>
+        <button 
+          className="cb-btn-secondary" 
+          onClick={handleQuit}
+          type="button"
+        >
+          <ArrowLeft size={16} /> Back to List
+        </button>
+      </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/60"
-          style={{ borderLeftWidth: 4, borderLeftColor: accentColor }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: accentColor + '18' }}>
-              <Save size={15} style={{ color: accentColor }} />
+      {/* Inline Form Card */}
+      <div className="cb-card animate-fade" style={{ padding: 0 }}>
+        
+        {/* Card Header */}
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ padding: 10, background: 'rgba(79, 70, 229, 0.1)', borderRadius: 10, color: 'var(--primary)' }}>
+              <Layers size={20} />
             </div>
             <div>
-              <h2 className="font-bold text-slate-800 text-base leading-tight">
-                {title} {modeLabel}
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {mode === 'create' ? 'Fill in the details below' : 'Update the details below'}
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>{cardTitle}</h3>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>
+                {pageTitle} Details
               </p>
             </div>
           </div>
-          <button onClick={handleQuit}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-            <X size={17} />
-          </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-1">
-          {children}
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-50/60 border-t border-slate-100">
-          <div className="flex items-center gap-4 text-xs text-slate-400">
-            <span>
-              <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500 mr-1 shadow-sm">Ctrl+S</kbd> Save
-            </span>
-            <span>
-              <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-500 mr-1 shadow-sm">Esc</kbd> Cancel
-            </span>
+        {/* Card Body (Form) */}
+        <div style={{ padding: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {children}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleQuit}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onAccept}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold text-white shadow-sm transition-all disabled:opacity-60"
-              style={{ background: isLoading ? '#94a3b8' : accentColor }}
-            >
-              {isLoading
-                ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
-                : <><Save size={14} /> {mode === 'create' ? 'Create' : 'Save Changes'}</>
-              }
+
+          {/* Card Footer (Buttons) */}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 20, marginTop: 24 }}>
+            <button type="button" className="cb-btn-secondary" onClick={handleQuit}>Cancel</button>
+            <button type="button" className="cb-btn-primary" onClick={onAccept} disabled={isLoading}>
+              <Save size={16} /> {isLoading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
@@ -95,50 +91,56 @@ export default function TallyFormLayout({
   );
 }
 
-/** Labelled field row */
+/** 
+ * Matches the layout in GroupCreate: label block + input full width
+ */
 export function FormRow({ label, required, hint, children }) {
   return (
-    <div className="grid grid-cols-12 gap-4 py-3.5 items-start border-b border-slate-100 last:border-b-0">
-      <label className="col-span-4 text-sm font-semibold text-slate-600 pt-2 leading-tight">
-        {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
+    <div className="form-group" style={{ marginBottom: 0 }}>
+      <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
+        {label} {required && <span style={{ color: '#ef4444' }}>*</span>}
       </label>
-      <div className="col-span-8 flex flex-col gap-1">
-        {children}
-        {hint && <span className="text-[11px] text-slate-400 leading-tight">{hint}</span>}
-      </div>
+      {children}
+      {hint && <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{hint}</p>}
     </div>
   );
 }
 
-/** Styled text / number input */
-export function FormInput({ className = '', ...props }) {
+/** 
+ * Standard cb-input style
+ */
+export function FormInput({ className = '', style, ...props }) {
   return (
     <input
       {...props}
-      className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/15 transition-all placeholder:text-slate-300 ${className}`}
+      style={{ ...style }}
+      className={`cb-input ${className}`}
     />
   );
 }
 
-/** Styled select */
-export function FormSelect({ className = '', children, ...props }) {
+/** 
+ * Standard cb-input for selects
+ */
+export function FormSelect({ className = '', style, children, ...props }) {
   return (
     <select
       {...props}
-      className={`w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/15 transition-all ${className}`}
+      style={{ ...style }}
+      className={`cb-input cursor-pointer ${className}`}
     >
       {children}
     </select>
   );
 }
 
-/** Section divider */
+/** 
+ * Optional divider for sections
+ */
 export function SectionHeader({ title }) {
   return (
-    <div className="flex items-center gap-3 pt-4 pb-1 first:pt-0">
-      <span className="text-[10px] font-bold uppercase tracking-widest text-purple-600">{title}</span>
-      <div className="flex-1 h-px bg-slate-100" />
+    <div style={{ padding: '8px 0', borderBottom: '1px solid var(--border)', marginBottom: 8, marginTop: 8 }}>
+      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{title}</span>
     </div>
   );
 }

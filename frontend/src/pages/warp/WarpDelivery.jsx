@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, Package, Factory, Download, ChevronDown, FileText, CheckCircle } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, Package, Factory, Download, ChevronDown, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 import { warpDeliveryAPI, partyAPI, warpingSizingPOAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -206,8 +206,8 @@ export default function WarpDelivery() {
     if (po) {
       setForm(prev => {
         const newForm = { ...prev, po_no_base: poNo, ref_no: poNo };
-        newForm.party_name = po.supplier_job_worker || prev.party_name;
-        newForm.sizing_name = po.supplier_job_worker || prev.sizing_name;
+        newForm.party_name = po.party_name || po.supplier_job_worker || prev.party_name;
+        newForm.sizing_name = po.party_name || po.supplier_job_worker || prev.sizing_name;
         newForm.order_no = po.order_no || prev.order_no;
         newForm.bpo_no = po.buyer_order_no || po.order_no || prev.bpo_no;
         newForm.design_no = po.design_no || prev.design_no;
@@ -556,14 +556,17 @@ export default function WarpDelivery() {
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Delivery Details' : editingId ? 'Edit Delivery' : 'New Warp Delivery'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -824,6 +827,16 @@ export default function WarpDelivery() {
                   </div>
                 </div>
             </fieldset>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              {!isReadOnly && (
+                <button type="button" className="btn btn-primary" onClick={handleCreate}>
+                  <Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
