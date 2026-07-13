@@ -89,8 +89,6 @@ export default function DespatchForm() {
   const [loading, setLoading] = useState(false);
   const [buyerOrdersList, setBuyerOrdersList] = useState([]);
 
-  // Dropdown standard mock lists
-  const buyersList = ['SK Textiles', 'Mani Spinners', 'Global Exim', 'A1 Garments', 'Raju Traders'];
   const merchandList = ['ABDUL', 'SUDHAKAR', 'MANOJ', 'RAMESH'];
 
   // Master & Submaster states
@@ -115,9 +113,6 @@ export default function DespatchForm() {
 
   const [isCustomDeliveryParty, setIsCustomDeliveryParty] = useState(false);
   const [customDeliveryPartyVal, setCustomDeliveryPartyVal] = useState('');
-
-  const [isCustomDesign, setIsCustomDesign] = useState(false);
-  const [customDesignVal, setCustomDesignVal] = useState('');
 
   const initialForm = {
     // Green header fields
@@ -295,19 +290,42 @@ export default function DespatchForm() {
 
     const order = buyerOrdersList.find(o => o.ibpo_number === value);
     if (order) {
+      const item = order.items && order.items.length > 0 ? order.items[0] : null;
       setFormData(prev => ({
         ...prev,
         ibpo: value,
+        // Header fields
         po_date: order.order_date ? formatFromAPI(order.order_date) : prev.po_date,
+        // Billing & Delivery Party/Address
         billing_party: order.party_name || prev.billing_party,
         billing_address: order.billing_address || prev.billing_address,
+        delivery_party: order.party_name || prev.delivery_party,
         delivery_address: order.delivery_address || prev.delivery_address,
+        // State codes
         state_code: order.state_code || prev.state_code,
-        design_no: order.items && order.items.length > 0 ? order.items[0].design_no : prev.design_no,
-        qty: order.items && order.items.length > 0 ? String(order.items[0].order_mtrs) : prev.qty,
-        buyer_po_no: order.items && order.items.length > 0 ? order.items[0].party_po_no : prev.buyer_po_no,
-        total_planning: order.items && order.items.length > 0 ? String(order.items[0].order_mtrs) : prev.total_planning,
-        merchand: order.order_taken_by || prev.merchand,
+        del_state_code: order.state_code || prev.del_state_code,
+        // Dates from order
+        party_comp_date: order.party_comp_date ? formatFromAPI(order.party_comp_date) : prev.party_comp_date,
+        delivery_starting: order.delivery_starting ? formatFromAPI(order.delivery_starting) : prev.delivery_starting,
+        // Personnel
+        merchand: order.order_taken_by || order.merchandiser || prev.merchand,
+        // Certificate type
+        certificate_type: order.certified_type || prev.certificate_type,
+        // Item-level fields
+        design_no: item?.design_no || prev.design_no,
+        qty: item ? String(item.order_mtrs || '') : prev.qty,
+        buyer_po_no: item?.party_po_no || prev.buyer_po_no,
+        total_planning: item ? String(item.order_mtrs || '') : prev.total_planning,
+        uom: item?.uom || prev.uom,
+        tolerance_percent: item ? String(item.tolerance_pct || '0') : prev.tolerance_percent,
+        fabric_type: item?.fabric_type || prev.fabric_type,
+        currency: item?.currency || prev.currency,
+        poc_no: item?.point_of_contact || prev.poc_no,
+        party_style: item?.buyer_style || prev.party_style,
+        patten: item?.pattern || prev.patten,
+        print_name: item?.print_name || prev.print_name,
+        rate: item ? String(item.rate || '') : prev.rate,
+        ibpo_rate: item ? String(item.rate || '') : prev.ibpo_rate,
       }));
     }
   };
@@ -478,7 +496,7 @@ export default function DespatchForm() {
                       <label>Billing Party</label>
                       <select className="form-control" name="billing_party" value={formData.billing_party} onChange={handleChange}>
                         <option value="">Select Billing Party</option>
-                        {buyersList.map(b => <option key={b} value={b}>{b}</option>)}
+                        {partiesList.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                       </select>
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
@@ -491,42 +509,15 @@ export default function DespatchForm() {
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label>Design No</label>
-                      {isCustomDesign ? (
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <input 
-                            autoFocus 
-                            className="form-control" 
-                            style={{ margin: 0, flex: 1 }}
-                            value={customDesignVal} 
-                            onChange={e => setCustomDesignVal(e.target.value)} 
-                            placeholder="Add design no..."
-                          />
-                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => handleSaveCustom('design_no_master', customDesignVal, setIsCustomDesign, 'design_no')}>
-                            <CheckCircle size={16} color="var(--primary)" />
-                          </button>
-                          <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => setIsCustomDesign(false)}>
-                            <X size={16} color="#ef4444" />
-                          </button>
-                        </div>
-                      ) : (
-                        <select 
-                          className="form-control" 
-                          name="design_no" 
-                          value={formData.design_no} 
-                          onChange={(e) => {
-                            if (e.target.value === '__ADD_NEW__') {
-                              setCustomDesignVal('');
-                              setIsCustomDesign(true);
-                            } else {
-                              handleChange(e);
-                            }
-                          }}
-                        >
-                          <option value="">Select Design No</option>
-                          {dropdowns.masters?.design_no_master?.map(d => <option key={d} value={d}>{d}</option>)}
-                          <option value="__ADD_NEW__">+ Add Custom...</option>
-                        </select>
-                      )}
+                      <select 
+                        className="form-control" 
+                        name="design_no" 
+                        value={formData.design_no} 
+                        onChange={handleChange}
+                      >
+                        <option value="">Select Design No</option>
+                        {dropdowns.masters?.design_no_master?.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label>Order</label>
