@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
-  ArrowUpRight, Search, Plus, Printer, Check, CheckCircle,
+  ArrowUpRight, ArrowLeft, Search, Plus, Printer, Check, CheckCircle,
   Clock, Truck, Trash2, Eye, Calendar, ShieldAlert, X, Edit, Download
 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -136,8 +136,6 @@ export default function GateOutward() {
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
 
-  // Form Section active tab
-  const [activeFormTab, setActiveFormTab] = useState('Reference Info');
 
   // Form input fields state
   const [inwardRef, setInwardRef] = useState('');
@@ -207,7 +205,6 @@ export default function GateOutward() {
     setRemarks('');
     setStatus('');
 
-    setActiveFormTab('Reference Info');
     setIsFormOpen(true);
   };
 
@@ -232,7 +229,6 @@ export default function GateOutward() {
     setRemarks(item.remarks);
     setStatus(item.status);
 
-    setActiveFormTab('Reference Info');
     setIsFormOpen(true);
   };
 
@@ -476,52 +472,34 @@ export default function GateOutward() {
         <div className="card animate-fade" style={{ padding: '32px', minHeight: '600px', background: 'white' }}>
           
           {/* Form Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '28px' }}>
+            <button
+              type="button"
+              onClick={() => setIsFormOpen(false)}
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+                flexShrink: 0,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+              }}
+              title="Back to List"
+            >
+              <ArrowLeft size={20} />
+            </button>
             <div>
               <h2 style={{ fontSize: '20px', fontWeight: 850, color: 'var(--text-primary)', margin: 0 }}>
                 {outwards.some(o => o.id === currentFormId) ? `Edit Gate Outward Record (${currentFormId})` : `Add New Gate Outward / Clearance`}
               </h2>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Official Security Checkpost Material Dispatch Clearance Register</span>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <X size={15} /> Close
-              </button>
-              <button type="button" className="btn btn-primary" onClick={handleSave} style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#7c3aed', borderColor: '#7c3aed' }}>
-                <Check size={15} /> Save Slip
-              </button>
-            </div>
-          </div>
-
-          {/* Form Section Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px', position: 'sticky', top: '0', background: 'white', zIndex: 10, paddingTop: '10px' }}>
-            {['Reference Info', 'Driver & Recipient Details', 'Cargo & Security'].map(tab => {
-              const isSelected = activeFormTab === tab;
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => {
-                    setActiveFormTab(tab);
-                    const elId = tab === 'Reference Info' ? 'ref-info' : tab === 'Driver & Recipient Details' ? 'driver-info' : 'cargo-info';
-                    document.getElementById(elId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    border: 'none',
-                    background: isSelected ? 'rgba(124, 58, 237, 0.08)' : 'transparent',
-                    color: isSelected ? '#7c3aed' : 'var(--text-secondary)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {tab}
-                </button>
-              );
-            })}
           </div>
 
           {/* Form Content Scrolling Area */}
@@ -908,6 +886,23 @@ export default function GateOutward() {
 
             </div>
 
+          </div>
+
+          {/* Bottom Action Bar */}
+          <div style={{
+            marginTop: 32,
+            paddingTop: 20,
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px'
+          }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)} style={{ display: 'flex', gap: '6px', alignItems: 'center', minWidth: 100 }}>
+              <X size={15} /> Close
+            </button>
+            <button type="button" className="btn btn-primary" onClick={handleSave} style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#7c3aed', borderColor: '#7c3aed', minWidth: 120 }}>
+              <Check size={15} /> Save Slip
+            </button>
           </div>
 
         </div>
