@@ -157954,21 +157954,13 @@ Traceback (most recent call last):
 asyncpg.exceptions.InvalidPasswordError: password authentication failed for user "postgres"
 
 
-<<<<<<< HEAD
 Global Error on http://127.0.0.1:8000/api/v1/grey-yarn-deliveries: Unknown PG numeric type: 1043
-=======
-Global Error on http://127.0.0.1:8000/api/v1/company-settings/: password authentication failed for user "postgres"
->>>>>>> c2766c4978411a35fca415f46328aa5c88ddffc9
   + Exception Group Traceback (most recent call last):
   |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/_utils.py", line 77, in collapse_excgroups
   |     yield
   |   File "/home/cubeai/.local/lib/python3.12/site-packages/starlette/middleware/base.py", line 186, in __call__
   |     async with anyio.create_task_group() as task_group:
-<<<<<<< HEAD
   |   File "/home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 781, in __aexit__
-=======
-  |   File "/home/cubeai/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 799, in __aexit__
->>>>>>> c2766c4978411a35fca415f46328aa5c88ddffc9
   |     raise BaseExceptionGroup(
   | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
   +-+---------------- 1 ----------------

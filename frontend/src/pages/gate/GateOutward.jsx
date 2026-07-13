@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
-  ArrowUpRight, Search, Plus, Printer, Check, CheckCircle,
+  ArrowUpRight, ArrowLeft, Search, Plus, Printer, Check, CheckCircle,
   Clock, Truck, Trash2, Eye, Calendar, ShieldAlert, X, Edit, Download
 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -136,8 +136,6 @@ export default function GateOutward() {
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
 
-  // Form Section active tab
-  const [activeFormTab, setActiveFormTab] = useState('Reference Info');
 
   // Form input fields state
   const [inwardRef, setInwardRef] = useState('');
@@ -158,6 +156,23 @@ export default function GateOutward() {
   const [guardName, setGuardName] = useState('K. Palanisamy');
   const [remarks, setRemarks] = useState('');
   const [status, setStatus] = useState('');
+
+  // Line Items table
+  const emptyLineItem = () => ({ item: '', qty: '', rate: '', uom: '', amount: '' });
+  const [lineItems, setLineItems] = useState([emptyLineItem()]);
+
+  const addLineItem = () => setLineItems(prev => [...prev, emptyLineItem()]);
+  const removeLineItem = (idx) => setLineItems(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+  const updateLineItem = (idx, field, val) => {
+    setLineItems(prev => prev.map((row, i) => {
+      if (i !== idx) return row;
+      const updated = { ...row, [field]: val };
+      const q = parseFloat(updated.qty) || 0;
+      const r = parseFloat(updated.rate) || 0;
+      updated.amount = q && r ? (q * r).toFixed(2) : '';
+      return updated;
+    }));
+  };
 
   // KPI Calculations
   const totalOutwards = outwards.length;
@@ -206,8 +221,8 @@ export default function GateOutward() {
     setGuardName('K. Palanisamy');
     setRemarks('');
     setStatus('');
+    setLineItems([emptyLineItem()]);
 
-    setActiveFormTab('Reference Info');
     setIsFormOpen(true);
   };
 
@@ -231,8 +246,8 @@ export default function GateOutward() {
     setGuardName(item.guardName);
     setRemarks(item.remarks);
     setStatus(item.status);
+    setLineItems(item.lineItems && item.lineItems.length > 0 ? item.lineItems : [emptyLineItem()]);
 
-    setActiveFormTab('Reference Info');
     setIsFormOpen(true);
   };
 
@@ -246,6 +261,10 @@ export default function GateOutward() {
     const dateStr = new Date().toISOString().substring(0, 10);
     const timeStr = new Date().toISOString().substring(11, 16);
     const isExisting = outwards.some(o => o.id === currentFormId);
+
+    const totalQty = lineItems.reduce((s, r) => s + (parseFloat(r.qty) || 0), 0);
+    const firstUnit = lineItems[0]?.uom || '';
+    const desc = lineItems.map(row => `${row.item} (${row.qty} ${row.uom || ''})`).join(', ');
 
     if (isExisting) {
       const updated = outwards.map(o => {
@@ -261,15 +280,16 @@ export default function GateOutward() {
             purpose,
             dcNo,
             invoiceNo,
-            itemDesc,
-            qty: Number(qty),
-            unit,
+            itemDesc: desc,
+            qty: totalQty,
+            unit: firstUnit,
             weight: Number(weight),
             packages: Number(packages),
             gatePassNo,
             guardName,
             remarks,
-            status
+            status,
+            lineItems
           };
         }
         return o;
@@ -289,16 +309,17 @@ export default function GateOutward() {
         purpose,
         dcNo,
         invoiceNo,
-        itemDesc,
-        qty: Number(qty),
-        unit,
+        itemDesc: desc,
+        qty: totalQty,
+        unit: firstUnit,
         weight: Number(weight),
         packages: Number(packages),
         gatePassNo,
         guardName,
         outTime: timeStr,
         remarks,
-        status
+        status,
+        lineItems
       };
       const updated = [newEntry, ...outwards];
       setOutwards(updated);
@@ -476,52 +497,34 @@ export default function GateOutward() {
         <div className="card animate-fade" style={{ padding: '32px', minHeight: '600px', background: 'white' }}>
           
           {/* Form Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '18px', marginBottom: '28px' }}>
+            <button
+              type="button"
+              onClick={() => setIsFormOpen(false)}
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+                flexShrink: 0,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+              }}
+              title="Back to List"
+            >
+              <ArrowLeft size={20} />
+            </button>
             <div>
               <h2 style={{ fontSize: '20px', fontWeight: 850, color: 'var(--text-primary)', margin: 0 }}>
                 {outwards.some(o => o.id === currentFormId) ? `Edit Gate Outward Record (${currentFormId})` : `Add New Gate Outward / Clearance`}
               </h2>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Official Security Checkpost Material Dispatch Clearance Register</span>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <X size={15} /> Close
-              </button>
-              <button type="button" className="btn btn-primary" onClick={handleSave} style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#7c3aed', borderColor: '#7c3aed' }}>
-                <Check size={15} /> Save Slip
-              </button>
-            </div>
-          </div>
-
-          {/* Form Section Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--border)', paddingBottom: '8px', marginBottom: '28px', position: 'sticky', top: '0', background: 'white', zIndex: 10, paddingTop: '10px' }}>
-            {['Reference Info', 'Driver & Recipient Details', 'Cargo & Security'].map(tab => {
-              const isSelected = activeFormTab === tab;
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => {
-                    setActiveFormTab(tab);
-                    const elId = tab === 'Reference Info' ? 'ref-info' : tab === 'Driver & Recipient Details' ? 'driver-info' : 'cargo-info';
-                    document.getElementById(elId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    border: 'none',
-                    background: isSelected ? 'rgba(124, 58, 237, 0.08)' : 'transparent',
-                    color: isSelected ? '#7c3aed' : 'var(--text-secondary)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {tab}
-                </button>
-              );
-            })}
           </div>
 
           {/* Form Content Scrolling Area */}
@@ -774,9 +777,9 @@ export default function GateOutward() {
             </div>
 
             <div id="cargo-info" className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Cargo Inward details & Gate Checkpost verification</h4>
+              <h4 style={{ color: '#7c3aed', fontSize: '14px', fontWeight: 800, margin: 0 }}>Cargo Outward details & Gate Checkpost verification</h4>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
                   
                   <div className="form-group">
                     <label>Delivery Challan No *</label>
@@ -791,64 +794,6 @@ export default function GateOutward() {
                   </div>
 
                   <div className="form-group">
-                    <label>Quantity *</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      value={qty}
-                      onChange={e => setQty(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Unit *</label>
-                    {isCustomUnit ? (
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input 
-                          autoFocus
-                          className="form-control" 
-                          placeholder="Type new unit..."
-                          value={customUnitVal}
-                          onChange={(e) => setCustomUnitVal(e.target.value)}
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              await handleSaveCustomUnit();
-                            }
-                          }}
-                        />
-                        <button type="button" className="btn btn-primary" style={{ padding: '0 8px' }} onClick={handleSaveCustomUnit} title="Save">
-                          <Check size={16} />
-                        </button>
-                        <button type="button" className="btn btn-secondary" style={{ padding: '0 8px' }} onClick={() => { setIsCustomUnit(false); setUnit(''); }} title="Cancel">
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <select className="form-control" value={unit} onChange={e => {
-                        if (e.target.value === 'custom_add_new') {
-                          setIsCustomUnit(true);
-                          setCustomUnitVal('');
-                        } else {
-                          setUnit(e.target.value);
-                        }
-                      }}>
-                        <option value="">Select Unit...</option>
-                        <option value="Meter">Meter</option>
-                        <option value="Kg">Kg</option>
-                        <option value="Nos">Nos</option>
-                        {Array.from(new Set([
-                          ...(options.masters?.unit_master || [])
-                        ])).map(u => (
-                          <option key={u} value={u}>{u}</option>
-                        ))}
-                        <option value="custom_add_new" style={{ color: '#7c3aed', fontWeight: 'bold' }}>+ Add Custom Unit...</option>
-                      </select>
-                    )}
-                  </div>
-
-                  <div className="form-group">
                     <label>No. of Packages *</label>
                     <input 
                       type="number" 
@@ -859,10 +804,6 @@ export default function GateOutward() {
                     />
                   </div>
 
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                  
                   <div className="form-group">
                     <label>Weight (KG) *</label>
                     <input 
@@ -875,6 +816,121 @@ export default function GateOutward() {
                     />
                   </div>
 
+                </div>
+
+                {/* ---- LINE ITEMS TABLE ---- */}
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#4b5563' }}>Item Details Log Matrix</span>
+                    <button
+                      type="button"
+                      onClick={addLineItem}
+                      style={{
+                        background: 'rgba(124,58,237,0.09)',
+                        border: '1px dashed #7c3aed',
+                        color: '#7c3aed',
+                        borderRadius: 6,
+                        padding: '5px 14px',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 5
+                      }}
+                    >
+                      <Plus size={14} /> Add Row
+                    </button>
+                  </div>
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f5f3ff' }}>
+                          <th style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)', width: 44 }}>S.No</th>
+                          <th style={{ padding: '9px 10px', textAlign: 'left',   fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)' }}>Item / Description</th>
+                          <th style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)', width: 90 }}>Qty</th>
+                          <th style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)', width: 100 }}>Rate</th>
+                          <th style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)', width: 100 }}>UOM</th>
+                          <th style={{ padding: '9px 10px', textAlign: 'right',  fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)', width: 110 }}>Amount (₹)</th>
+                          <th style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 800, color: '#7c3aed', borderBottom: '1px solid var(--border)', width: 40 }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lineItems.map((row, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0', background: idx % 2 === 0 ? '#fff' : '#fafafa' }}>
+                            <td style={{ padding: '7px 10px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 700 }}>{idx + 1}</td>
+                            <td style={{ padding: '5px 8px' }}>
+                              <input
+                                className="form-control"
+                                style={{ margin: 0, fontSize: 13 }}
+                                placeholder="Enter item name..."
+                                value={row.item}
+                                onChange={e => updateLineItem(idx, 'item', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '5px 8px' }}>
+                              <input
+                                type="number"
+                                className="form-control"
+                                style={{ margin: 0, fontSize: 13, textAlign: 'right' }}
+                                placeholder="0"
+                                value={row.qty}
+                                onChange={e => updateLineItem(idx, 'qty', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '5px 8px' }}>
+                              <input
+                                type="number"
+                                className="form-control"
+                                style={{ margin: 0, fontSize: 13, textAlign: 'right' }}
+                                placeholder="0.00"
+                                value={row.rate}
+                                onChange={e => updateLineItem(idx, 'rate', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '5px 8px' }}>
+                              <select
+                                className="form-control"
+                                style={{ margin: 0, fontSize: 13 }}
+                                value={row.uom}
+                                onChange={e => updateLineItem(idx, 'uom', e.target.value)}
+                              >
+                                <option value="">UOM</option>
+                                {Array.from(new Set(['Kg','Meter','Nos','Box','Roll','Bundle',...(options.masters?.unit_master||[])])).map(u => (
+                                  <option key={u} value={u}>{u}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '5px 10px', textAlign: 'right', fontWeight: 700, color: '#065f46' }}>
+                              {row.amount ? `₹ ${Number(row.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+                            </td>
+                            <td style={{ padding: '5px 8px', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => removeLineItem(idx)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4 }}
+                                title="Remove row"
+                                disabled={lineItems.length === 1}
+                              >
+                                <X size={15} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ background: '#f5f3ff', borderTop: '2px solid #ddd6fe' }}>
+                          <td colSpan={5} style={{ padding: '9px 12px', fontWeight: 800, fontSize: 13, textAlign: 'right', color: '#4b5563' }}>Grand Total</td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 900, fontSize: 14, color: '#7c3aed' }}>
+                            ₹ {lineItems.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  
                   <div className="form-group">
                     <label>Security Guard Name *</label>
                     <input 
@@ -886,28 +942,38 @@ export default function GateOutward() {
                     />
                   </div>
 
-                </div>
+                  <div className="form-group">
+                    <label>Remarks ⚠️</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Checklist remarks..." 
+                      value={remarks} 
+                      onChange={e => setRemarks(e.target.value)} 
+                    />
+                  </div>
 
-                <div className="form-group">
-                  <label>Item Description Details *</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
-                    placeholder="Enter detailed description of exiting cargo packages..."
-                    value={itemDesc}
-                    onChange={e => setItemDesc(e.target.value)}
-                    style={{ resize: 'none' }}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Remarks ⚠️</label>
-                  <input type="text" className="form-control" placeholder="Checklist remarks..." value={remarks} onChange={e => setRemarks(e.target.value)} />
                 </div>
 
             </div>
 
+          </div>
+
+          {/* Bottom Action Bar */}
+          <div style={{
+            marginTop: 32,
+            paddingTop: 20,
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px'
+          }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setIsFormOpen(false)} style={{ display: 'flex', gap: '6px', alignItems: 'center', minWidth: 100 }}>
+              <X size={15} /> Close
+            </button>
+            <button type="button" className="btn btn-primary" onClick={handleSave} style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#7c3aed', borderColor: '#7c3aed', minWidth: 120 }}>
+              <Check size={15} /> Save Slip
+            </button>
           </div>
 
         </div>
