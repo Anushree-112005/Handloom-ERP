@@ -12,6 +12,7 @@ import OrderSubModule from './pages/buyer_order/OrderSubModule';
 import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
 import IPOInvoice from './pages/buyer_order/IPOInvoice';
 import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
+import CalendarModule from './pages/calendar/CalendarModule';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
@@ -49,6 +50,8 @@ import HRModule from './pages/HR/HRModule';
 import PPCMultiModule from './pages/ppc/PPCMultiModule';
 import LiveDashboard from './pages/ppc/LiveDashboard';
 import ETACalculation from './pages/ppc/ETACalculation';
+import CostingSheetModule from './pages/costing_sheet/CostingSheetModule';
+import StockSheetModule from './pages/inventory/StockSheetModule';
 
 // Fleet & Vehicle Management Imports
 import FleetDashboard from './pages/Vehicle management/FleetDashboard';
@@ -240,6 +243,7 @@ export default function App() {
       }>
         <Route index element={<Dashboard />} />
         <Route path="overview" element={<Overview />} />
+        <Route path="calendar" element={<CalendarModule />} />
         <Route path="my-approvals" element={<MockDbSyncWrapper><MyApprovals /></MockDbSyncWrapper>} />
         <Route path="party-master" element={<PartyMaster />} />
 
@@ -300,6 +304,7 @@ export default function App() {
         <Route path="jobwork/status" element={<JobWorkStatus />} />
         <Route path="inventory/stock-summary" element={<StockSummary />} />
         <Route path="inventory/stock-ledger" element={<StockLedger />} />
+        <Route path="inventory/stock-sheet" element={<StockSheetModule />} />
 
         <Route path="cloth/inward" element={<ClothInward />} />
         <Route path="cloth/checking" element={<OnTableChecking />} />
@@ -331,6 +336,9 @@ export default function App() {
         <Route path="ppc/tracking/live-dashboard" element={<LiveDashboard />} />
         <Route path="ppc/eta-engine" element={<ETACalculation />} />
         <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
+        
+        {/* Costing Sheet Module */}
+        <Route path="costing-sheet" element={<CostingSheetModule />} />
 
         {/* LAB & Shade Management Routes */}
         <Route path="lab/lab-dip" element={

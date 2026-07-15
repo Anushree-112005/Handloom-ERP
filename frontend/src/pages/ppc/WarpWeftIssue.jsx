@@ -1,26 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Search, Save } from 'lucide-react';
+import { ppcWarpDeliveryAPI, ppcAPI, buyerOrderAPI } from '../../services/api';
 
 export default function WarpWeftIssue() {
-  const [requisitions, setRequisitions] = useState([
-    { id: 'REQ-1001', order: 'PO-00101', loom: 'Loom L1', status: 'Pending', warp: 'Cotton 40s (12,000 ends)', weft: 'Polyester 150D', date: '2026-06-12' },
-    { id: 'REQ-1002', order: 'PO-00205', loom: 'Loom L3', status: 'Issued', warp: 'Linen Blend (8,500 ends)', weft: 'Cotton 30s', date: '2026-06-11' },
-  ]);
-
+  const [requisitions, setRequisitions] = useState([]);
+  const [looms, setLooms] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  
   const [formData, setFormData] = useState({
-    order: '', loom: '', warp: '', weft: ''
+    order_id: '', loom_id: '', warp_configuration: '', weft_configuration: ''
   });
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [reqRes, loomRes, ordRes, allocRes] = await Promise.all([
+        ppcWarpDeliveryAPI.list().catch(() => ({ data: [] })),
+        ppcAPI.getLooms().catch(() => ({ data: [] })),
+        buyerOrderAPI.list().catch(() => ({ data: [] })),
+        ppcAPI.getAllocations().catch(() => ({ data: [] }))
+      ]);
+      setRequisitions(reqRes?.data || []);
+      setLooms(loomRes?.data || []);
+      setOrders(ordRes?.data || []);
+      setAllocations(allocRes?.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleOrderChange = (e) => {
+    const oId = e.target.value;
+    setFormData(prev => ({ ...prev, order_id: oId }));
+    
+    // Auto-fill loom if order is already allocated
+    const alloc = allocations.find(a => a.order_id === oId);
+    if (alloc) {
+      setFormData(prev => ({ ...prev, loom_id: alloc.loom_id.toString() }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setRequisitions([...requisitions, { 
-      id: `REQ-${1000 + requisitions.length + 1}`, 
-      order: formData.order, loom: formData.loom, 
-      warp: formData.warp, weft: formData.weft, 
-      status: 'Pending', 
-      date: new Date().toISOString().split('T')[0] 
-    }]);
-    setFormData({ order: '', loom: '', warp: '', weft: '' });
+    try {
+      await ppcWarpDeliveryAPI.create({
+        requisition_id: `REQ-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        order_id: formData.order_id,
+        loom_id: parseInt(formData.loom_id) || 1,
+        warp_configuration: formData.warp_configuration,
+        weft_configuration: formData.weft_configuration,
+        status: 'Pending'
+      });
+      setFormData({ order_id: '', loom_id: '', warp_configuration: '', weft_configuration: '' });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Error creating requisition');
+    }
   };
 
   return (
@@ -56,13 +96,15 @@ export default function WarpWeftIssue() {
                 </tr>
               </thead>
               <tbody>
-                {requisitions.map((req, i) => (
-                  <tr key={i}>
-                    <td><span style={{ fontWeight: 600, color: 'var(--primary)' }}>{req.id}</span></td>
-                    <td>{req.order}</td>
-                    <td>{req.loom}</td>
-                    <td>{req.warp}</td>
-                    <td>{req.weft}</td>
+                {requisitions.map((req, i) => {
+                  const loomName = looms.find(l => l.id === req.loom_id)?.loom_name || `ID:${req.loom_id}`;
+                  return (
+                  <tr key={req.id || i}>
+                    <td><span style={{ fontWeight: 600, color: 'var(--primary)' }}>{req.requisition_id}</span></td>
+                    <td>{req.order_id}</td>
+                    <td>{loomName}</td>
+                    <td>{req.warp_configuration}</td>
+                    <td>{req.weft_configuration}</td>
                     <td>
                       <span style={{
                         padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
@@ -76,16 +118,19 @@ export default function WarpWeftIssue() {
                       {req.status === 'Pending' && (
                         <button 
                           className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: 12 }}
-                          onClick={() => {
-                            const newReq = [...requisitions];
-                            newReq[i].status = 'Issued';
-                            setRequisitions(newReq);
+                          onClick={async () => {
+                            try {
+                              await warpDeliveryAPI.update(req.id, { ...req, status: 'Issued' });
+                              fetchData();
+                            } catch (e) {
+                              console.error(e);
+                            }
                           }}
                         >Mark Issued</button>
                       )}
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -96,25 +141,27 @@ export default function WarpWeftIssue() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Order ID *</label>
-              <input 
-                type="text" className="form-control" 
-                value={formData.order} onChange={e => setFormData({...formData, order: e.target.value})}
-                required placeholder="e.g. PO-00105"
-              />
+              <select className="form-control" value={formData.order_id} onChange={handleOrderChange} required>
+                <option value="">-- Select Order --</option>
+                {orders.map(o => (
+                  <option key={o.id} value={o.order_no || o.ibpo_number || o.id}>{o.order_no || o.ibpo_number}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Target Loom *</label>
-              <input 
-                type="text" className="form-control" 
-                value={formData.loom} onChange={e => setFormData({...formData, loom: e.target.value})}
-                required placeholder="e.g. Loom L2"
-              />
+              <select className="form-control" value={formData.loom_id} onChange={e => setFormData({...formData, loom_id: e.target.value})} required>
+                <option value="">-- Select Loom --</option>
+                {looms.map(l => (
+                  <option key={l.id} value={l.id}>{l.loom_name}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Warp Details *</label>
               <input 
                 type="text" className="form-control" 
-                value={formData.warp} onChange={e => setFormData({...formData, warp: e.target.value})}
+                value={formData.warp_configuration} onChange={e => setFormData({...formData, warp_configuration: e.target.value})}
                 required placeholder="e.g. Cotton 40s (10,000 ends)"
               />
             </div>
@@ -122,7 +169,7 @@ export default function WarpWeftIssue() {
               <label>Weft Details *</label>
               <input 
                 type="text" className="form-control" 
-                value={formData.weft} onChange={e => setFormData({...formData, weft: e.target.value})}
+                value={formData.weft_configuration} onChange={e => setFormData({...formData, weft_configuration: e.target.value})}
                 required placeholder="e.g. Linen 30s"
               />
             </div>

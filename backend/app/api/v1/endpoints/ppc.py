@@ -6,12 +6,14 @@ from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.core.database import get_db, engine, Base
-from app.models.ppc import LoomMaster, LoomAllocation, ProductionLog
+from app.models.ppc import LoomMaster, LoomAllocation, ProductionLog, LoomBreakdown, WarpingDelivery
 from app.schemas.ppc import (
     LoomMasterCreate, LoomMasterResponse,
     LoomAllocationCreate, LoomAllocationResponse,
     ProductionLogCreate, ProductionLogResponse,
-    OperatorMasterCreate, OperatorMasterResponse
+    OperatorMasterCreate, OperatorMasterResponse,
+    LoomBreakdownCreate, LoomBreakdownResponse,
+    WarpingDeliveryCreate, WarpingDeliveryResponse
 )
 from app.models.ppc import OperatorMaster
 
@@ -314,6 +316,186 @@ async def delete_operator(id: int, db: AsyncSession = Depends(get_db)):
     if not existing:
         raise HTTPException(status_code=404, detail="Operator not found")
         
-    await db.delete(existing)
-    await db.commit()
     return {"status": "success"}
+
+@router.get("/daily-entries")
+async def get_daily_entries(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(select(ProductionLog).options(selectinload(ProductionLog.allocation)))
+    logs = result.scalars().all()
+    # Format similar to shift entries
+    output = []
+    for log in logs:
+        alloc = log.allocation
+        output.append({
+            "id": log.id,
+            "allocation_id": log.allocation_id,
+            "order_id": alloc.order_id if alloc else None,
+            "loom_id": alloc.loom_id if alloc else None,
+            "meters_produced": log.meters_produced,
+            "downtime_minutes": log.downtime_minutes,
+            "timestamp": log.timestamp,
+            "remarks": log.remarks
+        })
+    return output
+
+@router.get("/dashboard")
+async def get_dashboard(db: AsyncSession = Depends(get_db)):
+    from app.models.buyer_order import BuyerOrder
+    from app.models.cloth import ClothInward
+    from datetime import datetime, timedelta
+    from sqlalchemy import func
+    
+    # 1. Total Looms Running / Idle
+    looms_res = await db.execute(select(LoomMaster))
+    looms = looms_res.scalars().all()
+    total_running = sum(1 for l in looms if l.status == "Running")
+    total_idle = sum(1 for l in looms if l.status in ["Idle", "Unknown", "Setup"])
+    
+    # 2. Avg Efficiency
+    running_looms = [l for l in looms if l.status == "Running"]
+    avg_eff = sum(l.efficiency_pct for l in running_looms) / len(running_looms) if running_looms else 0
+    
+    # 3. Active Orders
+    try:
+        active_orders_res = await db.execute(select(func.count(BuyerOrder.id)).where(BuyerOrder.status == "Active"))
+        active_orders = active_orders_res.scalar() or 0
+    except Exception:
+        active_orders = 0
+        
+    # 4. Production Today
+    today = datetime.utcnow().date()
+    # Depending on DB dialect, cast might be needed, but we'll do a simple filter in python for now or query >= today start
+    today_start = datetime(today.year, today.month, today.day)
+    try:
+        prod_res = await db.execute(select(func.sum(ProductionLog.meters_produced)).where(ProductionLog.timestamp >= today_start))
+        prod_today = prod_res.scalar() or 0
+    except Exception:
+        prod_today = 0
+        
+    # 5. Pending Receipts
+    try:
+        pending_rcpt_res = await db.execute(select(func.count(ClothInward.id)).where(ClothInward.status != "Completed"))
+        pending_rcpt = pending_rcpt_res.scalar() or 0
+    except Exception:
+        pending_rcpt = 0
+        
+    # Orders On Time / At Risk based on allocations
+    allocs_res = await db.execute(select(LoomAllocation).where(LoomAllocation.allocation_status.in_(["Pending", "Active"])))
+    allocs = allocs_res.scalars().all()
+    on_time = 0
+    at_risk = 0
+    for a in allocs:
+        # Default target date 30 days from start for demo
+        target_date = (a.start_time + timedelta(days=30)) if a.start_time else (datetime.utcnow() + timedelta(days=30))
+        if a.expected_finish_time:
+            if a.expected_finish_time.replace(tzinfo=None) > target_date.replace(tzinfo=None):
+                at_risk += 1
+            else:
+                on_time += 1
+
+    return {
+        "active_orders": active_orders,
+        "total_running": total_running,
+        "total_idle": total_idle,
+        "production_today": float(prod_today),
+        "on_time": on_time,
+        "at_risk": at_risk,
+        "avg_efficiency": round(avg_eff, 1),
+        "pending_receipts": pending_rcpt
+    }
+
+@router.get("/eta")
+async def get_eta(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(select(LoomAllocation).options(selectinload(LoomAllocation.loom)).where(LoomAllocation.allocation_status.in_(["Pending", "Active"])))
+    allocations = result.scalars().all()
+    
+    eta_data = []
+    for a in allocations:
+        loom_name = a.loom.loom_name if a.loom else "Unknown"
+        target_date = (a.start_time + timedelta(days=30)) if a.start_time else datetime.utcnow()
+        eta_data.append({
+            "allocation_id": a.id,
+            "order_id": a.order_id,
+            "loom_name": loom_name,
+            "assigned_meters": a.assigned_meters,
+            "completed_meters": a.completed_meters,
+            "expected_finish_time": a.expected_finish_time,
+            "target_date": target_date,
+            "status": "AT RISK" if (a.expected_finish_time and a.expected_finish_time > target_date) else "SAFE"
+        })
+    return eta_data
+
+@router.get("/efficiency")
+async def get_efficiency(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(LoomMaster))
+    looms = result.scalars().all()
+    return [{"loom_name": l.loom_name, "efficiency": l.efficiency_pct, "status": l.status} for l in looms]
+
+@router.get("/breakdowns", response_model=List[LoomBreakdownResponse])
+async def get_breakdowns(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(LoomBreakdown).order_by(LoomBreakdown.date.desc()))
+    return result.scalars().all()
+
+@router.post("/breakdowns", response_model=LoomBreakdownResponse)
+async def create_breakdown(breakdown: LoomBreakdownCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        new_breakdown = LoomBreakdown(**breakdown.model_dump())
+        db.add(new_breakdown)
+        await db.commit()
+        await db.refresh(new_breakdown)
+        return new_breakdown
+    except Exception as e:
+        await db.rollback()
+        # Fallback to create table if missing
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            new_breakdown = LoomBreakdown(**breakdown.model_dump())
+            db.add(new_breakdown)
+            await db.commit()
+            await db.refresh(new_breakdown)
+            return new_breakdown
+        except Exception as fallback_e:
+            raise HTTPException(status_code=500, detail=str(fallback_e))
+
+@router.get("/warping-deliveries", response_model=List[WarpingDeliveryResponse])
+async def get_warping_deliveries(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(WarpingDelivery).order_by(WarpingDelivery.date.desc()))
+    return result.scalars().all()
+
+@router.post("/warping-deliveries", response_model=WarpingDeliveryResponse)
+async def create_warping_delivery(delivery: WarpingDeliveryCreate, db: AsyncSession = Depends(get_db)):
+    try:
+        new_delivery = WarpingDelivery(**delivery.model_dump())
+        db.add(new_delivery)
+        await db.commit()
+        await db.refresh(new_delivery)
+        return new_delivery
+    except Exception as e:
+        await db.rollback()
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            new_delivery = WarpingDelivery(**delivery.model_dump())
+            db.add(new_delivery)
+            await db.commit()
+            await db.refresh(new_delivery)
+            return new_delivery
+        except Exception as fallback_e:
+            raise HTTPException(status_code=500, detail=str(fallback_e))
+
+@router.put("/warping-deliveries/{delivery_id}", response_model=WarpingDeliveryResponse)
+async def update_warping_delivery(delivery_id: int, delivery_data: WarpingDeliveryCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(WarpingDelivery).where(WarpingDelivery.id == delivery_id))
+    db_delivery = result.scalar_one_or_none()
+    if not db_delivery:
+        raise HTTPException(status_code=404, detail="Warping Delivery not found")
+        
+    for key, value in delivery_data.model_dump().items():
+        setattr(db_delivery, key, value)
+        
+    await db.commit()
+    await db.refresh(db_delivery)
+    return db_delivery

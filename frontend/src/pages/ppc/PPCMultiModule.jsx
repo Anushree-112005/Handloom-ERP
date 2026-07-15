@@ -67,6 +67,7 @@ export default function PPCMultiModule() {
       title: 'Daily Monitoring',
       icon: Eye,
       tabs: [
+        { id: 'daily-report', label: 'Daily Production Report' },
         { id: 'target-actual', label: 'Target vs Actual' },
         { id: 'efficiency', label: 'Efficiency Calculation' },
         { id: 'loss-analysis', label: 'Loss Analysis' },
@@ -96,8 +97,7 @@ export default function PPCMultiModule() {
       title: 'Alert & Notification',
       icon: Bell,
       tabs: [
-        { id: 'low-efficiency', label: 'Low Efficiency Alert' },
-        { id: 'breakdown-alert', label: 'Breakdown Alert' }
+        { id: 'all-alerts', label: 'Smart Alerts Center', component: <SmartAlertsCenter /> }
       ]
     },
     'reports': {

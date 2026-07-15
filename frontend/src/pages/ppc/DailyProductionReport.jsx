@@ -22,6 +22,9 @@ export default function DailyProductionReport() {
     efficiency: 0
   });
 
+  const [logs, setLogs] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -29,18 +32,42 @@ export default function DailyProductionReport() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, prodRes] = await Promise.all([
-        subMasterAPI.list('ppc_daily_report').catch(() => ({ data: [] })),
+      const [loomRes, allocRes, logsRes, savedRes] = await Promise.all([
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_shift_production').catch(() => ({ data: [] }))
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] })),
+        subMasterAPI.list('ppc_daily_report').catch(() => ({ data: [] }))
       ]);
-      setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
-      setProductions(prodRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setLogs(logsRes?.data || []);
+      setRecords(savedRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const loom = looms.find(l => l.id.toString() === formData.loom_id);
+      const loomName = loom ? loom.loom_name : formData.loom_id;
+      const payload = {
+        name: `RPT-${formData.report_date}-${loomName}`,
+        code: loomName,
+        extra_field_1: formData.order_id,
+        extra_field_2: `${parseFloat(formData.total_meters).toFixed(1)} m / ${parseFloat(formData.target_meters).toFixed(1)} m`,
+        description: `Eff: ${parseFloat(formData.efficiency).toFixed(1)}% | Var: ${parseFloat(formData.variance).toFixed(1)} m`,
+        is_active: true
+      };
+      await subMasterAPI.create('ppc_daily_report', payload);
+      setIsFormOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Error saving report');
     }
   };
 
@@ -106,29 +133,54 @@ export default function DailyProductionReport() {
     setFormData(updated);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const loom = looms.find(l => l.id.toString() === formData.loom_id);
-      const lName = loom ? loom.loom_name : formData.loom_id;
-
-      await subMasterAPI.create('ppc_daily_report', {
-        name: `RPT-${formData.report_date}-${lName}`,
-        code: lName,
-        extra_field_1: formData.order_id,
-        extra_field_2: `${formData.total_meters.toFixed(1)} m / ${formData.target_meters.toFixed(1)} m`,
-        description: `Eff: ${formData.efficiency.toFixed(1)}% | Var: ${formData.variance.toFixed(1)} m`,
-        is_active: true
-      });
-      setIsFormOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Error creating report.');
+  // Group logs by Date + Loom
+  const reportsMap = {};
+  logs.forEach(log => {
+    const date = log.timestamp.split('T')[0];
+    const loomId = log.loom_id;
+    const key = `${date}-${loomId}`;
+    
+    if (!reportsMap[key]) {
+      const loom = looms.find(l => l.id === loomId);
+      const alloc = allocations.find(a => a.id === log.allocation_id);
+      
+      reportsMap[key] = {
+        id: key,
+        name: `RPT-${date}-${loom ? loom.loom_name : loomId}`,
+        code: loom ? loom.loom_name : `Loom ${loomId}`,
+        date,
+        total_meters: 0,
+        target_meters: loom ? loom.capacity_per_day * (loom.efficiency_pct / 100) : 425,
+        order_id: alloc ? alloc.order_id : '-'
+      };
     }
-  };
+    
+    reportsMap[key].total_meters += log.meters_produced || 0;
+  });
 
-  const filteredRecords = records.filter(r => 
+  const computedRecords = Object.values(reportsMap).map(rpt => {
+    const eff = rpt.target_meters > 0 ? (rpt.total_meters / rpt.target_meters) * 100 : 0;
+    const variance = rpt.total_meters - rpt.target_meters;
+    return {
+      ...rpt,
+      extra_field_1: rpt.order_id,
+      extra_field_2: `${rpt.total_meters.toFixed(1)} m / ${rpt.target_meters.toFixed(1)} m`,
+      description: `Eff: ${eff.toFixed(1)}% | Var: ${variance.toFixed(1)} m`
+    };
+  }).sort((a, b) => b.date.localeCompare(a.date));
+
+  // Combine saved reports from DB with dynamically computed ones
+  const allRecordsMap = {};
+  computedRecords.forEach(r => { allRecordsMap[r.name] = r; });
+  records.forEach(r => { allRecordsMap[r.name] = r; }); // Saved overrides computed
+
+  const finalRecords = Object.values(allRecordsMap).sort((a, b) => {
+    const nameA = a.name || '';
+    const nameB = b.name || '';
+    return nameB.localeCompare(nameA);
+  });
+
+  const filteredRecords = finalRecords.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -228,8 +280,7 @@ export default function DailyProductionReport() {
             onClick={() => {
               setFormData({
                 report_date: new Date().toISOString().split('T')[0],
-                loom_id: '', order_id: '', day_shift_meters: 0, night_shift_meters: 0,
-                total_meters: 0, target_meters: 0, variance: 0, efficiency: 0
+                loom_id: '', order_id: '', total_meters: 0, target_meters: 0, variance: 0, efficiency: 0
               });
               setIsFormOpen(true);
             }}
@@ -252,16 +303,18 @@ export default function DailyProductionReport() {
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Generated Reports ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search reports..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
             </div>
           </div>
           
@@ -269,11 +322,11 @@ export default function DailyProductionReport() {
             <table className="table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  <th>Report ID</th>
-                  <th>Loom ID</th>
-                  <th>Order</th>
-                  <th>Production / Target</th>
-                  <th>Metrics</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Report ID</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Order</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Production / Target</th>
+                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Performance</th>
                 </tr>
               </thead>
               <tbody>
@@ -282,12 +335,12 @@ export default function DailyProductionReport() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>{record.extra_field_1}</td>
-                    <td><span style={{ color: '#0369a1', fontWeight: 600 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '16px 20px', fontWeight: 500, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px 20px' }}>{record.code}</td>
+                    <td style={{ padding: '16px 20px' }}>{record.extra_field_1}</td>
+                    <td style={{ padding: '16px 20px', fontWeight: 600, color: '#0369a1' }}>{record.extra_field_2}</td>
+                    <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{record.description}</td>
                   </tr>
                 ))}
               </tbody>

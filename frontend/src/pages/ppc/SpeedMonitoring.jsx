@@ -48,8 +48,13 @@ export default function SpeedMonitoring() {
   const fetchLooms = async () => {
     setLoading(true);
     try {
-      const res = await ppcAPI.getLooms();
-      const activeLooms = (res?.data || []).filter(l => l.status === 'Running' || l.status === 'Idle');
+      const [res, allocRes] = await Promise.all([
+        ppcAPI.getLooms(),
+        ppcAPI.getAllocations()
+      ]);
+      const allocations = allocRes?.data || [];
+      const activeLoomIds = new Set(allocations.filter(a => a.allocation_status === 'Active').map(a => a.loom_id));
+      const activeLooms = (res?.data || []).filter(l => activeLoomIds.has(l.id));
       setLooms(activeLooms);
       generateInitialLive(activeLooms);
     } catch (err) {

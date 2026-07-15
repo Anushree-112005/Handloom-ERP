@@ -1,13 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Bell, Clock, AlertCircle } from 'lucide-react';
+import { ppcAPI } from '../../services/api';
 
 export default function SmartAlertsCenter() {
-  const alerts = [
-    { type: 'warning', title: 'Loom L1 Finishing Soon', message: 'Order PO-00099 on Loom L1 will finish in approximately 8 hours. Prepare next warp.', time: '10 mins ago' },
-    { type: 'danger', title: 'Low Efficiency Detected', message: 'Loom L2 has dropped below 60% efficiency in the last 4 hours.', time: '1 hour ago' },
-    { type: 'info', title: 'Idle Loom', message: 'Loom L4 is currently idle. No orders are queued.', time: '3 hours ago' },
-    { type: 'warning', title: 'Maintenance Due', message: 'Loom L3 has crossed 500 hours of runtime. Schedule preventive maintenance.', time: '1 day ago' },
-  ];
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [etaRes, dashRes, breakdownRes, loomRes] = await Promise.all([
+        ppcAPI.getEta().catch(() => ({ data: [] })),
+        ppcAPI.getDashboard().catch(() => ({ data: null })),
+        ppcAPI.getBreakdowns().catch(() => ({ data: [] })),
+        ppcAPI.getLooms().catch(() => ({ data: [] }))
+      ]);
+
+      const generatedAlerts = [];
+      const etas = etaRes?.data || [];
+      const dashboard = dashRes?.data || null;
+      const breakdowns = breakdownRes?.data || [];
+      const looms = loomRes?.data || [];
+
+      // 1. Delay Risk Alerts
+      etas.forEach(eta => {
+        if (eta.status === 'AT RISK') {
+          generatedAlerts.push({
+            type: 'danger',
+            title: 'ETA Delay Risk',
+            message: `Order ${eta.order_id} on ${eta.loom_name} is at risk of missing delivery target.`,
+            time: 'Live'
+          });
+        }
+      });
+
+      // 2. Efficiency Alert
+      if (dashboard && dashboard.avg_efficiency < 85) {
+        generatedAlerts.push({
+          type: 'warning',
+          title: 'Low Factory Efficiency',
+          message: `Average factory efficiency has dropped to ${dashboard.avg_efficiency}%. Threshold is 85%.`,
+          time: 'Live'
+        });
+      }
+
+      // 3. Breakdown Alerts
+      breakdowns.forEach(bd => {
+        const loomName = looms.find(l => l.id === bd.loom_id)?.loom_name || `Loom ${bd.loom_id}`;
+        generatedAlerts.push({
+          type: 'danger',
+          title: `Breakdown: ${loomName}`,
+          message: `Downtime recorded: ${bd.reason_category || 'Unknown'} (${bd.total_downtime || 0} mins)`,
+          time: new Date(bd.date).toLocaleString()
+        });
+      });
+
+      if (generatedAlerts.length === 0) {
+        generatedAlerts.push({
+          type: 'info',
+          title: 'All Systems Nominal',
+          message: 'No critical alerts or warnings at this time.',
+          time: 'Live'
+        });
+      }
+
+      setAlerts(generatedAlerts);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="animate-fade">
@@ -19,7 +86,9 @@ export default function SmartAlertsCenter() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {alerts.map((alert, i) => {
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading alerts...</div>
+        ) : alerts.map((alert, i) => {
           let bgColor = '#f8fafc';
           let iconColor = 'var(--text-muted)';
           let Icon = Bell;

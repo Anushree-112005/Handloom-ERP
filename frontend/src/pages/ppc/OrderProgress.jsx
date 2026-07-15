@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Search, Save, ArrowLeft, Clock, Activity, CheckCircle, Percent, Trash2, Edit2, Eye } from 'lucide-react';
-import { buyerOrderAPI, subMasterAPI } from '../../services/api';
+import { buyerOrderAPI, subMasterAPI, ppcAPI } from '../../services/api';
 
 export default function OrderProgress() {
   const [records, setRecords] = useState([]);
@@ -20,6 +20,9 @@ export default function OrderProgress() {
     days_remaining: 0
   });
 
+  const [allocations, setAllocations] = useState([]);
+  const [logs, setLogs] = useState([]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -27,12 +30,14 @@ export default function OrderProgress() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, ordRes] = await Promise.all([
-        subMasterAPI.list('ppc_order_progress').catch(() => ({ data: [] })),
-        buyerOrderAPI.list().catch(() => ({ data: [] }))
+      const [ordRes, allocRes, logsRes] = await Promise.all([
+        buyerOrderAPI.list().catch(() => ({ data: [] })),
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] }))
       ]);
-      setRecords(recRes?.data || []);
       setOrders(ordRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setLogs(logsRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -73,52 +78,38 @@ export default function OrderProgress() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await subMasterAPI.create('ppc_order_progress', {
-        name: formData.order_id,
-        code: formData.buyer_name,
-        extra_field_1: `${formData.completion_pct}%`,
-        extra_field_2: `${formData.remaining_meters} m`,
-        description: `Days Remaining: ${formData.days_remaining} | Produced: ${formData.total_produced}m`,
-        is_active: true
-      });
-      setIsFormOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Error creating snapshot.');
+  const computedRecords = orders.map(order => {
+    const orderAllocs = allocations.filter(a => a.order_id === order.ibpo_number || a.order_id === order.id?.toString());
+    const totalOrdered = orderAllocs.reduce((acc, curr) => acc + (curr.assigned_meters || 0), 0) || 30000;
+    
+    const allocIds = orderAllocs.map(a => a.id);
+    const orderLogs = logs.filter(l => allocIds.includes(l.allocation_id));
+    const totalProduced = orderLogs.reduce((acc, curr) => acc + (curr.meters_produced || 0), 0);
+    
+    const remaining = Math.max(0, totalOrdered - totalProduced);
+    const pct = totalOrdered > 0 ? (totalProduced / totalOrdered) * 100 : 0;
+    
+    let daysElapsed = 0;
+    if (orderAllocs.length > 0) {
+      const startTimes = orderAllocs.map(a => new Date(a.start_time).getTime());
+      const minStart = Math.min(...startTimes);
+      daysElapsed = Math.max(1, Math.floor((Date.now() - minStart) / (1000 * 60 * 60 * 24)));
     }
-  };
 
-  const handleEdit = (record) => {
-    // Partial mock implementation for editing
-    setFormData({
-      id: record.id,
-      order_id: record.name,
-      buyer_name: record.code,
-      total_ordered_meters: 30000,
-      total_produced: parseFloat(record.description?.match(/Produced: (.*?)m/)?.[1] || 0),
-      remaining_meters: parseFloat(record.extra_field_2) || 0,
-      completion_pct: parseFloat(record.extra_field_1) || 0,
-      days_elapsed: 5,
-      days_remaining: parseFloat(record.description?.match(/Days Remaining: (.*?) \|/)?.[1] || 0)
-    });
-    setIsFormOpen(true);
-  };
+    const remainingDays = totalProduced > 0 ? Math.floor(remaining / (totalProduced / daysElapsed)) : 20;
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this record?')) return;
-    try {
-      await subMasterAPI.delete('ppc_order_progress', id);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    return {
+      id: order.id,
+      name: order.ibpo_number || `ORD-${order.id}`,
+      code: order.party_name || 'Generic Buyer',
+      extra_field_1: `${pct.toFixed(1)}%`,
+      extra_field_2: `${remaining.toFixed(1)} m`,
+      description: `Days Remaining: ${remainingDays} | Produced: ${totalProduced.toFixed(1)}m`,
+      pct: pct
+    };
+  });
 
-  const filteredRecords = records.filter(r => 
+  const filteredRecords = computedRecords.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -239,7 +230,7 @@ export default function OrderProgress() {
             </div>
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Tracked Orders</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.length}</div>
             </div>
           </div>
           <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -249,7 +240,7 @@ export default function OrderProgress() {
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Avg Completion %</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.length ? (records.reduce((sum, r) => sum + (parseFloat(r.extra_field_1) || 0), 0) / records.length).toFixed(1) : 0}%
+                {computedRecords.length ? (computedRecords.reduce((sum, r) => sum + (parseFloat(r.pct) || 0), 0) / computedRecords.length).toFixed(1) : 0}%
               </div>
             </div>
           </div>
@@ -260,7 +251,7 @@ export default function OrderProgress() {
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Remaining (m)</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2) || 0), 0).toLocaleString()}
+                {computedRecords.reduce((sum, r) => sum + (parseFloat(r.extra_field_2) || 0), 0).toLocaleString()}
               </div>
             </div>
           </div>
@@ -285,14 +276,8 @@ export default function OrderProgress() {
               </div>
               <button 
                 className="btn btn-primary" 
-                onClick={() => {
-                  setFormData({
-                    order_id: '', buyer_name: '', total_ordered_meters: 0, total_produced: 0,
-                    remaining_meters: 0, completion_pct: 0, days_elapsed: 0, days_remaining: 0
-                  });
-                  setIsFormOpen(true);
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#10b981', borderColor: '#10b981', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+                onClick={() => {}}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#10b981', borderColor: '#10b981', color: '#fff', borderRadius: '8px', fontWeight: 500, visibility: 'hidden' }}
               >
                 <Search size={16} /> Analyze Order
               </button>
@@ -308,7 +293,6 @@ export default function OrderProgress() {
                   <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Completion %</th>
                   <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Remaining Meters</th>
                   <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Timeline</th>
-                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -330,19 +314,6 @@ export default function OrderProgress() {
                     </td>
                     <td style={{ padding: '16px' }}><span style={{ color: '#b45309', fontWeight: 600 }}>{record.extra_field_2}</span></td>
                     <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
-                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
-                        </button>
-                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
-                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
-                        </button>
-                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
-                          <Trash2 size={16} style={{ color: '#ef4444' }} />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))}
               </tbody>

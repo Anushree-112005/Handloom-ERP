@@ -50,6 +50,7 @@ export default function LiveDashboard() {
   const [activeModalTab, setActiveModalTab] = useState('assignments');
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   // Left sidebar options state
   const [dept, setDept] = useState('Weaving');
@@ -73,49 +74,34 @@ export default function LiveDashboard() {
     return () => clearInterval(dbInterval);
   }, []);
 
-  // Simulates telemetry/IoT fluctuations every 4s
   useEffect(() => {
-    if (Object.keys(liveLoomStates).length === 0 && looms.length > 0) {
+    if (looms.length > 0) {
       initializeLiveStates();
     }
-
-    const telemetryInterval = setInterval(() => {
-      setLiveLoomStates(prev => {
-        const next = { ...prev };
-        const keys = Object.keys(next);
-        if (keys.length > 0) {
-          for (let i = 0; i < 3; i++) {
-            const randomKey = keys[Math.floor(Math.random() * keys.length)];
-            const statuses = ['Running', 'Running', 'Running', 'Warp-stop', 'Manual stop', 'Other', 'Idle'];
-            const nextStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            
-            next[randomKey] = {
-              ...next[randomKey],
-              status: nextStatus,
-              speed: nextStatus === 'Running' ? Math.floor(Math.random() * 80 + 600) : 0,
-              efficiency: nextStatus === 'Running' ? (82 + Math.random() * 15).toFixed(1) : 0,
-              meters: nextStatus === 'Running' ? next[randomKey].meters + ((next[randomKey].speed / 15) / ((next[randomKey].ppi || 35) * 39.37) || 0.1) : next[randomKey].meters
-            };
-          }
-        }
-        return next;
-      });
-      setLastUpdated(new Date());
-    }, 4000);
-
-    return () => clearInterval(telemetryInterval);
-  }, [looms, liveLoomStates]);
+  }, [looms, allocations]);
 
   const fetchInitialData = async () => {
     try {
-      const [loomRes, allocRes, orderRes] = await Promise.all([
+      const [loomRes, allocRes, orderRes, dashRes, breakdownRes] = await Promise.all([
         ppcAPI.getLooms().catch(() => ({ data: [] })),
         ppcAPI.getAllocations().catch(() => ({ data: [] })),
-        buyerOrderAPI.list().catch(() => ({ data: [] }))
+        buyerOrderAPI.list().catch(() => ({ data: [] })),
+        ppcAPI.getDashboard().catch(() => ({ data: null })),
+        ppcAPI.getBreakdowns().catch(() => ({ data: [] }))
       ]);
       setLooms(loomRes?.data || []);
       setAllocations(allocRes?.data || []);
       setActiveOrders(orderRes?.data || []);
+      
+      const bds = breakdownRes?.data || [];
+      const activeBds = bds.filter(b => b.status === 'Open');
+
+      if (dashRes?.data) {
+        setDashboardStats({
+          ...dashRes.data,
+          active_breakdowns: activeBds.length
+        });
+      }
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -125,41 +111,37 @@ export default function LiveDashboard() {
 
   const initializeLiveStates = () => {
     const initial = {};
-    const operators = ['Ramesh Kumar', 'Murugan Swamy', 'Karthik S.', 'Selvam P.', 'Anand Raj', 'M. Pandian'];
-    const fabrics = ['Cotton Poplin', 'Linen Blend', 'Printed Twill', 'Denim Warp', 'Satin Grey'];
-    
-    // Fallback if no looms, but ideally there will be looms fetched from the backend.
-    const sourceLooms = looms.length > 0 ? looms : Array.from({ length: 60 }, (_, i) => ({ id: i + 1, loom_name: `Loom ${String(i + 1).padStart(3, '0')}`, status: 'Running' }));
+    const sourceLooms = looms;
 
     sourceLooms.forEach((loom, i) => {
       const loomName = loom.loom_name || `Loom ${loom.id || i+1}`;
       const shortId = loomName.replace('Loom ', '').trim();
-      let status = (loom.status && loom.status !== 'string' && loom.status !== 'Unknown') ? loom.status : 'Running';
+      let status = loom.status || 'Idle';
       
-      // Introduce slight randomness for dynamic feel if all are running
-      if (status === 'Running' && Math.random() > 0.85) {
-        const statuses = ['Warp-stop', 'Manual stop', 'Other', 'Idle'];
-        status = statuses[Math.floor(Math.random() * statuses.length)];
-      }
+      const alloc = allocations.find(a => a.loom_id === loom.id && a.allocation_status === 'Active');
+      
+      const targetMeters = alloc ? alloc.assigned_meters : 0;
+      const completedMeters = alloc ? alloc.completed_meters : 0;
+      const order = alloc ? alloc.order_id : '-';
 
-      const targetMeters = 10000;
       initial[shortId] = {
         id: shortId,
         name: loomName,
         status: status,
-        speed: status === 'Running' ? Math.floor(Math.random() * 50 + 640) : 0,
-        efficiency: status === 'Running' ? (80 + Math.random() * 17).toFixed(1) : 0,
-        operator: operators[i % operators.length],
-        fabric: fabrics[i % fabrics.length],
-        meters: Math.floor(Math.random() * 2000 + 1500),
+        speed: (status === 'Running' || alloc) ? loom.running_speed_per_hr || 600 : 0,
+        efficiency: (status === 'Running' || alloc) ? (loom.efficiency_pct || 85).toFixed(1) : 0,
+        operator: alloc ? 'Assigned' : 'None',
+        fabric: alloc ? 'Woven' : '-',
+        meters: completedMeters,
         targetMeters: targetMeters,
-        order: `ORD-2026-${100 + i}`,
-        warpId: `WRP-${Math.floor(Math.random() * 900 + 100)}`,
-        yarnCount: Math.floor(Math.random() * 20 + 20),
-        ppi: Math.floor(Math.random() * 40 + 40)
+        order: order,
+        warpId: alloc ? `WRP-ALLC-${alloc.id}` : '-',
+        yarnCount: loom.total_ends || 10000,
+        ppi: 40 // Default, would need style master
       };
     });
     setLiveLoomStates(initial);
+    setLastUpdated(new Date());
   };
 
   const getStatusColor = (status) => {
@@ -225,8 +207,19 @@ export default function LiveDashboard() {
     ? (runningLoomsList.reduce((acc, curr) => acc + parseFloat(curr.efficiency || 0), 0) / runningLoomsCnt).toFixed(1)
     : '0.0';
 
-  const idleCountActual = loomsArr.filter(l => l.status === 'Idle').length;
-  const breakdownCount = loomsArr.filter(l => l.status === 'Breakdown' || l.status === 'Manual stop').length;
+  const idleCountActual = loomsArr.filter(l => l.status === 'Idle' || l.status === 'Unknown' || l.status === 'Setup').length;
+  // If backend returns 0 for idle but we have setup looms locally, trust our local calculation
+  const displayIdleCount = (dashboardStats && dashboardStats.total_idle > 0) ? dashboardStats.total_idle : idleCountActual;
+  
+  const displayTotalLooms = dashboardStats ? (dashboardStats.total_running + displayIdleCount) : totalLoomsCnt;
+  const displayRunningCount = dashboardStats ? dashboardStats.total_running : runningLoomsCnt;
+  const displayMetersToday = dashboardStats ? dashboardStats.production_today : Math.floor(totalMeters);
+  const displayAvgEff = dashboardStats ? dashboardStats.avg_efficiency : avgEff;
+
+  const breakdownCount = dashboardStats && dashboardStats.active_breakdowns !== undefined 
+    ? dashboardStats.active_breakdowns 
+    : loomsArr.filter(l => l.status === 'Breakdown' || l.status === 'Manual stop').length;
+  
   const maintenanceCount = loomsArr.filter(l => l.status === 'Maintenance').length;
 
   return (
@@ -258,8 +251,8 @@ export default function LiveDashboard() {
             <Activity size={14} color="#cbd5e1" />
           </div>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#10b981' }}>{runningLoomsCnt}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>of {totalLoomsCnt} total looms</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#10b981' }}>{displayRunningCount}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>of {displayTotalLooms} total looms</div>
           </div>
         </div>
 
@@ -270,7 +263,7 @@ export default function LiveDashboard() {
             <Layers size={14} color="#cbd5e1" />
           </div>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#0ea5e9' }}>{Math.floor(totalMeters).toLocaleString()}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#0ea5e9' }}>{Math.floor(displayMetersToday).toLocaleString()}</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>across all running looms</div>
           </div>
         </div>
@@ -282,7 +275,7 @@ export default function LiveDashboard() {
             <Zap size={14} color="#cbd5e1" />
           </div>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#3b82f6' }}>{avgEff}%</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#3b82f6' }}>{displayAvgEff}%</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>target: &gt;85%</div>
           </div>
         </div>
@@ -318,7 +311,7 @@ export default function LiveDashboard() {
             <Clock size={14} color="#cbd5e1" />
           </div>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#8b5cf6' }}>{idleCountActual}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#8b5cf6' }}>{displayIdleCount}</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>ready for assignment</div>
           </div>
         </div>

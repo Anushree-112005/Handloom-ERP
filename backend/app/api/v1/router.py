@@ -25,7 +25,6 @@ api_router.include_router(log_reports.router)
 api_router.include_router(eway_bills.router)
 api_router.include_router(company_settings.router)
 
-
 # Newly registered missing routers
 api_router.include_router(design_entries.router)
 api_router.include_router(yarn_inwards.router)
@@ -36,7 +35,12 @@ api_router.include_router(warp_beam_receipts.router)
 api_router.include_router(warp_deliveries.router)
 api_router.include_router(sub_masters.router)
 api_router.include_router(fleet.router)
-api_router.include_router(twisting_doubling_po.router, prefix="/twisting-doubling-po", tags=["Twisting Doubling PO"])
+
+api_router.include_router(twisting_doubling_po.router, prefix="/purchase/twisting-doubling", tags=["Purchase Orders - Twisting & Doubling"])
+api_router.include_router(calendar_events.router, prefix="/calendar-events", tags=["Calendar Events"])
+api_router.include_router(costing_sheet.router, prefix="/costing-sheet", tags=["Costing Sheet"])
+api_router.include_router(stock_sheet.router, prefix="/stock-sheet", tags=["Stock Sheet"])
+
 api_router.include_router(yarn_dyeing_po.router, prefix="/yarn-dyeing-po", tags=["Yarn Dyeing PO"])
 api_router.include_router(fabric_dyeing_po.router, prefix="/fabric-dyeing-po", tags=["Fabric Dyeing PO"])
 api_router.include_router(warping_sizing_po.router, prefix="/warping-sizing-po", tags=["Warping Sizing PO"])
@@ -73,5 +77,3 @@ api_router.include_router(stores_consumables_router)
 
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)
-
-

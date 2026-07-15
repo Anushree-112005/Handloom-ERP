@@ -32,7 +32,7 @@ export default function BreakdownEntry() {
     setLoading(true);
     try {
       const [recRes, loomRes] = await Promise.all([
-        subMasterAPI.list('ppc_breakdown_entry').catch(() => ({ data: [] })),
+        ppcAPI.getBreakdowns().catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
@@ -65,16 +65,18 @@ export default function BreakdownEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const loom = looms.find(l => l.id.toString() === formData.loom_id);
-      const lName = loom ? loom.loom_name : formData.loom_id;
-
-      await subMasterAPI.create('ppc_breakdown_entry', {
-        name: formData.breakdown_id,
-        code: lName,
-        extra_field_1: `${formData.reason_category} - ${formData.status}`,
-        extra_field_2: `${formData.total_downtime} hrs`,
-        description: `Action: ${formData.action_taken} | Attended: ${formData.attended_by}`,
-        is_active: true
+      await ppcAPI.logBreakdown({
+        loom_id: parseInt(formData.loom_id),
+        breakdown_id: formData.breakdown_id,
+        start_time: formData.start_time,
+        end_time: formData.end_time || null,
+        total_downtime: parseFloat(formData.total_downtime) || 0,
+        reason_category: formData.reason_category,
+        reason_details: formData.reason_details,
+        reported_by: formData.reported_by,
+        attended_by: formData.attended_by,
+        action_taken: formData.action_taken,
+        status: formData.status
       });
 
       // Update actual Loom status
@@ -93,18 +95,18 @@ export default function BreakdownEntry() {
     // Mock parsing for edit
     setFormData({
       id: record.id,
-      breakdown_id: record.name,
-      loom_id: looms.find(l => l.loom_name === record.code)?.id?.toString() || '',
-      date: new Date().toISOString().split('T')[0],
-      start_time: '',
-      end_time: '',
-      total_downtime: parseFloat(record.extra_field_2) || '',
-      reason_category: record.extra_field_1?.split(' - ')[0] || 'Mechanical',
-      reason_details: '',
-      reported_by: 'Login User',
-      attended_by: record.description?.match(/Attended: (.*)/)?.[1] || '',
-      action_taken: record.description?.match(/Action: (.*?) \|/)?.[1] || '',
-      status: record.extra_field_1?.split(' - ')[1] || 'Open'
+      breakdown_id: record.breakdown_id,
+      loom_id: record.loom_id.toString(),
+      date: record.date ? record.date.split('T')[0] : new Date().toISOString().split('T')[0],
+      start_time: record.start_time || '',
+      end_time: record.end_time || '',
+      total_downtime: record.total_downtime || '',
+      reason_category: record.reason_category || 'Mechanical',
+      reason_details: record.reason_details || '',
+      reported_by: record.reported_by || 'Login User',
+      attended_by: record.attended_by || '',
+      action_taken: record.action_taken || '',
+      status: record.status || 'Open'
     });
     setIsFormOpen(true);
   };
@@ -112,7 +114,9 @@ export default function BreakdownEntry() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this incident?')) return;
     try {
-      await subMasterAPI.delete('ppc_breakdown_entry', id);
+      // If we had a delete endpoint: await ppcAPI.deleteBreakdown(id);
+      // For now just refresh, as we didn't define a delete breakdown
+      alert('Delete breakdown not implemented on backend yet.');
       fetchData();
     } catch (err) {
       console.error(err);
@@ -120,8 +124,8 @@ export default function BreakdownEntry() {
   };
 
   const filteredRecords = records.filter(r => 
-    r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.code?.toLowerCase().includes(searchTerm.toLowerCase())
+    r.breakdown_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    looms.find(l => l.id === r.loom_id)?.loom_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isFormOpen) {
@@ -263,7 +267,7 @@ export default function BreakdownEntry() {
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Open Incidents</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.filter(r => r.extra_field_1?.includes('Open')).length}
+                {records.filter(r => r.status === 'Open').length}
               </div>
             </div>
           </div>
@@ -274,7 +278,7 @@ export default function BreakdownEntry() {
             <div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Downtime</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.reduce((sum, r) => sum + (parseFloat(r.extra_field_2) || 0), 0).toFixed(1)} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>hrs</span>
+                {records.reduce((sum, r) => sum + (parseFloat(r.total_downtime) || 0), 0).toFixed(1)} <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>hrs</span>
               </div>
             </div>
           </div>
@@ -332,21 +336,23 @@ export default function BreakdownEntry() {
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</td></tr>
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
-                ) : filteredRecords.map((record, idx) => (
+                ) : filteredRecords.map((record, idx) => {
+                  const loomName = looms.find(l => l.id === record.loom_id)?.loom_name || 'Unknown';
+                  return (
                   <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
-                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
-                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{record.code}</td>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.breakdown_id}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{loomName}</td>
                     <td style={{ padding: '16px' }}>
                       <span style={{ 
-                        color: record.extra_field_1?.includes('Open') ? '#b91c1c' : '#047857', 
-                        backgroundColor: record.extra_field_1?.includes('Open') ? '#ef444420' : '#10b98120', 
+                        color: record.status === 'Open' ? '#b91c1c' : '#047857', 
+                        backgroundColor: record.status === 'Open' ? '#ef444420' : '#10b98120', 
                         padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600
                       }}>
-                        {record.extra_field_1}
+                        {record.reason_category} - {record.status}
                       </span>
                     </td>
-                    <td style={{ padding: '16px' }}><span style={{ color: '#b91c1c', fontWeight: 700 }}>{record.extra_field_2}</span></td>
-                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: '#b91c1c', fontWeight: 700 }}>{record.total_downtime} hrs</span></td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>Action: {record.action_taken} | Attended: {record.attended_by}</td>
                     <td style={{ padding: '16px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                         <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
@@ -361,7 +367,7 @@ export default function BreakdownEntry() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
