@@ -30,6 +30,8 @@ const baseBuyerQtyData = [];
 const baseQualityCompliance = [];
 const baseDispatchByTransporter = [];
 
+
+
 const COLORS = ['#0ea5e9', '#0284c7', '#0369a1', '#38bdf8', '#7dd3fc', '#bae6fd'];
 
 export default function Dashboard() {
@@ -52,6 +54,8 @@ export default function Dashboard() {
   const [qualityCompliance, setQualityCompliance] = useState(baseQualityCompliance);
   const [dispatchByTransporter, setDispatchByTransporter] = useState(baseDispatchByTransporter);
 
+
+
   // Dropdown UI state
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
@@ -68,6 +72,38 @@ export default function Dashboard() {
     else if (dateFilter === 'This Year') factor = 8.5;
     else if (dateFilter === 'Custom Range') factor = 0.7;
 
+    let start_date = '';
+    let end_date = '';
+    const today = new Date();
+
+    if (dateFilter === 'This Week') {
+      const day = today.getDay();
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(today.setDate(diff));
+      start_date = monday.toISOString().split('T')[0];
+      end_date = new Date().toISOString().split('T')[0];
+    } else if (dateFilter === 'This Month') {
+      const y = today.getFullYear();
+      const m = today.getMonth();
+      start_date = new Date(y, m, 1).toISOString().split('T')[0];
+      end_date = new Date(y, m + 1, 0).toISOString().split('T')[0];
+    } else if (dateFilter === 'This Year') {
+      const y = today.getFullYear();
+      start_date = `${y}-01-01`;
+      end_date = `${y}-12-31`;
+    } else if (dateFilter === 'Custom Range') {
+      start_date = fromDate;
+      end_date = toDate;
+    }
+
+    setLoading(true);
+    dashboardAPI.stats({ start_date, end_date })
+      .then((r) => setStats(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [dateFilter, fromDate, toDate]);
+
+  const applyFilters = () => {
     // Retrieve stats or use mock default (0)
     const vendorInward = stats.vendor_inward_rolls !== undefined ? stats.vendor_inward_rolls : 0;
     const purchaseInward = stats.purchase_inward_kgs !== undefined ? stats.purchase_inward_kgs : 0;
@@ -128,11 +164,30 @@ export default function Dashboard() {
     } else {
       setDispatchByTransporter(baseDispatchByTransporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
     }
+      { label: 'Vendor Inward', value: `${vendorInward} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
+      { label: 'Purchase Inward', value: `${purchaseInward.toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
+      { label: 'Process Delivery', value: `${processDelivery} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
+      { label: 'Process Inward', value: `${processInward} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
+      { label: 'Sales Delivery', value: `${salesDelivery} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
+      { label: 'IMPO', value: `${impoVal} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
+      { label: 'IMBO', value: `${imboVal} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
+      { label: 'Total DC', value: `${totalDC} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
+      { label: 'Total Qty', value: `${totalQty.toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
+    ]);
+
+    // 2. Update Charts
+    setDailyProduction(stats.daily_production || []);
+    setProdVsDispatch(stats.production_vs_dispatch || []);
+    setBottleneckData(stats.process_bottlenecks || []);
+    setBuyerQty(stats.buyer_order_volumes || []);
+
+
   };
 
   useEffect(() => {
     applyFilters();
   }, [dateFilter, fromDate, toDate, stats]);
+  }, [stats]);
 
   const exportToExcel = () => { alert("Export triggered"); };
   const exportToPDF = () => { alert("Export triggered"); };
@@ -363,6 +418,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
+
 
       {/* Row 3: 1 Full-width Column (Daily Activity) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>

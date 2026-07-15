@@ -19,6 +19,7 @@ const modules = [
   { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
+  { path: '/calendar', label: 'Calendar', icon: Calendar },
   // { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
 
 
@@ -179,6 +180,7 @@ const modules = [
   { path: '/design-ai', label: 'Design AI', icon: Sparkles },
   // { path: '/weaving-calculator', label: 'Weaving Calculator', icon: Calculator },
 
+
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
   { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
@@ -202,6 +204,11 @@ const modules = [
   { section: 'Inventory' },
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
   { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
+  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
+  { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
+  { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
+  // { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
   { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
@@ -306,6 +313,9 @@ const modules = [
       { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
       //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
       { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
+      { path: '/costing-sheet', label: 'Costing Sheet', icon: Calculator },
+      //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
+      { path: '/ppc/monitoring', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
       { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
       { path: '/ppc/eta-engine', label: 'ETA Engine', icon: Clock },

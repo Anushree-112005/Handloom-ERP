@@ -7,6 +7,14 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const createAPI = (endpoint) => ({
+  list: (params) => api.get(endpoint + '/', { params }),
+  get: (id) => api.get(`${endpoint}/${id}`),
+  create: (data) => api.post(endpoint + '/', data),
+  update: (id, data) => api.put(`${endpoint}/${id}`, data),
+  delete: (id) => api.delete(`${endpoint}/${id}`),
+});
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -39,6 +47,7 @@ export const authAPI = {
 // ---- Dashboard ----
 export const dashboardAPI = {
   stats: () => api.get('/dashboard/stats'),
+  stats: (params) => api.get('/dashboard/stats', { params }),
 };
 
 // ---- Party Master ----
@@ -409,6 +418,39 @@ export const ppcAPI = {
   createOperator: (data) => api.post('/ppc/operators', data),
   updateOperator: (id, data) => api.put(`/ppc/operators/${id}`, data),
   deleteOperator: (id) => api.delete(`/ppc/operators/${id}`),
+  getDashboard: () => api.get('/ppc/dashboard'),
+  getDailyEntries: () => api.get('/ppc/daily-entries'),
+  getEta: () => api.get('/ppc/eta'),
+  getEfficiency: () => api.get('/ppc/efficiency'),
+  getBreakdowns: () => api.get('/ppc/breakdowns'),
+  logBreakdown: (data) => api.post('/ppc/breakdowns', data),
+};
+
+export const ppcWarpDeliveryAPI = {
+  list: () => api.get('/ppc/warping-deliveries/'),
+  create: (data) => api.post('/ppc/warping-deliveries/', data),
+  getById: (id) => api.get(`/ppc/warping-deliveries/${id}`),
+  update: (id, data) => api.put(`/ppc/warping-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/ppc/warping-deliveries/${id}`)
+};
+
+// ---- Calendar Events ----
+export const calendarEventAPI = {
+  list: (params) => api.get('/calendar-events/', { params }),
+  create: (data) => api.post('/calendar-events/', data),
+};
+
+export const costingSheetAPI = {
+  list: (params) => api.get('/costing-sheet/', { params }),
+  getById: (id) => api.get(`/costing-sheet/${id}`),
+  create: (data) => api.post('/costing-sheet/', data),
+  update: (id, data) => api.put(`/costing-sheet/${id}`, data),
+  delete: (id) => api.delete(`/costing-sheet/${id}`)
+};
+
+export const stockSheetAPI = {
+  list: (params) => api.get('/stock-sheet/', { params }),
+  create: (data) => api.post('/stock-sheet/', data),
 };
 
 export default api;

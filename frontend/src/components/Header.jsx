@@ -286,6 +286,33 @@ export default function Header() {
 
       {/* Central Global Search Bar */}
       <div style={{ flex: 1, position: 'relative', maxWidth: '380px', margin: '0 16px' }}>
+      <div style={{ flex: '0 0 260px', marginRight: '16px', position: 'relative', zIndex: 2 }} />
+
+      {/* Background Running Marquee across topbar (stops before administrator) */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: '250px',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden'
+      }}>
+        <marquee behavior="scroll" direction="left" scrollamount="5" style={{ width: '100%' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', verticalAlign: 'middle' }}>
+            <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 700, fontSize: '15px', color: '#000000', letterSpacing: '0.03em', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+              {companyProfile.company_name} — {companyProfile.description}
+            </span>
+          </div>
+        </marquee>
+      </div>
+
+      {/* Central Global Search Bar */}
+      <div style={{ flex: 1, position: 'relative', maxWidth: '380px', margin: '0 16px', zIndex: 2 }}>
         <div style={{ position: 'relative' }}>
           <input 
             type="text" 
@@ -470,6 +497,7 @@ export default function Header() {
       </div>
 
       <div className="header-actions">
+      <div className="header-actions" style={{ position: 'relative', zIndex: 2 }}>
         {/* Dynamic Notification Dropdown */}
         <div ref={notificationRef} style={{ position: 'relative' }}>
           <button 

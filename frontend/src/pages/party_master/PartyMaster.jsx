@@ -23,6 +23,56 @@ const InfoRow2 = ({ label, value }) => (
   </div>
 );
 
+const isSalesParty = (p) => {
+  if (!p) return false;
+  const type = (p.party_type || '').toLowerCase();
+  const group = (p.party_group || '').toLowerCase();
+
+  const excludeTerms = [
+    'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+    'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+    'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
+    'lab', 'washing', 'service'
+  ];
+
+  if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
+    return false;
+  }
+
+  return (
+    type.includes('sales') ||
+    type.includes('customer') ||
+    type.includes('buyer') ||
+    group.includes('customer') ||
+    group.includes('buyer')
+  );
+};
+
+const isPurchaseParty = (p) => {
+  if (!p) return false;
+  const type = (p.party_type || '').toLowerCase();
+  const group = (p.party_group || '').toLowerCase();
+
+  const excludeTerms = [
+    'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+    'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+    'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
+    'lab', 'washing', 'service'
+  ];
+
+  if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
+    return false;
+  }
+
+  return (
+    type.includes('purchase') ||
+    type.includes('supplier') ||
+    type.includes('vendor') ||
+    group.includes('supplier') ||
+    group.includes('vendor')
+  );
+};
+
 export default function PartyMaster() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryId = searchParams.get('id');
