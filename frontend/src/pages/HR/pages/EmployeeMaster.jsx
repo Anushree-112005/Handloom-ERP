@@ -133,11 +133,23 @@ const EmployeeMaster = () => {
   const cleanFormData = (data) => {
     const cleaned = { ...data };
     // Fields that should be integers or null
-    const integerFields = ['shift_id', 'reporting_manager_id', 'department_id', 'designation_id', 'basic_salary', 'allowances', 'deductions', 'net_salary'];
+    const integerFields = ['shift_id', 'reporting_manager_id', 'department_id', 'designation_id'];
+    const floatZeroFields = ['basic_salary', 'allowances', 'deductions', 'net_salary'];
     // Fields that should be dates or null
     const dateFields = ['date_of_birth', 'date_of_joining', 'confirmation_date', 'probation_end_date', 'passport_expiry'];
 
     Object.keys(cleaned).forEach(key => {
+      // Convert float zero fields
+      if (floatZeroFields.includes(key)) {
+        if (cleaned[key] === '' || cleaned[key] === null || cleaned[key] === undefined) {
+          cleaned[key] = 0;
+        } else {
+          cleaned[key] = parseFloat(cleaned[key]);
+          if (isNaN(cleaned[key])) cleaned[key] = 0;
+        }
+        return; // skip further processing for this key
+      }
+
       // Convert empty strings to null
       if (cleaned[key] === '' || cleaned[key] === undefined) {
         cleaned[key] = null;
