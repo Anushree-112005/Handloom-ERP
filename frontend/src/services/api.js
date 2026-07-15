@@ -38,7 +38,7 @@ export const authAPI = {
 
 // ---- Dashboard ----
 export const dashboardAPI = {
-  stats: () => api.get('/dashboard/stats'),
+  stats: (params) => api.get('/dashboard/stats', { params }),
 };
 
 // ---- Party Master ----

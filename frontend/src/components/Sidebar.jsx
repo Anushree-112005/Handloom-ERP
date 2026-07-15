@@ -189,9 +189,6 @@ const modules = [
   { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
   { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
-  { section: 'Yarn Management' },
-  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
 
   { isJobWorkDynamic: true },
 
@@ -200,8 +197,10 @@ const modules = [
   { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
 
   { section: 'Inventory' },
+  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
-  { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
+  // { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
   { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
