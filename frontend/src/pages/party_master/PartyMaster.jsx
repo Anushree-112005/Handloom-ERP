@@ -1280,15 +1280,14 @@ export default function PartyMaster() {
               <thead>
                 <tr>
                   <th>Party no</th><th>Business Name</th><th>Type & Group</th>
-                  <th>Agent</th>
-                  <th>Contact & Phone</th><th>City</th><th>GST / PAN</th><th>Actions</th>
+                  <th>Contact & Phone</th><th>City</th><th>Merchandiser</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredParties.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
                 ) : (
                   filteredParties.map(p => (
                     <tr
@@ -1307,16 +1306,12 @@ export default function PartyMaster() {
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.party_group}</span>
                       </td>
                       <td>
-                        {p.agent_name ? <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{p.agent_name}</span> : <span style={{ color: 'var(--text-muted)' }}>N/A</span>}
-                      </td>
-                      <td>
                         {p.contact_person || 'N/A'}<br />
                         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.phone}</span>
                       </td>
                       <td>{p.city}</td>
                       <td>
-                        <span style={{ fontSize: 12 }}>{p.gst_no || 'N/A'}</span><br />
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.pan_no}</span>
+                        <span style={{ fontWeight: 600 }}>{p.merchandiser || 'N/A'}</span>
                       </td>
                       <td onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 8 }}>
