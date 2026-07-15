@@ -399,7 +399,7 @@ export default function PartyMaster() {
       (typeFilter === 'Sales' && isSalesParty(p)) ||
       (typeFilter === 'Purchase Party' && isPurchaseParty(p)) ||
       (typeFilter === 'Purchase' && isPurchaseParty(p)) ||
-      p.party_type === typeFilter;
+      p.party_type?.split(', ').includes(typeFilter);
     const matchesStatus = statusFilter === 'All Status' || p.status === statusFilter;
 
     let matchesDate = true;
@@ -784,6 +784,7 @@ export default function PartyMaster() {
                         required
                         disabled={isReadOnly}
                         placeholder="-- Select Party Type --"
+                        multiple={true}
                       />
                       <div className="form-group">
                         <label>Business Name *</label>

@@ -153,7 +153,7 @@ def sync_data():
             if not p.company_name:
                 continue
             # Map party_type
-            if p.party_type == 'Sales':
+            if p.party_type and 'Sales' in p.party_type:
                 group_name = 'Sundry Debtors'
                 bal_type = 'Dr'
             else:
