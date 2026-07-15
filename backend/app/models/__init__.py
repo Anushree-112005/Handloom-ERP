@@ -28,6 +28,7 @@ from app.models.twisting_doubling_po import TwistingDoublingPO, TwistingDoubling
 from app.models.yarn_dyeing_po import YarnDyeingPO, YarnDyeingPOItem
 from app.models.fabric_dyeing_po import FabricDyeingPO, FabricDyeingPOItem
 from app.models.warping_sizing_po import WarpingSizingPO, WarpingSizingPOItem
+from app.models.warehouse_material import WarehouseMaterial, WarehouseMaterialImage
 from app.models.weaving_po import WeavingPO, WeavingPOItem
 from app.models.processing_po import ProcessingPO, ProcessingPOItem
 from app.models.cloth_purchase_po import ClothPurchasePO, ClothPurchasePOItem
@@ -44,3 +45,4 @@ from app.models.fuel_entry import FuelEntry
 from app.models.fleet_document import FleetDocument
 from app.models.route_trip import Route, Trip
 from app.models.notification import Notification
+from app.models.warehouse_waxing import WarehouseWaxing

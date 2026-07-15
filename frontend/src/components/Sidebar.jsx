@@ -203,6 +203,9 @@ const modules = [
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
   { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
+  { section: 'Warehouse Operations' },
+  { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
+
   { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
 

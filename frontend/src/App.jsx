@@ -28,6 +28,7 @@ import LogReport from './pages/log_report/LogReport';
 import ReportsDashboard from './pages/reports_dashboard/ReportsDashboard';
 import EwayBill from './pages/eway_bill/EwayBill';
 import CompanySetting from './pages/settings/CompanySetting';
+import WarehouseStock from './pages/WarehouseWaxing';
 import GateInward from './pages/gate/GateInward';
 import GateOutward from './pages/gate/GateOutward';
 import GatePass from './pages/gate/GatePass';
@@ -128,6 +129,7 @@ import WarpingSizingPO from './pages/purchase_orders/WarpingSizingPO';
 import WeavingPO from './pages/purchase_orders/WeavingPO';
 import ProcessingPO from './pages/purchase_orders/ProcessingPO';
 import ClothPurchasePO from './pages/purchase_orders/ClothPurchasePO';
+import WarehouseWaxing from './pages/WarehouseWaxing';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -298,6 +300,7 @@ export default function App() {
         <Route path="jobwork/status" element={<JobWorkStatus />} />
         <Route path="inventory/stock-summary" element={<StockSummary />} />
         <Route path="inventory/stock-ledger" element={<StockLedger />} />
+        <Route path="warehouse/stock" element={<WarehouseStock />} />
 
         <Route path="cloth/inward" element={<ClothInward />} />
         <Route path="cloth/checking" element={<OnTableChecking />} />
