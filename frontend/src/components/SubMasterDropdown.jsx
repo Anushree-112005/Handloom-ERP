@@ -219,7 +219,7 @@ export default function SubMasterDropdown({
         <div
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
               e.preventDefault();
             }
           }}
@@ -308,7 +308,10 @@ export default function SubMasterDropdown({
                           onChange={(e) => setEditingText(e.target.value)}
                           onKeyDown={(e) => {
                             e.stopPropagation();
-                            if (e.key === 'Enter') handleSaveEdit(item.id);
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveEdit(item.id);
+                            }
                             if (e.key === 'Escape') setEditingId(null);
                           }}
                         />
@@ -404,7 +407,10 @@ export default function SubMasterDropdown({
                     onChange={(e) => setAddingText(e.target.value)}
                     onKeyDown={(e) => {
                       e.stopPropagation();
-                      if (e.key === 'Enter') handleSaveNew();
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveNew();
+                      }
                       if (e.key === 'Escape') setAddingMode(false);
                     }}
                   />
