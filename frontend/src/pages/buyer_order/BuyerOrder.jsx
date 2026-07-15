@@ -1207,14 +1207,15 @@ export default function BuyerOrder() {
                   <thead>
                     <tr>
                       <th>IBPO No</th><th>Order Date</th><th>Party Name</th>
-                      <th>Type</th><th>Items</th><th>Status</th><th>Actions</th>
+                      <th>Fabric Name</th><th>PO No</th><th>PO Date</th>
+                      <th>Pattern</th><th>Order Mtr</th><th>Certified</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredOrders.length === 0 ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
                     ) : filteredOrders.map(o => (
                       <tr
                         key={o.id}
@@ -1224,9 +1225,12 @@ export default function BuyerOrder() {
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{o.ibpo_number}</td>
                         <td>{o.order_date}</td>
                         <td style={{ fontWeight: 500 }}>{o.party_name}</td>
-                        <td><span className="badge badge-active">{o.order_type || 'Regular'}</span></td>
-                        <td>{o.items?.length || 0} items</td>
-                        <td><span className={`badge ${o.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{o.status}</span></td>
+                        <td>{o.items?.map(it => it.fabric_type).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.party_po_no).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.po_date).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.pattern).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.order_mtrs).filter(it => it !== undefined && it !== null).join(', ') || '0'}</td>
+                        <td>{o.certified_type || 'N/A'}</td>
                         <td onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button
