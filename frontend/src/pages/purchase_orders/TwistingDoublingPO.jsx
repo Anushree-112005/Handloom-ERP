@@ -106,6 +106,34 @@ export default function TwistingDoublingPO() {
     loadData();
   }, []);
 
+  const generateNextPONo = (existingOrders) => {
+    let maxNum = 0;
+    const prefix = 'TD-';
+    (existingOrders || []).forEach(o => {
+      const poStr = o.po_no || '';
+      if (poStr.toUpperCase().startsWith(prefix)) {
+        const numPart = poStr.substring(prefix.length);
+        const num = parseInt(numPart, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    const nextNum = maxNum + 1;
+    const padded = String(nextNum).padStart(4, '0');
+    return `${prefix}${padded}`;
+  };
+
+  const handleNewOrder = () => {
+    const nextPONo = generateNextPONo(orders);
+    setForm({
+      ...initialForm,
+      po_no: nextPONo,
+      delivery_location: '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'
+    });
+    setShowForm(true);
+  };
+
   const recalculate = (updatedForm) => {
     const updatedItems = (updatedForm.items || []).map(item => {
       const qty = parseFloat(item.order_kgs) || 0;
@@ -148,11 +176,50 @@ export default function TwistingDoublingPO() {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
 
-    if (name === 'design_no') {
-      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+    if (name === 'buyer_order_no') {
+      const bo = buyerOrders.find(b => b.ibpo_number === value);
+      const de = designEntries.find(d => d.ibpo_no === value || d.design_no === bo?.design_no);
+      
+      let yarnCountVal = '';
+      if (de && de.yarn_details) {
+        try {
+          const parsedYarn = typeof de.yarn_details === 'string' ? JSON.parse(de.yarn_details) : de.yarn_details;
+          if (Array.isArray(parsedYarn) && parsedYarn.length > 0) yarnCountVal = parsedYarn[0].yarn_count || '';
+        } catch (err) {}
+      }
+
       const updatedItems = [...form.items];
       if (updatedItems[0]) {
-        updatedItems[0].design_no = value;
+        updatedItems[0].design_no = de?.design_no || bo?.design_no || '';
+        updatedItems[0].yarn_count = yarnCountVal || updatedItems[0].yarn_count;
+        updatedItems[0].colour = bo?.fabric_color || de?.fabric_color || de?.color || updatedItems[0].colour;
+      }
+      setForm(recalculate({
+        ...form,
+        buyer_order_no: value,
+        buyer_name: bo?.party_name || bo?.buyer_name || de?.buyer_name || form.buyer_name,
+        design_no: de?.ds_ref_no || form.design_no,
+        items: updatedItems
+      }));
+      return;
+    }
+
+    if (name === 'design_no') {
+      const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      
+      let yarnCountVal = '';
+      if (de && de.yarn_details) {
+        try {
+          const parsedYarn = typeof de.yarn_details === 'string' ? JSON.parse(de.yarn_details) : de.yarn_details;
+          if (Array.isArray(parsedYarn) && parsedYarn.length > 0) yarnCountVal = parsedYarn[0].yarn_count || '';
+        } catch (err) {}
+      }
+
+      const updatedItems = [...form.items];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = de?.design_no || value;
+        updatedItems[0].yarn_count = yarnCountVal || updatedItems[0].yarn_count;
+        updatedItems[0].colour = de?.fabric_color || de?.color || updatedItems[0].colour;
       }
       setForm(recalculate({
         ...form,
@@ -305,7 +372,7 @@ export default function TwistingDoublingPO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <button className="btn btn-primary" onClick={handleNewOrder}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -396,7 +463,7 @@ export default function TwistingDoublingPO() {
             title="TWISTING/DOUBLING PO"
             poNumber={selectedViewOrder?.po_no}
             poDate={selectedViewOrder?.po_date}
-            deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
+            deliveryAt={selectedViewOrder?.delivery_location || "1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."}
             supplierName={selectedViewOrder?.supplier_worker}
             agentName=""
             designNo={selectedViewOrder?.sales_order_no || '-'}
@@ -480,10 +547,7 @@ export default function TwistingDoublingPO() {
                 </select>
               </div>
               <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Delivery At</label>
-                <select className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange}>
-                  <option value="-">-</option>
-                  {options.masters?.department?.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
+                <input type="text" className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange} />
               </div>
             </div>
 

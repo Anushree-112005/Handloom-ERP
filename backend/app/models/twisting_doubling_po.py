@@ -20,6 +20,8 @@ class TwistingDoublingPO(Base):
 
     # Reference Information
     ref_no_1 = Column(String(100))
+    buyer_order_no = Column(String(100))
+    design_no = Column(String(100))
     entry_against = Column(String(100))
     packing_type = Column(String(100))
 

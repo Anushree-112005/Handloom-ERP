@@ -43,4 +43,4 @@ from app.models.breakdown_entry import BreakdownEntry
 from app.models.fuel_entry import FuelEntry
 from app.models.fleet_document import FleetDocument
 from app.models.route_trip import Route, Trip
-
+from app.models.notification import Notification

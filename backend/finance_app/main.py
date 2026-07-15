@@ -5,6 +5,7 @@ from finance_app.routers import (
     auth, companies, financial_years, ledger_groups, ledgers,
     stock_items, vouchers, reports, gst, inventory_masters,
     users, audit_router, payroll, banking,
+    currencies, voucher_types
 )
 from finance_app.routers.auth import migrate_default_passwords
 
@@ -35,13 +36,22 @@ with engine.begin() as conn:
         except Exception as e:
             print(f"Migration warning: {e}")
 
-    # base_currency column on companies
+    # base_currency column on companies (and new cin/currency columns)
     try:
-        conn.execute(text("SELECT base_currency FROM companies LIMIT 1"))
+        conn.execute(text("SELECT cin FROM companies LIMIT 1"))
     except Exception:
         try:
-            conn.execute(text("ALTER TABLE companies ADD COLUMN base_currency TEXT NOT NULL DEFAULT 'INR'"))
-            print("Migrated: added base_currency to companies.")
+            conn.execute(text("ALTER TABLE companies ADD COLUMN cin TEXT"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_symbol TEXT DEFAULT '₹'"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_name TEXT DEFAULT 'INR'"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_iso_code TEXT DEFAULT 'INR'"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_decimal_places INTEGER DEFAULT 2"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_show_in_millions BOOLEAN DEFAULT 0"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_suffix_symbol BOOLEAN DEFAULT 0"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_space_between_amount_and_symbol BOOLEAN DEFAULT 0"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_unit TEXT DEFAULT 'Rupees'"))
+            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_decimal TEXT DEFAULT 'Paise'"))
+            print("Migrated: added cin and currency configs to companies.")
         except Exception as e:
             print(f"Migration warning: {e}")
 
@@ -80,6 +90,8 @@ app.include_router(ledger_groups.router,      prefix="/api/ledger-groups",   tag
 app.include_router(ledgers.router,            prefix="/api/ledgers",         tags=["Ledgers"])
 app.include_router(stock_items.router,        prefix="/api/stock-items",     tags=["Stock Items"])
 app.include_router(vouchers.router,           prefix="/api/vouchers",        tags=["Vouchers"])
+app.include_router(currencies.router,         prefix="/api/currencies",      tags=["Currencies"])
+app.include_router(voucher_types.router,      prefix="/api/voucher-types",   tags=["Voucher Types"])
 app.include_router(reports.router,            prefix="/api/reports",         tags=["Reports"])
 app.include_router(gst.router,               prefix="/api/gst",             tags=["GST"])
 app.include_router(inventory_masters.router,  prefix="/api/inventory",       tags=["Inventory Masters"])

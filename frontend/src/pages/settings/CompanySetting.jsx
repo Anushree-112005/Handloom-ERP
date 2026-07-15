@@ -11,6 +11,9 @@ export default function CompanySetting() {
     address: '',
     email: '',
     phone: '',
+    gstin: '',
+    pan: '',
+    financial_year: '',
   });
 
   const [loading, setLoading] = useState(true);
@@ -32,6 +35,9 @@ export default function CompanySetting() {
           address: response.data.address || '',
           email: response.data.email || '',
           phone: response.data.phone || '',
+          gstin: response.data.gstin || '',
+          pan: response.data.pan || '',
+          financial_year: response.data.financial_year || '',
         });
       }
     } catch (err) {
@@ -234,6 +240,45 @@ export default function CompanySetting() {
               </div>
             </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+              <div className="form-group">
+                <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>GSTIN</label>
+                <input
+                  type="text"
+                  name="gstin"
+                  className="form-control"
+                  style={{ width: '100%', margin: 0, textTransform: 'uppercase' }}
+                  placeholder="e.g. 33ABCDE1234F1Z5"
+                  value={formData.gstin}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group">
+                <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>PAN</label>
+                <input
+                  type="text"
+                  name="pan"
+                  className="form-control"
+                  style={{ width: '100%', margin: 0, textTransform: 'uppercase' }}
+                  placeholder="e.g. ABCDE1234F"
+                  value={formData.pan}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="form-group">
+                <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>Financial Year</label>
+                <input
+                  type="text"
+                  name="financial_year"
+                  className="form-control"
+                  style={{ width: '100%', margin: 0 }}
+                  placeholder="e.g. 2026-2027"
+                  value={formData.financial_year}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
             <div className="form-group">
               <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, display: 'block' }}>Company Logo</label>
               <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
@@ -379,6 +424,17 @@ export default function CompanySetting() {
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <Phone size={16} style={{ flexShrink: 0, opacity: 0.8 }} />
                 <span style={{ opacity: 0.9 }}>{formData.phone || '+91 00000 00000'}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4, padding: '12px', background: 'rgba(255,255,255,0.1)', borderRadius: 8 }}>
+                <div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>GSTIN</div>
+                  <div style={{ fontWeight: 600, letterSpacing: '0.5px' }}>{formData.gstin || '—'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>Financial Year</div>
+                  <div style={{ fontWeight: 600, letterSpacing: '0.5px' }}>{formData.financial_year || '—'}</div>
+                </div>
               </div>
             </div>
           </div>

@@ -29,6 +29,29 @@ def sync_data():
 
     # 1. Establish SQLite DB Session
     db = SessionLocal()
+    
+    # 1.5 Auto-migrate missing columns in SQLite (prevents crash on startup)
+    from sqlalchemy import text
+    try:
+        db.execute(text("SELECT cin FROM companies LIMIT 1"))
+    except Exception:
+        try:
+            print("  → Adding missing cin and currency columns to SQLite database...")
+            db.execute(text("ALTER TABLE companies ADD COLUMN cin TEXT"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_symbol TEXT DEFAULT '₹'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_name TEXT DEFAULT 'INR'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_iso_code TEXT DEFAULT 'INR'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_decimal_places INTEGER DEFAULT 2"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_show_in_millions BOOLEAN DEFAULT 0"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_suffix_symbol BOOLEAN DEFAULT 0"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_space_between_amount_and_symbol BOOLEAN DEFAULT 0"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_unit TEXT DEFAULT 'Rupees'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_decimal TEXT DEFAULT 'Paise'"))
+            db.commit()
+            print("  → Successfully added missing columns.")
+        except Exception as e:
+            print(f"  → Migration warning: {e}")
+            db.rollback()
 
     # 2. Establish PostgreSQL Connection
     from dotenv import load_dotenv

@@ -137,6 +137,15 @@ async def create_order(data: YarnPurchaseOrderCreate, db: AsyncSession = Depends
         order.indent_details.append(YarnPurchaseIndentDetail(**i.model_dump()))
 
     db.add(order)
+    
+    from app.models.notification import Notification
+    # Create notification for Stores/Receiving Team
+    notif = Notification(
+        user_role="Store Manager",
+        message=f"New Yarn Purchase Order ({po_no}) created for Supplier: {data.supplier_name}"
+    )
+    db.add(notif)
+    
     await db.commit()
     await db.refresh(order)
     

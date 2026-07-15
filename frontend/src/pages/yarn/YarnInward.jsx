@@ -226,6 +226,21 @@ export default function YarnInward() {
     }
   };
 
+  const handleConfirm = async (e) => {
+    e.preventDefault();
+    if (!window.confirm("Are you sure you want to confirm this GRN? This will update stock and send pending bill to Finance.")) {
+      return;
+    }
+    try {
+      await yarnInwardAPI.confirm(editingId);
+      alert('GRN Confirmed Successfully!');
+      setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Error confirming GRN');
+      console.error(err);
+    }
+  };
+
   const handleOpenForm = async (entry, readOnly = false) => {
     try {
       const { data } = await yarnInwardAPI.get(entry.id);
@@ -368,6 +383,18 @@ export default function YarnInward() {
     }
 
     let newForm = { ...form, [name]: value };
+
+    if (name === 'gate_no' && value) {
+      try {
+        const gateData = JSON.parse(localStorage.getItem('gate_inward_data') || '[]');
+        const matchedGate = gateData.find(g => g.id === value || g.inwardNo === value);
+        if (matchedGate && matchedGate.vehicleNo) {
+          newForm.veh_no = matchedGate.vehicleNo;
+        }
+      } catch (err) {
+        console.error('Error fetching gate data', err);
+      }
+    }
 
     if (name === 'received_type' && value === 'Direct') {
       newForm.po_no_dt = '';
@@ -1188,6 +1215,22 @@ export default function YarnInward() {
                   </div>
                 </div>
             </fieldset>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              {!isReadOnly && form.status !== 'Confirmed' && (
+                <button type="button" className="btn btn-primary" onClick={handleCreate}>
+                  <Save size={16} /> {editingId ? 'Update Inward' : 'Save Inward'}
+                </button>
+              )}
+              {editingId && form.status !== 'Confirmed' && !isReadOnly && (
+                <button type="button" className="btn btn-success" onClick={handleConfirm}>
+                  <CheckCircle size={16} /> Confirm GRN
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

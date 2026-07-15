@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Receipt, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI } from '../../services/api';
+import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI, buyerOrderAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -152,8 +152,88 @@ export default function SalesInvoice() {
     } catch (err) {
       console.error("Error fetching GRA list:", err);
     }
+    
+    try {
+      const { data: boData } = await buyerOrderAPI.list();
+      setBuyerOrders(boData || []);
+    } catch (err) {
+      console.error("Error fetching Buyer Orders:", err);
+    }
   };
 
+  const [buyerOrders, setBuyerOrders] = useState([]);
+
+  // Auto-fill form fields from selected GRA
+  const handleGraSelect = async (graNo) => {
+    setFormData(prev => ({ ...prev, gra_no: graNo }));
+    if (!graNo) return;
+
+    try {
+      // Find the GRA from the already-loaded list
+      const gra = graList.find(g => (g.gra_no || String(g.id)) === graNo);
+      if (!gra) return;
+
+      // Fetch full GRA detail with items
+      const { data: graDetail } = await goodsReleaseAPI.get(gra.id);
+
+      // Parse extra fields stored in remarks JSON
+      let extra = {};
+      try { extra = graDetail.remarks ? JSON.parse(graDetail.remarks) : {}; } catch (_) {}
+
+      // Auto-fill header fields from GRA
+      setFormData(prev => ({
+        ...prev,
+        gra_no: graNo,
+        pay_name: graDetail.party_name || prev.pay_name,
+        delivery: graDetail.party_name || prev.delivery,
+        delivery_address: graDetail.delivery_address || prev.delivery_address,
+        transport: graDetail.transport_name || prev.transport,
+        transport_mode: graDetail.transport_mode || prev.transport_mode,
+        truck_no: graDetail.vehicle_no || prev.truck_no,
+        lr_no: graDetail.lr_no || prev.lr_no,
+        lr_date: graDetail.lr_date || prev.lr_date,
+        freight_mode: extra.freight_mode || prev.freight_mode,
+        lr_team: extra.lr_team || prev.lr_team,
+        gross_weight: graDetail.gross_weight || prev.gross_weight,
+        total_qty: Number(graDetail.total_meters) || prev.total_qty,
+      }));
+
+      // Populate line items from GRA items
+      const graItems = graDetail.items || [];
+      if (graItems.length > 0) {
+        setItems(graItems.map(it => ({
+          design_no: it.design_no || '',
+          hsn_code: '',
+          description: it.color ? `${it.design_no || ''} - ${it.color}` : (it.design_no || ''),
+          total_bale: it.bale_no || '',
+          uom: 'MTR',
+          qty: Number(it.meters) || '',
+          rate: Number(it.rate) || '',
+          amount: Number(it.amount) || 0
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching GRA details:', err);
+    }
+  };
+
+  const handleIbpoSelect = (ibpoNo) => {
+    setFormData(prev => ({ ...prev, po_no: ibpoNo }));
+    const bo = buyerOrders.find(b => b.ibpo_number === ibpoNo);
+    if (bo) {
+      setFormData(prev => {
+        let updates = { po_no: ibpoNo, po_date: bo.order_date };
+        if (bo.order_type === "Export") {
+          updates.invoice_type_id = "Export Invoice";
+          updates.dly_state_code = "EXPORT"; // Force IGST calculation
+        } else if (bo.order_type === "Domestic") {
+          updates.invoice_type_id = "Domestic Invoice";
+          updates.dly_state_code = prev.state_code; // Force CGST/SGST calculation
+        }
+        return { ...prev, ...updates };
+      });
+    }
+  };
   const fetchInvoices = async () => {
     try {
       setLoading(true);
@@ -812,8 +892,13 @@ export default function SalesInvoice() {
                         <input className="form-control" name="dly_state_code" value={formData.dly_state_code} onChange={handleInputChange} />
                       </div>
                       <div className="form-group">
-                        <label>PO No</label>
-                        <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
+                        <label>PO / IBPO No</label>
+                        <select className="form-control" name="po_no" value={formData.po_no} onChange={(e) => handleIbpoSelect(e.target.value)}>
+                          <option value="">-- Select IBPO --</option>
+                          {buyerOrders.map(bo => (
+                            <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="form-group">
                         <label>PO Date</label>

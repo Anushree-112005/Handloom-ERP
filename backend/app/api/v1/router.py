@@ -24,7 +24,6 @@ api_router.include_router(log_reports.router)
 api_router.include_router(eway_bills.router)
 api_router.include_router(company_settings.router)
 
-
 # Newly registered missing routers
 api_router.include_router(design_entries.router)
 api_router.include_router(yarn_inwards.router)
@@ -52,6 +51,9 @@ api_router.include_router(design_ai_router)
 from app.api.v1.endpoints import textile_designs
 api_router.include_router(textile_designs.router)
 
+from app.api.v1.endpoints import inventory
+api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
+
 from app.api.v1.endpoints import ppc
 api_router.include_router(ppc.router, prefix="/ppc", tags=["Production Planning (PPC)"])
 
@@ -71,4 +73,5 @@ api_router.include_router(stationary_router)
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)
 
-
+from app.api.v1.endpoints import notifications
+api_router.include_router(notifications.router)
