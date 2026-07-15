@@ -7,8 +7,7 @@ import {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-
-const API_BASE = 'http://localhost:8000/api/v1';
+import { stockSheetAPI } from '../../services/api';
 
 export default function StockSheetModule() {
   const [view, setView] = useState('list');
@@ -25,56 +24,12 @@ export default function StockSheetModule() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch(`${API_BASE}/stock-sheet`);
-      if (res.ok) {
-        const data = await res.json();
-        setItems(data);
-        if (data.length === 0) {
-          seedMockData();
-        }
-      }
+      const res = await stockSheetAPI.list();
+      const data = res.data || [];
+      setItems(data);
     } catch (err) {
       console.error("Error fetching stock sheet items:", err);
     }
-  };
-
-  const seedMockData = async () => {
-    const mockData = [
-      {
-        item_code: 'YRN-001', item_name: 'Cotton Yarn 40s', category: 'Raw Material', material_type: 'Yarn',
-        warehouse: 'Main Store', batch_no: 'B-2026-01', unit: 'Kg',
-        opening_stock: 1200, stock_in: 500, stock_out: 800, current_stock: 900, reserved_stock: 200, available_stock: 700,
-        reorder_level: 500, unit_cost: 285.00, stock_value: 256500.00, status: 'In Stock',
-        stock_summary: { opening: 1200, purchased: 500, consumed: 800, closing: 900 },
-        movements: [
-          { date: '2026-07-10', type: 'Purchase', ref_no: 'PO-1025', module: 'Purchase', in: 500, out: 0, balance: 1700, user: 'Admin' },
-          { date: '2026-07-11', type: 'Production', ref_no: 'PR-250', module: 'PPC', in: 0, out: 800, balance: 900, user: 'Admin' }
-        ],
-        batches: [{ batch_no: 'B-2026-01', mfg_date: '2026-07-01', qty: 900, warehouse: 'Main Store', status: 'Active' }],
-        valuation: { average_cost: 285, standard_cost: 290, current_value: 256500, last_purchase_rate: 285 }
-      },
-      {
-        item_code: 'FAB-005', item_name: 'Single Jersey Fabric', category: 'Finished Goods', material_type: 'Fabric',
-        warehouse: 'Finished Goods WH', batch_no: 'LOT-55', unit: 'Mtr',
-        opening_stock: 500, stock_in: 1000, stock_out: 1400, current_stock: 100, reserved_stock: 50, available_stock: 50,
-        reorder_level: 300, unit_cost: 150.00, stock_value: 15000.00, status: 'Low Stock',
-        stock_summary: { opening: 500, produced: 1000, dispatched: 1400, closing: 100 },
-        movements: [], batches: [], valuation: { average_cost: 150, current_value: 15000 }
-      },
-      {
-        item_code: 'CHM-012', item_name: 'Blue Reactive Dye', category: 'Consumables', material_type: 'Chemical',
-        warehouse: 'Chemical Store', batch_no: 'DYE-89', unit: 'Kg',
-        opening_stock: 50, stock_in: 0, stock_out: 50, current_stock: 0, reserved_stock: 0, available_stock: 0,
-        reorder_level: 20, unit_cost: 420.00, stock_value: 0.00, status: 'Out of Stock',
-        stock_summary: { opening: 50, closing: 0 }, movements: [], batches: [], valuation: { average_cost: 420, current_value: 0 }
-      }
-    ];
-    for (const item of mockData) {
-      await fetch(`${API_BASE}/stock-sheet/`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item)
-      });
-    }
-    fetchItems();
   };
 
   const handleRowClick = (item) => {

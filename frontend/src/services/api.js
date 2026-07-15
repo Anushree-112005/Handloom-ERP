@@ -447,4 +447,9 @@ export const costingSheetAPI = {
   delete: (id) => api.delete(`/costing-sheet/${id}`)
 };
 
+export const stockSheetAPI = {
+  list: (params) => api.get('/stock-sheet/', { params }),
+  create: (data) => api.post('/stock-sheet/', data),
+};
+
 export default api;
