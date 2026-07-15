@@ -7,6 +7,14 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const createAPI = (endpoint) => ({
+  list: (params) => api.get(endpoint + '/', { params }),
+  get: (id) => api.get(`${endpoint}/${id}`),
+  create: (data) => api.post(endpoint + '/', data),
+  update: (id, data) => api.put(`${endpoint}/${id}`, data),
+  delete: (id) => api.delete(`${endpoint}/${id}`),
+});
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -423,6 +431,20 @@ export const ppcWarpDeliveryAPI = {
   getById: (id) => api.get(`/ppc/warping-deliveries/${id}`),
   update: (id, data) => api.put(`/ppc/warping-deliveries/${id}`, data),
   delete: (id) => api.delete(`/ppc/warping-deliveries/${id}`)
+};
+
+// ---- Calendar Events ----
+export const calendarEventAPI = {
+  list: (params) => api.get('/calendar-events/', { params }),
+  create: (data) => api.post('/calendar-events/', data),
+};
+
+export const costingSheetAPI = {
+  list: (params) => api.get('/costing-sheet/', { params }),
+  getById: (id) => api.get(`/costing-sheet/${id}`),
+  create: (data) => api.post('/costing-sheet/', data),
+  update: (id, data) => api.put(`/costing-sheet/${id}`, data),
+  delete: (id) => api.delete(`/costing-sheet/${id}`)
 };
 
 export default api;

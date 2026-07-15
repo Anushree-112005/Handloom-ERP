@@ -545,7 +545,45 @@ export default function FinishedFabricReceipt() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Log receipt of finished fabric rolls from external Finishers.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}><Plus size={18} /> Add Finished Receipt</button>
+        <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
+          {/* Export Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowExportMenu(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={15} /> Export ▾
+            </button>
+            {showExportMenu && (
+              <div
+                style={{
+                  position: 'absolute', top: '110%', right: 0, background: '#fff',
+                  border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  zIndex: 200, minWidth: 160, overflow: 'hidden'
+                }}
+              >
+                <button
+                  onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#dc2626' }}
+                  onMouseOver={e => e.currentTarget.style.background = '#fef2f2'}
+                  onMouseOut={e => e.currentTarget.style.background = 'none'}
+                >
+                  <FileText size={14} /> Export PDF
+                </button>
+                <button
+                  onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#16a34a' }}
+                  onMouseOver={e => e.currentTarget.style.background = '#f0fdf4'}
+                  onMouseOut={e => e.currentTarget.style.background = 'none'}
+                >
+                  <FileSpreadsheet size={14} /> Export Excel
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}><Plus size={18} /> Add Finished Receipt</button>
+        </div>
       </div>
 
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>

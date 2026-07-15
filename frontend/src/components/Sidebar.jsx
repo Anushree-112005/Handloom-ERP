@@ -19,6 +19,7 @@ const modules = [
   { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
+  { path: '/calendar', label: 'Calendar', icon: Calendar },
   // { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
 
 
@@ -179,6 +180,7 @@ const modules = [
   { path: '/design-ai', label: 'Design AI', icon: Sparkles },
   // { path: '/weaving-calculator', label: 'Weaving Calculator', icon: Calculator },
 
+
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
   { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
@@ -200,6 +202,7 @@ const modules = [
   { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
 
   { section: 'Inventory' },
+  { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: ClipboardList },
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
   { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
@@ -304,6 +307,7 @@ const modules = [
       { path: '/ppc/master/loom-master', label: 'Master Setup', icon: Settings },
       { path: '/ppc/planning/availability', label: 'Loom Planning', icon: ClipboardList },
       { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
+      { path: '/costing-sheet', label: 'Costing Sheet', icon: Calculator },
       //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
       { path: '/ppc/monitoring', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
