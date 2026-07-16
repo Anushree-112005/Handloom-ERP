@@ -23,47 +23,49 @@ finally:
     _startup_db.close()
 
 # ── Auto-migrations: add columns to existing tables if missing ────────────
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 with engine.begin() as conn:
-    # location columns on voucher_entries
-    try:
-        conn.execute(text("SELECT location_id FROM voucher_entries LIMIT 1"))
-    except Exception:
+    def sync_database_schema(connection):
         try:
-            conn.execute(text("ALTER TABLE voucher_entries ADD COLUMN location_id INTEGER"))
-            conn.execute(text("ALTER TABLE voucher_entries ADD COLUMN location_name VARCHAR"))
-            print("Migrated: added location_id/location_name to voucher_entries.")
+            inspector = inspect(connection)
+            for table_name, table in Base.metadata.tables.items():
+                if not inspector.has_table(table_name):
+                    continue
+                db_columns = {col["name"].lower() for col in inspector.get_columns(table_name)}
+                for col_name, column in table.columns.items():
+                    if col_name.lower() not in db_columns:
+                        type_str = str(column.type.compile(dialect=connection.dialect))
+                        default_val = "NULL"
+                        if column.default is not None and not callable(column.default.arg):
+                            val = column.default.arg
+                            if isinstance(val, str):
+                                escaped_val = val.replace("'", "''")
+                                default_val = f"'{escaped_val}'"
+                            elif isinstance(val, bool):
+                                default_val = "TRUE" if val else "FALSE"
+                            else:
+                                default_val = str(val)
+                        elif "float" in type_str.lower() or "numeric" in type_str.lower():
+                            default_val = "0.0"
+                        elif "integer" in type_str.lower():
+                            default_val = "0"
+                        elif "boolean" in type_str.lower():
+                            default_val = "FALSE"
+                        
+                        alter_query = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {type_str}"
+                        if default_val != "NULL":
+                            alter_query += f" DEFAULT {default_val}"
+                        
+                        try:
+                            connection.execute(text(alter_query))
+                            print(f"Successfully added column {col_name} to table {table_name}.")
+                        except Exception as ex:
+                            print(f"Failed to add column {col_name} to table {table_name}: {ex}")
         except Exception as e:
-            print(f"Migration warning: {e}")
+            print(f"Error during schema synchronization: {e}")
 
-    # base_currency column on companies (and new cin/currency columns)
-    try:
-        conn.execute(text("SELECT cin FROM companies LIMIT 1"))
-    except Exception:
-        try:
-            conn.execute(text("ALTER TABLE companies ADD COLUMN cin TEXT"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_symbol TEXT DEFAULT '₹'"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_name TEXT DEFAULT 'INR'"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_iso_code TEXT DEFAULT 'INR'"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_decimal_places INTEGER DEFAULT 2"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_show_in_millions BOOLEAN DEFAULT 0"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_suffix_symbol BOOLEAN DEFAULT 0"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_space_between_amount_and_symbol BOOLEAN DEFAULT 0"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_unit TEXT DEFAULT 'Rupees'"))
-            conn.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_decimal TEXT DEFAULT 'Paise'"))
-            print("Migrated: added cin and currency configs to companies.")
-        except Exception as e:
-            print(f"Migration warning: {e}")
-
-    # party_id column on vouchers
-    try:
-        conn.execute(text("SELECT party_id FROM vouchers LIMIT 1"))
-    except Exception:
-        try:
-            conn.execute(text("ALTER TABLE vouchers ADD COLUMN party_id INTEGER"))
-            print("Migrated: added party_id to vouchers.")
-        except Exception as e:
-            print(f"Migration warning: {e}")
+    # Use run_sync-like manual call since we have a sync connection
+    sync_database_schema(conn)
 
 app = FastAPI(title="CubeBook API", version="2.0.0")
 

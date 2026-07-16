@@ -214,6 +214,13 @@ export default function YarnInward() {
       const payload = { ...form };
       if (!payload.inward_date) payload.inward_date = null;
       if (!payload.entry_date) payload.entry_date = null;
+      if (payload.godown_id === '') payload.godown_id = null;
+      
+      payload.items = payload.items.map(item => ({
+        ...item,
+        rack_id: item.rack_id === '' ? null : item.rack_id
+      }));
+
 
       if (editingId) {
         await yarnInwardAPI.update(editingId, payload);
@@ -249,15 +256,22 @@ export default function YarnInward() {
       if (data.entry_date) data.entry_date = data.entry_date.substring(0, 10);
       if (data.inward_date) data.inward_date = data.inward_date.substring(0, 10);
       
-      const dataWithCalculatedAmounts = {
-        ...data,
-        items: (data.items || []).map(item => ({
-          ...item,
-          amount: (parseFloat(item.kgs) || 0) * (parseFloat(item.rate) || 0)
-        }))
-      };
-      
-      setForm({ ...initialForm, ...dataWithCalculatedAmounts });
+      const safeData = { ...data };
+      for (const key in safeData) {
+        if (safeData[key] === null) safeData[key] = '';
+      }
+      if (safeData.items) {
+        safeData.items = safeData.items.map(item => {
+          const safeItem = { ...item };
+          for (const k in safeItem) {
+            if (safeItem[k] === null) safeItem[k] = '';
+          }
+          safeItem.amount = (parseFloat(safeItem.kgs) || 0) * (parseFloat(safeItem.rate) || 0);
+          return safeItem;
+        });
+      }
+
+      setForm({ ...initialForm, ...safeData });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
       setActiveTab('general');

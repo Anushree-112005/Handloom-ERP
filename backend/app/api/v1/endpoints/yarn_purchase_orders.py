@@ -147,6 +147,36 @@ async def create_order(data: YarnPurchaseOrderCreate, db: AsyncSession = Depends
     db.add(notif)
     
     await db.commit()
+    
+    # Create Draft Voucher in Finance
+    try:
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.models.voucher import Voucher
+        from finance_app.models.ledger import Ledger
+        from datetime import date
+        
+        fin_db = FinanceSessionLocal()
+        supplier_ledger = fin_db.query(Ledger).filter(Ledger.name == order.supplier_name).first()
+        party_id = supplier_ledger.id if supplier_ledger else None
+        
+        v = Voucher(
+            voucher_number=f"PV-DRAFT-{po_no}",
+            voucher_type="Purchase",
+            date=order.po_date or date.today(),
+            status="Draft",
+            total_amount=order.net_amount or 0.0,
+            reference_no=po_no,
+            company_id=1,
+            party_id=party_id,
+            narration=f"Draft Accounts Payable generated from Yarn PO: {po_no} for Supplier: {order.supplier_name}"
+        )
+        fin_db.add(v)
+        fin_db.commit()
+        fin_db.close()
+    except Exception as e:
+        import logging
+        logging.getLogger("finance_sync").error(f"Failed to create draft voucher: {e}")
+        
     await db.refresh(order)
     
     result = await db.execute(

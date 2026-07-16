@@ -261,13 +261,8 @@ export default function Header() {
         </h2>
       </div>
 
-<<<<<<< Updated upstream
       {/* Central Global Search Bar */}
-      <div style={{ flex: 1, position: 'relative', maxWidth: '380px', margin: '0 16px' }}>
-=======
-
       <div style={{ flex: 1, position: 'relative', maxWidth: '380px', margin: '0 16px', zIndex: 2 }}>
->>>>>>> Stashed changes
         <div style={{ position: 'relative' }}>
           <input 
             type="text" 
@@ -451,11 +446,7 @@ export default function Header() {
         )}
       </div>
 
-<<<<<<< Updated upstream
-      <div className="header-actions">
-=======
       <div className="header-actions" style={{ position: 'relative', zIndex: 2 }}>
->>>>>>> Stashed changes
         {/* Dynamic Notification Dropdown */}
         <div ref={notificationRef} style={{ position: 'relative' }}>
           <button 

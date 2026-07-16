@@ -175,6 +175,36 @@ async def create_invoice(invoice_data: SalesInvoiceCreate, db: AsyncSession = De
             db.add(db_item)
 
         await db.commit()
+        
+        # Create Draft Voucher in Finance
+        try:
+            from finance_app.database import SessionLocal as FinanceSessionLocal
+            from finance_app.models.voucher import Voucher
+            from finance_app.models.ledger import Ledger
+            from datetime import date
+            
+            fin_db = FinanceSessionLocal()
+            buyer_ledger = fin_db.query(Ledger).filter(Ledger.name == db_invoice.buyer_name).first()
+            party_id = buyer_ledger.id if buyer_ledger else None
+            
+            v = Voucher(
+                voucher_number=f"SV-DRAFT-{db_invoice.invoice_no}",
+                voucher_type="Sales",
+                date=db_invoice.invoice_date or date.today(),
+                status="Draft",
+                total_amount=db_invoice.net_amount or 0.0,
+                reference_no=db_invoice.invoice_no,
+                company_id=1,
+                party_id=party_id,
+                narration=f"Draft Accounts Receivable generated from Sales Invoice: {db_invoice.invoice_no} for Buyer: {db_invoice.buyer_name}"
+            )
+            fin_db.add(v)
+            fin_db.commit()
+            fin_db.close()
+        except Exception as e:
+            import logging
+            logging.getLogger("finance_sync").error(f"Failed to create draft voucher: {e}")
+
     except Exception as e:
         import traceback
         with open("error_log.txt", "a") as f:

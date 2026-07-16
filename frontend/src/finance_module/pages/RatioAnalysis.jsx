@@ -107,7 +107,7 @@ export default function RatioAnalysis() {
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
             <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
@@ -118,7 +118,7 @@ export default function RatioAnalysis() {
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
           </div>

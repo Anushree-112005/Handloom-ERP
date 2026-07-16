@@ -239,6 +239,38 @@ async def create_warping_sizing_po(data: WarpingSizingPOCreate, db: AsyncSession
         )
         db.add(db_item)
     await db.commit()
+    await db.commit()
+    
+    # Create Draft Voucher in Finance
+    try:
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.models.voucher import Voucher
+        from finance_app.models.ledger import Ledger
+        
+        fin_db = FinanceSessionLocal()
+        # The supplier might be warping_name or sizing_name; typically it's the primary unit. Let's use warping_name.
+        supplier_name = new_po.warping_name or new_po.sizing_name
+        supplier_ledger = fin_db.query(Ledger).filter(Ledger.name == supplier_name).first() if supplier_name else None
+        party_id = supplier_ledger.id if supplier_ledger else None
+        
+        v = Voucher(
+            voucher_number=f"JV-DRAFT-{new_po.po_no}",
+            voucher_type="Journal",
+            date=new_po.po_date or date.today(),
+            status="Draft",
+            total_amount=new_po.gross_amt or 0.0,
+            reference_no=new_po.po_no,
+            company_id=1,
+            party_id=party_id,
+            narration=f"Draft Job Work Payable generated from Warping/Sizing PO: {new_po.po_no} for Unit: {supplier_name}"
+        )
+        fin_db.add(v)
+        fin_db.commit()
+        fin_db.close()
+    except Exception as e:
+        import logging
+        logging.getLogger("finance_sync").error(f"Failed to create draft voucher: {e}")
+
     return new_po
 
 @router.put("/{id}")

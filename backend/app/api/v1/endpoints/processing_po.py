@@ -110,6 +110,37 @@ async def create_processing_po(data: ProcessingPOCreate, db: Session = Depends(g
         db_item = ProcessingPOItem(**item.dict(), po_id=new_po.id)
         db.add(db_item)
     await db.commit()
+    await db.commit()
+    
+    # Create Draft Voucher in Finance
+    try:
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.models.voucher import Voucher
+        from finance_app.models.ledger import Ledger
+        from datetime import date
+        
+        fin_db = FinanceSessionLocal()
+        supplier_ledger = fin_db.query(Ledger).filter(Ledger.name == new_po.party_name).first()
+        party_id = supplier_ledger.id if supplier_ledger else None
+        
+        v = Voucher(
+            voucher_number=f"JV-DRAFT-{new_po.po_s_no}",
+            voucher_type="Journal",
+            date=new_po.po_date or date.today(),
+            status="Draft",
+            total_amount=new_po.net_amount or 0.0,
+            reference_no=new_po.po_s_no,
+            company_id=1,
+            party_id=party_id,
+            narration=f"Draft Job Work Payable generated from Finishing PO: {new_po.po_s_no} for Party: {new_po.party_name}"
+        )
+        fin_db.add(v)
+        fin_db.commit()
+        fin_db.close()
+    except Exception as e:
+        import logging
+        logging.getLogger("finance_sync").error(f"Failed to create draft voucher: {e}")
+
     return new_po
 
 @router.put("/{id}")

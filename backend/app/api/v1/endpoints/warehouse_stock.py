@@ -9,7 +9,7 @@ import uuid
 import hashlib
 
 from app.core.database import AsyncSessionLocal
-from app.models.warehouse_stock import WarehouseMaterial, WarehouseMaterialImage
+from app.models.warehouse_stock import WarehouseStock, WarehouseStockImage
 
 router = APIRouter()
 
@@ -22,13 +22,13 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.get("/")
 async def get_warehouse_stock(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(WarehouseMaterial).options(selectinload(WarehouseMaterial.images)))
+    result = await db.execute(select(WarehouseStock).options(selectinload(WarehouseStock.images)))
     items = result.scalars().all()
     return items
 
 @router.post("/")
 async def create_warehouse_stock(data: dict, db: AsyncSession = Depends(get_db)):
-    new_item = WarehouseMaterial(
+    new_item = WarehouseStock(
         material_name=data.get("material_name"),
         category=data.get("category"),
         quantity=data.get("quantity", 0.0),
@@ -44,7 +44,7 @@ async def create_warehouse_stock(data: dict, db: AsyncSession = Depends(get_db))
 
 @router.post("/{item_id}/images")
 async def upload_warehouse_image(item_id: int, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(WarehouseMaterial).where(WarehouseMaterial.id == item_id))
+    result = await db.execute(select(WarehouseStock).where(WarehouseStock.id == item_id))
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -57,7 +57,7 @@ async def upload_warehouse_image(item_id: int, file: UploadFile = File(...), db:
         shutil.copyfileobj(file.file, buffer)
 
     image_url = f"/static/warehouse/{filename}"
-    new_image = WarehouseMaterialImage(material_id=item_id, image_url=image_url)
+    new_image = WarehouseStockImage(material_id=item_id, image_url=image_url)
     db.add(new_image)
     await db.commit()
     await db.refresh(new_image)
@@ -65,7 +65,7 @@ async def upload_warehouse_image(item_id: int, file: UploadFile = File(...), db:
 
 @router.delete("/{item_id}")
 async def delete_warehouse_stock(item_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(WarehouseMaterial).where(WarehouseMaterial.id == item_id))
+    result = await db.execute(select(WarehouseStock).where(WarehouseStock.id == item_id))
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -93,14 +93,13 @@ async def search_by_image(file: UploadFile = File(...), db: AsyncSession = Depen
     if matched_filename:
         image_url = f"/static/warehouse/{matched_filename}"
         result = await db.execute(
-            select(WarehouseMaterial)
-            .join(WarehouseMaterial.images)
-            .where(WarehouseMaterialImage.image_url == image_url)
-            .options(selectinload(WarehouseMaterial.images))
+            select(WarehouseStock)
+            .join(WarehouseStock.images)
+            .where(WarehouseStockImage.image_url == image_url)
+            .options(selectinload(WarehouseStock.images))
         )
         item = result.scalar_one_or_none()
         if item:
             return {"status": "success", "data": item}
             
     return {"status": "not_found", "message": "No matching image found in the database."}
-

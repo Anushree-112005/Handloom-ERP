@@ -132,7 +132,7 @@ export default function BalanceSheet() {
                 value={asOf}
                 onChange={(e) => setAsOf(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
           </div>

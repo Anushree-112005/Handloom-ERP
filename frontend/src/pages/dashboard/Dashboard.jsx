@@ -56,15 +56,6 @@ export default function Dashboard() {
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
   useEffect(() => {
-<<<<<<< Updated upstream
-    dashboardAPI.stats()
-      .then((r) => setStats(r.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const applyFilters = () => {
-=======
     let start_date = '';
     let end_date = '';
     const today = new Date();
@@ -97,24 +88,11 @@ export default function Dashboard() {
   }, [dateFilter, fromDate, toDate]);
 
   useEffect(() => {
->>>>>>> Stashed changes
     let factor = 1.0;
     if (dateFilter === 'This Week') factor = 0.45;
     else if (dateFilter === 'This Year') factor = 8.5;
     else if (dateFilter === 'Custom Range') factor = 0.7;
 
-<<<<<<< Updated upstream
-    // Retrieve stats or use mock default (0)
-    const vendorInward = stats.vendor_inward_rolls !== undefined ? stats.vendor_inward_rolls : 0;
-    const purchaseInward = stats.purchase_inward_kgs !== undefined ? stats.purchase_inward_kgs : 0;
-    const processDelivery = stats.process_delivery_batches !== undefined ? stats.process_delivery_batches : 0;
-    const processInward = stats.process_inward_bags !== undefined ? stats.process_inward_bags : 0;
-    const salesDelivery = stats.sales_delivery !== undefined ? stats.sales_delivery : 0;
-    const impoVal = stats.impo_orders !== undefined ? stats.impo_orders : 0;
-    const imboVal = stats.imbo_lots !== undefined ? stats.imbo_lots : 0;
-    const totalDC = stats.total_dc_challans !== undefined ? stats.total_dc_challans : 0;
-    const totalQty = stats.total_qty_meters !== undefined ? stats.total_qty_meters : 0;
-=======
     const vendorInward = stats?.vendor_inward_rolls ?? 0;
     const purchaseInward = stats?.purchase_inward_kgs ?? 0;
     const processDelivery = stats?.process_delivery_batches ?? 0;
@@ -124,7 +102,6 @@ export default function Dashboard() {
     const imboVal = stats?.imbo_lots ?? 0;
     const totalDC = stats?.total_dc_challans ?? 0;
     const totalQty = stats?.total_qty_meters ?? 0;
->>>>>>> Stashed changes
 
     // 1. Update Daily Operations Panel
     setOperations([
@@ -175,15 +152,7 @@ export default function Dashboard() {
     } else {
       setDispatchByTransporter(baseDispatchByTransporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
     }
-<<<<<<< Updated upstream
-  };
-
-  useEffect(() => {
-    applyFilters();
-  }, [dateFilter, fromDate, toDate, stats]);
-=======
   }, [stats, dateFilter]);
->>>>>>> Stashed changes
 
   const exportToExcel = () => { alert("Export triggered"); };
   const exportToPDF = () => { alert("Export triggered"); };

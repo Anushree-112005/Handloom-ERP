@@ -172,6 +172,36 @@ async def create_yarn_dyeing_po(data: YarnDyeingPOCreate, db: AsyncSession = Dep
         )
         db.add(new_item)
     await db.commit()
+    
+    # Create Draft Voucher in Finance
+    try:
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.models.voucher import Voucher
+        from finance_app.models.ledger import Ledger
+        from datetime import date
+        
+        fin_db = FinanceSessionLocal()
+        supplier_ledger = fin_db.query(Ledger).filter(Ledger.name == new_po.supplier_dyeing_unit).first()
+        party_id = supplier_ledger.id if supplier_ledger else None
+        
+        v = Voucher(
+            voucher_number=f"JV-DRAFT-{new_po.po_no}",
+            voucher_type="Journal",
+            date=new_po.po_date or date.today(),
+            status="Draft",
+            total_amount=new_po.net_amount or 0.0,
+            reference_no=new_po.po_no,
+            company_id=1,
+            party_id=party_id,
+            narration=f"Draft Job Work Payable generated from Yarn Dyeing PO: {new_po.po_no} for Unit: {new_po.supplier_dyeing_unit}"
+        )
+        fin_db.add(v)
+        fin_db.commit()
+        fin_db.close()
+    except Exception as e:
+        import logging
+        logging.getLogger("finance_sync").error(f"Failed to create draft voucher: {e}")
+
     await db.refresh(new_po)
 
     stmt_out = select(YarnDyeingPO).options(selectinload(YarnDyeingPO.items)).where(YarnDyeingPO.id == new_po.id)

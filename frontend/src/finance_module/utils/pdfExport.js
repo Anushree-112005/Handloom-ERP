@@ -1,7 +1,9 @@
 const fmt = (n) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
 
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 export function exportToPDF({ title, companyName, period, data, reportType }) {
-  const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   
   // Title
@@ -72,7 +74,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       fmt(reportType === 'balance-sheet' ? data.assets?.total : data.income?.total)
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head,
       body,
@@ -105,7 +107,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
     
     body.push(['Grand Total', fmt(data.raw?.total_dr), fmt(data.raw?.total_cr)]);
     
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head,
       body,
@@ -132,7 +134,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       ]);
     });
     
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head,
       body,
@@ -152,7 +154,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       ]);
     });
     
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head,
       body,
@@ -174,7 +176,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       ]);
     });
     
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head,
       body,
@@ -202,7 +204,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       [netPayable >= 0 ? 'Net Tax Payable' : 'Net Tax Refundable',
        '', '', '', fmt(Math.abs(netPayable))],
     ];
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head,
       body,
@@ -221,7 +223,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       fmt(s.total_taxable_value), fmt(s.total_cgst), fmt(s.total_sgst),
       fmt(s.total_igst), fmt(s.total_invoice_value)
     ]);
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head, body,
       columnStyles: { 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'right'}, 8:{halign:'right'}, 9:{halign:'right'} },
@@ -229,7 +231,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
 
   } else if (reportType === 'gstr3b') {
     // Table 3.1
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head: [['Nature of Supplies','IGST (Rs.)','CGST (Rs.)','SGST (Rs.)','Total Tax (Rs.)']],
       body: [[
@@ -243,7 +245,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
     const y2 = doc.lastAutoTable.finalY + 8;
     doc.setFontSize(10); doc.setTextColor(55,65,81);
     doc.text('Table 4: Eligible Input Tax Credit', 14, y2);
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles, startY: y2 + 4,
       head: [['ITC Details','IGST (Rs.)','CGST (Rs.)','SGST (Rs.)','Total ITC (Rs.)']],
       body: [[
@@ -257,7 +259,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
     const y3 = doc.lastAutoTable.finalY + 8;
     doc.text('Table 6.1: Net Tax Payable', 14, y3);
     const np = data.net_payable || 0;
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles, startY: y3 + 4,
       head: [['Tax','Output Tax (Rs.)','ITC (Rs.)','Net Payable (Rs.)']],
       body: [
@@ -285,7 +287,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       fmt(s.total_taxable_value), fmt(s.total_cgst), fmt(s.total_sgst),
       fmt(s.total_igst), fmt(s.total_tax)
     ]);
-    doc.autoTable({
+    autoTable(doc, {
       ...commonStyles,
       head, body,
       columnStyles: { 5:{halign:'right'}, 6:{halign:'right'}, 7:{halign:'right'}, 8:{halign:'right'}, 9:{halign:'right'} },
@@ -309,7 +311,7 @@ export function exportToPDF({ title, companyName, period, data, reportType }) {
       head = [['Name','Under']];
       body = invRows.map(r => [r.name, r.parent_name || 'Primary']);
     }
-    doc.autoTable({ ...commonStyles, head, body });
+    autoTable(doc, { ...commonStyles, head, body });
   }
 
   doc.save(`${title.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);

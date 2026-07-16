@@ -17,7 +17,7 @@ class WarehouseMaterial(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    images = relationship("WarehouseMaterialImage", back_populates="material", cascade="all, delete-orphan")
+    images = relationship("app.models.warehouse_material.WarehouseMaterialImage", back_populates="material", cascade="all, delete-orphan")
 
 
 class WarehouseMaterialImage(Base):
@@ -31,4 +31,4 @@ class WarehouseMaterialImage(Base):
     uploaded_date = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    material = relationship("WarehouseMaterial", back_populates="images")
+    material = relationship("app.models.warehouse_material.WarehouseMaterial", back_populates="images")

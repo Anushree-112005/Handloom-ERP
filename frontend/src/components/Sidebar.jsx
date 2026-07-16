@@ -203,14 +203,11 @@ const modules = [
   { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
   { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
-<<<<<<< Updated upstream
 
   { section: 'Warehouse Operations' },
   { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
-=======
   { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
   // { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
->>>>>>> Stashed changes
 
   { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },

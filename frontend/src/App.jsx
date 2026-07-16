@@ -46,7 +46,6 @@ import RackMaster from './pages/rack_master/RackMaster';
 
 
 import CubeBookPage from './pages/cubebook/CubeBookPage';
-import WarehouseStock from './pages/WarehouseWaxing';
 import HRModule from './pages/HR/HRModule';
 import PPCMultiModule from './pages/ppc/PPCMultiModule';
 import LiveDashboard from './pages/ppc/LiveDashboard';
