@@ -28,8 +28,6 @@ const baseProdVsDispatchData = [];
 const baseBottleneckData = [];
 const baseBuyerQtyData = [];
 
-
-
 const COLORS = ['#0ea5e9', '#0284c7', '#0369a1', '#38bdf8', '#7dd3fc', '#bae6fd'];
 
 export default function Dashboard() {
@@ -49,8 +47,6 @@ export default function Dashboard() {
   const [prodVsDispatch, setProdVsDispatch] = useState(baseProdVsDispatchData);
   const [bottleneckData, setBottleneckData] = useState(baseBottleneckData);
   const [buyerQty, setBuyerQty] = useState(baseBuyerQtyData);
-
-
 
   // Dropdown UI state
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
@@ -117,8 +113,6 @@ export default function Dashboard() {
     setProdVsDispatch(stats.production_vs_dispatch || []);
     setBottleneckData(stats.process_bottlenecks || []);
     setBuyerQty(stats.buyer_order_volumes || []);
-
-
   };
 
   useEffect(() => {
@@ -313,8 +307,6 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
-
-
 
       {/* Row 3: 1 Full-width Column (Daily Activity) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>

@@ -45,7 +45,7 @@ async def get_current_user(
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     uid = payload.get("sub")
-    result = await db.execute(select(Employee).where(Employee.employee_code == uid))
+    result = await db.execute(select(Employee).where((Employee.employee_code == uid) | (Employee.username == uid)))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -54,13 +54,13 @@ async def get_current_user(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Employee).where(Employee.employee_code == form.username))
+    result = await db.execute(select(Employee).where((Employee.employee_code == form.username) | (Employee.username == form.username)))
     user = result.scalar_one_or_none()
     if not user or not user.password_hash or not verify_password(form.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if user.status != "Active":
         raise HTTPException(status_code=403, detail="Account disabled")
-    token = create_access_token({"sub": user.employee_code})
+    token = create_access_token({"sub": user.username or user.employee_code})
     return TokenResponse(
         access_token=token, user_id=user.employee_code,
         user_name=user.name, user_type=user.user_type,

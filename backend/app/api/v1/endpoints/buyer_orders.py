@@ -601,6 +601,19 @@ async def create_order(data: OrderCreate, db: AsyncSession = Depends(get_db)):
     db.add(order)
     await db.commit()
     await db.refresh(order)
+    
+    # Notification logic
+    from app.models.notification import Notification
+    if order.order_type == "Domestic":
+        notif = Notification(user_role="Design Team", message=f"New Order Domestic — Design Required for {ibpo}", related_ibpo=ibpo)
+        db.add(notif)
+    elif order.order_type == "Export":
+        notif1 = Notification(user_role="Design Team", message=f"New Order Export — Design Required for {ibpo}", related_ibpo=ibpo)
+        notif2 = Notification(user_role="Export Documentation Staff", message=f"New Export Order received for {ibpo}", related_ibpo=ibpo)
+        db.add_all([notif1, notif2])
+    
+    await db.commit()
+
     # Reload with items
     result = await db.execute(
         select(BuyerOrder).options(selectinload(BuyerOrder.items)).where(BuyerOrder.id == order.id)

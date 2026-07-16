@@ -11,6 +11,9 @@ class CompanySetting(Base):
     address = Column(String)
     email = Column(String(100))
     phone = Column(String(50))
+    gstin = Column(String(50))
+    pan = Column(String(50))
+    financial_year = Column(String(50))
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

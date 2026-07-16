@@ -3,9 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown, ArrowLeft } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI, subMasterAPI, dropdownAPI } from '../../services/api';
-import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { rackAPI } from '../../services/api';
 
 const DetailRow = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: 4 }}>
@@ -21,6 +21,7 @@ export default function YarnInward() {
   const [inwards, setInwards] = useState([]);
   const [parties, setParties] = useState([]);
   const [pos, setPos] = useState([]);
+  const [racks, setRacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
@@ -171,7 +172,7 @@ export default function YarnInward() {
     
     items: [{
       yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
-      our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
+      our_id: '', rack_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
     }]
   };
 
@@ -179,14 +180,15 @@ export default function YarnInward() {
 
   const loadData = async () => {
     try {
-      const [inwRes, partRes, poRes, dropRes, colorRes] = await Promise.all([
-        yarnInwardAPI.list(), partyAPI.list(), yarnPurchaseOrderAPI.list({ limit: 10000 }), dropdownAPI.getAll(), subMasterAPI.list('color_master')
+      const [inwRes, partRes, poRes, dropRes, colorRes, racksRes] = await Promise.all([
+        yarnInwardAPI.list(), partyAPI.list(), yarnPurchaseOrderAPI.list({ limit: 10000 }), dropdownAPI.getAll(), subMasterAPI.list('color_master'), rackAPI.list()
       ]);
       setInwards(inwRes.data);
       setParties(partRes.data);
       setPos(poRes.data);
       setOptions(dropRes.data);
       setColorMasters(colorRes.data);
+      setRacks(racksRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -222,6 +224,21 @@ export default function YarnInward() {
       setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving inward');
+      console.error(err);
+    }
+  };
+
+  const handleConfirm = async (e) => {
+    e.preventDefault();
+    if (!window.confirm("Are you sure you want to confirm this GRN? This will update stock and send pending bill to Finance.")) {
+      return;
+    }
+    try {
+      await yarnInwardAPI.confirm(editingId);
+      alert('GRN Confirmed Successfully!');
+      setShowForm(false); setEditingId(null); setForm(initialForm); loadData();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Error confirming GRN');
       console.error(err);
     }
   };
@@ -369,6 +386,18 @@ export default function YarnInward() {
 
     let newForm = { ...form, [name]: value };
 
+    if (name === 'gate_no' && value) {
+      try {
+        const gateData = JSON.parse(localStorage.getItem('gate_inward_data') || '[]');
+        const matchedGate = gateData.find(g => g.id === value || g.inwardNo === value);
+        if (matchedGate && matchedGate.vehicleNo) {
+          newForm.veh_no = matchedGate.vehicleNo;
+        }
+      } catch (err) {
+        console.error('Error fetching gate data', err);
+      }
+    }
+
     if (name === 'received_type' && value === 'Direct') {
       newForm.po_no_dt = '';
     }
@@ -394,7 +423,7 @@ export default function YarnInward() {
           remarks: '',
           items: [{
             yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
-            our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
+            our_id: '', rack_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
           }]
         };
       } else {
@@ -427,6 +456,7 @@ export default function YarnInward() {
               color_code: selectedColor ? (selectedColor.code || '') : '',
               lot_no: '',
               our_id: '',
+              rack_id: '',
               bags: 0,
               kgs: remainingQty,
               rate: item.rate || 0,
@@ -436,7 +466,7 @@ export default function YarnInward() {
 
           const finalItems = mappedItems.length > 0 ? mappedItems : [{
             yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
-            our_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
+            our_id: '', rack_id: '', bags: 0, kgs: 0, rate: 0, amount: 0
           }];
 
           const totalKgs = finalItems.reduce((sum, item) => sum + (parseFloat(item.kgs) || 0), 0);
@@ -562,6 +592,7 @@ export default function YarnInward() {
     const newItems = [...form.items];
     let val = value;
     if (['bags', 'kgs', 'rate', 'amount'].includes(field)) val = parseFloat(value) || 0;
+    if (field === 'rack_id') val = value ? parseInt(value) : null;
     newItems[index][field] = val;
     
     if (field === 'colour' && val) {
@@ -986,7 +1017,7 @@ export default function YarnInward() {
                     <table className="data-table">
                       <thead>
                         <tr>
-                          <th>SNo</th><th>Count</th><th>Color</th><th>Color Code</th><th>Lot No</th><th>Our ID</th>
+                          <th>SNo</th><th>Count</th><th>Color</th><th>Color Code</th><th>Lot No</th><th>Our ID</th><th>Rack</th>
                           <th>Bags</th><th>Kgs</th><th>Rate</th><th>Amount</th><th>X</th>
                         </tr>
                       </thead>
@@ -1043,6 +1074,14 @@ export default function YarnInward() {
                             <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Color Code" value={item.color_code || ''} onChange={e => updateItem(idx, 'color_code', e.target.value)} /></td>
                             <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Lot No" value={item.lot_no || ''} onChange={e => updateItem(idx, 'lot_no', e.target.value)} /></td>
                             <td><input type="text" className="form-control" style={{ width: 120 }} placeholder="Our ID" value={item.our_id || ''} onChange={e => updateItem(idx, 'our_id', e.target.value)} /></td>
+                            <td>
+                              <select className="form-control" style={{ width: 120 }} value={item.rack_id || ''} onChange={e => updateItem(idx, 'rack_id', e.target.value)}>
+                                <option value="">Select Rack...</option>
+                                {racks.filter(r => r.is_active).map(r => (
+                                  <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                              </select>
+                            </td>
                             <td><input type="number" className="form-control" style={{ width: 90 }} value={item.bags} onChange={e => updateItem(idx, 'bags', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.kgs} onChange={e => updateItem(idx, 'kgs', e.target.value)} /></td>
                             <td><input type="number" className="form-control" style={{ width: 100 }} value={item.rate} onChange={e => updateItem(idx, 'rate', e.target.value)} /></td>

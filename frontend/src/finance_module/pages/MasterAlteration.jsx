@@ -14,6 +14,7 @@ const masterSections = [
     icon: Layers,
     items: [
       { label: 'Group', icon: Layers, description: 'Alter ledger groups.', route: '/cubebook/masters/group?mode=alter', color: '#6366f1' },
+      { label: 'Party Master', icon: Users, description: 'Manage customers and suppliers.', route: '/party-master', color: '#10b981' },
       { label: 'Ledger', icon: Users, description: 'Alter ledger masters.', route: '/cubebook/ledgers?mode=alter', color: '#3b82f6' },
       { label: 'Currency', icon: Globe, description: 'Alter currency settings.', route: '/cubebook/currency/alter', color: '#10b981' },
       { label: 'Voucher Type', icon: Receipt, description: 'Alter voucher types.', route: '/cubebook/masters/voucher-types', color: '#f59e0b' },

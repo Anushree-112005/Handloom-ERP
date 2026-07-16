@@ -1,23 +1,58 @@
 import api from '../../services/api';
 
 // Mock Database and Helper Functions for Stationery & Consumables Management
-const defaultCategories = [];
-const defaultUOMs = [];
-const defaultDepartments = [];
-const defaultVendors = [];
-const defaultItems = [];
-const defaultRequests = [];
-const defaultPOs = [];
-const defaultGRNs = [];
-const defaultIssues = [];
-const defaultLedger = [];
+const defaultCategories = [
+  { id: 1, category_code: 'CAT-CHEM', category_name: 'Chemicals & Dyes', description: 'Various dyes and chemical processing agents', status: 'Active' },
+  { id: 2, category_code: 'CAT-SPRS', category_name: 'Spare Parts', description: 'Machinery replacement parts and tools', status: 'Active' },
+  { id: 3, category_code: 'CAT-STAT', category_name: 'Stationery', description: 'Office and administrative supplies', status: 'Active' }
+];
+
+const defaultUOMs = [
+  { id: 1, uom_code: 'KGS', uom_name: 'Kilograms', symbol: 'kg', status: 'Active' },
+  { id: 2, uom_code: 'PCS', uom_name: 'Pieces', symbol: 'pcs', status: 'Active' },
+  { id: 3, uom_code: 'LTR', uom_name: 'Liters', symbol: 'L', status: 'Active' }
+];
+
+const defaultDepartments = [
+  { id: 1, department_code: 'DPT-PRD', department_name: 'Production', head: 'John Doe', status: 'Active' },
+  { id: 2, department_code: 'DPT-MNT', department_name: 'Maintenance', head: 'Jane Smith', status: 'Active' },
+  { id: 3, department_code: 'DPT-ADM', department_name: 'Administration', head: 'Alice Johnson', status: 'Active' }
+];
+
+const defaultVendors = [
+  { id: 1, vendor_code: 'VND-C01', vendor_name: 'Apex Chemical Industries', contact_person: 'Rahul Sharma', email: 'rahul@apexchemicals.com', phone: '9876543210', status: 'Active' },
+  { id: 2, vendor_code: 'VND-S01', vendor_name: 'Global Spares Hub', contact_person: 'Vikram Singh', email: 'sales@globalspares.com', phone: '9876543211', status: 'Active' },
+  { id: 3, vendor_code: 'VND-P01', vendor_name: 'Prime Stationers', contact_person: 'Amit Kumar', email: 'info@primestationers.com', phone: '9876543212', status: 'Active' }
+];
+
+const defaultItems = [
+  { id: 1, item_code: 'ITM-C01', item_name: 'Reactive Red Dye RC', category_id: 1, uom_id: 1, vendor_id: 1, department_id: 1, minimum_stock: 50, maximum_stock: 500, current_stock: 150, reorder_level: 60, purchase_price: 500, status: 'Active', category_name: 'Chemicals & Dyes', uom_name: 'Kilograms', department_name: 'Production', vendor_name: 'Apex Chemical Industries' },
+  { id: 2, item_code: 'ITM-S01', item_name: 'Loom Bearing 6204', category_id: 2, uom_id: 2, vendor_id: 2, department_id: 2, minimum_stock: 10, maximum_stock: 100, current_stock: 25, reorder_level: 15, purchase_price: 150, status: 'Active', category_name: 'Spare Parts', uom_name: 'Pieces', department_name: 'Maintenance', vendor_name: 'Global Spares Hub' },
+  { id: 3, item_code: 'ITM-P01', item_name: 'A4 Copier Paper Ream', category_id: 3, uom_id: 2, vendor_id: 3, department_id: 3, minimum_stock: 20, maximum_stock: 200, current_stock: 80, reorder_level: 30, purchase_price: 250, status: 'Active', category_name: 'Stationery', uom_name: 'Pieces', department_name: 'Administration', vendor_name: 'Prime Stationers' }
+];
+
+const defaultRequests = [
+  { id: 1, request_no: 'REQ-2310-001', request_date: '2026-07-10', department_id: 1, department_name: 'Production', priority: 'High', status: 'Pending', remarks: 'Urgent for new batch', items: [{ item_id: 1, item_name: 'Reactive Red Dye RC', uom: 'Kilograms', quantity: 20 }] }
+];
+const defaultPOs = [
+  { id: 1, po_no: 'PO-2310-001', po_date: '2026-07-11', vendor_id: 1, vendor_name: 'Apex Chemical Industries', total_amount: 10000, status: 'Approved', items: [{ item_id: 1, item_name: 'Reactive Red Dye RC', uom: 'Kilograms', quantity: 20, unit_price: 500, total: 10000 }] }
+];
+const defaultGRNs = [
+  { id: 1, grn_no: 'GRN-2310-001', grn_date: '2026-07-12', po_no: 'PO-2310-001', vendor_name: 'Apex Chemical Industries', status: 'Received', items: [{ item_id: 1, item_name: 'Reactive Red Dye RC', uom: 'Kilograms', order_qty: 20, receive_qty: 20 }] }
+];
+const defaultIssues = [
+  { id: 1, issue_no: 'ISS-2310-001', issue_date: '2026-07-13', department_id: 1, department_name: 'Production', request_no: 'REQ-2310-001', status: 'Issued', items: [{ item_id: 1, item_name: 'Reactive Red Dye RC', uom: 'Kilograms', quantity: 10 }] }
+];
+const defaultLedger = [
+  { id: 1, date: '2026-07-12', itemId: 1, refType: 'GRN', refId: 'GRN-2310-001', inQty: 20, outQty: 0, balance: 170 },
+  { id: 2, date: '2026-07-13', itemId: 1, refType: 'ISSUE', refId: 'ISS-2310-001', inQty: 0, outQty: 10, balance: 160 }
+];
 const defaultQuotations = [];
 const defaultRequisitions = [];
 const defaultReturns = [];
 const defaultTransfers = [];
 const defaultAdjustments = [];
 const defaultVerifications = [];
-
 const keys = [
   'consumables_categories',
   'consumables_uoms',

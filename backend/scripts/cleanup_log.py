@@ -3,7 +3,7 @@ import asyncpg
 
 async def run_cleanup():
     print("Connecting to the database...")
-    db_url = "postgresql://postgres:bala2021@localhost:5432/dinesh_textile_erp"
+    db_url = "postgresql://postgres:Karthi%401234@localhost:5432/dinesh_textile_erp"
     
     conn = await asyncpg.connect(db_url)
     print("Connected successfully!")

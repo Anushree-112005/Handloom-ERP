@@ -1,5 +1,13 @@
 Traceback (most recent call last):
+<<<<<<< HEAD
   File "C:\Users\Welcome\Desktop\Navani\dinesh_txt\backend\app\main.py", line 46, in lifespan
+=======
+<<<<<<< Updated upstream
+  File "C:\Users\User\Desktop\dinesh-tex\dinesh-tex1\dinesh-tex\backend\app\main.py", line 30, in lifespan
+=======
+  File "C:\Users\User\Desktop\dinesh-tex\dinesh-tex1\dinesh-tex\backend\app\main.py", line 46, in lifespan
+>>>>>>> Stashed changes
+>>>>>>> d3ff6874ee021996c81a4db3bf8f602e9171c33e
     async with engine.begin() as conn:
                ~~~~~~~~~~~~^^
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3824.0_x64__qbz5n2kfra8p0\Lib\contextlib.py", line 214, in __aenter__

@@ -1,2 +1,2 @@
-from backend.schemas.company import CompanyCreate, CompanyOut
-from backend.schemas.voucher import VoucherCreate, VoucherOut, VoucherEntryIn, VoucherType
+from finance_app.schemas.company import CompanyCreate, CompanyOut
+from finance_app.schemas.voucher import VoucherCreate, VoucherOut, VoucherEntryIn, VoucherType

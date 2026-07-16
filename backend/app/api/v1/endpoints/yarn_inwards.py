@@ -9,6 +9,7 @@ from datetime import date, datetime
 
 from app.core.database import get_db
 from app.models.yarn_inward import YarnInward, YarnInwardItem
+from app.models.notification import Notification
 
 router = APIRouter(prefix="/yarn-inwards", tags=["Yarn Inwards"])
 
@@ -19,6 +20,7 @@ class YarnInwardItemIn(BaseModel):
     color_code: Optional[str] = None
     lot_no: Optional[str] = None
     our_id: Optional[str] = None
+    rack_id: Optional[int] = None
     bags: Optional[int] = 0
     kgs: Optional[float] = 0.0
     rate: Optional[float] = 0.0
@@ -190,3 +192,61 @@ async def delete_inward(inward_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(order)
     await db.commit()
     return None
+
+@router.post("/{inward_id}/confirm", response_model=YarnInwardOut)
+async def confirm_inward(inward_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(YarnInward).options(selectinload(YarnInward.items)).where(YarnInward.id == inward_id)
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Yarn Inward not found")
+        
+    if order.status == "Confirmed":
+        raise HTTPException(status_code=400, detail="Already confirmed")
+        
+    order.status = "Confirmed"
+    
+    # Update Notifications
+    notif1 = Notification(
+        user_role="Store Manager",
+        message=f"Stock Updated for Yarn Inward GRN: {order.ref_no}"
+    )
+    notif2 = Notification(
+        user_role="Merchandiser",
+        message=f"Stock Updated for Yarn Inward GRN: {order.ref_no}"
+    )
+    notif3 = Notification(
+        user_role="Accountant",
+        message=f"Bill Entry Pending for GRN: {order.ref_no} - {order.received_from}"
+    )
+    db.add_all([notif1, notif2, notif3])
+    
+    await db.commit()
+    await db.refresh(order)
+    
+    # Create Draft Voucher in Finance
+    try:
+        from finance_app.database import SessionLocal as FinanceSessionLocal
+        from finance_app.models.voucher import Voucher
+        from datetime import date
+        
+        fin_db = FinanceSessionLocal()
+        v = Voucher(
+            voucher_number=f"PV-DRAFT-{order.ref_no}",
+            voucher_type="Purchase",
+            date=order.inward_date or date.today(),
+            status="Draft",
+            total_amount=order.net_amount,
+            reference_no=order.ref_no,
+            company_id=1,
+            narration=f"Draft Purchase Bill generated from GRN: {order.ref_no}"
+        )
+        fin_db.add(v)
+        fin_db.commit()
+        fin_db.close()
+    except Exception as e:
+        import logging
+        logging.getLogger("finance_sync").error(f"Failed to create draft voucher: {e}")
+        
+    return order

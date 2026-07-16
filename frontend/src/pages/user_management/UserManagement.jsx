@@ -10,7 +10,7 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const initialForm = {
-    employee_code: '', name: '', user_type: 'User', status: 'Active',
+    employee_code: '', username: '', name: '', user_type: 'User', status: 'Active',
     web_access: 'Allow', department: '', designation: '', email: '',
     mobile: '', password: '', company_depl: false, company_mtm: false,
     access_expiry_date: '', unit: '',
@@ -140,8 +140,12 @@ export default function UserManagement() {
           <form id="userForm" onSubmit={handleSubmit}>
             <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               <div className="form-group">
-                <label>User ID (Unique login ID) *</label>
+                <label>User ID (Employee Code) *</label>
                 <input className="form-control" name="employee_code" value={formData.employee_code} onChange={handleChange} required disabled={!!editingId} />
+              </div>
+              <div className="form-group">
+                <label>Login Username *</label>
+                <input className="form-control" name="username" value={formData.username || ''} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label>User Name (Full name) *</label>
@@ -384,7 +388,7 @@ export default function UserManagement() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>User ID</th>
+              <th>Emp Code & Username</th>
               <th>Name & Contact</th>
               <th>Role & Dept</th>
               <th>Web Access</th>
@@ -401,7 +405,10 @@ export default function UserManagement() {
             ) : (
               filteredUsers.map(u => (
                 <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>{u.employee_code}</td>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{u.employee_code}</div>
+                    <div style={{ fontSize: 12, color: 'var(--primary)', marginTop: 4 }}>@{u.username || '—'}</div>
+                  </td>
                   <td>
                     <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.email || u.mobile || '-'}</div>

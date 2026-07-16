@@ -7,6 +7,7 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.models.company_setting import CompanySetting
+from app.models.log_report import LogReport
 
 router = APIRouter(prefix="/company-settings", tags=["Company Settings"])
 
@@ -17,6 +18,9 @@ class CompanySettingBase(BaseModel):
     address: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    gstin: Optional[str] = None
+    pan: Optional[str] = None
+    financial_year: Optional[str] = None
 
 class CompanySettingCreate(CompanySettingBase):
     pass
@@ -48,6 +52,16 @@ async def save_company_setting(data: CompanySettingCreate, db: AsyncSession = De
         # Create new
         setting = CompanySetting(**data.model_dump())
         db.add(setting)
+
+    # Add LogReport
+    new_log = LogReport(
+        user_name="Admin",
+        user_id="admin",
+        mode="Save",
+        module="Company Settings",
+        remarks=f"Company Settings Updated: {data.company_name}"
+    )
+    db.add(new_log)
 
     await db.commit()
     await db.refresh(setting)

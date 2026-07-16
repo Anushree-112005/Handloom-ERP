@@ -197,13 +197,14 @@ const modules = [
   { section: 'Quality Control' },
   { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
   { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
-
-  { section: 'Inventory' },
+  { section: 'Warehouse & Inventory' },
   { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
   { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
+  { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
+  { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
+  { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
   { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
-  // { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
   { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },

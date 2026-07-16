@@ -151,7 +151,7 @@ function FieldRow({ label, hint, children }) {
   );
 }
 
-export default function VoucherForm({ type: initialType, companyId, ledgers = [], onClose, onSaved }) {
+export default function VoucherForm({ type: initialType, companyId, ledgers = [], stockItems = [], locations = [], onClose, onSaved }) {
   const [voucherType,           setVoucherType]           = useState(initialType || "Payment");
   const [date,                  setDate]                  = useState(new Date().toISOString().split("T")[0]);
   const [narration,             setNarration]             = useState("");
@@ -162,7 +162,7 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
   const [salesLedgerSearch,     setSalesLedgerSearch]     = useState("");
   const [supplierInvNo,         setSupplierInvNo]         = useState("");
   const [supplierInvDate,       setSupplierInvDate]       = useState("");
-  const [itemLines,             setItemLines]             = useState([{ name: "", qty: "", rate: "", per: "Nos", amount: "" }]);
+  const [itemLines,             setItemLines]             = useState([{ name: "", stock_item_id: "", location_id: "", qty: "", rate: "", per: "Nos", amount: "" }]);
   const [entries,               setEntries]               = useState([{ ledger_id: "", ledger_name: "", amount: "", search: "" }]);
   const [error,                 setError]                 = useState(null);
   const [saving,                setSaving]                = useState(false);
@@ -193,7 +193,7 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
       return next;
     });
   };
-  const addItemRow    = () => setItemLines(prev => [...prev, { name: "", qty: "", rate: "", per: "Nos", amount: "" }]);
+  const addItemRow    = () => setItemLines(prev => [...prev, { name: "", stock_item_id: "", location_id: "", qty: "", rate: "", per: "Nos", amount: "" }]);
   const removeItemRow = idx => setItemLines(prev => prev.filter((_, i) => i !== idx));
 
   /* ── Ledger entry helpers ── */
@@ -224,6 +224,10 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
           dr_amount:   isDr ? parseFloat(l.amount) : 0,
           cr_amount:   isDr ? 0 : parseFloat(l.amount),
           gst_rate:    0,
+          stock_item_id: l.stock_item_id ? Number(l.stock_item_id) : null,
+          location_id: l.location_id ? Number(l.location_id) : null,
+          qty:         l.qty ? parseFloat(l.qty) : null,
+          rate:        l.rate ? parseFloat(l.rate) : null,
         });
       });
       apiEntries.push({
@@ -525,8 +529,10 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
                 Items
               </div>
               {/* Table header */}
-              <div style={{ display: "grid", gridTemplateColumns: "3fr 80px 90px 60px 100px 36px", gap: 8, padding: "8px 12px", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--text-muted)" }}>
-                <div>Name of Item</div>
+              <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr 2fr 80px 90px 60px 100px 36px", gap: 8, padding: "8px 12px", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--text-muted)" }}>
+                <div>Ledger / Item Name</div>
+                <div>Stock Item (Opt)</div>
+                <div>Location (Opt)</div>
                 <div style={{ textAlign: "center" }}>Qty</div>
                 <div style={{ textAlign: "right" }}>Rate</div>
                 <div style={{ textAlign: "center" }}>Per</div>
@@ -534,8 +540,23 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
                 <div />
               </div>
               {itemLines.map((line, idx) => (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "3fr 80px 90px 60px 100px 36px", gap: 8, padding: "8px 12px", alignItems: "center", borderBottom: "1px solid var(--border)" }}>
-                  <input type="text" value={line.name} onChange={e => updateItem(idx, "name", e.target.value)} placeholder="Item name…" style={smallInputStyle} />
+                <div key={idx} style={{ display: "grid", gridTemplateColumns: "3fr 2fr 2fr 80px 90px 60px 100px 36px", gap: 8, padding: "8px 12px", alignItems: "center", borderBottom: "1px solid var(--border)" }}>
+                  <input type="text" value={line.name} onChange={e => updateItem(idx, "name", e.target.value)} placeholder="Ledger item name…" style={smallInputStyle} />
+                  
+                  <select value={line.stock_item_id} onChange={e => updateItem(idx, "stock_item_id", e.target.value)} style={{ ...smallInputStyle, cursor: "pointer" }}>
+                    <option value="">- Select Stock -</option>
+                    {stockItems.map(si => (
+                      <option key={si.id} value={si.id}>{si.name}</option>
+                    ))}
+                  </select>
+
+                  <select value={line.location_id} onChange={e => updateItem(idx, "location_id", e.target.value)} style={{ ...smallInputStyle, cursor: "pointer" }}>
+                    <option value="">- Location -</option>
+                    {locations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                  </select>
+
                   <input type="number" min="0" step="0.001" value={line.qty} onChange={e => updateItem(idx, "qty", e.target.value)} placeholder="0" style={{ ...smallInputStyle, textAlign: "center" }} />
                   <input type="number" min="0" step="0.01" value={line.rate} onChange={e => updateItem(idx, "rate", e.target.value)} placeholder="0.00" style={{ ...smallInputStyle, textAlign: "right" }} />
                   <input type="text" value={line.per} onChange={e => updateItem(idx, "per", e.target.value)} style={{ ...smallInputStyle, textAlign: "center" }} />

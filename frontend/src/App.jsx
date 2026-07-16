@@ -30,6 +30,7 @@ import LogReport from './pages/log_report/LogReport';
 import ReportsDashboard from './pages/reports_dashboard/ReportsDashboard';
 import EwayBill from './pages/eway_bill/EwayBill';
 import CompanySetting from './pages/settings/CompanySetting';
+import WarehouseStock from './pages/WarehouseWaxing';
 import GateInward from './pages/gate/GateInward';
 import GateOutward from './pages/gate/GateOutward';
 import GatePass from './pages/gate/GatePass';
@@ -41,6 +42,7 @@ import SparesApproval from './pages/spares/SparesApproval';
 import VoucherEntry from './pages/accounts/VoucherEntry';
 import AccountsTransaction from './pages/accounts/AccountsTransaction';
 import SubMasterPage from './pages/masters/SubMasterPage';
+import RackMaster from './pages/rack_master/RackMaster';
 
 
 
@@ -268,7 +270,9 @@ export default function App() {
         <Route path="overview" element={<Overview />} />
         <Route path="calendar" element={<CalendarModule />} />
         <Route path="my-approvals" element={<MockDbSyncWrapper><MyApprovals /></MockDbSyncWrapper>} />
+        <Route path="warehouse-stock" element={<WarehouseStock />} />
         <Route path="party-master" element={<PartyMaster />} />
+        <Route path="rack-master" element={<RackMaster />} />
 
         {/* Dynamic Sub-Master route — handles all 38 generic master forms */}
         <Route path="sub-master/:entity" element={<SubMasterPage />} />

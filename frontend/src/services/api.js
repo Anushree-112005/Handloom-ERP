@@ -126,6 +126,7 @@ export const designEntryAPI = {
   create: (data) => api.post('/design-entries/', data),
   update: (id, data) => api.put(`/design-entries/${id}`, data),
   delete: (id) => api.delete(`/design-entries/${id}`),
+  approve: (id) => api.put(`/design-entries/${id}/approve`),
   uploadImage: (id, file) => {
     const fd = new FormData();
     fd.append('file', file);
@@ -241,6 +242,7 @@ export const yarnInwardAPI = {
   create: (data) => api.post('/yarn-inwards/', data),
   update: (id, data) => api.put(`/yarn-inwards/${id}`, data),
   delete: (id) => api.delete(`/yarn-inwards/${id}`),
+  confirm: (id) => api.post(`/yarn-inwards/${id}/confirm`),
 };
 
 export const greyYarnDeliveryAPI = {
@@ -462,6 +464,14 @@ export const costingSheetAPI = {
 export const stockSheetAPI = {
   list: (params) => api.get('/stock-sheet/', { params }),
   create: (data) => api.post('/stock-sheet/', data),
+};
+
+export const rackAPI = {
+  list: (params) => api.get('/racks/', { params }),
+  get: (id) => api.get(`/racks/${id}`),
+  create: (data) => api.post('/racks/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  update: (id, data) => api.put(`/racks/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  delete: (id) => api.delete(`/racks/${id}`),
 };
 
 export default api;

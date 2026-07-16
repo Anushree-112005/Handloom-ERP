@@ -27,6 +27,8 @@ api_router.include_router(company_settings.router)
 
 # Newly registered missing routers
 api_router.include_router(design_entries.router)
+from app.api.v1.endpoints import racks
+api_router.include_router(racks.router)
 api_router.include_router(yarn_inwards.router)
 api_router.include_router(grey_yarn_deliveries.router)
 api_router.include_router(dyed_yarn_receipts.router)
@@ -57,8 +59,14 @@ api_router.include_router(design_ai_router)
 from app.api.v1.endpoints import textile_designs
 api_router.include_router(textile_designs.router)
 
+from app.api.v1.endpoints import inventory
+api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
+
 from app.api.v1.endpoints import ppc
 api_router.include_router(ppc.router, prefix="/ppc", tags=["Production Planning (PPC)"])
+
+from app.api.v1.endpoints import warehouse_stock
+api_router.include_router(warehouse_stock.router, prefix="/warehouse-stock", tags=["Warehouse Stock"])
 
 from app.api.v1.endpoints import chat
 api_router.include_router(chat.router)
@@ -77,3 +85,8 @@ api_router.include_router(stores_consumables_router)
 
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)
+from app.api.v1.endpoints import notifications
+api_router.include_router(notifications.router)
+
+from app.api.v1.endpoints import warehouse
+api_router.include_router(warehouse.router, prefix="/warehouse", tags=["Warehouse"])

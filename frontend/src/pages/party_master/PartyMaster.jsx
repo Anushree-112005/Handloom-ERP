@@ -183,10 +183,15 @@ export default function PartyMaster() {
     e.preventDefault();
     if (isReadOnly) return;
     try {
+      const payload = { ...formData };
+      payload.credit_days = Number(payload.credit_days) || 0;
+      payload.credit_limit = Number(payload.credit_limit) || 0;
+      payload.tds_percent = Number(payload.tds_percent) || 0;
+      
       if (editingId) {
-        await partyAPI.update(editingId, formData);
+        await partyAPI.update(editingId, payload);
       } else {
-        await partyAPI.create(formData);
+        await partyAPI.create(payload);
       }
       setView('list');
       fetchParties();
@@ -196,10 +201,10 @@ export default function PartyMaster() {
     }
   };
 
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     let { name, value } = e.target;
     if (['credit_days', 'credit_limit', 'tds_percent'].includes(name)) {
-      value = value === '' ? 0 : Number(value);
+      value = value === '' ? '' : Number(value);
     }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -1022,32 +1027,45 @@ export default function PartyMaster() {
                       />
                       <div className="form-group">
                         <label>Bill Credit Days</label>
-                        <input type="number" className="form-control" name="credit_days" value={formData.credit_days} onChange={handleChange} />
+                        <input type="number" className="form-control" name="credit_days" value={formData.credit_days === '' ? '' : formData.credit_days} onChange={handleChange} disabled={isReadOnly} />
                       </div>
                       <div className="form-group">
                         <label>Credit Limit Rs.</label>
-                        <input type="number" className="form-control" name="credit_limit" value={formData.credit_limit} onChange={handleChange} />
+                        <input type="number" className="form-control" name="credit_limit" value={formData.credit_limit === '' ? '' : formData.credit_limit} onChange={handleChange} disabled={isReadOnly} />
                       </div>
                       <div className="form-group">
                         <label>Merchandiser</label>
-                        <select className="form-control" name="merchandiser" value={formData.merchandiser} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('merchandis')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                        </select>
+                        <input list="merchandiser-list" className="form-control" name="merchandiser" value={formData.merchandiser || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
+                        <datalist id="merchandiser-list">
+                          {options.employees.filter(emp => 
+                            emp.user_type?.toLowerCase().includes('merchandis') || 
+                            emp.designation?.toLowerCase().includes('merchandis') ||
+                            emp.department?.toLowerCase().includes('merchandis')
+                          ).map(emp => <option key={emp.id} value={emp.name} />)}
+                        </datalist>
                       </div>
                       <div className="form-group">
                         <label>Manager</label>
-                        <select className="form-control" name="manager" value={formData.manager} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('manag')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                        </select>
+                        <input list="manager-list" className="form-control" name="manager" value={formData.manager || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
+                        <datalist id="manager-list">
+                          {options.employees.filter(emp => 
+                            emp.user_type?.toLowerCase().includes('manag') || 
+                            emp.designation?.toLowerCase().includes('manag') ||
+                            emp.department?.toLowerCase().includes('admin') ||
+                            emp.department?.toLowerCase().includes('manag')
+                          ).map(emp => <option key={emp.id} value={emp.name} />)}
+                        </datalist>
                       </div>
                       <div className="form-group">
                         <label>A/c Incharge</label>
-                        <select className="form-control" name="account_incharge" value={formData.account_incharge} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('account')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                        </select>
+                        <input list="account-incharge-list" className="form-control" name="account_incharge" value={formData.account_incharge || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
+                        <datalist id="account-incharge-list">
+                          {options.employees.filter(emp => 
+                            emp.user_type?.toLowerCase().includes('account') || 
+                            emp.designation?.toLowerCase().includes('account') ||
+                            emp.department?.toLowerCase().includes('account')
+                          ).map(emp => <option key={emp.id} value={emp.name} />)}
+                        </datalist>
                       </div>
                       <SubMasterDropdown
                         label="Agent Name"
@@ -1088,7 +1106,7 @@ export default function PartyMaster() {
                       />
                       <div className="form-group">
                         <label>Deliver Party Name</label>
-                        <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
+                        <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange} disabled={isReadOnly}>
                           <option value="">-- Same as Business Name --</option>
                           {formData.deliver_party_name && !options.all_parties.some(p => p.name === formData.deliver_party_name) && (
                             <option value={formData.deliver_party_name}>{formData.deliver_party_name}</option>
@@ -1098,7 +1116,7 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>Delivery Address</label>
-                        <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} />
+                        <input className="form-control" name="delivery_address" value={formData.delivery_address || ''} onChange={handleChange} disabled={isReadOnly} />
                       </div>
                     </div>
                   </div>

@@ -40,6 +40,7 @@ class DesignEntry(Base):
     packing_less = Column(Float, default=0.0)
     weight_grm = Column(Float, default=0.0)
     dyeing_loss_pct = Column(Float, default=0.0)
+    status = Column(String(50), default="Pending")
     
     yarn_details = Column(Text, nullable=True)
     fabric_design_details = Column(Text, nullable=True)

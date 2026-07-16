@@ -1040,7 +1040,7 @@ export default function DesignEntry() {
         dropdownAPI.getAll().catch(() => ({ data: { masters: {}, masters_with_ids: {} } }))
       ]);
       setEntries(entriesRes.data);
-      setBuyers(partiesRes.data.filter(p => p.party_type === 'Sales Party'));
+      setBuyers(partiesRes.data.filter(p => p.party_type === 'Sales Party' || p.party_type === 'Sales' || p.party_type === 'Customer' || p.party_type === 'Buyer' || (p.party_type || '').toLowerCase().includes('buyer')));
       setEmployees(empRes.data);
       setOrders(ordRes.data);
       setColorMasters(colorRes.data || []);
@@ -1456,6 +1456,21 @@ export default function DesignEntry() {
     }
   };
 
+  const handleApprove = async (id, e) => {
+    if (e) e.stopPropagation();
+    if (window.confirm('Are you sure you want to approve this design? This will notify the Purchase Team.')) {
+      try {
+        await designEntryAPI.approve(id);
+        alert('Design approved successfully!');
+        if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
+        loadData();
+      } catch (err) {
+        alert('Error approving design');
+        console.error(err);
+      }
+    }
+  };
+
   const handleDelete = async (id, ds_ref, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete ${ds_ref}?`)) {
@@ -1513,7 +1528,7 @@ export default function DesignEntry() {
         const suffix = digitsMatch ? digitsMatch[0] : '';
         
         setForm(prev => {
-          const autoDesignNo = suffix ? `DEPL-${suffix}` : (firstItem.design_no || prev.design_no);
+          const autoDesignNo = firstItem.design_no || (suffix ? `DEPL-${suffix}` : prev.design_no);
           return {
             ...prev,
             ibpo_no: value,
@@ -1531,6 +1546,7 @@ export default function DesignEntry() {
             reed: firstItem.finish_reed || prev.reed,
             count_rxpxw: firstItem.construction || prev.count_rxpxw,
             toie_pct: firstItem.tolerance_pct || prev.toie_pct,
+            weight_grm: firstItem.gsm || prev.weight_grm,
             ibpo_image: firstItem.image_design_path || ''
           };
         });
@@ -1754,7 +1770,7 @@ export default function DesignEntry() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Design EntryNo</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Actions</th>
+                      <th>Design EntryNo</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Status</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1770,8 +1786,18 @@ export default function DesignEntry() {
                         <td>{e.buyer_name || '-'}</td>
                         <td><span className="badge badge-draft">{e.fabric || 'N/A'}</span></td>
                         <td><span className="badge badge-active">{e.weaving || 'N/A'}</span></td>
+                        <td>
+                          <span className={`badge ${e.status === 'Approved' ? 'badge-active' : 'badge-draft'}`} style={e.status === 'Approved' ? { background: '#10b981', color: 'white' } : {}}>
+                            {e.status || 'Pending'}
+                          </span>
+                        </td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
+                            {e.status !== 'Approved' && (
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: '#10b981' }} onClick={(evt) => handleApprove(e.id, evt)} title="Approve Design">
+                                <CheckCircle size={14} />
+                              </button>
+                            )}
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => { evt.stopPropagation(); setViewModalDesign(e); }} title="Preview Design"><Eye size={14} color="var(--primary)" /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(e, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(e.id, e.ds_ref_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>

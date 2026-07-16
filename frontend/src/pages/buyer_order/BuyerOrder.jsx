@@ -1415,15 +1415,14 @@ export default function BuyerOrder() {
                         </select>
                       )}
                     </div>
-                    <SubMasterDropdown
-                      label="Order Type"
-                      name="order_type"
-                      value={form.order_type || ''}
-                      entity="order_type_master"
-                      options={options}
-                      onChange={handleDropdownChange}
-                      onOptionsRefresh={refreshDropdownOptions}
-                    />
+                    <div className="form-group">
+                      <label>Order Type</label>
+                      <select className="form-control" name="order_type" value={form.order_type || ''} onChange={handleChange}>
+                        <option value="">-- Select Order Type --</option>
+                        <option value="Domestic">Domestic</option>
+                        <option value="Export">Export</option>
+                      </select>
+                    </div>
                     <SubMasterDropdown
                       label="Certified Type"
                       name="certified_type"
@@ -1456,10 +1455,10 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Order Taken By</label>
-                      <select className="form-control" name="order_taken_by" value={form.order_taken_by} onChange={handleChange}>
-                        <option value="">Select Employee...</option>
-                        {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                      </select>
+                      <input list="order-taken-by-list" className="form-control" name="order_taken_by" value={form.order_taken_by || ''} onChange={handleChange} placeholder="Select or type..." />
+                      <datalist id="order-taken-by-list">
+                        {employees.map(e => <option key={e.id} value={e.name} />)}
+                      </datalist>
                     </div>
                     <div className="form-group">
                       <label>Merchandiser</label>

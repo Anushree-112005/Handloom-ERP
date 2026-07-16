@@ -13,6 +13,7 @@ router = APIRouter(prefix="/employees", tags=["Employee Master"])
 
 class EmployeeBase(BaseModel):
     employee_code: str
+    username: Optional[str] = None
     name: str
     dob: Optional[str] = None
     gender: Optional[str] = None

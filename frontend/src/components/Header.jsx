@@ -74,53 +74,7 @@ export default function Header() {
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'Low Yarn Stock Alert',
-      message: 'Yarn stock count for 40s Comb Cotton is below the reorder level (120 bags remaining).',
-      time: '5 mins ago',
-      unread: true,
-      category: 'stock',
-      link: '/stores-consumables/report-reorder'
-    },
-    {
-      id: 2,
-      title: 'Pending PR Approval',
-      message: 'Purchase Requisition PR-00004 requires your approval.',
-      time: '20 mins ago',
-      unread: true,
-      category: 'approval',
-      link: '/stores-consumables/requisition'
-    },
-    {
-      id: 3,
-      title: 'Vehicle Waiting at Gate',
-      message: 'Incoming yarn delivery vehicle TN-39-AX-4592 is waiting at Gate 1.',
-      time: '1 hour ago',
-      unread: true,
-      category: 'gate',
-      link: '/gate/inward'
-    },
-    {
-      id: 4,
-      title: 'Loom Maintenance Overdue',
-      message: 'Loom #12 scheduled maintenance is overdue by 2 days.',
-      time: '3 hours ago',
-      unread: true,
-      category: 'maintenance',
-      link: '/ppc/problem/breakdown-entry'
-    },
-    {
-      id: 5,
-      title: 'New Sales Order Created',
-      message: 'Vardhman Yarns placed a new order SO-00089.',
-      time: '1 day ago',
-      unread: true,
-      category: 'sales',
-      link: '/buyer-order'
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
 
@@ -140,6 +94,29 @@ export default function Header() {
       }
     };
     loadCompany();
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/notifications/");
+        if(res.ok) {
+          const data = await res.json();
+          const formatted = data.map(n => ({
+            id: n.id,
+            title: n.user_role + " Alert",
+            message: n.message,
+            time: new Date(n.created_at).toLocaleTimeString(),
+            unread: !n.is_read,
+            category: 'alert',
+            link: n.related_ibpo ? '/buyer-order' : '#'
+          }));
+          setNotifications(formatted);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchNotifications();
+    const intervalId = setInterval(fetchNotifications, 10000);
 
     // Fetch search database records once on mount
     const fetchSearchData = async () => {
