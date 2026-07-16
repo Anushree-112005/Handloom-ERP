@@ -1,5 +1,9 @@
 Traceback (most recent call last):
+<<<<<<< Updated upstream
   File "C:\Users\User\Desktop\dinesh-tex\dinesh-tex1\dinesh-tex\backend\app\main.py", line 30, in lifespan
+=======
+  File "C:\Users\User\Desktop\dinesh-tex\dinesh-tex1\dinesh-tex\backend\app\main.py", line 46, in lifespan
+>>>>>>> Stashed changes
     async with engine.begin() as conn:
                ^^^^^^^^^^^^^^
   File "C:\Users\User\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 210, in __aenter__

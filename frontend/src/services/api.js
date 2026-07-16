@@ -413,4 +413,12 @@ export const ppcAPI = {
   deleteOperator: (id) => api.delete(`/ppc/operators/${id}`),
 };
 
+export const rackAPI = {
+  list: (params) => api.get('/racks/', { params }),
+  get: (id) => api.get(`/racks/${id}`),
+  create: (data) => api.post('/racks/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  update: (id, data) => api.put(`/racks/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  delete: (id) => api.delete(`/racks/${id}`),
+};
+
 export default api;

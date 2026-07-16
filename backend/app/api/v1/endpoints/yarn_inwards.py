@@ -20,6 +20,7 @@ class YarnInwardItemIn(BaseModel):
     color_code: Optional[str] = None
     lot_no: Optional[str] = None
     our_id: Optional[str] = None
+    rack_id: Optional[int] = None
     bags: Optional[int] = 0
     kgs: Optional[float] = 0.0
     rate: Optional[float] = 0.0
