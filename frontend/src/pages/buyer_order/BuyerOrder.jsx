@@ -1465,7 +1465,14 @@ export default function BuyerOrder() {
                       <label>Merchandiser</label>
                       <select className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange}>
                         <option value="">Select Merchandiser...</option>
-                        {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                        {employees.filter(e => e.department === 'Merchandising' && e.status === 'Active').length === 0 ? (
+                          <option value="" disabled>No Merchandising Employees Found</option>
+                        ) : (
+                          employees
+                            .filter(e => e.department === 'Merchandising' && e.status === 'Active')
+                            .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                            .map(e => <option key={e.id} value={e.name}>{e.name}</option>)
+                        )}
                       </select>
                     </div>
                     <div className="form-group">

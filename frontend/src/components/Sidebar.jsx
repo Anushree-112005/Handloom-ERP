@@ -292,6 +292,10 @@ const modules = [
     ]
   },
 
+  // Status Update Module
+  { section: 'Status Update Module' },
+  { path: '/status-update/dashboard', label: 'Status Update', icon: Activity },
+
   // Production Planning Modules
   { section: 'Production Planning (PPC)' },
   {

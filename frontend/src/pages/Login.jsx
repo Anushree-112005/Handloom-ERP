@@ -17,6 +17,14 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await authAPI.login(username, password);
+      
+      // Main ERP Login Rules: Only allow admin users (reject 'user' explicitly)
+      if (res.data.user_id.toLowerCase() === 'user') {
+        setError('Invalid Username or Password.');
+        setLoading(false);
+        return;
+      }
+      
       localStorage.setItem('token', res.data.access_token);
       localStorage.setItem('user', JSON.stringify({
         user_id: res.data.user_id,
