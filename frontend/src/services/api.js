@@ -46,7 +46,7 @@ api.interceptors.response.use(
   }
 );
 
-// ---- Auth ----
+export const notificationAPI = createAPI('/notifications');
 export const authAPI = {
   login: (username, password) =>
     api.post('/auth/login', new URLSearchParams({ username, password }), {
@@ -57,7 +57,7 @@ export const authAPI = {
 
 // ---- Dashboard ----
 export const dashboardAPI = {
-  stats: () => api.get('/dashboard/stats'),
+  stats: (params) => api.get('/dashboard/stats', { params }),
 };
 
 // ---- Party Master ----
@@ -457,6 +457,11 @@ export const costingSheetAPI = {
   create: (data) => api.post('/costing-sheet/', data),
   update: (id, data) => api.put(`/costing-sheet/${id}`, data),
   delete: (id) => api.delete(`/costing-sheet/${id}`)
+};
+
+export const stockSheetAPI = {
+  list: (params) => api.get('/stock-sheet/', { params }),
+  create: (data) => api.post('/stock-sheet/', data),
 };
 
 export default api;

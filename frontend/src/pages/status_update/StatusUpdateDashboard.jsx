@@ -3,40 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, Search, Clock, CheckCircle, AlertTriangle, 
   PauseCircle, Upload, Save, History, Activity, Layers, ArrowRight,
-  TrendingUp, FileText, CheckSquare, Settings, Factory
+  TrendingUp, FileText, CheckSquare, Settings, Factory, Edit2
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { buyerOrderAPI } from '../../services/api';
-
-// --- MOCK DATA ---
-const mockOrders = [
-  {
-    id: 'ORD-1001',
-    buyerName: 'Global Retailers Inc',
-    buyerOrderNo: 'GR-2026-001',
-    styleNo: 'ST-045A',
-    poNo: 'PO-99238',
-    productName: 'Mens Cotton T-Shirt',
-    color: 'Navy Blue',
-    size: 'M',
-    orderQuantity: 5000,
-    deliveryDate: '2026-08-15',
-  },
-  {
-    id: 'ORD-1002',
-    buyerName: 'Fashion Hub Ltd',
-    buyerOrderNo: 'FH-5541',
-    styleNo: 'ST-112B',
-    poNo: 'PO-88122',
-    productName: 'Womens Denim Jacket',
-    color: 'Stone Wash',
-    size: 'L',
-    orderQuantity: 2000,
-    deliveryDate: '2026-09-01',
-  }
-];
+import { buyerOrderAPI, notificationAPI } from '../../services/api';
+import './statusUpdateMobile.css';
 
 const productionStages = [
   'Fabric Received', 'Fabric Inspection', 'Dyeing', 'Compacting',
@@ -54,13 +27,16 @@ export default function StatusUpdateDashboard() {
   // State for stage tracking
   const [stageStatuses, setStageStatuses] = useState({});
   const [history, setHistory] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [stages, setStages] = useState(productionStages);
+  const [renamingStageIndex, setRenamingStageIndex] = useState(null);
+  const [newStageName, setNewStageName] = useState('');
   
   const [editingStage, setEditingStage] = useState(null);
   const [stageForm, setStageForm] = useState({
     status: 'Not Started',
     completedQty: 0,
-    remarks: ''
+    remarks: '',
+    attachment: null
   });
 
   // Verify Auth & Load Data
@@ -79,6 +55,15 @@ export default function StatusUpdateDashboard() {
       .catch(err => console.error('Failed to load orders', err));
   }, [navigate]);
 
+  // Auto-save to localStorage whenever data changes
+  useEffect(() => {
+    if (selectedOrder) {
+      localStorage.setItem(`su_stages_${selectedOrder}`, JSON.stringify(stages));
+      localStorage.setItem(`su_statuses_${selectedOrder}`, JSON.stringify(stageStatuses));
+      localStorage.setItem(`su_history_${selectedOrder}`, JSON.stringify(history));
+    }
+  }, [stages, stageStatuses, history, selectedOrder]);
+
   // Handle Order Selection
   const handleOrderChange = (e) => {
     const ordId = e.target.value;
@@ -90,47 +75,70 @@ export default function StatusUpdateDashboard() {
       setOrderData(order);
       const orderQty = order.items?.reduce((sum, item) => sum + (item.order_mtrs || 0), 0) || 0;
       
-      // Initialize or load stage statuses for this order (Mocking initial state)
-      const initialStatuses = {};
-      productionStages.forEach(stage => {
-        initialStatuses[stage] = {
-          status: 'Not Started',
-          completedQty: 0,
-          pendingQty: orderQty,
-          updatedBy: '-',
-          updatedTime: '-',
-          expectedDate: '-',
-          remarks: ''
-        };
-      });
-      // Mock some progress for ORD-1001
-      if (ordId === 'ORD-1001') {
-        initialStatuses['Fabric Received'] = { status: 'Completed', completedQty: 5000, pendingQty: 0, updatedBy: 'EMP123', updatedTime: '2026-07-10 10:00', expectedDate: '2026-07-10', remarks: 'Received full batch' };
-        initialStatuses['Fabric Inspection'] = { status: 'Completed', completedQty: 5000, pendingQty: 0, updatedBy: 'EMP123', updatedTime: '2026-07-11 14:00', expectedDate: '2026-07-11', remarks: 'Passed QC' };
-        initialStatuses['Dyeing'] = { status: 'In Progress', completedQty: 3000, pendingQty: 2000, updatedBy: 'EMP123', updatedTime: '2026-07-15 09:30', expectedDate: '2026-07-18', remarks: 'Dyeing running' };
+      // Load from localStorage or initialize defaults
+      const storedStages = localStorage.getItem(`su_stages_${ordId}`);
+      const loadedStages = storedStages ? JSON.parse(storedStages) : productionStages;
+      setStages(loadedStages);
+
+      const storedStatuses = localStorage.getItem(`su_statuses_${ordId}`);
+      if (storedStatuses) {
+        setStageStatuses(JSON.parse(storedStatuses));
+      } else {
+        const initialStatuses = {};
+        loadedStages.forEach(stage => {
+          initialStatuses[stage] = {
+            status: 'Not Started',
+            completedQty: 0,
+            pendingQty: orderQty,
+            updatedBy: '-',
+            updatedTime: '-',
+            expectedDate: '-',
+            remarks: ''
+          };
+        });
+        setStageStatuses(initialStatuses);
       }
       
-      setStageStatuses(initialStatuses);
-      
-      // Mock history
-      setHistory([
-        { id: 1, date: '2026-07-10 10:00', stage: 'Fabric Received', prevStatus: 'Not Started', newStatus: 'Completed', by: 'EMP123', remarks: 'Received full batch' },
-        { id: 2, date: '2026-07-11 14:00', stage: 'Fabric Inspection', prevStatus: 'Not Started', newStatus: 'Completed', by: 'EMP123', remarks: 'Passed QC' }
-      ]);
+      const storedHistory = localStorage.getItem(`su_history_${ordId}`);
+      setHistory(storedHistory ? JSON.parse(storedHistory) : []);
     } else {
       setOrderData(null);
       setStageStatuses({});
       setHistory([]);
+      setStages(productionStages);
     }
   };
 
-  const addNotification = (type, message) => {
-    const newNotif = { id: Date.now(), type, message };
-    setNotifications(prev => [newNotif, ...prev].slice(0, 5));
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
-    }, 5000);
+  const handleRenameStage = (idx) => {
+    if (!newStageName.trim()) {
+      setRenamingStageIndex(null);
+      return;
+    }
+    const oldName = stages[idx];
+    const newName = newStageName.trim();
+    
+    if (oldName === newName) {
+      setRenamingStageIndex(null);
+      return;
+    }
+
+    const updatedStages = [...stages];
+    updatedStages[idx] = newName;
+    setStages(updatedStages);
+
+    const updatedStatuses = { ...stageStatuses };
+    if (updatedStatuses[oldName]) {
+      updatedStatuses[newName] = updatedStatuses[oldName];
+      delete updatedStatuses[oldName];
+    }
+    setStageStatuses(updatedStatuses);
+    if (editingStage === oldName) {
+      setEditingStage(newName);
+    }
+    setRenamingStageIndex(null);
   };
+
+
 
   const handleLogout = () => {
     localStorage.removeItem('status_update_token');
@@ -144,7 +152,8 @@ export default function StatusUpdateDashboard() {
     setStageForm({
       status: current.status,
       completedQty: current.completedQty,
-      remarks: current.remarks
+      remarks: current.remarks,
+      attachment: current.attachment || null
     });
   };
 
@@ -174,7 +183,8 @@ export default function StatusUpdateDashboard() {
         pendingQty: newPending,
         updatedBy: user?.empId || 'System',
         updatedTime: new Date().toLocaleString(),
-        remarks: stageForm.remarks
+        remarks: stageForm.remarks,
+        attachment: stageForm.attachment
       }
     };
     
@@ -194,11 +204,20 @@ export default function StatusUpdateDashboard() {
       ...prev
     ]);
     
-    // Notifications
-    if (stageForm.status === 'Completed') {
-      addNotification('success', `${editingStage} has been marked as Completed.`);
-    } else if (stageForm.status === 'Hold') {
-      addNotification('warning', `${editingStage} has been put on Hold.`);
+
+    // Fire real-time notification to the backend
+    try {
+      notificationAPI.create({
+        ibpo_id: orderData.ibpo_number || String(orderData.id),
+        buyer_order_no: orderData.items?.[0]?.party_po_no || '-',
+        buyer_name: orderData.buyer_name || '-',
+        updated_by: user?.name || user?.empId || 'System',
+        stage: editingStage,
+        status: stageForm.status,
+        date_time: new Date().toLocaleString()
+      });
+    } catch (err) {
+      console.error('Failed to send real-time notification', err);
     }
     
     setEditingStage(null);
@@ -248,17 +267,17 @@ export default function StatusUpdateDashboard() {
   };
 
   return (
-    <div className="animate-in fade-in" style={{ padding: '0px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="animate-in fade-in status-update-mobile-scope su-dashboard-wrapper" style={{ padding: '0px', height: '100%', display: 'flex', flexDirection: 'column' }}>
       
       {/* Header specific to Status Update */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '16px 24px', borderBottom: '1px solid var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+      <div className="su-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '16px 24px', borderBottom: '1px solid var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
         <div>
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
             <Settings size={24} color="var(--primary)" /> Production Status Update
           </h2>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Update live floor status and track manufacturing progress.</p>
         </div>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div className="su-header-actions" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
             Logged in as: <strong>{user?.empId || 'Employee'}</strong>
           </div>
@@ -268,26 +287,11 @@ export default function StatusUpdateDashboard() {
         </div>
       </div>
 
-      {/* Notifications overlay */}
-      <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {notifications.map(n => (
-          <div key={n.id} className="animate-fade" style={{ 
-            background: n.type === 'success' ? '#ecfdf5' : '#fffbeb', 
-            border: `1px solid ${n.type === 'success' ? '#a7f3d0' : '#fde68a'}`,
-            color: n.type === 'success' ? '#065f46' : '#92400e',
-            padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-          }}>
-            {n.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-            <span style={{ fontSize: '14px', fontWeight: 500 }}>{n.message}</span>
-          </div>
-        ))}
-      </div>
 
-      <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+      <div className="su-content" style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
         
         {/* Order Selection */}
-        <div className="card mb-4" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="card mb-4 su-order-select-card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
             Select Order to Update:
           </div>
@@ -328,34 +332,38 @@ export default function StatusUpdateDashboard() {
               </div>
             </div>
 
-            {/* Progress Summary */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-              <div className="card stat-card" style={{ padding: '16px' }}>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Total Order Quantity</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>{orderData.items?.reduce((sum, item) => sum + (item.order_mtrs || 0), 0) || 0}</div>
-              </div>
-              <div className="card stat-card" style={{ padding: '16px' }}>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Overall Completion %</div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#10b981' }}>{overallCompletionPct}%</div>
-                <div style={{ width: '100%', background: '#e2e8f0', height: '6px', borderRadius: '3px', marginTop: '8px', overflow: 'hidden' }}>
-                  <div style={{ width: `${overallCompletionPct}%`, background: '#10b981', height: '100%' }}></div>
+            {orderData && (
+              <>
+                {/* Top Metrics */}
+                <div className="su-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                  <div className="card stat-card" style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Total Order Quantity</div>
+                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>{orderData.items?.reduce((sum, item) => sum + (item.order_mtrs || 0), 0) || 0}</div>
+                  </div>
+                  <div className="card stat-card" style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Overall Completion %</div>
+                    <div style={{ fontSize: '24px', fontWeight: 700, color: '#10b981' }}>{overallCompletionPct}%</div>
+                    <div style={{ width: '100%', background: '#e2e8f0', height: '6px', borderRadius: '3px', marginTop: '8px', overflow: 'hidden' }}>
+                      <div style={{ width: `${overallCompletionPct}%`, background: '#10b981', height: '100%' }}></div>
+                    </div>
+                  </div>
+                  <div className="card stat-card" style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Active Process</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Activity size={20} /> {activeProcess}
+                    </div>
+                  </div>
+                  <div className="card stat-card" style={{ padding: '16px' }}>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Next Process</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ArrowRight size={20} /> {nextProcess}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="card stat-card" style={{ padding: '16px' }}>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Active Process</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Activity size={20} /> {activeProcess}
-                </div>
-              </div>
-              <div className="card stat-card" style={{ padding: '16px' }}>
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Next Process</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ArrowRight size={20} /> {nextProcess}
-                </div>
-              </div>
-            </div>
+              </>
+            )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+            <div className="su-main-layout" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
               
               {/* Production Stages Timeline/Cards */}
               <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -365,7 +373,7 @@ export default function StatusUpdateDashboard() {
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', paddingRight: '8px' }}>
-                  {productionStages.map((stage, idx) => {
+                  {stages.map((stage, idx) => {
                     const st = stageStatuses[stage];
                     const isEditing = editingStage === stage;
                     
@@ -387,7 +395,43 @@ export default function StatusUpdateDashboard() {
                               }}>
                                 {idx + 1}
                               </div>
-                              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>{stage}</h4>
+                              {renamingStageIndex === idx ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <input 
+                                    type="text" 
+                                    className="form-control"
+                                    style={{ padding: '2px 8px', fontSize: '14px', height: '28px', width: '150px' }}
+                                    value={newStageName}
+                                    onChange={(e) => setNewStageName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleRenameStage(idx);
+                                      if (e.key === 'Escape') setRenamingStageIndex(null);
+                                    }}
+                                    autoFocus
+                                  />
+                                  <button 
+                                    className="btn btn-primary" 
+                                    style={{ padding: '2px 8px', height: '28px', fontSize: '12px' }}
+                                    onClick={() => handleRenameStage(idx)}
+                                  >
+                                    Save
+                                  </button>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>{stage}</h4>
+                                  <button 
+                                    onClick={() => {
+                                      setRenamingStageIndex(idx);
+                                      setNewStageName(stage);
+                                    }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px' }}
+                                    title="Edit Stage Name"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                </div>
+                              )}
                               <span style={{ 
                                 display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600,
                                 padding: '2px 8px', borderRadius: '12px',
@@ -404,6 +448,11 @@ export default function StatusUpdateDashboard() {
                                 <div><strong>Completed:</strong> {st.completedQty} / {orderData.items?.reduce((sum, item) => sum + (item.order_mtrs || 0), 0) || 0}</div>
                                 <div><strong>Pending:</strong> {st.pendingQty}</div>
                                 {st.updatedBy !== '-' && <div><strong>Updated By:</strong> {st.updatedBy} ({st.updatedTime})</div>}
+                                {st.attachment && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', fontSize: '13px', color: 'var(--primary)' }}>
+                                    <FileText size={14} /> <span>{st.attachment.name}</span>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -418,7 +467,7 @@ export default function StatusUpdateDashboard() {
                         {/* Edit Form */}
                         {isEditing && (
                           <div className="animate-fade" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--border)' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                            <div className="su-stage-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
                               <div>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>Status</label>
                                 <select 
@@ -443,9 +492,21 @@ export default function StatusUpdateDashboard() {
                               </div>
                               <div>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>Attachments (Optional)</label>
-                                <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }} type="button">
-                                  <Upload size={14} /> Upload Image/Doc
-                                </button>
+                                <label className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Upload size={14} style={{ flexShrink: 0 }} />
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+                                    {stageForm.attachment ? stageForm.attachment.name : 'Upload Image/Doc'}
+                                  </span>
+                                  <input 
+                                    type="file" 
+                                    style={{ display: 'none' }} 
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files.length > 0) {
+                                        setStageForm({...stageForm, attachment: e.target.files[0]});
+                                      }
+                                    }} 
+                                  />
+                                </label>
                               </div>
                             </div>
                             <div>
@@ -458,7 +519,7 @@ export default function StatusUpdateDashboard() {
                                 placeholder="Add notes about delays, issues, etc."
                               />
                             </div>
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                            <div className="su-stage-actions" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
                               <button className="btn btn-secondary" onClick={() => setEditingStage(null)}>Cancel</button>
                               <button className="btn btn-primary" onClick={handleSaveStage}>
                                 <Save size={16} /> Save Changes
