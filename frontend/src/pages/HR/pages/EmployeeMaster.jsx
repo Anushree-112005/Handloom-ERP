@@ -389,31 +389,15 @@ const EmployeeMaster = () => {
             <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="Auto-generated if empty" />
           </div>
           <div className="group">
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Biometric Machine ID</label>
+            <input type="text" value={form.biometric_id || ''} onChange={(e) => setForm({ ...form, biometric_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="e.g. 1" />
+          </div>
+          <div className="group">
             <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Personal Email</label>
             <input type="email" value={form.personal_email || ''} onChange={(e) => setForm({ ...form, personal_email: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="john.personal@gmail.com" />
           </div>
         </div>
-        <div className="group">
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Work Email *</label>
-          <input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="john@company.com" />
-        </div>
-        <div className="group">
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Phone *</label>
-          <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="10-digit number" />
-        </div>
-        <div className="group">
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Employee ID</label>
-          <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="Auto-generated if empty" />
-        </div>
-        <div className="group">
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Biometric Machine ID</label>
-          <input type="text" value={form.biometric_id || ''} onChange={(e) => setForm({ ...form, biometric_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="e.g. 1" />
-        </div>
-        <div className="group">
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Personal Email</label>
-          <input type="email" value={form.personal_email || ''} onChange={(e) => setForm({ ...form, personal_email: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="john.personal@gmail.com" />
-        </div>
-      </div>
+      </fieldset>
     </div>
   );
 
