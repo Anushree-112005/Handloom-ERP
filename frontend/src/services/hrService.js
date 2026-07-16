@@ -1,5 +1,19 @@
 import api, { employeeAPI, subMasterAPI } from './api';
 
+export const testBiometricConnection = async (ip, port) => {
+  const res = await api.post('/hr/biometric/test-connection', { ip, port });
+  return res.data;
+};
+
+export const syncBiometricAttendance = async (ip, port, mock = false) => {
+  const res = await api.post('/hr/biometric/sync', { ip, port, mock });
+  return res.data;
+};
+
+export const fetchRawBiometricLogs = async () => {
+  return fetchHRItems('biometric_raw_logs');
+};
+
 const mapBackendToFrontend = (emp) => {
   if (!emp) return null;
   return {
@@ -15,6 +29,7 @@ const mapBackendToFrontend = (emp) => {
     personal_email: emp.personal_email || '',
     current_address: emp.address || '',
     permanent_address: emp.permanent_address || '',
+    biometric_id: emp.biometric_id || '',
   };
 };
 
@@ -30,6 +45,7 @@ const mapFrontendToBackend = (form) => {
     aadhaar_no: form.aadhar_number || '',
     status: form.employment_status || 'Active',
     address: form.current_address || '',
+    biometric_id: form.biometric_id || null,
   };
 };
 

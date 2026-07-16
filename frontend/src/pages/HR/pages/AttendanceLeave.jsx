@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, CheckCircle2, AlertTriangle, Plus, Trash2, X, Clock, Calendar, User, Eye, MapPin, Info, Edit2, Filter, LayoutList, LayoutGrid, Search, Download, FileText, FileSpreadsheet, RefreshCw } from 'lucide-react';
-import { fetchAttendance, createAttendance, updateAttendance, deleteAttendance, fetchLeaves, createLeave, updateLeave, deleteLeave, fetchEmployees, fetchShifts } from '../../../services/hrService';
+import { fetchAttendance, createAttendance, updateAttendance, deleteAttendance, fetchLeaves, createLeave, updateLeave, deleteLeave, fetchEmployees, fetchShifts, testBiometricConnection, syncBiometricAttendance, fetchRawBiometricLogs } from '../../../services/hrService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -41,6 +41,29 @@ const AttendanceLeave = () => {
   const itemsPerPage = 10;
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
+
+  // Biometric integration state
+  const [deviceIp, setDeviceIp] = useState('192.168.0.202');
+  const [devicePort, setDevicePort] = useState(4370);
+  const [syncMock, setSyncMock] = useState(true);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [syncingBiometric, setSyncingBiometric] = useState(false);
+  const [rawLogs, setRawLogs] = useState([]);
+
+  const loadRawLogs = async () => {
+    try {
+      const logs = await fetchRawBiometricLogs();
+      setRawLogs(logs || []);
+    } catch (err) {
+      console.error('Failed to load raw biometric logs:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'biometric') {
+      loadRawLogs();
+    }
+  }, [activeTab]);
 
   const loadData = async () => {
     setLoading(true);
@@ -489,9 +512,10 @@ const AttendanceLeave = () => {
             >
               <option value="attendance">Daily Attendance</option>
               <option value="leave">Leave Requests</option>
+              <option value="biometric">Biometric Sync</option>
             </select>
 
-            {activeTab === 'attendance' ? (
+            {activeTab === 'attendance' && (
               <select 
                 value={filterShift} 
                 onChange={(e) => { setFilterShift(e.target.value); setCurrentPage(1); }}
@@ -500,7 +524,9 @@ const AttendanceLeave = () => {
                 <option value="">All Shifts</option>
                 {shifts.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
               </select>
-            ) : (
+            )}
+
+            {activeTab === 'leave' && (
               <>
                 <select 
                   value={filterLeaveType} 
@@ -911,6 +937,161 @@ const AttendanceLeave = () => {
               </div>
             )}
           </>
+        )}
+
+        {activeTab === 'biometric' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: 24 }}>
+            {/* LEFT: Device Configuration & Action Panel */}
+            <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <CalendarClock size={20} color="var(--primary)" /> Device Configuration
+                </h3>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Configure and test biometric machine connection.</p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="form-group">
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Device Brand</label>
+                  <input type="text" className="form-control" value="eSSL / ZKTeco" disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Device Name</label>
+                  <input type="text" className="form-control" value="X2008" disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>IP Address</label>
+                  <input type="text" className="form-control" value={deviceIp} onChange={(e) => setDeviceIp(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>TCP Port</label>
+                  <input type="number" className="form-control" value={devicePort} onChange={(e) => setDevicePort(Number(e.target.value))} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <input type="checkbox" id="syncMock" checked={syncMock} onChange={(e) => setSyncMock(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                  <label htmlFor="syncMock" style={{ fontSize: 13, fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
+                    Simulation Mode (Offline Fallback)
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                <button
+                  onClick={async () => {
+                    setTestingConnection(true);
+                    setError('');
+                    setSuccess('');
+                    try {
+                      const res = await testBiometricConnection(deviceIp, devicePort);
+                      if (res.success) {
+                        setSuccess(res.message);
+                      } else {
+                        setError(res.message);
+                      }
+                    } catch (e) {
+                      setError('Failed to test connection to biometric machine.');
+                    }
+                    setTestingConnection(false);
+                  }}
+                  disabled={testingConnection || syncingBiometric}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', height: 44, fontWeight: 600 }}
+                >
+                  {testingConnection ? 'Testing...' : 'Test Connection'}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    setSyncingBiometric(true);
+                    setError('');
+                    setSuccess('');
+                    try {
+                      const res = await syncBiometricAttendance(deviceIp, devicePort, syncMock);
+                      if (res.success) {
+                        setSuccess(res.message);
+                        loadData();
+                        loadRawLogs();
+                      } else {
+                        setError(res.message);
+                      }
+                    } catch (e) {
+                      setError('Failed to sync biometric logs.');
+                    }
+                    setSyncingBiometric(false);
+                  }}
+                  disabled={testingConnection || syncingBiometric}
+                  className="btn btn-primary"
+                  style={{ width: '100%', height: 44, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  <RefreshCw size={16} className={syncingBiometric ? 'animate-spin' : ''} />
+                  {syncingBiometric ? 'Syncing...' : 'Sync Attendance Logs'}
+                </button>
+              </div>
+            </div>
+
+            {/* RIGHT: Raw Punch Logs Viewer */}
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Raw Device Logs</h3>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Latest punch events imported from ZK machine.</p>
+                </div>
+                <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200">
+                  {rawLogs.length} events
+                </span>
+              </div>
+
+              <div style={{ overflowX: 'auto', maxHeight: '550px' }}>
+                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Employee / Code</th>
+                      <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Biometric ID</th>
+                      <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Punch Timestamp</th>
+                      <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Event Direction</th>
+                      <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Punch Type</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {rawLogs.map((log) => {
+                      const details = log.data || {};
+                      const empName = getEmployeeName(log.employee_id || details.biometric_id);
+                      return (
+                        <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <p className="font-semibold text-slate-900">{empName}</p>
+                            <p className="text-xs text-slate-500">Code: {log.employee_id || '—'}</p>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-700 font-mono">
+                            {details.biometric_id || '—'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-700">
+                            {details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${details.status === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                              {details.status === 0 ? 'Check In' : 'Check Out'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-slate-500">
+                            {details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {rawLogs.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                          <CalendarClock className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                          No raw logs synced yet. Click "Sync Attendance Logs" to import data.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>{/* END DATA AREA */}

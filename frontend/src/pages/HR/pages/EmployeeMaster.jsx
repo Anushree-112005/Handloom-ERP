@@ -18,7 +18,7 @@ const getErrorMessage = (err, defaultMsg = 'An error occurred') => {
 
 const initialFormState = {
   // Basic Info
-  name: '', email: '', phone: '', employee_id: '',
+  name: '', email: '', phone: '', employee_id: '', biometric_id: '',
   // Personal Details
   date_of_birth: '', gender: '', blood_group: '', marital_status: '', nationality: 'Indian',
   personal_email: '', emergency_contact_phone: '', emergency_contact_name: '', emergency_contact_relation: '',
@@ -372,6 +372,10 @@ const EmployeeMaster = () => {
         <div className="group">
           <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Employee ID</label>
           <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="Auto-generated if empty" />
+        </div>
+        <div className="group">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Biometric Machine ID</label>
+          <input type="text" value={form.biometric_id || ''} onChange={(e) => setForm({ ...form, biometric_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="e.g. 1" />
         </div>
         <div className="group">
           <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Personal Email</label>
