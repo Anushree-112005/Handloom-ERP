@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from app.core.database import get_db
-from app.models.warehouse_stock import WarehouseMaterial, WarehouseMaterialImage
+from app.models.warehouse_material import WarehouseMaterial, WarehouseMaterialImage
 from app.schemas.warehouse_material import WarehouseMaterialCreate, WarehouseMaterialResponse, WarehouseMaterialImageResponse
 
 router = APIRouter()

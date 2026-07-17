@@ -60,4 +60,5 @@ from app.models.stock_sheet import StockSheetItem
 from app.models.costing_sheet import CostingSheet
 from app.models.notification import Notification
 from app.models.warehouse_waxing import WarehouseWaxing
-from app.models.warehouse_stock import WarehouseMaterial, WarehouseMaterialImage
+from app.models.warehouse_stock import WarehouseStock, WarehouseStockImage
+from app.models.warehouse_material import WarehouseMaterial, WarehouseMaterialImage

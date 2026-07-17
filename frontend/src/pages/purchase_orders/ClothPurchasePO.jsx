@@ -252,6 +252,7 @@ export default function ClothPurchasePO() {
     try {
       const payload = { ...form };
       if (!payload.delivery_date) payload.delivery_date = null;
+      if (!payload.expected_delivery_date) payload.expected_delivery_date = null;
 
       if (form.id) {
         await clothPurchasePOAPI.update(form.id, payload);
@@ -267,7 +268,20 @@ export default function ClothPurchasePO() {
   };
 
   const handleEdit = (order) => {
-    setForm(order);
+    const safeOrder = { ...order };
+    for (const key in safeOrder) {
+      if (safeOrder[key] === null) safeOrder[key] = '';
+    }
+    if (safeOrder.items) {
+      safeOrder.items = safeOrder.items.map(item => {
+        const safeItem = { ...item };
+        for (const k in safeItem) {
+          if (safeItem[k] === null) safeItem[k] = '';
+        }
+        return safeItem;
+      });
+    }
+    setForm(safeOrder);
     setShowForm(true);
   };
 

@@ -4,6 +4,7 @@ import api from '../services/api'; // Use main api instance
 
 export default function WarehouseStock() {
   const [stockItems, setStockItems] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -112,6 +113,26 @@ export default function WarehouseStock() {
     }
   };
 
+  const filteredItems = stockItems.filter(item => {
+    if (!searchTerm) return true;
+    const lowerTerm = searchTerm.toLowerCase();
+    return (
+      item.id.toString().includes(lowerTerm) ||
+      (item.material_name && item.material_name.toLowerCase().includes(lowerTerm)) ||
+      (item.category && item.category.toLowerCase().includes(lowerTerm)) ||
+      (item.location && item.location.toLowerCase().includes(lowerTerm)) ||
+      (item.notes && item.notes.toLowerCase().includes(lowerTerm)) ||
+      (item.images && item.images.some(img => img.id.toString().includes(lowerTerm) || `img-${img.id}`.includes(lowerTerm)))
+    );
+  });
+
+  const groupedItems = filteredItems.reduce((acc, item) => {
+    const loc = item.location || 'Unassigned Location';
+    if (!acc[loc]) acc[loc] = [];
+    acc[loc].push(item);
+    return acc;
+  }, {});
+
   return (
     <div className="animate-fade" style={{ paddingBottom: '40px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -121,10 +142,12 @@ export default function WarehouseStock() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage physical inventory and verify stock with photo evidence.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={() => fetchStock()} className="btn btn-secondary" style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13.5px', fontWeight: 600 }}>
-             Reset / Show All
-          </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={16} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input type="text" placeholder="Search ID, Name, Image ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              style={{ padding: '8px 12px 8px 32px', border: '1px solid var(--border)', borderRadius: '8px', outline: 'none', width: '250px' }} />
+          </div>
           <label className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '8px 16px', borderRadius: '8px', fontSize: '13.5px', fontWeight: 600 }}>
             <Search size={16} /> Search by Image
             <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSearchByImage} />
@@ -139,74 +162,86 @@ export default function WarehouseStock() {
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading stock records...</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', padding: '20px' }}>
-            {stockItems.map(item => (
-              <div key={item.id} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-primary)' }}>{item.material_name}</h3>
-                      <span style={{ fontSize: '12px', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px', color: 'var(--text-muted)', display: 'inline-block', marginTop: '4px' }}>{item.category || 'General'}</span>
-                    </div>
-                    <span style={{ 
-                      fontSize: '12px', padding: '4px 10px', borderRadius: '20px', fontWeight: 600,
-                      background: item.status === 'Verified' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)',
-                      color: item.status === 'Verified' ? 'var(--success)' : 'var(--warning)'
-                    }}>
-                      {item.status || 'Pending'}
-                    </span>
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
-                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quantity</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{item.quantity} {item.uom}</div>
-                    </div>
-                    <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{item.location || '-'}</div>
-                    </div>
-                  </div>
-                </div>
+          <div style={{ padding: '20px' }}>
+            {Object.entries(groupedItems).map(([rack, items]) => (
+              <div key={rack} style={{ marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '2px solid var(--border)', paddingBottom: '8px' }}>
+                  <Package size={20} /> {rack}
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                  {items.map(item => (
+                    <div key={item.id} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-primary)' }}>{item.material_name}</h3>
+                            <span style={{ fontSize: '12px', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '4px', color: 'var(--text-muted)', display: 'inline-block', marginTop: '4px' }}>{item.category || 'General'}</span>
+                          </div>
+                          <span style={{ 
+                            fontSize: '12px', padding: '4px 10px', borderRadius: '20px', fontWeight: 600,
+                            background: item.status === 'Verified' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)',
+                            color: item.status === 'Verified' ? 'var(--success)' : 'var(--warning)'
+                          }}>
+                            {item.status}
+                          </span>
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
+                          <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quantity</div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{item.quantity} {item.uom}</div>
+                          </div>
+                          <div style={{ background: 'var(--bg-card)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</div>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>{item.location || '-'}</div>
+                          </div>
+                        </div>
+                      </div>
 
-                <div style={{ padding: '16px', background: 'var(--bg-secondary)', flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '12px', display: 'flex', justifyContent: 'space-between', color: 'var(--text-primary)' }}>
-                    <span>Photos ({item.images?.length || 0})</span>
-                    <label style={{ cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                      <UploadCloud size={14} /> Upload
-                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleImageUpload(e, item.id)} />
-                    </label>
-                  </div>
-                  
-                  {item.images && item.images.length > 0 ? (
-                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                      {item.images.map(img => (
-                        <div key={img.id} style={{ 
-                          width: '64px', height: '64px', borderRadius: '8px', overflow: 'hidden', 
-                          border: '2px solid white', flexShrink: 0, boxShadow: 'var(--shadow-sm)',
-                          backgroundImage: `url(${api.defaults.baseURL.replace('/api/v1', '')}${img.image_url})`,
-                          backgroundSize: 'cover', backgroundPosition: 'center'
-                        }} />
-                      ))}
+                      <div style={{ padding: '16px', background: 'var(--bg-secondary)', flex: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '12px', display: 'flex', justifyContent: 'space-between', color: 'var(--text-primary)' }}>
+                          <span>Photos ({item.images?.length || 0})</span>
+                          <label style={{ cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                            <UploadCloud size={14} /> Upload
+                            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleImageUpload(e, item.id)} />
+                          </label>
+                        </div>
+                        
+                        {item.images && item.images.length > 0 ? (
+                          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                            {item.images.map(img => (
+                              <div key={img.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                <div style={{ 
+                                  width: '64px', height: '64px', borderRadius: '8px', overflow: 'hidden', 
+                                  border: '2px solid white', flexShrink: 0, boxShadow: 'var(--shadow-sm)',
+                                  backgroundImage: `url(${api.defaults.baseURL.replace('/api/v1', '')}${img.image_url})`,
+                                  backgroundSize: 'cover', backgroundPosition: 'center'
+                                }} title={`Image ID: IMG-${img.id}`} />
+                                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)' }}>IMG-{img.id}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '20px', textAlign: 'center', background: 'var(--bg-card)', border: '1px dashed var(--border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
+                            <ImageIcon size={20} style={{ opacity: 0.5, marginBottom: '8px', margin: '0 auto' }} />
+                            <div style={{ fontSize: '12px' }}>No photos yet</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', background: 'var(--bg-card)' }}>
+                         <button onClick={() => handleDelete(item.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                           Delete Record
+                         </button>
+                      </div>
                     </div>
-                  ) : (
-                    <div style={{ padding: '20px', textAlign: 'center', background: 'var(--bg-card)', border: '1px dashed var(--border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
-                      <ImageIcon size={20} style={{ opacity: 0.5, marginBottom: '8px', margin: '0 auto' }} />
-                      <div style={{ fontSize: '12px' }}>No photos yet</div>
-                    </div>
-                  )}
-                </div>
-                
-                <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', background: 'var(--bg-card)' }}>
-                   <button onClick={() => handleDelete(item.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
-                     Delete Record
-                   </button>
+                  ))}
                 </div>
               </div>
             ))}
-            {stockItems.length === 0 && (
-              <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                No stock records found. Click "New Stock Record" to add one.
+            {filteredItems.length === 0 && (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                No stock records match your search criteria.
               </div>
             )}
           </div>

@@ -50,7 +50,7 @@ function CashBookTab({ companyId, activeFy }) {
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
             <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
@@ -61,7 +61,7 @@ function CashBookTab({ companyId, activeFy }) {
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
           </div>
@@ -198,7 +198,7 @@ function BankBookTab({ companyId, activeFy }) {
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
             <span style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>to</span>
@@ -209,7 +209,7 @@ function BankBookTab({ companyId, activeFy }) {
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 className="cb-input"
-                style={{ paddingLeft: 36, width: 140 }}
+                style={{ paddingLeft: 40, paddingRight: 10, width: 160 }}
               />
             </div>
           </div>

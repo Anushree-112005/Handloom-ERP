@@ -853,3 +853,10 @@
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── 38. Fix date input padding across all finance reports ── */
+input[type="date"].cb-input {
+  padding-left: 36px !important;
+  padding-right: 32px !important;
+  min-width: 180px !important;
+}
