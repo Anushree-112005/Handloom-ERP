@@ -49,8 +49,8 @@ export default function Dashboard() {
   const [prodVsDispatch, setProdVsDispatch] = useState(baseProdVsDispatchData);
   const [bottleneckData, setBottleneckData] = useState(baseBottleneckData);
   const [buyerQty, setBuyerQty] = useState(baseBuyerQtyData);
-  const [qualityCompliance, setQualityCompliance] = useState(baseQualityCompliance);
-  const [dispatchByTransporter, setDispatchByTransporter] = useState(baseDispatchByTransporter);
+  const [qualityCompliance, setQualityCompliance] = useState([]);
+  const [dispatchByTransporter, setDispatchByTransporter] = useState([]);
 
   // Dropdown UI state
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
@@ -105,15 +105,15 @@ export default function Dashboard() {
 
     // 1. Update Daily Operations Panel
     setOperations([
-      { label: 'Vendor Inward', value: `${Math.round(vendorInward * factor)} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
-      { label: 'Purchase Inward', value: `${Math.round(purchaseInward * factor).toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
-      { label: 'Process Delivery', value: `${Math.round(processDelivery * factor)} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
-      { label: 'Process Inward', value: `${Math.round(processInward * factor)} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
-      { label: 'Sales Delivery', value: `${Math.round(salesDelivery * factor)} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
-      { label: 'IMPO', value: `${Math.round(impoVal * factor)} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
-      { label: 'IMBO', value: `${Math.round(imboVal * factor)} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
-      { label: 'Total DC', value: `${Math.round(totalDC * factor)} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
-      { label: 'Total Qty', value: `${Math.round(totalQty * factor).toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
+      { label: 'Vendor Inward', value: `${vendorInward} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
+      { label: 'Purchase Inward', value: `${purchaseInward.toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
+      { label: 'Process Delivery', value: `${processDelivery} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
+      { label: 'Process Inward', value: `${processInward} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
+      { label: 'Sales Delivery', value: `${salesDelivery} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
+      { label: 'IMPO', value: `${impoVal} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
+      { label: 'IMBO', value: `${imboVal} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
+      { label: 'Total DC', value: `${totalDC} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
+      { label: 'Total Qty', value: `${totalQty.toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
     ]);
 
     // 2. Update Charts
@@ -154,8 +154,27 @@ export default function Dashboard() {
     }
   }, [stats, dateFilter]);
 
-  const exportToExcel = () => { alert("Export triggered"); };
-  const exportToPDF = () => { alert("Export triggered"); };
+  const exportToExcel = () => {
+    setExportDropdownOpen(false);
+    const data = operations.map(op => ({ Metric: op.label, Value: op.value }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Operations");
+    XLSX.writeFile(wb, `Dashboard_${dateFilter.replace(/\s+/g, '_')}.xlsx`);
+  };
+
+  const exportToPDF = () => {
+    setExportDropdownOpen(false);
+    const doc = new jsPDF();
+    doc.text(`Dashboard Operations Report (${dateFilter})`, 14, 15);
+    const tableData = operations.map(op => [op.label, op.value]);
+    autoTable(doc, {
+      head: [['Metric', 'Value']],
+      body: tableData,
+      startY: 20,
+    });
+    doc.save(`Dashboard_${dateFilter.replace(/\s+/g, '_')}.pdf`);
+  };
 
   const renderMetricGrid = (title, items) => (
     <div style={{ marginBottom: 20 }}>
@@ -339,47 +358,6 @@ export default function Dashboard() {
               <Tooltip />
               <Legend content={renderCustomLegend} verticalAlign="middle" align="right" layout="vertical" />
             </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-
-      {/* Row 2: 3 Columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
-        <ChartCard title="Quality Compliance %" subtitle="Pass rate per process step">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={qualityCompliance} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={20}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
-              <Tooltip cursor={{fill: 'transparent'}} />
-              <Bar dataKey="value" fill="#0284c7" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Dispatch by Transporter" subtitle="Volume distributed (Meters)">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dispatchByTransporter} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={20}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
-              <Tooltip cursor={{fill: 'transparent'}} />
-              <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Dispatch Target vs Actual" subtitle="Last 4 Weeks Analysis">
-           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={prodVsDispatch.slice(-4)} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-              <Tooltip cursor={{fill: 'transparent'}} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="Dispatch" name="Actual Dispatch" fill="#38bdf8" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Production" name="Target Dispatch" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-            </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>

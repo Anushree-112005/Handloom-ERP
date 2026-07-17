@@ -477,7 +477,7 @@ async def calculate_requirement(design_id: int, db: AsyncSession = Depends(get_d
         threads = item.threads or 0
         weft_wastage = wastage_weft - 0.085
         weight_kg = (threads * sized_length) / (count * 1693.6) * weft_wastage
-        item.req_kg = math.ceil(weight_kg)
+        item.req_kg = max(1, int(weight_kg + 0.5)) if weight_kg > 0 else 0
         total_weft_kg += item.req_kg
 
     design.warp_kg = float(total_warp_kg)

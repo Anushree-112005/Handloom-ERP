@@ -1,0 +1,153 @@
+/* Mobile Responsive Styles strictly scoped to the Status Update module */
+@media screen and (max-width: 768px) {
+  .status-update-mobile-scope {
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
+    width: 100vw;
+    max-width: 100%;
+  }
+
+  /* ---------------------- LOGIN PAGE ---------------------- */
+  .status-update-mobile-scope.login-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 10vh;
+  }
+  
+  .status-update-mobile-scope .login-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .status-update-mobile-scope .login-card input {
+    height: 48px; /* Touch friendly */
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  .status-update-mobile-scope .login-card button {
+    height: 50px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* ---------------------- DASHBOARD ---------------------- */
+  .status-update-mobile-scope.su-dashboard-wrapper {
+    height: 100vh; /* Fill entire viewport */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Sticky Header */
+  .status-update-mobile-scope .su-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px;
+    padding: 16px !important;
+  }
+  
+  .status-update-mobile-scope .su-header h2 {
+    font-size: 18px !important;
+  }
+
+  .status-update-mobile-scope .su-header-actions {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .status-update-mobile-scope .su-header-actions button {
+    height: 40px; /* Touch friendly logout */
+  }
+
+  /* Main scrollable area */
+  .status-update-mobile-scope .su-content {
+    padding: 12px !important;
+    padding-bottom: 80px !important; /* Space for sticky bottom bar if any */
+  }
+
+  /* Order Selection */
+  .status-update-mobile-scope .su-order-select-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 16px !important;
+  }
+  
+  .status-update-mobile-scope .su-order-select-card > div:last-child {
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .status-update-mobile-scope .su-order-select-card select {
+    height: 48px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  /* Metrics Grid (Stats Cards) */
+  .status-update-mobile-scope .su-metrics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .status-update-mobile-scope .stat-card {
+    padding: 12px !important;
+  }
+
+  /* Layout container (Stages and History) */
+  .status-update-mobile-scope .su-main-layout {
+    grid-template-columns: 1fr !important; /* Stack vertically */
+    gap: 20px !important;
+  }
+
+  /* Forms inside Stage Cards */
+  .status-update-mobile-scope .su-stage-form-grid {
+    grid-template-columns: 1fr !important; /* Stack vertically */
+    gap: 12px !important;
+  }
+  
+  .status-update-mobile-scope .su-stage-form-grid select,
+  .status-update-mobile-scope .su-stage-form-grid input {
+    height: 48px;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  /* Stage Form Action Buttons */
+  .status-update-mobile-scope .su-stage-actions {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  
+  .status-update-mobile-scope .su-stage-actions button {
+    width: 100%;
+    height: 48px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* General Touch Targets */
+  .status-update-mobile-scope button {
+    min-height: 44px; /* Minimum touch target size */
+  }
+  
+  .status-update-mobile-scope .btn-secondary {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+  }
+
+  /* Make texts slightly larger for readability */
+  .status-update-mobile-scope p,
+  .status-update-mobile-scope span,
+  .status-update-mobile-scope div {
+    /* Don't force font sizes everywhere, just specific ones */
+  }
+}

@@ -42,10 +42,10 @@ export default function WarehouseStock() {
       const payload = { ...newItem, quantity: parseFloat(newItem.quantity) || 0 };
       const response = await api.post('/warehouse-stock/', payload);
       
-      if (newItemImage && response.data?.data?.id) {
+      if (newItemImage && response.data?.id) {
         const formData = new FormData();
         formData.append("file", newItemImage);
-        await api.post(`/warehouse-stock/${response.data.data.id}/images`, formData, {
+        await api.post(`/warehouse-stock/${response.data.id}/images`, formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
       }

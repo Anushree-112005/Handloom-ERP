@@ -147,16 +147,14 @@ export default function YarnStock() {
         </div>
       </div>
 
+
       {/* Stats Cards */}
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
           <p>Loading yarn stock data...</p>
         </div>
-      ) : stock.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <p>No stock data available. Record yarn inward receipts first.</p>
-        </div>
       ) : (
+      <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
         <div className="card stat-card">
           <div className="stat-icon" style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)' }}>
@@ -186,10 +184,7 @@ export default function YarnStock() {
           </div>
         </div>
       </div>
-      )}
 
-      {!loading && stock.length > 0 && (
-      <>
       {/* Filters & Controls */}
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
         <div style={{ position: 'relative', flex: 1 }}>
@@ -261,7 +256,7 @@ export default function YarnStock() {
             {filteredStock.length === 0 && (
               <tr>
                 <td colSpan={10} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  No stock records match the selection.
+                  {stock.length === 0 ? 'No stock data available. Record yarn inward receipts first.' : 'No stock records match the selection.'}
                 </td>
               </tr>
             )}

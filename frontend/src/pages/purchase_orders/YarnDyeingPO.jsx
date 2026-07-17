@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Palette, FileText, Layers, IndianRupee, Download, Table } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, Palette, FileText, Layers, IndianRupee, Download, Table, ArrowLeft } from 'lucide-react';
 import { yarnDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI, yarnInwardAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
@@ -390,8 +390,8 @@ export default function YarnDyeingPO() {
     const crimpPct = parseFloat(de.crimp_pct) || 0;
     const skgPct = parseFloat(de.skg_pct) || 0;
     const dyeingPct = parseFloat(de.dyeing_loss_pct) || 0;
-    const warpLength = parseFloat(de.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-    const weftProMtrVal = parseFloat(de.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+    const warpLength = Math.round(parseFloat(de.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+    const weftProMtrVal = Math.round(parseFloat(de.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
 
     const parseEqCount = (lbl) => {
       const YARN_COUNTS = {
@@ -483,7 +483,7 @@ export default function YarnDyeingPO() {
       const eqCount = parseEqCount(row.count);
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
       return { ...row, total_ends: groupEnds, req_kg };
     });
 
@@ -951,12 +951,19 @@ export default function YarnDyeingPO() {
           />
       ) : (
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setForm(initialForm); }}><X size={16} /> Close</button>
-              <button type="submit" form="yd-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => { setShowForm(false); setForm(initialForm); }} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {form.id ? 'Edit' : 'Create'} {title}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -983,9 +990,8 @@ export default function YarnDyeingPO() {
 
            <form id="yd-po-form" onSubmit={handleCreate} style={{ padding: 24, background: '#fff' }}>
             <div id="section-info" className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 24, gap: '12px 24px' }}>
-              <div className="form-group"><label>PO No</label><input type="text" className="form-control" name="po_no" value={form.po_no} disabled style={{ fontWeight: 'bold', color: 'var(--primary)' }} /></div>
               <div className="form-group"><label>Order Date</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-              <div className="form-group">
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
                 <label>Order No. (Buyer Order) *</label>
                 <select className="form-control" name="ref_no_1" value={form.ref_no_1 || ''} onChange={handleChange} required>
                   <option value="">Select Order No...</option>
@@ -1046,16 +1052,17 @@ export default function YarnDyeingPO() {
                 </select>
               </div>
               <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                <label>Certificate Type</label>
                 <SubMasterDropdown
+                  label="Certificate Type"
                   name="certificate_type"
                   value={form.certificate_type}
-                  entity="certificate_type_master"
-                  category="certificate_type"
+                  entity="certified_type"
+                  category="certified_type"
                   options={options}
                   onChange={handleFieldChange}
                   onOptionsRefresh={handleRefreshOptions}
                   placeholder="-- Select Certificate --"
+                  allowCustom={true}
                 />
               </div>
               <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks || ''} onChange={handleChange} /></div>
@@ -1232,6 +1239,14 @@ export default function YarnDyeingPO() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setForm(initialForm); }}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> Save Order
+              </button>
             </div>
           </form>
         </div>

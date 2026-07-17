@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, Package, Factory, Download, ChevronDown, FileText } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Truck, Package, Factory, Download, ChevronDown, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 import { warpDeliveryAPI, partyAPI, warpingSizingPOAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -25,6 +25,11 @@ export default function WarpDelivery() {
   const [activeTab, setActiveTab] = useState('general');
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  // Terms state
+  const [newTerm, setNewTerm] = useState('');
+  const [editingTermIdx, setEditingTermIdx] = useState(null);
+  const [editingTermVal, setEditingTermVal] = useState('');
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('All Types');
@@ -42,6 +47,18 @@ export default function WarpDelivery() {
     
     total_beams: 0, total_meters: 0, total_exptd_mtrs: 0, balance_meters: 0,
     remarks: '', status: 'Delivered',
+    
+    terms_conditions: [],
+    gross_amt: 0,
+    tax_type: '',
+    cgst_pct: 0,
+    cgst_amount: 0,
+    sgst_pct: 0,
+    sgst_amount: 0,
+    igst_pct: 0,
+    igst_amount: 0,
+    net_amount: 0,
+
     items: [{
       beam_no: '', beam_type: '', yarn_count: '', warp_ends: 0, reed_width: 0,
       warp_mtrs: 0, weight_kgs: 0, loom_no: '', remarks: '', beam_status: ''
@@ -67,6 +84,29 @@ export default function WarpDelivery() {
 
   useEffect(() => { loadData(); }, []);
 
+  const addTerm = () => {
+    if (newTerm.trim()) {
+      setForm({ ...form, terms_conditions: [...(form.terms_conditions || []), newTerm.trim()] });
+      setNewTerm('');
+    }
+  };
+
+  const removeTerm = (index) => {
+    setForm({ ...form, terms_conditions: (form.terms_conditions || []).filter((_, i) => i !== index) });
+  };
+
+  const recalculate = (updatedForm) => {
+    const grossAmt = parseFloat(updatedForm.gross_amt) || 0;
+    const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
+    const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
+    const igstPct = parseFloat(updatedForm.igst_pct) || 0;
+    const cgstAmount = parseFloat(((cgstPct / 100) * grossAmt).toFixed(2));
+    const sgstAmount = parseFloat(((sgstPct / 100) * grossAmt).toFixed(2));
+    const igstAmount = parseFloat(((igstPct / 100) * grossAmt).toFixed(2));
+    const netAmount = grossAmt + cgstAmount + sgstAmount + igstAmount;
+    return { ...updatedForm, cgst_amount: cgstAmount, sgst_amount: sgstAmount, igst_amount: igstAmount, net_amount: netAmount };
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -90,6 +130,32 @@ export default function WarpDelivery() {
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving delivery');
     }
+  };
+ 
+  const handleOpenNewForm = () => {
+    setEditingId(null);
+    setIsReadOnly(false);
+    let maxNum = 0;
+    deliveries.forEach(d => {
+      if (d.dc_no && d.dc_no.toUpperCase().startsWith("WD-")) {
+        const parts = d.dc_no.split("-");
+        if (parts.length > 1) {
+          const num = parseInt(parts[1]);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    });
+    const nextDcNo = `WD-${String(maxNum + 1).padStart(5, '0')}`;
+    setForm({
+      ...initialForm,
+      dc_no: nextDcNo,
+      dc_date: new Date().toISOString().split('T')[0],
+      po_date: new Date().toISOString().split('T')[0]
+    });
+    setActiveTab('general');
+    setShowForm(true);
   };
 
   const handleOpenForm = async (entry, readOnly = false) => {
@@ -140,8 +206,8 @@ export default function WarpDelivery() {
     if (po) {
       setForm(prev => {
         const newForm = { ...prev, po_no_base: poNo, ref_no: poNo };
-        newForm.party_name = po.supplier_job_worker || prev.party_name;
-        newForm.sizing_name = po.supplier_job_worker || prev.sizing_name;
+        newForm.party_name = po.party_name || po.supplier_job_worker || prev.party_name;
+        newForm.sizing_name = po.party_name || po.supplier_job_worker || prev.sizing_name;
         newForm.order_no = po.order_no || prev.order_no;
         newForm.bpo_no = po.buyer_order_no || po.order_no || prev.bpo_no;
         newForm.design_no = po.design_no || prev.design_no;
@@ -151,6 +217,18 @@ export default function WarpDelivery() {
         newForm.yarn_count = po.selected_count || prev.yarn_count;
         newForm.order_mtrs = parseFloat(po.warp_meters) || prev.order_mtrs;
         newForm.remarks = po.remarks || prev.remarks;
+        
+        // Fetch financial info
+        newForm.terms_conditions = po.terms_conditions || [];
+        newForm.gross_amt = parseFloat(po.gross_amt) || 0;
+        newForm.tax_type = po.tax_type || '';
+        newForm.cgst_pct = parseFloat(po.cgst_pct) || 0;
+        newForm.cgst_amount = parseFloat(po.cgst_amount) || 0;
+        newForm.sgst_pct = parseFloat(po.sgst_pct) || 0;
+        newForm.sgst_amount = parseFloat(po.sgst_amount) || 0;
+        newForm.igst_pct = parseFloat(po.igst_pct) || 0;
+        newForm.igst_amount = parseFloat(po.igst_amount) || 0;
+        newForm.net_amount = parseFloat(po.net_amount) || 0;
         
         // Calculate items
         const newItems = [];
@@ -217,8 +295,26 @@ export default function WarpDelivery() {
       handleFetchFromWarpingSizingPO(value);
       return;
     }
+
+    if (name === 'tax_type') {
+      let taxUpdates = { tax_type: value };
+      if (value === 'GST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 2.5, cgst_pct: 2.5, igst_pct: 0 };
+      } else if (value === 'IGST') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 5.0 };
+      } else if (value === 'Exempt') {
+        taxUpdates = { ...taxUpdates, sgst_pct: 0, cgst_pct: 0, igst_pct: 0 };
+      }
+      setForm(prev => recalculate({ ...prev, ...taxUpdates }));
+      return;
+    }
+
+    if (['gross_amt', 'cgst_pct', 'sgst_pct', 'igst_pct'].includes(name)) {
+      setForm(prev => recalculate({ ...prev, [name]: value }));
+      return;
+    }
     
-    setForm({ ...form, [name]: value });
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, initialForm.items[0]] });
@@ -329,7 +425,7 @@ export default function WarpDelivery() {
                   </div>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+              <button className="btn btn-primary" onClick={handleOpenNewForm}>
                 <Plus size={18} /> New Delivery
               </button>
             </div>
@@ -460,14 +556,17 @@ export default function WarpDelivery() {
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Delivery Details' : editingId ? 'Edit Delivery' : 'New Warp Delivery'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -504,14 +603,12 @@ export default function WarpDelivery() {
                         {warpingSizingPOs.filter(p => p.po_no).map(p => <option key={p.id} value={p.po_no}>{p.po_no} ({p.supplier_job_worker || p.party_name || 'No Vendor'})</option>)}
                       </select>
                     </div>
-                    <div className="form-group"><label>Ref No / DC SNo</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Dely Type</label>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Dely Type</label>
                       <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
                         <option>Direct</option><option>Against Order</option>
                       </select>
                     </div>
-                    <div className="form-group"><label>DC No</label><input className="form-control" name="dc_no" value={form.dc_no} onChange={handleChange} disabled={editingId != null} /></div>
-                    <div className="form-group"><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
 
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Sizing Name</label><input className="form-control" name="sizing_name" value={form.sizing_name} onChange={handleChange} /></div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
@@ -586,8 +683,160 @@ export default function WarpDelivery() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Section 3: Terms & Conditions & Order Summary */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Terms & Summary</h4>
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
+                        </div>
+                        <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {(form.terms_conditions || []).map((term, idx) => (
+                              <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                {editingTermIdx === idx ? (
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'green' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={16} /></button>
+                                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--text-muted)' }} onClick={() => setEditingTermIdx(null)}><X size={16} /></button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                                    <span>{term}</span>
+                                    {!isReadOnly && (
+                                      <div style={{ display: 'flex', gap: 6 }}>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--primary)' }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }}><Edit2 size={14} /></button>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#ef4444' }} onClick={() => removeTerm(idx)}><Trash2 size={14} /></button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                          {!isReadOnly && (
+                            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                              <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
+                              <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
+                                <Plus size={16} /> Add
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ORDER SUMMARY */}
+                    <div style={{ width: 350, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
+                        </div>
+                        <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                          
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Gross Amount</span>
+                            <input 
+                              type="number" 
+                              name="gross_amt" 
+                              value={form.gross_amt} 
+                              onChange={handleChange} 
+                              disabled={isReadOnly}
+                              style={{
+                                width: '120px',
+                                textAlign: 'right',
+                                border: '1px solid var(--border)',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                color: 'var(--text-primary)',
+                                background: 'transparent'
+                              }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Tax Type</span>
+                            <select 
+                              name="tax_type" 
+                              value={form.tax_type || ''} 
+                              onChange={handleChange}
+                              disabled={isReadOnly}
+                              style={{
+                                width: '120px',
+                                textAlign: 'right',
+                                border: '1px solid var(--border)',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                color: 'var(--text-primary)',
+                                background: 'transparent'
+                              }}
+                            >
+                              <option value="">Select...</option>
+                              <option value="GST">GST</option>
+                              <option value="IGST">IGST</option>
+                              <option value="Exempt">Exempt</option>
+                            </select>
+                          </div>
+
+                          {(form.tax_type === 'GST') && (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                                  <input type="number" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} disabled={isReadOnly} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                                </div>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                                  <input type="number" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} disabled={isReadOnly} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                                </div>
+                                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            </>
+                          )}
+
+                          {form.tax_type === 'IGST' && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                                  <input type="number" name="igst_pct" value={form.igst_pct} onChange={handleChange} disabled={isReadOnly} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                              </div>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          )}
+
+                          <div style={{ borderTop: '1px dashed var(--border)', margin: '4px 0' }} />
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 700 }}>Net Amount</span>
+                            <span style={{ fontSize: 16, color: 'var(--primary)', fontWeight: 800 }}>₹{(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
             </fieldset>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              {!isReadOnly && (
+                <button type="button" className="btn btn-primary" onClick={handleCreate}>
+                  <Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

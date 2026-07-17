@@ -57,9 +57,17 @@ pipeline {
         stage('📥 Checkout Code') {
             steps {
                 echo '📥 Fetching source code...'
-                git branch: "${GIT_BRANCH}",
-                    url: "${GIT_URL}",
-                    credentialsId: "${GITHUB_CRED_ID}"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${GIT_BRANCH}"]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30]
+                    ],
+                    userRemoteConfigs: [[
+                        credentialsId: "${GITHUB_CRED_ID}",
+                        url: "${GIT_URL}"
+                    ]]
+                ])
             }
         }
 
@@ -165,6 +173,11 @@ pipeline {
                             export FRONTEND_IMAGE=$FRONTEND_IMAGE &&
                             
                             (docker compose up -d --force-recreate || docker-compose up -d --force-recreate) &&
+                            
+                            echo "Waiting for backend container to start..." &&
+                            sleep 5 &&
+                            (docker compose exec -T backend python recreate_tables.py || docker-compose exec -T backend python recreate_tables.py || echo "Recreate database command failed but proceeding") &&
+
                             docker image prune -af --filter 'until=12h' &&
                             docker ps
                         "

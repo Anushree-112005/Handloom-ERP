@@ -21,7 +21,7 @@ from app.api.v1.router import api_router
 import app.models  # noqa: F401
     
 
-RESET_DATABASE = False    # Change to True to clear all data from tables on restart
+RESET_DATABASE = False       # Change to True to clear all data from tables on restart
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -363,8 +363,8 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 @app.get("/")
 async def root():
     return {"message": "Dinesh Textile ERP API", "version": "1.0.0", "docs": "/docs"}
-
-import os, shutil, sys
+import sys
+import shutil
 
 # MIGRATION LOGIC (Runs once during Uvicorn reload)
 try:

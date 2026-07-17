@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, ShoppingCart, Activity, CheckCircle, Package, Clock, Download, FileText, ChevronDown, MessageSquare, CreditCard, ClipboardList, Settings, Truck, Star, Filter } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, ShoppingCart, Activity, CheckCircle, Package, Clock, Download, FileText, ChevronDown, MessageSquare, CreditCard, ClipboardList, Settings, Truck, Star, Filter, ArrowLeft } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { buyerOrderAPI, partyAPI, employeeAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
@@ -1207,14 +1207,15 @@ export default function BuyerOrder() {
                   <thead>
                     <tr>
                       <th>IBPO No</th><th>Order Date</th><th>Party Name</th>
-                      <th>Type</th><th>Items</th><th>Status</th><th>Actions</th>
+                      <th>Fabric Name</th><th>PO No</th><th>PO Date</th>
+                      <th>Pattern</th><th>Order Mtr</th><th>Certified</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredOrders.length === 0 ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
                     ) : filteredOrders.map(o => (
                       <tr
                         key={o.id}
@@ -1224,9 +1225,12 @@ export default function BuyerOrder() {
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{o.ibpo_number}</td>
                         <td>{o.order_date}</td>
                         <td style={{ fontWeight: 500 }}>{o.party_name}</td>
-                        <td><span className="badge badge-active">{o.order_type || 'Regular'}</span></td>
-                        <td>{o.items?.length || 0} items</td>
-                        <td><span className={`badge ${o.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{o.status}</span></td>
+                        <td>{o.items?.map(it => it.fabric_type).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.party_po_no).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.po_date).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.pattern).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.order_mtrs).filter(it => it !== undefined && it !== null).join(', ') || '0'}</td>
+                        <td>{o.certified_type || 'N/A'}</td>
                         <td onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button
@@ -1306,14 +1310,19 @@ export default function BuyerOrder() {
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Buyer Order Details' : editingId ? 'Edit Buyer Order' : 'New Buyer Order Entry'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Order' : 'Save Order'}</button>
-              )}
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {isReadOnly ? 'View Buyer Order Details' : editingId ? 'Edit Buyer Order' : 'New Buyer Order Entry'}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -1346,14 +1355,10 @@ export default function BuyerOrder() {
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Main Details</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
-                      <label>IBPO Number</label>
-                      <input type="text" className="form-control" value={form.ibpo_number || (editingId ? 'AUTO-GENERATED' : getNextIbpoNumber())} disabled style={{ background: 'rgba(0,0,0,0.05)', fontWeight: 600, color: 'var(--primary)' }} />
-                    </div>
-                    <div className="form-group">
                       <label>Order Date *</label>
                       <input type="date" className="form-control" name="order_date" value={form.order_date} onChange={handleChange} required />
                     </div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <div className="form-group" style={{ gridColumn: 'span 3' }}>
                       <label>Party Name *</label>
                       <select className="form-control" required value={form.party_id} onChange={handlePartyChange}>
                         <option value="">Select Party...</option>
@@ -1457,10 +1462,17 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Merchandiser</label>
-                      <input list="buyer-merchandiser-list" className="form-control" name="merchandiser" value={form.merchandiser || ''} onChange={handleChange} placeholder="Select or type..." />
-                      <datalist id="buyer-merchandiser-list">
-                        {employees.map(e => <option key={e.id} value={e.name} />)}
-                      </datalist>
+                      <select className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange}>
+                        <option value="">Select Merchandiser...</option>
+                        {employees.filter(e => e.department === 'Merchandising' && e.status === 'Active').length === 0 ? (
+                          <option value="" disabled>No Merchandising Employees Found</option>
+                        ) : (
+                          employees
+                            .filter(e => e.department === 'Merchandising' && e.status === 'Active')
+                            .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                            .map(e => <option key={e.id} value={e.name}>{e.name}</option>)
+                        )}
+                      </select>
                     </div>
                     <div className="form-group">
                       <label>Nomination</label>
@@ -1621,6 +1633,17 @@ export default function BuyerOrder() {
                   </div>
               </div>
             </fieldset>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              {!isReadOnly && (
+                <button type="button" className="btn btn-primary" onClick={handleCreate}>
+                  <Save size={16} /> {editingId ? 'Update Order' : 'Save Order'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

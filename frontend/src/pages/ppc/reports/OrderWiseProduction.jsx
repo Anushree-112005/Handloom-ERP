@@ -33,12 +33,13 @@ export default function OrderWiseProduction() {
       const allocationsList = allocRes.data || [];
 
       const reportData = ordersList.map((order, i) => {
-        const orderIdStr = order.order_no || order.id.toString();
+        const orderIdStr = order.ibpo_number || order.order_no || order.id.toString();
         const orderAllocs = allocationsList.filter(a => a.order_id === orderIdStr || a.order_id === order.id.toString());
         
         const looms = orderAllocs.length;
         // fallback to order total if no allocs
-        const total = looms > 0 ? orderAllocs.reduce((sum, a) => sum + (a.assigned_meters || 0), 0) : (order.total_amount || 0); 
+        const totalItemsMeters = (order.items || []).reduce((sum, item) => sum + (item.order_mtrs || 0), 0);
+        const total = looms > 0 ? orderAllocs.reduce((sum, a) => sum + (a.assigned_meters || 0), 0) : totalItemsMeters; 
         const produced = orderAllocs.reduce((sum, a) => sum + (a.completed_meters || 0), 0);
         const remaining = Math.max(0, total - produced);
         const completion = total > 0 ? (produced / total) * 100 : 0;
@@ -54,7 +55,7 @@ export default function OrderWiseProduction() {
 
         return {
           id: order.id,
-          order_id: order.order_no || `ORD-${order.id}`,
+          order_id: orderIdStr,
           buyer_name: order.party_name || 'Unknown Buyer',
           fabric_type: order.fabric_quality || 'Standard',
           order_date: order.order_date || '2026-01-01',

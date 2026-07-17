@@ -21,6 +21,8 @@ export default function FinishingDelivery() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
+  const [nextDcNo, setNextDcNo] = useState('');
+
   // Split view state
   const [selectedViewDelivery, setSelectedViewDelivery] = useState(null);
   const [viewModalDelivery, setViewModalDelivery] = useState(null);
@@ -106,6 +108,22 @@ export default function FinishingDelivery() {
     try {
       setLoading(true);
       const { data } = await clothDeliveryAPI.list();
+      // Calculate max CD- dc_no
+      let maxNum = 0;
+      data.forEach(d => {
+        if (d.dc_no && d.dc_no.toUpperCase().startsWith("CD-")) {
+          const parts = d.dc_no.split("-");
+          if (parts.length > 1) {
+            const num = parseInt(parts[1]);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        }
+      });
+      const nextNum = maxNum > 0 ? maxNum + 1 : 5001;
+      setNextDcNo(`CD-${nextNum}`);
+
       // Filter only "Finishing" deliveries
       const finishingOnly = data.filter(d => d.process_type === 'Finishing');
       setDeliveries(finishingOnly);
@@ -167,7 +185,11 @@ export default function FinishingDelivery() {
         setItems([{ piece_no: '', lot_no: '', ok_mtr: 0, fold_mtr: 0, design_no: '', color: '', rate: 0, amount: 0 }]);
       }
     } else {
-      setFormData(initialForm);
+      setFormData({
+        ...initialForm,
+        dc_no: nextDcNo,
+        dc_date: new Date().toISOString().split('T')[0]
+      });
       setEditingId(null);
       setItems([{ piece_no: '', lot_no: '', ok_mtr: 0, fold_mtr: 0, design_no: '', color: '', rate: 0, amount: 0 }]);
     }
@@ -316,14 +338,17 @@ export default function FinishingDelivery() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Finishing Delivery Details' : editingId ? 'Edit Finishing Delivery Challan' : 'Add New Finishing Delivery Entry'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button type="submit" form="finishingDeliveryForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Challan' : 'Save Challan'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -354,11 +379,7 @@ export default function FinishingDelivery() {
                 <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Finishing Delivery & Party Information</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
-                      <div className="form-group">
-                        <label>DC No *</label>
-                        <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>DC Date *</label>
                         <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} required />
                       </div>
@@ -520,6 +541,16 @@ export default function FinishingDelivery() {
                     </div>
                   </div>
               </fieldset>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>

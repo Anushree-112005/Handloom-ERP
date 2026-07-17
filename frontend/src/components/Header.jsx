@@ -78,6 +78,63 @@ export default function Header() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
 
+  // Helper to format relative time
+  const getTimeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const now = new Date();
+    const past = new Date(dateStr);
+    const diffMs = now - past;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
+  };
+
+  useEffect(() => {
+    // Setup WebSocket for Real-Time Notifications
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const isDev = import.meta.env.DEV;
+    const wsHost = isDev ? '127.0.0.1:8000' : window.location.host;
+    const wsUrl = `${protocol}//${wsHost}/api/v1/notifications/ws`;
+    
+    let ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'history') {
+          setNotifications(payload.data);
+        } else if (payload.type === 'new_notification') {
+          setNotifications(prev => {
+            const exists = prev.find(n => n.id === payload.data.id);
+            if (exists) return prev;
+            return [payload.data, ...prev];
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing websocket notification', e);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    // Update relative times every minute
+    const interval = setInterval(() => {
+      setNotifications(prev => [...prev]); // trigger re-render to update getTimeAgo
+    }, 60000);
+
+    return () => {
+      ws.close();
+      clearInterval(interval);
+    };
+  }, []);
+
   useEffect(() => {
     const loadCompany = async () => {
       try {
@@ -250,15 +307,29 @@ export default function Header() {
           background-color: #f1f5f9 !important;
         }
       `}</style>
-      <div style={{ flex: '0 0 260px', overflow: 'hidden', marginRight: '16px' }}>
-        <h2 className="header-title" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '15px' }}>
-          <marquee behavior="scroll" direction="left" scrollamount="6">
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', verticalAlign: 'middle' }}>
-              <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
-              <span style={{ fontWeight: 600 }}>{companyProfile.company_name} - {companyProfile.description}</span>
-            </div>
-          </marquee>
-        </h2>
+      <div style={{ flex: '0 0 260px', marginRight: '16px', position: 'relative', zIndex: 2 }} />
+
+      {/* Background Running Marquee across topbar (stops before administrator) */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: '250px',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden'
+      }}>
+        <marquee behavior="scroll" direction="left" scrollamount="5" style={{ width: '100%' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px', verticalAlign: 'middle' }}>
+            <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+            <span style={{ fontWeight: 700, fontSize: '15px', color: '#000000', letterSpacing: '0.03em', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+              {companyProfile.company_name} — {companyProfile.description}
+            </span>
+          </div>
+        </marquee>
       </div>
 
       {/* Central Global Search Bar */}
@@ -560,11 +631,11 @@ export default function Header() {
                         <div style={{ fontSize: '12.5px', fontWeight: n.unread ? 600 : 500, color: '#1e293b' }}>
                           {n.title}
                         </div>
-                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>
+                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
                           {n.message}
                         </div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>
-                          {n.time}
+                          {getTimeAgo(n.raw_time) || n.time}
                         </div>
                       </div>
                       {n.unread && (

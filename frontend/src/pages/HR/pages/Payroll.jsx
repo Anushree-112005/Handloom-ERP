@@ -100,7 +100,7 @@ const Payroll = () => {
     return { gross: totalGross, deductions: totalDeductions, net: totalNet, pending };
   }, [rows]);
 
-  const handleEmployeeChange = async (employeeValue) => {
+  const handleEmployeeChange = (employeeValue) => {
     if (!employeeValue) {
       setForm(prev => ({
         ...prev,
@@ -120,9 +120,6 @@ const Payroll = () => {
     );
 
     if (selectedEmp) {
-      const empId = selectedEmp.id;
-      const empCode = selectedEmp.employee_id;
-      
       const empLoans = loans.filter(l => 
         (selectedEmp.id && Number(l.employee_id) === Number(selectedEmp.id)) ||
         (selectedEmp.name && l.employee_name && l.employee_name.toLowerCase() === selectedEmp.name.toLowerCase())
@@ -137,45 +134,73 @@ const Payroll = () => {
         basic: selectedEmp.basic_salary || 0,
         allowances: selectedEmp.allowances || 0,
         deductions: selectedEmp.deductions || 0,
-        lop_days: 0,
-        ot_hours: 0,
         loan_amount: activeLoansTotal
       }));
+    } else {
+      setForm(prev => ({ ...prev, employee: employeeValue, loan_amount: 0 }));
+    }
+  };
 
+  useEffect(() => {
+    const fetchAndCalculate = async () => {
+      if (!form.employee) return;
+      
+      const selectedEmp = employees.find(
+        emp => String(emp.employee_id) === String(form.employee) || String(emp.id) === String(form.employee)
+      );
+      if (!selectedEmp) return;
+      
       try {
+        const employeeValue = form.employee;
         const [attData, leavesData] = await Promise.all([
           hrService.fetchEmployeeAttendance(employeeValue).catch(() => []),
           hrService.fetchEmployeeLeaves(employeeValue).catch(() => [])
         ]);
-
-        let attLop = attData.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
-        let attOt = attData.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
-
+        
+        const targetMonthName = form.month || monthsList[new Date().getMonth()];
+        const targetMonthIdx = monthsList.indexOf(targetMonthName); // 0-11
+        
+        const filterByMonth = (list) => {
+          return list.filter(att => {
+            if (!att.date) return false;
+            const parts = att.date.split('-');
+            if (parts.length < 2) return false;
+            const monthVal = parseInt(parts[1], 10) - 1; // 0-indexed
+            return monthVal === targetMonthIdx;
+          });
+        };
+        
+        let filtered = filterByMonth(attData);
+        let attLop = filtered.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
+        let attOt = filtered.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
+        
         if (attData.length === 0) {
           const fallbackId = selectedEmp.id;
           const attDataById = await hrService.fetchEmployeeAttendance(fallbackId).catch(() => []);
+          const filteredById = filterByMonth(attDataById);
           if (attDataById.length > 0) {
-            attLop = attDataById.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
-            attOt = attDataById.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
+            attLop = filteredById.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
+            attOt = filteredById.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
           } else if (selectedEmp.employee_id) {
             const attDataByCode = await hrService.fetchEmployeeAttendance(selectedEmp.employee_id).catch(() => []);
-            attLop = attDataByCode.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
-            attOt = attDataByCode.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
+            const filteredByCode = filterByMonth(attDataByCode);
+            attLop = filteredByCode.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
+            attOt = filteredByCode.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
           }
         }
-
+        
         setForm(prev => ({
           ...prev,
           lop_days: attLop,
           ot_hours: attOt
         }));
       } catch (err) {
-        console.error("Error fetching employee details:", err);
+        console.error("Error recalculating payroll fields:", err);
       }
-    } else {
-      setForm(prev => ({ ...prev, employee: employeeValue, loan_amount: 0 }));
-    }
-  };
+    };
+    
+    fetchAndCalculate();
+  }, [form.employee, form.month, employees, loans]);
 
   const resetForm = () => {
     setForm(initialForm);

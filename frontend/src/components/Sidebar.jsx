@@ -19,6 +19,7 @@ const modules = [
   { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
+  { path: '/calendar', label: 'Calendar', icon: Calendar },
   // { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
 
 
@@ -179,6 +180,7 @@ const modules = [
   { path: '/design-ai', label: 'Design AI', icon: Sparkles },
   // { path: '/weaving-calculator', label: 'Weaving Calculator', icon: Calculator },
 
+
   { section: 'Purchase Management' },
   { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
   { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
@@ -189,25 +191,19 @@ const modules = [
   { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
   { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
-  { section: 'Yarn Management' },
-  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
 
   { isJobWorkDynamic: true },
 
   { section: 'Quality Control' },
   { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
   { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
-
   { section: 'Warehouse & Inventory' },
+  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
   { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
   { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
   { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
-
-  { section: 'Warehouse Operations' },
-  { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
   { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
-  // { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
   { section: 'Packing' },
   { path: '/packing', label: 'Packing Slip', icon: Box },
@@ -229,7 +225,6 @@ const modules = [
 
   { section: 'Reports & MIS' },
   { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
-  { path: '/log-report', label: 'Log Report', icon: Activity },
 
 
 
@@ -297,6 +292,10 @@ const modules = [
     ]
   },
 
+  // Status Update Module
+  { section: 'Status Update Module' },
+  { path: '/status-update/dashboard', label: 'Status Update', icon: Activity },
+
   // Production Planning Modules
   { section: 'Production Planning (PPC)' },
   {
@@ -311,11 +310,12 @@ const modules = [
       { path: '/ppc/master/loom-master', label: 'Master Setup', icon: Settings },
       { path: '/ppc/planning/availability', label: 'Loom Planning', icon: ClipboardList },
       { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
+      { path: '/costing-sheet', label: 'Costing Sheet', icon: Calculator },
       //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
-      { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
+      { path: '/ppc/monitoring', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/ppc/tracking/order-progress', label: 'Progress', icon: TrendingUp },
       { path: '/ppc/problem/breakdown-entry', label: 'Problems', icon: Wrench },
-      { path: '/ppc/alerts/eta-calc', label: 'ETA Engine', icon: Clock },
+      { path: '/ppc/eta-engine', label: 'ETA Engine', icon: Clock },
       { path: '/ppc/alerts/low-efficiency', label: 'Alerts', icon: Bell, badge: '3', badgeColor: '#e11d48' },
       { path: '/ppc/reports/loom-wise', label: 'Reports', icon: FileText }
     ]
@@ -363,11 +363,14 @@ const modules = [
       { path: '/fleet/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/fleet/vehicles', label: 'Vehicles', icon: Truck },
       { path: '/fleet/drivers', label: 'Vehicle Assignment', icon: Users },
+      { path: '/fleet/routes', label: 'Routes', icon: MapIcon },
+      { path: '/fleet/trip-planning', label: 'Trip Planning', icon: Calendar },
       { path: '/fleet/service-schedule', label: 'Service Schedule', icon: Calendar },
       { path: '/fleet/breakdown-entry', label: 'Breakdown Entry', icon: AlertTriangle },
       { path: '/fleet/maintenance-log', label: 'Maintenance Log', icon: Wrench },
       { path: '/fleet/documents', label: 'RC / Insurance / Permit', icon: FileText },
       { path: '/fleet/expiry-alerts', label: 'Expiry Alerts', icon: Bell },
+      // { path: '/fleet/fuel-entry', label: 'Fuel Entry', icon: Activity },
       { path: '/fleet/fuel-consumption', label: 'Fuel Consumption Report', icon: Activity },
       { path: '/fleet/driver-performance', label: 'Driver Report', icon: Users }
     ]
@@ -420,6 +423,8 @@ const modules = [
 
   { section: 'Administration & Security' },
   { path: '/user-management', label: 'User Management', icon: Users },
+  { path: '/log-report', label: 'Log Report', icon: Activity },
+
 
   { section: 'System' },
   { path: '/company-settings', label: 'Company', icon: Settings },
@@ -437,8 +442,6 @@ const jobWorkRoutes = [
   { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
   { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
   { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/printing-delivery', label: 'Printing Delivery', icon: Truck },
-  { path: '/jobwork/printed-fabric-receipt', label: 'Printed Fabric Receipt', icon: Palette },
   { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
   { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
   { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },

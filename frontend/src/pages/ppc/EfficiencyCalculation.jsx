@@ -40,6 +40,8 @@ export default function EfficiencyCalculation() {
     calculated_at: new Date().toLocaleString()
   });
 
+  const [logs, setLogs] = useState([]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -47,26 +49,61 @@ export default function EfficiencyCalculation() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, prodRes, allocRes, schedRes, dtRes] = await Promise.all([
-        subMasterAPI.list('ppc_efficiency_calc').catch(() => ({ data: [] })),
+      const [loomRes, allocRes, logsRes] = await Promise.all([
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_shift_production').catch(() => ({ data: [] })),
         ppcAPI.getAllocations().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_start_end_plan').catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_downtime_calc').catch(() => ({ data: [] }))
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] }))
       ]);
-      setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
-      setProductions(prodRes?.data || []);
       setAllocations(allocRes?.data || []);
-      setSchedules(schedRes?.data || []);
-      setDowntimes(dtRes?.data || []);
+      setLogs(logsRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  // Aggregate OEE by Loom ID from daily entries
+  const efficiencyMap = {};
+  logs.forEach(log => {
+    const loomId = log.loom_id;
+    if (!efficiencyMap[loomId]) {
+      const loom = looms.find(l => l.id === loomId);
+      efficiencyMap[loomId] = {
+        loomId,
+        loomName: loom ? loom.loom_name : `Loom ${loomId}`,
+        totalMeters: 0,
+        expectedMeters: loom ? loom.capacity_per_day * (loom.efficiency_pct / 100) : 425,
+        totalEntries: 0
+      };
+    }
+    efficiencyMap[loomId].totalMeters += log.meters_produced || 0;
+    efficiencyMap[loomId].totalEntries += 1;
+  });
+
+  const computedRecords = Object.values(efficiencyMap).map(data => {
+    const target = data.expectedMeters * Math.max(1, data.totalEntries);
+    const performance = target > 0 ? (data.totalMeters / target) : 0;
+    const availability = 0.95; 
+    const quality = 0.98;
+    const oee = (availability * performance * quality) * 100;
+    
+    return {
+      id: data.loomId,
+      name: `OEE-${data.loomId}`,
+      code: data.loomName,
+      extra_field_1: 'All Shifts',
+      extra_field_2: `OEE: ${oee.toFixed(1)}%`,
+      description: `Spd: ${(performance * 100).toFixed(1)}% | Qly: ${(quality * 100).toFixed(1)}%`,
+      oee
+    };
+  });
+
+  const filteredRecords = computedRecords.filter(r => 
+    r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.code?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleRecalc = (name, value, currentData) => {
     const updated = { ...currentData, [name]: value };
@@ -79,7 +116,6 @@ export default function EfficiencyCalculation() {
       updated.loom_name = lName;
       
       if (name === 'loom_id' || name === 'shift' || name === 'date') {
-         // 1. Find Order ID from allocations or schedule
          const alloc = allocations.find(a => a.loom_id?.toString() === lIdNum.toString() && a.allocation_status !== 'Completed');
          if (alloc) {
             updated.order_id = alloc.order_id || alloc.order_no || '';
@@ -89,7 +125,6 @@ export default function EfficiencyCalculation() {
             else updated.order_id = '';
          }
 
-         // 2. Find actual production
          const prod = productions.find(p => p.code?.toString() === loomIdStr && p.extra_field_1?.includes(updated.shift));
          if (prod) {
             const opMatch = prod.extra_field_1?.match(/Op:\s*(.+)/);
@@ -107,10 +142,8 @@ export default function EfficiencyCalculation() {
             updated.defect_meters = 0;
          }
 
-         // 3. Planned meters based on loom capacity
          updated.planned_meters = loom ? Math.round(loom.capacity_per_day / (24 / parseFloat(updated.available_hours || 8))) : 400;
 
-         // 4. Default downtime, can be adjusted manually
          updated.downtime_hrs = 0;
          updated.loss_reason = '';
       }
@@ -123,7 +156,7 @@ export default function EfficiencyCalculation() {
       const avail = parseFloat(updated.available_hours) || 8;
       const work = Math.max(0, avail - down);
 
-      const maxCap = loom ? loom.capacity_per_day / (24 / avail) : 500; // shift max capacity
+      const maxCap = loom ? loom.capacity_per_day / (24 / avail) : 500;
       
       const availabilityPct = avail > 0 ? (work / avail) : 0;
       const speedPct = maxCap > 0 ? (actual / maxCap) : 0;
@@ -168,8 +201,6 @@ export default function EfficiencyCalculation() {
   };
 
   const handleEdit = (record) => {
-    // This is a partial dummy implementation for edit, 
-    // real implementation would parse the string fields accurately if possible.
     setFormData({
       id: record.id,
       efficiency_id: record.name,
@@ -209,74 +240,9 @@ export default function EfficiencyCalculation() {
     }
   };
 
-  const filteredRecords = records.filter(r => 
-    r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.code?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <BarChart2 style={{ color: '#8b5cf6' }} /> Efficiency Calculation (OEE)
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Calculate Availability, Speed, Quality, and OEE metrics</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Activity size={24} style={{ color: '#8b5cf6' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{records.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <CheckCircle size={24} style={{ color: '#10b981' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>High Performers (&gt;85% OEE)</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.filter(r => {
-                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
-                  return match && parseFloat(match[1]) >= 85;
-                }).length}
-              </div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Percent size={24} style={{ color: '#4f46e5' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Average OEE</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {records.length ? (records.reduce((sum, r) => {
-                  const match = r.extra_field_2?.match(/OEE: (.*)%/);
-                  return sum + (match ? parseFloat(match[1]) : 0);
-                }, 0) / records.length).toFixed(1) : 0}%
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -383,11 +349,11 @@ export default function EfficiencyCalculation() {
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>OEE %</label>
-                <input type="text" className="form-control" value={formData.oee ? `${formData.oee}%` : ''} readOnly style={{ backgroundColor: '#8b5cf618', borderColor: '#8b5cf6', color: '#6d28d9', fontWeight: 800, fontSize: 16 }} />
+                <input type="text" className="form-control" value={formData.oee ? `${formData.oee}%` : ''} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
               <div className="form-group">
                 <label style={{ fontSize: 11 }}>Status</label>
-                <input type="text" className="form-control" value={formData.efficiency_status} readOnly style={{ backgroundColor: formData.efficiency_status.includes('Good') ? '#10b98118' : formData.efficiency_status.includes('Poor') ? '#ef444418' : '#f59e0b18', color: formData.efficiency_status.includes('Good') ? '#047857' : formData.efficiency_status.includes('Poor') ? '#b91c1c' : '#b45309', fontWeight: 800 }} />
+                <input type="text" className="form-control" value={formData.efficiency_status} readOnly style={{ backgroundColor: 'var(--bg-secondary)', fontWeight: 600 }} />
               </div>
             </div>
 
@@ -419,7 +385,68 @@ export default function EfficiencyCalculation() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BarChart2 style={{ color: '#8b5cf6' }} /> Efficiency Calculation (OEE)
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Calculate Availability, Speed, Quality, and OEE metrics</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#ede9fe', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Activity size={24} style={{ color: '#8b5cf6' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Calculations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>High Performers (&gt;85% OEE)</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {computedRecords.filter(r => r.oee >= 85).length}
+              </div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#e0e7ff', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Percent size={24} style={{ color: '#4f46e5' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Average OEE</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {computedRecords.length ? (computedRecords.reduce((sum, r) => sum + r.oee, 0) / computedRecords.length).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>OEE Records ({filteredRecords.length})</h3>
@@ -437,15 +464,8 @@ export default function EfficiencyCalculation() {
               </div>
               <button 
                 className="btn btn-primary" 
-                onClick={() => {
-                  setFormData({
-                    ...formData,
-                    efficiency_id: `EF-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                    calculated_at: new Date().toLocaleString()
-                  });
-                  setIsFormOpen(true);
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#8b5cf6', borderColor: '#8b5cf6', color: '#fff', borderRadius: '8px', fontWeight: 500 }}
+                onClick={() => {}}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#8b5cf6', borderColor: '#8b5cf6', color: '#fff', borderRadius: '8px', fontWeight: 500, visibility: 'hidden' }}
               >
                 <Plus size={16} /> Calculate OEE
               </button>
@@ -461,7 +481,6 @@ export default function EfficiencyCalculation() {
                   <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Shift</th>
                   <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>OEE %</th>
                   <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Status Details</th>
-                  <th style={{ padding: '16px', fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,26 +495,13 @@ export default function EfficiencyCalculation() {
                     <td style={{ padding: '16px' }}>{record.extra_field_1}</td>
                     <td style={{ padding: '16px' }}><span style={{ color: '#6d28d9', fontWeight: 800 }}>{record.extra_field_2}</span></td>
                     <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="View/Edit">
-                          <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
-                        </button>
-                        <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleEdit(record)} title="Edit">
-                          <Edit2 size={16} style={{ color: 'var(--text-secondary)' }} />
-                        </button>
-                        <button style={{ padding: '4px 6px', border: '1px solid #fee2e2', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => handleDelete(record.id)} title="Delete">
-                          <Trash2 size={16} style={{ color: '#ef4444' }} />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

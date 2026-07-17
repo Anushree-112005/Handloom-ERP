@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, FileSpreadsheet } from 'lucide-react';
-import { clothDeliveryAPI, dropdownAPI } from '../../services/api';
+import { clothDeliveryAPI, dropdownAPI, fabricDyeingPOAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -38,6 +38,7 @@ export default function FabricDyeingDelivery() {
     employees: [],
     masters: {}
   });
+  const [dyeingPOs, setDyeingPOs] = useState([]);
 
   const initialForm = {
     dc_no: '',
@@ -117,10 +118,14 @@ export default function FabricDyeingDelivery() {
 
   const fetchOptions = async () => {
     try {
-      const { data } = await dropdownAPI.getAll();
-      setOptions(data);
+      const [optRes, poRes] = await Promise.all([
+        dropdownAPI.getAll(),
+        fabricDyeingPOAPI.list()
+      ]);
+      setOptions(optRes.data);
+      setDyeingPOs(poRes.data || []);
     } catch (err) {
-      console.error("Error fetching dropdowns:", err);
+      console.error("Error fetching dropdowns/POs:", err);
     }
   };
 
@@ -166,7 +171,26 @@ export default function FabricDyeingDelivery() {
         setItems([{ piece_no: '', lot_no: '', ok_mtr: 0, fold_mtr: 0, design_no: '', color: '', rate: 0, amount: 0 }]);
       }
     } else {
-      setFormData(initialForm);
+      let maxNum = 0;
+      deliveries.forEach(d => {
+        if (d.dc_no && d.dc_no.toUpperCase().startsWith("CD-")) {
+          const parts = d.dc_no.split("-");
+          if (parts.length > 1) {
+            const num = parseInt(parts[1]);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        }
+      });
+      const nextNum = maxNum > 0 ? maxNum + 1 : 5001;
+      const nextDcNo = `CD-${nextNum}`;
+
+      setFormData({
+        ...initialForm,
+        dc_no: nextDcNo,
+        dc_date: new Date().toISOString().split('T')[0]
+      });
       setEditingId(null);
       setItems([{ piece_no: '', lot_no: '', ok_mtr: 0, fold_mtr: 0, design_no: '', color: '', rate: 0, amount: 0 }]);
     }
@@ -190,6 +214,26 @@ export default function FabricDyeingDelivery() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'po_no') {
+      const selectedPO = dyeingPOs.find(p => p.po_no === value);
+      if (selectedPO) {
+        const firstItem = selectedPO.items && selectedPO.items[0] ? selectedPO.items[0] : {};
+        setFormData(prev => ({
+          ...prev,
+          po_no: value,
+          party_name: selectedPO.supplier_dyeing_unit || prev.party_name,
+          buyer_name: selectedPO.buyer_name || prev.buyer_name,
+          design_no: firstItem.design_no || selectedPO.design_no || prev.design_no,
+          ibpo: selectedPO.buyer_order_no || prev.ibpo,
+          fabric_detail: firstItem.fabric_name || prev.fabric_detail,
+          ibpo_order_mtr: Number(firstItem.qty) || prev.ibpo_order_mtr,
+          rate_mtr: Number(firstItem.rate) || prev.rate_mtr
+        }));
+        return;
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: ['ibpo_order_mtr', 'fresh_width', 'griege_rate', 'finish_pick', 'glm', 'rate_mtr'].includes(name)
@@ -315,14 +359,17 @@ export default function FabricDyeingDelivery() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Dyeing Delivery Details' : editingId ? 'Edit Dyeing Delivery Challan' : 'Add New Dyeing Delivery Entry'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button type="submit" form="dyeingDeliveryForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Challan' : 'Save Challan'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -353,11 +400,7 @@ export default function FabricDyeingDelivery() {
                 <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', margin: "0 0 16px 0", borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Dyeing Delivery & Party Information</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 32 }}>
-                      <div className="form-group">
-                        <label>DC No *</label>
-                        <input className="form-control" name="dc_no" value={formData.dc_no} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>DC Date *</label>
                         <input type="date" className="form-control" name="dc_date" value={formData.dc_date} onChange={handleInputChange} required />
                       </div>
@@ -386,7 +429,12 @@ export default function FabricDyeingDelivery() {
                       </div>
                       <div className="form-group">
                         <label>PO No</label>
-                        <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
+                        <select className="form-control" name="po_no" value={formData.po_no || ''} onChange={handleInputChange}>
+                          <option value="">-- Select PO --</option>
+                          {dyeingPOs.map(po => (
+                            <option key={po.id} value={po.po_no}>{po.po_no} ({po.supplier_dyeing_unit || 'No Supplier'})</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="form-group">
                         <label>Buyer Name</label>
@@ -519,6 +567,16 @@ export default function FabricDyeingDelivery() {
                     </div>
                   </div>
               </fieldset>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingId ? 'Update Delivery' : 'Save Delivery'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>

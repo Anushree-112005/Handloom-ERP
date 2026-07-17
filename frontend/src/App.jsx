@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import ModulePage from './components/ModulePage';
 import Login from './pages/Login';
@@ -12,9 +12,11 @@ import OrderSubModule from './pages/buyer_order/OrderSubModule';
 import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
 import IPOInvoice from './pages/buyer_order/IPOInvoice';
 import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
+import CalendarModule from './pages/calendar/CalendarModule';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
+import DespatchForm from './pages/despatch/DespatchForm';
 import SalesInvoice from './pages/sales_invoice/SalesInvoice';
 import GoodsRelease from './pages/goods_release/GoodsRelease';
 import PackingSlip from './pages/packing/PackingSlip';
@@ -49,6 +51,13 @@ import CubeBookPage from './pages/cubebook/CubeBookPage';
 import HRModule from './pages/HR/HRModule';
 import PPCMultiModule from './pages/ppc/PPCMultiModule';
 import LiveDashboard from './pages/ppc/LiveDashboard';
+import ETACalculation from './pages/ppc/ETACalculation';
+import CostingSheetModule from './pages/costing_sheet/CostingSheetModule';
+import StockSheetModule from './pages/inventory/StockSheetModule';
+
+// Status Update Module Imports
+import StatusUpdateLogin from './pages/status_update/StatusUpdateLogin';
+import StatusUpdateDashboard from './pages/status_update/StatusUpdateDashboard';
 
 // Fleet & Vehicle Management Imports
 import FleetDashboard from './pages/Vehicle management/FleetDashboard';
@@ -130,7 +139,6 @@ import WarpingSizingPO from './pages/purchase_orders/WarpingSizingPO';
 import WeavingPO from './pages/purchase_orders/WeavingPO';
 import ProcessingPO from './pages/purchase_orders/ProcessingPO';
 import ClothPurchasePO from './pages/purchase_orders/ClothPurchasePO';
-import WarehouseWaxing from './pages/WarehouseWaxing';
 import {
   ShoppingCart, Package, Truck, Palette, Layers, Factory,
   CheckSquare, Scissors, Box, ClipboardList, Receipt, MapPin,
@@ -139,7 +147,26 @@ import {
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" replace />;
+  const suToken = localStorage.getItem('status_update_token');
+  const location = useLocation();
+
+  if (token) return children;
+
+  // If they have the status update token, only allow them to access status-update routes
+  if (suToken) {
+    if (location.pathname.startsWith('/status-update')) {
+      return children;
+    }
+    return <Navigate to="/status-update/dashboard" replace />;
+  }
+
+  // Otherwise, kick to login
+  // Note: /status-update/login itself should ideally be outside ProtectedRoute or handled gracefully
+  if (location.pathname.startsWith('/status-update/login')) {
+    return children;
+  }
+
+  return <Navigate to="/login" replace />;
 }
 
 function MockDbSyncWrapper({ children }) {
@@ -158,12 +185,12 @@ function MockDbSyncWrapper({ children }) {
 export default function App() {
   useEffect(() => {
     const keysToMigrate = ['gate_pass_data', 'gate_inward_data', 'gate_outward_data', 'gate_transaction_data'];
-    
+
     function migrateGateId(val) {
       if (typeof val !== 'string') return val;
       const repl = (match, prefix, num) => `${prefix}-${String(num).padStart(5, '0')}`;
       return val.replace(/\b([A-Za-z0-9\-]+)-2026-(\d+)\b/g, repl)
-                .replace(/\b([A-Za-z0-9\-]+)-26-(\d+)\b/g, repl);
+        .replace(/\b([A-Za-z0-9\-]+)-26-(\d+)\b/g, repl);
     }
 
     function migrateGateObject(obj) {
@@ -241,6 +268,7 @@ export default function App() {
       }>
         <Route index element={<Dashboard />} />
         <Route path="overview" element={<Overview />} />
+        <Route path="calendar" element={<CalendarModule />} />
         <Route path="my-approvals" element={<MockDbSyncWrapper><MyApprovals /></MockDbSyncWrapper>} />
         <Route path="warehouse-stock" element={<WarehouseStock />} />
         <Route path="party-master" element={<PartyMaster />} />
@@ -303,7 +331,7 @@ export default function App() {
         <Route path="jobwork/status" element={<JobWorkStatus />} />
         <Route path="inventory/stock-summary" element={<StockSummary />} />
         <Route path="inventory/stock-ledger" element={<StockLedger />} />
-        <Route path="warehouse/stock" element={<WarehouseStock />} />
+        <Route path="inventory/stock-sheet" element={<StockSheetModule />} />
 
         <Route path="cloth/inward" element={<ClothInward />} />
         <Route path="cloth/checking" element={<OnTableChecking />} />
@@ -333,7 +361,11 @@ export default function App() {
 
         {/* Production Planning & Control (PPC) - Full 10 Module Structure */}
         <Route path="ppc/tracking/live-dashboard" element={<LiveDashboard />} />
+        <Route path="ppc/eta-engine" element={<ETACalculation />} />
         <Route path="ppc/:moduleName/:submodule?" element={<PPCMultiModule />} />
+
+        {/* Costing Sheet Module */}
+        <Route path="costing-sheet" element={<CostingSheetModule />} />
 
         {/* LAB & Shade Management Routes */}
         <Route path="lab/lab-dip" element={
@@ -360,10 +392,20 @@ export default function App() {
         <Route path="sales-invoice" element={<SalesInvoice />} />
 
         <Route path="despatch" element={<DespatchPlanning />} />
+        <Route path="despatch/new" element={<DespatchForm />} />
+        <Route path="despatch/edit/:id" element={<DespatchForm />} />
+        <Route path="despatch/view/:id" element={<DespatchForm />} />
 
         <Route path="eway-bill" element={<EwayBill />} />
 
         <Route path="employee" element={<EmployeeMaster />} />
+
+        {/* Status Update Routes */}
+        <Route path="status-update">
+          <Route index element={<Navigate to="login" replace />} />
+          <Route path="login" element={<StatusUpdateLogin />} />
+          <Route path="dashboard" element={<StatusUpdateDashboard />} />
+        </Route>
 
         <Route path="user-management" element={<UserManagement />} />
 
@@ -394,7 +436,7 @@ export default function App() {
         <Route path="finance/desk/lc" element={<AccountsTransaction defaultSection="LC" />} />
         <Route path="cubebook/*" element={<CubeBookPage />} />
         <Route path="hr/*" element={<HRModule />} />
-        
+
         {/* Fleet & Vehicle Management Routes */}
         <Route path="fleet/dashboard" element={<FleetDashboard />} />
         <Route path="fleet/vehicles" element={<VehicleList />} />
@@ -467,7 +509,7 @@ export default function App() {
             </div>
           </div>
         } />
-        
+
         {/* Wildcard redirect for unmatched routes */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

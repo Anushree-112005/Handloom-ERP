@@ -62,6 +62,10 @@ export default function DelayRisk() {
     loom_breakup: []
   });
 
+  const [allocations, setAllocations] = useState([]);
+  const [etaData, setEtaData] = useState([]);
+  const [breakdowns, setBreakdowns] = useState([]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -69,12 +73,18 @@ export default function DelayRisk() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, ordRes] = await Promise.all([
+      const [recRes, ordRes, allocRes, etaRes, bdRes] = await Promise.all([
         subMasterAPI.list('ppc_delay_risk').catch(() => ({ data: [] })),
-        buyerOrderAPI.list().catch(() => ({ data: [] }))
+        buyerOrderAPI.list().catch(() => ({ data: [] })),
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getEta().catch(() => ({ data: [] })),
+        ppcAPI.getBreakdowns().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setOrders(ordRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setEtaData(etaRes?.data || []);
+      setBreakdowns(bdRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -87,26 +97,41 @@ export default function DelayRisk() {
     const order = orders.find(o => o.order_no === oId || o.id.toString() === oId);
     
     if (order) {
-      // Extensive mock generation based on schema rules
-      const totalOrdered = 30000;
-      const totalProduced = Math.floor(Math.random() * 20000 + 5000); // 5k-25k
+      const orderAllocs = allocations.filter(a => a.order_id === oId);
+      const totalOrdered = orderAllocs.reduce((sum, a) => sum + (a.assigned_meters || 0), 0) || 30000;
+      const totalProduced = orderAllocs.reduce((sum, a) => sum + (a.completed_meters || 0), 0);
       const remain = totalOrdered - totalProduced;
       
-      const compPct = (totalProduced / totalOrdered) * 100;
-      const expPct = compPct + (Math.random() * 10 - 5); // Randomly ahead or behind
+      const compPct = totalOrdered > 0 ? (totalProduced / totalOrdered) * 100 : 0;
+      
+      const orderEtaList = etaData.filter(eta => eta.order_id === oId);
+      let latestEtaDate = new Date();
+      let totalAssignedEta = 0;
+      if (orderEtaList.length > 0) {
+        latestEtaDate = new Date(Math.max(...orderEtaList.map(e => e.expected_finish_time ? new Date(e.expected_finish_time) : new Date())));
+        totalAssignedEta = orderEtaList.reduce((sum, e) => sum + (e.assigned_meters || 0), 0);
+      }
+      
+      const orderBreakdowns = breakdowns.filter(b => orderAllocs.some(a => a.loom_id === b.loom_id));
+      const totalDowntimeHours = orderBreakdowns.reduce((sum, b) => sum + (b.total_downtime || 0), 0);
+
+      const startDate = orderAllocs.length > 0 ? new Date(Math.min(...orderAllocs.map(a => new Date(a.start_time)))) : new Date();
+      const deliveryStr = order.expected_delivery_date || new Date(Date.now() + 27 * 86400000).toISOString().split('T')[0];
+      const deliveryDate = new Date(deliveryStr);
+      
+      const daysElapsed = Math.max(0, Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+      const daysRemaining = Math.max(0, Math.floor((deliveryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+      const totalDuration = daysElapsed + daysRemaining;
+      
+      const expPct = totalDuration > 0 ? (daysElapsed / totalDuration) * 100 : 0;
       const variance = compPct - expPct;
-
-      const dailyRate = Math.floor(Math.random() * 100 + 350);
-      const deliveryDate = new Date();
-      deliveryDate.setDate(deliveryDate.getDate() + 27);
-      const finishDays = remain / dailyRate;
-      const requiredRate = remain / 27; // simple approx
+      
+      const dailyRate = daysElapsed > 0 ? totalProduced / daysElapsed : 0;
+      const requiredRate = daysRemaining > 0 ? remain / daysRemaining : remain;
       const rateGap = dailyRate - requiredRate;
-
-      const etaDate = new Date();
-      etaDate.setDate(etaDate.getDate() + Math.ceil(finishDays));
-      const buffer = Math.floor((deliveryDate - etaDate) / (1000 * 60 * 60 * 24));
-
+      
+      const buffer = Math.floor((deliveryDate.getTime() - latestEtaDate.getTime()) / (1000 * 60 * 60 * 24));
+      
       let riskScore = 20;
       if (variance < -5) riskScore += 30;
       if (buffer < 5) riskScore += 40;
@@ -118,27 +143,31 @@ export default function DelayRisk() {
       else if (riskScore > 50) rLevel = '🔴 High';
       else if (riskScore > 25) rLevel = '🟡 Medium';
 
-      const loomBreakup = Array.from({ length: 3 }).map((_, i) => ({
-        loom: `LM-00${i+1}`,
-        alloc: 10000,
-        prod: Math.floor(10000 * (compPct / 100) + (Math.random() * 1000 - 500)),
-        eta: new Date(Date.now() + Math.floor(Math.random() * 10) * 86400000).toISOString().split('T')[0],
-        r_level: Math.random() > 0.7 ? '🟡 Medium' : '🟢 Low'
-      }));
+      const loomBreakup = orderAllocs.map(a => {
+        const aEta = etaData.find(e => e.allocation_id === a.id);
+        const etaStr = aEta && aEta.expected_finish_time ? aEta.expected_finish_time.split('T')[0] : latestEtaDate.toISOString().split('T')[0];
+        return {
+          loom: a.loom_name || `Loom ${a.loom_id}`,
+          alloc: a.assigned_meters,
+          prod: a.completed_meters,
+          eta: etaStr,
+          r_level: (aEta && aEta.status === 'AT RISK') ? '🔴 High' : '🟢 Low'
+        }
+      });
 
       setFormData({
         ...formData,
         risk_id: `DR-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
         order_id: oId,
-        buyer_name: order.party_name || 'H&M Sweden',
+        buyer_name: order.party_name || 'Generic Buyer',
         loom_id: 'All',
 
-        order_start_date: new Date(Date.now() - 31 * 86400000).toISOString().split('T')[0],
-        planned_end_date: new Date(Date.now() + 25 * 86400000).toISOString().split('T')[0],
-        buyer_delivery_date: deliveryDate.toISOString().split('T')[0],
-        days_elapsed: 31,
-        days_remaining: 27,
-        total_duration: 58,
+        order_start_date: startDate.toISOString().split('T')[0],
+        planned_end_date: latestEtaDate.toISOString().split('T')[0],
+        buyer_delivery_date: deliveryStr,
+        days_elapsed: daysElapsed,
+        days_remaining: daysRemaining,
+        total_duration: totalDuration,
 
         total_ordered: totalOrdered,
         total_produced: totalProduced,
@@ -150,12 +179,12 @@ export default function DelayRisk() {
         required_daily_rate: requiredRate,
         rate_gap: rateGap,
 
-        current_eta: etaDate.toISOString().split('T')[0],
+        current_eta: latestEtaDate.toISOString().split('T')[0],
         buffer_days: buffer,
-        total_downtime: 12.5,
-        lost_meters_so_far: 312,
-        projected_lost: 150,
-        efficiency_drop: 6.4,
+        total_downtime: totalDowntimeHours,
+        lost_meters_so_far: 0,
+        projected_lost: 0,
+        efficiency_drop: 0,
         risk_score: riskScore,
         risk_level: rLevel,
         risk_reason: riskScore > 50 ? 'Efficiency drop + downtime' : 'Normal variation',
@@ -193,35 +222,9 @@ export default function DelayRisk() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertTriangle style={{ color: '#ef4444' }} /> Delay Risk Assessment
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Algorithmic detection of production shortfalls and delays</p>
-        </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => setIsFormOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#ef4444', borderColor: '#ef4444' }}
-          >
-            <Plus size={16} /> New Assessment
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -402,7 +405,40 @@ export default function DelayRisk() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle style={{ color: '#ef4444' }} /> Delay Risk Assessment
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Algorithmic detection of production shortfalls and delays</p>
+        </div>
+        {!isFormOpen ? (
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setIsFormOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#ef4444', borderColor: '#ef4444' }}
+          >
+            <Plus size={16} /> New Assessment
+          </button>
+        ) : (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Risk Assessments Archive ({filteredRecords.length})</h3>
@@ -448,7 +484,7 @@ export default function DelayRisk() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

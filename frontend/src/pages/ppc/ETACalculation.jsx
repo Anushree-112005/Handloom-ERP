@@ -14,43 +14,42 @@ export default function ETACalculation() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [allocRes, orderRes] = await Promise.all([
-        ppcAPI.getAllocations(),
-        buyerOrderAPI.list()
+      const [etaRes, orderRes] = await Promise.all([
+        ppcAPI.getEta().catch(() => ({ data: [] })),
+        buyerOrderAPI.list().catch(() => ({ data: [] }))
       ]);
       
-      const activeAllocs = (allocRes?.data || []).filter(a => a.allocation_status === 'Active');
+      const backendEta = etaRes?.data || [];
       const orders = orderRes?.data || [];
       
-      // Map data to the ETA fields
-      const etaData = activeAllocs.map(alloc => {
-        const order = orders.find(o => o.order_no === alloc.order_id || o.id.toString() === alloc.order_id) || {};
+      const etaData = backendEta.map(eta => {
+        const order = orders.find(o => o.order_no === eta.order_id || o.id.toString() === eta.order_id) || {};
         
-        const totalMeters = alloc.assigned_meters || 0;
-        const producedMeters = alloc.completed_meters || 0;
+        const totalMeters = eta.assigned_meters || 0;
+        const producedMeters = eta.completed_meters || 0;
         const remMeters = Math.max(0, totalMeters - producedMeters);
         
-        const speed = Math.floor(Math.random() * 5 + 18); // 18-22 m/hr
-        const dailyRate = speed * 20; // assumed 20 hrs running
-        const eff = Math.floor(Math.random() * 10 + 85); // 85-95%
+        // Compute speed and daily rate from ETA response if possible, else fallback
+        const speed = 20; // assumed avg speed
+        const dailyRate = speed * 20; // 400m
+        const eff = 90;
         
-        const days = dailyRate > 0 ? remMeters / dailyRate : 0;
-        const d = new Date();
-        d.setDate(d.getDate() + Math.ceil(days));
-        const etaDate = d.toISOString().split('T')[0];
+        const etaDate = eta.expected_finish_time ? eta.expected_finish_time.split('T')[0] : 'Unknown';
         
-        const deliveryStr = order.expected_delivery_date || '2026-07-10';
+        const deliveryStr = order.expected_delivery_date || eta.target_date?.split('T')[0] || '2026-07-10';
         const deliveryDate = new Date(deliveryStr);
+        const calcEtaDate = new Date(etaDate);
         
-        const delayDays = Math.max(0, Math.floor((d - deliveryDate) / (1000 * 60 * 60 * 24)));
+        const delayDays = (etaDate !== 'Unknown' && calcEtaDate > deliveryDate) 
+           ? Math.ceil((calcEtaDate - deliveryDate) / (1000 * 60 * 60 * 24)) : 0;
         
         let risk = 'Low';
-        if (delayDays > 0) risk = 'High';
-        else if (delayDays === 0 && days > 5) risk = 'Medium';
+        if (eta.status === 'AT RISK' || delayDays > 0) risk = 'High';
+        else if (delayDays === 0 && remMeters > 5000) risk = 'Medium';
         
         return {
-          loom_id: alloc.loom_id,
-          order_id: alloc.order_id,
+          loom_id: eta.loom_name,
+          order_id: eta.order_id,
           total_meters: totalMeters,
           produced_meters: producedMeters,
           remaining_meters: remMeters,

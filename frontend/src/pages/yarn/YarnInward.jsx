@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, ArrowRightLeft, FileText, IndianRupee, MapPin, Activity, CheckCircle, Package, Download, ChevronDown, ArrowLeft } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { yarnInwardAPI, partyAPI, yarnPurchaseOrderAPI, subMasterAPI, dropdownAPI } from '../../services/api';
 import autoTable from 'jspdf-autotable';
@@ -879,14 +879,17 @@ export default function YarnInward() {
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Inward Details' : editingId ? 'Edit Inward' : 'New Yarn Inward'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Inward' : 'Save Inward'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -1246,14 +1249,9 @@ export default function YarnInward() {
               <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
                 <X size={16} /> Close
               </button>
-              {!isReadOnly && form.status !== 'Confirmed' && (
+              {!isReadOnly && (
                 <button type="button" className="btn btn-primary" onClick={handleCreate}>
                   <Save size={16} /> {editingId ? 'Update Inward' : 'Save Inward'}
-                </button>
-              )}
-              {editingId && form.status !== 'Confirmed' && !isReadOnly && (
-                <button type="button" className="btn btn-success" onClick={handleConfirm}>
-                  <CheckCircle size={16} /> Confirm GRN
                 </button>
               )}
             </div>

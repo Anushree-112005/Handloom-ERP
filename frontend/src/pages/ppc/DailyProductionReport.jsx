@@ -22,6 +22,9 @@ export default function DailyProductionReport() {
     efficiency: 0
   });
 
+  const [logs, setLogs] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -29,18 +32,42 @@ export default function DailyProductionReport() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, prodRes] = await Promise.all([
-        subMasterAPI.list('ppc_daily_report').catch(() => ({ data: [] })),
+      const [loomRes, allocRes, logsRes, savedRes] = await Promise.all([
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_shift_production').catch(() => ({ data: [] }))
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] })),
+        subMasterAPI.list('ppc_daily_report').catch(() => ({ data: [] }))
       ]);
-      setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
-      setProductions(prodRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setLogs(logsRes?.data || []);
+      setRecords(savedRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const loom = looms.find(l => l.id.toString() === formData.loom_id);
+      const loomName = loom ? loom.loom_name : formData.loom_id;
+      const payload = {
+        name: `RPT-${formData.report_date}-${loomName}`,
+        code: loomName,
+        extra_field_1: formData.order_id,
+        extra_field_2: `${parseFloat(formData.total_meters).toFixed(1)} m / ${parseFloat(formData.target_meters).toFixed(1)} m`,
+        description: `Eff: ${parseFloat(formData.efficiency).toFixed(1)}% | Var: ${parseFloat(formData.variance).toFixed(1)} m`,
+        is_active: true
+      };
+      await subMasterAPI.create('ppc_daily_report', payload);
+      setIsFormOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Error saving report');
     }
   };
 
@@ -82,11 +109,11 @@ export default function DailyProductionReport() {
         }
       });
 
-      // Fallback mocks if no data
+      // Fallback mocks if no data (removed, set to 0)
       if (dayMeters === 0 && nightMeters === 0) {
-        dayMeters = 210;
-        nightMeters = 205;
-        orderId = 'ORD-2024-001';
+        dayMeters = 0;
+        nightMeters = 0;
+        orderId = '';
       }
 
       const total = dayMeters + nightMeters;
@@ -106,69 +133,61 @@ export default function DailyProductionReport() {
     setFormData(updated);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const loom = looms.find(l => l.id.toString() === formData.loom_id);
-      const lName = loom ? loom.loom_name : formData.loom_id;
-
-      await subMasterAPI.create('ppc_daily_report', {
-        name: `RPT-${formData.report_date}-${lName}`,
-        code: lName,
-        extra_field_1: formData.order_id,
-        extra_field_2: `${formData.total_meters.toFixed(1)} m / ${formData.target_meters.toFixed(1)} m`,
-        description: `Eff: ${formData.efficiency.toFixed(1)}% | Var: ${formData.variance.toFixed(1)} m`,
-        is_active: true
-      });
-      setIsFormOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Error creating report.');
+  // Group logs by Date + Loom
+  const reportsMap = {};
+  logs.forEach(log => {
+    const date = log.timestamp.split('T')[0];
+    const loomId = log.loom_id;
+    const key = `${date}-${loomId}`;
+    
+    if (!reportsMap[key]) {
+      const loom = looms.find(l => l.id === loomId);
+      const alloc = allocations.find(a => a.id === log.allocation_id);
+      
+      reportsMap[key] = {
+        id: key,
+        name: `RPT-${date}-${loom ? loom.loom_name : loomId}`,
+        code: loom ? loom.loom_name : `Loom ${loomId}`,
+        date,
+        total_meters: 0,
+        target_meters: loom ? loom.capacity_per_day * (loom.efficiency_pct / 100) : 425,
+        order_id: alloc ? alloc.order_id : '-'
+      };
     }
-  };
+    
+    reportsMap[key].total_meters += log.meters_produced || 0;
+  });
 
-  const filteredRecords = records.filter(r => 
+  const computedRecords = Object.values(reportsMap).map(rpt => {
+    const eff = rpt.target_meters > 0 ? (rpt.total_meters / rpt.target_meters) * 100 : 0;
+    const variance = rpt.total_meters - rpt.target_meters;
+    return {
+      ...rpt,
+      extra_field_1: rpt.order_id,
+      extra_field_2: `${rpt.total_meters.toFixed(1)} m / ${rpt.target_meters.toFixed(1)} m`,
+      description: `Eff: ${eff.toFixed(1)}% | Var: ${variance.toFixed(1)} m`
+    };
+  }).sort((a, b) => b.date.localeCompare(a.date));
+
+  // Combine saved reports from DB with dynamically computed ones
+  const allRecordsMap = {};
+  computedRecords.forEach(r => { allRecordsMap[r.name] = r; });
+  records.forEach(r => { allRecordsMap[r.name] = r; }); // Saved overrides computed
+
+  const finalRecords = Object.values(allRecordsMap).sort((a, b) => {
+    const nameA = a.name || '';
+    const nameB = b.name || '';
+    return nameB.localeCompare(nameA);
+  });
+
+  const filteredRecords = finalRecords.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FileText style={{ color: '#0ea5e9' }} /> Daily Production Report
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Aggregate shift data and view daily machine performance</p>
-        </div>
-        {!isFormOpen ? (
-          <button 
-            className="btn btn-primary" 
-            onClick={() => {
-              setFormData({
-                report_date: new Date().toISOString().split('T')[0],
-                loom_id: '', order_id: '', day_shift_meters: 0, night_shift_meters: 0,
-                total_meters: 0, target_meters: 0, variance: 0, efficiency: 0
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#0ea5e9', borderColor: '#0ea5e9' }}
-          >
-            <Plus size={16} /> Generate Report
-          </button>
-        ) : (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -241,32 +260,73 @@ export default function DailyProductionReport() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FileText style={{ color: '#0ea5e9' }} /> Daily Production Report
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Aggregate shift data and view daily machine performance</p>
+        </div>
+        {!isFormOpen ? (
+          <button 
+            className="btn btn-primary" 
+            onClick={() => {
+              setFormData({
+                report_date: new Date().toISOString().split('T')[0],
+                loom_id: '', order_id: '', total_meters: 0, target_meters: 0, variance: 0, efficiency: 0
+              });
+              setIsFormOpen(true);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#0ea5e9', borderColor: '#0ea5e9' }}
+          >
+            <Plus size={16} /> Generate Report
+          </button>
+        ) : (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Generated Reports ({filteredRecords.length})</h3>
-            <div className="search-bar" style={{ position: 'relative', width: 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-control"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Generated Reports ({filteredRecords.length})</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div className="search-bar" style={{ position: 'relative', width: 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Search reports..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                  style={{ paddingLeft: 36 }}
+                />
+              </div>
             </div>
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Report ID</th>
-                  <th>Loom ID</th>
-                  <th>Order</th>
-                  <th>Production / Target</th>
-                  <th>Metrics</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Report ID</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Order</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Production / Target</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Performance</th>
                 </tr>
               </thead>
               <tbody>
@@ -275,19 +335,19 @@ export default function DailyProductionReport() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>{record.extra_field_1}</td>
-                    <td><span style={{ color: '#0369a1', fontWeight: 600 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{record.code}</td>
+                    <td style={{ padding: '16px', fontWeight: 600 }}>{record.extra_field_1}</td>
+                    <td style={{ padding: '16px', fontWeight: 600, color: '#0369a1' }}>{record.extra_field_2}</td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

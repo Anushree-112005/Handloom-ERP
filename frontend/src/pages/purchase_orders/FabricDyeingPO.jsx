@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table } from 'lucide-react';
-import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Scissors, Download, Table, ArrowLeft } from 'lucide-react';
+import { fabricDyeingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI, clothInwardAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
 export default function FabricDyeingPO() {
@@ -19,7 +19,7 @@ export default function FabricDyeingPO() {
   const [toDate, setToDate] = useState('');
   const [activeSection, setActiveSection] = useState('info');
   const [selectedViewOrder, setSelectedViewOrder] = useState(null);
-  
+
   const initialForm = {
     po_no: '',
     po_date: new Date().toISOString().split('T')[0],
@@ -35,6 +35,7 @@ export default function FabricDyeingPO() {
     sales_order_no: '',
     production_order_no: '',
     buyer_order_no: '',
+    fabric_receipt_id: '',
     design_no: '',
     department: '',
 
@@ -83,22 +84,48 @@ export default function FabricDyeingPO() {
   const [options, setOptions] = useState({});
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
-  
+  const [clothInwards, setClothInwards] = useState([]);
+
+  const handleNewOrder = () => {
+    let maxNum = 0;
+    const prefix = 'FDP-';
+    (orders || []).forEach(o => {
+      const poStr = o.po_no || '';
+      if (poStr.toUpperCase().startsWith(prefix)) {
+        const numPart = poStr.substring(prefix.length);
+        const num = parseInt(numPart, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    const nextNum = maxNum + 1;
+    const padded = String(nextNum).padStart(4, '0');
+    const nextPoNo = `${prefix}${padded}`;
+    setForm({
+      ...initialForm,
+      po_no: nextPoNo
+    });
+    setShowForm(true);
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes] = await Promise.all([
+      const [ordRes, partRes, dropRes, buyerOrdRes, dsRes, clothInwRes] = await Promise.all([
         fabricDyeingPOAPI.list(),
         partyAPI.list(),
         dropdownAPI.getAll(),
         buyerOrderAPI.list(),
-        designEntryAPI.list()
+        designEntryAPI.list(),
+        clothInwardAPI.list()
       ]);
       setOrders(ordRes.data);
       setParties(partRes.data);
       setOptions(dropRes.data);
       setBuyerOrders(buyerOrdRes.data || []);
       setDesignEntries(dsRes.data || []);
+      setClothInwards(clothInwRes.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -162,6 +189,40 @@ export default function FabricDyeingPO() {
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
 
+    if (name === 'fabric_receipt_id') {
+      const ci = clothInwards.find(c => c.ref_no === value);
+      if (ci) {
+        const bo = buyerOrders.find(b => b.ibpo_number === ci.ibpo);
+        const de = designEntries.find(d => d.ds_ref_no === ci.design_no || d.design_no === ci.design_no || d.ibpo_no === ci.ibpo);
+
+        const updatedItems = [...(form.items || [])];
+        if (updatedItems[0]) {
+          updatedItems[0].design_no = de?.ds_ref_no || ci.design_no || '';
+          updatedItems[0].fabric_name = de?.fabric || '';
+          updatedItems[0].gsm = String(de?.gsm ?? '');
+          updatedItems[0].width = String(de?.gray_width ?? de?.fabric_width_grey ?? '');
+          updatedItems[0].qty = parseFloat(ci.total_meters) || 0;
+          updatedItems[0].fabric_type = de?.fabric_type || ci.const_fabric_type || '';
+        }
+
+        setForm(recalculate({
+          ...form,
+          fabric_receipt_id: value,
+          buyer_order_no: ci.ibpo || '',
+          design_no: de?.ds_ref_no || ci.design_no || '',
+          buyer_name: bo?.party_name || bo?.buyer_name || de?.buyer_name || form.buyer_name,
+          items: updatedItems
+        }));
+        return;
+      } else {
+        setForm(recalculate({
+          ...form,
+          fabric_receipt_id: value
+        }));
+        return;
+      }
+    }
+
     if (name === 'tax_type') {
       let taxUpdates = { tax_type: value };
       if (value === 'GST') {
@@ -175,13 +236,43 @@ export default function FabricDyeingPO() {
       return;
     }
 
+    if (name === 'buyer_order_no') {
+      const bo = buyerOrders.find(b => b.ibpo_number === value);
+      const de = designEntries.find(d => d.ibpo_no === value || d.design_no === bo?.design_no);
+
+      const updatedItems = [...(form.items || [])];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = de?.ds_ref_no || '';
+        updatedItems[0].fabric_name = de?.fabric || '';
+        updatedItems[0].gsm = String(de?.gsm ?? '');
+        updatedItems[0].width = String(de?.gray_width ?? de?.fabric_width_grey ?? '');
+      }
+
+      setForm(recalculate({
+        ...form,
+        buyer_order_no: value,
+        buyer_name: bo?.party_name || bo?.buyer_name || de?.buyer_name || form.buyer_name,
+        design_no: de?.ds_ref_no || '',
+        items: updatedItems
+      }));
+      return;
+    }
+
     if (name === 'design_no') {
       const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
       if (de) {
+        const updatedItems = [...(form.items || [])];
+        if (updatedItems[0]) {
+          updatedItems[0].design_no = value;
+          updatedItems[0].fabric_name = de.fabric || '';
+          updatedItems[0].gsm = String(de?.gsm ?? '');
+          updatedItems[0].width = String(de?.gray_width ?? de?.fabric_width_grey ?? '');
+        }
         setForm(recalculate({
           ...form,
           design_no: value,
-          buyer_name: de.buyer_name || form.buyer_name
+          buyer_name: de.buyer_name || form.buyer_name,
+          items: updatedItems
         }));
         return;
       }
@@ -283,9 +374,9 @@ export default function FabricDyeingPO() {
     const matchesSearch = searchTerm === '' ||
       o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       o.supplier_dyeing_unit?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     const matchesStatus = statusFilter === 'All Status' || o.status === statusFilter;
-    
+
     let matchesDate = true;
     if (o.po_date) {
       const entryDate = new Date(o.po_date);
@@ -329,7 +420,7 @@ export default function FabricDyeingPO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <button className="btn btn-primary" onClick={handleNewOrder}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -414,62 +505,69 @@ export default function FabricDyeingPO() {
           </div>
         </>
       ) : selectedViewOrder ? (
-          <CustomPODocumentPreview
-            isOpen={!!selectedViewOrder}
-            onClose={() => setSelectedViewOrder(null)}
-            title="FABRIC DYEING PO"
-            poNumber={selectedViewOrder?.po_no}
-            poDate={selectedViewOrder?.po_date}
-            deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
-            supplierName={selectedViewOrder?.supplier_dyeing_unit}
-            agentName=""
-            designNo={selectedViewOrder?.sales_order_no || '-'}
-            commission="0.00"
-            terms={selectedViewOrder?.terms_conditions || []}
-            taxes={{
-              cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
-              sgst_pct: selectedViewOrder?.sgst_pct || 0, sgst_amt: selectedViewOrder?.sgst_amount || 0,
-              igst_pct: selectedViewOrder?.igst_pct || 0, igst_amt: selectedViewOrder?.igst_amount || 0
-            }}
-            freightChg={parseFloat(selectedViewOrder?.transport_charge || 0) + parseFloat(selectedViewOrder?.loading_charge || 0) + parseFloat(selectedViewOrder?.unloading_charge || 0)}
-            insuranceChg={parseFloat(selectedViewOrder?.packing_charge || 0) + parseFloat(selectedViewOrder?.other_charges || 0)}
-            netAmount={selectedViewOrder?.net_amount || 0}
-            logistics={{
-              freight_type: "-",
-              transport: "-",
-              delivery_date: selectedViewOrder?.delivery_date || "-",
-              payment_terms: selectedViewOrder?.payment_terms || "-"
-            }}
-            tableHeaders={[
-              { label: 'Fabric Name', align: 'left', width: '25%' },
-              { label: 'Design No', align: 'left', width: '15%' },
-              { label: 'GSM / Width', align: 'center', width: '15%' },
-              { label: 'Color / Batch', align: 'left', width: '15%' },
-              { label: 'Qty', align: 'right', width: '10%' },
-              { label: 'Rate', align: 'right', width: '10%' },
-              { label: 'Amount', align: 'right', width: '10%' }
-            ]}
-            tableRows={(selectedViewOrder?.items || []).map(i => ({
-              rowData: [
-                i.fabric_name || '-',
-                i.design_no || '-',
-                `${i.gsm || '-'} / ${i.width || '-'}`,
-                `${i.color || '-'} / ${i.batch_no || '-'}`,
-                `${parseFloat(i.qty || 0).toFixed(2)} ${i.uom || ''}`,
-                parseFloat(i.rate || 0).toFixed(2),
-                parseFloat(i.amount || 0).toFixed(2)
-              ],
-              rowNote: i.fabric_code ? `Fabric Code: ${i.fabric_code}` : null
-            }))}
-          />
+        <CustomPODocumentPreview
+          isOpen={!!selectedViewOrder}
+          onClose={() => setSelectedViewOrder(null)}
+          title="FABRIC DYEING PO"
+          poNumber={selectedViewOrder?.po_no}
+          poDate={selectedViewOrder?.po_date}
+          deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
+          supplierName={selectedViewOrder?.supplier_dyeing_unit}
+          agentName=""
+          designNo={selectedViewOrder?.sales_order_no || '-'}
+          commission="0.00"
+          terms={selectedViewOrder?.terms_conditions || []}
+          taxes={{
+            cgst_pct: selectedViewOrder?.cgst_pct || 0, cgst_amt: selectedViewOrder?.cgst_amount || 0,
+            sgst_pct: selectedViewOrder?.sgst_pct || 0, sgst_amt: selectedViewOrder?.sgst_amount || 0,
+            igst_pct: selectedViewOrder?.igst_pct || 0, igst_amt: selectedViewOrder?.igst_amount || 0
+          }}
+          freightChg={parseFloat(selectedViewOrder?.transport_charge || 0) + parseFloat(selectedViewOrder?.loading_charge || 0) + parseFloat(selectedViewOrder?.unloading_charge || 0)}
+          insuranceChg={parseFloat(selectedViewOrder?.packing_charge || 0) + parseFloat(selectedViewOrder?.other_charges || 0)}
+          netAmount={selectedViewOrder?.net_amount || 0}
+          logistics={{
+            freight_type: "-",
+            transport: "-",
+            delivery_date: selectedViewOrder?.delivery_date || "-",
+            payment_terms: selectedViewOrder?.payment_terms || "-"
+          }}
+          tableHeaders={[
+            { label: 'Fabric Name', align: 'left', width: '25%' },
+            { label: 'Design No', align: 'left', width: '15%' },
+            { label: 'GSM / Width', align: 'center', width: '15%' },
+            { label: 'Color / Batch', align: 'left', width: '15%' },
+            { label: 'Qty', align: 'right', width: '10%' },
+            { label: 'Rate', align: 'right', width: '10%' },
+            { label: 'Amount', align: 'right', width: '10%' }
+          ]}
+          tableRows={(selectedViewOrder?.items || []).map(i => ({
+            rowData: [
+              i.fabric_name || '-',
+              i.design_no || '-',
+              `${i.gsm || '-'} / ${i.width || '-'}`,
+              `${i.color || '-'} / ${i.batch_no || '-'}`,
+              `${parseFloat(i.qty || 0).toFixed(2)} ${i.uom || ''}`,
+              parseFloat(i.rate || 0).toFixed(2),
+              parseFloat(i.amount || 0).toFixed(2)
+            ],
+            rowNote: i.fabric_code ? `Fabric Code: ${i.fabric_code}` : null
+          }))}
+        />
       ) : (
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              <button type="submit" form="fabric-yd-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {form.id ? 'Edit' : 'Create'} {title}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -498,36 +596,23 @@ export default function FabricDyeingPO() {
             {/* Section: Order Info */}
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group"><label>PO No *</label><input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required /></div>
-                <div className="form-group"><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier / Dyeing Unit</label>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(12, 1fr)' }}>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Supplier / Dyeing Unit</label>
                   <select className="form-control" name="supplier_dyeing_unit" value={form.supplier_dyeing_unit} onChange={handleChange}>
                     <option value="">Select Supplier...</option>
                     {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                   </select>
                 </div>
-                <div className="form-group"><label>Supplier Code</label><input type="text" className="form-control" name="supplier_code" value={form.supplier_code} onChange={handleChange} /></div>
-                <div className="form-group"><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
-                <div className="form-group"><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Name</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
-                <div className="form-group"><label>Status</label>
-                  <select className="form-control" name="status" value={form.status} onChange={handleChange}>
-                    <option value="Active">Active</option><option value="Closed">Closed</option>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Fabric Receipt ID</label>
+                  <select className="form-control" name="fabric_receipt_id" value={form.fabric_receipt_id || ''} onChange={handleChange}>
+                    <option value="">Select Receipt...</option>
+                    {clothInwards.map(ci => (
+                      <option key={ci.id} value={ci.ref_no}>{ci.ref_no} ({ci.party_name || 'No Weaver'})</option>
+                    ))}
                   </select>
                 </div>
-                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
-              </div>
-            </div>
-
-            {/* Section: Reference Info */}
-            <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
-                <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Sales Order No</label><input type="text" className="form-control" name="sales_order_no" value={form.sales_order_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Production Order No</label><input type="text" className="form-control" name="production_order_no" value={form.production_order_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Order No *</label>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Buyer Order No *</label>
                   <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
                     {buyerOrders.map(bo => (
@@ -535,6 +620,26 @@ export default function FabricDyeingPO() {
                     ))}
                   </select>
                 </div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Supplier Code</label><input type="text" className="form-control" name="supplier_code" value={form.supplier_code} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Delivery Date</label><input type="date" className="form-control" name="delivery_date" value={form.delivery_date} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Payment Terms</label><input type="text" className="form-control" name="payment_terms" value={form.payment_terms} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Buyer Name</label><input type="text" className="form-control" name="buyer_name" value={form.buyer_name} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Status</label>
+                  <select className="form-control" name="status" value={form.status} onChange={handleChange}>
+                    <option value="Active">Active</option><option value="Closed">Closed</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 9' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+              </div>
+            </div>
+
+            {/* Section: Reference Info */}
+            <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
+                <div className="form-group"><label>Sales Order No</label><input type="text" className="form-control" name="sales_order_no" value={form.sales_order_no} onChange={handleChange} /></div>
+                <div className="form-group"><label>Production Order No</label><input type="text" className="form-control" name="production_order_no" value={form.production_order_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Design No *</label>
                   <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
@@ -580,7 +685,7 @@ export default function FabricDyeingPO() {
 
 
                 </div>
-                
+
 
               </div>
             </div>
@@ -648,232 +753,240 @@ export default function FabricDyeingPO() {
               <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
-                </div>
-                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {(form.terms_conditions || []).map((term, idx) => (
-                      <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                        {editingTermIdx === idx ? (
-                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                            <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
-                            <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
-                            <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                            <span>{term}</span>
-                            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
-                              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
-                            </div>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                    <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
-                    <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
-                      <Plus size={16} /> Add
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ORDER SUMMARY */}
-                <div style={{ width: 350, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                  <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
-                  </div>
-                  <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Value</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>TERMS & CONDITIONS</span>
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Dyeing Charge</span>
-                      <input 
-                        type="number" 
-                        name="dyeing_charge" 
-                        value={form.dyeing_charge} 
-                        onChange={handleChange} 
-                        style={{
-                          width: '100px',
-                          textAlign: 'right',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)',
-                          background: 'transparent'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charge</span>
-                      <input 
-                        type="number" 
-                        name="packing_charge" 
-                        value={form.packing_charge} 
-                        onChange={handleChange} 
-                        style={{
-                          width: '100px',
-                          textAlign: 'right',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)',
-                          background: 'transparent'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charge</span>
-                      <input 
-                        type="number" 
-                        name="loading_charge" 
-                        value={form.loading_charge} 
-                        onChange={handleChange} 
-                        style={{
-                          width: '100px',
-                          textAlign: 'right',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)',
-                          background: 'transparent'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charge</span>
-                      <input 
-                        type="number" 
-                        name="unloading_charge" 
-                        value={form.unloading_charge} 
-                        onChange={handleChange} 
-                        style={{
-                          width: '100px',
-                          textAlign: 'right',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)',
-                          background: 'transparent'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Transport Charge</span>
-                      <input 
-                        type="number" 
-                        name="transport_charge" 
-                        value={form.transport_charge} 
-                        onChange={handleChange} 
-                        style={{
-                          width: '100px',
-                          textAlign: 'right',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)',
-                          background: 'transparent'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
-                      <input 
-                        type="number" 
-                        name="other_charges" 
-                        value={form.other_charges} 
-                        onChange={handleChange} 
-                        style={{
-                          width: '100px',
-                          textAlign: 'right',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)',
-                          background: 'transparent'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Tax Type</span>
-                      <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange} style={{ width: 100, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }}>
-                        <option value="GST">GST</option>
-                        <option value="IGST">IGST</option>
-                        <option value="Exempt">Exempt</option>
-                      </select>
-                    </div>
-
-                    {(form.tax_type === 'GST' || !form.tax_type) && (
-                      <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
-                            <input type="number" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
-                          </div>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
-                            <input type="number" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
-                          </div>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                      </>
-                    )}
-
-                    {form.tax_type === 'IGST' && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
-                          <input type="number" name="igst_pct" value={form.igst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {(form.terms_conditions || []).map((term, idx) => (
+                          <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                            {editingTermIdx === idx ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13, border: '1px solid var(--primary)' }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); } }} />
+                                <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                <span>{term}</span>
+                                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                  <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <input type="text" className="form-control" placeholder="Add new term or condition..." style={{ margin: 0 }} value={newTerm} onChange={e => setNewTerm(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addTerm())} />
+                        <button type="button" className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={addTerm}>
+                          <Plus size={16} /> Add
+                        </button>
                       </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
                     </div>
-                    <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Net Amount</span>
-                      <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                {/* ORDER SUMMARY */}
+                <div style={{ width: 350, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '12px 18px', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>ORDER SUMMARY</span>
+                    </div>
+                    <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Taxable Value</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>INR {(form.taxable_value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Dyeing Charge</span>
+                        <input
+                          type="number"
+                          name="dyeing_charge"
+                          value={form.dyeing_charge}
+                          onChange={handleChange}
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Packing Charge</span>
+                        <input
+                          type="number"
+                          name="packing_charge"
+                          value={form.packing_charge}
+                          onChange={handleChange}
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Loading Charge</span>
+                        <input
+                          type="number"
+                          name="loading_charge"
+                          value={form.loading_charge}
+                          onChange={handleChange}
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Unloading Charge</span>
+                        <input
+                          type="number"
+                          name="unloading_charge"
+                          value={form.unloading_charge}
+                          onChange={handleChange}
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Transport Charge</span>
+                        <input
+                          type="number"
+                          name="transport_charge"
+                          value={form.transport_charge}
+                          onChange={handleChange}
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Other Charges</span>
+                        <input
+                          type="number"
+                          name="other_charges"
+                          value={form.other_charges}
+                          onChange={handleChange}
+                          style={{
+                            width: '100px',
+                            textAlign: 'right',
+                            border: '1px solid var(--border)',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Tax Type</span>
+                        <select className="form-control" name="tax_type" value={form.tax_type || 'GST'} onChange={handleChange} style={{ width: 100, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }}>
+                          <option value="GST">GST</option>
+                          <option value="IGST">IGST</option>
+                          <option value="Exempt">Exempt</option>
+                        </select>
+                      </div>
+
+                      {(form.tax_type === 'GST' || !form.tax_type) && (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>CGST (%)</span>
+                              <input type="number" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.cgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>SGST (%)</span>
+                              <input type="number" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.sgst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {form.tax_type === 'IGST' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>IGST (%)</span>
+                            <input type="number" name="igst_pct" value={form.igst_pct} onChange={handleChange} className="form-control" style={{ width: 50, padding: '2px 6px', margin: 0, height: 26, fontSize: 13 }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(form.igst_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Round Off</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{form.round_off?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ borderTop: '2px solid var(--border)', paddingTop: 14, marginTop: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Net Amount</span>
+                        <span style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.3px' }}>INR {(form.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                  <X size={16} /> Close
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} /> Save Order
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
         </div>
       )}
     </div>

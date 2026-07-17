@@ -20,6 +20,7 @@ class TokenResponse(BaseModel):
     user_id: str
     user_name: str
     user_type: str
+    module_permissions: Optional[dict] = {}
 
 
 class UserOut(BaseModel):
@@ -63,6 +64,7 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
     return TokenResponse(
         access_token=token, user_id=user.employee_code,
         user_name=user.name, user_type=user.user_type,
+        module_permissions=user.module_permissions or {}
     )
 
 

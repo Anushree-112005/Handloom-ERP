@@ -97,7 +97,7 @@ class PartyMasterOut(PartyMasterBase):
 async def list_parties(skip: int = 0, limit: int = 100, party_type: Optional[str] = None, db: AsyncSession = Depends(get_db)):
     q = select(PartyMaster).options(selectinload(PartyMaster.addresses))
     if party_type:
-        q = q.where(PartyMaster.party_type == party_type)
+        q = q.where(PartyMaster.party_type.like(f"%{party_type}%"))
     q = q.offset(skip).limit(limit)
     result = await db.execute(q)
     return result.scalars().all()

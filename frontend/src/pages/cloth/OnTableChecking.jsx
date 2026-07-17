@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckSquare, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, Download, FileText, Barcode, HelpCircle, Check, AlertTriangle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { onTableCheckingAPI, dropdownAPI } from '../../services/api';
+import { onTableCheckingAPI, dropdownAPI, clothInwardAPI, subMasterAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -38,6 +38,9 @@ export default function OnTableChecking() {
     masters: {}
   });
 
+  const [gfrList, setGfrList] = useState([]);
+  const [checkers, setCheckers] = useState([]);
+
   // Barcode simulation state
   const [barcodeInput, setBarcodeInput] = useState('');
 
@@ -49,6 +52,7 @@ export default function OnTableChecking() {
     order_no: '',
     party_name: '',
     lot_no: '',
+    qc_name: '',
     total_meters: 0,
     total_pieces: 0,
     pass_meters: 0,
@@ -109,6 +113,12 @@ export default function OnTableChecking() {
     try {
       const { data } = await dropdownAPI.getAll();
       setOptions(data);
+      
+      const { data: gfrData } = await clothInwardAPI.list();
+      setGfrList(gfrData || []);
+
+      const { data: chkRes } = await subMasterAPI.list('checker_name_master');
+      setCheckers(chkRes || []);
     } catch (err) {
       console.error("Error fetching dropdowns:", err);
     }
@@ -125,12 +135,10 @@ export default function OnTableChecking() {
       setFormData(formattedEntry);
       setEditingId(entry.id);
     } else {
-      // Auto-generate reference number
-      const autoRef = `QC-${Date.now().toString().slice(-6)}`;
       setFormData({
         ...initialForm,
-        ref_no: autoRef,
-        party_name: options.all_parties?.[0]?.name || ''
+        ref_no: '',
+        party_name: ''
       });
       setEditingId(null);
     }
@@ -175,6 +183,52 @@ export default function OnTableChecking() {
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGfrChange = (e) => {
+    const selectedRef = e.target.value;
+    const gfr = gfrList.find(g => g.ref_no === selectedRef);
+    if (gfr) {
+      const newItems = (gfr.items || []).map((item, idx) => ({
+        piece_no: item.piece_no || `PC-${(idx + 1).toString().padStart(3, '0')}`,
+        vpc_no: item.vpc_no || '',
+        inv_pin: 'PIN-100',
+        checking_pin: 'CP-200',
+        pc_type: 'Pass',
+        defect_type: '',
+        grade: 'A',
+        meters: Number(item.meters) || 0,
+        pc_1: '',
+        pc_2: '',
+        pc_3: '',
+        pc_4: '',
+        pc_5: '',
+        pc_6: '',
+        pc_7: '',
+        swex: '',
+        remarks: ''
+      }));
+
+      setFormData(prev => ({
+        ...prev,
+        ref_no: selectedRef,
+        party_name: gfr.party_name || '',
+        design_no: gfr.design_no || '',
+        order_no: gfr.vendor_order || gfr.order_no || '',
+        lot_no: gfr.dc_no || '',
+        items: newItems
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        ref_no: '',
+        party_name: '',
+        design_no: '',
+        order_no: '',
+        lot_no: '',
+        items: []
+      }));
+    }
   };
 
   const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
@@ -357,6 +411,13 @@ export default function OnTableChecking() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            {view === 'form' && (
+              <ArrowLeft 
+                size={24} 
+                style={{ cursor: 'pointer', marginRight: 8, color: 'var(--text-primary)' }} 
+                onClick={() => setView('list')} 
+              />
+            )}
             <CheckSquare size={24} color="#eab308" /> ON Table Quality Checking
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Fabric quality inspection with defect tracking, barcode scanning, and grading.</p>
@@ -395,21 +456,10 @@ export default function OnTableChecking() {
             </div>
           )}
 
-          {view === 'list' ? (
+          {view === 'list' && (
             <button className="btn btn-primary" onClick={() => handleOpenForm()}>
               <Plus size={18} /> New QC Entry
             </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}>
-                Cancel
-              </button>
-              {!isReadOnly && (
-                <button type="submit" form="checkingForm" className="btn btn-primary">
-                  <Save size={18} /> Save Record
-                </button>
-              )}
-            </div>
           )}
         </div>
       </div>
@@ -642,39 +692,41 @@ export default function OnTableChecking() {
       ) : (
         /* CREATE / EDIT FORM VIEW */
         <div className="card" style={{ padding: 0, maxWidth: '100%', overflowX: 'hidden' }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto', borderTopLeftRadius: 8, borderTopRightRadius: 8 }}>
-            {[{ id: 'general', label: 'General Info & Barcode' }, { id: 'items', label: 'Inspection Grid' }].map(tab => (
-              <button 
-                type="button"
-                key={tab.id} onClick={() => {
-                  setActiveTab(tab.id);
-                  document.getElementById(`${tab.id}-section`)?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                style={{
-                  padding: '16px 24px', background: activeTab === tab.id ? '#fff' : 'transparent',
-                  border: 'none', borderBottom: activeTab === tab.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  fontWeight: 600, color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
           <div style={{ padding: 32, background: '#fff' }}>
             <form id="checkingForm" onSubmit={handleSubmit}>
               <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
                 
-                <div id="general-section" className="animate-fade" style={{ marginBottom: 32 }}>
+                <div id="general-section" style={{ marginBottom: 32 }}>
                   {/* SECTION 1: HEADER GENERAL INFO */}
                   <h4 style={{ color: 'var(--text-primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
                     General Inspection Info
                   </h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                     <div className="form-group">
-                      <label>Ref No *</label>
-                      <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleHeaderChange} required disabled />
+                      <label>Grey Fabric Receipt No *</label>
+                      {!editingId ? (
+                        <select
+                          className="form-control"
+                          name="ref_no"
+                          value={formData.ref_no}
+                          onChange={handleGfrChange}
+                          required
+                        >
+                          <option value="">-- Select GFR No --</option>
+                          {gfrList.map(gfr => (
+                            <option key={gfr.id} value={gfr.ref_no}>
+                              {gfr.ref_no}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          className="form-control"
+                          name="ref_no"
+                          value={formData.ref_no}
+                          disabled
+                        />
+                      )}
                     </div>
                     <div className="form-group">
                       <label>Checking Date *</label>
@@ -689,7 +741,18 @@ export default function OnTableChecking() {
                         <option>Table 4</option>
                       </select>
                     </div>
-                    <div style={{ gridColumn: 'span 1' }}></div>
+                    <div className="form-group">
+                      <label>QC Name *</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        name="qc_name" 
+                        value={formData.qc_name || ''} 
+                        onChange={handleHeaderChange} 
+                        required 
+                        placeholder="Enter QC Name..."
+                      />
+                    </div>
                     <div className="form-group">
                       <label>Design Number</label>
                       <input className="form-control" name="design_no" value={formData.design_no} onChange={handleHeaderChange} />
@@ -698,7 +761,6 @@ export default function OnTableChecking() {
                       <label>Lot Number</label>
                       <input className="form-control" name="lot_no" value={formData.lot_no} onChange={handleHeaderChange} />
                     </div>
-                    <div style={{ gridColumn: 'span 2' }}></div>
                     <div className="form-group">
                       <label>Buyer / Party *</label>
                       <select className="form-control" name="party_name" value={formData.party_name} onChange={handleHeaderChange} required>
@@ -723,7 +785,7 @@ export default function OnTableChecking() {
                   </div>
                   <div className="form-group" style={{ marginTop: 12 }}>
                     <label>QC General Remarks / Instructions</label>
-                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} onKeyDown={(e) => handleKeyDownTabTransition(e, 'items', 'piece_no')} />
+                    <textarea className="form-control" name="remarks" value={formData.remarks} onChange={handleHeaderChange} rows={2} />
                   </div>
 
                   {/* BARCODE SCAN SIMULATION */}
@@ -758,19 +820,14 @@ export default function OnTableChecking() {
 
                 <div id="items-section" className="animate-fade" style={{ marginBottom: 32, width: '100%' }}>
                   {/* SECTION 2: GRID ITEMS TABLE */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0' }}>
+                  <div style={{ marginBottom: 16 }}>
                     <h4 style={{ color: 'var(--text-primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>
                       Inspected Pieces / Rolls Grid
                     </h4>
-                    {!isReadOnly && (
-                      <button type="button" className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={handleAddItemRow}>
-                        <Plus size={14} /> Add Raw Row
-                      </button>
-                    )}
                   </div>
 
                   <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 24, width: '100%' }}>
-                    <table className="data-table" style={{ margin: 0, minWidth: 1800, tableLayout: 'fixed' }}>
+                    <table className="data-table" style={{ margin: 0, minWidth: 1200, tableLayout: 'fixed' }}>
                       <thead>
                         <tr>
                           <th style={{ width: 50 }}>S.No</th>
@@ -782,18 +839,15 @@ export default function OnTableChecking() {
                           <th style={{ width: 140 }}>Inspection QC *</th>
                           <th style={{ width: 150 }}>Defect Type</th>
                           <th style={{ width: 110 }}>Grade *</th>
-                          <th style={{ width: 140 }}>SWEX (Special)</th>
-                          <th style={{ width: 180 }}>QC Checks (PC 1 to PC 4)</th>
-                          <th style={{ width: 180 }}>QC Checks (PC 5 to PC 7)</th>
                           <th style={{ width: 150 }}>Item Remarks</th>
-                          {!isReadOnly && <th style={{ width: 60 }}>Action</th>}
+                          {!isReadOnly && <th style={{ width: 120, textAlign: 'center' }}>Action</th>}
                         </tr>
                       </thead>
                       <tbody>
                         {formData.items.length === 0 ? (
                           <tr>
-                            <td colSpan={isReadOnly ? 13 : 14} style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-muted)' }}>
-                              No pieces checked yet. Use the barcode scanner simulation box above or click "Add Raw Row" to start adding inspection pieces.
+                            <td colSpan={isReadOnly ? 10 : 11} style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-muted)' }}>
+                              No pieces checked yet. Use the barcode scanner simulation box above or click <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13, marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={handleAddItemRow}><Plus size={14} /> Add</button> to start adding inspection pieces.
                             </td>
                           </tr>
                         ) : (
@@ -871,7 +925,6 @@ export default function OnTableChecking() {
                                   style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                                   value={item.defect_type}
                                   onChange={e => handleGridCellChange(index, 'defect_type', e.target.value)}
-                                  disabled={item.pc_type === 'Pass'}
                                 />
                               </td>
                               <td>
@@ -891,77 +944,29 @@ export default function OnTableChecking() {
                                 <input
                                   className="form-control"
                                   style={{ width: '100%', margin: 0, padding: '4px 8px' }}
-                                  value={item.swex}
-                                  onChange={e => handleGridCellChange(index, 'swex', e.target.value)}
-                                />
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_1}
-                                    onChange={e => handleGridCellChange(index, 'pc_1', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_2}
-                                    onChange={e => handleGridCellChange(index, 'pc_2', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_3}
-                                    onChange={e => handleGridCellChange(index, 'pc_3', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_4}
-                                    onChange={e => handleGridCellChange(index, 'pc_4', e.target.value)}
-                                  />
-                                </div>
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_5}
-                                    onChange={e => handleGridCellChange(index, 'pc_5', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_6}
-                                    onChange={e => handleGridCellChange(index, 'pc_6', e.target.value)}
-                                  />
-                                  <input
-                                    className="form-control"
-                                    style={{ width: '100%', margin: 0, padding: '2px 4px', fontSize: 11 }}
-                                    value={item.pc_7}
-                                    onChange={e => handleGridCellChange(index, 'pc_7', e.target.value)}
-                                  />
-                                </div>
-                              </td>
-                              <td>
-                                <input
-                                  className="form-control"
-                                  style={{ width: '100%', margin: 0, padding: '4px 8px' }}
                                   value={item.remarks}
                                   onChange={e => handleGridCellChange(index, 'remarks', e.target.value)}
                                 />
                               </td>
                               {!isReadOnly && (
                                 <td style={{ textAlign: 'center' }}>
-                                  <button
-                                    type="button"
-                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
-                                    onClick={() => handleRemoveItemRow(index)}
-                                  >
-                                    <Trash2 size={16} color="#ef4444" />
-                                  </button>
+                                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
+                                      onClick={handleAddItemRow}
+                                    >
+                                      <Plus size={14} /> Add
+                                    </button>
+                                    <button
+                                      type="button"
+                                      style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 4 }}
+                                      onClick={() => handleRemoveItemRow(index)}
+                                    >
+                                      <Trash2 size={16} color="#ef4444" />
+                                    </button>
+                                  </div>
                                 </td>
                               )}
                             </tr>
@@ -989,6 +994,18 @@ export default function OnTableChecking() {
                       <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>QC Rejected Volume</span>
                       <span style={{ fontSize: 18, fontWeight: 700, color: '#ef4444' }}>{formData.reject_meters} Mtr</span>
                     </div>
+                  </div>
+                  
+                  {/* FORM ACTIONS FOOTER */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 32, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                      Close
+                    </button>
+                    {!isReadOnly && (
+                      <button type="submit" form="checkingForm" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Save size={18} /> Save Record
+                      </button>
+                    )}
                   </div>
                 </div>
 

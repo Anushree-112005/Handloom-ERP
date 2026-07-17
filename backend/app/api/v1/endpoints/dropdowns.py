@@ -70,8 +70,8 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     parties_req = await db.execute(select(PartyMaster.id, PartyMaster.company_name, PartyMaster.party_type))
     parties = parties_req.all()
     
-    agents = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type == "Agent"]
-    transporters = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type == "Logistics"]
+    agents = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type and "Agent" in p.party_type]
+    transporters = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type and "Logistics" in p.party_type]
     all_parties = [{"id": p.id, "name": p.company_name} for p in parties]
 
     # 2. Fetch employees for Manager, Merchandiser, A/c Incharge

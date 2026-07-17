@@ -5,7 +5,8 @@ import { subMasterAPI, ppcAPI } from '../../services/api';
 export default function TargetVsActual() {
   const [records, setRecords] = useState([]);
   const [looms, setLooms] = useState([]);
-  const [reports, setReports] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,14 +28,16 @@ export default function TargetVsActual() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, rptRes] = await Promise.all([
+      const [recRes, loomRes, allocRes, logsRes] = await Promise.all([
         subMasterAPI.list('ppc_target_actual').catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_daily_report').catch(() => ({ data: [] }))
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
-      setReports(rptRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setLogs(logsRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -45,23 +48,20 @@ export default function TargetVsActual() {
   const handleLoomDateChange = (name, value) => {
     const updated = { ...formData, [name]: value };
     
-    if (updated.loom_id && updated.date) {
+    if (updated.loom_id) {
       const loom = looms.find(l => l.id.toString() === updated.loom_id);
-      const lName = loom ? loom.loom_name : updated.loom_id;
-      
-      const rpt = reports.find(r => r.code === updated.loom_id || r.code === lName);
+      const alloc = allocations.find(a => a.loom_id.toString() === updated.loom_id && a.allocation_status !== 'Completed');
       
       let planned = loom ? loom.capacity_per_day * (loom.efficiency_pct / 100) : 425;
       let actual = 0;
 
-      if (rpt && rpt.extra_field_2) {
-         // "415.0 m / 425.0 m"
-         const parts = rpt.extra_field_2.split('/');
-         if (parts[0]) actual = parseFloat(parts[0].replace(' m', '')) || 0;
-         if (parts[1]) planned = parseFloat(parts[1].replace(' m', '')) || planned;
-      } else {
-         // Fallback mock
-         actual = 415;
+      if (updated.date) {
+         // Filter logs for this loom and date
+         const dayLogs = logs.filter(l => 
+             (l.loom_id === parseInt(updated.loom_id) || l.loom_name === updated.loom_id) && 
+             l.timestamp.startsWith(updated.date)
+         );
+         actual = dayLogs.reduce((acc, curr) => acc + (curr.meters_produced || 0), 0);
       }
 
       const shortfall = planned - actual;
@@ -78,102 +78,42 @@ export default function TargetVsActual() {
     setFormData(updated);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const loom = looms.find(l => l.id.toString() === formData.loom_id);
-      const lName = loom ? loom.loom_name : formData.loom_id;
+  const activeAllocs = allocations.filter(a => a.allocation_status === 'Active');
 
-      await subMasterAPI.create('ppc_target_actual', {
-        name: `${formData.date}-${lName}`,
-        code: lName,
-        extra_field_1: `${formData.actual_meters.toFixed(1)} / ${formData.planned_meters.toFixed(1)} m`,
-        extra_field_2: formData.status,
-        description: `Shortfall: ${formData.shortfall.toFixed(1)} m | Eff: ${formData.efficiency.toFixed(1)}%`,
-        is_active: true
-      });
-      setIsFormOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Error saving record.');
-    }
-  };
+  const computedRecords = activeAllocs.map(alloc => {
+    const loom = looms.find(l => l.id === alloc.loom_id);
+    const allocLogs = logs.filter(l => l.allocation_id === alloc.id);
+    const actual = allocLogs.reduce((acc, curr) => acc + (curr.meters_produced || 0), 0);
+    const planned = alloc.assigned_meters || 1;
+    const efficiency = (actual / planned) * 100;
+    const shortfall = planned - actual;
+    
+    // Simulate expected progress based on start_time and loom capacity
+    const daysElapsed = Math.max(1, Math.floor((Date.now() - new Date(alloc.start_time).getTime()) / (1000 * 60 * 60 * 24)));
+    const expected = loom ? Math.min(planned, loom.capacity_per_day * (loom.efficiency_pct / 100) * daysElapsed) : actual;
+    
+    let status = 'On Track';
+    if (actual < expected * 0.9) status = 'Delayed';
+    else if (actual >= planned) status = 'Completed';
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this evaluation?')) return;
-    try {
-      await subMasterAPI.delete('ppc_target_actual', id);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete');
-    }
-  };
+    return {
+      id: alloc.id,
+      name: `ALLOC-${alloc.id} (${alloc.order_id})`,
+      code: loom ? loom.loom_name : `Loom ${alloc.loom_id}`,
+      extra_field_1: `${actual.toFixed(1)} / ${planned.toFixed(1)} m`,
+      extra_field_2: status,
+      description: `Shortfall: ${Math.max(0, shortfall).toFixed(1)} m | Eff: ${efficiency.toFixed(1)}%`,
+    };
+  });
 
-  // Remove duplicates based on name (Date + Loom ID), keeping the latest entry
-  const uniqueRecords = Array.from(
-    records.reduce((map, record) => map.set(record.name, record), new Map()).values()
-  );
-
-  const filteredRecords = uniqueRecords.filter(r => 
+  const filteredRecords = computedRecords.filter(r => 
     r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Target style={{ color: '#ec4899' }} /> Target vs Actual
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Compare planned metrics against real outputs</p>
-        </div>
-        {isFormOpen && (
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {!isFormOpen && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fce7f3', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <Target size={24} style={{ color: '#ec4899' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Evaluations</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <CheckCircle size={24} style={{ color: '#10b981' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>On Track</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.filter(r => r.extra_field_2 === 'On Track').length}</div>
-            </div>
-          </div>
-          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
-              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Delayed</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{uniqueRecords.filter(r => r.extra_field_2 === 'Delayed').length}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -215,7 +155,7 @@ export default function TargetVsActual() {
               </div>
               <div className="form-group">
                 <label>Shortfall (Auto-calc)</label>
-                <input type="text" className="form-control" value={`${formData.shortfall.toFixed(1)} m`} readOnly style={{ backgroundColor: formData.shortfall > 0 ? '#ef444418' : '#10b98118', color: formData.shortfall > 0 ? '#b91c1c' : '#047857', fontWeight: 700 }} />
+                <input type="text" className="form-control" value={`${formData.shortfall.toFixed(1)} m`} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
               </div>
             </div>
 
@@ -226,7 +166,7 @@ export default function TargetVsActual() {
               </div>
               <div className="form-group">
                 <label>Status (Auto-flag)</label>
-                <input type="text" className="form-control" value={formData.status} readOnly style={{ backgroundColor: formData.status === 'Delayed' ? '#ef444418' : '#10b98118', borderColor: formData.status === 'Delayed' ? '#ef4444' : '#10b981', color: formData.status === 'Delayed' ? '#b91c1c' : '#047857', fontWeight: 800 }} />
+                <input type="text" className="form-control" value={formData.status} readOnly style={{ backgroundColor: 'var(--bg-secondary)' }} />
               </div>
             </div>
 
@@ -238,7 +178,64 @@ export default function TargetVsActual() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Target style={{ color: '#ec4899' }} /> Target vs Actual
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Compare planned metrics against real outputs</p>
+        </div>
+        {isFormOpen && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+      {!isFormOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fce7f3', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <Target size={24} style={{ color: '#ec4899' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Total Active Allocations</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#dcfce7', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>On Track</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.filter(r => r.extra_field_2 === 'On Track').length}</div>
+            </div>
+          </div>
+          <div className="card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#fee2e2', padding: 12, borderRadius: 12, display: 'flex' }}>
+              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>Delayed</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>{computedRecords.filter(r => r.extra_field_2 === 'Delayed').length}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Performance Evaluations ({filteredRecords.length})</h3>
@@ -288,7 +285,16 @@ export default function TargetVsActual() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => {
-                  const isDelayed = record.extra_field_2 === 'Delayed';
+                  const status = record.extra_field_2;
+                  let color = '#047857';
+                  let bg = '#10b98120';
+                  if (status === 'Delayed' || status === 'Critical') {
+                    color = '#b91c1c';
+                    bg = '#ef444420';
+                  } else if (status === 'Warning') {
+                    color = '#c2410c';
+                    bg = '#f9731620';
+                  }
                   return (
                     <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
                       <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
@@ -296,14 +302,14 @@ export default function TargetVsActual() {
                       <td style={{ padding: '16px', fontWeight: 600 }}>{record.extra_field_1}</td>
                       <td style={{ padding: '16px' }}>
                         <span style={{ 
-                          color: isDelayed ? '#b91c1c' : '#047857', 
+                          color: color, 
                           fontWeight: 600, 
-                          backgroundColor: isDelayed ? '#ef444420' : '#10b98120', 
+                          backgroundColor: bg, 
                           padding: '4px 10px', 
                           borderRadius: 12, 
                           fontSize: 12 
                         }}>
-                          {record.extra_field_2}
+                          {status}
                         </span>
                       </td>
                       <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
@@ -321,7 +327,7 @@ export default function TargetVsActual() {
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

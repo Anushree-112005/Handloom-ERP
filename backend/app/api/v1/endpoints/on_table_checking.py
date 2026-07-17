@@ -45,14 +45,6 @@ class OnTableCheckingItemBase(BaseModel):
     inv_pin: Optional[str] = None
     checking_pin: Optional[str] = None
     pc_type: Optional[str] = None
-    pc_1: Optional[str] = None
-    pc_2: Optional[str] = None
-    pc_3: Optional[str] = None
-    pc_4: Optional[str] = None
-    pc_5: Optional[str] = None
-    pc_6: Optional[str] = None
-    pc_7: Optional[str] = None
-    swex: Optional[str] = None
     meters: Optional[Decimal] = Decimal("0.0")
     defect_type: Optional[str] = None
     grade: Optional[str] = None
@@ -76,6 +68,7 @@ class OnTableCheckingBase(BaseModel):
     order_no: Optional[str] = None
     party_name: Optional[str] = None
     lot_no: Optional[str] = None
+    qc_name: Optional[str] = None
     total_meters: Optional[Decimal] = Decimal("0.0")
     total_pieces: Optional[int] = 0
     pass_meters: Optional[Decimal] = Decimal("0.0")

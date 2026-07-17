@@ -1,27 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wrench, AlertCircle, Clock, Search, Save } from 'lucide-react';
+import { ppcAPI } from '../../services/api';
 
 export default function DowntimeTracking() {
-  const [downtimes, setDowntimes] = useState([
-    { loom: 'Loom L1', reason: 'Yarn Breakage', duration: '45 mins', date: 'Today, 10:30 AM', loggedBy: 'Operator 12' },
-    { loom: 'Loom L3', reason: 'Warp Changeover', duration: '4 hours', date: 'Yesterday', loggedBy: 'Supervisor A' },
-    { loom: 'Loom L5', reason: 'Mechanical Fault', duration: '2 hours', date: 'Yesterday', loggedBy: 'Maintenance Team' },
-  ]);
-
+  const [downtimes, setDowntimes] = useState([]);
+  const [looms, setLooms] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
-    loom: '', reason: '', duration: '', loggedBy: ''
+    loom_id: '', reason: '', duration_minutes: '', logged_by: ''
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setDowntimes([{ 
-      loom: formData.loom, reason: formData.reason, 
-      duration: formData.duration + ' mins', 
-      loggedBy: formData.loggedBy, 
-      date: 'Just Now' 
-    }, ...downtimes]);
-    setFormData({ loom: '', reason: '', duration: '', loggedBy: '' });
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [breakRes, loomRes] = await Promise.all([
+        ppcAPI.getBreakdowns().catch(() => ({ data: [] })),
+        ppcAPI.getLooms().catch(() => ({ data: [] }))
+      ]);
+      setDowntimes(breakRes?.data || []);
+      setLooms(loomRes?.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await ppcAPI.logBreakdown({
+        loom_id: parseInt(formData.loom_id),
+        breakdown_id: `BD-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        start_time: new Date().toLocaleTimeString(),
+        reason_category: formData.reason,
+        total_downtime: parseFloat(formData.duration_minutes),
+        reported_by: formData.logged_by
+      });
+      setFormData({ loom_id: '', reason: '', duration_minutes: '', logged_by: '' });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to log downtime.');
+    }
+  };
+
+  const filteredDowntimes = downtimes.filter(log => {
+    const term = searchTerm.toLowerCase();
+    const lName = looms.find(l => l.id === log.loom_id)?.loom_name || '';
+    return lName.toLowerCase().includes(term) || log.reason_category?.toLowerCase().includes(term);
+  });
 
   return (
     <div className="animate-fade">
@@ -38,7 +71,7 @@ export default function DowntimeTracking() {
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Stoppage Log</h3>
             <div className="search-bar" style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--text-muted)' }} />
-              <input type="text" placeholder="Search logs..." className="form-control" style={{ paddingLeft: 36, width: 200 }} />
+              <input type="text" placeholder="Search logs..." className="form-control" style={{ paddingLeft: 36, width: 200 }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
           </div>
           
@@ -54,23 +87,29 @@ export default function DowntimeTracking() {
                 </tr>
               </thead>
               <tbody>
-                {downtimes.map((log, i) => (
+                {loading ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                ) : filteredDowntimes.length === 0 ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: 20 }}>No records found.</td></tr>
+                ) : filteredDowntimes.map((log, i) => {
+                  const lName = looms.find(l => l.id === log.loom_id)?.loom_name || `Loom ${log.loom_id}`;
+                  return (
                   <tr key={i}>
-                    <td><span style={{ fontWeight: 600 }}>{log.loom}</span></td>
+                    <td><span style={{ fontWeight: 600 }}>{lName}</span></td>
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#ef4444', fontWeight: 500 }}>
-                        <AlertCircle size={14} /> {log.reason}
+                        <AlertCircle size={14} /> {log.reason_category}
                       </span>
                     </td>
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--text-secondary)' }}>
-                        <Clock size={14} /> {log.duration}
+                        <Clock size={14} /> {log.total_downtime} mins
                       </span>
                     </td>
-                    <td>{log.date}</td>
-                    <td>{log.loggedBy}</td>
+                    <td>{new Date(log.date).toLocaleString()}</td>
+                    <td>{log.reported_by || 'Unknown'}</td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -81,11 +120,16 @@ export default function DowntimeTracking() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Loom ID *</label>
-              <input 
-                type="text" className="form-control" 
-                value={formData.loom} onChange={e => setFormData({...formData, loom: e.target.value})}
-                required placeholder="e.g. Loom L1"
-              />
+              <select 
+                className="form-control" 
+                value={formData.loom_id} onChange={e => setFormData({...formData, loom_id: e.target.value})}
+                required
+              >
+                <option value="">-- Select Loom --</option>
+                {looms.map(l => (
+                  <option key={l.id} value={l.id}>{l.loom_name}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Reason *</label>
@@ -106,7 +150,7 @@ export default function DowntimeTracking() {
               <label>Duration (Minutes) *</label>
               <input 
                 type="number" className="form-control" 
-                value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})}
+                value={formData.duration_minutes} onChange={e => setFormData({...formData, duration_minutes: e.target.value})}
                 required placeholder="e.g. 45"
               />
             </div>
@@ -114,7 +158,7 @@ export default function DowntimeTracking() {
               <label>Logged By *</label>
               <input 
                 type="text" className="form-control" 
-                value={formData.loggedBy} onChange={e => setFormData({...formData, loggedBy: e.target.value})}
+                value={formData.logged_by} onChange={e => setFormData({...formData, logged_by: e.target.value})}
                 required placeholder="Operator/Supervisor Name"
               />
             </div>

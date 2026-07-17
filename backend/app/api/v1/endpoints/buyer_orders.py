@@ -11,6 +11,8 @@ import uuid
 
 from app.core.database import get_db
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
+from app.api.v1.endpoints.auth import get_current_user
+from app.models.employee import Employee
 
 router = APIRouter(prefix="/buyer-orders", tags=["Buyer Orders"])
 
@@ -547,6 +549,28 @@ async def delete_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/", response_model=List[OrderOut])
 async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     q = select(BuyerOrder).options(selectinload(BuyerOrder.items)).offset(skip).limit(limit)
+    result = await db.execute(q)
+    return result.scalars().all()
+
+
+@router.get("/status-update/orders", response_model=List[OrderOut])
+async def list_status_update_orders(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: AsyncSession = Depends(get_db),
+    current_user: Employee = Depends(get_current_user)
+):
+    perms = current_user.module_permissions or {}
+    if not perms.get("status_update"):
+        raise HTTPException(status_code=403, detail="Access Denied")
+        
+    q = (
+        select(BuyerOrder)
+        .options(selectinload(BuyerOrder.items))
+        .where(BuyerOrder.merchandiser == current_user.name)
+        .offset(skip)
+        .limit(limit)
+    )
     result = await db.execute(q)
     return result.scalars().all()
 

@@ -333,6 +333,10 @@ export default function UserManagement() {
                     <input type="checkbox" name="log_report" checked={formData.module_permissions?.log_report || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
                     Log Report
                   </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input type="checkbox" name="status_update" checked={formData.module_permissions?.status_update || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
+                    Status Update
+                  </label>
                 </div>
               </div>
             </div>

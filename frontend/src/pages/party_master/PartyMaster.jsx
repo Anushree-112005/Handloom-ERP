@@ -23,6 +23,56 @@ const InfoRow2 = ({ label, value }) => (
   </div>
 );
 
+const isSalesParty = (p) => {
+  if (!p) return false;
+  const type = (p.party_type || '').toLowerCase();
+  const group = (p.party_group || '').toLowerCase();
+
+  const excludeTerms = [
+    'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+    'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+    'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
+    'lab', 'washing', 'service'
+  ];
+
+  if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
+    return false;
+  }
+
+  return (
+    type.includes('sales') ||
+    type.includes('customer') ||
+    type.includes('buyer') ||
+    group.includes('customer') ||
+    group.includes('buyer')
+  );
+};
+
+const isPurchaseParty = (p) => {
+  if (!p) return false;
+  const type = (p.party_type || '').toLowerCase();
+  const group = (p.party_group || '').toLowerCase();
+
+  const excludeTerms = [
+    'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
+    'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
+    'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
+    'lab', 'washing', 'service'
+  ];
+
+  if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
+    return false;
+  }
+
+  return (
+    type.includes('purchase') ||
+    type.includes('supplier') ||
+    type.includes('vendor') ||
+    group.includes('supplier') ||
+    group.includes('vendor')
+  );
+};
+
 export default function PartyMaster() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryId = searchParams.get('id');
@@ -354,7 +404,7 @@ export default function PartyMaster() {
       (typeFilter === 'Sales' && isSalesParty(p)) ||
       (typeFilter === 'Purchase Party' && isPurchaseParty(p)) ||
       (typeFilter === 'Purchase' && isPurchaseParty(p)) ||
-      p.party_type === typeFilter;
+      p.party_type?.split(', ').includes(typeFilter);
     const matchesStatus = statusFilter === 'All Status' || p.status === statusFilter;
 
     let matchesDate = true;
@@ -662,60 +712,6 @@ export default function PartyMaster() {
 
     doc.save(`Party_Profile_${party.company_name || 'Party'}.pdf`);
   };
-
-  const isSalesParty = (p) => {
-    if (!p) return false;
-    const type = (p.party_type || '').toLowerCase();
-    const group = (p.party_group || '').toLowerCase();
-
-    // Exclude service providers (job workers, processors, logistics, agents, etc.)
-    const excludeTerms = [
-      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
-      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
-      'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
-      'lab', 'washing', 'service'
-    ];
-
-    if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
-      return false;
-    }
-
-    return (
-      type.includes('sales') ||
-      type.includes('customer') ||
-      type.includes('buyer') ||
-      group.includes('customer') ||
-      group.includes('buyer')
-    );
-  };
-
-  const isPurchaseParty = (p) => {
-    if (!p) return false;
-    const type = (p.party_type || '').toLowerCase();
-    const group = (p.party_group || '').toLowerCase();
-
-    // Exclude service providers (job workers, processors, logistics, agents, etc.)
-    const excludeTerms = [
-      'job', 'worker', 'processor', 'dyeing', 'weaving', 'weaver', 'warping', 
-      'sizing', 'printing', 'finishing', 'doubling', 'twisting', 'converter', 
-      'coverter', 'loom', 'logistics', 'agent', 'courier', 'postage', 'testing', 
-      'lab', 'washing', 'service'
-    ];
-
-    if (excludeTerms.some(term => type.includes(term) || group.includes(term))) {
-      return false;
-    }
-
-    return (
-      type.includes('purchase') ||
-      type.includes('supplier') ||
-      type.includes('vendor') ||
-      group.includes('supplier') ||
-      group.includes('vendor')
-    );
-  };
-
-
   const totalParties = parties.length;
   const totalSales = parties.filter(isSalesParty).length;
   const totalPurchase = parties.filter(isPurchaseParty).length;
@@ -740,20 +736,19 @@ export default function PartyMaster() {
   if (view === 'form') {
     return (
       <div className="animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+          <button 
+            type="button"
+            onClick={() => setView('list')} 
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             {isReadOnly ? 'View Party Details' : editingId ? 'Edit Party Details' : 'Add New Party'}
           </h2>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn btn-secondary" onClick={() => setView('list')}>
-              <X size={16} /> Close
-            </button>
-            {!isReadOnly && (
-              <button type="submit" form="partyForm" className="btn btn-primary">
-                <Save size={16} /> Save Party
-              </button>
-            )}
-          </div>
         </div>
 
         <div className="card" style={{ padding: 0 }}>
@@ -794,6 +789,7 @@ export default function PartyMaster() {
                         required
                         disabled={isReadOnly}
                         placeholder="-- Select Party Type --"
+                        multiple={true}
                       />
                       <div className="form-group">
                         <label>Business Name *</label>
@@ -1039,37 +1035,15 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Merchandiser</label>
-                        <input list="merchandiser-list" className="form-control" name="merchandiser" value={formData.merchandiser || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
-                        <datalist id="merchandiser-list">
-                          {options.employees.filter(emp => 
-                            emp.user_type?.toLowerCase().includes('merchandis') || 
-                            emp.designation?.toLowerCase().includes('merchandis') ||
-                            emp.department?.toLowerCase().includes('merchandis')
-                          ).map(emp => <option key={emp.id} value={emp.name} />)}
-                        </datalist>
+                        <input className="form-control" name="merchandiser" value={formData.merchandiser || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <div className="form-group">
                         <label>Manager</label>
-                        <input list="manager-list" className="form-control" name="manager" value={formData.manager || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
-                        <datalist id="manager-list">
-                          {options.employees.filter(emp => 
-                            emp.user_type?.toLowerCase().includes('manag') || 
-                            emp.designation?.toLowerCase().includes('manag') ||
-                            emp.department?.toLowerCase().includes('admin') ||
-                            emp.department?.toLowerCase().includes('manag')
-                          ).map(emp => <option key={emp.id} value={emp.name} />)}
-                        </datalist>
+                        <input className="form-control" name="manager" value={formData.manager || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <div className="form-group">
                         <label>A/c Incharge</label>
-                        <input list="account-incharge-list" className="form-control" name="account_incharge" value={formData.account_incharge || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
-                        <datalist id="account-incharge-list">
-                          {options.employees.filter(emp => 
-                            emp.user_type?.toLowerCase().includes('account') || 
-                            emp.designation?.toLowerCase().includes('account') ||
-                            emp.department?.toLowerCase().includes('account')
-                          ).map(emp => <option key={emp.id} value={emp.name} />)}
-                        </datalist>
+                        <input className="form-control" name="account_incharge" value={formData.account_incharge || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <SubMasterDropdown
                         label="Agent Name"
@@ -1128,6 +1102,17 @@ export default function PartyMaster() {
 
 
               </fieldset>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> Save Party
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -1291,15 +1276,14 @@ export default function PartyMaster() {
               <thead>
                 <tr>
                   <th>Party no</th><th>Business Name</th><th>Type & Group</th>
-                  <th>Agent</th>
-                  <th>Contact & Phone</th><th>City</th><th>GST / PAN</th><th>Actions</th>
+                  <th>Contact & Phone</th><th>City</th><th>Merchandiser</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredParties.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
                 ) : (
                   filteredParties.map(p => (
                     <tr
@@ -1318,16 +1302,12 @@ export default function PartyMaster() {
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.party_group}</span>
                       </td>
                       <td>
-                        {p.agent_name ? <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{p.agent_name}</span> : <span style={{ color: 'var(--text-muted)' }}>N/A</span>}
-                      </td>
-                      <td>
                         {p.contact_person || 'N/A'}<br />
                         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.phone}</span>
                       </td>
                       <td>{p.city}</td>
                       <td>
-                        <span style={{ fontSize: 12 }}>{p.gst_no || 'N/A'}</span><br />
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.pan_no}</span>
+                        <span style={{ fontWeight: 600 }}>{p.merchandiser || 'N/A'}</span>
                       </td>
                       <td onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 8 }}>

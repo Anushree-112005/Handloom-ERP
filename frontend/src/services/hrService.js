@@ -1,5 +1,19 @@
 import api, { employeeAPI, subMasterAPI } from './api';
 
+export const testBiometricConnection = async (ip, port) => {
+  const res = await api.post('/hr/biometric/test-connection', { ip, port });
+  return res.data;
+};
+
+export const syncBiometricAttendance = async (ip, port, mock = false) => {
+  const res = await api.post('/hr/biometric/sync', { ip, port, mock });
+  return res.data;
+};
+
+export const fetchRawBiometricLogs = async () => {
+  return fetchHRItems('biometric_raw_logs');
+};
+
 const mapBackendToFrontend = (emp) => {
   if (!emp) return null;
   return {
@@ -15,6 +29,7 @@ const mapBackendToFrontend = (emp) => {
     personal_email: emp.personal_email || '',
     current_address: emp.address || '',
     permanent_address: emp.permanent_address || '',
+    biometric_id: emp.biometric_id || '',
   };
 };
 
@@ -30,6 +45,7 @@ const mapFrontendToBackend = (form) => {
     aadhaar_no: form.aadhar_number || '',
     status: form.employment_status || 'Active',
     address: form.current_address || '',
+    biometric_id: form.biometric_id || null,
   };
 };
 
@@ -154,12 +170,7 @@ export const fetchDepartments = async () => {
       };
     });
   } catch {
-    return getLocalItems('departments', [
-      { id: 1, name: 'HR', code: 'HR-01', type: 'Support' },
-      { id: 2, name: 'Engineering', code: 'ENG-01', type: 'Operational' },
-      { id: 3, name: 'Sales', code: 'SAL-01', type: 'Operational' },
-      { id: 4, name: 'Finance', code: 'FIN-01', type: 'Support' }
-    ]);
+    return [];
   }
 };
 
@@ -187,13 +198,7 @@ export const fetchDesignations = async () => {
       };
     });
   } catch {
-    return getLocalItems('designations', [
-      { id: 1, title: 'Software Engineer', code: 'ENG-001', department: 'Engineering', grade: 'L3', min_salary: 800000, max_salary: 1500000, experience: '3+ Years', skill_category: 'Technical', status: 'Active', description: 'Develop and maintain software applications.' },
-      { id: 2, title: 'Senior Software Engineer', code: 'ENG-002', department: 'Engineering', grade: 'L5', min_salary: 1500000, max_salary: 2500000, experience: '5+ Years', skill_category: 'Technical', status: 'Active', description: 'Lead development of core features and mentor juniors.' },
-      { id: 3, title: 'HR Manager', code: 'HR-001', department: 'HR', grade: 'M1', min_salary: 1200000, max_salary: 1800000, experience: '7+ Years', skill_category: 'Management', status: 'Active', description: 'Oversee HR operations and recruitment.' },
-      { id: 4, title: 'Sales Executive', code: 'SAL-001', department: 'Sales', grade: 'L2', min_salary: 400000, max_salary: 800000, experience: '1+ Years', skill_category: 'Communication', status: 'Active', description: 'Drive sales and manage client relationships.' },
-      { id: 5, title: 'Driver', code: 'LOG-001', department: 'Logistics', grade: 'L1', min_salary: 250000, max_salary: 400000, experience: '2+ Years', skill_category: 'Operations', status: 'Inactive', description: 'Handle transportation of company goods.' }
-    ]);
+    return [];
   }
 };
 
@@ -202,10 +207,7 @@ export const fetchShifts = async () => {
     const res = await subMasterAPI.list('shift');
     return (res.data || []).map(mapBackendToFrontendShift);
   } catch {
-    return getLocalItems('shifts', [
-      { id: 1, name: 'General Shift' },
-      { id: 2, name: 'Night Shift' }
-    ]);
+    return [];
   }
 };
 

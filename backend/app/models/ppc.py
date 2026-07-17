@@ -74,3 +74,36 @@ class OperatorMaster(Base):
     join_date = Column(DateTime(timezone=True), nullable=True)
     contact_number = Column(String, nullable=True)
     status = Column(Boolean, default=True) # True=Active, False=Inactive
+
+class LoomBreakdown(Base):
+    __tablename__ = "loom_breakdowns"
+
+    id = Column(Integer, primary_key=True, index=True)
+    loom_id = Column(Integer, ForeignKey("loom_master.id"), nullable=False)
+    breakdown_id = Column(String, index=True, nullable=False)
+    date = Column(DateTime(timezone=True), default=datetime.utcnow)
+    start_time = Column(String, nullable=False)
+    end_time = Column(String, nullable=True)
+    total_downtime = Column(Float, default=0.0)
+    reason_category = Column(String, nullable=False)
+    reason_details = Column(String, nullable=True)
+    reported_by = Column(String, nullable=True)
+    attended_by = Column(String, nullable=True)
+    action_taken = Column(String, nullable=True)
+    status = Column(String, default="Open") # Open, Resolved
+
+    loom = relationship("LoomMaster")
+
+class WarpingDelivery(Base):
+    __tablename__ = "warping_deliveries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    requisition_id = Column(String, index=True, nullable=False, unique=True)
+    order_id = Column(String, nullable=False)
+    loom_id = Column(Integer, ForeignKey("loom_master.id"), nullable=False)
+    warp_configuration = Column(String, nullable=False)
+    weft_configuration = Column(String, nullable=False)
+    status = Column(String, default="Pending") # Pending, Issued
+    date = Column(DateTime(timezone=True), default=datetime.utcnow)
+
+    loom = relationship("LoomMaster")

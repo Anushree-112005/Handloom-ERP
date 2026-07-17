@@ -281,8 +281,7 @@ export default function DesignAI() {
 
     const noD = warpRepeatSize > 0 ? Math.floor(totalWarpEnds / warpRepeatSize) : 0;
     const repeatEnds = warpRepeatSize * noD;
-    const selvage = 0;
-    const balance = totalWarpEnds - repeatEnds - selvage;
+    const balance = totalWarpEnds - repeatEnds;
 
     // Distribute balance to extra ends
     const extraEnds = warpDesign.map(() => 0);
@@ -344,7 +343,8 @@ export default function DesignAI() {
       weftDesign = [{ color_name: dom.color_name, threads: totalWeftEnds, hex: dom.hex }];
       
       const weft_wastage = wastage - 0.085;
-      const req_kg = Math.ceil((totalWeftEnds * sizedLength) / (weftEqCount * 1693.6) * weft_wastage);
+      const req_kg_raw = (totalWeftEnds * sizedLength) / (weftEqCount * 1693.6) * weft_wastage;
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw)) : 0;
       weftSummary = [{
         beam_type: 'Weft',
         count: weftCountLabel,
@@ -404,7 +404,8 @@ export default function DesignAI() {
 
       weftSummary = Object.values(weftColorAgg).map(row => {
         const weft_wastage = wastage - 0.085;
-        const req_kg = Math.ceil((row.total_ends * sizedLength) / (weftEqCount * 1693.6) * weft_wastage);
+        const req_kg_raw = (row.total_ends * sizedLength) / (weftEqCount * 1693.6) * weft_wastage;
+        const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw)) : 0;
         return {
           ...row,
           req_kg: req_kg
@@ -1122,7 +1123,7 @@ export default function DesignAI() {
                   </div>
                   <div className="dai-calc-item">
                     <div className="dai-calc-label">Selvage</div>
-                    <div className="dai-calc-value">{summaryData.selvage}</div>
+                    <div className="dai-calc-value">0</div>
                   </div>
                   <div className="dai-calc-item">
                     <div className="dai-calc-label">Total Ends</div>

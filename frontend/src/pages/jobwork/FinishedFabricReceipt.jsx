@@ -149,6 +149,18 @@ export default function FinishedFabricReceipt() {
     }));
   }, [items, formData.gry_delivery_mtr, formData.received_mtr, formData.order_mtr]);
 
+  const generateNextFFRNo = (existingInwards) => {
+    const ffrNums = existingInwards
+      .map(e => e.ref_no)
+      .filter(ref => ref && ref.toUpperCase().startsWith('FFR-'))
+      .map(ref => {
+        const num = parseInt(ref.replace(/FFR-/i, ''));
+        return isNaN(num) ? 0 : num;
+      });
+    const maxNum = ffrNums.length > 0 ? Math.max(...ffrNums) : 0;
+    return `FFR-${(maxNum + 1).toString().padStart(5, '0')}`;
+  };
+
   const handleOpenForm = (inward = null, readOnly = false) => {
     if (inward) {
       setEditingId(inward.id);
@@ -205,7 +217,11 @@ export default function FinishedFabricReceipt() {
         setItems([{ piece_no: '', weight: '', v_loom: '', v_pc_no: '', meters: '' }]);
       }
     } else {
-      setFormData(initialForm);
+      const nextRef = generateNextFFRNo(inwards);
+      setFormData({
+        ...initialForm,
+        ref_no: nextRef
+      });
       setEditingId(null);
       setItems([{ piece_no: '', weight: '', v_loom: '', v_pc_no: '', meters: '' }]);
     }
@@ -369,12 +385,17 @@ export default function FinishedFabricReceipt() {
     return (
       <div className="animate-fade">
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Finished Fabric Receipt' : editingId ? 'Edit Finished Fabric Receipt' : 'Add Finished Fabric Receipt'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setView('list')}><X size={16} /> Close</button>
-              {!isReadOnly && <button type="submit" form="finishedReceiptForm" className="btn btn-primary"><Save size={16} /> Save Receipt</button>}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -405,11 +426,7 @@ export default function FinishedFabricReceipt() {
                 <div className="animate-fade">
                     <h4 style={{ color: 'var(--primary)', marginBottom: 16, borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Receipt Reference</h4>
                     <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                      <div className="form-group">
-                        <label>Receipt ID *</label>
-                        <input className="form-control" name="ref_no" value={formData.ref_no} onChange={handleInputChange} required />
-                      </div>
-                      <div className="form-group">
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>Receipt Date *</label>
                         <input type="date" className="form-control" name="inv_date" value={formData.inv_date} onChange={handleInputChange} required />
                       </div>
@@ -502,6 +519,16 @@ export default function FinishedFabricReceipt() {
                     {!isReadOnly && <button type="button" onClick={addItemRow} className="btn btn-secondary" style={{ background: 'var(--primary)', color: '#fff', marginTop: 12 }}>+ Add Piece</button>}
                   </div>
               </fieldset>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                  <X size={16} /> Close
+                </button>
+                {!isReadOnly && (
+                  <button type="submit" className="btn btn-primary">
+                    <Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -518,7 +545,45 @@ export default function FinishedFabricReceipt() {
           </h2>
           <p style={{ color: 'var(--text-muted)' }}>Log receipt of finished fabric rolls from external Finishers.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => handleOpenForm()}><Plus size={18} /> Add Finished Receipt</button>
+        <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
+          {/* Export Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowExportMenu(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <Download size={15} /> Export ▾
+            </button>
+            {showExportMenu && (
+              <div
+                style={{
+                  position: 'absolute', top: '110%', right: 0, background: '#fff',
+                  border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  zIndex: 200, minWidth: 160, overflow: 'hidden'
+                }}
+              >
+                <button
+                  onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#dc2626' }}
+                  onMouseOver={e => e.currentTarget.style.background = '#fef2f2'}
+                  onMouseOut={e => e.currentTarget.style.background = 'none'}
+                >
+                  <FileText size={14} /> Export PDF
+                </button>
+                <button
+                  onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#16a34a' }}
+                  onMouseOver={e => e.currentTarget.style.background = '#f0fdf4'}
+                  onMouseOut={e => e.currentTarget.style.background = 'none'}
+                >
+                  <FileSpreadsheet size={14} /> Export Excel
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="btn btn-primary" onClick={() => handleOpenForm()}><Plus size={18} /> Add Finished Receipt</button>
+        </div>
       </div>
 
       <div className="card" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>

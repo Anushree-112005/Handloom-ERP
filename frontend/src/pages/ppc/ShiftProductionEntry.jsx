@@ -5,9 +5,8 @@ import { subMasterAPI, ppcAPI } from '../../services/api';
 export default function ShiftProductionEntry() {
   const [records, setRecords] = useState([]);
   const [looms, setLooms] = useState([]);
-  const [shifts, setShifts] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [startEntries, setStartEntries] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [operators, setOperators] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,18 +35,16 @@ export default function ShiftProductionEntry() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, shiftRes, assignRes, startRes] = await Promise.all([
-        subMasterAPI.list('ppc_shift_production').catch(() => ({ data: [] })),
+      const [recRes, loomRes, allocRes, opRes] = await Promise.all([
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_shift_master').catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_shift_planning_v2').catch(() => ({ data: [] })),
-        subMasterAPI.list('ppc_loom_start').catch(() => ({ data: [] }))
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getOperators().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
-      setShifts(shiftRes?.data || []);
-      setAssignments(assignRes?.data || []);
-      setStartEntries(startRes?.data || []);
+      setAllocations(allocRes?.data || []);
+      setOperators(opRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -58,33 +55,19 @@ export default function ShiftProductionEntry() {
   const handleLoomShiftChange = (name, value) => {
     const updated = { ...formData, [name]: value };
 
-    if (updated.loom_id && updated.shift) {
-      // Find operator and target from shift_planning_v2
-      const loom = looms.find(l => l.id.toString() === updated.loom_id);
-      const lName = loom ? loom.loom_name : updated.loom_id;
-
-      const assign = assignments.find(a =>
-        a.description && a.description.includes(lName) && a.code === updated.shift
-      );
-
-      if (assign) {
-        updated.operator = assign.extra_field_1;
-        // Target meters is extra_field_2: e.g. "212 m"
-        if (assign.extra_field_2) {
-          updated.target_meters = parseFloat(assign.extra_field_2.replace(' m', '')) || 0;
-        }
+    if (updated.loom_id) {
+      const alloc = allocations.find(a => (a.loom_id.toString() === updated.loom_id || a.loom_name === updated.loom_id) && a.allocation_status !== 'Completed');
+      if (alloc) {
+        updated.target_meters = alloc.assigned_meters;
+        // Find operator assigned to this loom
+        const loom = looms.find(l => l.id.toString() === updated.loom_id || l.loom_name === updated.loom_id);
+        const op = operators.find(o => String(o.assigned_loom) === String(loom ? loom.loom_name : ''));
+        updated.operator = op ? op.operator_name : (operators[0] ? operators[0].operator_name : 'Operator 1');
+        updated.opening_meter = alloc.completed_meters || 0;
       } else {
-        // Fallback or empty if not assigned
-        updated.operator = '';
         updated.target_meters = '';
-      }
-
-      // Find opening meter from recent loom start or previous production
-      // Simulating opening meter by finding the loom start entry
-      const startEntry = startEntries.find(s => s.code === updated.loom_id);
-      if (startEntry && startEntry.description) {
-        const match = startEntry.description.match(/Start:\s*(\d+)m/);
-        if (match) updated.opening_meter = parseInt(match[1], 10);
+        updated.operator = '';
+        updated.opening_meter = 0;
       }
     }
 
@@ -117,19 +100,23 @@ export default function ShiftProductionEntry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await subMasterAPI.create('ppc_shift_production', {
-        name: formData.entry_id,
-        code: formData.loom_id,
-        extra_field_1: `${formData.shift} | Op: ${formData.operator}`,
-        extra_field_2: `${formData.good_meters} m (Eff: ${formData.efficiency}%)`,
-        description: `Yarn: ${formData.yarn_used}kg | Defects: ${formData.defect_meters}m`,
-        is_active: true
+      const alloc = allocations.find(a => (a.loom_id.toString() === formData.loom_id || a.loom_name === formData.loom_id) && a.allocation_status !== 'Completed');
+      if (!alloc) {
+         alert("No active allocation found for this loom!");
+         return;
+      }
+
+      await ppcAPI.logProduction({
+        allocation_id: alloc.id,
+        meters_produced: parseFloat(formData.meters_produced) || 0,
+        downtime_minutes: parseFloat(formData.defect_meters) || 0, // Mocking downtime using defect field for now
+        remarks: `Yarn: ${formData.yarn_used}kg | Defects: ${formData.defect_meters}m | Remarks: ${formData.remarks}`
       });
       setIsFormOpen(false);
       fetchData();
     } catch (err) {
       console.error(err);
-      alert('Error creating entry.');
+      alert('Error logging production entry.');
     }
   };
 
@@ -138,44 +125,9 @@ export default function ShiftProductionEntry() {
     r.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Activity style={{ color: '#8b5cf6' }} /> Shift Production Entry
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Log end-of-shift metrics and calculate true efficiency</p>
-        </div>
-        {!isFormOpen ? (
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setFormData({
-                entry_id: `SPE-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-                entry_date: new Date().toISOString().split('T')[0],
-                loom_id: '', shift: '', operator: '', opening_meter: 0,
-                closing_meter: '', meters_produced: '', target_meters: '',
-                efficiency: '', defect_meters: 0, good_meters: '', yarn_used: '', remarks: ''
-              });
-              setIsFormOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#8b5cf6', borderColor: '#8b5cf6' }}
-          >
-            <Plus size={16} /> New Entry
-          </button>
-        ) : (
-          <button
-            className="btn btn-secondary"
-            onClick={() => setIsFormOpen(false)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
-          >
-            <ArrowLeft size={16} /> Back to List
-          </button>
-        )}
-      </div>
-
-      {isFormOpen ? (
+  if (isFormOpen) {
+    return (
+      <div className="animate-fade" style={{ height: '100%' }}>
         <div className="card animate-fade" style={{ padding: 0 }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -212,9 +164,9 @@ export default function ShiftProductionEntry() {
                 <label>Shift</label>
                 <select className="form-control" value={formData.shift} onChange={(e) => handleLoomShiftChange('shift', e.target.value)} required>
                   <option value="">-- Select Shift --</option>
-                  {shifts.map(s => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
-                  ))}
+                  <option value="Shift A">Shift A</option>
+                  <option value="Shift B">Shift B</option>
+                  <option value="Shift C">Shift C</option>
                 </select>
               </div>
             </div>
@@ -280,7 +232,49 @@ export default function ShiftProductionEntry() {
             </div>
           </form>
         </div>
-      ) : (
+      </div>
+    );
+  }
+
+
+  return (
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Activity style={{ color: '#8b5cf6' }} /> Shift Production Entry
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>Log end-of-shift metrics and calculate true efficiency</p>
+        </div>
+        {!isFormOpen ? (
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setFormData({
+                entry_id: `SPE-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+                entry_date: new Date().toISOString().split('T')[0],
+                loom_id: '', shift: '', operator: '', opening_meter: 0,
+                closing_meter: '', meters_produced: '', target_meters: '',
+                efficiency: '', defect_meters: 0, good_meters: '', yarn_used: '', remarks: ''
+              });
+              setIsFormOpen(true);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: '#8b5cf6', borderColor: '#8b5cf6' }}
+          >
+            <Plus size={16} /> New Entry
+          </button>
+        ) : (
+          <button
+            className="btn btn-secondary"
+            onClick={() => setIsFormOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px' }}
+          >
+            <ArrowLeft size={16} /> Back to List
+          </button>
+        )}
+      </div>
+
+
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Recent Logs ({filteredRecords.length})</h3>
@@ -315,18 +309,18 @@ export default function ShiftProductionEntry() {
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
                   <tr key={record.id || idx}>
-                    <td style={{ fontWeight: 600 }}>{record.name}</td>
-                    <td>{record.code}</td>
-                    <td>{record.extra_field_1}</td>
-                    <td><span style={{ color: '#047857', fontWeight: 600, backgroundColor: '#10b98120', padding: '4px 8px', borderRadius: 12 }}>{record.extra_field_2}</span></td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
+                    <td style={{ fontWeight: 600 }}>SPE-{String(record.id).padStart(3, '0')}</td>
+                    <td>{record.loom_id || 'Unknown Loom'}</td>
+                    <td>{new Date(record.timestamp).toLocaleDateString()}</td>
+                    <td><span style={{ color: '#047857', fontWeight: 600, backgroundColor: '#10b98120', padding: '4px 8px', borderRadius: 12 }}>{record.meters_produced} m</span></td>
+                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.remarks}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      )}
+
     </div>
   );
 }

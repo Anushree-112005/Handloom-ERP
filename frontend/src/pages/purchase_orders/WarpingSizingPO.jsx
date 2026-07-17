@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Factory, Download, Table } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Factory, Download, Table, ArrowLeft } from 'lucide-react';
 import { warpingSizingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
@@ -29,6 +29,7 @@ export default function WarpingSizingPO() {
     wages_input: '', wages_type: '', selected_count: '',
     merchandiser: '', payment_terms: '', certificate_type: '', loom_type: '',
     items: [{ weaver_name: '', no_of_beam: '' }],
+    yarn_items: [],
     tax_type: '', gross_amt: 0, cgst_pct: 0, cgst_amount: 0, sgst_pct: 0, sgst_amount: 0, igst_pct: 0, igst_amount: 0,
     remarks: '', total_beam_kgs: '', net_amount: 0,
     terms_conditions: [
@@ -127,7 +128,7 @@ export default function WarpingSizingPO() {
       setForm(recalculate({
         ...form,
         order_no: value,
-        party_name: bo?.party_name || bo?.buyer_name || form.party_name,
+        party_name: form.party_name,
         design_no: de?.ds_ref_no || form.design_no,
         fabric: de?.fabric || form.fabric,
         reed: de?.reed || form.reed,
@@ -146,10 +147,75 @@ export default function WarpingSizingPO() {
 
     if (name === 'design_no') {
       const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      let yarnCountVal = '';
+      if (de && de.yarn_details) {
+        try {
+          const parsedYarn = typeof de.yarn_details === 'string'
+            ? JSON.parse(de.yarn_details)
+            : de.yarn_details;
+          if (Array.isArray(parsedYarn) && parsedYarn.length > 0) {
+            yarnCountVal = parsedYarn[0].yarn_count || '';
+          }
+        } catch (e) {
+          console.error("Error parsing yarn_details", e);
+        }
+      }
       setForm(recalculate({
         ...form,
         design_no: value,
+        fabric: de?.fabric || form.fabric,
+        reed: de?.reed || form.reed,
+        pick: de?.pick_ot || de?.pick || form.pick,
+        warp_width: de?.warp_width || form.warp_width,
+        warp_ends: de?.total_ends || form.warp_ends,
+        warp_meters: de?.warp_mtr || form.warp_meters,
+        weft_meters: de?.weft_pro_mtr || form.weft_meters,
+        fabric_width: de?.gray_width || de?.fabric_width_grey || form.fabric_width,
+        finished_width: de?.finish_width || form.finished_width,
+        selected_count: yarnCountVal || de?.count_rxpxw || form.selected_count,
         merchandiser: de?.buyer_name || form.merchandiser
+      }));
+      return;
+    }
+
+    if (name === 'beam_type') {
+      const selectedType = value;
+      const de = designEntries.find(d => d.ds_ref_no === form.design_no || d.design_no === form.design_no);
+      
+      let newYarnItems = [];
+      if (de && selectedType) {
+        let warpSummary = [];
+        let weftSummary = [];
+        try {
+          warpSummary = de.warp_summary ? JSON.parse(de.warp_summary) : [];
+        } catch (e) {}
+        try {
+          weftSummary = de.weft_summary ? JSON.parse(de.weft_summary) : [];
+        } catch (e) {}
+
+        const matchedWarp = warpSummary.filter(item => item.beam_type?.toLowerCase() === selectedType.toLowerCase());
+        const matchedWeft = weftSummary.filter(item => item.beam_type?.toLowerCase() === selectedType.toLowerCase());
+        const combined = [...matchedWarp, ...matchedWeft];
+
+        newYarnItems = combined.map(item => {
+          const isWarp = item.beam_type?.toLowerCase().startsWith('warp');
+          const warpMtrsVal = isWarp ? (form.warp_meters || de.warp_mtr || 0) : (form.weft_meters || de.weft_pro_mtr || 0);
+          return {
+            yarn_count: item.count || item.yarn_count || '',
+            shade: item.color || item.shade || '',
+            uom: 'Cone',
+            yarn_code: String(item.total_ends || item.ends || 0),
+            qty_kg: item.req_kg || 0,
+            lot_no: String(warpMtrsVal),
+            yarn_type: item.beam_type || selectedType
+          };
+        });
+      }
+
+      setForm(recalculate({
+        ...form,
+        beam_type: selectedType,
+        yarn_items: newYarnItems
       }));
       return;
     }
@@ -180,11 +246,87 @@ export default function WarpingSizingPO() {
     setForm({ ...form, terms_conditions: newTerms });
   };
 
+  const handleInsertBeamType = () => {
+    if (!form.beam_type) {
+      alert("Please select a Beam Type first");
+      return;
+    }
+    
+    const de = designEntries.find(d => d.ds_ref_no === form.design_no || d.design_no === form.design_no);
+    if (!de) {
+      alert("Please select a Design No first");
+      return;
+    }
+
+    let warpSummary = [];
+    let weftSummary = [];
+    try {
+      warpSummary = de.warp_summary ? JSON.parse(de.warp_summary) : [];
+    } catch (e) {}
+    try {
+      weftSummary = de.weft_summary ? JSON.parse(de.weft_summary) : [];
+    } catch (e) {}
+
+    const matchedWarp = warpSummary.filter(item => item.beam_type?.toLowerCase() === form.beam_type.toLowerCase());
+    const matchedWeft = weftSummary.filter(item => item.beam_type?.toLowerCase() === form.beam_type.toLowerCase());
+    const combined = [...matchedWarp, ...matchedWeft];
+
+    if (combined.length === 0) {
+      alert(`No items found for Beam Type "${form.beam_type}" in Design Entry`);
+      return;
+    }
+
+    const newYarnItems = combined.map(item => {
+      const isWarp = item.beam_type?.toLowerCase().startsWith('warp');
+      const warpMtrsVal = isWarp ? (form.warp_meters || de.warp_mtr || 0) : (form.weft_meters || de.weft_pro_mtr || 0);
+      return {
+        yarn_count: item.count || item.yarn_count || '',
+        shade: item.color || item.shade || '',
+        uom: 'Cone',
+        yarn_code: String(item.total_ends || item.ends || 0),
+        qty_kg: item.req_kg || 0,
+        lot_no: String(warpMtrsVal),
+        yarn_type: item.beam_type || form.beam_type
+      };
+    });
+
+    setForm(prev => ({
+      ...prev,
+      yarn_items: [...(prev.yarn_items || []), ...newYarnItems]
+    }));
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
       const payload = { ...form };
       if (!payload.delivery_date) payload.delivery_date = null;
+      payload.supplier_job_worker = form.party_name;
+
+      payload.items = [
+        ...(form.yarn_items || []).map(yi => ({
+          yarn_count: yi.yarn_count,
+          shade: yi.shade,
+          uom: yi.uom || 'Cone',
+          yarn_code: yi.yarn_code,
+          qty_kg: yi.qty_kg || 0,
+          lot_no: yi.lot_no,
+          yarn_type: yi.yarn_type,
+          weaver_name: '',
+          no_of_beam: 0
+        })),
+        ...(form.items || []).filter(wi => wi.weaver_name).map(wi => ({
+          yarn_count: '',
+          shade: '',
+          uom: '',
+          yarn_code: '',
+          qty_kg: 0,
+          lot_no: '',
+          yarn_type: '',
+          weaver_name: wi.weaver_name,
+          no_of_beam: wi.no_of_beam
+        }))
+      ];
 
       if (form.id) {
         await warpingSizingPOAPI.update(form.id, payload);
@@ -200,7 +342,21 @@ export default function WarpingSizingPO() {
   };
 
   const handleEdit = (order) => {
-    setForm(order);
+    const wItems = (order.items || []).filter(i => i.weaver_name && !i.yarn_count);
+    const yItems = (order.items || []).filter(i => i.yarn_count);
+    setForm({
+      ...order,
+      items: wItems.length > 0 ? wItems : [{ weaver_name: '', no_of_beam: '' }],
+      yarn_items: yItems.map(yi => ({
+        yarn_count: yi.yarn_count || '',
+        shade: yi.shade || '',
+        uom: yi.uom || 'Cone',
+        yarn_code: yi.yarn_code || '0',
+        qty_kg: yi.qty_kg || 0,
+        lot_no: yi.lot_no || '0',
+        yarn_type: yi.yarn_type || 'Warp Beam1'
+      }))
+    });
     setShowForm(true);
   };
 
@@ -224,7 +380,7 @@ export default function WarpingSizingPO() {
     const rows = filteredOrders.map(o => [
       o.po_no || o.po_number || '-',
       o.po_date || '-',
-      o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit || '-',
+      o.party_name || o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit || '-',
       `Rs. ${o.net_amount?.toFixed(2) || '0.00'}`,
       o.status || '-'
     ]);
@@ -236,7 +392,7 @@ export default function WarpingSizingPO() {
     const data = filteredOrders.map(o => ({
       "PO No": o.po_no || o.po_number,
       "Date": o.po_date,
-      "Supplier": o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit,
+      "Supplier": o.party_name || o.supplier_name || o.supplier_job_worker || o.supplier_worker || o.supplier_dyeing_unit || o.supplier_weaver || o.supplier_processing_unit || '-',
       "Amount": o.net_amount,
       "Status": o.status
     }));
@@ -249,7 +405,7 @@ export default function WarpingSizingPO() {
   const filteredOrders = orders.filter(o => {
     const matchesSearch = searchTerm === '' ||
       o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.supplier_job_worker?.toLowerCase().includes(searchTerm.toLowerCase());
+      (o.party_name || o.supplier_job_worker || '')?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'All Status' || o.status === statusFilter;
 
@@ -265,6 +421,37 @@ export default function WarpingSizingPO() {
     }
     return matchesSearch && matchesStatus && matchesDate;
   });
+
+  const selectedDesignForBeamTypes = designEntries.find(
+    d => d.ds_ref_no === form.design_no || d.design_no === form.design_no
+  );
+  let beamTypeOptions = [];
+  if (selectedDesignForBeamTypes) {
+    try {
+      const warpSum = typeof selectedDesignForBeamTypes.warp_summary === 'string'
+        ? JSON.parse(selectedDesignForBeamTypes.warp_summary)
+        : selectedDesignForBeamTypes.warp_summary || [];
+      const weftSum = typeof selectedDesignForBeamTypes.weft_summary === 'string'
+        ? JSON.parse(selectedDesignForBeamTypes.weft_summary)
+        : selectedDesignForBeamTypes.weft_summary || [];
+      
+      const types = new Set();
+      if (Array.isArray(warpSum)) {
+        warpSum.forEach(item => {
+          if (item.beam_type) types.add(item.beam_type);
+        });
+      }
+      if (Array.isArray(weftSum)) {
+        weftSum.forEach(item => {
+          if (item.beam_type) types.add(item.beam_type);
+        });
+      }
+      beamTypeOptions = Array.from(types);
+    } catch (e) {
+      console.error("Error parsing design summaries for beam types", e);
+    }
+  }
+  const displayBeamTypes = beamTypeOptions.length > 0 ? beamTypeOptions : ['Warp Beam1', 'Warp Beam2', 'Weft'];
 
   return (
     <div className="animate-fade">
@@ -296,7 +483,7 @@ export default function WarpingSizingPO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <button className="btn btn-primary" onClick={() => { setForm(initialForm); setShowForm(true); }}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -352,7 +539,7 @@ export default function WarpingSizingPO() {
                     <tr key={order.id}>
                       <td style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{order.po_no}</td>
                       <td>{order.po_date}</td>
-                      <td style={{ fontWeight: 500 }}>{order.supplier_job_worker}</td>
+                      <td style={{ fontWeight: 500 }}>{order.party_name || order.supplier_job_worker || '-'}</td>
                       <td style={{ fontWeight: 600 }}>₹{order.net_amount?.toFixed(2) || '0.00'}</td>
                       <td>
                         <span className={`badge ${order.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>
@@ -388,7 +575,7 @@ export default function WarpingSizingPO() {
           poNumber={selectedViewOrder?.po_no}
           poDate={selectedViewOrder?.po_date}
           deliveryAt="1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008."
-          supplierName={selectedViewOrder?.supplier_worker}
+          supplierName={selectedViewOrder?.party_name || selectedViewOrder?.supplier_job_worker || '-'}
           agentName=""
           designNo={selectedViewOrder?.sales_order_no || '-'}
           commission="0.00"
@@ -429,12 +616,19 @@ export default function WarpingSizingPO() {
         />
       ) : (
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              <button type="submit" form="warping-sizing-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {form.id ? 'Edit' : 'Create'} {title}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -464,13 +658,8 @@ export default function WarpingSizingPO() {
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group"><label>Ref No</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="text" className="form-control" name="ref_no_1" value={form.ref_no_1} onChange={handleChange} style={{ width: '50%' }} />
-                    <input type="text" className="form-control" name="ref_no_2" value={form.ref_no_2} onChange={handleChange} style={{ width: '50%' }} />
-                  </div>
-                </div>
-                <div className="form-group"><label>Order No *</label>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Order No *</label>
                   <select className="form-control" name="order_no" value={form.order_no} onChange={handleChange} required>
                     <option value="">Select Order...</option>
                     {buyerOrders.map(bo => (
@@ -504,12 +693,12 @@ export default function WarpingSizingPO() {
                   </select>
                 </div>
                 <div className="form-group"><label>Beam Type</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }}>Insert</button>
-                    <select className="form-control" name="beam_type" value={form.beam_type} onChange={handleChange} style={{ flex: 1 }}>
-                      <option value="">Select...</option>
-                    </select>
-                  </div>
+                  <select className="form-control" name="beam_type" value={form.beam_type} onChange={handleChange}>
+                    <option value="">Select...</option>
+                    {displayBeamTypes.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Fabric</label><input type="text" className="form-control" name="fabric" value={form.fabric} onChange={handleChange} /></div>
 
@@ -528,6 +717,9 @@ export default function WarpingSizingPO() {
                     <input type="text" className="form-control" name="wages_input" value={form.wages_input} onChange={handleChange} style={{ width: '50%' }} />
                     <select className="form-control" name="wages_type" value={form.wages_type} onChange={handleChange} style={{ width: '50%' }}>
                       <option value="">Select...</option>
+                      <option value="Wages">Wages</option>
+                      <option value="Mtr">Mtr</option>
+                      <option value="Kgs">Kgs</option>
                     </select>
                   </div>
                 </div>
@@ -538,50 +730,213 @@ export default function WarpingSizingPO() {
                 <div className="form-group"><label>Certificate Type</label>
                   <select className="form-control" name="certificate_type" value={form.certificate_type} onChange={handleChange}>
                     <option value="">Select...</option>
+                    {options.masters?.certified_type?.map(o => <option key={o} value={o}>{o}</option>)}
+                    {!options.masters?.certified_type?.length && (
+                      <>
+                        <option value="100% BCI Cotton">100% BCI Cotton</option>
+                        <option value="100% Organic Cotton">100% Organic Cotton</option>
+                        <option value="GOTS Certified">GOTS Certified</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="form-group"><label>Loom Type</label>
                   <select className="form-control" name="loom_type" value={form.loom_type} onChange={handleChange}>
                     <option value="">Select...</option>
+                    {options.masters?.loom_type?.map(o => <option key={o} value={o}>{o}</option>)}
+                    {!options.masters?.loom_type?.length && (
+                      <>
+                        <option value="Airjet">Airjet</option>
+                        <option value="Rapier">Rapier</option>
+                        <option value="Shuttle">Shuttle</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Section: Weaver Details */}
-            <div id="section-items" className="animate-fade" style={{ marginTop: 32 }}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Weaver Details</h4>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}><Plus size={14} /> Add</button>
-              </div>
-              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
-                <table className="data-table" style={{ minWidth: '600px' }}>
-                  <thead>
-                    <tr>
-                      <th>S.No</th>
-                      <th>Weaver Name</th>
-                      <th>No.of Beam</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {form.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td>{idx + 1}</td>
-                        <td>
-                          <select className="form-control" style={{ margin: 0 }} value={item.weaver_name} onChange={e => updateItem(idx, 'weaver_name', e.target.value)}>
-                            <option value="">Select...</option>
-                            {parties.filter(p => p.party_type?.toLowerCase() === 'job worker').map(p => (
-                              <option key={p.id} value={p.company_name}>{p.company_name}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td><input type="number" className="form-control" style={{ width: 120, margin: 0 }} value={item.no_of_beam} onChange={e => updateItem(idx, 'no_of_beam', e.target.value)} /></td>
-                        <td><button type="button" className="icon-btn" onClick={() => removeItem(idx)} style={{ color: 'red' }}><Trash2 size={16} /></button></td>
+            {/* Tables for Sizing / Warping Yarn Details and Weaver Details stacked vertically (one-by-one) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 32, marginTop: 32 }}>
+              {/* Sizing/Warping Yarn Details */}
+              <div style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>Sizing / Warping Yarn Details</h4>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => {
+                    setForm(prev => ({
+                      ...prev,
+                      yarn_items: [...(prev.yarn_items || []), { yarn_count: '', shade: '', uom: 'Cone', yarn_code: '0', qty_kg: 0, lot_no: '0', yarn_type: 'Warp Beam1' }]
+                    }));
+                  }}><Plus size={14} /> Add Row</button>
+                </div>
+                <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
+                  <table className="data-table" style={{ minWidth: '600px' }}>
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        <th>Yarn Count</th>
+                        <th>Color</th>
+                        <th>Unit</th>
+                        <th>Tot Ends</th>
+                        <th>Tot Kgs</th>
+                        <th>Warp Mtrs</th>
+                        <th>Warp Type</th>
+                        <th></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {(form.yarn_items || []).map((item, idx) => (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12 }} 
+                              value={item.yarn_count} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].yarn_count = e.target.value;
+                                setForm({ ...form, yarn_items: updated });
+                              }} 
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12 }} 
+                              value={item.shade} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].shade = e.target.value;
+                                setForm({ ...form, yarn_items: updated });
+                              }} 
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12, width: 60 }} 
+                              value={item.uom} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].uom = e.target.value;
+                                setForm({ ...form, yarn_items: updated });
+                              }} 
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12, width: 70 }} 
+                              value={item.yarn_code} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].yarn_code = e.target.value;
+                                setForm({ ...form, yarn_items: updated });
+                              }} 
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="number" 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12, width: 80 }} 
+                              value={item.qty_kg} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].qty_kg = parseFloat(e.target.value) || 0;
+                                setForm({ ...form, yarn_items: updated });
+                              }} 
+                            />
+                          </td>
+                          <td>
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12, width: 80 }} 
+                              value={item.lot_no} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].lot_no = e.target.value;
+                                setForm({ ...form, yarn_items: updated });
+                              }} 
+                            />
+                          </td>
+                          <td>
+                            <select 
+                              className="form-control" 
+                              style={{ margin: 0, padding: '4px 8px', fontSize: 12 }} 
+                              value={item.yarn_type} 
+                              onChange={e => {
+                                const updated = [...form.yarn_items];
+                                updated[idx].yarn_type = e.target.value;
+                                setForm({ ...form, yarn_items: updated });
+                              }}
+                            >
+                              <option value="Warp Beam1">Warp Beam1</option>
+                              <option value="Warp Beam2">Warp Beam2</option>
+                              <option value="Weft">Weft</option>
+                            </select>
+                          </td>
+                          <td>
+                            <button 
+                              type="button" 
+                              className="icon-btn" 
+                              style={{ color: 'red' }} 
+                              onClick={() => {
+                                const updated = form.yarn_items.filter((_, i) => i !== idx);
+                                setForm({ ...form, yarn_items: updated });
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Weaver Details */}
+              <div style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h4 style={{ color: 'var(--primary)', margin: 0, fontSize: 16, fontWeight: 700 }}>Weaver Details</h4>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}><Plus size={14} /> Add Weaver</button>
+                </div>
+                <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 16, width: '100%' }}>
+                  <table className="data-table" style={{ minWidth: '400px' }}>
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        <th>Weaver Name</th>
+                        <th>No.of Beam</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td>
+                            <select className="form-control" style={{ margin: 0 }} value={item.weaver_name} onChange={e => updateItem(idx, 'weaver_name', e.target.value)}>
+                              <option value="">Select...</option>
+                              {parties.filter(p => p.party_type?.toLowerCase() === 'job worker' || p.party_type?.toLowerCase() === 'job work').map(p => (
+                                <option key={p.id} value={p.company_name}>{p.company_name}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td><input type="number" className="form-control" style={{ width: 120, margin: 0 }} value={item.no_of_beam} onChange={e => updateItem(idx, 'no_of_beam', e.target.value)} /></td>
+                          <td><button type="button" className="icon-btn" onClick={() => removeItem(idx)} style={{ color: 'red' }}><Trash2 size={16} /></button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -762,6 +1117,14 @@ export default function WarpingSizingPO() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> Save Order
+              </button>
             </div>
           </form>
         </div>

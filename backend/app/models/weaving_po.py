@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey, func, JSON
+from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey, func, JSON, Boolean
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -21,6 +21,39 @@ class WeavingPO(Base):
     production_order_no = Column(String(50))
     buyer_order_no = Column(String(50))
     department = Column(String(100))
+
+    # New top-level specification and vendor order detail fields from client form
+    order_type = Column(String(50))
+    design_color = Column(String(100))
+    fabric = Column(String(100))
+    weaving_type = Column(String(100))
+    loom_type = Column(String(100))
+    fabric_type = Column(String(100))
+    reed = Column(String(50))
+    pick = Column(String(50))
+    warp_width = Column(String(50))
+    warp_ends = Column(String(50))
+    warp_meters = Column(String(50))
+    weft_meters = Column(String(50))
+    fabric_width = Column(String(50))
+    finished_width = Column(String(50))
+    wages_mtr_kgs = Column(String(50))
+    selected_count = Column(String(100))
+    merchandiser = Column(String(100))
+    certificate_type = Column(String(100))
+
+    cooly_mtr = Column(Numeric(12, 2), default=0)
+    cooly_pick = Column(Numeric(12, 2), default=0)
+    salvage_waste_pct = Column(Numeric(5, 2), default=0)
+    no_repeat = Column(String(50))
+    crimp_pct = Column(Numeric(5, 2), default=0)
+    shrinkage = Column(String(50))
+    v_order_mtrs = Column(Numeric(12, 2), default=0)
+    min_mtrs = Column(Numeric(12, 2), default=0)
+    delivery_at = Column(String(200))
+    warp_isu_mtrs = Column(Numeric(12, 2), default=0)
+    warp_issued = Column(Boolean, default=False)
+    delivery_command = Column(Text)
 
     taxable_value = Column(Numeric(12, 2), default=0)
     weaving_charge = Column(Numeric(12, 2), default=0)

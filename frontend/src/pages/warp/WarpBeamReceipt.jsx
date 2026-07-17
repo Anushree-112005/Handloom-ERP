@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Columns, ArrowDownToLine, Layers, Download, ChevronDown, FileText } from 'lucide-react';
-import { warpBeamReceiptAPI, partyAPI } from '../../services/api';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Columns, ArrowDownToLine, Layers, Download, ChevronDown, FileText, ArrowLeft } from 'lucide-react';
+import { warpBeamReceiptAPI, partyAPI, warpDeliveryAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -16,6 +16,7 @@ const DetailRow = ({ label, value }) => (
 export default function WarpBeamReceipt() {
   const [receipts, setReceipts] = useState([]);
   const [parties, setParties] = useState([]);
+  const [warpDeliveries, setWarpDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -31,6 +32,7 @@ export default function WarpBeamReceipt() {
   const [toDate, setToDate] = useState('');
 
   const initialForm = {
+    warp_delivery_no: '',
     ref_no: '', rcvd_date: new Date().toISOString().split('T')[0],
     rcvd_type: 'Direct', beam_type: '', party_name: '',
     design_no: '', order_no: '', color: '', warp_count: '', warp_ends: 0,
@@ -47,11 +49,12 @@ export default function WarpBeamReceipt() {
 
   const loadData = async () => {
     try {
-      const [res, partRes] = await Promise.all([
-        warpBeamReceiptAPI.list(), partyAPI.list()
+      const [res, partRes, delvRes] = await Promise.all([
+        warpBeamReceiptAPI.list(), partyAPI.list(), warpDeliveryAPI.list()
       ]);
       setReceipts(res.data);
       setParties(partRes.data);
+      setWarpDeliveries(delvRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -61,10 +64,68 @@ export default function WarpBeamReceipt() {
 
   useEffect(() => { loadData(); }, []);
 
+  const handleFetchFromWarpDelivery = async (dcNo) => {
+    if (!dcNo) {
+      setForm(prev => ({ ...prev, warp_delivery_no: '' }));
+      return;
+    }
+    const selectedDelv = warpDeliveries.find(d => d.dc_no === dcNo);
+    if (!selectedDelv) return;
+
+    try {
+      const { data } = await warpDeliveryAPI.get(selectedDelv.id);
+      setForm(prev => {
+        const newForm = { ...prev };
+        newForm.warp_delivery_no = dcNo;
+        newForm.siz_dc_no = dcNo;
+        newForm.ref_no = `WR-${dcNo}`;
+        newForm.siz_dc_date = data.dc_date ? data.dc_date.substring(0, 10) : prev.siz_dc_date;
+        newForm.party_name = data.party_name || prev.party_name;
+        newForm.design_no = data.design_no || prev.design_no;
+        newForm.order_no = data.order_no || prev.order_no;
+        newForm.warp_count = data.yarn_count || prev.warp_count;
+        newForm.warp_ends = parseInt(data.warp_ends) || prev.warp_ends;
+        newForm.warp_meters = parseFloat(data.total_meters) || prev.warp_meters;
+        newForm.set_no = data.set_id || prev.set_no;
+        newForm.beam_type = data.items?.[0]?.beam_type || prev.beam_type;
+
+        // Auto-fill beams grid from delivery items
+        if (data.items && data.items.length > 0) {
+          newForm.beams = data.items.map(item => ({
+            beam_no: item.beam_no || '',
+            warp_mtrs: parseFloat(item.warp_mtrs) || 0,
+            beam_type: item.beam_type || 'Warping',
+            delivery_to_weaver: item.loom_no || '',
+            order_no: data.order_no || '',
+            dc_no: dcNo,
+            dc_date: data.dc_date ? data.dc_date.substring(0, 10) : new Date().toISOString().split('T')[0],
+            loom_no: item.loom_no || '',
+            loading_date: new Date().toISOString().split('T')[0],
+            total_meters: parseFloat(item.warp_mtrs) || 0
+          }));
+        }
+
+        return newForm;
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Error fetching warp delivery details.");
+    }
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
       const payload = { ...form };
+      delete payload.warp_delivery_no;
+      
+      const dateFields = ['rcvd_date', 'siz_dc_date'];
+      dateFields.forEach(field => {
+        if (!payload[field] || payload[field] === '') {
+          payload[field] = null;
+        }
+      });
+      
       if (editingId) {
         await warpBeamReceiptAPI.update(editingId, payload);
       } else {
@@ -74,6 +135,32 @@ export default function WarpBeamReceipt() {
     } catch (err) {
       alert(err.response?.data?.detail || 'Error saving receipt');
     }
+  };
+
+  const handleOpenNewForm = () => {
+    setEditingId(null);
+    setIsReadOnly(false);
+    let maxNum = 0;
+    receipts.forEach(r => {
+      if (r.ref_no && r.ref_no.toUpperCase().startsWith("WBR-")) {
+        const parts = r.ref_no.split("-");
+        if (parts.length > 1) {
+          const num = parseInt(parts[1]);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    });
+    const nextRefNo = `WBR-${String(maxNum + 1).padStart(5, '0')}`;
+    setForm({
+      ...initialForm,
+      ref_no: nextRefNo,
+      rcvd_date: new Date().toISOString().split('T')[0],
+      siz_dc_date: new Date().toISOString().split('T')[0]
+    });
+    setActiveTab('general');
+    setShowForm(true);
   };
 
   const handleOpenForm = async (entry, readOnly = false) => {
@@ -88,7 +175,7 @@ export default function WarpBeamReceipt() {
         loading_date: b.loading_date ? b.loading_date.substring(0, 10) : ''
       }));
 
-      setForm({ ...initialForm, ...data });
+      setForm({ ...initialForm, ...data, warp_delivery_no: data.siz_dc_no || '' });
       setEditingId(data.id);
       setIsReadOnly(readOnly);
       setActiveTab('general');
@@ -122,25 +209,14 @@ export default function WarpBeamReceipt() {
   };
 
   const handleChange = (e) => {
-    const handleKeyDownTabTransition = (e, nextTab, nextFieldName) => {
-      if (e.key === 'Tab' && !e.shiftKey) {
-        e.preventDefault();
-        setActiveTab(nextTab);
-        setTimeout(() => {
-          const nextInput = document.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"], textarea[name="${nextFieldName}"]`);
-          if (nextInput) {
-            nextInput.focus();
-          } else {
-            // Fallback to first focusable element
-            const fallback = document.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-            if (fallback) fallback.focus();
-          }
-        }, 100);
-      }
-    };
-
     let { name, value, type } = e.target;
     if (type === 'number') value = parseFloat(value) || 0;
+    
+    if (name === 'warp_delivery_no') {
+      handleFetchFromWarpDelivery(value);
+      return;
+    }
+    
     setForm({ ...form, [name]: value });
   };
 
@@ -251,7 +327,7 @@ export default function WarpBeamReceipt() {
                   </div>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm(initialForm); setIsReadOnly(false); setShowForm(true); }}>
+              <button className="btn btn-primary" onClick={handleOpenNewForm}>
                 <Plus size={18} /> New Receipt
               </button>
             </div>
@@ -376,14 +452,17 @@ export default function WarpBeamReceipt() {
         </>
       ) : (
         <div className="card" style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Warp Beam Details' : editingId ? 'Edit Warp Beam' : 'New Warp Beam Receipt'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button className="btn btn-primary" onClick={handleCreate}><Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}</button>
-              )}
-            </div>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -414,31 +493,39 @@ export default function WarpBeamReceipt() {
                   {/* Section 1: Top Section Fields */}
                   <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Top Section Fields</h4>
                   <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="form-group"><label>Ref No</label><input className="form-control" name="ref_no" value={form.ref_no} onChange={handleChange} disabled={editingId != null} /></div>
-                    <div className="form-group"><label>Rcvd Date</label><input type="date" className="form-control" name="rcvd_date" value={form.rcvd_date} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>WARP DELIVERY NO (Auto-fill Base)</label>
+                      <select className="form-control" name="warp_delivery_no" value={form.warp_delivery_no || ''} onChange={handleChange}>
+                        <option value="" disabled hidden>Select Warp Delivery...</option>
+                        {warpDeliveries.filter(d => d.dc_no).map(d => (
+                          <option key={d.id} value={d.dc_no}>{d.dc_no} ({d.party_name || 'No Party'})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Rcvd Date</label><input type="date" className="form-control" name="rcvd_date" value={form.rcvd_date} onChange={handleChange} /></div>
+                    
                     <div className="form-group"><label>Rcvd Type</label>
                       <select className="form-control" name="rcvd_type" value={form.rcvd_type} onChange={handleChange}>
                         <option>Direct</option><option>Against Order</option>
                       </select>
                     </div>
                     <div className="form-group"><label>Beam Type</label><input className="form-control" name="beam_type" value={form.beam_type} onChange={handleChange} /></div>
-
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
                         <option value="">Select Party...</option>
                         {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                       </select>
                     </div>
+
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
-
                     <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Count</label><input className="form-control" name="warp_count" value={form.warp_count} onChange={handleChange} /></div>
+                    
                     <div className="form-group"><label>Warp Ends</label><input type="number" className="form-control" name="warp_ends" value={form.warp_ends} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Meters</label><input type="number" className="form-control" name="warp_meters" value={form.warp_meters} onChange={handleChange} /></div>
-
                     <div className="form-group"><label>Set No</label><input className="form-control" name="set_no" value={form.set_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Siz DC No</label><input className="form-control" name="siz_dc_no" value={form.siz_dc_no} onChange={handleChange} /></div>
+                    
                     <div className="form-group"><label>Siz DC Date</label><input type="date" className="form-control" name="siz_dc_date" value={form.siz_dc_date} onChange={handleChange} /></div>
                   </div>
 
@@ -476,6 +563,16 @@ export default function WarpBeamReceipt() {
                   </div>
                 </div>
             </fieldset>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              {!isReadOnly && (
+                <button type="button" className="btn btn-primary" onClick={handleCreate}>
+                  <Save size={16} /> {editingId ? 'Update Receipt' : 'Save Receipt'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

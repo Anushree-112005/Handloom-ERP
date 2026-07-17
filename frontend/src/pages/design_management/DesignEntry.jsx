@@ -323,8 +323,8 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
   const crimpPct = parseFloat(design.crimp_pct) || 0;
   const skgPct = parseFloat(design.skg_pct) || 0;
   const dyeingPct = parseFloat(design.dyeing_loss_pct) || 0;
-  const warpLength = parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-  const weftProMtrVal = parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+  const warpLength = Math.round(parseFloat(design.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+  const weftProMtrVal = Math.round(parseFloat(design.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
   const wastageFactor = 1 + (crimpPct + skgPct + dyeingPct) / 100;
   const warpWastage = Math.max(1.0, wastageFactor - 0.015);
 
@@ -423,7 +423,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
       
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
 
       return {
         ...row,
@@ -463,6 +463,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
         image_path: design.image_path || null,
         
         warp_design: warpRows.map((r, i) => ({
+          yarn_count: r.yarn_count || '',
           color_name: r.color,
           threads: parseInt(r.threads) || 0,
           hex: getColorHex(r.color, colorMasters),
@@ -472,6 +473,7 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
           line: r.line || ''
         })),
         weft_design: weftRows.map((r, i) => ({
+          yarn_count: r.yarn_count || '',
           color_name: r.color,
           threads: parseInt(r.threads) || 0,
           hex: getColorHex(r.color, colorMasters),
@@ -1097,8 +1099,8 @@ export default function DesignEntry() {
     const crimpPct = parseFloat(form.crimp_pct) || 0;
     const skgPct = parseFloat(form.skg_pct) || 0;
     const dyeingPct = parseFloat(form.dyeing_loss_pct) || 0;
-    const warpLength = parseFloat(form.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100));
-    const weftProMtrVal = parseFloat(form.weft_pro_mtr) || (totalMtr * (1 + skgPct/100));
+    const warpLength = Math.round(parseFloat(form.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+    const weftProMtrVal = Math.round(parseFloat(form.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
 
     // Aggregate Warp
     const warpColorAgg = {};
@@ -1173,7 +1175,7 @@ export default function DesignEntry() {
       
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
 
       return {
         ...row,
@@ -1209,8 +1211,8 @@ export default function DesignEntry() {
     const crimpPct = parseFloat(currentForm.crimp_pct) || 0;
     const skgPct = parseFloat(currentForm.skg_pct) || 0;
 
-    const weftProMtr = parseFloat((totalMtr * (1 + skgPct / 100)).toFixed(2));
-    const warpMtr = parseFloat((weftProMtr * (1 + crimpPct / 100)).toFixed(2));
+    const weftProMtr = Math.round(totalMtr * (1 + skgPct / 100));
+    const warpMtr = Math.round(weftProMtr * (1 + crimpPct / 100));
 
     const reed = parseFloat(currentForm.reed) || 0;
     const reedOl = Math.max(0, reed - 8);
@@ -1858,14 +1860,19 @@ export default function DesignEntry() {
           </div>
         </>
       ) : (
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: 0, minWidth: 0, maxWidth: '100%' }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Design Details' : editingId ? 'Edit Design Entry' : 'New Design Entry'}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              {!isReadOnly && (
-                <button type="submit" form="designForm" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Design' : 'Save Design'}</button>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button 
+                type="button" 
+                onClick={() => setShowForm(false)} 
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-primary)', padding: 4, borderRadius: '50%', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#e2e8f0'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{isReadOnly ? 'View Design Details' : editingId ? 'Edit Design Entry' : 'New Design Entry'}</h2>
             </div>
           </div>
 
@@ -1873,21 +1880,33 @@ export default function DesignEntry() {
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               <form id="designForm" onSubmit={handleCreate}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
+                  <style>
+                    {`
+                      #designForm > div > div {
+                        min-width: 0;
+                        max-width: 100%;
+                      }
+                      .data-table-wrapper {
+                        overflow-x: auto;
+                        width: 100%;
+                      }
+                    `}
+                  </style>
                   {/* Top section: Basic & Buyer Info */}
                   <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic & Buyer Info</h4>
                     
-                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                       {/* Left Side: Form Details */}
-                      <div style={{ flex: 1, maxWidth: 'calc(100% - 500px)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                      <div style={{ flex: '1 1 min(100%, 600px)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
                           <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
                           <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
                           <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
                         </div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginTop: 16 }}>
                           <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
                           <div className="form-group"><label>Created By</label>
                             <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
@@ -1941,23 +1960,24 @@ export default function DesignEntry() {
                   </div>
 
                   {/* Metrics, Weaving & Allowances Section (Full Width) */}
-                  <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)', maxWidth: '100%' }}>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics, Weaving & Allowances</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                        {/* ROW 1: Ex Mtr / Total Mtr | Crmp % / SKG % */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+                        {/* ROW 1: Order Mtr / Ex Mtr / Total Mtr / Crmp % / SKG % */}
+                        <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Total Mtr</label><input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Crmp %</label><input type="number" className="form-control" name="crimp_pct" value={form.crimp_pct} onChange={handleChange} /></div>
                         <div className="form-group"><label>SKG %</label><input type="number" className="form-control" name="skg_pct" value={form.skg_pct} onChange={handleChange} /></div>
                         
-                        {/* ROW 2: Warp Mtr / Weft (Pro) Mtr | Gray Width / Finish Width */}
+                        {/* ROW 2: Warp Mtr / Weft (Pro) Mtr | Gray Width / Finish Width / Reed OL */}
                         <div className="form-group"><label>Warp Mtr</label><input type="number" className="form-control" name="warp_mtr" value={form.warp_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Weft (Pro) Mtr</label><input type="number" className="form-control" name="weft_pro_mtr" value={form.weft_pro_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Gray Width</label><input type="number" className="form-control" name="gray_width" value={form.gray_width} onChange={handleChange} /></div>
                         <div className="form-group"><label>Finish Width</label><input type="number" className="form-control" name="finish_width" value={form.finish_width} onChange={handleChange} /></div>
-                        
-                        {/* ROW 3: Reed OL / Pick OT | Reed / Fabric */}
                         <div className="form-group"><label>Reed OL</label><input type="number" className="form-control" name="reed_ol" value={form.reed_ol} onChange={handleChange} /></div>
+                        
+                        {/* ROW 3: Pick OT / Reed / Fabric / Total Ends / Warp Width */}
                         <div className="form-group"><label>Pick OT</label><input type="number" className="form-control" name="pick_ot" value={form.pick_ot} onChange={handleChange} /></div>
                         <div className="form-group"><label>Reed</label><input type="number" className="form-control" name="reed" value={form.reed} onChange={handleChange} /></div>
                         <div className="form-group"><label>Fabric</label>
@@ -1969,15 +1989,12 @@ export default function DesignEntry() {
                             )}
                           </select>
                         </div>
-                        
-                        {/* ROW 4: Total Ends / Warp Width | GLM / Tole % */}
                         <div className="form-group"><label>Total Ends</label><input type="number" className="form-control" name="total_ends" value={form.total_ends} onChange={handleChange} /></div>
                         <div className="form-group"><label>Warp Width</label><input type="number" className="form-control" name="warp_width" value={form.warp_width} onChange={handleChange} /></div>
+                        
+                        {/* ROW 4: GLM / Tole % / Selvage Waste / Weaving / Design Type */}
                         <div className="form-group"><label>GLM</label><input type="number" className="form-control" name="qlm" value={form.qlm} onChange={handleChange} /></div>
                         <div className="form-group"><label>Tole %</label><input type="number" className="form-control" name="toie_pct" value={form.toie_pct} onChange={handleChange} /></div>
-                        
-                        {/* ROW 5: Order Mtr | Selvage Waste | Weaving | Design Type */}
-                        <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Selvage Waste</label><input type="number" className="form-control" name="selvage_waste" value={form.selvage_waste} onChange={handleChange} /></div>
                         <div className="form-group"><label>Weaving</label>
                           <select className="form-control" name="weaving" value={form.weaving} onChange={handleChange}>
@@ -1994,10 +2011,11 @@ export default function DesignEntry() {
                           </select>
                         </div>
                         
-                        {/* ROW 6: Packing Less | Weight Grm | Dyeing Loss % */}
+                        {/* ROW 5: Packing Less / Weight Grm / Dyeing Loss % */}
                         <div className="form-group"><label>Packing Less</label><input type="number" className="form-control" name="packing_less" value={form.packing_less} onChange={handleChange} /></div>
                         <div className="form-group"><label>Weight Grm</label><input type="number" className="form-control" name="weight_grm" value={form.weight_grm} onChange={handleChange} /></div>
                         <div className="form-group"><label>Dyeing Loss %</label><input type="number" className="form-control" name="dyeing_loss_pct" value={form.dyeing_loss_pct} onChange={handleChange} /></div>
+                        <div className="form-group"></div>
                         <div className="form-group"></div>
                       </div>
                     </div>
@@ -2005,8 +2023,8 @@ export default function DesignEntry() {
                     {/* Right Column: Yarn Count Specifications Table */}
                     <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
                       <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Yarn Count Specifications</h4>
-                      <div style={{ overflowX: 'auto' }}>
-                        <table className="data-table" style={{ fontSize: 12, width: '100%' }}>
+                      <div style={{ overflowX: 'auto', width: '100%' }}>
+                        <table className="data-table" style={{ fontSize: 12, width: '100%', minWidth: 800 }}>
                           <thead>
                             <tr>
                               <th>Type</th>
@@ -2368,8 +2386,8 @@ export default function DesignEntry() {
                 </div>
 
                 {/* Fabric Design Specifications Table */}
-                <div className="card" style={{ padding: 0, borderRadius: '0 0 6px 6px', borderTop: 'none', overflowX: 'auto', marginBottom: 24 }}>
-                  <table className="data-table" style={{ fontSize: 12, width: '100%' }}>
+                <div className="card" style={{ padding: 0, borderRadius: '0 0 6px 6px', borderTop: 'none', overflowX: 'auto', marginBottom: 24, width: '100%' }}>
+                  <table className="data-table" style={{ fontSize: 12, width: '100%', minWidth: 1200 }}>
                     <thead>
                       <tr>
                         <th>S. No</th>
@@ -3046,6 +3064,14 @@ export default function DesignEntry() {
                     </div>
                   </div>
                 )}
+                
+                {/* Action Buttons at Bottom Right */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
+                  {!isReadOnly && (
+                    <button type="submit" className="btn btn-primary"><Save size={16} /> {editingId ? 'Update Design' : 'Save Design'}</button>
+                  )}
+                </div>
               </form>
             </fieldset>
           </div>

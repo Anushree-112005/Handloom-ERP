@@ -7,9 +7,22 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const createAPI = (endpoint) => ({
+  list: (params) => api.get(endpoint + '/', { params }),
+  get: (id) => api.get(`${endpoint}/${id}`),
+  create: (data) => api.post(endpoint + '/', data),
+  update: (id, data) => api.put(`${endpoint}/${id}`, data),
+  delete: (id) => api.delete(`${endpoint}/${id}`),
+});
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  let token = null;
+  if (window.location.pathname.startsWith('/status-update')) {
+    token = localStorage.getItem('status_update_token') || localStorage.getItem('token');
+  } else {
+    token = localStorage.getItem('token');
+  }
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -21,13 +34,19 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      localStorage.removeItem('status_update_token');
+      localStorage.removeItem('su_user');
+      if (window.location.pathname.startsWith('/status-update')) {
+        window.location.href = '/status-update/login';
+      } else {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }
 );
 
-// ---- Auth ----
+export const notificationAPI = createAPI('/notifications');
 export const authAPI = {
   login: (username, password) =>
     api.post('/auth/login', new URLSearchParams({ username, password }), {
@@ -38,7 +57,7 @@ export const authAPI = {
 
 // ---- Dashboard ----
 export const dashboardAPI = {
-  stats: () => api.get('/dashboard/stats'),
+  stats: (params) => api.get('/dashboard/stats', { params }),
 };
 
 // ---- Party Master ----
@@ -53,6 +72,7 @@ export const partyAPI = {
 
 export const buyerOrderAPI = {
   list: (params) => api.get('/buyer-orders/', { params }),
+  statusUpdateOrders: () => api.get('/buyer-orders/status-update/orders'),
   get: (id) => api.get(`/buyer-orders/${id}`),
   create: (data) => api.post('/buyer-orders/', data),
   update: (id, data) => api.put(`/buyer-orders/${id}`, data),
@@ -62,7 +82,7 @@ export const buyerOrderAPI = {
     fd.append('file', file);
     return api.post('/buyer-orders/upload-file', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
-  
+
   // Schedules
   listSchedules: () => api.get('/buyer-orders/schedules/'),
   createSchedule: (data) => api.post('/buyer-orders/schedules/', data),
@@ -154,11 +174,11 @@ export const yarnPurchaseOrderAPI = {
 };
 
 export const twistingDoublingPOAPI = {
-  list: () => api.get('/twisting-doubling-po/'),
-  create: (data) => api.post('/twisting-doubling-po/', data),
-  getById: (id) => api.get(`/twisting-doubling-po/${id}`),
-  update: (id, data) => api.put(`/twisting-doubling-po/${id}`, data),
-  delete: (id) => api.delete(`/twisting-doubling-po/${id}`)
+  list: () => api.get('/purchase/twisting-doubling'),
+  create: (data) => api.post('/purchase/twisting-doubling', data),
+  getById: (id) => api.get(`/purchase/twisting-doubling/${id}`),
+  update: (id, data) => api.put(`/purchase/twisting-doubling/${id}`, data),
+  delete: (id) => api.delete(`/purchase/twisting-doubling/${id}`)
 };
 
 export const yarnDyeingPOAPI = {
@@ -178,32 +198,32 @@ export const fabricDyeingPOAPI = {
 };
 
 export const warpingSizingPOAPI = {
-  list: () => api.get('/warping-sizing-po/'),
-  create: (data) => api.post('/warping-sizing-po/', data),
+  list: () => api.get('/warping-sizing-po'),
+  create: (data) => api.post('/warping-sizing-po', data),
   getById: (id) => api.get(`/warping-sizing-po/${id}`),
   update: (id, data) => api.put(`/warping-sizing-po/${id}`, data),
   delete: (id) => api.delete(`/warping-sizing-po/${id}`)
 };
 
 export const weavingPOAPI = {
-  list: () => api.get('/weaving-po/'),
-  create: (data) => api.post('/weaving-po/', data),
+  list: () => api.get('/weaving-po'),
+  create: (data) => api.post('/weaving-po', data),
   getById: (id) => api.get(`/weaving-po/${id}`),
   update: (id, data) => api.put(`/weaving-po/${id}`, data),
   delete: (id) => api.delete(`/weaving-po/${id}`)
 };
 
 export const processingPOAPI = {
-  list: () => api.get('/processing-po/'),
-  create: (data) => api.post('/processing-po/', data),
+  list: () => api.get('/processing-po'),
+  create: (data) => api.post('/processing-po', data),
   getById: (id) => api.get(`/processing-po/${id}`),
   update: (id, data) => api.put(`/processing-po/${id}`, data),
   delete: (id) => api.delete(`/processing-po/${id}`)
 };
 
 export const clothPurchasePOAPI = {
-  list: () => api.get('/cloth-purchase-po/'),
-  create: (data) => api.post('/cloth-purchase-po/', data),
+  list: () => api.get('/cloth-purchase-po'),
+  create: (data) => api.post('/cloth-purchase-po', data),
   getById: (id) => api.get(`/cloth-purchase-po/${id}`),
   update: (id, data) => api.put(`/cloth-purchase-po/${id}`, data),
   delete: (id) => api.delete(`/cloth-purchase-po/${id}`)
@@ -411,6 +431,39 @@ export const ppcAPI = {
   createOperator: (data) => api.post('/ppc/operators', data),
   updateOperator: (id, data) => api.put(`/ppc/operators/${id}`, data),
   deleteOperator: (id) => api.delete(`/ppc/operators/${id}`),
+  getDashboard: () => api.get('/ppc/dashboard'),
+  getDailyEntries: () => api.get('/ppc/daily-entries'),
+  getEta: () => api.get('/ppc/eta'),
+  getEfficiency: () => api.get('/ppc/efficiency'),
+  getBreakdowns: () => api.get('/ppc/breakdowns'),
+  logBreakdown: (data) => api.post('/ppc/breakdowns', data),
+};
+
+export const ppcWarpDeliveryAPI = {
+  list: () => api.get('/ppc/warping-deliveries/'),
+  create: (data) => api.post('/ppc/warping-deliveries/', data),
+  getById: (id) => api.get(`/ppc/warping-deliveries/${id}`),
+  update: (id, data) => api.put(`/ppc/warping-deliveries/${id}`, data),
+  delete: (id) => api.delete(`/ppc/warping-deliveries/${id}`)
+};
+
+// ---- Calendar Events ----
+export const calendarEventAPI = {
+  list: (params) => api.get('/calendar-events/', { params }),
+  create: (data) => api.post('/calendar-events/', data),
+};
+
+export const costingSheetAPI = {
+  list: (params) => api.get('/costing-sheet/', { params }),
+  getById: (id) => api.get(`/costing-sheet/${id}`),
+  create: (data) => api.post('/costing-sheet/', data),
+  update: (id, data) => api.put(`/costing-sheet/${id}`, data),
+  delete: (id) => api.delete(`/costing-sheet/${id}`)
+};
+
+export const stockSheetAPI = {
+  list: (params) => api.get('/stock-sheet/', { params }),
+  create: (data) => api.post('/stock-sheet/', data),
 };
 
 export const rackAPI = {

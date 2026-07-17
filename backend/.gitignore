@@ -41,10 +41,22 @@ venv.bak/
 *.sqlite
 postgresql/
 
-# File Uploads (Backend)
-backend/uploads/
-uploads/
+# File Uploads (Backend) — keep folder structure, ignore actual uploaded files
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploads/buyer_orders/*
+!backend/uploads/buyer_orders/.gitkeep
+backend/uploads/debug/*
+!backend/uploads/debug/.gitkeep
+backend/uploads/design_extracts/*
+!backend/uploads/design_extracts/.gitkeep
+backend/uploads/designs/*
+!backend/uploads/designs/.gitkeep
 /reports/
+
+# OCR Data & Large Documents
+*.traineddata
+*.odt
 
 # Docker
 .docker/
@@ -55,6 +67,7 @@ docker-compose.override.yml
 .env.local
 .env.*.local
 *.env
+*.txt
 
 # Jenkins
 .jenkins/
@@ -68,3 +81,10 @@ Jenkinsfile.local
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Logs
+*.log
+
+# Scratch folders
+scratch/
+backend/scratch/

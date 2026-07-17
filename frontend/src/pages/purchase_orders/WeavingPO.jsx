@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Download, Table } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Package, CheckCircle, Clock, FileText, Layers, IndianRupee, Download, Table, ArrowLeft } from 'lucide-react';
 import { weavingPOAPI, partyAPI, dropdownAPI, buyerOrderAPI, designEntryAPI } from '../../services/api';
 import CustomPODocumentPreview from '../../components/CustomPODocumentPreview';
 
@@ -37,6 +37,39 @@ export default function WeavingPO() {
     buyer_order_no: '',
     design_no: '',
     department: '',
+
+    // New top-level specification and vendor order fields
+    order_type: '',
+    design_color: '',
+    fabric: '',
+    weaving_type: '',
+    loom_type: '',
+    fabric_type: '',
+    reed: '',
+    pick: '',
+    warp_width: '',
+    warp_ends: '',
+    warp_meters: '',
+    weft_meters: '',
+    fabric_width: '',
+    finished_width: '',
+    wages_mtr_kgs: '',
+    selected_count: '',
+    merchandiser: '',
+    certificate_type: '',
+
+    cooly_mtr: 0,
+    cooly_pick: 0,
+    salvage_waste_pct: 0,
+    no_repeat: '',
+    crimp_pct: 0,
+    shrinkage: '',
+    v_order_mtrs: 0,
+    min_mtrs: 0,
+    delivery_at: '',
+    warp_isu_mtrs: 0,
+    warp_issued: false,
+    delivery_command: '',
 
     tax_type: 'GST',
     taxable_value: 0,
@@ -83,6 +116,34 @@ export default function WeavingPO() {
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [designEntries, setDesignEntries] = useState([]);
 
+
+  const generateNextPONo = (existingOrders) => {
+    let maxNum = 0;
+    const prefix = 'WP-';
+    (existingOrders || []).forEach(o => {
+      const poStr = o.po_no || '';
+      if (poStr.toUpperCase().startsWith(prefix)) {
+        const numPart = poStr.substring(prefix.length);
+        const num = parseInt(numPart, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    const nextNum = maxNum + 1;
+    const padded = String(nextNum).padStart(4, '0');
+    return `${prefix}${padded}`;
+  };
+
+  const handleNewOrder = () => {
+    const nextPONo = generateNextPONo(orders);
+    setForm({
+      ...initialForm,
+      po_no: nextPONo
+    });
+    setShowForm(true);
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -110,21 +171,34 @@ export default function WeavingPO() {
   }, []);
 
   const recalculate = (updatedForm) => {
-    const updatedItems = (updatedForm.items || []).map(item => {
-      const qty = parseFloat(item.qty_mtrs) || 0;
-      const rate = parseFloat(item.rate_per_mtr) || 0;
-      return { ...item, amount: parseFloat((qty * rate).toFixed(2)) };
+    const vOrderMtrs = parseFloat(updatedForm.v_order_mtrs) || 0;
+    const coolyMtr = parseFloat(updatedForm.cooly_mtr) || 0;
+    const computedWeavingCharge = parseFloat((vOrderMtrs * coolyMtr).toFixed(2));
+
+    const updatedItems = (updatedForm.items || []).map((item, idx) => {
+      let qty = parseFloat(item.qty_mtrs) || 0;
+      let rate = parseFloat(item.rate_per_mtr) || 0;
+      if (idx === 0) {
+        if (vOrderMtrs > 0) qty = vOrderMtrs;
+        if (coolyMtr > 0) rate = coolyMtr;
+      }
+      return { 
+        ...item, 
+        qty_mtrs: qty, 
+        rate_per_mtr: rate, 
+        amount: parseFloat((qty * rate).toFixed(2)) 
+      };
     });
 
     const itemsAmount = updatedItems.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const weavingCharge = parseFloat(updatedForm.weaving_charge) || 0;
+    const weavingCharge = computedWeavingCharge || parseFloat(updatedForm.weaving_charge) || 0;
     const packingCharge = parseFloat(updatedForm.packing_charge) || 0;
     const loadingCharge = parseFloat(updatedForm.loading_charge) || 0;
     const unloadingCharge = parseFloat(updatedForm.unloading_charge) || 0;
     const transportCharge = parseFloat(updatedForm.transport_charge) || 0;
     const otherCharges = parseFloat(updatedForm.other_charges) || 0;
 
-    const taxableValue = itemsAmount + weavingCharge + packingCharge + loadingCharge + unloadingCharge + transportCharge + otherCharges;
+    const taxableValue = itemsAmount + packingCharge + loadingCharge + unloadingCharge + transportCharge + otherCharges;
     const taxType = updatedForm.tax_type || 'GST';
     const cgstPct = parseFloat(updatedForm.cgst_pct) || 0;
     const sgstPct = parseFloat(updatedForm.sgst_pct) || 0;
@@ -148,6 +222,7 @@ export default function WeavingPO() {
     return {
       ...updatedForm,
       items: updatedItems,
+      weaving_charge: weavingCharge,
       taxable_value: taxableValue,
       cgst_amount: cgstAmount,
       sgst_amount: sgstAmount,
@@ -158,7 +233,11 @@ export default function WeavingPO() {
   };
 
   const handleChange = (e) => {
-    let { name, value, type } = e.target;
+    let { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      setForm(recalculate({ ...form, [name]: checked }));
+      return;
+    }
     if (type === 'number') value = parseFloat(value) || 0;
 
     if (name === 'tax_type') {
@@ -174,16 +253,95 @@ export default function WeavingPO() {
       return;
     }
 
+    if (name === 'buyer_order_no') {
+      const bo = buyerOrders.find(b => b.ibpo_number === value);
+      const de = designEntries.find(d => d.ibpo_no === value || d.design_no === bo?.design_no);
+      
+      let yarnCountVal = '';
+      if (de && de.yarn_details) {
+        try {
+          const parsedYarn = typeof de.yarn_details === 'string'
+            ? JSON.parse(de.yarn_details)
+            : de.yarn_details;
+          if (Array.isArray(parsedYarn) && parsedYarn.length > 0) {
+            yarnCountVal = parsedYarn[0].yarn_count || '';
+          }
+        } catch (err) {}
+      }
+
+      const updatedItems = [...form.items];
+      if (updatedItems[0]) {
+        updatedItems[0].design_no = de?.ds_ref_no || '';
+        updatedItems[0].fabric_name = de?.fabric || '';
+        updatedItems[0].gsm = de?.gsm || '';
+        updatedItems[0].width = de?.gray_width || de?.fabric_width_grey || '';
+      }
+
+      setForm(recalculate({
+        ...form,
+        buyer_order_no: value,
+        buyer_name: bo?.party_name || bo?.buyer_name || de?.buyer_name || form.buyer_name,
+        design_no: de?.ds_ref_no || '',
+        fabric: de?.fabric || form.fabric,
+        weaving_type: de?.weaving_type || form.weaving_type,
+        loom_type: de?.loom_type || form.loom_type,
+        fabric_type: de?.fabric_type || form.fabric_type,
+        reed: de?.reed || form.reed,
+        pick: de?.pick_ot || de?.pick || form.pick,
+        warp_width: de?.warp_width || form.warp_width,
+        warp_ends: de?.total_ends || form.warp_ends,
+        warp_meters: de?.warp_mtr || form.warp_meters,
+        weft_meters: de?.weft_pro_mtr || form.weft_meters,
+        fabric_width: de?.gray_width || de?.fabric_width_grey || form.fabric_width,
+        finished_width: de?.finish_width || form.finished_width,
+        selected_count: yarnCountVal || de?.count_rxpxw || form.selected_count,
+        merchandiser: de?.buyer_name || form.merchandiser,
+        items: updatedItems
+      }));
+      return;
+    }
+
     if (name === 'design_no') {
       const de = designEntries.find(d => d.ds_ref_no === value || d.design_no === value);
+      
+      let yarnCountVal = '';
+      if (de && de.yarn_details) {
+        try {
+          const parsedYarn = typeof de.yarn_details === 'string'
+            ? JSON.parse(de.yarn_details)
+            : de.yarn_details;
+          if (Array.isArray(parsedYarn) && parsedYarn.length > 0) {
+            yarnCountVal = parsedYarn[0].yarn_count || '';
+          }
+        } catch (err) {}
+      }
+
       const updatedItems = [...form.items];
       if (updatedItems[0]) {
         updatedItems[0].design_no = value;
+        updatedItems[0].fabric_name = de?.fabric || '';
+        updatedItems[0].gsm = de?.gsm || '';
+        updatedItems[0].width = de?.gray_width || de?.fabric_width_grey || '';
       }
+
       setForm(recalculate({
         ...form,
         design_no: value,
         buyer_name: de?.buyer_name || form.buyer_name,
+        fabric: de?.fabric || form.fabric,
+        weaving_type: de?.weaving_type || form.weaving_type,
+        loom_type: de?.loom_type || form.loom_type,
+        fabric_type: de?.fabric_type || form.fabric_type,
+        reed: de?.reed || form.reed,
+        pick: de?.pick_ot || de?.pick || form.pick,
+        warp_width: de?.warp_width || form.warp_width,
+        warp_ends: de?.total_ends || form.warp_ends,
+        warp_meters: de?.warp_mtr || form.warp_meters,
+        weft_meters: de?.weft_pro_mtr || form.weft_meters,
+        fabric_width: de?.gray_width || de?.fabric_width_grey || form.fabric_width,
+        finished_width: de?.finish_width || form.finished_width,
+        selected_count: yarnCountVal || de?.count_rxpxw || form.selected_count,
+        merchandiser: de?.buyer_name || form.merchandiser,
         items: updatedItems
       }));
       return;
@@ -220,6 +378,35 @@ export default function WeavingPO() {
     try {
       const payload = { ...form };
       if (!payload.delivery_date) payload.delivery_date = null;
+
+      // Convert string-based fields to actual string types
+      const stringFields = [
+        'po_no', 'supplier_weaver', 'supplier_code', 'buyer_name', 'remarks',
+        'indent_no', 'sales_order_no', 'production_order_no', 'buyer_order_no',
+        'department', 'order_type', 'design_color', 'fabric', 'weaving_type',
+        'loom_type', 'fabric_type', 'reed', 'pick', 'warp_width', 'warp_ends',
+        'warp_meters', 'weft_meters', 'fabric_width', 'finished_width',
+        'wages_mtr_kgs', 'selected_count', 'merchandiser', 'certificate_type',
+        'no_repeat', 'shrinkage', 'delivery_at'
+      ];
+      stringFields.forEach(field => {
+        if (payload[field] !== undefined && payload[field] !== null) {
+          payload[field] = String(payload[field]);
+        }
+      });
+
+      if (payload.items) {
+        const itemStringFields = ['fabric_code', 'fabric_name', 'design_no', 'fabric_type', 'color', 'gsm', 'width', 'uom'];
+        payload.items = payload.items.map(item => {
+          const newItem = { ...item };
+          itemStringFields.forEach(field => {
+            if (newItem[field] !== undefined && newItem[field] !== null) {
+              newItem[field] = String(newItem[field]);
+            }
+          });
+          return newItem;
+        });
+      }
 
       if (form.id) {
         await weavingPOAPI.update(form.id, payload);
@@ -331,7 +518,7 @@ export default function WeavingPO() {
                   </>
                 )}
               </div>
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <button className="btn btn-primary" onClick={handleNewOrder}>
                 <Plus size={18} /> New Order
               </button>
             </div>
@@ -425,7 +612,7 @@ export default function WeavingPO() {
           deliveryAt={selectedViewOrder?.delivery_at || '1-6-A, Aiyndhupanal post, Kadachanallur post, Komarapalayam TK, Tiruchengodu, Namakkal-638008.'}
           supplierName={selectedViewOrder?.supplier_weaver}
           agentName=""
-          designNo={selectedViewOrder?.against_ref || '-'}
+          designNo={selectedViewOrder?.design_no || selectedViewOrder?.against_ref || '-'}
           commission="0.00"
           terms={selectedViewOrder?.terms_conditions || []}
           taxes={{
@@ -438,10 +625,12 @@ export default function WeavingPO() {
           netAmount={selectedViewOrder?.net_amount || 0}
           logistics={{
             freight_type: "-",
-            transport: selectedViewOrder?.dispatch_through || "-",
-            delivery_date: "-",
+            transport: selectedViewOrder?.transport_name || selectedViewOrder?.dispatch_through || "-",
+            delivery_date: selectedViewOrder?.delivery_date || "-",
             payment_terms: selectedViewOrder?.payment_terms || "-"
           }}
+          designWiseDetails={`Fabric: ${selectedViewOrder?.fabric || '-'} | Weaving: ${selectedViewOrder?.weaving_type || '-'} | Loom: ${selectedViewOrder?.loom_type || '-'} | Fabric Type: ${selectedViewOrder?.fabric_type || '-'} | Reed: ${selectedViewOrder?.reed || '-'} | Pick: ${selectedViewOrder?.pick || '-'} | Warp Width: ${selectedViewOrder?.warp_width || '-'} | Warp Ends: ${selectedViewOrder?.warp_ends || '-'}`}
+          colorWiseDetails={`Warp Mtrs: ${selectedViewOrder?.warp_meters || '-'} | Weft Mtrs: ${selectedViewOrder?.weft_meters || '-'} | Fab Width: ${selectedViewOrder?.fabric_width || '-'} | Fin Width: ${selectedViewOrder?.finished_width || '-'} | Count: ${selectedViewOrder?.selected_count || '-'} | Merchandiser: ${selectedViewOrder?.merchandiser || '-'} | Cert: ${selectedViewOrder?.certificate_type || '-'} | V-Order Mtrs: ${selectedViewOrder?.v_order_mtrs || '0'} | Min Mtrs: ${selectedViewOrder?.min_mtrs || '0'} | Cooly/Mtr: ${selectedViewOrder?.cooly_mtr || '0'} | Cooly/Pick: ${selectedViewOrder?.cooly_pick || '0'} | Salvage Waste: ${selectedViewOrder?.salvage_waste_pct || '0'}% | Crimp %: ${selectedViewOrder?.crimp_pct || '0'} | Shrinkage: ${selectedViewOrder?.shrinkage || '-'} | Repeat: ${selectedViewOrder?.no_repeat || '-'} | Warp Issued Mtrs: ${selectedViewOrder?.warp_isu_mtrs || '0'} | Warp Issued: ${selectedViewOrder?.warp_issued ? 'YES' : 'NO'}`}
           tableHeaders={[
             { label: 'Fabric Name', align: 'left', width: '30%' },
             { label: 'Color', align: 'left', width: '15%' },
@@ -464,12 +653,19 @@ export default function WeavingPO() {
         />
       ) : (
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><Edit2 size={20} color="var(--primary)" /> {form.id ? 'Edit' : 'Create'} {title}</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}><X size={16} /> Close</button>
-              <button type="submit" form="weaving-po-form" className="btn btn-primary"><Save size={16} /> Save Order</button>
-            </div>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
+            <button 
+              type="button"
+              onClick={() => setShowForm(false)} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {form.id ? 'Edit' : 'Create'} {title}
+            </h2>
           </div>
 
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
@@ -499,12 +695,30 @@ export default function WeavingPO() {
             <div id="section-info" className="animate-fade">
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Information</h4>
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                <div className="form-group"><label>PO No *</label><input type="text" className="form-control" name="po_no" value={form.po_no} onChange={handleChange} required /></div>
-                <div className="form-group"><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Supplier / Weaver</label>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>PO Date *</label><input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} required /></div>
+                <div className="form-group"><label>Order Type</label>
+                  <select className="form-control" name="order_type" value={form.order_type || ''} onChange={handleChange}>
+                    <option value="">Select...</option>
+                    <option value="Against Buyer Order">Against Buyer Order</option>
+                    <option value="Bulk Order">Bulk Order</option>
+                    <option value="Repeat Order">Repeat Order</option>
+                    <option value="Sample Order">Sample Order</option>
+                  </select>
+                </div>
+                <div className="form-group"><label>Buyer Order No *</label>
+                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
+                    <option value="">Select...</option>
+                    {buyerOrders.map(bo => (
+                      <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group"><label>Supplier / Weaver</label>
                   <select className="form-control" name="supplier_weaver" value={form.supplier_weaver} onChange={handleChange}>
                     <option value="">Select Supplier...</option>
-                    {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
+                    {parties.filter(p => p.party_type?.toLowerCase() === 'job worker' || p.party_type?.toLowerCase() === 'job work').map(p => (
+                      <option key={p.id} value={p.company_name}>{p.company_name}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group"><label>Supplier Code</label><input type="text" className="form-control" name="supplier_code" value={form.supplier_code} onChange={handleChange} /></div>
@@ -516,25 +730,16 @@ export default function WeavingPO() {
                     <option value="Active">Active</option><option value="Closed">Closed</option>
                   </select>
                 </div>
-                <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
               </div>
             </div>
 
             {/* Section: Reference Info */}
             <div id="section-ref" className="animate-fade" style={{ marginTop: 32 }}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Reference Information</h4>
-              <div className="form-row" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                 <div className="form-group"><label>Indent No</label><input type="text" className="form-control" name="indent_no" value={form.indent_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Sales Order No</label><input type="text" className="form-control" name="sales_order_no" value={form.sales_order_no} onChange={handleChange} /></div>
                 <div className="form-group"><label>Production Order No</label><input type="text" className="form-control" name="production_order_no" value={form.production_order_no} onChange={handleChange} /></div>
-                <div className="form-group"><label>Buyer Order No *</label>
-                  <select className="form-control" name="buyer_order_no" value={form.buyer_order_no || ''} onChange={handleChange} required>
-                    <option value="">Select...</option>
-                    {buyerOrders.map(bo => (
-                      <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number} ({bo.party_name || bo.buyer_name || 'No Party'})</option>
-                    ))}
-                  </select>
-                </div>
                 <div className="form-group"><label>Design No *</label>
                   <select className="form-control" name="design_no" value={form.design_no || ''} onChange={handleChange} required>
                     <option value="">Select...</option>
@@ -547,38 +752,88 @@ export default function WeavingPO() {
                   <select className="form-control" name="department" value={form.department} onChange={handleChange}>
                     <option value="">Select...</option>
                     {options.masters?.department?.map(o => <option key={o} value={o}>{o}</option>)}
+                    {!options.masters?.department?.length && (
+                      <>
+                        <option value="Weaving">Weaving</option>
+                        <option value="Sizing">Sizing</option>
+                        <option value="Warping">Warping</option>
+                        <option value="Production">Production</option>
+                        <option value="Dispatch">Dispatch</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Section: Delivery Details */}
-            <div id="section-delivery" className="animate-fade" style={{ marginTop: 32 }}>
-              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Delivery Details</h4>
-              <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
-                    <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>DELIVERY DETAILS</span>
-                    </div>
-                    <div style={{ padding: '16px 18px' }}>
-                      <div className="form-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                        <div className="form-group"><label>Delivery Location</label><input type="text" className="form-control" name="delivery_location" value={form.delivery_location} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Dispatch Mode</label><input type="text" className="form-control" name="dispatch_mode" value={form.dispatch_mode} onChange={handleChange} /></div>
-                        <div className="form-group"><label>Transport Name</label>
-                          <select className="form-control" name="transport_name" value={form.transport_name} onChange={handleChange}>
-                            <option value="">Select...</option>
-                            {options.masters?.transport_name_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        </div>
-                        <div className="form-group"><label>Vehicle No</label><input type="text" className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Delivery Instructions</label><input type="text" className="form-control" name="delivery_instructions" value={form.delivery_instructions} onChange={handleChange} /></div>
-                      </div>
-                    </div>
-                  </div>
+            {/* Section: Design & Loom Specifications */}
+            <div id="section-design-specs" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Design & Loom Specifications</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                <div className="form-group"><label>Fabric</label><input type="text" className="form-control" name="fabric" value={form.fabric || ''} onChange={handleChange} readOnly style={{ background: '#f5f5f5' }} /></div>
+                <div className="form-group"><label>Weaving Type</label><input type="text" className="form-control" name="weaving_type" value={form.weaving_type || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Loom Type</label>
+                  <select className="form-control" name="loom_type" value={form.loom_type || ''} onChange={handleChange}>
+                    <option value="">Select...</option>
+                    <option value="Airjet">Airjet</option>
+                    <option value="Rapier">Rapier</option>
+                    <option value="Shuttle">Shuttle</option>
+                  </select>
+                </div>
+                <div className="form-group"><label>Fabric Type</label>
+                  <select className="form-control" name="fabric_type" value={form.fabric_type || ''} onChange={handleChange}>
+                    <option value="">Select...</option>
+                    <option value="Grey">Grey</option>
+                    <option value="Dyed">Dyed</option>
+                    <option value="Yarn-Dyed">Yarn-Dyed</option>
+                  </select>
+                </div>
+                <div className="form-group"><label>Warp Reed</label><input type="text" className="form-control" name="reed" value={form.reed || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Pick</label><input type="text" className="form-control" name="pick" value={form.pick || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Warp Width (in)</label><input type="text" className="form-control" name="warp_width" value={form.warp_width || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Warp Ends</label><input type="text" className="form-control" name="warp_ends" value={form.warp_ends || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Warp Meters</label><input type="text" className="form-control" name="warp_meters" value={form.warp_meters || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Weft Meters</label><input type="text" className="form-control" name="weft_meters" value={form.weft_meters || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Fabric Width (in)</label><input type="text" className="form-control" name="fabric_width" value={form.fabric_width || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Finished Width (in)</label><input type="text" className="form-control" name="finished_width" value={form.finished_width || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Selected Count</label><input type="text" className="form-control" name="selected_count" value={form.selected_count || ''} onChange={handleChange} readOnly style={{ background: '#f5f5f5' }} /></div>
+                <div className="form-group"><label>Merchandiser</label><input type="text" className="form-control" name="merchandiser" value={form.merchandiser || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Design Color</label><input type="text" className="form-control" name="design_color" value={form.design_color || ''} onChange={handleChange} /></div>
+                <div className="form-group">
+                  <label>Certificate Type</label>
+                  <select className="form-control" name="certificate_type" value={form.certificate_type || ''} onChange={handleChange}>
+                    <option value="">Select...</option>
+                    <option value="100% BCI Cotton">100% BCI Cotton</option>
+                    <option value="100% Organic Cotton">100% Organic Cotton</option>
+                    <option value="GOTS Certified">GOTS Certified</option>
+                  </select>
                 </div>
               </div>
             </div>
+
+            {/* Section: Vendor Weaving Details */}
+            <div id="section-vendor-details" className="animate-fade" style={{ marginTop: 32 }}>
+              <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Vendor Weaving Details</h4>
+              <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                <div className="form-group"><label>V-Order Mtrs (Qty) *</label><input type="number" className="form-control" name="v_order_mtrs" value={form.v_order_mtrs || 0} onChange={handleChange} required /></div>
+                <div className="form-group"><label>Min Mtrs</label><input type="number" className="form-control" name="min_mtrs" value={form.min_mtrs || 0} onChange={handleChange} /></div>
+                <div className="form-group"><label>Cooly/Mtr (Rate) *</label><input type="number" step="0.01" className="form-control" name="cooly_mtr" value={form.cooly_mtr || 0} onChange={handleChange} required /></div>
+                <div className="form-group"><label>Cooly/Pick</label><input type="number" step="0.01" className="form-control" name="cooly_pick" value={form.cooly_pick || 0} onChange={handleChange} /></div>
+                <div className="form-group"><label>Salvage Waste %</label><input type="number" step="0.01" className="form-control" name="salvage_waste_pct" value={form.salvage_waste_pct || 0} onChange={handleChange} /></div>
+                <div className="form-group"><label>Crimp %</label><input type="number" step="0.01" className="form-control" name="crimp_pct" value={form.crimp_pct || 0} onChange={handleChange} /></div>
+                <div className="form-group"><label>Shrinkage %</label><input type="text" className="form-control" name="shrinkage" value={form.shrinkage || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>No of Repeat</label><input type="text" className="form-control" name="no_repeat" value={form.no_repeat || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Delivery At</label><input type="text" className="form-control" name="delivery_at" value={form.delivery_at || ''} onChange={handleChange} /></div>
+                <div className="form-group"><label>Warp Issued Meters</label><input type="number" className="form-control" name="warp_isu_mtrs" value={form.warp_isu_mtrs || 0} onChange={handleChange} /></div>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 24 }}>
+                  <input type="checkbox" id="warp_issued" name="warp_issued" checked={!!form.warp_issued} onChange={handleChange} style={{ width: 18, height: 18, cursor: 'pointer' }} />
+                  <label htmlFor="warp_issued" style={{ margin: 0, fontWeight: 600, cursor: 'pointer' }}>Warp Beam Issued</label>
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Delivery Instructions / Command</label><textarea className="form-control" name="delivery_command" value={form.delivery_command || ''} onChange={handleChange} rows={2} /></div>
+              </div>
+            </div>
+
+
 
             {/* Section: Fabric Details */}
             <div id="section-items" className="animate-fade" style={{ marginTop: 32 }}>
@@ -844,6 +1099,14 @@ export default function WeavingPO() {
                     </div>
                   </div>
                 </div>  </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                <X size={16} /> Close
+              </button>
+              <button type="submit" className="btn btn-primary">
+                <Save size={16} /> Save Order
+              </button>
             </div>
           </form>
         </div>
