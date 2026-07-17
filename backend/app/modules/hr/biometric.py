@@ -20,7 +20,7 @@ except ImportError:
     PYZK_AVAILABLE = False
     logger.warning("pyzk package is not available. Biometric sync will run in simulation mode.")
 
-def test_device_connection(ip: str, port: int, timeout: int = 3) -> Tuple[bool, str]:
+def test_device_connection(ip: str, port: int, timeout: int = 10) -> Tuple[bool, str]:
     """Test TCP connection to the physical biometric machine."""
     try:
         # Step 1: Basic TCP socket test
@@ -44,7 +44,7 @@ def test_device_connection(ip: str, port: int, timeout: int = 3) -> Tuple[bool, 
     except Exception as e:
         return False, f"Could not connect to device: {e}"
 
-def generate_mock_logs(employees: List[Employee]) -> List[Dict[str, Any]]:
+def generate_mock_logs(employees: List[Employee], device_ip: str = "192.168.0.202") -> List[Dict[str, Any]]:
     """Generate realistic mock punch logs for testing when device is offline."""
     mock_logs = []
     # Generate logs for the last 3 days
@@ -81,27 +81,35 @@ def generate_mock_logs(employees: List[Employee]) -> List[Dict[str, Any]]:
                 "biometric_id": str(emp.biometric_id),
                 "timestamp": punch_in_time,
                 "status": 0, # check-in
-                "punch_type": 0 # finger
+                "punch_type": 0, # finger
+                "device_ip": device_ip
             })
             
             mock_logs.append({
                 "biometric_id": str(emp.biometric_id),
                 "timestamp": punch_out_time,
                 "status": 1, # check-out
-                "punch_type": 0 # finger
+                "punch_type": 0, # finger
+                "device_ip": device_ip
             })
             
     return mock_logs
 
 async def get_device_logs(ip: str, port: int, employees: List[Employee], force_mock: bool = False) -> Tuple[List[Dict[str, Any]], bool]:
-    """Fetch attendance logs from the ZK machine, falling back to mock logs if offline."""
-    if force_mock or not PYZK_AVAILABLE:
-        logger.info("Generating mock logs...")
-        return generate_mock_logs(employees), True
+    """Fetch attendance logs from the ZK machine, falling back to mock logs ONLY if force_mock is True."""
+    if force_mock:
+        if not PYZK_AVAILABLE:
+            logger.info("pyzk not installed. Generating mock logs for simulation...")
+        else:
+            logger.info("Simulation mode enabled. Generating mock logs...")
+        return generate_mock_logs(employees, ip), True
+
+    if not PYZK_AVAILABLE:
+        raise Exception("pyzk package is not installed. Cannot connect to real device. Enable 'Use Test Data' checkbox for simulation.")
 
     conn = None
     try:
-        zk = ZK(ip, port=port, timeout=3)
+        zk = ZK(ip, port=port, timeout=30)
         conn = zk.connect()
         conn.disable_device()
         
@@ -116,12 +124,17 @@ async def get_device_logs(ip: str, port: int, employees: List[Employee], force_m
                 "biometric_id": str(log.user_id),
                 "timestamp": log.timestamp,
                 "status": log.status,
-                "punch_type": log.punch
+                "punch_type": log.punch,
+                "device_ip": ip
             })
         return logs, False
     except Exception as e:
-        logger.error(f"Failed to read from biometric device: {e}. Falling back to mock simulation.")
-        return generate_mock_logs(employees), True
+        if conn:
+            try:
+                conn.disconnect()
+            except:
+                pass
+        raise Exception(f"Cannot connect to biometric device at {ip}:{port} — {e}. Check LAN cable and device power.")
 
 def calculate_hours_and_ot(
     check_in: datetime,
@@ -199,18 +212,20 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
     if not logs:
         return {"success": True, "message": "Connection OK, but no punch logs were found on the device.", "synced_count": 0}
 
-    # 4. Save raw logs to prevent data loss (deduplicated by biometric_id and timestamp)
+    # 4. Save raw logs to prevent data loss (deduplicated by biometric_id, timestamp, and device_ip)
     # Get existing raw logs to check duplicates
     raw_res = await db.execute(select(HRItem).where(HRItem.category == "biometric_raw_logs"))
     existing_raw = raw_res.scalars().all()
     existing_raw_keys = {
-        (str(item.data.get("biometric_id")), str(item.data.get("timestamp"))) for item in existing_raw if isinstance(item.data, dict)
+        (str(item.data.get("biometric_id")), str(item.data.get("timestamp")), str(item.data.get("device_ip", ip)))
+        for item in existing_raw if isinstance(item.data, dict)
     }
 
     new_raw_count = 0
     for log in logs:
         log_ts_str = log["timestamp"].isoformat() if isinstance(log["timestamp"], datetime) else str(log["timestamp"])
-        key = (str(log["biometric_id"]), log_ts_str)
+        device_ip = log.get("device_ip", ip)
+        key = (str(log["biometric_id"]), log_ts_str, device_ip)
         if key not in existing_raw_keys:
             raw_item = HRItem(
                 category="biometric_raw_logs",
@@ -219,7 +234,8 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
                     "biometric_id": str(log["biometric_id"]),
                     "timestamp": log_ts_str,
                     "status": int(log["status"]),
-                    "punch_type": int(log["punch_type"])
+                    "punch_type": int(log["punch_type"]),
+                    "device_ip": device_ip
                 }
             )
             db.add(raw_item)
@@ -230,11 +246,51 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
         await db.commit()
 
     # 5. Group punches by Employee and Date to calculate check-in / check-out
-    # punches[employee_code][date_str] = [list of punch datetimes]
-    punches: Dict[str, Dict[str, List[datetime]]] = {}
+    # We load ALL raw logs from the database so we have the full punch history across all machines
+    all_raw_res = await db.execute(select(HRItem).where(HRItem.category == "biometric_raw_logs"))
+    all_raw = all_raw_res.scalars().all()
     
+    punches: Dict[str, Dict[str, List[Tuple[datetime, str]]]] = {}
+    seen_punches = set()
+    combined_punches = []
+    
+    # Load raw logs from database
+    for item in all_raw:
+        if isinstance(item.data, dict):
+            bio_id = str(item.data.get("biometric_id"))
+            ts_str = str(item.data.get("timestamp"))
+            status = int(item.data.get("status", 0))
+            ptype = int(item.data.get("punch_type", 0))
+            dev_ip = str(item.data.get("device_ip", ip))
+            
+            key = (bio_id, ts_str)
+            if key not in seen_punches:
+                seen_punches.add(key)
+                combined_punches.append({
+                    "biometric_id": bio_id,
+                    "timestamp": ts_str,
+                    "status": status,
+                    "punch_type": ptype,
+                    "device_ip": dev_ip
+                })
+                
+    # Load newly fetched logs (in case they aren't committed to db yet)
     for log in logs:
         bio_id = str(log["biometric_id"])
+        ts_str = log["timestamp"].isoformat() if isinstance(log["timestamp"], datetime) else str(log["timestamp"])
+        key = (bio_id, ts_str)
+        if key not in seen_punches:
+            seen_punches.add(key)
+            combined_punches.append({
+                "biometric_id": bio_id,
+                "timestamp": ts_str,
+                "status": int(log["status"]),
+                "punch_type": int(log["punch_type"]),
+                "device_ip": log.get("device_ip", ip)
+            })
+            
+    for log in combined_punches:
+        bio_id = log["biometric_id"]
         if bio_id not in emp_map:
             continue  # Ignore punches for unregistered biometric IDs
             
@@ -255,7 +311,7 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
         if date_str not in punches[emp_code]:
             punches[emp_code][date_str] = []
             
-        punches[emp_code][date_str].append(ts)
+        punches[emp_code][date_str].append((ts, log["device_ip"]))
 
     # 6. Fetch existing processed attendance to update/prevent duplicates
     att_res = await db.execute(select(HRItem).where(HRItem.category == "attendance"))
@@ -295,11 +351,11 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
                 except Exception:
                     pass
 
-        for date_str, ts_list in dates.items():
-            ts_list.sort()
-            chk_in = ts_list[0]
+        for date_str, punch_tuples in dates.items():
+            punch_tuples.sort(key=lambda x: x[0])
+            chk_in, check_in_device = punch_tuples[0]
             # If there's only 1 punch, check-out equals check-in (half day or missed punch)
-            chk_out = ts_list[-1] if len(ts_list) > 1 else chk_in
+            chk_out, check_out_device = punch_tuples[-1] if len(punch_tuples) > 1 else (chk_in, check_in_device)
             
             # Calculate hours
             hours_worked, ot_hours, status = calculate_hours_and_ot(
@@ -312,13 +368,13 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
             )
             
             # Zero out hours if only one punch registered (requires manual intervention or is zero work hours)
-            if len(ts_list) == 1:
+            if len(punch_tuples) == 1:
                 hours_worked = 0.0
                 ot_hours = 0.0
                 status = "Punch Error"
             
             check_in_str = chk_in.strftime("%H:%M")
-            check_out_str = chk_out.strftime("%H:%M") if len(ts_list) > 1 else ""
+            check_out_str = chk_out.strftime("%H:%M") if len(punch_tuples) > 1 else ""
 
             # Check if record exists
             key = (emp_code, date_str)
@@ -335,7 +391,9 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
                         "ot_hours": ot_hours,
                         "source": "Biometric",
                         "status": status,
-                        "shift": emp_shift_name
+                        "shift": emp_shift_name,
+                        "check_in_device": check_in_device,
+                        "check_out_device": check_out_device
                     })
                     item.data = cast(Any, merged_data)
                     db.add(item)
@@ -356,7 +414,9 @@ async def sync_biometric_attendance(db: AsyncSession, ip: str = "192.168.0.202",
                         "source": "Biometric",
                         "status": status,
                         "leave_days": 0,
-                        "lop_days": 0
+                        "lop_days": 0,
+                        "check_in_device": check_in_device,
+                        "check_out_device": check_out_device
                     })
                 )
                 db.add(new_item)

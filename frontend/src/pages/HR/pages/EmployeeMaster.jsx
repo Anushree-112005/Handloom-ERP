@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchEmployees, addEmployee, updateEmployee, deleteEmployee, searchEmployeesByPrefix, fetchDepartments, fetchDesignations, fetchShifts, getEmployeeById } from '../../../services/hrService';
+import { fetchEmployees, addEmployee, updateEmployee, deleteEmployee, searchEmployeesByPrefix, fetchDepartments, fetchDesignations, fetchShifts, getEmployeeById, fetchRawBiometricLogs } from '../../../services/hrService';
 import { Users, Plus, Search, Edit2, Trash2, X, Save, Mail, Phone, Building, User, MapPin, Briefcase, CreditCard, FileText, ChevronRight, Eye, ExternalLink, LayoutList, LayoutGrid, Filter, IndianRupee, Download, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -70,6 +70,8 @@ const EmployeeMaster = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [biometricIds, setBiometricIds] = useState([]);
+  const [showBiometricDropdown, setShowBiometricDropdown] = useState(false);
 
   // Load employees from backend
 
@@ -84,14 +86,19 @@ const EmployeeMaster = () => {
 
   const loadMasterData = async () => {
     try {
-      const [depts, desigs, shiftList] = await Promise.all([
+      const [depts, desigs, shiftList, logs] = await Promise.all([
         fetchDepartments().catch(() => []),
         fetchDesignations().catch(() => []),
-        fetchShifts().catch(() => [])
+        fetchShifts().catch(() => []),
+        fetchRawBiometricLogs().catch(() => [])
       ]);
       setDepartments(depts);
       setDesignations(desigs);
       setShifts(shiftList);
+      
+      const uniqueIds = Array.from(new Set(logs.map(log => log.biometric_id || log.data?.biometric_id))).filter(Boolean);
+      uniqueIds.sort((a, b) => parseInt(a) - parseInt(b));
+      setBiometricIds(uniqueIds);
     } catch (e) {
       console.log('Master data load error:', e);
     }
@@ -388,9 +395,52 @@ const EmployeeMaster = () => {
             <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Employee ID</label>
             <input type="text" value={form.employee_id || ''} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="Auto-generated if empty" />
           </div>
-          <div className="group">
+          <div className="group relative">
             <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Biometric Machine ID</label>
-            <input type="text" value={form.biometric_id || ''} onChange={(e) => setForm({ ...form, biometric_id: e.target.value })} className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" placeholder="e.g. 1" />
+            <input 
+              type="text" 
+              value={form.biometric_id || ''} 
+              onChange={(e) => setForm({ ...form, biometric_id: e.target.value })} 
+              onFocus={() => setShowBiometricDropdown(true)}
+              onBlur={() => setTimeout(() => setShowBiometricDropdown(false), 200)}
+              className="form-control hover:border-indigo-300 focus:border-indigo-500 transition-colors" 
+              placeholder="Select or type ID..." 
+            />
+            {showBiometricDropdown && (
+              <ul className="absolute z-10 w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 max-h-60 overflow-auto">
+                {biometricIds
+                  .filter(id => !form.biometric_id || String(id).toLowerCase().includes(String(form.biometric_id).toLowerCase()))
+                  .map(id => {
+                    const assignedEmp = employees.find(e => String(e.biometric_id) === String(id) && e.id !== editingId);
+                    return (
+                      <li 
+                        key={id} 
+                        className="px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b last:border-0 border-slate-100 transition-colors flex justify-between items-center" 
+                        onMouseDown={() => { 
+                          setForm({ ...form, biometric_id: String(id) }); 
+                          setShowBiometricDropdown(false); 
+                        }}
+                      >
+                        <span className="font-semibold text-slate-800">ID: {id}</span>
+                        {assignedEmp ? (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                            Assigned to {assignedEmp.name}
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">
+                            Available
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                {biometricIds.filter(id => !form.biometric_id || String(id).toLowerCase().includes(String(form.biometric_id).toLowerCase())).length === 0 && (
+                  <li className="px-4 py-3 text-sm text-slate-400 text-center">
+                    No matching biometric IDs found. Type to use custom.
+                  </li>
+                )}
+              </ul>
+            )}
           </div>
           <div className="group">
             <label className="block text-sm font-semibold text-slate-700 mb-1.5 group-hover:text-indigo-600 transition-colors">Personal Email</label>

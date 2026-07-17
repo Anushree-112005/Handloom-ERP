@@ -1,12 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Factory, Printer, Download, Filter, Target, Activity, Settings, Package } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { ppcAPI } from '../../../services/api';
 
 export default function DailyFactoryReport() {
   const [filters, setFilters] = useState({
     reportDate: new Date().toISOString().split('T')[0],
     shift: 'Both'
   });
+
+  const [dashboard, setDashboard] = useState({
+    active_orders: 0,
+    total_running: 0,
+    total_idle: 0,
+    production_today: 0,
+    on_time: 0,
+    at_risk: 0,
+    avg_efficiency: 0,
+    pending_receipts: 0
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const res = await ppcAPI.getDashboard();
+      if (res.data) {
+        setDashboard(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalLooms = dashboard.total_running + dashboard.total_idle;
+  const loomsRunning = dashboard.total_running;
+  const loomsIdle = dashboard.total_idle;
+  const utilization = totalLooms > 0 ? (loomsRunning / totalLooms) * 100 : 0;
+  
+  const targetMeters = totalLooms * 425 || 425;
+  const actualMeters = dashboard.production_today;
+  const variance = actualMeters - targetMeters;
+  const efficiency = dashboard.avg_efficiency || 0;
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -35,7 +76,16 @@ export default function DailyFactoryReport() {
     doc.text(`Date: ${filters.reportDate}`, 14, 62);
     doc.text(`Generated On: ${new Date().toLocaleString()}`, doc.internal.pageSize.width - 14, 62, { align: 'right' });
 
-    doc.text('This is a mock PDF for Daily Factory Report', 14, 70);
+    doc.text(`Total Looms: ${totalLooms}`, 14, 75);
+    doc.text(`Running Looms: ${loomsRunning}`, 14, 82);
+    doc.text(`Idle Looms: ${loomsIdle}`, 14, 89);
+    doc.text(`Utilization: ${utilization.toFixed(1)}%`, 14, 96);
+    
+    doc.text(`Target Production: ${targetMeters} m`, 14, 110);
+    doc.text(`Actual Production: ${actualMeters} m`, 14, 117);
+    doc.text(`Variance: ${variance.toFixed(1)} m`, 14, 124);
+    doc.text(`Overall Efficiency: ${efficiency.toFixed(1)}%`, 14, 131);
+
     doc.save(`Daily_Factory_${filters.reportDate}.pdf`);
   };
 
@@ -51,9 +101,6 @@ export default function DailyFactoryReport() {
         <div style={{ display: 'flex', gap: 12 }}>
           <button className="btn btn-secondary" onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Printer size={16} /> PDF
-          </button>
-          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#10b981', borderColor: '#10b981' }}>
-            <Download size={16} /> Excel
           </button>
         </div>
       </div>
@@ -88,24 +135,24 @@ export default function DailyFactoryReport() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
             <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Looms in Factory</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>10</div>
+              <div style={{ fontSize: 24, fontWeight: 700 }}>{totalLooms}</div>
             </div>
             <div style={{ padding: 16, background: '#ecfdf5', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: '#047857' }}>Total Looms Running</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#047857' }}>8</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#047857' }}>{loomsRunning}</div>
             </div>
             <div style={{ padding: 16, background: '#fef3c7', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: '#b45309' }}>Total Looms Idle</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#b45309' }}>1</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#b45309' }}>{loomsIdle}</div>
             </div>
             <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: '#b91c1c' }}>Total Looms Breakdown</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#b91c1c' }}>1</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#b91c1c' }}>{dashboard.pending_receipts}</div>
             </div>
           </div>
           <div style={{ marginTop: 16, padding: 12, borderTop: '1px dashed var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontWeight: 500 }}>Factory Utilization</span>
-            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>80.0%</span>
+            <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{utilization.toFixed(1)}%</span>
           </div>
         </div>
 
@@ -116,43 +163,16 @@ export default function DailyFactoryReport() {
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Target Meters</span><span style={{ fontWeight: 600 }}>4,250 m</span>
+              <span style={{ color: 'var(--text-muted)' }}>Target Meters</span><span style={{ fontWeight: 600 }}>{targetMeters.toLocaleString()} m</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Actual Meters</span><span style={{ fontWeight: 600, color: '#047857' }}>4,020 m</span>
+              <span style={{ color: 'var(--text-muted)' }}>Actual Meters</span><span style={{ fontWeight: 600, color: '#047857' }}>{actualMeters.toLocaleString()} m</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Variance</span><span style={{ fontWeight: 600, color: '#b91c1c' }}>-230 m</span>
+              <span style={{ color: 'var(--text-muted)' }}>Variance</span><span style={{ fontWeight: 600, color: variance < 0 ? '#b91c1c' : '#047857' }}>{variance > 0 ? '+' : ''}{variance.toFixed(1)} m</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Overall Efficiency</span><span style={{ fontWeight: 700, color: 'var(--primary)' }}>94.6%</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Quality Pass %</span><span style={{ fontWeight: 600 }}>97.9%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Downtime Section */}
-        <div className="card">
-          <h4 style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 12, margin: '0 0 16px 0', color: 'var(--text-primary)' }}>
-            <Activity size={18} /> Downtime & Maintenance
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Total Downtime (hrs)</span><span style={{ fontWeight: 600 }}>6.5 hrs</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>No. of Breakdowns</span><span style={{ fontWeight: 600 }}>3</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Mechanical Downtime</span><span style={{ fontWeight: 600 }}>3.0 hrs</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Total Lost Meters</span><span style={{ fontWeight: 600, color: '#b91c1c' }}>162 m</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px dashed var(--border)' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Est. Financial Loss</span><span style={{ fontWeight: 700, color: '#b91c1c' }}>₹7,290</span>
+              <span style={{ color: 'var(--text-muted)' }}>Overall Efficiency</span><span style={{ fontWeight: 700, color: 'var(--primary)' }}>{efficiency.toFixed(1)}%</span>
             </div>
           </div>
         </div>
@@ -165,19 +185,15 @@ export default function DailyFactoryReport() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
             <div style={{ padding: 16, background: 'var(--bg-secondary)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Active Orders</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>5</div>
+              <div style={{ fontSize: 24, fontWeight: 700 }}>{dashboard.active_orders}</div>
             </div>
             <div style={{ padding: 16, background: '#ecfdf5', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: '#047857' }}>On Track</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#047857' }}>4</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#047857' }}>{dashboard.on_time}</div>
             </div>
             <div style={{ padding: 16, background: '#fef3c7', borderRadius: 8 }}>
               <div style={{ fontSize: 12, color: '#b45309' }}>At Risk</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#b45309' }}>1</div>
-            </div>
-            <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
-              <div style={{ fontSize: 12, color: '#b91c1c' }}>Delayed</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: '#b91c1c' }}>0</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#b45309' }}>{dashboard.at_risk}</div>
             </div>
           </div>
         </div>

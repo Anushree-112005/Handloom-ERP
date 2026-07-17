@@ -109,11 +109,11 @@ export default function DailyProductionReport() {
         }
       });
 
-      // Fallback mocks if no data
+      // Fallback mocks if no data (removed, set to 0)
       if (dayMeters === 0 && nightMeters === 0) {
-        dayMeters = 210;
-        nightMeters = 205;
-        orderId = 'ORD-2024-001';
+        dayMeters = 0;
+        nightMeters = 0;
+        orderId = '';
       }
 
       const total = dayMeters + nightMeters;

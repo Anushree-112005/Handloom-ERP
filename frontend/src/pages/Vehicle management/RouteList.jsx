@@ -85,17 +85,11 @@ const RouteList = () => {
       if (data && data.length > 0) {
         setDispatches(data);
       } else {
-        // Ultimate fallback if backend returns truly empty and mock fails
-        setDispatches([
-          { id: 'mock1', indent_id: 'DSP-001', delivery_place: 'Fallback Chennai' },
-          { id: 'mock2', indent_id: 'DSP-002', delivery_place: 'Fallback Coimbatore' }
-        ]);
+        setDispatches([]);
       }
     } catch (error) {
       console.error('Failed to fetch dispatches', error);
-      setDispatches([
-        { id: 'mock1', indent_id: 'DSP-001', delivery_place: 'Error Fallback' }
-      ]);
+      setDispatches([]);
     }
   };
 

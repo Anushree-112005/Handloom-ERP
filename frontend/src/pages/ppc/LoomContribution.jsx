@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Search, FileText, Factory, TrendingUp, CheckCircle2, RefreshCw } from 'lucide-react';
-import { buyerOrderAPI, subMasterAPI } from '../../services/api';
+import { buyerOrderAPI, subMasterAPI, ppcAPI } from '../../services/api';
 
 const ContributionGauge = ({ percent, color }) => {
   const radius = 36;
@@ -66,35 +66,38 @@ export default function LoomContribution() {
 
     setLoading(true);
     try {
-      // Mock Data Generation
-      const totalOrder = 30000;
-      const numLooms = Math.floor(Math.random() * 3) + 2; 
-      const allocMeters = Math.floor(totalOrder / numLooms);
+      // Fetch real-time allocations from DB
+      const res = await ppcAPI.getAllocations();
+      const allAllocations = res.data || [];
       
-      const mockAllocations = Array.from({ length: numLooms }).map((_, i) => {
-        const allocated = i === numLooms - 1 ? totalOrder - (allocMeters * i) : allocMeters;
-        const produced = Math.floor(allocated * (Math.random() * 0.8 + 0.1));
-        const remaining = allocated - produced;
-        const contribution = (produced / (totalOrder * 0.6)) * 100;
-        
+      // Filter allocations matching selected order name or ID
+      const orderAllocations = allAllocations.filter(
+        a => String(a.order_id) === String(oId)
+      );
+
+      const parsedAllocations = orderAllocations.map(a => {
+        const allocated = a.assigned_meters || 0;
+        const produced = a.completed_meters || 0;
+        const remaining = Math.max(0, allocated - produced);
         return {
-          loom_id: `LM-00${i + 1}`,
+          loom_id: a.loom?.loom_name || `LM-${a.loom_id}`,
           allocated: allocated,
           produced: produced,
           remaining: remaining,
-          contribution: contribution.toFixed(1),
-          status: remaining === 0 ? 'Completed' : 'Running'
+          contribution: 0, // Calculated below
+          status: a.allocation_status === 'Completed' || remaining === 0 ? 'Completed' : 'Running'
         };
       });
 
-      const totalProduced = mockAllocations.reduce((sum, a) => sum + a.produced, 0);
-      mockAllocations.forEach(a => {
-        a.contribution = totalProduced > 0 ? ((a.produced / totalProduced) * 100).toFixed(1) : 0;
+      const totalProduced = parsedAllocations.reduce((sum, a) => sum + a.produced, 0);
+      parsedAllocations.forEach(a => {
+        a.contribution = totalProduced > 0 ? ((a.produced / totalProduced) * 100).toFixed(1) : '0.0';
       });
 
-      setAllocations(mockAllocations);
+      setAllocations(parsedAllocations);
     } catch (err) {
       console.error(err);
+      setAllocations([]);
     } finally {
       setLoading(false);
     }

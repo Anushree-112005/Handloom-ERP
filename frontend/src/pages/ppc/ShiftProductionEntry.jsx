@@ -6,6 +6,7 @@ export default function ShiftProductionEntry() {
   const [records, setRecords] = useState([]);
   const [looms, setLooms] = useState([]);
   const [allocations, setAllocations] = useState([]);
+  const [operators, setOperators] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,14 +35,16 @@ export default function ShiftProductionEntry() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [recRes, loomRes, allocRes] = await Promise.all([
+      const [recRes, loomRes, allocRes, opRes] = await Promise.all([
         ppcAPI.getDailyEntries().catch(() => ({ data: [] })),
         ppcAPI.getLooms().catch(() => ({ data: [] })),
-        ppcAPI.getAllocations().catch(() => ({ data: [] }))
+        ppcAPI.getAllocations().catch(() => ({ data: [] })),
+        ppcAPI.getOperators().catch(() => ({ data: [] }))
       ]);
       setRecords(recRes?.data || []);
       setLooms(loomRes?.data || []);
       setAllocations(allocRes?.data || []);
+      setOperators(opRes?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -56,7 +59,10 @@ export default function ShiftProductionEntry() {
       const alloc = allocations.find(a => (a.loom_id.toString() === updated.loom_id || a.loom_name === updated.loom_id) && a.allocation_status !== 'Completed');
       if (alloc) {
         updated.target_meters = alloc.assigned_meters;
-        updated.operator = 'Operator 1'; // Mock for now or fetch from operators API
+        // Find operator assigned to this loom
+        const loom = looms.find(l => l.id.toString() === updated.loom_id || l.loom_name === updated.loom_id);
+        const op = operators.find(o => String(o.assigned_loom) === String(loom ? loom.loom_name : ''));
+        updated.operator = op ? op.operator_name : (operators[0] ? operators[0].operator_name : 'Operator 1');
         updated.opening_meter = alloc.completed_meters || 0;
       } else {
         updated.target_meters = '';

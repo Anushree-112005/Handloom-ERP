@@ -197,70 +197,10 @@ async def get_stock_summary(db: AsyncSession = Depends(get_db)):
 
     # 4. Fallback high-quality real-time data if database is empty
     if not stock_items:
-        stock_items = [
-            {
-                "id": "SKU-001",
-                "category": "Yarn",
-                "itemName": "40S combed cotton yarn",
-                "qty": 4500.0,
-                "unit": "KGS",
-                "value": 1125000.0,
-                "godown": "Yarn Godown A",
-                "lastUpdated": "13/07/2026"
-            },
-            {
-                "id": "SKU-002",
-                "category": "Yarn",
-                "itemName": "30S carded cotton yarn",
-                "qty": 3200.0,
-                "unit": "KGS",
-                "value": 736000.0,
-                "godown": "Yarn Godown B",
-                "lastUpdated": "12/07/2026"
-            },
-            {
-                "id": "SKU-003",
-                "category": "Grey Fabric",
-                "itemName": "Design D-893 Grey Cotton Voile",
-                "qty": 12500.0,
-                "unit": "MTRS",
-                "value": 687500.0,
-                "godown": "Weaving Shed 2",
-                "lastUpdated": "13/07/2026"
-            },
-            {
-                "id": "SKU-004",
-                "category": "Grey Fabric",
-                "itemName": "Design D-124 Linen Blend Grey",
-                "qty": 8900.0,
-                "unit": "MTRS",
-                "value": 623000.0,
-                "godown": "Weaving Shed 1",
-                "lastUpdated": "11/07/2026"
-            },
-            {
-                "id": "SKU-005",
-                "category": "Finished Fabric",
-                "itemName": "Design D-893 Finished Printed Rayon",
-                "qty": 6700.0,
-                "unit": "MTRS",
-                "value": 569500.0,
-                "godown": "Finished Goods Warehouse",
-                "lastUpdated": "13/07/2026"
-            },
-            {
-                "id": "SKU-006",
-                "category": "Finished Fabric",
-                "itemName": "Design D-702 Dyed Poplin Fabric",
-                "qty": 5400.0,
-                "unit": "MTRS",
-                "value": 459000.0,
-                "godown": "Finished Goods Warehouse",
-                "lastUpdated": "10/07/2026"
-            }
-        ]
+        stock_items = []
         
     return stock_items
+
 
 
 @router.get("/stock-ledger", response_model=List[Dict[str, Any]])
@@ -376,55 +316,6 @@ async def get_stock_ledger(db: AsyncSession = Depends(get_db)):
         final_list = []
         
     if not final_list:
-        final_list = [
-            {
-                "id": "TXN-1001",
-                "date": "13/07/2026",
-                "sku": "40S combed cotton yarn",
-                "type": "Inward",
-                "ref": "INW-Y-801",
-                "qtyIn": 5000.0,
-                "qtyOut": 0.0,
-                "balance": 5000.0,
-                "godown": "Yarn Godown A",
-                "operator": "Admin"
-            },
-            {
-                "id": "TXN-1002",
-                "date": "13/07/2026",
-                "sku": "40S combed cotton yarn",
-                "type": "Outward",
-                "ref": "DEL-Y-402",
-                "qtyIn": 0.0,
-                "qtyOut": 500.0,
-                "balance": 4500.0,
-                "godown": "Yarn Godown A",
-                "operator": "Supervisor 1"
-            },
-            {
-                "id": "TXN-1003",
-                "date": "13/07/2026",
-                "sku": "Design D-893 Grey Cotton Voile",
-                "type": "Inward",
-                "ref": "INW-C-293",
-                "qtyIn": 12500.0,
-                "qtyOut": 0.0,
-                "balance": 12500.0,
-                "godown": "Weaving Shed 2",
-                "operator": "Admin"
-            },
-            {
-                "id": "TXN-1004",
-                "date": "13/07/2026",
-                "sku": "Design D-893 Finished Printed Rayon",
-                "type": "Inward",
-                "ref": "INW-FF-082",
-                "qtyIn": 6700.0,
-                "qtyOut": 0.0,
-                "balance": 6700.0,
-                "godown": "Finished Goods Warehouse",
-                "operator": "Admin"
-            }
-        ]
+        final_list = []
         
     return final_list

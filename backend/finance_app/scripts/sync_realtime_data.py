@@ -229,11 +229,12 @@ def sync_data():
 
         # 9. Sync Yarn Inwards -> Purchase Vouchers (for BOTH FYs)
         print("  → Syncing Yarn Inward Entries into Purchase Vouchers...")
-        inwards = pg_conn.execute(sa.text("SELECT id, inward_date, received_from, net_amount, cgst_pct, sgst_pct, igst_pct, gross_amount, ref_no FROM yarn_inwards")).fetchall()
+        raw_inwards = pg_conn.execute(sa.text("SELECT id, inward_date, received_from, net_amount, cgst_pct, sgst_pct, igst_pct, gross_amount, ref_no FROM yarn_inwards")).fetchall()
+        inwards = raw_inwards if raw_inwards is not None else []
         
         purchase_no_seq = 1
         for inw in inwards:
-            if not inw.received_from:
+            if inw is None or not inw.received_from:
                 continue
             gross = float(inw.gross_amount or 0)
             net = float(inw.net_amount or 0)
@@ -292,11 +293,12 @@ def sync_data():
 
         # 10. Sync Sales Invoices -> Sales Vouchers (for BOTH FYs)
         print("  → Syncing Sales Invoices into Sales Vouchers...")
-        sales = pg_conn.execute(sa.text("SELECT id, invoice_no, invoice_date, party_name, gross_amount, cgst, sgst, igst, net_amount FROM sales_invoices")).fetchall()
+        raw_sales = pg_conn.execute(sa.text("SELECT id, invoice_no, invoice_date, party_name, gross_amount, cgst, sgst, igst, net_amount FROM sales_invoices")).fetchall()
+        sales = raw_sales if raw_sales is not None else []
         
         sales_no_seq = 1
         for sal in sales:
-            if not sal.party_name:
+            if sal is None or not sal.party_name:
                 continue
             gross = float(sal.gross_amount or 0)
             net = float(sal.net_amount or 0)
@@ -361,7 +363,7 @@ def sync_data():
         for fy in [fy25, fy26]:
             # Simulate a bank payment for each Purchase to keep creditors balanced
             for inw in inwards:
-                if not inw.received_from:
+                if inw is None or not inw.received_from:
                     continue
                 net = float(inw.net_amount or 0)
                 sup_id = ledger_map[inw.received_from]
@@ -397,7 +399,7 @@ def sync_data():
 
             # Simulate a bank receipt for each Sale to keep debtors balanced
             for sal in sales:
-                if not sal.party_name:
+                if sal is None or not sal.party_name:
                     continue
                 net = float(sal.net_amount or 0)
                 buy_id = ledger_map[sal.party_name]
