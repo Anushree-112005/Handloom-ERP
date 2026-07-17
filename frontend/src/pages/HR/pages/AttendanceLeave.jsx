@@ -75,6 +75,12 @@ const AttendanceLeave = () => {
   const [selectedMachineId, setSelectedMachineId] = useState('machine1');
   const [deviceIp, setDeviceIp] = useState('192.168.0.202');
   const [devicePort, setDevicePort] = useState(4370);
+  const [machineDirections, setMachineDirections] = useState({
+    '192.168.0.202': 'in',
+    '192.168.0.201': 'out',
+    '192.168.1.203': 'both',
+    '192.168.0.203': 'both'
+  });
   const [filterMachineIp, setFilterMachineIp] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [filterAttendanceDate, setFilterAttendanceDate] = useState(getTodayDateString());
@@ -140,7 +146,12 @@ const AttendanceLeave = () => {
     return emp ? (emp.biometric_id || '—') : '—';
   };
 
-  const getPunchDirection = (status, timestamp) => {
+  const getPunchDirection = (status, timestamp, deviceIp) => {
+    const ip = deviceIp || '';
+    const mode = machineDirections[ip] || 'both';
+    if (mode === 'in') return 'Check In';
+    if (mode === 'out') return 'Check Out';
+
     if (timestamp) {
       try {
         const hour = new Date(timestamp).getHours();
@@ -266,7 +277,7 @@ const AttendanceLeave = () => {
         const bioId = details.biometric_id || '-';
         const devName = `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`;
         const timestampStr = details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
-        const direction = getPunchDirection(details.status, details.timestamp);
+        const direction = getPunchDirection(details.status, details.timestamp, details.device_ip);
         const punchType = details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other';
 
         tableRows.push([
@@ -344,7 +355,7 @@ const AttendanceLeave = () => {
           "Biometric ID": details.biometric_id || '-',
           "Device": `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`,
           "Punch Timestamp": timestampStr,
-          "Direction": getPunchDirection(details.status, details.timestamp),
+          "Direction": getPunchDirection(details.status, details.timestamp, details.device_ip),
           "Punch Type": details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'
         };
       });
@@ -1244,6 +1255,39 @@ const AttendanceLeave = () => {
                       </div>
                     </div>
                   )}
+                  <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <span style={{ fontWeight: 600, color: '#475569', fontSize: 12 }}>Punch Mode Config:</span>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(machineDirections[deviceIp] || 'both') === 'in'} 
+                          onChange={(e) => {
+                            setMachineDirections(prev => ({
+                              ...prev,
+                              [deviceIp]: e.target.checked ? 'in' : 'both'
+                            }));
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Inward Only
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(machineDirections[deviceIp] || 'both') === 'out'} 
+                          onChange={(e) => {
+                            setMachineDirections(prev => ({
+                              ...prev,
+                              [deviceIp]: e.target.checked ? 'out' : 'both'
+                            }));
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Outward Only
+                      </label>
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <input type="checkbox" id="syncMock" checked={syncMock} onChange={(e) => setSyncMock(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
                     <label htmlFor="syncMock" style={{ fontSize: 13, fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
@@ -1427,7 +1471,7 @@ const AttendanceLeave = () => {
                             </td>
                             <td className="px-6 py-4">
                               {(() => {
-                                const dir = getPunchDirection(details.status, details.timestamp);
+                                const dir = getPunchDirection(details.status, details.timestamp, details.device_ip);
                                 return (
                                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${dir === 'Check In' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                     {dir}
