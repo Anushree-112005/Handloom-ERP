@@ -147,6 +147,7 @@ const modules = [
 
   { section: 'Order Management' },
   { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
+  { path: '/buyer-order/time-and-action', label: 'T&A Tracker (Preview)', icon: Clock },
   // {
   //   label: 'Work Order Transaction',
   //   icon: Layers,
