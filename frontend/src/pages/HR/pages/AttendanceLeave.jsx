@@ -1427,9 +1427,9 @@ const AttendanceLeave = () => {
                       onChange={(e) => setFilterMachineIp(e.target.value)}
                     >
                       <option value="all">All Machines</option>
-                      <option value="192.168.0.202">Machine 1 (192.168.0.202)</option>
-                      <option value="192.168.0.201">Machine 2 (192.168.0.201)</option>
-                      <option value="192.168.1.203">Machine 3 (192.168.1.203)</option>
+                      <option value="192.168.0.203">Machine 1 (192.168.0.203)</option>
+                      <option value="192.168.0.202">Machine 2 (192.168.0.202)</option>
+                      <option value="192.168.0.201">Machine 3 (192.168.0.201)</option>
                     </select>
                     <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200">
                       {filteredRawLogs.length} events
