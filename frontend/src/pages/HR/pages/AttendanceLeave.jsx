@@ -89,7 +89,7 @@ const AttendanceLeave = () => {
 
   useEffect(() => {
     setLogsPage(1);
-  }, [filterMachineIp, filterDate]);
+  }, [filterMachineIp, filterDate, filterEmployee]);
 
   const loadRawLogs = async () => {
     try {
@@ -1137,6 +1137,16 @@ const AttendanceLeave = () => {
             if (filterDate) {
               const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
               if (logDateStr !== filterDate) return false;
+            }
+            // Filter by search query
+            if (filterEmployee) {
+              const query = filterEmployee.toLowerCase();
+              const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+              const empId = (log.employee_id || '').toString().toLowerCase();
+              const bioId = (log.biometric_id || '').toString().toLowerCase();
+              if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+                return false;
+              }
             }
             return true;
           });
