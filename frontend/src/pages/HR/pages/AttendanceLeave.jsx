@@ -44,16 +44,16 @@ const AttendanceLeave = () => {
 
   // Biometric integration state
   const BIOMETRIC_MACHINES = [
-    { id: 'machine1', name: 'Machine 1', ip: '192.168.0.202', port: 4370, serial: 'CEXJ233960759' },
-    { id: 'machine2', name: 'Machine 2', ip: '192.168.0.201', port: 4370, serial: 'CEXJ233960836' },
-    { id: 'machine3', name: 'Machine 3', ip: '192.168.1.203', port: 4370, serial: 'CEXJ232161690' },
+    { id: 'machine1', name: 'Machine 1', ip: '192.168.0.203', port: 4370, serial: 'CEXJ232161690', direction: 'both' },
+    { id: 'machine2', name: 'Machine 2', ip: '192.168.0.202', port: 4370, serial: 'CEXJ233960759', direction: 'in' },
+    { id: 'machine3', name: 'Machine 3', ip: '192.168.0.201', port: 4370, serial: 'CEXJ233960836', direction: 'out' },
     { id: 'custom', name: 'Custom Configuration...', ip: '', port: 4370, serial: '' }
   ];
 
   const getDeviceName = (ip) => {
-    if (ip === '192.168.0.202') return 'Machine 1';
-    if (ip === '192.168.0.201') return 'Machine 2';
-    if (ip === '192.168.1.203') return 'Machine 3';
+    if (ip === '192.168.0.203' || ip === '192.168.1.203') return 'Machine 1';
+    if (ip === '192.168.0.202') return 'Machine 2';
+    if (ip === '192.168.0.201') return 'Machine 3';
     return ip || '—';
   };
 
@@ -73,7 +73,7 @@ const AttendanceLeave = () => {
   };
 
   const [selectedMachineId, setSelectedMachineId] = useState('machine1');
-  const [deviceIp, setDeviceIp] = useState('192.168.0.202');
+  const [deviceIp, setDeviceIp] = useState('192.168.0.203');
   const [devicePort, setDevicePort] = useState(4370);
   const [machineDirections, setMachineDirections] = useState({
     '192.168.0.202': 'in',
