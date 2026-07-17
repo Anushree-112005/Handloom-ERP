@@ -140,6 +140,16 @@ const AttendanceLeave = () => {
     return emp ? (emp.biometric_id || '—') : '—';
   };
 
+  const getPunchDirection = (status, timestamp) => {
+    if (timestamp) {
+      try {
+        const hour = new Date(timestamp).getHours();
+        return hour < 12 ? 'Check In' : 'Check Out';
+      } catch (e) {}
+    }
+    return status === 0 ? 'Check In' : 'Check Out';
+  };
+
   const calculateOT = (checkIn, checkOut, shiftName) => {
     if (!checkIn || !checkOut) return 0;
     
@@ -256,7 +266,7 @@ const AttendanceLeave = () => {
         const bioId = details.biometric_id || '-';
         const devName = `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`;
         const timestampStr = details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
-        const direction = details.status === 0 ? 'Check In' : 'Check Out';
+        const direction = getPunchDirection(details.status, details.timestamp);
         const punchType = details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other';
 
         tableRows.push([
@@ -334,7 +344,7 @@ const AttendanceLeave = () => {
           "Biometric ID": details.biometric_id || '-',
           "Device": `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`,
           "Punch Timestamp": timestampStr,
-          "Direction": details.status === 0 ? 'Check In' : 'Check Out',
+          "Direction": getPunchDirection(details.status, details.timestamp),
           "Punch Type": details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'
         };
       });
@@ -1416,9 +1426,14 @@ const AttendanceLeave = () => {
                               {details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${details.status === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                {details.status === 0 ? 'Check In' : 'Check Out'}
-                              </span>
+                              {(() => {
+                                const dir = getPunchDirection(details.status, details.timestamp);
+                                return (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${dir === 'Check In' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {dir}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="px-6 py-4 text-xs text-slate-500">
                               {details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'}
