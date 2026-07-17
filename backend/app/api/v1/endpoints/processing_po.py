@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, selectinload
-from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlalchemy import select, delete
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import date
@@ -63,12 +64,12 @@ class ProcessingPOCreate(BaseModel):
     items: List[ProcessingPOItemCreate] = []
 
 @router.get("/")
-async def get_processing_pos(db: Session = Depends(get_db)):
+async def get_processing_pos(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProcessingPO).options(selectinload(ProcessingPO.items)).order_by(ProcessingPO.id.desc()))
     return result.scalars().all()
 
 @router.post("/")
-async def create_processing_po(data: ProcessingPOCreate, db: Session = Depends(get_db)):
+async def create_processing_po(data: ProcessingPOCreate, db: AsyncSession = Depends(get_db)):
     new_po = ProcessingPO(
         po_s_no=data.po_s_no,
         po_date=data.po_date,
@@ -144,7 +145,7 @@ async def create_processing_po(data: ProcessingPOCreate, db: Session = Depends(g
     return new_po
 
 @router.put("/{id}")
-async def update_processing_po(id: int, data: ProcessingPOCreate, db: Session = Depends(get_db)):
+async def update_processing_po(id: int, data: ProcessingPOCreate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProcessingPO).options(selectinload(ProcessingPO.items)).where(ProcessingPO.id == id))
     po = result.scalars().first()
     if not po:
@@ -182,7 +183,7 @@ async def update_processing_po(id: int, data: ProcessingPOCreate, db: Session = 
     po.net_amount = data.net_amount
     po.remarks = data.remarks
 
-    await db.execute(ProcessingPOItem.__table__.delete().where(ProcessingPOItem.po_id == id))
+    await db.execute(delete(ProcessingPOItem).where(ProcessingPOItem.po_id == id))
     
     for item in data.items:
         db_item = ProcessingPOItem(**item.dict(), po_id=id)
@@ -193,7 +194,7 @@ async def update_processing_po(id: int, data: ProcessingPOCreate, db: Session = 
     return po
 
 @router.delete("/{id}")
-async def delete_processing_po(id: int, db: Session = Depends(get_db)):
+async def delete_processing_po(id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ProcessingPO).where(ProcessingPO.id == id))
     po = result.scalars().first()
     if not po:
