@@ -1035,37 +1035,15 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group">
                         <label>Merchandiser</label>
-                        <input list="merchandiser-list" className="form-control" name="merchandiser" value={formData.merchandiser || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
-                        <datalist id="merchandiser-list">
-                          {options.employees.filter(emp => 
-                            emp.user_type?.toLowerCase().includes('merchandis') || 
-                            emp.designation?.toLowerCase().includes('merchandis') ||
-                            emp.department?.toLowerCase().includes('merchandis')
-                          ).map(emp => <option key={emp.id} value={emp.name} />)}
-                        </datalist>
+                        <input className="form-control" name="merchandiser" value={formData.merchandiser || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <div className="form-group">
                         <label>Manager</label>
-                        <input list="manager-list" className="form-control" name="manager" value={formData.manager || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
-                        <datalist id="manager-list">
-                          {options.employees.filter(emp => 
-                            emp.user_type?.toLowerCase().includes('manag') || 
-                            emp.designation?.toLowerCase().includes('manag') ||
-                            emp.department?.toLowerCase().includes('admin') ||
-                            emp.department?.toLowerCase().includes('manag')
-                          ).map(emp => <option key={emp.id} value={emp.name} />)}
-                        </datalist>
+                        <input className="form-control" name="manager" value={formData.manager || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <div className="form-group">
                         <label>A/c Incharge</label>
-                        <input list="account-incharge-list" className="form-control" name="account_incharge" value={formData.account_incharge || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
-                        <datalist id="account-incharge-list">
-                          {options.employees.filter(emp => 
-                            emp.user_type?.toLowerCase().includes('account') || 
-                            emp.designation?.toLowerCase().includes('account') ||
-                            emp.department?.toLowerCase().includes('account')
-                          ).map(emp => <option key={emp.id} value={emp.name} />)}
-                        </datalist>
+                        <input className="form-control" name="account_incharge" value={formData.account_incharge || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <SubMasterDropdown
                         label="Agent Name"

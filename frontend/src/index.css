@@ -267,6 +267,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; }
 .page-content {
   flex: 1;
   padding: 28px;
+  min-width: 0;
 }
 
 /* ---- Cards ---- */

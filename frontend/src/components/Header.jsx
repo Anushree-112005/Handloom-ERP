@@ -97,9 +97,9 @@ export default function Header() {
   useEffect(() => {
     // Setup WebSocket for Real-Time Notifications
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // When running locally with Vite proxy, or direct backend
-    // Since Vite proxies /api, it handles wss if configured, but let's connect directly or via proxy
-    const wsUrl = `${protocol}//${window.location.host}/api/v1/notifications/ws`;
+    const isDev = import.meta.env.DEV;
+    const wsHost = isDev ? '127.0.0.1:8000' : window.location.host;
+    const wsUrl = `${protocol}//${wsHost}/api/v1/notifications/ws`;
     
     let ws = new WebSocket(wsUrl);
 

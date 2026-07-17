@@ -86,8 +86,6 @@ api_router.include_router(stores_consumables_router)
 
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)
-from app.api.v1.endpoints import notifications
-api_router.include_router(notifications.router)
 
 from app.api.v1.endpoints import warehouse
 api_router.include_router(warehouse.router, prefix="/warehouse", tags=["Warehouse"])
