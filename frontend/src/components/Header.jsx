@@ -78,6 +78,63 @@ export default function Header() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
 
+  // Helper to format relative time
+  const getTimeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const now = new Date();
+    const past = new Date(dateStr);
+    const diffMs = now - past;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
+  };
+
+  useEffect(() => {
+    // Setup WebSocket for Real-Time Notifications
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // When running locally with Vite proxy, or direct backend
+    // Since Vite proxies /api, it handles wss if configured, but let's connect directly or via proxy
+    const wsUrl = `${protocol}//${window.location.host}/api/v1/notifications/ws`;
+    
+    let ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'history') {
+          setNotifications(payload.data);
+        } else if (payload.type === 'new_notification') {
+          setNotifications(prev => {
+            const exists = prev.find(n => n.id === payload.data.id);
+            if (exists) return prev;
+            return [payload.data, ...prev];
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing websocket notification', e);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    // Update relative times every minute
+    const interval = setInterval(() => {
+      setNotifications(prev => [...prev]); // trigger re-render to update getTimeAgo
+    }, 60000);
+
+    return () => {
+      ws.close();
+      clearInterval(interval);
+    };
+  }, []);
+
   useEffect(() => {
     const loadCompany = async () => {
       try {
@@ -574,11 +631,11 @@ export default function Header() {
                         <div style={{ fontSize: '12.5px', fontWeight: n.unread ? 600 : 500, color: '#1e293b' }}>
                           {n.title}
                         </div>
-                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>
+                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
                           {n.message}
                         </div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>
-                          {n.time}
+                          {getTimeAgo(n.raw_time) || n.time}
                         </div>
                       </div>
                       {n.unread && (

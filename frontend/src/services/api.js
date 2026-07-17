@@ -46,7 +46,7 @@ api.interceptors.response.use(
   }
 );
 
-// ---- Auth ----
+export const notificationAPI = createAPI('/notifications');
 export const authAPI = {
   login: (username, password) =>
     api.post('/auth/login', new URLSearchParams({ username, password }), {

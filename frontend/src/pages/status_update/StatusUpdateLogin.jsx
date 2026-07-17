@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn, Factory } from 'lucide-react';
 import defaultLogo from '../../assets/logo.svg';
 import { authAPI } from '../../services/api';
+import './statusUpdateMobile.css';
 
 export default function StatusUpdateLogin() {
   const [username, setUsername] = useState('');
@@ -24,22 +25,22 @@ export default function StatusUpdateLogin() {
 
     try {
       const res = await authAPI.login(username, password);
-      
+
       // Status Update Login Rules: ONLY allow users with 'status_update' permission
       if (!res.data.module_permissions?.status_update) {
         setError('Access Denied. You do not have permission to access the Status Update module.');
         setLoading(false);
         return;
       }
-      
+
       // If successful, store a separate token specifically for the Status Update module
       localStorage.setItem('status_update_token', res.data.access_token);
-      localStorage.setItem('su_user', JSON.stringify({ 
-        empId: res.data.user_id, 
+      localStorage.setItem('su_user', JSON.stringify({
+        empId: res.data.user_id,
         role: res.data.user_type,
         name: res.data.user_name
       }));
-      
+
       navigate('/status-update/dashboard');
     } catch (err) {
       if (err.response?.status === 401 || err.response?.data?.detail === "Invalid credentials") {
@@ -55,7 +56,7 @@ export default function StatusUpdateLogin() {
   };
 
   return (
-    <div className="login-page" style={{ minHeight: 'calc(100vh - 120px)', borderRadius: '16px' }}>
+    <div className="login-page status-update-mobile-scope" style={{ minHeight: 'calc(100vh - 120px)', borderRadius: '16px' }}>
       <div className="login-card animate-fade">
         <div className="logo-section">
           <div className="logo-box" style={{ background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 4 }}>
