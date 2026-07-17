@@ -83,6 +83,9 @@ const AttendanceLeave = () => {
   });
   const [filterMachineIp, setFilterMachineIp] = useState('all');
   const [filterDate, setFilterDate] = useState('');
+  const [filterRawMonth, setFilterRawMonth] = useState('');
+  const [showCheckInLogs, setShowCheckInLogs] = useState(true);
+  const [showCheckOutLogs, setShowCheckOutLogs] = useState(true);
   const [filterAttendanceDate, setFilterAttendanceDate] = useState(getTodayDateString());
   const [filterAttendanceMonth, setFilterAttendanceMonth] = useState(getCurrentMonth());
   const [attendanceViewMode, setAttendanceViewMode] = useState('daily');
@@ -95,7 +98,7 @@ const AttendanceLeave = () => {
 
   useEffect(() => {
     setLogsPage(1);
-  }, [filterMachineIp, filterDate, filterEmployee]);
+  }, [filterMachineIp, filterDate, filterEmployee, filterRawMonth, showCheckInLogs, showCheckOutLogs]);
 
   const loadRawLogs = async () => {
     try {
@@ -1159,6 +1162,11 @@ const AttendanceLeave = () => {
               const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
               if (logDateStr !== filterDate) return false;
             }
+            // Filter by Month
+            if (filterRawMonth) {
+              const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+              if (logMonthStr !== filterRawMonth) return false;
+            }
             // Filter by search query
             if (filterEmployee) {
               const query = filterEmployee.toLowerCase();
@@ -1169,6 +1177,11 @@ const AttendanceLeave = () => {
                 return false;
               }
             }
+            // Filter by direction checkboxes
+            const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+            if (dir === 'Check In' && !showCheckInLogs) return false;
+            if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
             return true;
           });
 
@@ -1419,6 +1432,45 @@ const AttendanceLeave = () => {
                           Clear
                         </button>
                       )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Filter Month:</span>
+                      <input
+                        type="month"
+                        className="form-control"
+                        style={{ width: 140, height: 36, fontSize: 13, padding: '0 8px' }}
+                        value={filterRawMonth}
+                        onChange={(e) => setFilterRawMonth(e.target.value)}
+                      />
+                      {filterRawMonth && (
+                        <button
+                          onClick={() => setFilterRawMonth('')}
+                          className="btn btn-secondary"
+                          style={{ height: 36, padding: '0 8px', fontSize: 12 }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={showCheckInLogs}
+                          onChange={(e) => setShowCheckInLogs(e.target.checked)}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Check In
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={showCheckOutLogs}
+                          onChange={(e) => setShowCheckOutLogs(e.target.checked)}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Check Out
+                      </label>
                     </div>
                     <select
                       className="form-control"
