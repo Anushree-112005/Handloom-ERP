@@ -151,37 +151,9 @@ async def update_processing_po(id: int, data: ProcessingPOCreate, db: AsyncSessi
     if not po:
         raise HTTPException(status_code=404, detail="PO not found")
         
-    po.po_s_no = data.po_s_no
-    po.po_date = data.po_date
-    po.party_name = data.party_name
-    po.po_no = data.po_no
-    po.delivery_date = data.delivery_date
-    po.merchandiser = data.merchandiser
-    po.merchandiser_ext = data.merchandiser_ext
-    po.fob_point = data.fob_point
-    po.glm = data.glm
-    po.process_sequence = data.process_sequence
-    po.process_sequence_ext = data.process_sequence_ext
-    po.grey_rate = data.grey_rate
-    po.order_type = data.order_type
-    po.order_type_ext = data.order_type_ext
-    po.status = data.status
-    po.total_mtr = data.total_mtr
-    po.gross_amt = data.gross_amt
-    po.tax_type = data.tax_type
-    po.cgst = data.cgst
-    po.sgst = data.sgst
-    po.igst = data.igst
-    po.total_gst = data.total_gst
-    po.payment = data.payment
-    po.packing = data.packing
-    po.ship_pack_chg = data.ship_pack_chg
-    po.add_other = data.add_other
-    po.tax_value = data.tax_value
-    po.delivery_instruction = data.delivery_instruction
-    po.round_off = data.round_off
-    po.net_amount = data.net_amount
-    po.remarks = data.remarks
+    update_data = data.dict(exclude={'items'})
+    for key, value in update_data.items():
+        setattr(po, key, value)
 
     await db.execute(delete(ProcessingPOItem).where(ProcessingPOItem.po_id == id))
     
