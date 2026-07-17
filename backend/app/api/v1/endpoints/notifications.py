@@ -66,7 +66,7 @@ async def mark_read(notif_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Notification).where(Notification.id == notif_id))
     notif = result.scalar_one_or_none()
     if notif:
-        notif.is_read = True
+        notif.is_read = True  # type: ignore
         await db.commit()
     return {"success": True}
 
