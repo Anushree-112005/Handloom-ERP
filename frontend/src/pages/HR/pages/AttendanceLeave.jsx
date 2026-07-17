@@ -81,7 +81,11 @@ const AttendanceLeave = () => {
     '192.168.1.203': 'both',
     '192.168.0.203': 'both'
   });
-  const [filterMachineIp, setFilterMachineIp] = useState('all');
+  const [selectedFilterMachineIps, setSelectedFilterMachineIps] = useState([
+    '192.168.0.203',
+    '192.168.0.202',
+    '192.168.0.201'
+  ]);
   const [filterDate, setFilterDate] = useState('');
   const [filterRawMonth, setFilterRawMonth] = useState('');
   const [showCheckInLogs, setShowCheckInLogs] = useState(true);
@@ -98,7 +102,7 @@ const AttendanceLeave = () => {
 
   useEffect(() => {
     setLogsPage(1);
-  }, [filterMachineIp, filterDate, filterEmployee, filterRawMonth, showCheckInLogs, showCheckOutLogs]);
+  }, [selectedFilterMachineIps, filterDate, filterEmployee, filterRawMonth, showCheckInLogs, showCheckOutLogs]);
 
   const loadRawLogs = async () => {
     try {
@@ -259,14 +263,38 @@ const AttendanceLeave = () => {
       doc.save(`${typeLabel}_Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     } else if (activeTab === 'biometric') {
       const logsToExport = rawLogs.filter(log => {
-        if (filterMachineIp !== 'all') {
-          const logIp = log.device_ip || '192.168.0.202';
-          if (logIp !== filterMachineIp) return false;
-        }
+        // Filter by machines checkboxes
+        const logIp = log.device_ip || '192.168.0.203';
+        if (!selectedFilterMachineIps.includes(logIp)) return false;
+
+        // Filter by Date
         if (filterDate) {
           const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
           if (logDateStr !== filterDate) return false;
         }
+
+        // Filter by Month
+        if (filterRawMonth) {
+          const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+          if (logMonthStr !== filterRawMonth) return false;
+        }
+
+        // Filter by search query
+        if (filterEmployee) {
+          const query = filterEmployee.toLowerCase();
+          const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+          const empId = (log.employee_id || '').toString().toLowerCase();
+          const bioId = (log.biometric_id || '').toString().toLowerCase();
+          if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+            return false;
+          }
+        }
+
+        // Filter by direction checkboxes
+        const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+        if (dir === 'Check In' && !showCheckInLogs) return false;
+        if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
         return true;
       });
 
@@ -336,14 +364,38 @@ const AttendanceLeave = () => {
       filename = `${typeLabel}_Attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
     } else if (activeTab === 'biometric') {
       const logsToExport = rawLogs.filter(log => {
-        if (filterMachineIp !== 'all') {
-          const logIp = log.device_ip || '192.168.0.202';
-          if (logIp !== filterMachineIp) return false;
-        }
+        // Filter by machines checkboxes
+        const logIp = log.device_ip || '192.168.0.203';
+        if (!selectedFilterMachineIps.includes(logIp)) return false;
+
+        // Filter by Date
         if (filterDate) {
           const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
           if (logDateStr !== filterDate) return false;
         }
+
+        // Filter by Month
+        if (filterRawMonth) {
+          const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+          if (logMonthStr !== filterRawMonth) return false;
+        }
+
+        // Filter by search query
+        if (filterEmployee) {
+          const query = filterEmployee.toLowerCase();
+          const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+          const empId = (log.employee_id || '').toString().toLowerCase();
+          const bioId = (log.biometric_id || '').toString().toLowerCase();
+          if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+            return false;
+          }
+        }
+
+        // Filter by direction checkboxes
+        const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+        if (dir === 'Check In' && !showCheckInLogs) return false;
+        if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
         return true;
       });
 
@@ -1152,11 +1204,9 @@ const AttendanceLeave = () => {
 
         {activeTab === 'biometric' && (() => {
           const filteredRawLogs = rawLogs.filter(log => {
-            // Filter by machine IP
-            if (filterMachineIp !== 'all') {
-              const logIp = log.device_ip || '192.168.0.202';
-              if (logIp !== filterMachineIp) return false;
-            }
+            // Filter by machine IP checkboxes
+            const logIp = log.device_ip || '192.168.0.203';
+            if (!selectedFilterMachineIps.includes(logIp)) return false;
             // Filter by Date
             if (filterDate) {
               const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
@@ -1472,17 +1522,54 @@ const AttendanceLeave = () => {
                         Check Out
                       </label>
                     </div>
-                    <select
-                      className="form-control"
-                      style={{ width: 200, height: 36, fontSize: 13, padding: '0 10px' }}
-                      value={filterMachineIp}
-                      onChange={(e) => setFilterMachineIp(e.target.value)}
-                    >
-                      <option value="all">All Machines</option>
-                      <option value="192.168.0.203">Machine 1 (192.168.0.203)</option>
-                      <option value="192.168.0.202">Machine 2 (192.168.0.202)</option>
-                      <option value="192.168.0.201">Machine 3 (192.168.0.201)</option>
-                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e2e8f0', borderRadius: 6, padding: '6px 12px', background: '#fff' }}>
+                      <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>Machines:</span>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.203')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.203']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.203'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M1 (203)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.202')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.202']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.202'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M2 (202)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.201')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.201']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.201'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M3 (201)
+                      </label>
+                    </div>
                     <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200">
                       {filteredRawLogs.length} events
                     </span>
