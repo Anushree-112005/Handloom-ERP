@@ -46,6 +46,19 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             
+            # Ensure state_code column exists in party_addresses table
+            from sqlalchemy import text
+            try:
+                if "postgresql" in str(engine.url):
+                    await conn.execute(text("ALTER TABLE party_addresses ADD COLUMN IF NOT EXISTS state_code VARCHAR(10)"))
+                else:
+                    try:
+                        await conn.execute(text("ALTER TABLE party_addresses ADD COLUMN state_code VARCHAR(10)"))
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.info(f"Adding state_code column info: {e}")
+            
             def sync_database_schema(connection):
                 from sqlalchemy import inspect, text
                 try:
