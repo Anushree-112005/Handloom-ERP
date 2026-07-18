@@ -471,7 +471,14 @@ export const rackAPI = {
   get: (id) => api.get(`/racks/${id}`),
   create: (data) => api.post('/racks/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   update: (id, data) => api.put(`/racks/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  delete: (id) => api.delete(`/racks/${id}`),
+};
+
+export const getBackendURL = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  const base = window.location.port === '5173' ? 'http://localhost:8000' : window.location.origin;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${cleanPath}`;
 };
 
 export default api;

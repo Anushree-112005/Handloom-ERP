@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, Box, Image as ImageIcon } from 'lucide-react';
-import { rackAPI } from '../../services/api';
+import { rackAPI, getBackendURL } from '../../services/api';
 import { API_BASE } from '../../services/api';
 
 export default function RackMaster() {
@@ -76,7 +76,7 @@ export default function RackMaster() {
       specific_data: rack.specific_data || '',
       is_active: rack.is_active,
     });
-    setPreviewImage(rack.image_url ? (rack.image_url.startsWith('http') ? rack.image_url : `http://localhost:8000${rack.image_url}`) : null);
+    setPreviewImage(getBackendURL(rack.image_url));
     setImageFile(null);
     setEditingId(rack.id);
     setShowForm(true);
@@ -131,7 +131,7 @@ export default function RackMaster() {
                 <div key={rack.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ height: 160, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border)' }}>
                     {rack.image_url ? (
-                      <img src={rack.image_url.startsWith('http') ? rack.image_url : `http://localhost:8000${rack.image_url}`} alt={rack.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={getBackendURL(rack.image_url)} alt={rack.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <Box size={48} color="var(--text-muted)" opacity={0.5} />
                     )}

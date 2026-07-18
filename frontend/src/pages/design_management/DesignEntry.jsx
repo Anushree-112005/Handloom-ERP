@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown, ArrowLeft, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI, dropdownAPI } from '../../services/api';
+import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI, dropdownAPI, getBackendURL } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -598,10 +598,10 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
                   <div style={{ width: 120, border: '1px solid #aaa', borderRadius: 4, padding: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff', flexShrink: 0, marginTop: -40 }}>
                     <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: 2 }}>Fabric Sample</span>
                     <img 
-                      src={`http://localhost:8000${design.image_path}`} 
+                      src={getBackendURL(design.image_path)} 
                       alt="Fabric Sample" 
                       style={{ width: '100%', height: 95, objectFit: 'cover', borderRadius: 2, border: '1px solid #e2e8f0', cursor: 'pointer' }}
-                      onClick={() => window.open(`http://localhost:8000${design.image_path}`, '_blank')}
+                      onClick={() => window.open(getBackendURL(design.image_path), '_blank')}
                     />
                   </div>
                 )}
@@ -1846,10 +1846,10 @@ export default function DesignEntry() {
                       <div style={{ marginTop: 12 }}>
                         <h4 style={{ margin: '8px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Design Image</h4>
                         <img
-                          src={`http://localhost:8000${selectedViewEntry.image_path}`}
+                          src={getBackendURL(selectedViewEntry.image_path)}
                           alt="Design Preview"
                           style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)', marginTop: 4, cursor: 'pointer' }}
-                          onClick={() => window.open(`http://localhost:8000${selectedViewEntry.image_path}`, '_blank')}
+                          onClick={() => window.open(getBackendURL(selectedViewEntry.image_path), '_blank')}
                         />
                       </div>
                     )}
@@ -1943,10 +1943,10 @@ export default function DesignEntry() {
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, alignSelf: 'flex-start' }}>IBPO Design Image</span>
                         {form.ibpo_image ? (
                           <img 
-                            src={form.ibpo_image.startsWith('http') ? form.ibpo_image : `http://localhost:8000${form.ibpo_image}`} 
+                            src={getBackendURL(form.ibpo_image)} 
                             alt="IBPO Design" 
                             style={{ width: '100%', maxHeight: 230, objectFit: 'contain', borderRadius: 6, border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'transform 0.2s' }}
-                            onClick={() => window.open(form.ibpo_image.startsWith('http') ? form.ibpo_image : `http://localhost:8000${form.ibpo_image}`, '_blank')}
+                            onClick={() => window.open(getBackendURL(form.ibpo_image), '_blank')}
                             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                             onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
                           />
@@ -2368,7 +2368,7 @@ export default function DesignEntry() {
                         className="btn"
                         style={{ padding: '4px 12px', background: '#f59e0b', color: '#fff', fontWeight: 600 }}
                         onClick={() => {
-                          window.open(imagePreviewUrl.startsWith('blob:') ? imagePreviewUrl : `http://localhost:8000${imagePreviewUrl}`, '_blank');
+                          window.open(getBackendURL(imagePreviewUrl), '_blank');
                         }}
                       >
                         View Image
