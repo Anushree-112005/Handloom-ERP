@@ -130,7 +130,11 @@ export default function Header() {
     }, 60000);
 
     return () => {
-      ws.close();
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.onopen = () => ws.close();
+      } else {
+        ws.close();
+      }
       clearInterval(interval);
     };
   }, []);

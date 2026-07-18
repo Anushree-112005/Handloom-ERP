@@ -18,7 +18,7 @@ api.interceptors.request.use(
 
 // Response interceptor for generic error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
     

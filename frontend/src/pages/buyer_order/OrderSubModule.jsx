@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   Calendar, Settings, History, CheckSquare, Plus, Save, 
   Search, Lock, CheckCircle, FileText, Truck, Eye, Trash2, X, Edit
@@ -6,9 +7,13 @@ import {
 import { buyerOrderAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 
 export default function OrderSubModule() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialTab = searchParams.get('tab') === 'completion' ? 'Buyer Order Completion' : 'Buyer Order Schedule';
+
   const [customAddItem, setCustomAddItem] = useState({ form: null, field: null, val: '' });
   const [options, setOptions] = useState({});
-  const [activeCard, setActiveCard] = useState('Buyer Order Schedule');
+  const [activeCard, setActiveCard] = useState(initialTab);
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   

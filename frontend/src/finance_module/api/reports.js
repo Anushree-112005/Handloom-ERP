@@ -1,0 +1,20 @@
+import api from "./client";
+
+export const dayBook = (params) => api.get("/reports/day-book", { params });
+export const ledgerStatement = (params) => api.get("/reports/ledger-statement", { params });
+export const groupSummary = (params) => api.get("/reports/group-summary", { params });
+export const trialBalance = (params) => api.get("/reports/trial-balance", { params });
+export const profitLoss = (params) => api.get("/reports/profit-loss", { params });
+export const balanceSheet = (params) => api.get("/reports/balance-sheet", { params });
+export const cashBook = (params) => api.get("/reports/cash-book", { params });
+export const bankBook = (params) => api.get("/reports/bank-book", { params });
+export const outstanding = (params) => api.get("/reports/outstanding", { params });
+export const salesRegister = (params) => api.get("/reports/sales-register", { params });
+export const purchaseRegister = (params) => api.get("/reports/purchase-register", { params });
+export const gstSummary = (params) => api.get("/reports/gst-summary", { params });
+export const ledgerSummary = (params) => api.get("/reports/ledger-summary", { params });
+export const ratioAnalysis = (params) => api.get("/reports/ratio-analysis", { params });
+export const stockMovement = (params) => api.get("/reports/stock-movement", { params });
+export const godownSummary = (params) => api.get("/reports/godown-summary", { params });
+export const gstr1 = (params) => api.get("/reports/gstr1", { params });
+export const itcLedger = (params) => api.get("/reports/itc-ledger", { params });
