@@ -508,47 +508,82 @@ const hrService = {
   
   getEmployee: async (id) => getEmployeeById(id),
   fetchEmployeeAttendance: async (id) => {
-    const [emp, list] = await Promise.all([
-      getEmployeeById(id).catch(() => null),
+    const [employeesList, list] = await Promise.all([
+      fetchEmployees().catch(() => []),
       fetchHRItems('attendance')
     ]);
-    const empCode = emp?.employee_code;
+    const emp = employeesList.find(e => 
+      String(e.id) === String(id) || 
+      String(e.employee_code) === String(id) || 
+      String(e.employee_id) === String(id) || 
+      (e.biometric_id && String(e.biometric_id) === String(id))
+    );
+    if (!emp) return [];
+    const empDbId = String(emp.id);
+    const empCode = String(emp.employee_code || emp.employee_id);
+    const empBioId = emp.biometric_id ? String(emp.biometric_id) : '';
     return list.filter(item => 
-      String(item.employee_id) === String(id) || 
-      (empCode && String(item.employee) === String(empCode))
+      String(item.employee_id) === empDbId || 
+      String(item.employee) === empCode ||
+      (empBioId && String(item.employee) === empBioId) ||
+      (empBioId && String(item.biometric_id) === empBioId)
     );
   },
   fetchEmployeeLeaves: async (id) => {
-    const [emp, list] = await Promise.all([
-      getEmployeeById(id).catch(() => null),
+    const [employeesList, list] = await Promise.all([
+      fetchEmployees().catch(() => []),
       fetchHRItems('leaves')
     ]);
-    const empCode = emp?.employee_code;
+    const emp = employeesList.find(e => 
+      String(e.id) === String(id) || 
+      String(e.employee_code) === String(id) || 
+      String(e.employee_id) === String(id) || 
+      (e.biometric_id && String(e.biometric_id) === String(id))
+    );
+    if (!emp) return [];
+    const empDbId = String(emp.id);
+    const empCode = String(emp.employee_code || emp.employee_id);
     return list.filter(item => 
-      String(item.employee_id) === String(id) || 
-      (empCode && String(item.employee) === String(empCode))
+      String(item.employee_id) === empDbId || 
+      String(item.employee) === empCode
     );
   },
   fetchEmployeeTasks: async (id) => {
-    const [emp, list] = await Promise.all([
-      getEmployeeById(id).catch(() => null),
+    const [employeesList, list] = await Promise.all([
+      fetchEmployees().catch(() => []),
       fetchHRItems('tasks')
     ]);
-    const empCode = emp?.employee_code;
+    const emp = employeesList.find(e => 
+      String(e.id) === String(id) || 
+      String(e.employee_code) === String(id) || 
+      String(e.employee_id) === String(id) || 
+      (e.biometric_id && String(e.biometric_id) === String(id))
+    );
+    if (!emp) return [];
+    const empDbId = String(emp.id);
+    const empCode = String(emp.employee_code || emp.employee_id);
     return list.filter(item => 
-      String(item.employee_id) === String(id) || 
-      (empCode && String(item.employee) === String(empCode))
+      String(item.employee_id) === empDbId || 
+      String(item.employee) === empCode
     );
   },
   fetchEmployeePayroll: async (id) => {
-    const [emp, list] = await Promise.all([
-      getEmployeeById(id).catch(() => null),
+    const [employeesList, list] = await Promise.all([
+      fetchEmployees().catch(() => []),
       fetchHRItems('payroll')
     ]);
-    const empCode = emp?.employee_code;
+    const emp = employeesList.find(e => 
+      String(e.id) === String(id) || 
+      String(e.employee_code) === String(id) || 
+      String(e.employee_id) === String(id) || 
+      (e.biometric_id && String(e.biometric_id) === String(id))
+    );
+    if (!emp) return [];
+    const empDbId = String(emp.id);
+    const empCode = String(emp.employee_code || emp.employee_id);
     return list.filter(item => 
-      String(item.employee_id) === String(id) || 
-      (empCode && String(item.employee) === String(empCode))
+      String(item.employee_id) === empDbId || 
+      String(item.employee) === empCode
     );
   },
   fetchLeaveBalances: async (id, year) => {
@@ -559,14 +594,22 @@ const hrService = {
     ];
   },
   fetchEmployeeTrainings: async (id) => {
-    const [emp, list] = await Promise.all([
-      getEmployeeById(id).catch(() => null),
+    const [employeesList, list] = await Promise.all([
+      fetchEmployees().catch(() => []),
       fetchHRItems('certifications')
     ]);
-    const empCode = emp?.employee_code;
+    const emp = employeesList.find(e => 
+      String(e.id) === String(id) || 
+      String(e.employee_code) === String(id) || 
+      String(e.employee_id) === String(id) || 
+      (e.biometric_id && String(e.biometric_id) === String(id))
+    );
+    if (!emp) return [];
+    const empDbId = String(emp.id);
+    const empCode = String(emp.employee_code || emp.employee_id);
     return list.filter(item => 
-      String(item.employee_id) === String(id) || 
-      (empCode && String(item.employee) === String(empCode))
+      String(item.employee_id) === empDbId || 
+      String(item.employee) === empCode
     );
   },
   predictAttrition: async (data) => {

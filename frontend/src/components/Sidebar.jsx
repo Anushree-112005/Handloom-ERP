@@ -15,6 +15,22 @@ import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
 
 
+const jobWorkRoutes = [
+  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
+  { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
+  { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
+  { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
+  // { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
+  // { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
+  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
+  { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
+  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
+  { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
+  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
+  { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
+  { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
+];
+
 const modules = [
   { section: 'Dashboard' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -23,213 +39,69 @@ const modules = [
   // { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
 
 
-  { section: 'Masters' },
-  { path: '/party-master', label: 'Party Master', icon: Users },
+  { section: 'Textile Operations' },
+  {
+    label: 'Textile Operations Management',
+    icon: Factory,
+    children: [
+      { section: 'Masters' },
+      { path: '/party-master', label: 'Party Master', icon: Users },
 
-  // { section: 'Sub Masters' },
-  // {
-  //   label: 'Core System Basics',
-  //   icon: Package,
-  //   children: [
-  //     { path: '/sub-master/buyer', label: 'Buyer Master', icon: Users },
-  //     { path: '/sub-master/certified_type', label: 'Certified Type', icon: Shield },
-  //     { path: '/sub-master/color_master', label: 'Color Master', icon: Palette },
-  //     { path: '/sub-master/count_system', label: 'Count System', icon: Layers },
-  //     { path: '/sub-master/currency_master', label: 'Currency Master', icon: Receipt },
-  //     { path: '/sub-master/designer', label: 'Designer Master', icon: Palette },
-  //     { path: '/sub-master/district_city_master', label: 'District & City', icon: MapPin },
-  //     { path: '/sub-master/end_use_master', label: 'End Use Master', icon: Target },
-  //     { path: '/sub-master/gate_location_master', label: 'Gate Location', icon: MapPin },
-  //     { path: '/sub-master/godown_master', label: 'Godown Master', icon: Box },
-  //     { path: '/sub-master/group_count', label: 'Group Count', icon: Layers },
-  //     { path: '/sub-master/hsn_code_master', label: 'HSN Code Master', icon: FileText },
-  //     { path: '/sub-master/loom_master', label: 'Loom Master', icon: Factory },
-  //     { path: '/sub-master/loom_type_master', label: 'Loom Type Master', icon: Factory },
-  //     { path: '/sub-master/lr_terms', label: 'LR Terms', icon: FileText },
-  //     { path: '/sub-master/lr_type_master', label: 'LR Type Master', icon: Truck },
-  //     { path: '/sub-master/organization_name_master', label: 'Organization Name Master', icon: Building },
-  //     { path: '/sub-master/manager', label: 'Manager Master', icon: Users },
-  //     { path: '/sub-master/merchandiser', label: 'Merchandiser Master', icon: Users },
-  //     { path: '/sub-master/mill_name_master', label: 'Mill Name Master', icon: Factory },
-  //     { path: '/sub-master/order_type_master', label: 'Order Type Master', icon: ClipboardList },
-  //     { path: '/sub-master/packing_type_master', label: 'Packing Type Master', icon: Box },
-  //     { path: '/sub-master/party_group', label: 'Party Group', icon: Users },
-  //     { path: '/sub-master/party_type', label: 'Party Type', icon: Users },
-  //     { path: '/sub-master/party_type_group', label: 'Party Type / Group', icon: Users },
-  //     { path: '/sub-master/pattern_master', label: 'Pattern Master', icon: Layers },
-  //     { path: '/sub-master/payment_terms_master', label: 'Payment Terms', icon: Receipt },
-  //     { path: '/sub-master/payment_term_and_conditions', label: 'Payment Term & Conditions', icon: Receipt },
-  //     { path: '/sub-master/sales_region_master', label: 'Sales Region', icon: MapPin },
-  //     { path: '/sub-master/section_group', label: 'Section Group', icon: Layers },
-  //     { path: '/sub-master/sp_no', label: 'SP NO Master', icon: Layers },
-  //     { path: '/sub-master/uom_master', label: 'Unit Master', icon: Layers },
-  //     { path: '/sub-master/transport_mode_master', label: 'Transport Mode Master', icon: Truck },
-  //     { path: '/sub-master/transport_name_master', label: 'Transport Name Master', icon: Truck },
-  //     { path: '/sub-master/yarn_count_master', label: 'Yarn Count Master', icon: Layers },
-  //     { path: '/sub-master/yarn_type_master', label: 'Yarn Type Master', icon: Layers },
-  //   ],
-  // },
-  // {
-  //   label: 'Operations & Processing',
-  //   icon: Wrench,
-  //   children: [
-  //     { path: '/sub-master/ac_incharge', label: 'A/C Incharge', icon: Users },
-  //     { path: '/sub-master/against_reference_master', label: 'Against Reference Master', icon: ClipboardList },
-  //     { path: '/sub-master/category_master', label: 'Category Master', icon: Layers },
-  //     { path: '/sub-master/freight_type_master', label: 'Freight Type Master', icon: Truck },
-  //     { path: '/sub-master/checker_name_master', label: 'Checker Name', icon: CheckSquare },
-  //     { path: '/sub-master/checking_table_machine', label: 'Checking Table/Machine', icon: Settings },
-  //     { path: '/sub-master/chemical_group_master', label: 'Chemical Group', icon: Layers },
-  //     { path: '/sub-master/cloth_dyeing_order_process_type', label: 'Cloth Dyeing Order Process Type', icon: Settings },
-  //     { path: '/sub-master/damage_master', label: 'Damage Master', icon: Shield },
-  //     { path: '/sub-master/debit_credit_reason_master', label: 'Debit/Credit Reason', icon: FileText },
-  //     { path: '/sub-master/design_color_master', label: 'Design Color', icon: Palette },
-  //     { path: '/sub-master/dyeing_cly', label: 'Dyeing Cly', icon: Layers },
-  //     { path: '/sub-master/duty_master', label: 'Duty Master', icon: Receipt },
-  //     { path: '/sub-master/expenses_group', label: 'Expenses Group', icon: Receipt },
-  //     { path: '/sub-master/expenses_group_head', label: 'Expenses Group/Head', icon: Receipt },
-  //     { path: '/sub-master/expense_type_master', label: 'Expense Type Master', icon: Receipt },
-  //     { path: '/sub-master/payment_mode_master', label: 'Payment Mode Master', icon: CreditCard },
-  //     { path: '/sub-master/fabric_type_master', label: 'Fabric Master', icon: Scissors },
-  //     { path: '/sub-master/fibre_count_master', label: 'Fibre Count', icon: Layers },
-  //     { path: '/sub-master/finishing_type_master', label: 'Finishing Type', icon: Wrench },
-  //     { path: '/sub-master/grey_checker_name', label: 'Grey Checker Name', icon: CheckSquare },
-  //     { path: '/sub-master/grey_damage', label: 'Grey Damage Master', icon: Shield },
-  //     { path: '/sub-master/gry_mas_baletype', label: 'Gry Mas BaleType', icon: Box },
-  //     { path: '/sub-master/printing_technique_master', label: 'Printing Technique', icon: Palette },
-  //     { path: '/sub-master/process_sequence_master', label: 'Process Sequences', icon: ClipboardList },
-  //     { path: '/sub-master/process_type_master', label: 'Process Type Master', icon: Settings },
-  //     { path: '/sub-master/remarks_master', label: 'Remarks Master', icon: FileText },
-  //     { path: '/sub-master/sample', label: 'Sample Master', icon: ClipboardList },
-  //     { path: '/sub-master/shringage', label: 'Shringage (Shrinkage)', icon: Wrench },
-  //     { path: '/sub-master/sizing_chemical_master', label: 'Sizing Chemical', icon: Layers },
-  //     { path: '/sub-master/tds_bill_type_master', label: 'TDS Bill Type', icon: FileText },
-  //     { path: '/sub-master/test_parameter_master', label: 'Test Parameter', icon: Activity },
-  //     { path: '/sub-master/weaving_type_master', label: 'Weaving Master', icon: Layers },
-  //   ],
-  // },
-  // {
-  //   label: 'Complex Masters',
-  //   icon: Layers,
-  //   children: [
-  //     { path: '/sub-master/buyer_kyc_form', label: 'Buyer KYC Form', icon: Shield },
-  //     { path: '/sub-master/buyer_sub_master', label: 'Buyer Sub Master', icon: Users },
-  //     { path: '/sub-master/company_bank_master', label: 'Company Bank Master', icon: CreditCard },
-  //     { path: '/sub-master/fabric_costing_engine', label: 'Fabric Costing Engine', icon: DollarSign },
-  //     { path: '/sub-master/fabric_single_costing', label: 'Fabric Single Costing', icon: DollarSign },
-  //     { path: '/sub-master/lc_bank_master', label: 'LC Bank Master', icon: Factory },
-  //   ],
-  // },
-  // {
-  //   label: 'Amendment Masters',
-  //   icon: ClipboardList,
-  //   children: [
-  //     { path: '/sub-master/cloth_lot_no_amd', label: 'Cloth LOT No. AMD', icon: ClipboardList },
-  //     { path: '/sub-master/invoice_amd', label: 'Invoice AMD', icon: FileText },
-  //     { path: '/sub-master/despatch_request_amd', label: 'Despatch Request AMD', icon: Truck },
-  //     { path: '/sub-master/point_amd', label: 'Point AMD', icon: Target },
-  //     { path: '/sub-master/vendor_order_amd', label: 'Vendor Order AMD', icon: ShoppingCart },
-  //   ],
-  // },
-  // {
-  //   label: 'System Config & Utilities',
-  //   icon: Settings,
-  //   children: [
-  //     { path: '/sub-master/approval_settings', label: 'Approval Settings', icon: Settings },
-  //     { path: '/sub-master/direct_invoice_limits', label: 'Direct Invoice Limits', icon: Percent },
-  //     { path: '/sub-master/sub_menu_master', label: 'Sub Menu Master', icon: ClipboardList },
-  //     { path: '/sub-master/control_service', label: 'Control Service', icon: Shield },
-  //     { path: '/sub-master/log_report_util', label: 'Log Report', icon: FileText },
-  //     { path: '/sub-master/old_year_menu', label: 'Old Year Menu', icon: BookOpen },
-  //   ],
-  // },
+      { section: 'Order Management' },
+      { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
 
+      { section: 'Design Management' },
+      { path: '/design-entry', label: 'Design Entry', icon: Palette },
+      { path: '/design-ai', label: 'Design AI', icon: Sparkles },
 
-  { section: 'Order Management' },
-  { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
-  // {
-  //   label: 'Work Order Transaction',
-  //   icon: Layers,
-  //   children: [
-  //     { path: '/work-order/transaction/design', label: 'Design & Development', icon: FileText },
-  //     { path: '/work-order/transaction/management', label: 'Order Management', icon: Factory },
-  //     { path: '/work-order/transaction/processing', label: 'Processing', icon: Palette },
-  //     { path: '/work-order/transaction/prep', label: 'Yarn & Fabric Prep', icon: Layers },
-  //     { path: '/work-order/transaction/amendments', label: 'Amendments & Codes', icon: Edit }
-  //   ]
-  // },
-  // {
-  //   label: 'Work Order Completion',
-  //   icon: CheckSquare,
-  //   children: [
-  //     { path: '/work-order/completion/vendor-purchase', label: 'Vendor & Purchase Completion', icon: ShoppingCart },
-  //     { path: '/work-order/completion/processing-fabric', label: 'Processing & Fabric Completion', icon: Layers }
-  //   ]
-  // },
-  // {
-  //   label: 'Work Order Approval',
-  //   icon: Settings,
-  //   children: [
-  //     { path: '/work-order/approval/external', label: 'External Order Approvals', icon: Globe },
-  //     { path: '/work-order/approval/material-yarn', label: 'Material & Yarn Approvals', icon: Package }
-  //   ]
-  // },
+      { section: 'Purchase Management' },
+      { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
+      { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
+      { path: '/purchase-order/twisting-doubling', label: 'Twisting / Doubling PO', icon: Layers },
+      { path: '/purchase-order/warping-sizing', label: 'Warping / Sizing PO', icon: Factory },
+      { path: '/purchase-order/weaving', label: 'Weaving PO', icon: Layers },
+      { path: '/purchase-order/fabric-dyeing', label: 'Fabric Dyeing PO', icon: Palette },
+      { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
+      { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
-  { section: 'Design Management' },
-  { path: '/design-entry', label: 'Design Entry', icon: Palette },
-  { path: '/design-ai', label: 'Design AI', icon: Sparkles },
-  // { path: '/weaving-calculator', label: 'Weaving Calculator', icon: Calculator },
+      { section: 'JOB WORK MANAGEMENT' },
+      ...jobWorkRoutes,
 
+      { section: 'Quality Control' },
+      { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
+      { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
 
-  { section: 'Purchase Management' },
-  { path: '/yarn/purchase-order', label: 'Grey / Color Yarn PO', icon: Box },
-  { path: '/purchase-order/yarn-dyeing', label: 'Yarn Dyeing PO', icon: Palette },
-  { path: '/purchase-order/twisting-doubling', label: 'Twisting / Doubling PO', icon: Layers },
-  { path: '/purchase-order/warping-sizing', label: 'Warping / Sizing PO', icon: Factory },
-  { path: '/purchase-order/weaving', label: 'Weaving PO', icon: Layers },
-  { path: '/purchase-order/fabric-dyeing', label: 'Fabric Dyeing PO', icon: Palette },
-  { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
-  { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
+      { section: 'Warehouse & Inventory' },
+      { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+      { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
+      { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
+      { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
+      { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
+      { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
 
+      { section: 'Warehouse Operations' },
+      { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
+      { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
 
-  { isJobWorkDynamic: true },
+      { section: 'Packing' },
+      { path: '/packing', label: 'Packing Slip', icon: Box },
 
-  { section: 'Quality Control' },
-  { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
-  { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
-  { section: 'Warehouse & Inventory' },
-  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
-  { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
-  { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
-  { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
-  { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
+      { section: 'Sales & Dispatch' },
+      { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
+      { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
+      { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
+      { path: '/despatch', label: 'Despatch ', icon: MapPin },
 
-  { section: 'Warehouse Operations' },
-  { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
-  { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
-  // { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
+      { section: 'Gate & Security' },
+      { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
+      { path: '/gate/outward', label: 'Gate Outward', icon: ArrowUpRight },
+      { path: '/gate/pass', label: 'Gate Pass Creation', icon: FileText },
+      { path: '/gate/reports', label: 'Gate Reports', icon: PieChart },
 
-  { section: 'Packing' },
-  { path: '/packing', label: 'Packing Slip', icon: Box },
-
-
-  { section: 'Sales & Dispatch' },
-  { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
-  { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
-  { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
-
-  { path: '/despatch', label: 'Despatch ', icon: MapPin },
-
-  { section: 'Gate & Security' },
-  { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
-  { path: '/gate/outward', label: 'Gate Outward', icon: ArrowUpRight },
-  { path: '/gate/pass', label: 'Gate Pass Creation', icon: FileText },
-  { path: '/gate/reports', label: 'Gate Reports', icon: PieChart },
-
-
-  { section: 'Reports & MIS' },
-  { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText },
+      { section: 'Reports & MIS' },
+      { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText }
+    ]
+  },
 
 
 
@@ -436,26 +308,11 @@ const modules = [
   { path: '/about', label: 'About', icon: Info },
 ];
 
-const jobWorkRoutes = [
-  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
-  { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
-  { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
-  { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
-  // { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
-  // { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
-  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
-  { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
-  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
-  { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
-  { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
-  { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
-];
 
 export default function Sidebar({ isCollapsed, onToggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [openMenus, setOpenMenus] = useState({ 'Purchase Order': true });
+  const [openMenus, setOpenMenus] = useState({ 'Purchase Order': true, 'Textile Operations Management': true });
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'DINESH EXPORTS',
     description: 'THE HOUSE OF FABRICS',
