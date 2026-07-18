@@ -71,8 +71,10 @@ async def lifespan(app: FastAPI):
                             if col_name.lower() not in db_columns:
                                 type_str = str(column.type.compile(dialect=connection.dialect))
                                 default_val = "NULL"
-                                if column.default is not None and not callable(column.default.arg):
-                                    val = column.default.arg
+                                default_obj = column.default
+                                default_arg = getattr(default_obj, "arg", None) if default_obj is not None else None
+                                if default_arg is not None and not callable(default_arg):
+                                    val = default_arg
                                     if isinstance(val, str):
                                         escaped_val = val.replace("'", "''")
                                         default_val = f"'{escaped_val}'"
@@ -291,7 +293,7 @@ import asyncio
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.security import decode_access_token
 
-async def log_audit_trail(method: str, path: str, auth_header: str):
+async def log_audit_trail(method: str, path: str, auth_header: str | None = None):
     if "auth/login" in path or "log-reports" in path:
         return
         
