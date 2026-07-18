@@ -9,6 +9,7 @@ import MyApprovals from './pages/dashboard/MyApprovals';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import OrderSubModule from './pages/buyer_order/OrderSubModule';
+
 import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
 import IPOInvoice from './pages/buyer_order/IPOInvoice';
 import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
@@ -278,6 +279,7 @@ export default function App() {
         <Route path="sub-master/:entity" element={<SubMasterPage />} />
 
         <Route path="buyer-order" element={<BuyerOrder />} />
+
         <Route path="buyer-order/processing" element={<OrderSubModule />} />
         <Route path="buyer-order/dispatch-expense" element={<DispatchExpenseSubModule />} />
         <Route path="ipo-invoice" element={<IPOInvoice />} />

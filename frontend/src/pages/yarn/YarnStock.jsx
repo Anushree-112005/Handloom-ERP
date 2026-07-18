@@ -22,12 +22,13 @@ export default function YarnStock() {
         inwards.forEach(inward => {
           if (inward.items && Array.isArray(inward.items)) {
             inward.items.forEach(item => {
-              // Skip incomplete items (must have yarn_count and lot_no)
-              if (!item.yarn_count || !item.lot_no) {
+              // Skip incomplete items (must have yarn_count)
+              if (!item.yarn_count) {
                 return;
               }
 
-              const key = `${item.lot_no}-${item.yarn_count}-${item.colour || ''}`;
+              const lot = item.lot_no || 'N/A';
+              const key = `${lot}-${item.yarn_count}-${item.colour || ''}`;
               if (!lotMap[key]) {
                 lotMap[key] = {
                   id: item.id,
