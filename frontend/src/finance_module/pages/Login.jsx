@@ -5,14 +5,14 @@ import axios from 'axios';
 
 // ── Auth helpers ───────────────────────────────────────────────────────────
 async function tryLoginCubeBook(username, password) {
-  const res = await axios.post('http://localhost:8000/api/auth/login', { username, password });
+  const res = await axios.post(`http://${window.location.hostname}:8000/api/auth/login`, { username, password });
   return res.data; // { access_token, user_id, username, full_name, role }
 }
 
 async function tryLoginDinesh(username, password) {
   const params = new URLSearchParams({ username, password });
   const res = await axios.post(
-    'http://localhost:8001/api/v1/auth/login',
+    `http://${window.location.hostname}:8001/api/v1/auth/login`,
     params,
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
@@ -90,7 +90,7 @@ export default function Login() {
 
   const openDinesh = (token) => {
     // Pass token via URL hash so dinesh-tex Login can auto-populate localStorage
-    window.open(`http://localhost:5174/auto-login?token=${encodeURIComponent(token)}`, '_blank');
+    window.open(`http://${window.location.hostname}:5174/auto-login?token=${encodeURIComponent(token)}`, '_blank');
   };
 
   // ── Portal chooser screen ──────────────────────────────────────────────

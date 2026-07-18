@@ -1431,7 +1431,7 @@ export default function DesignEntry() {
       setSelectedFiles([]);
 
       const matchedOrder = orders.find(o => o.ibpo_number === data.ibpo_no);
-      const ibpoImg = matchedOrder?.items?.[0]?.image_design_path || '';
+      const ibpoImg = matchedOrder?.items?.find(item => item.image_design_path)?.image_design_path || '';
 
       setManuallyEditedFields({
         total_mtr: true,
@@ -1521,6 +1521,7 @@ export default function DesignEntry() {
       const selectedOrder = orders.find(o => o.ibpo_number === value);
       if (selectedOrder) {
         const firstItem = selectedOrder.items?.[0] || {};
+        const itemWithImage = selectedOrder.items?.find(item => item.image_design_path) || {};
         const ordMtr = firstItem.order_mtrs || 0;
         const exMtr = 0;
         
@@ -1547,7 +1548,7 @@ export default function DesignEntry() {
             count_rxpxw: firstItem.construction || prev.count_rxpxw,
             toie_pct: firstItem.tolerance_pct || prev.toie_pct,
             weight_grm: firstItem.gsm || prev.weight_grm,
-            ibpo_image: firstItem.image_design_path || ''
+            ibpo_image: itemWithImage.image_design_path || ''
           };
         });
         return;

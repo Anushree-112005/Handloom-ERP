@@ -211,9 +211,14 @@ async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_
         logging.getLogger("app").warning(f"Cross-module integration failed when creating party: {e}")
         if sqlite_db:
             try:
+                sqlite_db.rollback()
                 sqlite_db.close()
             except:
                 pass
+        try:
+            await db.rollback()
+        except:
+            pass
     
     # Reload party with addresses
     result = await db.execute(
