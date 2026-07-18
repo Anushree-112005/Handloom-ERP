@@ -27,6 +27,8 @@ const baseDailyProductionData = [];
 const baseProdVsDispatchData = [];
 const baseBottleneckData = [];
 const baseBuyerQtyData = [];
+const baseQualityCompliance = [];
+const baseDispatchByTransporter = [];
 
 const COLORS = ['#0ea5e9', '#0284c7', '#0369a1', '#38bdf8', '#7dd3fc', '#bae6fd'];
 
@@ -47,6 +49,8 @@ export default function Dashboard() {
   const [prodVsDispatch, setProdVsDispatch] = useState(baseProdVsDispatchData);
   const [bottleneckData, setBottleneckData] = useState(baseBottleneckData);
   const [buyerQty, setBuyerQty] = useState(baseBuyerQtyData);
+  const [qualityCompliance, setQualityCompliance] = useState([]);
+  const [dispatchByTransporter, setDispatchByTransporter] = useState([]);
 
   // Dropdown UI state
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
@@ -138,8 +142,27 @@ export default function Dashboard() {
     }
   }, [stats, dateFilter]);
 
-  const exportToExcel = () => { alert("Export triggered"); };
-  const exportToPDF = () => { alert("Export triggered"); };
+  const exportToExcel = () => {
+    setExportDropdownOpen(false);
+    const data = operations.map(op => ({ Metric: op.label, Value: op.value }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Operations");
+    XLSX.writeFile(wb, `Dashboard_${dateFilter.replace(/\s+/g, '_')}.xlsx`);
+  };
+
+  const exportToPDF = () => {
+    setExportDropdownOpen(false);
+    const doc = new jsPDF();
+    doc.text(`Dashboard Operations Report (${dateFilter})`, 14, 15);
+    const tableData = operations.map(op => [op.label, op.value]);
+    autoTable(doc, {
+      head: [['Metric', 'Value']],
+      body: tableData,
+      startY: 20,
+    });
+    doc.save(`Dashboard_${dateFilter.replace(/\s+/g, '_')}.pdf`);
+  };
 
   const renderMetricGrid = (title, items) => (
     <div style={{ marginBottom: 20 }}>

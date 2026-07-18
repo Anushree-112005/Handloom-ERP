@@ -76,11 +76,11 @@ export default function StockSheetModule() {
   const outOfStockCount = items.filter(i => i.status === 'Out of Stock').length;
 
   const renderStatusBadge = (status) => {
-    let bg = '#e2e8f0', color = '#475569';
-    if (status === 'In Stock') { bg = '#dcfce7'; color = '#166534'; }
-    else if (status === 'Low Stock') { bg = '#fef08a'; color = '#854d0e'; }
-    else if (status === 'Out of Stock') { bg = '#fee2e2'; color = '#991b1b'; }
-    return <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, background: bg, color }}>{status}</span>;
+    let bg = '#f1f5f9', color = '#475569';
+    if (status === 'In Stock') { bg = '#10b98120'; color = '#047857'; }
+    else if (status === 'Low Stock') { bg = '#f9731620'; color = '#c2410c'; }
+    else if (status === 'Out of Stock') { bg = '#ef444420'; color = '#b91c1c'; }
+    return <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600, background: bg, color }}>{status}</span>;
   };
 
   if (view === 'detail' && selectedItem) {
@@ -236,59 +236,64 @@ export default function StockSheetModule() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" className="form-control" placeholder="Search by Code or Item Name..." 
-              style={{ paddingLeft: 40, width: '100%' }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            />
+      <div className="card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Stock Items ({filteredItems.length})</h3>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className="search-bar" style={{ position: 'relative', width: 300 }}>
+              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input 
+                type="text" className="form-control" placeholder="Search by Code or Item Name..." 
+                style={{ paddingLeft: 36, width: '100%' }} value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <select className="form-control" style={{ width: '160px' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+              <option value="">All Material Types</option>
+              <option value="Yarn">Yarn</option>
+              <option value="Fabric">Fabric</option>
+              <option value="Chemical">Chemical</option>
+              <option value="Accessory">Accessory</option>
+            </select>
+            <select className="form-control" style={{ width: '160px' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+              <option value="">All Statuses</option>
+              <option value="In Stock">In Stock</option>
+              <option value="Low Stock">Low Stock</option>
+              <option value="Out of Stock">Out of Stock</option>
+            </select>
           </div>
-          <select className="form-control" style={{ width: '200px' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
-            <option value="">All Material Types</option>
-            <option value="Yarn">Yarn</option>
-            <option value="Fabric">Fabric</option>
-            <option value="Chemical">Chemical</option>
-            <option value="Accessory">Accessory</option>
-          </select>
-          <select className="form-control" style={{ width: '200px' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="">All Statuses</option>
-            <option value="In Stock">In Stock</option>
-            <option value="Low Stock">Low Stock</option>
-            <option value="Out of Stock">Out of Stock</option>
-          </select>
         </div>
 
-        <table className="table" style={{ width: '100%', textAlign: 'left' }}>
-          <thead>
-            <tr>
-              <th>Item Code</th>
-              <th>Item Name</th>
-              <th>Type</th>
-              <th>Warehouse</th>
-              <th>Current Stock</th>
-              <th>Stock Value</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.map(item => (
-              <tr key={item.id} onClick={() => handleRowClick(item)} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{item.item_code}</td>
-                <td>{item.item_name}</td>
-                <td>{item.material_type}</td>
-                <td>{item.warehouse}</td>
-                <td style={{ fontWeight: 600 }}>{item.current_stock} {item.unit}</td>
-                <td>₹ {item.stock_value?.toFixed(2)}</td>
-                <td>{renderStatusBadge(item.status)}</td>
+        <div className="table-responsive" style={{ flex: 1 }}>
+          <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ background: 'var(--bg-secondary)' }}>
+              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Item Code</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Item Name</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Type</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Warehouse</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Current Stock</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Stock Value</th>
+                <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
               </tr>
-            ))}
-            {filteredItems.length === 0 && (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No stock items found.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredItems.map(item => (
+                <tr key={item.id} onClick={() => handleRowClick(item)} style={{ cursor: 'pointer', borderBottom: '1px solid #f8fafc' }}>
+                  <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{item.item_code}</td>
+                  <td style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{item.item_name}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{item.material_type}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{item.warehouse}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>{item.current_stock} {item.unit}</td>
+                  <td style={{ padding: '16px', fontWeight: 600 }}>₹ {item.stock_value?.toFixed(2)}</td>
+                  <td style={{ padding: '16px' }}>{renderStatusBadge(item.status)}</td>
+                </tr>
+              ))}
+              {filteredItems.length === 0 && (
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No stock items found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

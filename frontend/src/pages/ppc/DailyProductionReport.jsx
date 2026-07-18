@@ -301,8 +301,8 @@ export default function DailyProductionReport() {
 
 
         <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Generated Reports ({filteredRecords.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Generated Reports ({filteredRecords.length})</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div className="search-bar" style={{ position: 'relative', width: 250 }}>
                 <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -319,14 +319,14 @@ export default function DailyProductionReport() {
           </div>
           
           <div className="table-responsive" style={{ flex: 1 }}>
-            <table className="table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Report ID</th>
-                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Loom ID</th>
-                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Order</th>
-                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Production / Target</th>
-                  <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>Performance</th>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-secondary)' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Report ID</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Loom ID</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Order</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Production / Target</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Performance</th>
                 </tr>
               </thead>
               <tbody>
@@ -335,12 +335,12 @@ export default function DailyProductionReport() {
                 ) : filteredRecords.length === 0 ? (
                   <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
                 ) : filteredRecords.map((record, idx) => (
-                  <tr key={record.id || idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '16px 20px', fontWeight: 500, color: 'var(--text-primary)' }}>{record.name}</td>
-                    <td style={{ padding: '16px 20px' }}>{record.code}</td>
-                    <td style={{ padding: '16px 20px' }}>{record.extra_field_1}</td>
-                    <td style={{ padding: '16px 20px', fontWeight: 600, color: '#0369a1' }}>{record.extra_field_2}</td>
-                    <td style={{ padding: '16px 20px', color: 'var(--text-secondary)' }}>{record.description}</td>
+                  <tr key={record.id || idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                    <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{record.name}</td>
+                    <td style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{record.code}</td>
+                    <td style={{ padding: '16px', fontWeight: 600 }}>{record.extra_field_1}</td>
+                    <td style={{ padding: '16px', fontWeight: 600, color: '#0369a1' }}>{record.extra_field_2}</td>
+                    <td style={{ padding: '16px', fontSize: 13, color: 'var(--text-secondary)' }}>{record.description}</td>
                   </tr>
                 ))}
               </tbody>

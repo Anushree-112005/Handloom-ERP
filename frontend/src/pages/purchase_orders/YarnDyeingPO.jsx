@@ -1062,7 +1062,7 @@ export default function YarnDyeingPO() {
                   onChange={handleFieldChange}
                   onOptionsRefresh={handleRefreshOptions}
                   placeholder="-- Select Certificate --"
-                  allowCustom={false}
+                  allowCustom={true}
                 />
               </div>
               <div className="form-group" style={{ gridColumn: 'span 4' }}><label>Remarks</label><input type="text" className="form-control" name="remarks" value={form.remarks || ''} onChange={handleChange} /></div>

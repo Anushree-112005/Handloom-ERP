@@ -752,6 +752,15 @@ export default function WeavingPO() {
                   <select className="form-control" name="department" value={form.department} onChange={handleChange}>
                     <option value="">Select...</option>
                     {options.masters?.department?.map(o => <option key={o} value={o}>{o}</option>)}
+                    {!options.masters?.department?.length && (
+                      <>
+                        <option value="Weaving">Weaving</option>
+                        <option value="Sizing">Sizing</option>
+                        <option value="Warping">Warping</option>
+                        <option value="Production">Production</option>
+                        <option value="Dispatch">Dispatch</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>

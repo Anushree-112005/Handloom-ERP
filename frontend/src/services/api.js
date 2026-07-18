@@ -82,7 +82,7 @@ export const buyerOrderAPI = {
     fd.append('file', file);
     return api.post('/buyer-orders/upload-file', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
-  
+
   // Schedules
   listSchedules: () => api.get('/buyer-orders/schedules/'),
   createSchedule: (data) => api.post('/buyer-orders/schedules/', data),
@@ -174,11 +174,11 @@ export const yarnPurchaseOrderAPI = {
 };
 
 export const twistingDoublingPOAPI = {
-  list: () => api.get('/twisting-doubling-po/'),
-  create: (data) => api.post('/twisting-doubling-po/', data),
-  getById: (id) => api.get(`/twisting-doubling-po/${id}`),
-  update: (id, data) => api.put(`/twisting-doubling-po/${id}`, data),
-  delete: (id) => api.delete(`/twisting-doubling-po/${id}`)
+  list: () => api.get('/purchase/twisting-doubling'),
+  create: (data) => api.post('/purchase/twisting-doubling', data),
+  getById: (id) => api.get(`/purchase/twisting-doubling/${id}`),
+  update: (id, data) => api.put(`/purchase/twisting-doubling/${id}`, data),
+  delete: (id) => api.delete(`/purchase/twisting-doubling/${id}`)
 };
 
 export const yarnDyeingPOAPI = {
@@ -198,32 +198,32 @@ export const fabricDyeingPOAPI = {
 };
 
 export const warpingSizingPOAPI = {
-  list: () => api.get('/warping-sizing-po/'),
-  create: (data) => api.post('/warping-sizing-po/', data),
+  list: () => api.get('/warping-sizing-po'),
+  create: (data) => api.post('/warping-sizing-po', data),
   getById: (id) => api.get(`/warping-sizing-po/${id}`),
   update: (id, data) => api.put(`/warping-sizing-po/${id}`, data),
   delete: (id) => api.delete(`/warping-sizing-po/${id}`)
 };
 
 export const weavingPOAPI = {
-  list: () => api.get('/weaving-po/'),
-  create: (data) => api.post('/weaving-po/', data),
+  list: () => api.get('/weaving-po'),
+  create: (data) => api.post('/weaving-po', data),
   getById: (id) => api.get(`/weaving-po/${id}`),
   update: (id, data) => api.put(`/weaving-po/${id}`, data),
   delete: (id) => api.delete(`/weaving-po/${id}`)
 };
 
 export const processingPOAPI = {
-  list: () => api.get('/processing-po/'),
-  create: (data) => api.post('/processing-po/', data),
+  list: () => api.get('/processing-po'),
+  create: (data) => api.post('/processing-po', data),
   getById: (id) => api.get(`/processing-po/${id}`),
   update: (id, data) => api.put(`/processing-po/${id}`, data),
   delete: (id) => api.delete(`/processing-po/${id}`)
 };
 
 export const clothPurchasePOAPI = {
-  list: () => api.get('/cloth-purchase-po/'),
-  create: (data) => api.post('/cloth-purchase-po/', data),
+  list: () => api.get('/cloth-purchase-po'),
+  create: (data) => api.post('/cloth-purchase-po', data),
   getById: (id) => api.get(`/cloth-purchase-po/${id}`),
   update: (id, data) => api.put(`/cloth-purchase-po/${id}`, data),
   delete: (id) => api.delete(`/cloth-purchase-po/${id}`)

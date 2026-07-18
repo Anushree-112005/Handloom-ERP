@@ -86,17 +86,16 @@ const modules = [
       { section: 'Packing' },
       { path: '/packing', label: 'Packing Slip', icon: Box },
 
-      { section: 'Sales & Dispatch' },
-      { path: '/goods-release', label: 'Goods Release (GRA)', icon: ClipboardList },
-      { path: '/sales-invoice', label: 'Sales Invoice', icon: Receipt },
-      { path: '/eway-bill', label: 'E-Way Bill', icon: FileText },
-      { path: '/despatch', label: 'Despatch ', icon: MapPin },
-
-      { section: 'Gate & Security' },
-      { path: '/gate/inward', label: 'Gate Inward', icon: ArrowDownLeft },
-      { path: '/gate/outward', label: 'Gate Outward', icon: ArrowUpRight },
-      { path: '/gate/pass', label: 'Gate Pass Creation', icon: FileText },
-      { path: '/gate/reports', label: 'Gate Reports', icon: PieChart },
+  { section: 'Quality Control' },
+  { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
+  { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
+  { section: 'Warehouse & Inventory' },
+  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
+  { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
+  { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
+  { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
+  { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
 
       { section: 'Reports & MIS' },
       { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText }
