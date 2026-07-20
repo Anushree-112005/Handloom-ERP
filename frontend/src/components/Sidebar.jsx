@@ -91,16 +91,16 @@ const modules = [
       { section: 'Packing' },
       { path: '/packing', label: 'Packing Slip', icon: Box },
 
-  { section: 'Quality Control' },
-  { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
-  { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
-  { section: 'Warehouse & Inventory' },
-  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
-  { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
-  { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
-  { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
-  { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
+      { section: 'Quality Control' },
+      { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
+      { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
+      { section: 'Warehouse & Inventory' },
+      { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+      { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
+      { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
+      { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
+      { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
+      { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
 
       { section: 'Reports & MIS' },
       { path: '/reports-dashboard', label: 'Reports Dashboard', icon: FileText }
@@ -303,6 +303,7 @@ const modules = [
 
 
   { section: 'Administration & Security' },
+  { path: '/role-management', label: 'Role & Permission Management', icon: Shield },
   { path: '/user-management', label: 'User Management', icon: Users },
   { path: '/log-report', label: 'Log Report', icon: Activity },
 
@@ -317,11 +318,102 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [openMenus, setOpenMenus] = useState({ 'Purchase Order': true, 'Textile Operations Management': true });
+  const [filteredModules, setFilteredModules] = useState(modules);
   const [companyProfile, setCompanyProfile] = useState({
     company_name: 'DINESH EXPORTS',
     description: 'THE HOUSE OF FABRICS',
     logo: ''
   });
+
+  const moduleKeyMapping = {
+    'Dashboard': 'dashboard',
+    'Overview': 'overview',
+    'Calendar': 'calendar',
+    'Textile Operations Management': 'textile_operations',
+    'Finance': 'finance',
+    'Status Update Module': 'status_update',
+    'Production Management': 'ppc',
+    'HR Management': 'hr',
+    'Vehicle Management': 'vehicle',
+    'Stores & Consumables': 'stores',
+    'Administration & Security': 'admin',
+    'Role & Permission Management': 'admin',
+    'User Management': 'admin',
+    'Log Report': 'admin',
+    'System': 'system',
+    'Company': 'system',
+    'About': 'system',
+    'Status Update': 'status_update'
+  };
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.module_permissions && user.module_permissions.permissions) {
+          const perms = user.module_permissions.permissions;
+
+          const hasViewPermission = (key) => {
+            if (!key) return true; // If no key mapped, assume visible (like sections, until filtered out)
+            return perms[key] && perms[key]['View'] === true;
+          };
+
+          // Function to filter an array of module items recursively
+          const filterItems = (items, parentKey = null) => {
+            return items.reduce((acc, item) => {
+              if (item.section) {
+                // Keep sections temporarily, we'll filter out empty ones later
+                acc.push(item);
+                return acc;
+              }
+
+              const currentKey = moduleKeyMapping[item.label] || parentKey;
+
+              if (item.children) {
+                // It's a parent menu, recursively filter children
+                const filteredChildren = filterItems(item.children, currentKey);
+                if (filteredChildren.length > 0 && hasViewPermission(currentKey)) {
+                  acc.push({ ...item, children: filteredChildren });
+                }
+              } else {
+                // It's a leaf node (link)
+                // If it's a top-level unmapped link like '/' or '/overview', use a hardcoded fallback or its mapping
+                let specificKey = currentKey;
+                if (item.path === '/') specificKey = 'dashboard';
+                else if (item.path === '/overview') specificKey = 'overview';
+                else if (item.path === '/calendar') specificKey = 'calendar';
+                else if (item.path === '/user-management' || item.path === '/log-report') specificKey = 'admin';
+                else if (item.path === '/company-settings' || item.path === '/about') specificKey = 'system';
+
+                if (hasViewPermission(specificKey)) {
+                  acc.push(item);
+                }
+              }
+              return acc;
+            }, []);
+          };
+
+          let newModules = filterItems(modules);
+
+          // Second pass: Remove empty sections
+          newModules = newModules.filter((item, index, array) => {
+            if (item.section) {
+              const nextItem = array[index + 1];
+              if (!nextItem || nextItem.section) {
+                return false; // Section is immediately followed by another section or EOF
+              }
+            }
+            return true;
+          });
+
+          setFilteredModules(newModules);
+        }
+      }
+    } catch (e) {
+      console.error("Error filtering sidebar", e);
+    }
+  }, []);
 
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -434,7 +526,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
         )}
       </div>
       <nav className="sidebar-nav">
-        {modules.map((item, i) =>
+        {filteredModules.map((item, i) =>
           item.section ? (
             <div key={i} className="nav-section">{item.section}</div>
           ) : item.isJobWorkDynamic ? (

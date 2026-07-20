@@ -12,9 +12,7 @@ const createCRUD = (endpoint) => ({
 });
 
 const auth = {
-  login: (data) => api.post('/auth/login', new URLSearchParams(data), {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  }),
+  login: (data) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),
 };
 

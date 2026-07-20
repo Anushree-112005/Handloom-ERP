@@ -8,38 +8,38 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const initialForm = {
     employee_code: '', username: '', name: '', user_type: 'User', status: 'Active',
     web_access: 'Allow', department: '', designation: '', email: '',
     mobile: '', password: '', company_depl: false, company_mtm: false,
-    access_expiry_date: '', unit: '',
-    module_permissions: {
-      dashboard: false, overview: false,
-      party_master: false, employee_master: false,
-      design_entry: false, buyer_order: false,
-      yarn_po: false, yarn_inward: false, grey_yarn_delivery: false, dyed_yarn_receipt: false, dyed_yarn_delivery: false,
-      warp_beam_receipt: false, warp_delivery: false,
-      cloth_inward: false, cloth_delivery: false, finished_fabric: false,
-      quality_checking: false,
-      packing_slip: false,
-      gra: false, sales_invoice: false, despatch_planning: false,
-      eway_bill: false,
-      log_report: false
-    }
+    access_expiry_date: '', unit: '', role_id: ''
   };
 
-  const [formData, setFormData] = useState(initialForm);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const [formData, setFormData] = useState(initialForm);
+  const [availableRoles, setAvailableRoles] = useState([]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data } = await employeeAPI.list();
-      setUsers(data);
+      const { data } = await employeeAPI.list({
+        page: currentPage,
+        limit: pageSize,
+        search: searchTerm || undefined
+      });
+      if (data && data.data) {
+        setUsers(data.data);
+        setTotalRecords(data.total);
+      } else {
+        setUsers(data || []);
+        setTotalRecords((data || []).length);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -47,13 +47,41 @@ export default function UserManagement() {
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      // Assuming api is configured in employeeAPI or import api
+      const api = (await import('../../services/api')).default;
+      const { data } = await api.get('/rbac/roles');
+      setAvailableRoles(data);
+    } catch (err) {
+      console.error("Failed to fetch roles", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, pageSize]);
+
+  // Debounced Search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on search
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const handleOpenForm = (user = null) => {
     if (user) {
       setFormData({ 
         ...user, 
         password: '', 
         access_expiry_date: user.access_expiry_date ? user.access_expiry_date.substring(0, 10) : '',
-        module_permissions: user.module_permissions || initialForm.module_permissions
+        role_id: user.role_id || ''
       });
       setEditingId(user.id);
     } else {
@@ -70,6 +98,7 @@ export default function UserManagement() {
       const payload = { ...formData };
       if (!payload.password) delete payload.password; // Don't send empty password
       if (!payload.access_expiry_date) payload.access_expiry_date = null; // Fix 422 Unprocessable Entity
+      if (!payload.role_id) payload.role_id = null;
 
       if (editingId) {
         payload.modified_by = "Admin"; // In a real app, from context
@@ -105,21 +134,8 @@ export default function UserManagement() {
     }));
   };
 
-  const handlePermissionChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      module_permissions: {
-        ...prev.module_permissions,
-        [name]: checked
-      }
-    }));
-  };
-
-  const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // The filtering is now handled by the backend
+  const filteredUsers = users;
 
   if (view === 'form') {
     return (
@@ -153,11 +169,11 @@ export default function UserManagement() {
               </div>
               <div className="form-group">
                 <label>User Type (Role)</label>
-                <select className="form-control" name="user_type" value={formData.user_type} onChange={handleChange}>
-                  <option>Admin</option>
-                  <option>Manager</option>
-                  <option>Operator</option>
-                  <option>User</option>
+                <select className="form-control" name="role_id" value={formData.role_id} onChange={handleChange}>
+                  <option value="">Select a Role...</option>
+                  {availableRoles.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -228,115 +244,9 @@ export default function UserManagement() {
 
               <div className="card" style={{ background: 'var(--bg-secondary)', border: 'none', gridColumn: 'span 2' }}>
                 <h4 style={{ marginBottom: 16, fontWeight: 600 }}>Module Permissions</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                  
-                  {/* Row 1 */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="dashboard" checked={formData.module_permissions?.dashboard || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Dashboard
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="overview" checked={formData.module_permissions?.overview || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Overview
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="party_master" checked={formData.module_permissions?.party_master || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Party Master
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="employee_master" checked={formData.module_permissions?.employee_master || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Employee Master
-                  </label>
-
-                  {/* Row 2 */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="design_entry" checked={formData.module_permissions?.design_entry || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Design Entry
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="buyer_order" checked={formData.module_permissions?.buyer_order || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Buyer Order
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="yarn_po" checked={formData.module_permissions?.yarn_po || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Yarn Purchase Order
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="yarn_inward" checked={formData.module_permissions?.yarn_inward || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Yarn Inward
-                  </label>
-
-                  {/* Row 3 */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="grey_yarn_delivery" checked={formData.module_permissions?.grey_yarn_delivery || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Grey Yarn Delivery
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="dyed_yarn_receipt" checked={formData.module_permissions?.dyed_yarn_receipt || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Dyed Yarn Received
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="dyed_yarn_delivery" checked={formData.module_permissions?.dyed_yarn_delivery || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Dyed Yarn Delivery
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="warp_beam_receipt" checked={formData.module_permissions?.warp_beam_receipt || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Warp Beam Receipt
-                  </label>
-
-                  {/* Row 4 */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="warp_delivery" checked={formData.module_permissions?.warp_delivery || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Warp Delivery
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="cloth_inward" checked={formData.module_permissions?.cloth_inward || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Cloth Inward
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="cloth_delivery" checked={formData.module_permissions?.cloth_delivery || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Cloth Delivery
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="finished_fabric" checked={formData.module_permissions?.finished_fabric || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Finished Fabric
-                  </label>
-
-                  {/* Row 5 */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="quality_checking" checked={formData.module_permissions?.quality_checking || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    On-Table Checking
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="packing_slip" checked={formData.module_permissions?.packing_slip || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Packing Slip
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="gra" checked={formData.module_permissions?.gra || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Goods Release (GRA)
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="sales_invoice" checked={formData.module_permissions?.sales_invoice || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Sales Invoice
-                  </label>
-
-                  {/* Row 6 */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="despatch_planning" checked={formData.module_permissions?.despatch_planning || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Despatch Planning
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="eway_bill" checked={formData.module_permissions?.eway_bill || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    E-Way Bill
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="log_report" checked={formData.module_permissions?.log_report || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Log Report
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" name="status_update" checked={formData.module_permissions?.status_update || false} onChange={handlePermissionChange} style={{ width: 16, height: 16 }} />
-                    Status Update
-                  </label>
+                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.5)', borderRadius: '8px', color: 'var(--text-muted)' }}>
+                  <p>Permissions are now managed via Roles. Assign a <strong>User Type (Role)</strong> above, and the permissions will automatically apply based on the Role's configuration.</p>
+                  <p style={{ marginTop: '8px' }}>To modify what a Role can do, visit the <strong>Administration & Security → Role & Permission Management</strong> page.</p>
                 </div>
               </div>
             </div>
@@ -414,7 +324,7 @@ export default function UserManagement() {
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.email || u.mobile || '-'}</div>
                   </td>
                   <td>
-                    <span className="badge" style={{ background: 'var(--bg-secondary)' }}>{u.user_type}</span>
+                    <span className="badge" style={{ background: 'var(--bg-secondary)' }}>{u.role_name || u.user_type || 'Unassigned'}</span>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{u.department || '-'}</div>
                   </td>
                   <td>
@@ -451,6 +361,83 @@ export default function UserManagement() {
             )}
           </tbody>
         </table>
+        
+        {/* Pagination Footer */}
+        {!loading && totalRecords > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} results
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Items per page:</span>
+                <select 
+                  className="form-control" 
+                  style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }}
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+              
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '4px 12px', fontSize: 13 }}
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                >
+                  Previous
+                </button>
+                <div style={{ display: 'flex', gap: 2 }}>
+                  {Array.from({ length: Math.ceil(totalRecords / pageSize) }).map((_, idx) => {
+                    const page = idx + 1;
+                    // Show current page, first, last, and pages immediately surrounding current
+                    const totalPages = Math.ceil(totalRecords / pageSize);
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={page}
+                          className={`btn ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ padding: '4px 10px', fontSize: 13, minWidth: 32 }}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else if (
+                      page === currentPage - 2 || 
+                      page === currentPage + 2
+                    ) {
+                      return <span key={page} style={{ display: 'flex', alignItems: 'flex-end', padding: '0 4px', color: 'var(--text-muted)' }}>...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '4px 12px', fontSize: 13 }}
+                  disabled={currentPage >= Math.ceil(totalRecords / pageSize)}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

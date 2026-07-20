@@ -18,6 +18,7 @@ import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
 import CalendarModule from './pages/calendar/CalendarModule';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
+import RoleManagement from './pages/user_management/RoleManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
 import DespatchForm from './pages/despatch/DespatchForm';
 import SalesInvoice from './pages/sales_invoice/SalesInvoice';
@@ -148,28 +149,134 @@ import {
   FileText, Shield, Activity, ArrowRightLeft, Users, Info
 } from 'lucide-react';
 
+const routeModuleMapping = {
+  '/party-master': 'textile_operations',
+  '/buyer-order': 'textile_operations',
+  '/design-entry': 'textile_operations',
+  '/design-ai': 'textile_operations',
+  '/yarn': 'textile_operations',
+  '/purchase-order': 'textile_operations',
+  '/jobwork': 'textile_operations',
+  '/cloth': 'textile_operations',
+  '/fabric': 'textile_operations',
+  '/packing': 'textile_operations',
+  '/warehouse': 'textile_operations',
+  '/inventory': 'textile_operations',
+  '/my-approvals': 'dashboard',
+  '/user-management': 'admin',
+  '/role-management': 'admin',
+  '/log-report': 'admin',
+  '/company-settings': 'system',
+  '/about': 'system',
+  '/hr': 'hr',
+  '/fleet': 'vehicle',
+  '/stores-consumables': 'stores',
+  '/cubebook': 'finance',
+  '/status-update': 'status_update',
+  '/ppc': 'ppc',
+  '/costing-sheet': 'ppc'
+};
+
+const moduleDefaultPaths = {
+  'dashboard': '/',
+  'overview': '/overview',
+  'calendar': '/calendar',
+  'textile_operations': '/party-master',
+  'finance': '/cubebook/dashboard',
+  'status_update': '/status-update/dashboard',
+  'ppc': '/ppc/tracking/live-dashboard',
+  'hr': '/hr',
+  'vehicle': '/fleet/dashboard',
+  'stores': '/stores-consumables/dashboard',
+  'admin': '/user-management',
+  'system': '/company-settings'
+};
+
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   const suToken = localStorage.getItem('status_update_token');
+  const userStr = localStorage.getItem('user');
   const location = useLocation();
 
-  if (token) return children;
+  if (!token && !suToken) {
+    if (location.pathname.startsWith('/status-update/login')) {
+      return children;
+    }
+    return <Navigate to="/login" replace />;
+  }
 
-  // If they have the status update token, only allow them to access status-update routes
-  if (suToken) {
+  if (suToken && !token) {
     if (location.pathname.startsWith('/status-update')) {
       return children;
     }
     return <Navigate to="/status-update/dashboard" replace />;
   }
 
-  // Otherwise, kick to login
-  // Note: /status-update/login itself should ideally be outside ProtectedRoute or handled gracefully
-  if (location.pathname.startsWith('/status-update/login')) {
-    return children;
+  // If we have a user, apply strict RBAC guarding
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.module_permissions && user.module_permissions.permissions) {
+        const perms = user.module_permissions.permissions;
+
+        let requiredModule = null;
+        
+        if (location.pathname === '/') {
+          requiredModule = 'dashboard';
+        } else if (location.pathname === '/overview') {
+          requiredModule = 'overview';
+        } else if (location.pathname === '/calendar') {
+          requiredModule = 'calendar';
+        } else {
+          for (const [prefix, modKey] of Object.entries(routeModuleMapping)) {
+            if (location.pathname.startsWith(prefix)) {
+              requiredModule = modKey;
+              break;
+            }
+          }
+        }
+
+        if (requiredModule) {
+          if (!perms[requiredModule] || perms[requiredModule]['View'] !== true) {
+            
+            // Special UX: if trying to access dashboard but don't have permission,
+            // automatically route to the first module they DO have access to.
+            if (location.pathname === '/') {
+              const firstPermittedModule = Object.keys(perms).find(k => perms[k]['View'] === true);
+              if (firstPermittedModule && moduleDefaultPaths[firstPermittedModule]) {
+                return <Navigate to={moduleDefaultPaths[firstPermittedModule]} replace />;
+              }
+            }
+
+            console.warn(`Access Denied: Missing View permission for module ${requiredModule}`);
+            return (
+              <div style={{ padding: 40, textAlign: 'center' }}>
+                <h1 style={{ fontSize: 24, color: '#ef4444', marginBottom: 16 }}>Access Denied</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>You do not have permission to access this module.</p>
+                <div style={{ marginTop: 24, display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <a href="/" style={{ color: 'var(--primary)', padding: '8px 16px', border: '1px solid var(--primary)', borderRadius: '6px', textDecoration: 'none' }}>Return to Dashboard</a>
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('user');
+                      window.location.href = '/login';
+                    }}
+                    style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}
+                  >
+                    Logout & Re-Authenticate
+                  </button>
+                </div>
+              </div>
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("RBAC Route parsing error", e);
+    }
   }
 
-  return <Navigate to="/login" replace />;
+  return children;
 }
 
 function MockDbSyncWrapper({ children }) {
@@ -413,6 +520,7 @@ export default function App() {
         </Route>
 
         <Route path="user-management" element={<UserManagement />} />
+        <Route path="role-management" element={<RoleManagement />} />
 
         <Route path="log-report" element={<LogReport />} />
 
