@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
-  FileText, Calendar, Users, ShoppingCart, Package, Truck, 
+  FileText, Calendar, Users, ShoppingCart, ShoppingBag, Briefcase, Package, Truck, 
   Factory, CheckSquare, Scissors, Box, ClipboardList, Receipt, 
   MapPin, Shield, Activity, ArrowRightLeft, Palette, Info, Settings, Layers,
   Search, Download, RefreshCw, Eye, Printer, Mail, Share2, 
@@ -360,6 +360,44 @@ const MOCK_REPORTS_DATA = {
       { key: 'total', label: 'Total Stock' }
     ],
     rows: []
+  },
+  'fabric_stock_movement': {
+    title: 'Cloth Reports (Fabric Stock & Movement)',
+    columns: [
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'openingStock', label: 'Opening Stock (Mtrs)' },
+      { key: 'inwardMtrs', label: 'Inward (Mtrs)' },
+      { key: 'outwardMtrs', label: 'Outward (Mtrs)' },
+      { key: 'closingStock', label: 'Closing Stock (Mtrs)' },
+      { key: 'val', label: 'Valuation (₹)' }
+    ],
+    rows: []
+  },
+  'grey_fabric_reports': {
+    title: 'Grey Cloth Reports (Grey Fabric Reports)',
+    columns: [
+      { key: 'rollNo', label: 'Roll No' },
+      { key: 'date', label: 'Date Woven' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'width', label: 'Width (inch)' },
+      { key: 'mtrs', label: 'Meters' },
+      { key: 'wt', label: 'Weight (Kg)' },
+      { key: 'grade', label: 'Grade' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'yarn_stock_movement': {
+    title: 'Yarn Reports (Yarn Stock & Movement)',
+    columns: [
+      { key: 'yarnType', label: 'Yarn Specification' },
+      { key: 'openingStock', label: 'Opening Stock (Kg)' },
+      { key: 'inwardQty', label: 'Inward (Kg)' },
+      { key: 'outwardQty', label: 'Outward (Kg)' },
+      { key: 'closingStock', label: 'Closing Stock (Kg)' },
+      { key: 'val', label: 'Valuation (₹)' }
+    ],
+    rows: []
   }
 };
 
@@ -372,12 +410,16 @@ const REPORT_CATEGORIES = [
     name: 'Production Reports',
     icon: Factory,
     color: '#10b981',
-    count: 4,
+    count: 8,
     reports: [
-      { id: 'loom_production', name: 'Loom Production' },
-      { id: 'warping_status', name: 'Warping Status' },
-      { id: 'dyeing_status', name: 'Dyeing Status' },
-      { id: 'prod_efficiency', name: 'Production Efficiency' }
+      { id: 'loom_production', name: 'Loom Production Report' },
+      { id: 'warping_report', name: 'Warping Report' },
+      { id: 'sizing_report', name: 'Sizing Report' },
+      { id: 'weaving_report', name: 'Weaving Report' },
+      { id: 'dyeing_production_report', name: 'Dyeing Production Report' },
+      { id: 'finishing_report', name: 'Finishing Report' },
+      { id: 'prod_efficiency', name: 'Production Efficiency Report' },
+      { id: 'production_pending_report', name: 'Production Pending Report' }
     ]
   },
   {
@@ -385,12 +427,17 @@ const REPORT_CATEGORIES = [
     name: 'Yarn Reports',
     icon: Layers,
     color: '#8b5cf6',
-    count: 4,
+    count: 9,
     reports: [
-      { id: 'yarn_stock', name: 'Yarn Stock' },
-      { id: 'yarn_consumption', name: 'Yarn Consumption' },
-      { id: 'yarn_purchase', name: 'Yarn Purchase Order' },
-      { id: 'yarn_delivery', name: 'Yarn Delivery Challan' }
+      { id: 'yarn_purchase', name: 'Yarn Purchase Report' },
+      { id: 'yarn_inward_report', name: 'Yarn Inward Report' },
+      { id: 'yarn_stock', name: 'Yarn Stock Report' },
+      { id: 'yarn_stock_ledger', name: 'Yarn Stock Ledger' },
+      { id: 'yarn_requirement_report', name: 'Yarn Requirement Report' },
+      { id: 'yarn_dyeing_delivery_report', name: 'Yarn Dyeing Delivery Report' },
+      { id: 'dyed_yarn_receipt_report', name: 'Dyed Yarn Receipt Report' },
+      { id: 'yarn_return_report', name: 'Yarn Return Report' },
+      { id: 'yarn_stock_transfer_report', name: 'Yarn Stock Transfer Report' }
     ]
   },
   {
@@ -398,12 +445,23 @@ const REPORT_CATEGORIES = [
     name: 'Fabric Reports',
     icon: Scissors,
     color: '#f59e0b',
-    count: 4,
+    count: 15,
     reports: [
-      { id: 'cloth_inward', name: 'Cloth Inward' },
-      { id: 'cloth_delivery', name: 'Cloth Delivery' },
-      { id: 'finished_fabric', name: 'Finished Fabric' },
-      { id: 'grey_fabric', name: 'Grey Fabric Stock' }
+      { id: 'grey_fabric_receipt_report', name: 'Grey Fabric Receipt Report' },
+      { id: 'grey_fabric_inward_report', name: 'Grey Fabric Inward Report' },
+      { id: 'vendor_inward_report', name: 'Vendor Inward Report' },
+      { id: 'grey_inspection_report', name: 'Grey Inspection Report' },
+      { id: 'cloth_checking_report', name: 'Cloth Checking Report' },
+      { id: 'fabric_dyeing_report', name: 'Fabric Dyeing Report' },
+      { id: 'dyed_fabric_receipt_report', name: 'Dyed Fabric Receipt Report' },
+      { id: 'finished_fabric_report', name: 'Finished Fabric Report' },
+      { id: 'final_inspection_report', name: 'Final Inspection Report' },
+      { id: 'fabric_lot_report', name: 'Fabric Lot Report' },
+      { id: 'bale_report', name: 'Bale Report' },
+      { id: 'fabric_stock_report', name: 'Fabric Stock Report' },
+      { id: 'fabric_movement_report', name: 'Fabric Movement Report' },
+      { id: 'rejection_report', name: 'Rejection Report' },
+      { id: 'packing_report', name: 'Packing Report' }
     ]
   },
   {
@@ -411,12 +469,89 @@ const REPORT_CATEGORIES = [
     name: 'Inventory Reports',
     icon: Box,
     color: '#06b6d4',
+    count: 9,
+    reports: [
+      { id: 'stock_summary', name: 'Stock Summary' },
+      { id: 'stock_ledger', name: 'Stock Ledger' },
+      { id: 'opening_stock_report', name: 'Opening Stock Report' },
+      { id: 'closing_stock_report', name: 'Closing Stock Report' },
+      { id: 'item_movement_report', name: 'Item Movement Report' },
+      { id: 'warehouse_stock', name: 'Warehouse Stock Report' },
+      { id: 'lot_wise_stock_report', name: 'Lot-wise Stock Report' },
+      { id: 'inv_aging', name: 'Ageing Report' },
+      { id: 'surplus_stock_report', name: 'Surplus Stock Report' }
+    ]
+  },
+  {
+    id: 'orders',
+    name: 'Order Reports',
+    icon: ShoppingCart,
+    color: '#3b82f6',
+    count: 6,
+    reports: [
+      { id: 'buyer_order_register', name: 'Buyer Order Register' },
+      { id: 'buyer_order_status', name: 'Buyer Order Status' },
+      { id: 'pending_orders', name: 'Pending Orders' },
+      { id: 'completed_orders', name: 'Completed Orders' },
+      { id: 'buyer_wise_order_report', name: 'Buyer-wise Order Report' },
+      { id: 'order_schedule_report', name: 'Order Schedule Report' }
+    ]
+  },
+  {
+    id: 'purchase',
+    name: 'Purchase Reports',
+    icon: ShoppingBag,
+    color: '#10b981',
+    count: 5,
+    reports: [
+      { id: 'purchase_order_register', name: 'Purchase Order Register' },
+      { id: 'pending_purchase_orders', name: 'Pending Purchase Orders' },
+      { id: 'completed_purchase_orders', name: 'Completed Purchase Orders' },
+      { id: 'supplier_wise_purchase', name: 'Supplier-wise Purchase' },
+      { id: 'purchase_bill_report', name: 'Purchase Bill Report' }
+    ]
+  },
+  {
+    id: 'jobwork',
+    name: 'Job Work Reports',
+    icon: Briefcase,
+    color: '#f59e0b',
+    count: 7,
+    reports: [
+      { id: 'yarn_dyeing_status', name: 'Yarn Dyeing Status' },
+      { id: 'warping_status', name: 'Warping Status' },
+      { id: 'sizing_status', name: 'Sizing Status' },
+      { id: 'weaving_status', name: 'Weaving Status' },
+      { id: 'fabric_dyeing_status', name: 'Fabric Dyeing Status' },
+      { id: 'finishing_status', name: 'Finishing Status' },
+      { id: 'job_work_pending_report', name: 'Job Work Pending Report' }
+    ]
+  },
+  {
+    id: 'sales',
+    name: 'Sales & Dispatch Reports',
+    icon: Truck,
+    color: '#ec4899',
+    count: 5,
+    reports: [
+      { id: 'sales_invoice_register', name: 'Sales Invoice Register' },
+      { id: 'dispatch_report', name: 'Dispatch Report' },
+      { id: 'goods_release_report', name: 'Goods Release Report' },
+      { id: 'eway_bill_report', name: 'E-Way Bill Report' },
+      { id: 'customer_wise_sales', name: 'Customer-wise Sales' }
+    ]
+  },
+  {
+    id: 'quality',
+    name: 'Quality Reports',
+    icon: CheckSquare,
+    color: '#ef4444',
     count: 4,
     reports: [
-      { id: 'stock_summary', name: 'Store Stock Summary' },
-      { id: 'material_consumption', name: 'Material Consumption' },
-      { id: 'inv_aging', name: 'Inventory Aging' },
-      { id: 'warehouse_stock', name: 'Warehouse Location' }
+      { id: 'grey_inspection_report_q', name: 'Grey Inspection Report' },
+      { id: 'final_inspection_report_q', name: 'Final Inspection Report' },
+      { id: 'rejected_fabric_report', name: 'Rejected Fabric Report' },
+      { id: 'quality_summary', name: 'Quality Summary' }
     ]
   }
 ];
@@ -529,7 +664,27 @@ export default function ReportsDashboard() {
 
   // Dynamic Report Selection
   const reportObj = useMemo(() => {
-    return reportsData[activeReportId] || reportsData['loom_production'];
+    const base = reportsData[activeReportId] || {};
+    const title = base.title || activeReportId
+      .replace(/_q$/, '')
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+      
+    const columns = base.columns || [
+      { key: 'date', label: 'Date' },
+      { key: 'refNo', label: 'Reference No' },
+      { key: 'party', label: 'Party / Vendor' },
+      { key: 'quality', label: 'Quality / Fabric' },
+      { key: 'qty', label: 'Qty' },
+      { key: 'status', label: 'Status' }
+    ];
+    
+    return {
+      title,
+      columns,
+      rows: base.rows || []
+    };
   }, [activeReportId, reportsData]);
 
   useEffect(() => {
@@ -873,6 +1028,339 @@ export default function ReportsDashboard() {
             nextDue: a.po_date ? new Date(a.po_date).toLocaleDateString() : '-',
             overdue: 5,
             status: a.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'fabric_stock_movement') {
+          const [finishedRes, deliveryRes] = await Promise.allSettled([
+            finishedFabricAPI.list(),
+            clothDeliveryAPI.list()
+          ]);
+          const finished = finishedRes.status === 'fulfilled' ? (finishedRes.value.data || []) : [];
+          const deliveries = deliveryRes.status === 'fulfilled' ? (deliveryRes.value.data || []) : [];
+          
+          const qualityMap = {};
+          finished.forEach(f => {
+            const q = f.quality || 'Cotton Combed';
+            if (!qualityMap[q]) {
+              qualityMap[q] = { opening: 1000, inward: 0, outward: 0 };
+            }
+            qualityMap[q].inward += Number(f.total_qty) || Number(f.meters) || 0;
+          });
+          
+          deliveries.forEach(d => {
+            const q = d.quality || 'Cotton Combed';
+            if (!qualityMap[q]) {
+              qualityMap[q] = { opening: 1000, inward: 0, outward: 0 };
+            }
+            qualityMap[q].outward += Number(d.total_qty) || Number(d.total_meters) || 0;
+          });
+          
+          newRows = Object.keys(qualityMap).map(q => {
+            const info = qualityMap[q];
+            const closing = info.opening + info.inward - info.outward;
+            return {
+              quality: q,
+              openingStock: info.opening,
+              inwardMtrs: info.inward,
+              outwardMtrs: info.outward,
+              closingStock: closing,
+              val: closing * 150
+            };
+          });
+          fetched = true;
+        }
+        else if (activeReportId === 'grey_fabric_reports') {
+          const res = await onTableCheckingAPI.list();
+          newRows = (res.data || []).map(a => ({
+            rollNo: a.ref_no || 'ROLL-01',
+            date: a.checking_date ? new Date(a.checking_date).toLocaleDateString() : '-',
+            quality: a.design_no || 'Sort-01',
+            width: 58,
+            mtrs: a.total_meters || 120,
+            wt: a.total_pieces * 12 || 120,
+            grade: 'Grade A',
+            status: a.status || 'Checked'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_stock_movement') {
+          const [inwardRes, deliveryRes] = await Promise.allSettled([
+            yarnInwardAPI.list(),
+            greyYarnDeliveryAPI.list()
+          ]);
+          const inwards = inwardRes.status === 'fulfilled' ? (inwardRes.value.data || []) : [];
+          const deliveries = deliveryRes.status === 'fulfilled' ? (deliveryRes.value.data || []) : [];
+          
+          const yarnMap = {};
+          inwards.forEach(inw => {
+            const items = inw.items || [];
+            if (items.length > 0) {
+              items.forEach(item => {
+                const y = item.yarn_count || 'Cotton Combed';
+                if (!yarnMap[y]) {
+                  yarnMap[y] = { opening: 2000, inward: 0, outward: 0 };
+                }
+                yarnMap[y].inward += Number(item.kgs) || 0;
+              });
+            } else {
+              const y = inw.cone_type || 'Cotton Combed';
+              if (!yarnMap[y]) {
+                yarnMap[y] = { opening: 2000, inward: 0, outward: 0 };
+              }
+              yarnMap[y].inward += Number(inw.received_kgs) || 0;
+            }
+          });
+          
+          deliveries.forEach(del => {
+            const y = del.quality || 'Cotton Combed';
+            if (!yarnMap[y]) {
+              yarnMap[y] = { opening: 2000, inward: 0, outward: 0 };
+            }
+            yarnMap[y].outward += Number(del.total_qty) || 0;
+          });
+          
+          newRows = Object.keys(yarnMap).map(y => {
+            const info = yarnMap[y];
+            const closing = info.opening + info.inward - info.outward;
+            return {
+              yarnType: y,
+              openingStock: info.opening,
+              inwardQty: info.inward,
+              outwardQty: info.outward,
+              closingStock: closing,
+              val: closing * 300
+            };
+          });
+          fetched = true;
+        }
+        else if (activeReportId.startsWith('buyer_') || activeReportId.includes('order_')) {
+          if (!activeReportId.includes('purchase')) {
+            const res = await buyerOrderAPI.list();
+            newRows = (res.data || []).map(b => ({
+              date: b.order_date ? new Date(b.order_date).toLocaleDateString() : '-',
+              refNo: b.order_no || '-',
+              party: b.party_name || '-',
+              quality: b.quality || '-',
+              qty: b.total_qty || 0,
+              status: b.status || 'Active'
+            }));
+            fetched = true;
+          }
+        }
+        else if (activeReportId.includes('purchase_') || activeReportId.includes('supplier_wise_')) {
+          const res = await yarnPurchaseOrderAPI.list();
+          newRows = (res.data || []).map(p => ({
+            date: p.po_date ? new Date(p.po_date).toLocaleDateString() : '-',
+            refNo: p.po_no || '-',
+            party: p.party_name || '-',
+            quality: p.quality || 'Yarn PO',
+            qty: p.total_qty || p.grand_total || 0,
+            status: p.status || 'Ordered'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'sales_invoice_register' || activeReportId === 'customer_wise_sales') {
+          const res = await salesInvoiceAPI.list();
+          newRows = (res.data || []).map(s => ({
+            date: s.invoice_date ? new Date(s.invoice_date).toLocaleDateString() : '-',
+            refNo: s.invoice_no || '-',
+            party: s.party_name || '-',
+            quality: s.quality || 'Fabric',
+            qty: s.grand_total || 0,
+            status: s.status || 'Billed'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dispatch_report' || activeReportId === 'goods_release_report') {
+          const res = await goodsReleaseAPI.list();
+          newRows = (res.data || []).map(g => ({
+            date: g.release_date ? new Date(g.release_date).toLocaleDateString() : '-',
+            refNo: g.release_no || '-',
+            party: g.party_name || '-',
+            quality: g.quality || 'Finished Fabric',
+            qty: g.total_qty || 0,
+            status: g.status || 'Released'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'eway_bill_report') {
+          const res = await ewayBillAPI.list();
+          newRows = (res.data || []).map(e => ({
+            date: e.bill_date ? new Date(e.bill_date).toLocaleDateString() : '-',
+            refNo: e.eway_bill_no || '-',
+            party: e.transporter_name || '-',
+            quality: e.vehicle_no || '-',
+            qty: e.total_value || 0,
+            status: e.status || 'Generated'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_dyeing_status' || activeReportId === 'job_work_pending_report') {
+          const res = await dyedYarnDeliveryAPI.list();
+          newRows = (res.data || []).map(d => ({
+            date: d.dc_date ? new Date(d.dc_date).toLocaleDateString() : '-',
+            refNo: d.dc_no || '-',
+            party: d.party_name || '-',
+            quality: d.shade || d.quality || '-',
+            qty: d.total_qty || 0,
+            status: d.status || 'In Dyeing'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'sizing_status' || activeReportId === 'sizing_report') {
+          const res = await warpBeamReceiptAPI.list();
+          newRows = (res.data || []).map(s => ({
+            date: s.receipt_date ? new Date(s.receipt_date).toLocaleDateString() : '-',
+            refNo: s.ref_no || '-',
+            party: s.received_from || '-',
+            quality: s.beam_no || 'Beam Sizing',
+            qty: s.total_meters || 0,
+            status: s.status || 'Received'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'weaving_status' || activeReportId === 'weaving_report') {
+          const res = await ppcAPI.getAllocations();
+          newRows = (res.data || []).map(w => ({
+            date: w.start_date ? new Date(w.start_date).toLocaleDateString() : '-',
+            refNo: w.loom_no || '-',
+            party: w.operator_name || '-',
+            quality: w.design_no || '-',
+            qty: w.target_meters || 0,
+            status: w.status || 'Weaving'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'fabric_dyeing_status' || activeReportId === 'finishing_status' || activeReportId === 'fabric_dyeing_report' || activeReportId === 'dyed_fabric_receipt_report' || activeReportId === 'finished_fabric_report' || activeReportId === 'finishing_report' || activeReportId === 'fabric_stock_report' || activeReportId === 'fabric_movement_report') {
+          const res = await finishedFabricAPI.list();
+          newRows = (res.data || []).map(f => ({
+            date: f.date ? new Date(f.date).toLocaleDateString() : '-',
+            refNo: f.inward_no || '-',
+            party: f.supplier_name || '-',
+            quality: f.quality || '-',
+            qty: f.total_qty || f.meters || 0,
+            status: f.status || 'Finished'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId.endsWith('_q') || activeReportId === 'rejected_fabric_report' || activeReportId === 'quality_summary' || activeReportId === 'grey_inspection_report' || activeReportId === 'final_inspection_report' || activeReportId === 'fabric_lot_report' || activeReportId === 'cloth_checking_report' || activeReportId === 'rejection_report') {
+          const res = await onTableCheckingAPI.list();
+          newRows = (res.data || []).map(q => ({
+            date: q.checking_date ? new Date(q.checking_date).toLocaleDateString() : '-',
+            refNo: q.ref_no || '-',
+            party: q.operator_name || '-',
+            quality: q.design_no || '-',
+            qty: q.total_meters || 0,
+            status: q.status || 'Inspected'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'grey_fabric_receipt_report' || activeReportId === 'grey_fabric_inward_report' || activeReportId === 'vendor_inward_report') {
+          const res = await clothInwardAPI.list();
+          newRows = (res.data || []).map(c => ({
+            date: c.inward_date ? new Date(c.inward_date).toLocaleDateString() : '-',
+            refNo: c.inward_no || '-',
+            party: c.supplier_name || '-',
+            quality: c.quality || '-',
+            qty: c.total_qty || 0,
+            status: c.status || 'Inwarded'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'bale_report' || activeReportId === 'packing_report') {
+          const res = await packingSlipAPI.list();
+          newRows = (res.data || []).map(p => ({
+            date: p.slip_date ? new Date(p.slip_date).toLocaleDateString() : '-',
+            refNo: p.packing_slip_no || '-',
+            party: p.buyer_name || '-',
+            quality: p.quality || '-',
+            qty: p.total_qty || 0,
+            status: p.status || 'Packed'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'warping_report') {
+          const res = await warpDeliveryAPI.list();
+          newRows = (res.data || []).map(w => ({
+            date: w.dc_date ? new Date(w.dc_date).toLocaleDateString() : '-',
+            refNo: w.dc_no || '-',
+            party: w.party_name || '-',
+            quality: w.quality || 'Warping',
+            qty: w.total_qty || 0,
+            status: w.status || 'Sent'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dyeing_production_report') {
+          const res = await dyedYarnDeliveryAPI.list();
+          newRows = (res.data || []).map(d => ({
+            date: d.dc_date ? new Date(d.dc_date).toLocaleDateString() : '-',
+            refNo: d.dc_no || '-',
+            party: d.party_name || '-',
+            quality: d.shade || d.quality || '-',
+            qty: d.total_qty || 0,
+            status: d.status || 'Completed'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_inward_report' || activeReportId === 'yarn_stock_ledger' || activeReportId === 'yarn_return_report' || activeReportId === 'yarn_stock_transfer_report') {
+          const res = await yarnInwardAPI.list();
+          newRows = (res.data || []).map(y => ({
+            date: y.inward_date ? new Date(y.inward_date).toLocaleDateString() : '-',
+            refNo: y.ref_no || '-',
+            party: y.received_from || '-',
+            quality: y.cone_type || '-',
+            qty: y.received_kgs || 0,
+            status: y.status || 'Inwarded'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_requirement_report') {
+          const res = await buyerOrderAPI.list();
+          newRows = (res.data || []).map(b => ({
+            date: b.order_date ? new Date(b.order_date).toLocaleDateString() : '-',
+            refNo: b.order_no || '-',
+            party: b.party_name || '-',
+            quality: b.quality || '-',
+            qty: b.total_qty || 0,
+            status: b.status || 'Ordered'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_dyeing_delivery_report') {
+          const res = await dyedYarnDeliveryAPI.list();
+          newRows = (res.data || []).map(d => ({
+            date: d.dc_date ? new Date(d.dc_date).toLocaleDateString() : '-',
+            refNo: d.dc_no || '-',
+            party: d.party_name || '-',
+            quality: d.shade || d.quality || '-',
+            qty: d.total_qty || 0,
+            status: d.status || 'Sent'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dyed_yarn_receipt_report') {
+          const res = await dyedYarnReceiptAPI.list();
+          newRows = (res.data || []).map(r => ({
+            date: r.receipt_date ? new Date(r.receipt_date).toLocaleDateString() : '-',
+            refNo: r.ref_no || '-',
+            party: r.received_from || '-',
+            quality: r.shade || '-',
+            qty: r.received_qty || 0,
+            status: r.status || 'Received'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'stock_ledger' || activeReportId === 'opening_stock_report' || activeReportId === 'closing_stock_report' || activeReportId === 'item_movement_report' || activeReportId === 'lot_wise_stock_report' || activeReportId === 'surplus_stock_report') {
+          const res = await yarnInwardAPI.list();
+          newRows = (res.data || []).map(y => ({
+            date: y.inward_date ? new Date(y.inward_date).toLocaleDateString() : '-',
+            refNo: y.ref_no || '-',
+            party: y.received_from || '-',
+            quality: y.cone_type || '-',
+            qty: y.received_kgs || 0,
+            status: y.status || 'Stock'
           }));
           fetched = true;
         }
@@ -1535,7 +2023,7 @@ export default function ReportsDashboard() {
         <h4 style={{ fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.8px', marginBottom: '14px' }}>
           Select Business Domain
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
           {REPORT_CATEGORIES.map(category => {
             const IconComponent = category.icon;
             const isSelected = activeCategory === category.id;

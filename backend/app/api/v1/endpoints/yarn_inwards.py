@@ -75,6 +75,7 @@ class YarnInwardCreate(BaseModel):
     round_off: Optional[float] = 0.0
     net_amount: Optional[float] = 0.0
     remarks: Optional[str] = None
+    terms_conditions: Optional[List[str]] = []
     
     items: Optional[List[YarnInwardItemIn]] = []
 

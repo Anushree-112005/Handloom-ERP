@@ -162,6 +162,49 @@ const A4DocumentPreview = ({
                     </div>
                   )}
 
+                  {section.type === 'split' && (
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', marginTop: 8 }}>
+                      {/* Left Side: Terms */}
+                      <div style={{ flex: 1 }}>
+                        {(section.leftData || []).map((item, i) => (
+                          <div key={i} style={{ display: 'flex', padding: '6px 0', borderBottom: '1px dashed #e2e8f0', fontSize: 11 }}>
+                            <div style={{ width: 60, color: '#0f172a', fontWeight: 600 }}>{item.label}</div>
+                            <div style={{ width: 15, color: '#0f172a', textAlign: 'center' }}>:</div>
+                            <div style={{ flex: 1, color: '#0f172a', fontWeight: 500, lineHeight: 1.4 }}>{item.value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Right Side: Summary Box */}
+                      <div style={{ flex: '0 0 280px', border: '1px solid #cbd5e1', borderRadius: 8, overflow: 'hidden', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <div style={{ background: '#0f172a', color: '#ffffff', padding: '8px 14px', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          {section.rightTitle || 'ORDER SUMMARY'}
+                        </div>
+                        <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {(section.rightData || []).map((item, i) => (
+                            <div key={i} style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              fontSize: item.isTotal ? 12 : 11, 
+                              borderTop: item.isTotal ? '2px solid #0f172a' : 'none',
+                              borderBottom: !item.isTotal && i < (section.rightData.length - 1) ? '1px dashed #e2e8f0' : 'none',
+                              paddingTop: item.isTotal ? 10 : 2, 
+                              paddingBottom: !item.isTotal ? 6 : 0 
+                            }}>
+                              <span style={{ color: item.isTotal ? '#0f172a' : '#64748b', fontWeight: item.isTotal ? 800 : 500, textTransform: item.isTotal ? 'uppercase' : 'none' }}>
+                                {item.label}
+                              </span>
+                              <span style={{ fontWeight: item.isTotal ? 900 : 700, color: item.isTotal ? '#4f46e5' : '#0f172a', fontSize: item.isTotal ? 14 : 11 }}>
+                                {item.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {section.type === 'design_images' && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 8 }}>
                       {section.images.map((imgData, i) => (
