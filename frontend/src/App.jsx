@@ -9,9 +9,11 @@ import MyApprovals from './pages/dashboard/MyApprovals';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import OrderSubModule from './pages/buyer_order/OrderSubModule';
-
-import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
-import IPOInvoice from './pages/buyer_order/IPOInvoice';
+import BuyerOrderSchedule from './pages/buyer_order/BuyerOrderSchedule';
+import OrderExpenses from './pages/buyer_order/OrderExpenses';
+import ProformaInvoice from './pages/buyer_order/ProformaInvoice';
+import BuyerOrderAmendment from './pages/buyer_order/BuyerOrderAmendment';
+import BuyerOrderCompletion from './pages/buyer_order/BuyerOrderCompletion';
 import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
 import CalendarModule from './pages/calendar/CalendarModule';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
@@ -280,16 +282,17 @@ export default function App() {
 
         <Route path="buyer-order" element={<BuyerOrder />} />
 
-        <Route path="buyer-order/processing" element={<OrderSubModule />} />
-        <Route path="buyer-order/dispatch-expense" element={<DispatchExpenseSubModule />} />
-        <Route path="ipo-invoice" element={<IPOInvoice />} />
+        <Route path="buyer-order/processing" element={<BuyerOrderSchedule />} />
+        <Route path="buyer-order/completion" element={<BuyerOrderCompletion />} />
+        <Route path="buyer-order/dispatch-expense" element={<OrderExpenses />} />
+        <Route path="ipo-invoice" element={<ProformaInvoice />} />
         <Route path="work-order/desk" element={<WorkOrderDesk defaultSection="Transactions" />} />
         <Route path="work-order/transaction" element={<Navigate to="/work-order/transaction/design" replace />} />
         <Route path="work-order/transaction/design" element={<WorkOrderDesk defaultSection="Design & Development" />} />
         <Route path="work-order/transaction/management" element={<WorkOrderDesk defaultSection="Order Management" />} />
         <Route path="work-order/transaction/processing" element={<WorkOrderDesk defaultSection="Processing" />} />
         <Route path="work-order/transaction/prep" element={<WorkOrderDesk defaultSection="Yarn & Fabric Prep" />} />
-        <Route path="work-order/transaction/amendments" element={<WorkOrderDesk defaultSection="Amendments & Codes" />} />
+        <Route path="work-order/transaction/amendments" element={<BuyerOrderAmendment />} />
         <Route path="work-order/completion" element={<Navigate to="/work-order/completion/vendor-purchase" replace />} />
         <Route path="work-order/completion/vendor-purchase" element={<WorkOrderDesk defaultSection="Vendor & Purchase Completion" />} />
         <Route path="work-order/completion/processing-fabric" element={<WorkOrderDesk defaultSection="Processing & Fabric Completion" />} />

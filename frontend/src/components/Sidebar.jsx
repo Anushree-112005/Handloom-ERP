@@ -49,6 +49,11 @@ const modules = [
 
       { section: 'Order Management' },
       { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
+      { path: '/buyer-order/processing', label: 'Buyer Order Schedule', icon: Calendar },
+      { path: '/ipo-invoice', label: 'Proforma Invoice', icon: FileText },
+      { path: '/work-order/transaction/amendments', label: 'Buyer Order Amendment', icon: Edit },
+      { path: '/buyer-order/completion', label: 'Buyer Order Completion', icon: CheckSquare },
+      { path: '/buyer-order/dispatch-expense', label: 'Order Expenses', icon: DollarSign },
 
       { section: 'Design Management' },
       { path: '/design-entry', label: 'Design Entry', icon: Palette },
@@ -497,7 +502,7 @@ export default function Sidebar({ isCollapsed, onToggleSidebar }) {
                       </div>
                     ) : (
                       <NavLink
-                        key={child.path}
+                        key={`${child.path}-${childIdx}`}
                         to={child.path}
                         end={child.path === '/'}
                         className={({ isActive }) => {
