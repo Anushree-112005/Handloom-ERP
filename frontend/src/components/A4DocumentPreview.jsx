@@ -176,6 +176,30 @@ const A4DocumentPreview = ({
                       ))}
                     </div>
                   )}
+
+                  {section.type === 'split_terms_summary' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 24, marginTop: 8 }}>
+                      <div style={{ paddingRight: 16, borderRight: '1px solid #e2e8f0' }}>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: '#0f172a', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Terms & Conditions:</div>
+                        <ol style={{ margin: 0, paddingLeft: 16, fontSize: 10, color: '#334155', lineHeight: 1.6 }}>
+                          {(section.terms || []).map((t, idx) => (
+                            <li key={idx} style={{ marginBottom: 4 }}>{t}</li>
+                          ))}
+                        </ol>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: '#0f172a', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order Summary:</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {(section.summary || []).map((item, i) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: item.isTotal ? '2px solid #0f172a' : '1px dashed #e2e8f0', fontSize: item.isTotal ? 12 : 11, fontWeight: item.isTotal ? 700 : 500, color: item.isTotal ? '#0f172a' : '#334155' }}>
+                              <span>{item.label}</span>
+                              <span style={{ fontWeight: item.isTotal ? 800 : 600 }}>{item.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 

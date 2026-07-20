@@ -147,6 +147,20 @@ export default function YarnInward() {
     }
   };
 
+  // Terms & Conditions
+  const defaultTerms = [
+    'Material not meeting our specification and standards will be returned',
+    'Demanded Qty to be supplied in whole and excess/short supply will not be accepted.',
+    'Send Invoice along with Material.',
+    'Defective and damage pieces will not be accepted.',
+    'Start bulk production only after getting the sample Approval.',
+    'Subject to Namakkal Jurisdiction.'
+  ];
+
+  const [editingTermIdx, setEditingTermIdx] = useState(null);
+  const [editingTermVal, setEditingTermVal] = useState('');
+  const [newTermVal, setNewTermVal] = useState('');
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
@@ -169,6 +183,7 @@ export default function YarnInward() {
     other_remarks: '', packing: '', freight: 0, gross_amount: 0, tax_type: 'GST',
     cgst_pct: 0, sgst_pct: 0, igst_pct: 0, tax_value: 0, tcs_value: 0, tds_pct: 0,
     total_tax: 0, round_off: 0, net_amount: 0, remarks: '',
+    terms_conditions: [...defaultTerms],
     
     items: [{
       yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
@@ -1107,69 +1122,46 @@ export default function YarnInward() {
                     </table>
                   </div>
 
-                  {/* Section 3: Tax & Logistics */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Tax & Logistics</h4>
+                  {/* Section 3: Terms & Conditions */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Terms & Conditions</h4>
                   <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
                       
-                      {/* ── Logistics & Packing ── */}
+                      {/* ── Terms & Conditions ── */}
                       <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Logistics & Packing</span>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Terms & Conditions</span>
                         </div>
                         <div style={{ padding: '16px 18px' }}>
-                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
-                            <div className="form-group"><label>Packing</label>
-                              {isCustomPacking ? (
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                  <input type="text" className="form-control" placeholder="New Packing" value={customPackingVal} onChange={e => setCustomPackingVal(e.target.value)} />
-                                  <button type="button" className="btn btn-primary" onClick={handleSaveCustomPacking} style={{ padding: '0 12px' }}><CheckCircle size={16} /></button>
-                                  <button type="button" className="btn btn-secondary" onClick={() => setIsCustomPacking(false)} style={{ padding: '0 12px' }}><X size={16} /></button>
-                                </div>
-                              ) : (
-                                <select className="form-control" name="packing" value={form.packing || ''} onChange={handleChange}>
-                                  <option value="">Select...</option>
-                                  {options.masters?.packing_type_master?.map(o => <option key={o} value={o}>{o}</option>)}
-                                  {form.packing && !options.masters?.packing_type_master?.includes(form.packing) && (
-                                    <option value={form.packing}>{form.packing}</option>
-                                  )}
-                                  <option value="custom" style={{ color: '#3b82f6', fontWeight: 600 }}>+ Add Custom...</option>
-                                </select>
-                              )}
+                          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {(form.terms_conditions || defaultTerms).map((term, idx) => (
+                              <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                {editingTermIdx === idx ? (
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { const updated = [...(form.terms_conditions || defaultTerms)]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                    <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...(form.terms_conditions || defaultTerms)]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                    <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                    <span>{term}</span>
+                                    {!isReadOnly && (
+                                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: (form.terms_conditions || defaultTerms).filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                          {!isReadOnly && (
+                            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                              <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} placeholder="Add new term or condition..." value={newTermVal} onChange={e => setNewTermVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || defaultTerms), newTermVal.trim()] }); setNewTermVal(''); }}} />
+                              <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || defaultTerms), newTermVal.trim()] }); setNewTermVal(''); }}}><Plus size={14} /> Add</button>
                             </div>
-                            <div className="form-group"><label>Freight</label><input type="number" className="form-control" name="freight" value={form.freight} onChange={handleChange} /></div>
-                            <div className="form-group"><label>Gross Amount</label><input type="number" className="form-control" name="gross_amount" value={form.gross_amount} onChange={handleChange} /></div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ── Tax & TDS/TCS Details ── */}
-                      <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-                        <div style={{ background: 'var(--bg-secondary)', padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Tax & TDS/TCS Details</span>
-                        </div>
-                        <div style={{ padding: '16px 18px' }}>
-                          <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', margin: 0 }}>
-                            <div className="form-group"><label>TAX Type</label>
-                              <select className="form-control" name="tax_type" value={form.tax_type} onChange={handleChange}>
-                                <option>GST</option><option>IGST</option><option>Exempt</option>
-                              </select>
-                            </div>
-                            {form.tax_type === 'GST' && (
-                              <>
-                                <div className="form-group"><label>CGST %</label><input type="number" className="form-control" name="cgst_pct" value={form.cgst_pct} onChange={handleChange} /></div>
-                                <div className="form-group"><label>SGST %</label><input type="number" className="form-control" name="sgst_pct" value={form.sgst_pct} onChange={handleChange} /></div>
-                              </>
-                            )}
-                            {form.tax_type === 'IGST' && (
-                              <div className="form-group"><label>IGST %</label><input type="number" className="form-control" name="igst_pct" value={form.igst_pct} onChange={handleChange} /></div>
-                            )}
-                            <div className="form-group"><label>Tax Value</label><input type="number" className="form-control" name="tax_value" value={form.tax_value} onChange={handleChange} readOnly /></div>
-                            <div className="form-group"><label>TCS Value</label><input type="number" className="form-control" name="tcs_value" value={form.tcs_value} onChange={handleChange} /></div>
-                            <div className="form-group"><label>TDS %</label><input type="number" className="form-control" name="tds_pct" value={form.tds_pct} onChange={handleChange} /></div>
-                            <div className="form-group"><label>Total Tax</label><input type="number" className="form-control" name="total_tax" value={form.total_tax} onChange={handleChange} readOnly /></div>
-                            <div className="form-group"><label>Round Off</label><input type="number" className="form-control" name="round_off" value={form.round_off} onChange={handleChange} /></div>
-                          </div>
+                          )}
                         </div>
                       </div>
 
@@ -1281,31 +1273,41 @@ export default function YarnInward() {
             ]
           },
           {
-            title: "FINANCIAL SUMMARY",
-            icon: "IndianRupee",
-            type: "grid",
-            data: [
-              { label: "Bill No", value: viewModalInward.bill_no || '-' },
-              { label: "Bill Amount", value: `₹ ${Number(viewModalInward.bill_amount).toFixed(2)}` },
-              { label: "Gross Amount", value: `₹ ${Number(viewModalInward.gross_amount).toFixed(2)}` },
-              { label: "Total Tax", value: `₹ ${Number(viewModalInward.total_tax).toFixed(2)}` },
-              { label: "Net Amount", value: `₹ ${Number(viewModalInward.net_amount).toFixed(2)}` }
-            ]
-          },
-          {
             title: "YARN ITEMS",
             icon: "Box",
             type: "table",
-            headers: ["S.No", "Yarn Count", "Colour", "Bags", "Kgs", "Rate", "Amount"],
+            headers: ["S.No", "Yarn Count", "Colour", "Lot No", "Bags", "Kgs", "Rate", "Amount"],
             rows: (viewModalInward.items || []).map((item, idx) => [
               idx + 1,
-              item.yarn_count,
-              item.colour,
-              item.bags,
-              item.kgs,
-              `₹ ${item.rate}`,
-              `₹ ${Number(item.amount).toFixed(2)}`
+              item.yarn_count || '-',
+              item.colour || '-',
+              item.lot_no || '-',
+              item.bags || 0,
+              item.kgs || 0,
+              `₹ ${item.rate || 0}`,
+              `₹ ${Number(item.amount || 0).toFixed(2)}`
             ])
+          },
+          {
+            title: "TERMS & ORDER SUMMARY",
+            icon: "FileText",
+            type: "split_terms_summary",
+            terms: viewModalInward.terms_conditions && viewModalInward.terms_conditions.length > 0 ? viewModalInward.terms_conditions : defaultTerms,
+            summary: [
+              { label: "Gross Amount", value: `₹ ${(viewModalInward.gross_amount || 0).toFixed(2)}` },
+              { label: "Freight Charges", value: `₹ ${(viewModalInward.freight || 0).toFixed(2)}` },
+              ...(viewModalInward.tax_type === 'GST' ? [
+                { label: `SGST (${viewModalInward.sgst_pct || 0}%)`, value: `₹ ${(((parseFloat(viewModalInward.gross_amount) || 0) + (parseFloat(viewModalInward.freight) || 0)) * (viewModalInward.sgst_pct || 0) / 100).toFixed(2)}` },
+                { label: `CGST (${viewModalInward.cgst_pct || 0}%)`, value: `₹ ${(((parseFloat(viewModalInward.gross_amount) || 0) + (parseFloat(viewModalInward.freight) || 0)) * (viewModalInward.cgst_pct || 0) / 100).toFixed(2)}` }
+              ] : viewModalInward.tax_type === 'IGST' ? [
+                { label: `IGST (${viewModalInward.igst_pct || 0}%)`, value: `₹ ${(((parseFloat(viewModalInward.gross_amount) || 0) + (parseFloat(viewModalInward.freight) || 0)) * (viewModalInward.igst_pct || 0) / 100).toFixed(2)}` }
+              ] : []),
+              { label: "TCS Value", value: `₹ ${(viewModalInward.tcs_value || 0).toFixed(2)}` },
+              { label: "Round Off", value: `₹ ${(viewModalInward.round_off || 0).toFixed(2)}` },
+              { label: "Total Bags", value: `${viewModalInward.total_bags || 0}` },
+              { label: "Received Kgs", value: `${(viewModalInward.received_kgs || 0).toLocaleString('en-IN')}` },
+              { label: "Net Amount", value: `₹ ${(viewModalInward.net_amount || 0).toFixed(2)}`, isTotal: true }
+            ]
           }
         ] : []}
       />
