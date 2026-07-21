@@ -47,7 +47,7 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid token")
     uid = payload.get("sub")
     result = await db.execute(select(Employee).where((Employee.employee_code == uid) | (Employee.username == uid)))
-    user = result.scalar_one_or_none()
+    user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user
@@ -56,7 +56,7 @@ async def get_current_user(
 @router.post("/login", response_model=TokenResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Employee).where((Employee.employee_code == form.username) | (Employee.username == form.username)))
-    user = result.scalar_one_or_none()
+    user = result.scalars().first()
     if not user or not user.password_hash or not verify_password(form.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if user.status != "Active":
