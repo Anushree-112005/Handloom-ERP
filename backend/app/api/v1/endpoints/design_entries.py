@@ -242,6 +242,20 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     client = Groq(api_key=settings.GROQ_API_KEY)
     
     import time
+    import re
+
+    def parse_json_from_llm(raw_content: str) -> dict:
+        if not raw_content:
+            return {}
+        cleaned = re.sub(r'<think>.*?</think>', '', raw_content, flags=re.DOTALL).strip()
+        match = re.search(r'\{.*\}', cleaned, flags=re.DOTALL)
+        if match:
+            cleaned = match.group(0)
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            return {}
+
     def call_llm_with_retry(groq_client, **kwargs):
         for attempt in range(4):
             try:
@@ -268,7 +282,7 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
     try:
         completion = call_llm_with_retry(
             client,
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            model="qwen/qwen3.6-27b",
             messages=[
                 {
                     "role": "user",
@@ -283,11 +297,10 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
                     ],
                 }
             ],
-            response_format={"type": "json_object"},
             temperature=0.0
         )
         if completion and hasattr(completion, 'choices') and completion.choices:
-            res_data = json.loads(completion.choices[0].message.content or "{}")
+            res_data = parse_json_from_llm(completion.choices[0].message.content or "")
             template_type = res_data.get("type", "other")
     except Exception:
         template_type = "other"
@@ -393,7 +406,7 @@ Return ONLY a JSON object of this structure:
         try:
             completion = call_llm_with_retry(
                 client,
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="qwen/qwen3.6-27b",
                 messages=[
                     {
                         "role": "user",
@@ -408,11 +421,10 @@ Return ONLY a JSON object of this structure:
                         ],
                     }
                 ],
-                response_format={"type": "json_object"},
                 temperature=0.0
             )
             if completion and hasattr(completion, 'choices') and completion.choices:
-                res_data = json.loads(completion.choices[0].message.content or "{}")
+                res_data = parse_json_from_llm(completion.choices[0].message.content or "")
                 combined_warp.extend(res_data.get("warp", []))
                 combined_weft.extend(res_data.get("weft", []))
         except Exception as e:

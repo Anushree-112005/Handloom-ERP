@@ -46,6 +46,9 @@ import VoucherEntry from './pages/accounts/VoucherEntry';
 import AccountsTransaction from './pages/accounts/AccountsTransaction';
 import SubMasterPage from './pages/masters/SubMasterPage';
 import RackMaster from './pages/rack_master/RackMaster';
+import WarpingProductionEntry from './pages/warp/WarpingProductionEntry';
+import SizingProductionEntry from './pages/warp/SizingProductionEntry';
+import JobWorkBillEntry from './pages/jobwork/JobWorkBillEntry';
 
 
 
@@ -323,11 +326,10 @@ export default function App() {
 
         <Route path="dyed-yarn/received" element={<DyedYarnReceived />} />
 
-        <Route path="dyed-yarn/delivery" element={<DyedYarnDelivery />} />
-
-        <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
-
+        <Route path="dyed-yarn/delivery" element={<DyedYarnDelivery />} />        <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
         <Route path="warp/delivery" element={<WarpDelivery />} />
+        <Route path="warp/production-entry" element={<WarpingProductionEntry />} />
+        <Route path="warp/sizing-production-entry" element={<SizingProductionEntry />} />
         <Route path="warp/transaction" element={<Navigate to="/warp/transaction/entries" replace />} />
         <Route path="warp/transaction/entries" element={<WarpSizingTransaction defaultSection="Beam & Transaction Entries" />} />
         <Route path="warp/transaction/reports" element={<WarpSizingTransaction defaultSection="Reports, Bills & Amendments" />} />
@@ -350,6 +352,7 @@ export default function App() {
         <Route path="jobwork/printed-fabric-receipt" element={<PrintedFabricReceipt />} />
         <Route path="jobwork/finishing-delivery" element={<FinishingDelivery />} />
         <Route path="jobwork/finished-fabric-receipt" element={<FinishedFabricReceipt />} />
+        <Route path="jobwork/bill" element={<JobWorkBillEntry />} />
 
         <Route path="fabric/transaction" element={<Navigate to="/fabric/transaction/checking" replace />} />
         <Route path="fabric/transaction/checking" element={<FabricTransaction defaultSection="Fabric Checking" />} />

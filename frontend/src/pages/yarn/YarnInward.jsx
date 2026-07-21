@@ -1257,7 +1257,6 @@ export default function YarnInward() {
         title="YARN INWARD RECEIPT"
         documentNumber={viewModalInward?.ref_no}
         status={viewModalInward?.status}
-        onDownloadPdf={() => alert('PDF Download for Yarn Inward triggered')}
         sections={viewModalInward ? [
           {
             title: "LOGISTICS & SUPPLIER",

@@ -2909,7 +2909,6 @@ export default function WarpSizingTransaction({ defaultSection = 'Beam & Transac
           title={PAGES_METADATA[selectedViewRecord?.module_type]?.label?.toUpperCase() || 'DOCUMENT PREVIEW'}
           documentNumber={selectedViewRecord?.voucherNo || selectedViewRecord?.billNo || selectedViewRecord?.setReportNo || selectedViewRecord?.amendmentNo || selectedViewRecord?.id}
           status={selectedViewRecord?.statusTracking || selectedViewRecord?.status || selectedViewRecord?.qcStatus || 'Active'}
-          onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
           sections={selectedViewRecord ? [
             {
               title: "GENERAL INFORMATION",
