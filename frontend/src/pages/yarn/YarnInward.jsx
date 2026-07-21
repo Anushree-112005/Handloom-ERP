@@ -170,10 +170,6 @@ export default function YarnInward() {
     'Subject to Namakkal Jurisdiction.'
   ];
 
-  const [editingTermIdx, setEditingTermIdx] = useState(null);
-  const [editingTermVal, setEditingTermVal] = useState('');
-  const [newTermVal, setNewTermVal] = useState('');
-
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
