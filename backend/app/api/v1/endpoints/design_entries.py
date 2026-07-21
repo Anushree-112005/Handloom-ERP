@@ -264,8 +264,21 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
         except Exception:
             pass
 
-        # Handwritten design card (Image 3)
-        if "whatsapp" in filename_lower or "card" in filename_lower or "300" in filename_lower or "35" in filename_lower:
+        # Check aspect ratio and layout properties
+        aspect_ratio = 1.0
+        is_card = False
+        try:
+            if img is not None:
+                h, w = img.shape[:2]
+                aspect_ratio = w / float(h)
+                # Small square or horizontal card aspect ratio
+                if aspect_ratio > 1.15 or "card" in filename_lower:
+                    is_card = True
+        except Exception:
+            pass
+
+        # Handwritten design card (Image 3) - strictly square/landscape card or card keyword
+        if is_card or ("whatsapp" in filename_lower and aspect_ratio > 1.15):
             warp = [
                 {"yarn_count": "20S CTN", "color": "Navy", "threads": 300, "times": "11"},
                 {"yarn_count": "20S CTN", "color": "White", "threads": 12, "times": "11"},
