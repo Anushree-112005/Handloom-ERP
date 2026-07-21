@@ -54,6 +54,14 @@ const workflowSteps = [
   },
   {
     num: 7,
+    title: "Warehouse & Stock Photos",
+    color: "#059669", // Emerald
+    icon: Warehouse,
+    path: "/warehouse-stock",
+    bullets: ["Physical Stock Verification", "Material Photos", "Branch Check"]
+  },
+  {
+    num: 8,
     title: "Logistics & Shipping",
     color: "#dc2626", // Red
     icon: Truck,
@@ -61,7 +69,7 @@ const workflowSteps = [
     bullets: ["Order Fulfillment", "Global Shipping"]
   },
   {
-    num: 8,
+    num: 9,
     title: "Billing & Accounting",
     color: "#2563eb", // Blue
     icon: Receipt,

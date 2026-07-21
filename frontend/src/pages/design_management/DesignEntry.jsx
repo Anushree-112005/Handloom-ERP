@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown, ArrowLeft, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
 import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI, dropdownAPI } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
@@ -1040,7 +1040,7 @@ export default function DesignEntry() {
         dropdownAPI.getAll().catch(() => ({ data: { masters: {}, masters_with_ids: {} } }))
       ]);
       setEntries(entriesRes.data);
-      setBuyers(partiesRes.data.filter(p => p.party_type === 'Sales Party'));
+      setBuyers(partiesRes.data.filter(p => p.party_type === 'Sales Party' || p.party_type === 'Sales' || p.party_type === 'Customer' || p.party_type === 'Buyer' || (p.party_type || '').toLowerCase().includes('buyer')));
       setEmployees(empRes.data);
       setOrders(ordRes.data);
       setColorMasters(colorRes.data || []);
@@ -1456,6 +1456,21 @@ export default function DesignEntry() {
     }
   };
 
+  const handleApprove = async (id, e) => {
+    if (e) e.stopPropagation();
+    if (window.confirm('Are you sure you want to approve this design? This will notify the Purchase Team.')) {
+      try {
+        await designEntryAPI.approve(id);
+        alert('Design approved successfully!');
+        if (selectedViewEntry?.id === id) setSelectedViewEntry(null);
+        loadData();
+      } catch (err) {
+        alert('Error approving design');
+        console.error(err);
+      }
+    }
+  };
+
   const handleDelete = async (id, ds_ref, e) => {
     if (e) e.stopPropagation();
     if (window.confirm(`Are you sure you want to delete ${ds_ref}?`)) {
@@ -1513,7 +1528,7 @@ export default function DesignEntry() {
         const suffix = digitsMatch ? digitsMatch[0] : '';
         
         setForm(prev => {
-          const autoDesignNo = suffix ? `DEPL-${suffix}` : (firstItem.design_no || prev.design_no);
+          const autoDesignNo = firstItem.design_no || (suffix ? `DEPL-${suffix}` : prev.design_no);
           return {
             ...prev,
             ibpo_no: value,
@@ -1531,6 +1546,7 @@ export default function DesignEntry() {
             reed: firstItem.finish_reed || prev.reed,
             count_rxpxw: firstItem.construction || prev.count_rxpxw,
             toie_pct: firstItem.tolerance_pct || prev.toie_pct,
+            weight_grm: firstItem.gsm || prev.weight_grm,
             ibpo_image: firstItem.image_design_path || ''
           };
         });
@@ -1754,7 +1770,7 @@ export default function DesignEntry() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Design EntryNo</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Actions</th>
+                      <th>Design EntryNo</th><th>DS Date</th><th>Design No</th><th>Buyer</th><th>Fabric</th><th>Weaving</th><th>Status</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1770,8 +1786,18 @@ export default function DesignEntry() {
                         <td>{e.buyer_name || '-'}</td>
                         <td><span className="badge badge-draft">{e.fabric || 'N/A'}</span></td>
                         <td><span className="badge badge-active">{e.weaving || 'N/A'}</span></td>
+                        <td>
+                          <span className={`badge ${e.status === 'Approved' ? 'badge-active' : 'badge-draft'}`} style={e.status === 'Approved' ? { background: '#10b981', color: 'white' } : {}}>
+                            {e.status || 'Pending'}
+                          </span>
+                        </td>
                         <td onClick={evt => evt.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
+                            {e.status !== 'Approved' && (
+                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: '#10b981' }} onClick={(evt) => handleApprove(e.id, evt)} title="Approve Design">
+                                <CheckCircle size={14} />
+                              </button>
+                            )}
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => { evt.stopPropagation(); setViewModalDesign(e); }} title="Preview Design"><Eye size={14} color="var(--primary)" /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleOpenForm(e, false)} title="Edit"><Edit2 size={14} /></button>
                             <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={(evt) => handleDelete(e.id, e.ds_ref_no, evt)} title="Delete"><Trash2 size={14} color="#ef4444" /></button>
@@ -1834,7 +1860,7 @@ export default function DesignEntry() {
           </div>
         </>
       ) : (
-        <div className="card" style={{ padding: 0 }}>
+        <div className="card" style={{ padding: 0, minWidth: 0, maxWidth: '100%' }}>
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button 
@@ -1854,21 +1880,33 @@ export default function DesignEntry() {
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
               <form id="designForm" onSubmit={handleCreate}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
+                  <style>
+                    {`
+                      #designForm > div > div {
+                        min-width: 0;
+                        max-width: 100%;
+                      }
+                      .data-table-wrapper {
+                        overflow-x: auto;
+                        width: 100%;
+                      }
+                    `}
+                  </style>
                   {/* Top section: Basic & Buyer Info */}
                   <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Basic & Buyer Info</h4>
                     
-                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                       {/* Left Side: Form Details */}
-                      <div style={{ flex: 1, maxWidth: 'calc(100% - 500px)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                      <div style={{ flex: '1 1 min(100%, 600px)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
                           <div className="form-group"><label>DS Date *</label><input type="date" className="form-control" name="ds_date" value={form.ds_date} onChange={handleChange} required /></div>
                           <div className="form-group"><label>Design No *</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} required /></div>
                           <div className="form-group"><label>Color</label><input className="form-control" name="color" value={form.color} onChange={handleChange} /></div>
                         </div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginTop: 16 }}>
                           <div className="form-group"><label>Count RxPXW</label><input className="form-control" name="count_rxpxw" value={form.count_rxpxw} onChange={handleChange} /></div>
                           <div className="form-group"><label>Created By</label>
                             <select className="form-control" name="created_by" value={form.created_by} onChange={handleChange}>
@@ -1922,9 +1960,9 @@ export default function DesignEntry() {
                   </div>
 
                   {/* Metrics, Weaving & Allowances Section (Full Width) */}
-                  <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)', maxWidth: '100%' }}>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Metrics, Weaving & Allowances</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
                         {/* ROW 1: Order Mtr / Ex Mtr / Total Mtr / Crmp % / SKG % */}
                         <div className="form-group"><label>Order Mtr</label><input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} /></div>
                         <div className="form-group"><label>Ex Mtr</label><input type="number" className="form-control" name="ex_mtr" value={form.ex_mtr} onChange={handleChange} /></div>
@@ -1985,8 +2023,8 @@ export default function DesignEntry() {
                     {/* Right Column: Yarn Count Specifications Table */}
                     <div style={{ background: '#fafafa', padding: 20, borderRadius: 8, border: '1px solid var(--border)' }}>
                       <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Yarn Count Specifications</h4>
-                      <div style={{ overflowX: 'auto' }}>
-                        <table className="data-table" style={{ fontSize: 12, width: '100%' }}>
+                      <div style={{ overflowX: 'auto', width: '100%' }}>
+                        <table className="data-table" style={{ fontSize: 12, width: '100%', minWidth: 800 }}>
                           <thead>
                             <tr>
                               <th>Type</th>
@@ -2348,8 +2386,8 @@ export default function DesignEntry() {
                 </div>
 
                 {/* Fabric Design Specifications Table */}
-                <div className="card" style={{ padding: 0, borderRadius: '0 0 6px 6px', borderTop: 'none', overflowX: 'auto', marginBottom: 24 }}>
-                  <table className="data-table" style={{ fontSize: 12, width: '100%' }}>
+                <div className="card" style={{ padding: 0, borderRadius: '0 0 6px 6px', borderTop: 'none', overflowX: 'auto', marginBottom: 24, width: '100%' }}>
+                  <table className="data-table" style={{ fontSize: 12, width: '100%', minWidth: 1200 }}>
                     <thead>
                       <tr>
                         <th>S. No</th>

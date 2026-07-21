@@ -76,6 +76,7 @@ class YarnInwardItem(Base):
     color_code = Column(String(100))
     lot_no = Column(String(100))
     our_id = Column(String(100))
+    rack_id = Column(Integer, ForeignKey("racks.id"), nullable=True)
     bags = Column(Integer, default=0)
     kgs = Column(Float, default=0.0)
     rate = Column(Float, default=0.0)

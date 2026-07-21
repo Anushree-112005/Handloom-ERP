@@ -176,42 +176,7 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       setSurplusDeliveries(allTxns.filter(t => t.module_type === 'surplus_delivery').map(mapTxn));
       setCustomerHangers(allTxns.filter(t => t.module_type === 'customer_hanger').map(mapTxn));
       const fetchedFinalInspections = allTxns.filter(t => t.module_type === 'final_inspection').map(mapTxn);
-      const isSeededDeleted = localStorage.getItem('final_inspection_seeded_deleted') === 'true';
-      if (fetchedFinalInspections.length === 0 && !isSeededDeleted) {
-        const seedPayload = {
-          module_type: 'final_inspection',
-          transaction_no: 'AUD-00003',
-          status: 'APPROVED',
-          details: {
-            auditNo: 'AUD-00003',
-            auditDate: '2026-08-05',
-            overallStatus: 'APPROVED',
-            designNo: 'DEPL-00003',
-            buyerName: 'Sri Lakshmi Textiles Pvt Ltd',
-            buyerOrderNo: 'IBPO-00003',
-            totalMetersInspected: '1960.00',
-            approvedMeters: '1960.00',
-            rejectedQuantity: '0.00',
-            rolls: [
-              { pieceNo: 'PC-301-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-              { pieceNo: 'PC-302-F', meters: '98.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-              { pieceNo: 'PC-303-F', meters: '97.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'B' },
-              { pieceNo: 'PC-304-F', meters: '99.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-              { pieceNo: 'PC-305-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' }
-            ]
-          }
-        };
-        try {
-          await workOrderTransactionAPI.create(seedPayload);
-          const reloadRes = await workOrderTransactionAPI.getAll();
-          setFinalInspections(reloadRes.data.filter(t => t.module_type === 'final_inspection').map(mapTxn));
-        } catch (seedErr) {
-          console.error("Failed to seed final inspection record", seedErr);
-          setFinalInspections([{ ...seedPayload.details, id: seedPayload.transaction_no, status: seedPayload.status }]);
-        }
-      } else {
-        setFinalInspections(fetchedFinalInspections);
-      }
+      setFinalInspections(fetchedFinalInspections);
 
       try {
         const dRes = await designEntryAPI.list();
@@ -254,14 +219,8 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
             grade: 'A'
           }));
         } else {
-          // fallback default sample rolls
-          rolls = [
-            { pieceNo: 'PC-301-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-            { pieceNo: 'PC-302-F', meters: '98.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-            { pieceNo: 'PC-303-F', meters: '97.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'B' },
-            { pieceNo: 'PC-304-F', meters: '99.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-            { pieceNo: 'PC-305-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' }
-          ];
+          // fallback to empty rolls list
+          rolls = [];
         }
 
         setFields(prev => ({
@@ -3346,49 +3305,27 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       };
     }
     else if (activePage === 'final_inspection') {
-      const nextNum = finalInspections.length + 3;
+      let nextNum = 1;
+      if (finalInspections.length > 0) {
+        const nums = finalInspections.map(item => {
+          const match = (item.auditNo || item.id || '').match(/\d+/);
+          return match ? parseInt(match[0], 10) : 0;
+        });
+        nextNum = Math.max(...nums, 0) + 1;
+      }
       nextId = `AUD-${String(nextNum).padStart(5, '0')}`;
-      
-      const defaultDesign = 'DEPL-00003';
-      const design = dbDesigns.find(d => d.design_no === defaultDesign);
-      const matchedReceipt = finishedFabricsList.find(r => r.design_no === defaultDesign || (design && r.order_no === design.ibpo_no));
-      
-      let defaultBuyer = 'Sunrise Fashion House'; // Match the DEPL-00003 buyer in database
-      let defaultOrder = 'IBPO-00003';
-      let rolls = [
-        { pieceNo: 'PC-301-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-        { pieceNo: 'PC-302-F', meters: '98.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-        { pieceNo: 'PC-303-F', meters: '97.50', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'B' },
-        { pieceNo: 'PC-304-F', meters: '99.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' },
-        { pieceNo: 'PC-305-F', meters: '98.00', colorCheck: 'OK', widthCheck: '59.68"', status: 'Approved', grade: 'A' }
-      ];
-
-      if (design) {
-        defaultBuyer = design.buyer_name || defaultBuyer;
-        defaultOrder = design.ibpo_no || defaultOrder;
-      }
-      if (matchedReceipt && matchedReceipt.items && matchedReceipt.items.length > 0) {
-        rolls = matchedReceipt.items.map(item => ({
-          pieceNo: item.piece_no || '',
-          meters: item.meters || '0.00',
-          colorCheck: 'OK',
-          widthCheck: matchedReceipt.width ? `${matchedReceipt.width}"` : '59.68"',
-          status: 'Approved',
-          grade: 'A'
-        }));
-      }
 
       initialFields = {
-        auditNo: getAuditNoFromDesignNo(defaultDesign),
+        auditNo: nextId,
         auditDate: dateToday,
         overallStatus: 'APPROVED',
-        designNo: defaultDesign,
-        buyerName: defaultBuyer,
-        buyerOrderNo: defaultOrder,
-        totalMetersInspected: rolls.reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0).toFixed(2),
-        approvedMeters: rolls.filter(r => r.status === 'Approved').reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0).toFixed(2),
-        rejectedQuantity: rolls.filter(r => r.status === 'Rejected').reduce((sum, r) => sum + (parseFloat(r.meters) || 0), 0).toFixed(2),
-        rolls: rolls
+        designNo: '',
+        buyerName: '',
+        buyerOrderNo: '',
+        totalMetersInspected: '0.00',
+        approvedMeters: '0.00',
+        rejectedQuantity: '0.00',
+        rolls: []
       };
     }
     else {
@@ -3468,9 +3405,6 @@ export default function FabricTransaction({ defaultSection = 'Fabric Checking' }
       try {
         if (db_id) {
           await workOrderTransactionAPI.delete(db_id);
-        }
-        if (id === 'AUD-00003') {
-          localStorage.setItem('final_inspection_seeded_deleted', 'true');
         }
         loadData();
       } catch (err) {

@@ -19,10 +19,12 @@ class VoucherEntryIn(BaseModel):
     dr_amount:   float = 0.0
     cr_amount:   float = 0.0
     gst_rate:    float = 0.0
-    item_id:     Optional[int] = None
-    item_name:   Optional[str] = None
-    quantity:    Optional[float] = None
-    rate:        Optional[float] = None
+    item_id:       Optional[int] = None
+    item_name:     Optional[str] = None
+    quantity:      Optional[float] = None
+    rate:          Optional[float] = None
+    location_id:   Optional[int] = None
+    location_name: Optional[str] = None
 
 class VoucherCreate(BaseModel):
     voucher_type: VoucherType

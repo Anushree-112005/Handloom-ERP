@@ -1,18 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 
 from app.core.database import get_db
 from app.models.employee import Employee
+from app.models.rbac import UserRole, Role
 from app.core.security import get_password_hash
 
 router = APIRouter(prefix="/employees", tags=["Employee Master"])
 
 class EmployeeBase(BaseModel):
     employee_code: str
+    username: Optional[str] = None
     name: str
     dob: Optional[str] = None
     gender: Optional[str] = None
@@ -84,6 +86,8 @@ class EmployeeBase(BaseModel):
     created_by: Optional[str] = None
     modified_by: Optional[str] = None
     access_expiry_date: Optional[datetime] = None
+    
+    role_id: Optional[int] = None
 
 class EmployeeCreate(EmployeeBase):
     password: Optional[str] = None
@@ -95,14 +99,55 @@ class EmployeeOut(EmployeeBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    role_name: Optional[str] = None
 
     class Config:
         from_attributes = True
 
-@router.get("/", response_model=List[EmployeeOut])
-async def list_employees(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Employee))
-    return result.scalars().all()
+@router.get("/", response_model=Any)
+async def list_employees(
+    page: Optional[int] = Query(None),
+    limit: Optional[int] = Query(10),
+    search: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db)
+):
+    query = (
+        select(Employee, UserRole.role_id, Role.name.label("role_name"))
+        .outerjoin(UserRole, UserRole.user_id == Employee.id)
+        .outerjoin(Role, Role.id == UserRole.role_id)
+    )
+
+    if search:
+        query = query.where(
+            (Employee.name.ilike(f"%{search}%")) |
+            (Employee.employee_code.ilike(f"%{search}%"))
+        )
+
+    if page is not None:
+        count_query = select(func.count()).select_from(Employee)
+        if search:
+            count_query = count_query.where(
+                (Employee.name.ilike(f"%{search}%")) |
+                (Employee.employee_code.ilike(f"%{search}%"))
+            )
+        total_res = await db.execute(count_query)
+        total = total_res.scalar()
+
+        query = query.offset((page - 1) * limit).limit(limit)
+
+    result = await db.execute(query)
+    rows = result.all()
+    out = []
+    for emp, r_id, r_name in rows:
+        emp_dict = emp.__dict__.copy()
+        emp_dict.pop("_sa_instance_state", None)
+        emp_dict["role_id"] = r_id
+        emp_dict["role_name"] = r_name
+        out.append(emp_dict)
+    
+    if page is not None:
+        return {"data": out, "total": total, "page": page, "limit": limit}
+    return out
 
 @router.post("/", response_model=EmployeeOut, status_code=201)
 async def create_employee(emp: EmployeeCreate, db: AsyncSession = Depends(get_db)):
@@ -116,14 +161,27 @@ async def create_employee(emp: EmployeeCreate, db: AsyncSession = Depends(get_db
     if not (mobile_val.isdigit() and len(mobile_val) == 10):
         raise HTTPException(status_code=400, detail="Phone number must be exactly 10 digits")
     
-    data = emp.model_dump(exclude={"password"})
+    data = emp.model_dump(exclude={"password", "role_id"})
     if emp.password:
         data["password_hash"] = get_password_hash(emp.password)
     db_emp = Employee(**data)
     db.add(db_emp)
+    await db.flush() # get db_emp.id
+    
+    if emp.role_id:
+        db.add(UserRole(user_id=db_emp.id, role_id=emp.role_id))
+        
     await db.commit()
     await db.refresh(db_emp)
-    return db_emp
+    
+    emp_out = db_emp.__dict__.copy()
+    emp_out["role_id"] = emp.role_id
+    if emp.role_id:
+        role_res = await db.execute(select(Role).where(Role.id == emp.role_id))
+        role = role_res.scalar_one_or_none()
+        emp_out["role_name"] = role.name if role else None
+        
+    return emp_out
 
 @router.put("/{emp_id}", response_model=EmployeeOut)
 async def update_employee(emp_id: int, emp: EmployeeUpdate, db: AsyncSession = Depends(get_db)):
@@ -139,24 +197,51 @@ async def update_employee(emp_id: int, emp: EmployeeUpdate, db: AsyncSession = D
         if not (mobile_val.isdigit() and len(mobile_val) == 10):
             raise HTTPException(status_code=400, detail="Phone number must be exactly 10 digits")
 
-    data = emp.model_dump(exclude={"password"}, exclude_unset=True)
+    data = emp.model_dump(exclude={"password", "role_id"}, exclude_unset=True)
     if emp.password:
         data["password_hash"] = get_password_hash(emp.password)
         
     for k, v in data.items():
         setattr(db_emp, k, v)
         
+    if "role_id" in emp.model_dump(exclude_unset=True):
+        await db.execute(UserRole.__table__.delete().where(UserRole.user_id == emp_id))
+        if emp.role_id:
+            db.add(UserRole(user_id=emp_id, role_id=emp.role_id))
+            
     await db.commit()
     await db.refresh(db_emp)
-    return db_emp
+    
+    emp_out = db_emp.__dict__.copy()
+    role_res = await db.execute(
+        select(UserRole.role_id, Role.name)
+        .join(Role, Role.id == UserRole.role_id)
+        .where(UserRole.user_id == emp_id)
+    )
+    r = role_res.first()
+    if r:
+        emp_out["role_id"] = r[0]
+        emp_out["role_name"] = r[1]
+        
+    return emp_out
 
 @router.get("/{emp_id}", response_model=EmployeeOut)
 async def get_employee(emp_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Employee).where(Employee.id == emp_id))
-    db_emp = result.scalar_one_or_none()
-    if not db_emp:
+    result = await db.execute(
+        select(Employee, UserRole.role_id, Role.name.label("role_name"))
+        .outerjoin(UserRole, UserRole.user_id == Employee.id)
+        .outerjoin(Role, Role.id == UserRole.role_id)
+        .where(Employee.id == emp_id)
+    )
+    row = result.first()
+    if not row:
         raise HTTPException(status_code=404, detail="Employee not found")
-    return db_emp
+    
+    emp, r_id, r_name = row
+    emp_out = emp.__dict__.copy()
+    emp_out["role_id"] = r_id
+    emp_out["role_name"] = r_name
+    return emp_out
 
 @router.delete("/{emp_id}", status_code=204)
 async def delete_employee(emp_id: int, db: AsyncSession = Depends(get_db)):

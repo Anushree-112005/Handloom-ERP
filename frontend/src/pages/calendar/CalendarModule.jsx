@@ -9,6 +9,9 @@ import {
   buyerOrderAPI, despatchAPI, ppcAPI, partyAPI, genericPurchaseOrderAPI, calendarEventAPI,
   yarnPurchaseOrderAPI, salesInvoiceAPI, employeeAPI, designEntryAPI
 } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -27,6 +30,7 @@ export default function CalendarModule() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addEventModalOpen, setAddEventModalOpen] = useState(false);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
   const [newEventData, setNewEventData] = useState({ title: '', event_type: 'Meeting', event_date: '', event_time: '', description: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -457,6 +461,32 @@ export default function CalendarModule() {
     return Object.entries(summary);
   };
 
+  const exportToExcel = () => {
+    setExportDropdownOpen(false);
+    const csvContent = "data:text/csv;charset=utf-8,Type,Category,Date,Time\n" 
+      + events.map(e => `${e.type},${e.category},${e.date.toLocaleDateString()},${e.time}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `calendar_events_${MONTHS[currentDate.getMonth()]}_${currentDate.getFullYear()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    setExportDropdownOpen(false);
+    const doc = new jsPDF();
+    doc.text(`Calendar Events - ${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`, 14, 15);
+    const tableData = events.map(e => [e.type, e.category, e.date.toLocaleDateString(), e.time]);
+    autoTable(doc, {
+      head: [['Type', 'Category', 'Date', 'Time']],
+      body: tableData,
+      startY: 20,
+    });
+    doc.save(`calendar_events_${MONTHS[currentDate.getMonth()]}_${currentDate.getFullYear()}.pdf`);
+  };
+
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
@@ -474,25 +504,22 @@ export default function CalendarModule() {
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn btn-secondary" onClick={() => {
-            const csvContent = "data:text/csv;charset=utf-8,Type,Category,Date,Time\n" 
-              + events.map(e => `${e.type},${e.category},${e.date.toLocaleDateString()},${e.time}`).join("\n");
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `calendar_events_${MONTHS[currentDate.getMonth()]}_${currentDate.getFullYear()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }}>
-            <Download size={16} /> Export
-          </button>
-          <button className="btn btn-secondary" onClick={() => {
-            setEvents([]); // Clear to show visual refresh
-            setTimeout(() => setRefreshTrigger(prev => prev + 1), 100);
-          }}>
-            <RefreshCw size={16} /> Refresh
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              className="btn"
+              style={{ background: '#4f46e5', color: '#fff' }}
+              onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+            >
+              <Download size={16} /> Export
+            </button>
+            {exportDropdownOpen && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '4px', background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '150px', overflow: 'hidden' }}>
+                <button onClick={exportToPDF} style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', borderBottom: '1px solid var(--border)', textAlign: 'left', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onMouseOver={e => e.target.style.background = '#f8fafc'} onMouseOut={e => e.target.style.background = 'none'}>Download as PDF</button>
+                <button onClick={exportToExcel} style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)' }} onMouseOver={e => e.target.style.background = '#f8fafc'} onMouseOut={e => e.target.style.background = 'none'}>Download as Excel</button>
+              </div>
+            )}
+          </div>
+
           <button className="btn btn-primary" onClick={() => {
             setNewEventData({ title: '', event_type: 'Meeting', event_date: currentDate.toISOString().split('T')[0], event_time: '10:00', description: '' });
             setAddEventModalOpen(true);
@@ -900,58 +927,71 @@ export default function CalendarModule() {
       {/* Add Event Modal */}
       {addEventModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s' }}>
-          <div className="card" style={{ width: '400px', maxWidth: '90vw', padding: '24px', animation: 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '800', margin: '0 0 16px 0' }}>Add Calendar Event</h3>
+          <div className="card" style={{ width: '600px', maxWidth: '90vw', padding: '0', animation: 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>New Calendar Event</h2>
+              <button 
+                type="button"
+                onClick={() => setAddEventModalOpen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: 'var(--text-secondary)' }}>Event Title *</label>
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  value={newEventData.title}
-                  onChange={e => setNewEventData({...newEventData, title: e.target.value})}
-                  placeholder="e.g. Board Meeting"
-                />
+            <div style={{ padding: '24px' }}>
+              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                <div className="form-group">
+                  <label>Event Title *</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    value={newEventData.title}
+                    onChange={e => setNewEventData({...newEventData, title: e.target.value})}
+                    placeholder="e.g. Board Meeting"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Event Type</label>
+                  <select 
+                    className="form-control" 
+                    value={newEventData.event_type}
+                    onChange={e => setNewEventData({...newEventData, event_type: e.target.value})}
+                  >
+                    <option value="Meeting">Meeting</option>
+                    <option value="Reminder">Reminder</option>
+                    <option value="Holiday">Holiday</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: 'var(--text-secondary)' }}>Event Type</label>
-                <select 
-                  className="input-field" 
-                  value={newEventData.event_type}
-                  onChange={e => setNewEventData({...newEventData, event_type: e.target.value})}
-                >
-                  <option value="Meeting">Meeting</option>
-                  <option value="Reminder">Reminder</option>
-                  <option value="Holiday">Holiday</option>
-                  <option value="Follow-up">Follow-up</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: 'var(--text-secondary)' }}>Date *</label>
+              
+              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                <div className="form-group">
+                  <label>Date *</label>
                   <input 
                     type="date" 
-                    className="input-field" 
+                    className="form-control" 
                     value={newEventData.event_date}
                     onChange={e => setNewEventData({...newEventData, event_date: e.target.value})}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: 'var(--text-secondary)' }}>Time</label>
+                <div className="form-group">
+                  <label>Time</label>
                   <input 
                     type="time" 
-                    className="input-field" 
+                    className="form-control" 
                     value={newEventData.event_time}
                     onChange={e => setNewEventData({...newEventData, event_time: e.target.value})}
                   />
                 </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: 'var(--text-secondary)' }}>Description</label>
+              
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label>Description</label>
                 <textarea 
-                  className="input-field" 
+                  className="form-control" 
                   rows="3"
                   value={newEventData.description}
                   onChange={e => setNewEventData({...newEventData, description: e.target.value})}
@@ -960,7 +1000,7 @@ export default function CalendarModule() {
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <div style={{ borderTop: '1px solid var(--border)', padding: '16px 24px', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button className="btn btn-secondary" onClick={() => setAddEventModalOpen(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={async () => {
                 if (!newEventData.title || !newEventData.event_date) {

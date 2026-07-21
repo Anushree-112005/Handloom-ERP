@@ -16,33 +16,7 @@ export default function DynamicETAUpdate() {
     setLoading(true);
     try {
       const res = await subMasterAPI.list('ppc_dynamic_eta').catch(() => ({ data: [] }));
-      
-      // If empty, generate some mock dynamic ETA logs
-      if (!res?.data || res.data.length === 0) {
-        const mockLogs = Array.from({ length: 5 }).map((_, i) => {
-          const isBreakdown = Math.random() > 0.5;
-          const prevDate = new Date();
-          prevDate.setDate(prevDate.getDate() + Math.floor(Math.random() * 20 + 5));
-          
-          const delay = Math.floor(Math.random() * 3) + 1;
-          const revDate = new Date(prevDate);
-          revDate.setDate(revDate.getDate() + delay);
-          
-          const onTrack = Math.random() > 0.4;
-          
-          return {
-            id: i,
-            name: `ORD-2024-${String(i+1).padStart(3, '0')}`,
-            code: isBreakdown ? 'Breakdown' : 'Speed drop',
-            extra_field_1: prevDate.toISOString().split('T')[0],
-            extra_field_2: revDate.toISOString().split('T')[0],
-            description: `Delay: +${delay} days | On Track: ${onTrack ? 'Yes' : 'No'}`
-          };
-        });
-        setLogs(mockLogs);
-      } else {
-        setLogs(res.data);
-      }
+      setLogs(res?.data || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -50,21 +24,24 @@ export default function DynamicETAUpdate() {
     }
   };
 
-  const handleManualUpdate = () => {
+  const handleManualUpdate = async () => {
     setIsUpdating(true);
-    // Simulate complex background crunching
-    setTimeout(() => {
+    try {
       const newLog = {
-        id: Date.now(),
         name: `ORD-2024-${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
         code: 'Operator Absence',
         extra_field_1: new Date().toISOString().split('T')[0],
         extra_field_2: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        description: `Delay: +1 days | On Track: Yes`
+        description: `Delay: +1 days | On Track: Yes`,
+        is_active: true
       };
-      setLogs([newLog, ...logs]);
+      await subMasterAPI.create('ppc_dynamic_eta', newLog);
+      await fetchLogs();
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsUpdating(false);
-    }, 1500);
+    }
   };
 
   const filteredLogs = logs.filter(l => 

@@ -158,7 +158,8 @@ export default function EmployeeMaster() {
       setView('list');
       fetchEmployees();
     } catch (err) {
-      alert("Error saving employee");
+      console.error(err.response?.data);
+      alert("Error saving employee: " + JSON.stringify(err.response?.data?.detail || err.message));
     }
   };
 

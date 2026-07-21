@@ -717,6 +717,9 @@ export default function WarpingSizingPO() {
                     <input type="text" className="form-control" name="wages_input" value={form.wages_input} onChange={handleChange} style={{ width: '50%' }} />
                     <select className="form-control" name="wages_type" value={form.wages_type} onChange={handleChange} style={{ width: '50%' }}>
                       <option value="">Select...</option>
+                      <option value="Wages">Wages</option>
+                      <option value="Mtr">Mtr</option>
+                      <option value="Kgs">Kgs</option>
                     </select>
                   </div>
                 </div>
@@ -727,11 +730,27 @@ export default function WarpingSizingPO() {
                 <div className="form-group"><label>Certificate Type</label>
                   <select className="form-control" name="certificate_type" value={form.certificate_type} onChange={handleChange}>
                     <option value="">Select...</option>
+                    {options.masters?.certified_type?.map(o => <option key={o} value={o}>{o}</option>)}
+                    {!options.masters?.certified_type?.length && (
+                      <>
+                        <option value="100% BCI Cotton">100% BCI Cotton</option>
+                        <option value="100% Organic Cotton">100% Organic Cotton</option>
+                        <option value="GOTS Certified">GOTS Certified</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="form-group"><label>Loom Type</label>
                   <select className="form-control" name="loom_type" value={form.loom_type} onChange={handleChange}>
                     <option value="">Select...</option>
+                    {options.masters?.loom_type?.map(o => <option key={o} value={o}>{o}</option>)}
+                    {!options.masters?.loom_type?.length && (
+                      <>
+                        <option value="Airjet">Airjet</option>
+                        <option value="Rapier">Rapier</option>
+                        <option value="Shuttle">Shuttle</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
@@ -906,7 +925,7 @@ export default function WarpingSizingPO() {
                           <td>
                             <select className="form-control" style={{ margin: 0 }} value={item.weaver_name} onChange={e => updateItem(idx, 'weaver_name', e.target.value)}>
                               <option value="">Select...</option>
-                              {parties.filter(p => p.party_type?.toLowerCase() === 'job worker').map(p => (
+                              {parties.filter(p => p.party_type?.toLowerCase() === 'job worker' || p.party_type?.toLowerCase() === 'job work').map(p => (
                                 <option key={p.id} value={p.company_name}>{p.company_name}</option>
                               ))}
                             </select>

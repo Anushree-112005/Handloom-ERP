@@ -17,7 +17,6 @@ const defaultReturns = [];
 const defaultTransfers = [];
 const defaultAdjustments = [];
 const defaultVerifications = [];
-
 const keys = [
   'consumables_categories',
   'consumables_uoms',

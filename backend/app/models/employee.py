@@ -8,6 +8,7 @@ class Employee(Base):
     id = Column(Integer, primary_key=True, index=True)
     # Identity & Login
     employee_code = Column(String(50), unique=True, index=True, nullable=False)
+    username = Column(String(100), unique=True, index=True, nullable=True)
     password_hash = Column(String(255), nullable=True)
 
     # Personal info

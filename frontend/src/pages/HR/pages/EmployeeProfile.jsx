@@ -420,6 +420,7 @@ const EmployeeProfile = () => {
                   <div><p className="text-slate-500">Passport Number</p><p className="font-medium text-slate-900">{employee.passport_number || '—'}</p></div>
                   <div><p className="text-slate-500">Passport Expiry</p><p className="font-medium text-slate-900">{employee.passport_expiry ? new Date(employee.passport_expiry).toLocaleDateString() : '—'}</p></div>
                   <div><p className="text-slate-500">Driving License</p><p className="font-medium text-slate-900">{employee.driving_license || '—'}</p></div>
+                  <div><p className="text-slate-500">Biometric Machine ID</p><p className="font-medium text-slate-900">{employee.biometric_id || '—'}</p></div>
                 </div>
               </div>
 

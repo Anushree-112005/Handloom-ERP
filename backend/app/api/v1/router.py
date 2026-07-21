@@ -1,8 +1,6 @@
 """Aggregated API router — includes all module endpoints."""
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet, twisting_doubling_po, yarn_dyeing_po, fabric_dyeing_po, warping_sizing_po, weaving_po, processing_po, cloth_purchase_po
-from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet, twisting_doubling_po, yarn_dyeing_po, fabric_dyeing_po, warping_sizing_po, weaving_po, processing_po, cloth_purchase_po, inventory, calendar_events, costing_sheet, stock_sheet
-
+from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet, twisting_doubling_po, yarn_dyeing_po, fabric_dyeing_po, warping_sizing_po, weaving_po, processing_po, cloth_purchase_po, inventory, calendar_events, costing_sheet, stock_sheet, notifications, proforma_invoice, buyer_order_schedule, buyer_order_amendment, buyer_order_completion, order_expenses
 
 api_router = APIRouter()
 
@@ -25,10 +23,13 @@ api_router.include_router(cloth_inwards.router)
 api_router.include_router(log_reports.router)
 api_router.include_router(eway_bills.router)
 api_router.include_router(company_settings.router)
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 
 
 # Newly registered missing routers
 api_router.include_router(design_entries.router)
+from app.api.v1.endpoints import racks
+api_router.include_router(racks.router)
 api_router.include_router(yarn_inwards.router)
 api_router.include_router(grey_yarn_deliveries.router)
 api_router.include_router(dyed_yarn_receipts.router)
@@ -60,14 +61,21 @@ api_router.include_router(design_ai_router)
 from app.api.v1.endpoints import textile_designs
 api_router.include_router(textile_designs.router)
 
+from app.api.v1.endpoints import inventory
+api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
+
 from app.api.v1.endpoints import ppc
 api_router.include_router(ppc.router, prefix="/ppc", tags=["Production Planning (PPC)"])
+
+from app.api.v1.endpoints import warehouse_stock
+api_router.include_router(warehouse_stock.router, prefix="/warehouse-stock", tags=["Warehouse Stock"])
 
 from app.api.v1.endpoints import chat
 api_router.include_router(chat.router)
 
-from app.api.v1.endpoints import reports
+from app.api.v1.endpoints import reports, rbac
 api_router.include_router(reports.router)
+api_router.include_router(rbac.router)
 
 from app.modules.hr.router import router as hr_router
 from app.modules.vehicle_management.router import router as fleet_router
@@ -81,4 +89,10 @@ api_router.include_router(stores_consumables_router)
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)
 
-
+from app.api.v1.endpoints import warehouse
+api_router.include_router(warehouse.router, prefix="/warehouse", tags=["Warehouse"])
+api_router.include_router(proforma_invoice.router)
+api_router.include_router(buyer_order_schedule.router)
+api_router.include_router(buyer_order_amendment.router)
+api_router.include_router(buyer_order_completion.router)
+api_router.include_router(order_expenses.router)

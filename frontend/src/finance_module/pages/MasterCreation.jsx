@@ -3,7 +3,7 @@ import useCompanyStore from '../store/companyStore';
 import {
   PlusCircle, Layers, Users, Globe, Receipt,
   Package, Grid, Box, Scale, MapPin,
-  FileText, FileSpreadsheet, Key, ArrowRight
+  FileText, FileSpreadsheet, Key, ArrowRight, DollarSign
 } from 'lucide-react';
 
 const masterSections = [
@@ -14,8 +14,9 @@ const masterSections = [
     icon: Layers,
     items: [
       { label: 'Group', icon: Layers, description: 'Ledger classification groups.', route: '/cubebook/masters/group', color: '#6366f1' },
+      { label: 'Party Master', icon: Users, description: 'Manage customers and suppliers.', route: '/party-master', color: '#10b981' },
       { label: 'Ledger', icon: Users, description: 'Account ledger masters.', route: '/cubebook/masters/ledger', color: '#3b82f6' },
-      { label: 'Currency', icon: Globe, description: 'Foreign currency settings.', route: '/cubebook/currency/create', color: '#10b981' },
+      { label: 'Currency', icon: DollarSign, description: 'Multi-currency setup.', route: '/cubebook/masters/currency', color: '#14b8a6' },
       { label: 'Voucher Type', icon: Receipt, description: 'Numbering and prefixes.', route: '/cubebook/masters/voucher-type/create', color: '#f59e0b' },
     ],
   },

@@ -126,27 +126,7 @@ class BuyerOrderItem(Base):
 
     order = relationship("BuyerOrder", back_populates="items")
 
-class BuyerOrderSchedule(Base):
-    __tablename__ = "buyer_order_schedules"
 
-    id = Column(Integer, primary_key=True, index=True)
-    schedule_id = Column(String(50), unique=True, index=True)
-    order_id_ref = Column(String(50))
-    buyer_ref = Column(String(100))
-    shipment_date = Column(Date)
-    delivery_place = Column(String(150))
-    delivery_terms = Column(String(100))
-    qty = Column(String(50))
-    fabric_type = Column(String(100))
-    shade = Column(String(100))
-    lot_no = Column(String(100))
-    packing_type = Column(String(50))
-    transporter_name = Column(String(150))
-    transport_mode = Column(String(50))
-    remarks = Column(Text)
-    status = Column(String(30), default="Scheduled")
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class BuyerOrderSequence(Base):
     __tablename__ = "buyer_order_sequences"
@@ -167,45 +147,7 @@ class BuyerOrderSequence(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-class BuyerOrderAmendment(Base):
-    __tablename__ = "buyer_order_amendments"
 
-    id = Column(Integer, primary_key=True, index=True)
-    amendment_id = Column(String(50), unique=True, index=True)
-    order_id_ref = Column(String(50))
-    amd_date = Column(Date)
-    field_changed = Column(String(100))
-    old_value = Column(String(200))
-    new_value = Column(String(200))
-    remarks = Column(Text)
-    approved_by = Column(String(100))
-    effective_date = Column(Date)
-    buyer_ref = Column(String(100))
-    fabric_details = Column(Text)
-    shade = Column(String(100))
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class BuyerOrderCompletion(Base):
-    __tablename__ = "buyer_order_completions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    cmp_id = Column(String(50), unique=True, index=True)
-    order_id_ref = Column(String(50))
-    completion_date = Column(Date)
-    status = Column(String(50), default="Closed")
-    final_dispatch_qty = Column(String(100))
-    balance_qty = Column(String(100))
-    fabric_type = Column(String(100))
-    shade = Column(String(100))
-    lot_no = Column(String(100))
-    packing_type = Column(String(100))
-    delivery_place = Column(String(150))
-    transporter_name = Column(String(150))
-    buyer_ref = Column(String(100))
-    remarks = Column(Text)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class BuyerOrderDispatch(Base):
     __tablename__ = "buyer_order_dispatches"

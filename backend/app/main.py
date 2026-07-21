@@ -21,7 +21,7 @@ from app.api.v1.router import api_router
 import app.models  # noqa: F401
     
 
-RESET_DATABASE = False    # Change to True to clear all data from tables on restart
+RESET_DATABASE = False       # Change to True to clear all data from tables on restart
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -98,10 +98,12 @@ async def lifespan(app: FastAPI):
         from sqlalchemy import select
 
         async with AsyncSessionLocal() as session:
-            result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
-            if not result.scalar_one_or_none():
+            result = await session.execute(select(Employee).where((Employee.employee_code == "admin") | (Employee.username == "admin")))
+            existing_admin = result.scalar_one_or_none()
+            if not existing_admin:
                 admin = Employee(
                     employee_code="admin",
+                    username="admin",
                     name="Administrator",
                     user_type="Admin",
                     email="admin@dinesh-textile.com",
@@ -117,6 +119,11 @@ async def lifespan(app: FastAPI):
                     },
                 )
                 session.add(admin)
+                await session.commit()
+            else:
+                existing_admin.username = "admin"
+                existing_admin.password_hash = get_password_hash("admin123")
+                existing_admin.status = "Active"
                 await session.commit()
 
             # Seed default departments and designations
@@ -241,6 +248,11 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
+
+from fastapi.staticfiles import StaticFiles
+import os
+os.makedirs("uploads", exist_ok=True)
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
 
 @app.exception_handler(RequestValidationError)

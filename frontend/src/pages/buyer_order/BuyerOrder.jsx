@@ -1207,14 +1207,15 @@ export default function BuyerOrder() {
                   <thead>
                     <tr>
                       <th>IBPO No</th><th>Order Date</th><th>Party Name</th>
-                      <th>Type</th><th>Items</th><th>Status</th><th>Actions</th>
+                      <th>Fabric Name</th><th>PO No</th><th>PO Date</th>
+                      <th>Pattern</th><th>Order Mtr</th><th>Certified</th><th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40 }}>Loading...</td></tr>
                     ) : filteredOrders.length === 0 ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No buyer orders found.</td></tr>
                     ) : filteredOrders.map(o => (
                       <tr
                         key={o.id}
@@ -1224,9 +1225,12 @@ export default function BuyerOrder() {
                         <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{o.ibpo_number}</td>
                         <td>{o.order_date}</td>
                         <td style={{ fontWeight: 500 }}>{o.party_name}</td>
-                        <td><span className="badge badge-active">{o.order_type || 'Regular'}</span></td>
-                        <td>{o.items?.length || 0} items</td>
-                        <td><span className={`badge ${o.status === 'Active' ? 'badge-active' : 'badge-draft'}`}>{o.status}</span></td>
+                        <td>{o.items?.map(it => it.fabric_type).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.party_po_no).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.po_date).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.pattern).filter(Boolean).join(', ') || 'N/A'}</td>
+                        <td>{o.items?.map(it => it.order_mtrs).filter(it => it !== undefined && it !== null).join(', ') || '0'}</td>
+                        <td>{o.certified_type || 'N/A'}</td>
                         <td onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button
@@ -1452,16 +1456,23 @@ export default function BuyerOrder() {
                     </div>
                     <div className="form-group">
                       <label>Order Taken By</label>
-                      <select className="form-control" name="order_taken_by" value={form.order_taken_by} onChange={handleChange}>
-                        <option value="">Select Employee...</option>
-                        {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                      </select>
+                      <input list="order-taken-by-list" className="form-control" name="order_taken_by" value={form.order_taken_by || ''} onChange={handleChange} placeholder="Select or type..." />
+                      <datalist id="order-taken-by-list">
+                        {employees.map(e => <option key={e.id} value={e.name} />)}
+                      </datalist>
                     </div>
                     <div className="form-group">
                       <label>Merchandiser</label>
                       <select className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleChange}>
                         <option value="">Select Merchandiser...</option>
-                        {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                        {employees.filter(e => e.department === 'Merchandising' && e.status === 'Active').length === 0 ? (
+                          <option value="" disabled>No Merchandising Employees Found</option>
+                        ) : (
+                          employees
+                            .filter(e => e.department === 'Merchandising' && e.status === 'Active')
+                            .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                            .map(e => <option key={e.id} value={e.name}>{e.name}</option>)
+                        )}
                       </select>
                     </div>
                     <div className="form-group">
@@ -1644,7 +1655,6 @@ export default function BuyerOrder() {
         title="BUYER ORDER"
         documentNumber={viewModalOrder?.ibpo_number}
         status={viewModalOrder?.status}
-        onDownloadPdf={() => alert('PDF Download for Buyer Order triggered')}
         sections={viewModalOrder ? [
           {
             title: "ORDER & BUYER",

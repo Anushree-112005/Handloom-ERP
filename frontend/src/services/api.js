@@ -17,7 +17,12 @@ const createAPI = (endpoint) => ({
 
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  let token = null;
+  if (window.location.pathname.startsWith('/status-update')) {
+    token = localStorage.getItem('status_update_token') || localStorage.getItem('token');
+  } else {
+    token = localStorage.getItem('token');
+  }
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -29,13 +34,19 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      localStorage.removeItem('status_update_token');
+      localStorage.removeItem('su_user');
+      if (window.location.pathname.startsWith('/status-update')) {
+        window.location.href = '/status-update/login';
+      } else {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }
 );
 
-// ---- Auth ----
+export const notificationAPI = createAPI('/notifications');
 export const authAPI = {
   login: (username, password) =>
     api.post('/auth/login', new URLSearchParams({ username, password }), {
@@ -62,6 +73,7 @@ export const partyAPI = {
 
 export const buyerOrderAPI = {
   list: (params) => api.get('/buyer-orders/', { params }),
+  statusUpdateOrders: () => api.get('/buyer-orders/status-update/orders'),
   get: (id) => api.get(`/buyer-orders/${id}`),
   create: (data) => api.post('/buyer-orders/', data),
   update: (id, data) => api.put(`/buyer-orders/${id}`, data),
@@ -71,7 +83,7 @@ export const buyerOrderAPI = {
     fd.append('file', file);
     return api.post('/buyer-orders/upload-file', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
-  
+
   // Schedules
   listSchedules: () => api.get('/buyer-orders/schedules/'),
   createSchedule: (data) => api.post('/buyer-orders/schedules/', data),
@@ -115,6 +127,7 @@ export const designEntryAPI = {
   create: (data) => api.post('/design-entries/', data),
   update: (id, data) => api.put(`/design-entries/${id}`, data),
   delete: (id) => api.delete(`/design-entries/${id}`),
+  approve: (id) => api.put(`/design-entries/${id}/approve`),
   uploadImage: (id, file) => {
     const fd = new FormData();
     fd.append('file', file);
@@ -162,11 +175,11 @@ export const yarnPurchaseOrderAPI = {
 };
 
 export const twistingDoublingPOAPI = {
-  list: () => api.get('/twisting-doubling-po/'),
-  create: (data) => api.post('/twisting-doubling-po/', data),
-  getById: (id) => api.get(`/twisting-doubling-po/${id}`),
-  update: (id, data) => api.put(`/twisting-doubling-po/${id}`, data),
-  delete: (id) => api.delete(`/twisting-doubling-po/${id}`)
+  list: () => api.get('/purchase/twisting-doubling'),
+  create: (data) => api.post('/purchase/twisting-doubling', data),
+  getById: (id) => api.get(`/purchase/twisting-doubling/${id}`),
+  update: (id, data) => api.put(`/purchase/twisting-doubling/${id}`, data),
+  delete: (id) => api.delete(`/purchase/twisting-doubling/${id}`)
 };
 
 export const yarnDyeingPOAPI = {
@@ -186,32 +199,32 @@ export const fabricDyeingPOAPI = {
 };
 
 export const warpingSizingPOAPI = {
-  list: () => api.get('/warping-sizing-po/'),
-  create: (data) => api.post('/warping-sizing-po/', data),
+  list: () => api.get('/warping-sizing-po'),
+  create: (data) => api.post('/warping-sizing-po', data),
   getById: (id) => api.get(`/warping-sizing-po/${id}`),
   update: (id, data) => api.put(`/warping-sizing-po/${id}`, data),
   delete: (id) => api.delete(`/warping-sizing-po/${id}`)
 };
 
 export const weavingPOAPI = {
-  list: () => api.get('/weaving-po/'),
-  create: (data) => api.post('/weaving-po/', data),
+  list: () => api.get('/weaving-po'),
+  create: (data) => api.post('/weaving-po', data),
   getById: (id) => api.get(`/weaving-po/${id}`),
   update: (id, data) => api.put(`/weaving-po/${id}`, data),
   delete: (id) => api.delete(`/weaving-po/${id}`)
 };
 
 export const processingPOAPI = {
-  list: () => api.get('/processing-po/'),
-  create: (data) => api.post('/processing-po/', data),
+  list: () => api.get('/processing-po'),
+  create: (data) => api.post('/processing-po', data),
   getById: (id) => api.get(`/processing-po/${id}`),
   update: (id, data) => api.put(`/processing-po/${id}`, data),
   delete: (id) => api.delete(`/processing-po/${id}`)
 };
 
 export const clothPurchasePOAPI = {
-  list: () => api.get('/cloth-purchase-po/'),
-  create: (data) => api.post('/cloth-purchase-po/', data),
+  list: () => api.get('/cloth-purchase-po'),
+  create: (data) => api.post('/cloth-purchase-po', data),
   getById: (id) => api.get(`/cloth-purchase-po/${id}`),
   update: (id, data) => api.put(`/cloth-purchase-po/${id}`, data),
   delete: (id) => api.delete(`/cloth-purchase-po/${id}`)
@@ -230,6 +243,7 @@ export const yarnInwardAPI = {
   create: (data) => api.post('/yarn-inwards/', data),
   update: (id, data) => api.put(`/yarn-inwards/${id}`, data),
   delete: (id) => api.delete(`/yarn-inwards/${id}`),
+  confirm: (id) => api.post(`/yarn-inwards/${id}/confirm`),
 };
 
 export const greyYarnDeliveryAPI = {
@@ -453,4 +467,17 @@ export const stockSheetAPI = {
   create: (data) => api.post('/stock-sheet/', data),
 };
 
+export const rackAPI = {
+  list: (params) => api.get('/racks/', { params }),
+  get: (id) => api.get(`/racks/${id}`),
+  create: (data) => api.post('/racks/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  update: (id, data) => api.put(`/racks/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  delete: (id) => api.delete(`/racks/${id}`),
+};
+
 export default api;
+export const proformaInvoiceAPI = createAPI('/proforma-invoices');
+export const buyerOrderScheduleAPI = createAPI('/buyer-order-schedules');
+export const buyerOrderAmendmentAPI = createAPI('/buyer-order-amendments');
+export const buyerOrderCompletionAPI = createAPI('/buyer-order-completions');
+export const orderExpenseAPI = createAPI('/order-expenses');

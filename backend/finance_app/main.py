@@ -5,6 +5,7 @@ from finance_app.routers import (
     auth, companies, financial_years, ledger_groups, ledgers,
     stock_items, vouchers, reports, gst, inventory_masters,
     users, audit_router, payroll, banking,
+    currencies, voucher_types
 )
 from finance_app.routers.auth import migrate_default_passwords
 
@@ -22,38 +23,49 @@ finally:
     _startup_db.close()
 
 # ── Auto-migrations: add columns to existing tables if missing ────────────
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 with engine.begin() as conn:
-    # location columns on voucher_entries
-    try:
-        conn.execute(text("SELECT location_id FROM voucher_entries LIMIT 1"))
-    except Exception:
+    def sync_database_schema(connection):
         try:
-            conn.execute(text("ALTER TABLE voucher_entries ADD COLUMN location_id INTEGER"))
-            conn.execute(text("ALTER TABLE voucher_entries ADD COLUMN location_name VARCHAR"))
-            print("Migrated: added location_id/location_name to voucher_entries.")
+            inspector = inspect(connection)
+            for table_name, table in Base.metadata.tables.items():
+                if not inspector.has_table(table_name):
+                    continue
+                db_columns = {col["name"].lower() for col in inspector.get_columns(table_name)}
+                for col_name, column in table.columns.items():
+                    if col_name.lower() not in db_columns:
+                        type_str = str(column.type.compile(dialect=connection.dialect))
+                        default_val = "NULL"
+                        if column.default is not None and not callable(column.default.arg):
+                            val = column.default.arg
+                            if isinstance(val, str):
+                                escaped_val = val.replace("'", "''")
+                                default_val = f"'{escaped_val}'"
+                            elif isinstance(val, bool):
+                                default_val = "TRUE" if val else "FALSE"
+                            else:
+                                default_val = str(val)
+                        elif "float" in type_str.lower() or "numeric" in type_str.lower():
+                            default_val = "0.0"
+                        elif "integer" in type_str.lower():
+                            default_val = "0"
+                        elif "boolean" in type_str.lower():
+                            default_val = "FALSE"
+                        
+                        alter_query = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {type_str}"
+                        if default_val != "NULL":
+                            alter_query += f" DEFAULT {default_val}"
+                        
+                        try:
+                            connection.execute(text(alter_query))
+                            print(f"Successfully added column {col_name} to table {table_name}.")
+                        except Exception as ex:
+                            print(f"Failed to add column {col_name} to table {table_name}: {ex}")
         except Exception as e:
-            print(f"Migration warning: {e}")
+            print(f"Error during schema synchronization: {e}")
 
-    # base_currency column on companies
-    try:
-        conn.execute(text("SELECT base_currency FROM companies LIMIT 1"))
-    except Exception:
-        try:
-            conn.execute(text("ALTER TABLE companies ADD COLUMN base_currency TEXT NOT NULL DEFAULT 'INR'"))
-            print("Migrated: added base_currency to companies.")
-        except Exception as e:
-            print(f"Migration warning: {e}")
-
-    # party_id column on vouchers
-    try:
-        conn.execute(text("SELECT party_id FROM vouchers LIMIT 1"))
-    except Exception:
-        try:
-            conn.execute(text("ALTER TABLE vouchers ADD COLUMN party_id INTEGER"))
-            print("Migrated: added party_id to vouchers.")
-        except Exception as e:
-            print(f"Migration warning: {e}")
+    # Use run_sync-like manual call since we have a sync connection
+    sync_database_schema(conn)
 
 app = FastAPI(title="CubeBook API", version="2.0.0")
 
@@ -80,6 +92,8 @@ app.include_router(ledger_groups.router,      prefix="/api/ledger-groups",   tag
 app.include_router(ledgers.router,            prefix="/api/ledgers",         tags=["Ledgers"])
 app.include_router(stock_items.router,        prefix="/api/stock-items",     tags=["Stock Items"])
 app.include_router(vouchers.router,           prefix="/api/vouchers",        tags=["Vouchers"])
+app.include_router(currencies.router,         prefix="/api/currencies",      tags=["Currencies"])
+app.include_router(voucher_types.router,      prefix="/api/voucher-types",   tags=["Voucher Types"])
 app.include_router(reports.router,            prefix="/api/reports",         tags=["Reports"])
 app.include_router(gst.router,               prefix="/api/gst",             tags=["GST"])
 app.include_router(inventory_masters.router,  prefix="/api/inventory",       tags=["Inventory Masters"])

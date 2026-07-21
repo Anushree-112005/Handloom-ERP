@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, CheckCircle2, AlertTriangle, Plus, Trash2, X, Clock, Calendar, User, Eye, MapPin, Info, Edit2, Filter, LayoutList, LayoutGrid, Search, Download, FileText, FileSpreadsheet, RefreshCw } from 'lucide-react';
-import { fetchAttendance, createAttendance, updateAttendance, deleteAttendance, fetchLeaves, createLeave, updateLeave, deleteLeave, fetchEmployees, fetchShifts } from '../../../services/hrService';
+import { fetchAttendance, createAttendance, updateAttendance, deleteAttendance, fetchLeaves, createLeave, updateLeave, deleteLeave, fetchEmployees, fetchShifts, testBiometricConnection, syncBiometricAttendance, fetchRawBiometricLogs } from '../../../services/hrService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -42,6 +42,83 @@ const AttendanceLeave = () => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
 
+  // Biometric integration state
+  const BIOMETRIC_MACHINES = [
+    { id: 'machine1', name: 'Machine 1', ip: '192.168.0.203', port: 4370, serial: 'CEXJ232161690', direction: 'both' },
+    { id: 'machine2', name: 'Machine 2', ip: '192.168.0.202', port: 4370, serial: 'CEXJ233960759', direction: 'in' },
+    { id: 'machine3', name: 'Machine 3', ip: '192.168.0.201', port: 4370, serial: 'CEXJ233960836', direction: 'out' },
+    { id: 'custom', name: 'Custom Configuration...', ip: '', port: 4370, serial: '' }
+  ];
+
+  const getDeviceName = (ip) => {
+    if (ip === '192.168.0.203' || ip === '192.168.1.203') return 'Machine 1';
+    if (ip === '192.168.0.202') return 'Machine 2';
+    if (ip === '192.168.0.201') return 'Machine 3';
+    return ip || '—';
+  };
+
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getCurrentMonth = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  };
+
+  const [selectedMachineId, setSelectedMachineId] = useState('machine1');
+  const [deviceIp, setDeviceIp] = useState('192.168.0.203');
+  const [devicePort, setDevicePort] = useState(4370);
+  const [machineDirections, setMachineDirections] = useState({
+    '192.168.0.202': 'in',
+    '192.168.0.201': 'out',
+    '192.168.1.203': 'both',
+    '192.168.0.203': 'both'
+  });
+  const [selectedFilterMachineIps, setSelectedFilterMachineIps] = useState([
+    '192.168.0.203',
+    '192.168.0.202',
+    '192.168.0.201'
+  ]);
+  const [filterDate, setFilterDate] = useState('');
+  const [filterRawMonth, setFilterRawMonth] = useState('');
+  const [showCheckInLogs, setShowCheckInLogs] = useState(true);
+  const [showCheckOutLogs, setShowCheckOutLogs] = useState(true);
+  const [filterAttendanceDate, setFilterAttendanceDate] = useState(getTodayDateString());
+  const [filterAttendanceMonth, setFilterAttendanceMonth] = useState(getCurrentMonth());
+  const [attendanceViewMode, setAttendanceViewMode] = useState('daily');
+  const [syncMock, setSyncMock] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [syncingBiometric, setSyncingBiometric] = useState(false);
+  const [rawLogs, setRawLogs] = useState([]);
+  const [logsPage, setLogsPage] = useState(1);
+  const logsPerPage = 50;
+
+  useEffect(() => {
+    setLogsPage(1);
+  }, [selectedFilterMachineIps, filterDate, filterEmployee, filterRawMonth, showCheckInLogs, showCheckOutLogs]);
+
+  const loadRawLogs = async () => {
+    try {
+      const logs = await fetchRawBiometricLogs();
+      setRawLogs(logs || []);
+    } catch (err) {
+      console.error('Failed to load raw biometric logs:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'biometric') {
+      loadRawLogs();
+    }
+  }, [activeTab]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -69,6 +146,26 @@ const AttendanceLeave = () => {
   const getEmployeeName = (employeeId) => {
     const emp = employees.find(e => e.employee_id === employeeId || e.id === employeeId || String(e.id) === String(employeeId));
     return emp ? emp.name : employeeId;
+  };
+
+  const getEmployeeBiometricId = (employeeId) => {
+    const emp = employees.find(e => e.employee_id === employeeId || e.id === employeeId || String(e.id) === String(employeeId));
+    return emp ? (emp.biometric_id || '—') : '—';
+  };
+
+  const getPunchDirection = (status, timestamp, deviceIp) => {
+    const ip = deviceIp || '';
+    const mode = machineDirections[ip] || 'both';
+    if (mode === 'in') return 'Check In';
+    if (mode === 'out') return 'Check Out';
+
+    if (timestamp) {
+      try {
+        const hour = new Date(timestamp).getHours();
+        return hour < 12 ? 'Check In' : 'Check Out';
+      } catch (e) {}
+    }
+    return status === 0 ? 'Check In' : 'Check Out';
   };
 
   const calculateOT = (checkIn, checkOut, shiftName) => {
@@ -112,10 +209,12 @@ const AttendanceLeave = () => {
   const filteredRows = useMemo(() => {
     return rows.filter(r => {
       if (filterShift && r.shift !== filterShift) return false;
-      if (filterEmployee && !r.employee?.toLowerCase().includes(filterEmployee.toLowerCase())) return false;
+      if (filterEmployee && !r.employee?.toLowerCase().includes(filterEmployee.toLowerCase()) && !getEmployeeName(r.employee)?.toLowerCase().includes(filterEmployee.toLowerCase())) return false;
+      if (attendanceViewMode === 'daily' && filterAttendanceDate && r.date !== filterAttendanceDate) return false;
+      if (attendanceViewMode === 'monthly' && filterAttendanceMonth && r.date && !r.date.startsWith(filterAttendanceMonth)) return false;
       return true;
     });
-  }, [rows, filterShift, filterEmployee]);
+  }, [rows, filterShift, filterEmployee, filterAttendanceDate, filterAttendanceMonth, attendanceViewMode]);
 
   const filteredLeaves = useMemo(() => {
     return leaves.filter(l => {
@@ -141,22 +240,90 @@ const AttendanceLeave = () => {
   const exportPDF = () => {
     const doc = new jsPDF();
     if (activeTab === 'attendance') {
-      doc.text("Attendance Report", 14, 15);
-      const tableColumn = ["#", "Employee", "Shift", "Check In", "Check Out", "Hours", "OT"];
+      const typeLabel = attendanceViewMode === 'monthly' ? 'Monthly' : 'Daily';
+      doc.text(`${typeLabel} Attendance Report`, 14, 15);
+      const tableColumn = ["#", "Employee Name", "Employee ID", "Biometric ID", "Date", "Shift", "Check In", "Check Out", "Hours", "OT", "Status"];
       const tableRows = [];
       filteredRows.forEach((r, index) => {
         tableRows.push([
           index + 1,
-          r.employee,
+          getEmployeeName(r.employee) || '-',
+          r.employee || '-',
+          getEmployeeBiometricId(r.employee) || '-',
+          r.date || '-',
           r.shift || '-',
           r.check_in || '-',
           r.check_out || '-',
           r.hours || 0,
-          r.ot_hours || 0
+          r.ot_hours || 0,
+          r.status || '-'
         ]);
       });
       autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
-      doc.save(`Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.save(`${typeLabel}_Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    } else if (activeTab === 'biometric') {
+      const logsToExport = rawLogs.filter(log => {
+        // Filter by machines checkboxes
+        const logIp = log.device_ip || '192.168.0.203';
+        if (!selectedFilterMachineIps.includes(logIp)) return false;
+
+        // Filter by Date
+        if (filterDate) {
+          const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
+          if (logDateStr !== filterDate) return false;
+        }
+
+        // Filter by Month
+        if (filterRawMonth) {
+          const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+          if (logMonthStr !== filterRawMonth) return false;
+        }
+
+        // Filter by search query
+        if (filterEmployee) {
+          const query = filterEmployee.toLowerCase();
+          const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+          const empId = (log.employee_id || '').toString().toLowerCase();
+          const bioId = (log.biometric_id || '').toString().toLowerCase();
+          if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+            return false;
+          }
+        }
+
+        // Filter by direction checkboxes
+        const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+        if (dir === 'Check In' && !showCheckInLogs) return false;
+        if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
+        return true;
+      });
+
+      doc.text("Biometric Device Logs Report", 14, 15);
+      const tableColumn = ["#", "Employee Name", "Employee ID", "Biometric ID", "Device", "Punch Timestamp", "Direction", "Type"];
+      const tableRows = [];
+      logsToExport.forEach((log, index) => {
+        const details = log;
+        const empName = getEmployeeName(log.employee_id || details.biometric_id) || '-';
+        const empId = log.employee_id || '-';
+        const bioId = details.biometric_id || '-';
+        const devName = `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`;
+        const timestampStr = details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+        const direction = getPunchDirection(details.status, details.timestamp, details.device_ip);
+        const punchType = details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other';
+
+        tableRows.push([
+          index + 1,
+          empName,
+          empId,
+          bioId,
+          devName,
+          timestampStr,
+          direction,
+          punchType
+        ]);
+      });
+      autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
+      doc.save(`Biometric_Logs_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     } else {
       doc.text("Leave Report", 14, 15);
       const tableColumn = ["#", "Employee", "Type", "Days", "Status", "Approver"];
@@ -164,7 +331,7 @@ const AttendanceLeave = () => {
       filteredLeaves.forEach((l, index) => {
         tableRows.push([
           index + 1,
-          l.employee,
+          getEmployeeName(l.employee) || l.employee || '-',
           l.leave_type || '-',
           l.days || 1,
           l.status || 'Pending',
@@ -172,7 +339,7 @@ const AttendanceLeave = () => {
         ]);
       });
       autoTable(doc, { head: [tableColumn], body: tableRows, startY: 20 });
-      doc.save(`Leave_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.save("Leave_Report_" + new Date().toISOString().split('T')[0] + ".pdf");
     }
   };
 
@@ -180,20 +347,78 @@ const AttendanceLeave = () => {
     let data;
     let filename;
     if (activeTab === 'attendance') {
+      const typeLabel = attendanceViewMode === 'monthly' ? 'Monthly' : 'Daily';
       data = filteredRows.map((r, index) => ({
         "#": index + 1,
-        "Employee": r.employee,
+        "Employee Name": getEmployeeName(r.employee) || '-',
+        "Employee ID": r.employee || '-',
+        "Biometric ID": getEmployeeBiometricId(r.employee) || '-',
+        "Date": r.date || '-',
         "Shift": r.shift || '-',
         "Check In": r.check_in || '-',
         "Check Out": r.check_out || '-',
         "Hours": r.hours || 0,
-        "OT": r.ot_hours || 0
+        "OT": r.ot_hours || 0,
+        "Status": r.status || '-'
       }));
-      filename = `Attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
+      filename = `${typeLabel}_Attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
+    } else if (activeTab === 'biometric') {
+      const logsToExport = rawLogs.filter(log => {
+        // Filter by machines checkboxes
+        const logIp = log.device_ip || '192.168.0.203';
+        if (!selectedFilterMachineIps.includes(logIp)) return false;
+
+        // Filter by Date
+        if (filterDate) {
+          const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
+          if (logDateStr !== filterDate) return false;
+        }
+
+        // Filter by Month
+        if (filterRawMonth) {
+          const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+          if (logMonthStr !== filterRawMonth) return false;
+        }
+
+        // Filter by search query
+        if (filterEmployee) {
+          const query = filterEmployee.toLowerCase();
+          const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+          const empId = (log.employee_id || '').toString().toLowerCase();
+          const bioId = (log.biometric_id || '').toString().toLowerCase();
+          if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+            return false;
+          }
+        }
+
+        // Filter by direction checkboxes
+        const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+        if (dir === 'Check In' && !showCheckInLogs) return false;
+        if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
+        return true;
+      });
+
+      data = logsToExport.map((log, index) => {
+        const details = log;
+        const empName = getEmployeeName(log.employee_id || details.biometric_id) || '-';
+        const timestampStr = details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+        return {
+          "#": index + 1,
+          "Employee Name": empName,
+          "Employee ID": log.employee_id || '-',
+          "Biometric ID": details.biometric_id || '-',
+          "Device": `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`,
+          "Punch Timestamp": timestampStr,
+          "Direction": getPunchDirection(details.status, details.timestamp, details.device_ip),
+          "Punch Type": details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'
+        };
+      });
+      filename = `Biometric_Logs_${new Date().toISOString().split('T')[0]}.xlsx`;
     } else {
       data = filteredLeaves.map((l, index) => ({
         "#": index + 1,
-        "Employee": l.employee,
+        "Employee": getEmployeeName(l.employee) || l.employee || '-',
         "Type": l.leave_type || '-',
         "Days": l.days || 1,
         "Status": l.status || 'Pending',
@@ -483,24 +708,58 @@ const AttendanceLeave = () => {
           
           <div style={{ display: 'flex', gap: 12 }}>
             <select 
-              value={activeTab} 
-              onChange={(e) => { setActiveTab(e.target.value); setCurrentPage(1); }}
-              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, height: 44, outline: 'none', background: '#f8fafc', fontWeight: 600, color: '#334155', minWidth: 160, cursor: 'pointer' }}
+              value={activeTab === 'attendance' && attendanceViewMode === 'monthly' ? 'monthly_attendance' : activeTab} 
+              onChange={(e) => { 
+                const val = e.target.value;
+                if (val === 'monthly_attendance') {
+                  setActiveTab('attendance');
+                  setAttendanceViewMode('monthly');
+                } else {
+                  setActiveTab(val);
+                  if (val === 'attendance') setAttendanceViewMode('daily');
+                }
+                setCurrentPage(1); 
+              }}
+              style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 14, height: 44, outline: 'none', background: '#f8fafc', fontWeight: 600, color: '#334155', minWidth: 180, cursor: 'pointer' }}
             >
               <option value="attendance">Daily Attendance</option>
+              <option value="monthly_attendance">Monthly Attendance</option>
               <option value="leave">Leave Requests</option>
+              <option value="biometric">Biometric Sync</option>
             </select>
 
-            {activeTab === 'attendance' ? (
-              <select 
-                value={filterShift} 
-                onChange={(e) => { setFilterShift(e.target.value); setCurrentPage(1); }}
-                style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 160 }}
-              >
-                <option value="">All Shifts</option>
-                {shifts.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-              </select>
-            ) : (
+            {activeTab === 'attendance' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {attendanceViewMode === 'daily' && (
+                  <input
+                    type="date"
+                    className="form-control"
+                    style={{ width: 155, height: 44, fontSize: 14, padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: 8 }}
+                    value={filterAttendanceDate}
+                    onChange={(e) => { setFilterAttendanceDate(e.target.value); setCurrentPage(1); }}
+                  />
+                )}
+                {attendanceViewMode === 'monthly' && (
+                  <input
+                    type="month"
+                    className="form-control"
+                    style={{ width: 170, height: 44, fontSize: 14, padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: 8 }}
+                    value={filterAttendanceMonth}
+                    onChange={(e) => { setFilterAttendanceMonth(e.target.value); setCurrentPage(1); }}
+                  />
+                )}
+                <select 
+                  value={filterShift} 
+                  onChange={(e) => { setFilterShift(e.target.value); setCurrentPage(1); }}
+                  style={{ padding: '0 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, height: 44, outline: 'none', background: '#fff', minWidth: 120 }}
+                >
+                  <option value="">All Shifts</option>
+                  {shifts.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {activeTab === 'leave' && (
               <>
                 <select 
                   value={filterLeaveType} 
@@ -534,6 +793,9 @@ const AttendanceLeave = () => {
                 setFilterShift('');
                 setFilterLeaveType('');
                 setFilterLeaveStatus('');
+                setFilterAttendanceDate(getTodayDateString());
+                setFilterAttendanceMonth(getCurrentMonth());
+                setAttendanceViewMode('daily');
                 setCurrentPage(1);
               }}
               style={{ padding: '0 16px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: 14, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
@@ -603,6 +865,8 @@ const AttendanceLeave = () => {
                   <thead className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 backdrop-blur-sm">
                     <tr>
                       <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Employee</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Biometric ID</th>
+                      <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Date</th>
                       <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Shift & Time</th>
                       <th className="text-left px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">Status</th>
                       <th className="px-6 py-5 text-xs uppercase font-extrabold tracking-wider text-slate-500">
@@ -624,9 +888,23 @@ const AttendanceLeave = () => {
                             </div>
                           </div>
                         </td>
+                        <td className="px-6 py-4 text-sm text-slate-700 font-mono">
+                          {getEmployeeBiometricId(r.employee)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-700">
+                          {r.date}
+                        </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-slate-800">{r.shift} • {r.check_in} - {r.check_out}</p>
                           <p className="text-xs text-slate-500">Source: {r.source}</p>
+                          {r.source === 'Biometric' && (r.check_in_device || r.check_out_device) && (
+                            <p className="text-xs text-indigo-600 font-semibold mt-1">
+                              Device: {r.check_in_device === r.check_out_device ? 
+                                getDeviceName(r.check_in_device) : 
+                                `${getDeviceName(r.check_in_device)} ➜ ${getDeviceName(r.check_out_device)}`
+                              }
+                            </p>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-2">
@@ -653,7 +931,7 @@ const AttendanceLeave = () => {
                     ))}
                     {filteredRows.length === 0 && !loading && (
                       <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center">
+                        <td colSpan={6} className="px-6 py-12 text-center">
                           <CalendarClock className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                           <p className="text-slate-500">No attendance records</p>
                         </td>
@@ -712,6 +990,17 @@ const AttendanceLeave = () => {
                         <span className="text-slate-500">Time</span>
                         <span className="font-medium text-slate-700">{r.check_in} - {r.check_out}</span>
                       </div>
+                      {r.source === 'Biometric' && (r.check_in_device || r.check_out_device) && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Device(s)</span>
+                          <span className="text-indigo-600 font-semibold" style={{ fontSize: 10 }}>
+                            {r.check_in_device === r.check_out_device ? 
+                              getDeviceName(r.check_in_device) : 
+                              `${getDeviceName(r.check_in_device)} ➜ ${getDeviceName(r.check_out_device)}`
+                            }
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-500">Hours</span>
                         <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-100">{r.hours?.toFixed(1)}h</span>
@@ -912,6 +1201,469 @@ const AttendanceLeave = () => {
             )}
           </>
         )}
+
+        {activeTab === 'biometric' && (() => {
+          const filteredRawLogs = rawLogs.filter(log => {
+            // Filter by machine IP checkboxes
+            const logIp = log.device_ip || '192.168.0.203';
+            if (!selectedFilterMachineIps.includes(logIp)) return false;
+            // Filter by Date
+            if (filterDate) {
+              const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
+              if (logDateStr !== filterDate) return false;
+            }
+            // Filter by Month
+            if (filterRawMonth) {
+              const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+              if (logMonthStr !== filterRawMonth) return false;
+            }
+            // Filter by search query
+            if (filterEmployee) {
+              const query = filterEmployee.toLowerCase();
+              const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+              const empId = (log.employee_id || '').toString().toLowerCase();
+              const bioId = (log.biometric_id || '').toString().toLowerCase();
+              if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+                return false;
+              }
+            }
+            // Filter by direction checkboxes
+            const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+            if (dir === 'Check In' && !showCheckInLogs) return false;
+            if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
+            return true;
+          });
+
+          const totalLogsPages = Math.ceil(filteredRawLogs.length / logsPerPage);
+          const paginatedLogs = filteredRawLogs.slice((logsPage - 1) * logsPerPage, logsPage * logsPerPage);
+
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: 24 }}>
+              {/* LEFT: Device Configuration & Action Panel */}
+              <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CalendarClock size={20} color="var(--primary)" /> Device Configuration
+                  </h3>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Configure and test biometric machine connections.</p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Select Device</label>
+                    <select
+                      className="form-control"
+                      value={selectedMachineId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedMachineId(val);
+                        if (val !== 'custom') {
+                          const m = BIOMETRIC_MACHINES.find(x => x.id === val);
+                          if (m) {
+                            setDeviceIp(m.ip);
+                            setDevicePort(m.port);
+                          }
+                        }
+                      }}
+                    >
+                      {BIOMETRIC_MACHINES.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Device Brand</label>
+                    <input type="text" className="form-control" value="eSSL / ZKTeco" disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>Device Name</label>
+                    <input type="text" className="form-control" value="X2008" disabled style={{ background: '#f1f5f9', cursor: 'not-allowed' }} />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>IP Address</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={deviceIp}
+                      onChange={(e) => setDeviceIp(e.target.value)}
+                      disabled={selectedMachineId !== 'custom'}
+                      style={selectedMachineId !== 'custom' ? { background: '#f1f5f9', cursor: 'not-allowed' } : {}}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 6 }}>TCP Port</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={devicePort}
+                      onChange={(e) => setDevicePort(Number(e.target.value))}
+                      disabled={selectedMachineId !== 'custom'}
+                      style={selectedMachineId !== 'custom' ? { background: '#f1f5f9', cursor: 'not-allowed' } : {}}
+                    />
+                  </div>
+                  {selectedMachineId !== 'custom' && (
+                    <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Serial Number:</span>
+                        <span style={{ fontWeight: 600, color: '#1e293b' }}>
+                          {BIOMETRIC_MACHINES.find(m => m.id === selectedMachineId)?.serial}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Subnet Mask:</span>
+                        <span style={{ fontWeight: 600, color: '#1e293b' }}>
+                          {selectedMachineId === 'machine3' ? '255.255.254.0' : '255.255.255.0'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <span style={{ fontWeight: 600, color: '#475569', fontSize: 12 }}>Punch Mode Config:</span>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(machineDirections[deviceIp] || 'both') === 'in'} 
+                          onChange={(e) => {
+                            setMachineDirections(prev => ({
+                              ...prev,
+                              [deviceIp]: e.target.checked ? 'in' : 'both'
+                            }));
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Inward Only
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(machineDirections[deviceIp] || 'both') === 'out'} 
+                          onChange={(e) => {
+                            setMachineDirections(prev => ({
+                              ...prev,
+                              [deviceIp]: e.target.checked ? 'out' : 'both'
+                            }));
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Outward Only
+                      </label>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <input type="checkbox" id="syncMock" checked={syncMock} onChange={(e) => setSyncMock(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                    <label htmlFor="syncMock" style={{ fontSize: 13, fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
+                      Use Test Data (Simulation Mode)
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                  <button
+                    onClick={async () => {
+                      setTestingConnection(true);
+                      setError('');
+                      setSuccess('');
+                      try {
+                        const res = await testBiometricConnection(deviceIp, devicePort);
+                        if (res.success) {
+                          setSuccess(res.message);
+                        } else {
+                          setError(res.message);
+                        }
+                      } catch (e) {
+                        const errMsg = e?.response?.data?.message || e?.message || 'Failed to test connection.';
+                        setError(errMsg);
+                      }
+                      setTestingConnection(false);
+                    }}
+                    disabled={testingConnection || syncingBiometric}
+                    className="btn btn-secondary"
+                    style={{ width: '100%', height: 44, fontWeight: 600 }}
+                  >
+                    {testingConnection ? 'Testing...' : 'Test Connection'}
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      setSyncingBiometric(true);
+                      setError('');
+                      setSuccess('');
+                      try {
+                        const res = await syncBiometricAttendance(deviceIp, devicePort, syncMock);
+                        if (res.success) {
+                          setSuccess(res.message);
+                          loadData();
+                          loadRawLogs();
+                        } else {
+                          setError(res.message);
+                        }
+                      } catch (e) {
+                        const errMsg = e?.response?.data?.message || e?.message || 'Failed to sync biometric logs.';
+                        setError(errMsg);
+                      }
+                      setSyncingBiometric(false);
+                    }}
+                    disabled={testingConnection || syncingBiometric}
+                    className="btn btn-primary"
+                    style={{ width: '100%', height: 44, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    <RefreshCw size={16} className={syncingBiometric ? 'animate-spin' : ''} />
+                    {syncingBiometric ? 'Syncing...' : 'Sync Selected Machine'}
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      setSyncingBiometric(true);
+                      setError('');
+                      setSuccess('');
+                      let successCount = 0;
+                      let messageParts = [];
+                      const activeMachines = BIOMETRIC_MACHINES.filter(m => m.id !== 'custom');
+                      
+                      for (const machine of activeMachines) {
+                        try {
+                          const res = await syncBiometricAttendance(machine.ip, machine.port, syncMock);
+                          if (res.success) {
+                            successCount++;
+                            messageParts.push(`${machine.name}: Sync completed.`);
+                          } else {
+                            messageParts.push(`${machine.name}: Failed (${res.message})`);
+                          }
+                        } catch (e) {
+                          const errMsg = e?.response?.data?.message || e?.message || 'Request failed';
+                          messageParts.push(`${machine.name}: ${errMsg}`);
+                        }
+                      }
+                      
+                      if (successCount > 0) {
+                        setSuccess(`Synced ${successCount}/${activeMachines.length} machines. ${messageParts.join(' | ')}`);
+                        loadData();
+                        loadRawLogs();
+                      } else {
+                        setError(`All ${activeMachines.length} machines failed. ${messageParts.join(' | ')}`);
+                      }
+                      setSyncingBiometric(false);
+                    }}
+                    disabled={testingConnection || syncingBiometric}
+                    className="btn btn-primary"
+                    style={{ width: '100%', height: 44, fontWeight: 600, background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    <RefreshCw size={16} className={syncingBiometric ? 'animate-spin' : ''} />
+                    {syncingBiometric ? 'Syncing All...' : 'Sync All 3 Machines'}
+                  </button>
+                </div>
+              </div>
+
+              {/* RIGHT: Raw Punch Logs Viewer */}
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Raw Device Logs</h3>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0 0' }}>Latest punch events imported from ZK machines.</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Filter Date:</span>
+                      <input
+                        type="date"
+                        className="form-control"
+                        style={{ width: 140, height: 36, fontSize: 13, padding: '0 8px' }}
+                        value={filterDate}
+                        onChange={(e) => setFilterDate(e.target.value)}
+                      />
+                      {filterDate && (
+                        <button
+                          onClick={() => setFilterDate('')}
+                          className="btn btn-secondary"
+                          style={{ height: 36, padding: '0 8px', fontSize: 12 }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Filter Month:</span>
+                      <input
+                        type="month"
+                        className="form-control"
+                        style={{ width: 140, height: 36, fontSize: 13, padding: '0 8px' }}
+                        value={filterRawMonth}
+                        onChange={(e) => setFilterRawMonth(e.target.value)}
+                      />
+                      {filterRawMonth && (
+                        <button
+                          onClick={() => setFilterRawMonth('')}
+                          className="btn btn-secondary"
+                          style={{ height: 36, padding: '0 8px', fontSize: 12 }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={showCheckInLogs}
+                          onChange={(e) => setShowCheckInLogs(e.target.checked)}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Check In
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={showCheckOutLogs}
+                          onChange={(e) => setShowCheckOutLogs(e.target.checked)}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Check Out
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e2e8f0', borderRadius: 6, padding: '6px 12px', background: '#fff' }}>
+                      <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>Machines:</span>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.203')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.203']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.203'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M1 (203)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.202')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.202']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.202'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M2 (202)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.201')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.201']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.201'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M3 (201)
+                      </label>
+                    </div>
+                    <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200">
+                      {filteredRawLogs.length} events
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto', maxHeight: '550px' }}>
+                  <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Employee / Code</th>
+                        <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Biometric ID</th>
+                        <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Device / IP</th>
+                        <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Punch Timestamp</th>
+                        <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Event Direction</th>
+                        <th className="px-6 py-4 text-xs uppercase font-extrabold tracking-wider text-slate-500">Punch Type</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {paginatedLogs.map((log) => {
+                        const details = log; // Use log directly since the backend API flattens the data dictionary to the root
+                        const empName = getEmployeeName(log.employee_id || details.biometric_id);
+                        return (
+                          <tr key={log.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <p className="font-semibold text-slate-900">{empName}</p>
+                              <p className="text-xs text-slate-500">Code: {log.employee_id || '—'}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-700 font-mono">
+                              {details.biometric_id || '—'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-700">
+                              <span className="font-semibold text-slate-800">{getDeviceName(details.device_ip)}</span>
+                              <p className="text-xs text-slate-500 font-mono">{details.device_ip || '192.168.0.202'}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-700">
+                              {details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
+                            </td>
+                            <td className="px-6 py-4">
+                              {(() => {
+                                const dir = getPunchDirection(details.status, details.timestamp, details.device_ip);
+                                return (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${dir === 'Check In' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {dir}
+                                  </span>
+                                );
+                              })()}
+                            </td>
+                            <td className="px-6 py-4 text-xs text-slate-500">
+                              {details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {filteredRawLogs.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                            <CalendarClock className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                            No raw logs found for this machine selection. Click "Sync" to import data.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {totalLogsPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                    <div style={{ fontSize: 13, color: '#64748b' }}>
+                      Showing <span style={{ fontWeight: 600, color: '#1e293b' }}>{(logsPage - 1) * logsPerPage + 1}</span> to <span style={{ fontWeight: 600, color: '#1e293b' }}>{Math.min(logsPage * logsPerPage, filteredRawLogs.length)}</span> of <span style={{ fontWeight: 600, color: '#1e293b' }}>{filteredRawLogs.length}</span> results
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        disabled={logsPage === 1}
+                        onClick={() => setLogsPage(p => p - 1)}
+                        style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: logsPage === 1 ? '#f1f5f9' : '#fff', color: logsPage === 1 ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: logsPage === 1 ? 'not-allowed' : 'pointer' }}
+                      >
+                        Previous
+                      </button>
+                      <button
+                        disabled={logsPage === totalLogsPages}
+                        onClick={() => setLogsPage(p => p + 1)}
+                        style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 6, background: logsPage === totalLogsPages ? '#f1f5f9' : '#fff', color: logsPage === totalLogsPages ? '#94a3b8' : '#475569', fontSize: 13, fontWeight: 500, cursor: logsPage === totalLogsPages ? 'not-allowed' : 'pointer' }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
       </div>{/* END DATA AREA */}
       </div>

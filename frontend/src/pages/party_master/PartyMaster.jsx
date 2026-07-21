@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Users, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, Briefcase, CheckCircle, Download, FileText, User, Phone, MapPin, IndianRupee, Mail, Globe, Box } from 'lucide-react';
 import { partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -91,6 +92,7 @@ export default function PartyMaster() {
 
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
+  const partyPreviewRef = useRef(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -183,10 +185,15 @@ export default function PartyMaster() {
     e.preventDefault();
     if (isReadOnly) return;
     try {
+      const payload = { ...formData };
+      payload.credit_days = Number(payload.credit_days) || 0;
+      payload.credit_limit = Number(payload.credit_limit) || 0;
+      payload.tds_percent = Number(payload.tds_percent) || 0;
+      
       if (editingId) {
-        await partyAPI.update(editingId, formData);
+        await partyAPI.update(editingId, payload);
       } else {
-        await partyAPI.create(formData);
+        await partyAPI.create(payload);
       }
       setView('list');
       fetchParties();
@@ -196,10 +203,10 @@ export default function PartyMaster() {
     }
   };
 
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     let { name, value } = e.target;
     if (['credit_days', 'credit_limit', 'tds_percent'].includes(name)) {
-      value = value === '' ? 0 : Number(value);
+      value = value === '' ? '' : Number(value);
     }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -399,7 +406,7 @@ export default function PartyMaster() {
       (typeFilter === 'Sales' && isSalesParty(p)) ||
       (typeFilter === 'Purchase Party' && isPurchaseParty(p)) ||
       (typeFilter === 'Purchase' && isPurchaseParty(p)) ||
-      p.party_type === typeFilter;
+      p.party_type?.split(', ').includes(typeFilter);
     const matchesStatus = statusFilter === 'All Status' || p.status === statusFilter;
 
     let matchesDate = true;
@@ -481,6 +488,11 @@ export default function PartyMaster() {
   };
 
   const generatePartyPDF = async (party) => {
+    if (partyPreviewRef.current) {
+      const safeName = (party?.company_name || 'Party').replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(partyPreviewRef.current, `Party_Profile_${safeName}.pdf`);
+      return;
+    }
     const doc = new jsPDF('p', 'pt', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 40;
@@ -838,6 +850,7 @@ export default function PartyMaster() {
                         required
                         disabled={isReadOnly}
                         placeholder="-- Select Party Type --"
+                        multiple={true}
                       />
                       <div className="form-group">
                         <label>Business Name *</label>
@@ -1075,32 +1088,23 @@ export default function PartyMaster() {
                       />
                       <div className="form-group">
                         <label>Bill Credit Days</label>
-                        <input type="number" className="form-control" name="credit_days" value={formData.credit_days} onChange={handleChange} />
+                        <input type="number" className="form-control" name="credit_days" value={formData.credit_days === '' ? '' : formData.credit_days} onChange={handleChange} disabled={isReadOnly} />
                       </div>
                       <div className="form-group">
                         <label>Credit Limit Rs.</label>
-                        <input type="number" className="form-control" name="credit_limit" value={formData.credit_limit} onChange={handleChange} />
+                        <input type="number" className="form-control" name="credit_limit" value={formData.credit_limit === '' ? '' : formData.credit_limit} onChange={handleChange} disabled={isReadOnly} />
                       </div>
                       <div className="form-group">
                         <label>Merchandiser</label>
-                        <select className="form-control" name="merchandiser" value={formData.merchandiser} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('merchandis')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                        </select>
+                        <input className="form-control" name="merchandiser" value={formData.merchandiser || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <div className="form-group">
                         <label>Manager</label>
-                        <select className="form-control" name="manager" value={formData.manager} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('manag')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                        </select>
+                        <input className="form-control" name="manager" value={formData.manager || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <div className="form-group">
                         <label>A/c Incharge</label>
-                        <select className="form-control" name="account_incharge" value={formData.account_incharge} onChange={handleChange}>
-                          <option value="">-- Select --</option>
-                          {options.employees.filter(emp => emp.department?.toLowerCase().includes('account')).map(emp => <option key={emp.id} value={emp.name}>{emp.name}</option>)}
-                        </select>
+                        <input className="form-control" name="account_incharge" value={formData.account_incharge || ''} onChange={handleChange} disabled={isReadOnly} placeholder="Select or type new..." />
                       </div>
                       <SubMasterDropdown
                         label="Agent Name"
@@ -1141,7 +1145,7 @@ export default function PartyMaster() {
                       />
                       <div className="form-group">
                         <label>Deliver Party Name</label>
-                        <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange}>
+                        <select className="form-control" name="deliver_party_name" value={formData.deliver_party_name} onChange={handleChange} disabled={isReadOnly}>
                           <option value="">-- Same as Business Name --</option>
                           {formData.deliver_party_name && !options.all_parties.some(p => p.name === formData.deliver_party_name) && (
                             <option value={formData.deliver_party_name}>{formData.deliver_party_name}</option>
@@ -1151,7 +1155,7 @@ export default function PartyMaster() {
                       </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
                         <label>Delivery Address</label>
-                        <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleChange} />
+                        <input className="form-control" name="delivery_address" value={formData.delivery_address || ''} onChange={handleChange} disabled={isReadOnly} />
                       </div>
                     </div>
                   </div>
@@ -1333,15 +1337,14 @@ export default function PartyMaster() {
               <thead>
                 <tr>
                   <th>Party no</th><th>Business Name</th><th>Type & Group</th>
-                  <th>Agent</th>
-                  <th>Contact & Phone</th><th>City</th><th>GST / PAN</th><th>Actions</th>
+                  <th>Contact & Phone</th><th>City</th><th>Merchandiser</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>Loading...</td></tr>
                 ) : filteredParties.length === 0 ? (
-                  <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: 20 }}>No parties found matching criteria.</td></tr>
                 ) : (
                   filteredParties.map(p => (
                     <tr
@@ -1360,16 +1363,12 @@ export default function PartyMaster() {
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.party_group}</span>
                       </td>
                       <td>
-                        {p.agent_name ? <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{p.agent_name}</span> : <span style={{ color: 'var(--text-muted)' }}>N/A</span>}
-                      </td>
-                      <td>
                         {p.contact_person || 'N/A'}<br />
                         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.phone}</span>
                       </td>
                       <td>{p.city}</td>
                       <td>
-                        <span style={{ fontSize: 12 }}>{p.gst_no || 'N/A'}</span><br />
-                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.pan_no}</span>
+                        <span style={{ fontWeight: 600 }}>{p.merchandiser || 'N/A'}</span>
                       </td>
                       <td onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -1576,7 +1575,7 @@ export default function PartyMaster() {
             <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
               
               {/* A4 Paper */}
-              <div style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+              <div ref={partyPreviewRef} style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
                 
                 {/* Top Header Section */}
                 <div style={{ padding: '32px 40px 20px 40px' }}>

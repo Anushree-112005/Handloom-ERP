@@ -8,6 +8,7 @@ import os, uuid
 
 from app.core.database import get_db
 from app.models.design_entry import DesignEntry
+from app.models.notification import Notification
 
 router = APIRouter(prefix="/design-entries", tags=["Design Entry"])
 
@@ -50,6 +51,7 @@ class DesignEntryBase(BaseModel):
     image_path: Optional[str] = None
     book_no: Optional[str] = None
     page_no: Optional[str] = None
+    status: Optional[str] = "Pending"
 
 class DesignEntryCreate(DesignEntryBase):
     pass
@@ -57,6 +59,7 @@ class DesignEntryCreate(DesignEntryBase):
 class DesignEntryOut(DesignEntryBase):
     id: int
     ds_ref_no: str
+    status: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -175,6 +178,26 @@ async def delete_design_entry(entry_id: int, db: AsyncSession = Depends(get_db))
     await db.commit()
     return None
 
+@router.put("/{entry_id}/approve", response_model=DesignEntryOut)
+async def approve_design_entry(entry_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(DesignEntry).where(DesignEntry.id == entry_id))
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Design Entry not found")
+
+    entry.status = "Approved"
+    
+    # Create notification for Purchase Team
+    notif = Notification(
+        user_role="Purchase Team",
+        message=f"Yarn Procurement Required for Design No: {entry.design_no}"
+    )
+    db.add(notif)
+    
+    await db.commit()
+    await db.refresh(entry)
+    return entry
+
 @router.post("/{entry_id}/upload-image")
 async def upload_design_entry_image(entry_id: int, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(DesignEntry).where(DesignEntry.id == entry_id))
@@ -219,6 +242,20 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     client = Groq(api_key=settings.GROQ_API_KEY)
     
     import time
+    import re
+
+    def parse_json_from_llm(raw_content: str) -> dict:
+        if not raw_content:
+            return {}
+        cleaned = re.sub(r'<think>.*?</think>', '', raw_content, flags=re.DOTALL).strip()
+        match = re.search(r'\{.*\}', cleaned, flags=re.DOTALL)
+        if match:
+            cleaned = match.group(0)
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            return {}
+
     def call_llm_with_retry(groq_client, **kwargs):
         for attempt in range(4):
             try:
@@ -245,7 +282,7 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
     try:
         completion = call_llm_with_retry(
             client,
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            model="qwen/qwen3.6-27b",
             messages=[
                 {
                     "role": "user",
@@ -260,11 +297,10 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
                     ],
                 }
             ],
-            response_format={"type": "json_object"},
             temperature=0.0
         )
         if completion and hasattr(completion, 'choices') and completion.choices:
-            res_data = json.loads(completion.choices[0].message.content or "{}")
+            res_data = parse_json_from_llm(completion.choices[0].message.content or "")
             template_type = res_data.get("type", "other")
     except Exception:
         template_type = "other"
@@ -370,7 +406,7 @@ Return ONLY a JSON object of this structure:
         try:
             completion = call_llm_with_retry(
                 client,
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="qwen/qwen3.6-27b",
                 messages=[
                     {
                         "role": "user",
@@ -385,11 +421,10 @@ Return ONLY a JSON object of this structure:
                         ],
                     }
                 ],
-                response_format={"type": "json_object"},
                 temperature=0.0
             )
             if completion and hasattr(completion, 'choices') and completion.choices:
-                res_data = json.loads(completion.choices[0].message.content or "{}")
+                res_data = parse_json_from_llm(completion.choices[0].message.content or "")
                 combined_warp.extend(res_data.get("warp", []))
                 combined_weft.extend(res_data.get("weft", []))
         except Exception as e:

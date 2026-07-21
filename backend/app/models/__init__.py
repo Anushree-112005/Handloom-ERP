@@ -58,4 +58,11 @@ from app.models.route_trip import Route, Trip
 from app.models.calendar_event import CalendarEvent
 from app.models.stock_sheet import StockSheetItem
 from app.models.costing_sheet import CostingSheet
-
+from app.models.notification import Notification
+from app.models.warehouse_waxing import WarehouseWaxing
+from app.models.warehouse_stock import WarehouseStock, WarehouseStockImage
+from app.models.warehouse_material import WarehouseMaterial, WarehouseMaterialImage
+from app.models.rbac import (
+    Role, PermissionAction, Module, RolePermission, UserRole, UserModule, UserPermission, AuditLog
+)
+from app.models.rack import Rack

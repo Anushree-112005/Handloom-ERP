@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from datetime import date
 from finance_app.database import get_db
 from finance_app.models.voucher import Voucher, VoucherEntry
+from finance_app.models.gst_models import GSTRegistration, GSTClassification
+from finance_app.schemas.gst_models import GSTRegistrationCreate, GSTRegistrationOut, GSTClassificationCreate, GSTClassificationOut
+from typing import List
 
 router = APIRouter()
 
@@ -60,3 +63,31 @@ def gst_summary(company_id: int, month: int, year: int, db: Session = Depends(ge
             "total": round(net_cgst + net_sgst + net_igst, 2)
         }
     }
+
+# --- GST Registration Endpoints ---
+
+@router.get("/registrations", response_model=List[GSTRegistrationOut])
+def get_gst_registrations(company_id: int, db: Session = Depends(get_db)):
+    return db.query(GSTRegistration).filter(GSTRegistration.company_id == company_id).all()
+
+@router.post("/registrations", response_model=GSTRegistrationOut)
+def create_gst_registration(company_id: int, reg: GSTRegistrationCreate, db: Session = Depends(get_db)):
+    db_reg = GSTRegistration(**reg.model_dump(), company_id=company_id)
+    db.add(db_reg)
+    db.commit()
+    db.refresh(db_reg)
+    return db_reg
+
+# --- GST Classification Endpoints ---
+
+@router.get("/classifications", response_model=List[GSTClassificationOut])
+def get_gst_classifications(company_id: int, db: Session = Depends(get_db)):
+    return db.query(GSTClassification).filter(GSTClassification.company_id == company_id).all()
+
+@router.post("/classifications", response_model=GSTClassificationOut)
+def create_gst_classification(company_id: int, cls: GSTClassificationCreate, db: Session = Depends(get_db)):
+    db_cls = GSTClassification(**cls.model_dump(), company_id=company_id)
+    db.add(db_cls)
+    db.commit()
+    db.refresh(db_cls)
+    return db_cls

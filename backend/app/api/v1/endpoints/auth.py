@@ -8,6 +8,7 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.core.security import verify_password, create_access_token, decode_access_token
+from app.core.authorization import get_user_rbac_context
 from app.models.employee import Employee
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -20,6 +21,7 @@ class TokenResponse(BaseModel):
     user_id: str
     user_name: str
     user_type: str
+    module_permissions: Optional[dict] = {}
 
 
 class UserOut(BaseModel):
@@ -44,7 +46,7 @@ async def get_current_user(
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     uid = payload.get("sub")
-    result = await db.execute(select(Employee).where(Employee.employee_code == uid))
+    result = await db.execute(select(Employee).where((Employee.employee_code == uid) | (Employee.username == uid)))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -53,19 +55,36 @@ async def get_current_user(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Employee).where(Employee.employee_code == form.username))
+    result = await db.execute(select(Employee).where((Employee.employee_code == form.username) | (Employee.username == form.username)))
     user = result.scalar_one_or_none()
     if not user or not user.password_hash or not verify_password(form.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if user.status != "Active":
         raise HTTPException(status_code=403, detail="Account disabled")
-    token = create_access_token({"sub": user.employee_code})
+    token = create_access_token({"sub": user.username or user.employee_code})
+    
+    rbac_context = await get_user_rbac_context(user.id, db)
+    
     return TokenResponse(
         access_token=token, user_id=user.employee_code,
         user_name=user.name, user_type=user.user_type,
+        module_permissions=rbac_context
     )
 
 
 @router.get("/me", response_model=UserOut)
-async def read_current_user(current_user: Employee = Depends(get_current_user)):
-    return current_user
+async def read_current_user(current_user: Employee = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    rbac_context = await get_user_rbac_context(current_user.id, db)
+    
+    # We create a dictionary representation of current_user and inject module_permissions
+    user_dict = {
+        "id": current_user.id,
+        "employee_code": current_user.employee_code,
+        "name": current_user.name,
+        "user_type": current_user.user_type,
+        "department": current_user.department,
+        "designation": current_user.designation,
+        "email": current_user.email,
+        "module_permissions": rbac_context
+    }
+    return user_dict

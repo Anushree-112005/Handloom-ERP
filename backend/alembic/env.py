@@ -14,7 +14,7 @@ from app.core.database import Base
 
 from app.core.config import settings
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL).replace("%", "%%"))
 
 target_metadata = Base.metadata
 

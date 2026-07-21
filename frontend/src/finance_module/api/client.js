@@ -18,17 +18,17 @@ api.interceptors.request.use(
 
 // Response interceptor for generic error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
     
     // If the backend says "Company not found", it means the active company was deleted.
-    // Clear it from localStorage and redirect back to the Company Setup page.
+    // Clear it from localStorage and redirect back to the Company Setup page within finance.
     if (error.response?.status === 404 && error.response?.data?.detail === "Company not found") {
       localStorage.removeItem('cb_company_id');
       localStorage.removeItem('cb_company_name');
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
+      if (window.location.pathname !== '/cubebook/company/create') {
+        window.location.href = '/cubebook/company/create';
       }
     }
 

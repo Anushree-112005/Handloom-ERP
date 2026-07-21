@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Receipt, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, CheckCircle, Download, FileText, Briefcase, FileSpreadsheet } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI } from '../../services/api';
+import { salesInvoiceAPI, dropdownAPI, partyAPI, subMasterAPI, goodsReleaseAPI, buyerOrderAPI } from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -151,6 +151,13 @@ export default function SalesInvoice() {
       setGraList(data);
     } catch (err) {
       console.error("Error fetching GRA list:", err);
+    }
+    
+    try {
+      const { data: boData } = await buyerOrderAPI.list();
+      setBuyerOrders(boData || []);
+    } catch (err) {
+      console.error("Error fetching Buyer Orders:", err);
     }
   };
 
@@ -850,8 +857,13 @@ export default function SalesInvoice() {
                         <input className="form-control" name="dly_state_code" value={formData.dly_state_code} onChange={handleInputChange} />
                       </div>
                       <div className="form-group">
-                        <label>PO No</label>
-                        <input className="form-control" name="po_no" value={formData.po_no} onChange={handleInputChange} />
+                        <label>PO / IBPO No</label>
+                        <select className="form-control" name="po_no" value={formData.po_no} onChange={(e) => handleIbpoSelect(e.target.value)}>
+                          <option value="">-- Select IBPO --</option>
+                          {buyerOrders.map(bo => (
+                            <option key={bo.id} value={bo.ibpo_number}>{bo.ibpo_number}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="form-group">
                         <label>PO Date</label>

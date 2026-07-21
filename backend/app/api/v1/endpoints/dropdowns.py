@@ -61,7 +61,8 @@ DEFAULT_SUB_MASTERS = {
     "uom_master": ["Meters", "Yards", "Kgs", "Rolls", "Pieces"],
     "payment_terms_master": ["30 Days", "45 Days", "60 Days", "90 Days", "Cash"],
     "agent_master": ["Self", "Local Agent", "Direct Agent"],
-    "yarn_spec_type_master": ["Warp", "Weft"]
+    "yarn_spec_type_master": ["Warp", "Weft"],
+    "order_type_master": ["Domestic", "Export"]
 }
 
 @router.get("/")
@@ -70,8 +71,8 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
     parties_req = await db.execute(select(PartyMaster.id, PartyMaster.company_name, PartyMaster.party_type))
     parties = parties_req.all()
     
-    agents = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type == "Agent"]
-    transporters = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type == "Logistics"]
+    agents = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type and "Agent" in p.party_type]
+    transporters = [{"id": p.id, "name": p.company_name} for p in parties if p.party_type and "Logistics" in p.party_type]
     all_parties = [{"id": p.id, "name": p.company_name} for p in parties]
 
     # 2. Fetch employees for Manager, Merchandiser, A/c Incharge
@@ -168,6 +169,26 @@ async def get_all_dropdowns(db: AsyncSession = Depends(get_db)):
                     db.add(SubMaster(entity="yarn_spec_type_master", name=val, is_active=True))
                     added_any = True
             db.add(SubMaster(entity="system_seeded", name="yarn_spec_type_seeded", is_active=True))
+            added_any = True
+            if added_any:
+                await db.commit()
+
+        # One-time migration for existing databases: check if order_type_master has been seeded
+        order_type_check = await db.execute(
+            select(SubMaster).where(SubMaster.entity == "system_seeded", SubMaster.name == "order_type_seeded")
+        )
+        has_seeded_order_type = order_type_check.scalars().first() is not None
+        
+        if not has_seeded_order_type:
+            added_any = False
+            for val in ["Domestic", "Export"]:
+                check_exist = await db.execute(
+                    select(SubMaster).where(SubMaster.entity == "order_type_master", SubMaster.name == val)
+                )
+                if not check_exist.scalars().first():
+                    db.add(SubMaster(entity="order_type_master", name=val, is_active=True))
+                    added_any = True
+            db.add(SubMaster(entity="system_seeded", name="order_type_seeded", is_active=True))
             added_any = True
             if added_any:
                 await db.commit()

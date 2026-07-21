@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Calculator, AlertTriangle, CheckCircle2, FileText, Plus, Trash2, X, DollarSign, Eye, User, Calendar, Building, RefreshCw, Download, Printer, FileSpreadsheet, Filter, LayoutList, LayoutGrid, Sparkles, Search, Edit2 } from 'lucide-react';
 import hrService, { fetchPayroll, createPayroll, updatePayroll, deletePayroll, fetchLoans, fetchEmployees } from '../../../services/hrService';
+import { companySettingAPI } from '../../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -11,7 +12,7 @@ const monthsList = [
 
 const initialForm = {
   employee: '', period: 'Monthly', month: monthsList[new Date().getMonth()],
-  basic: 0, allowances: 0, deductions: 0, lop_days: 0, ot_hours: 0, loan_amount: 0
+  basic: 0, allowances: 0, deductions: 0, lop_days: 0, ot_hours: 0, loan_amount: 0, advance: 0
 };
 
 const Payroll = () => {
@@ -23,8 +24,11 @@ const Payroll = () => {
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [viewingPayslip, setViewingPayslip] = useState(null);
+  const [viewingAttendance, setViewingAttendance] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [empSearch, setEmpSearch] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPeriod, setFilterPeriod] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,18 +40,67 @@ const Payroll = () => {
   const [isDetecting, setIsDetecting] = useState(false);
   const [aiAnomalies, setAiAnomalies] = useState([]);
   const [showAiModal, setShowAiModal] = useState(false);
+  const [companySettings, setCompanySettings] = useState(null);
+
+  useEffect(() => {
+    const fetchViewingAttendance = async () => {
+      if (!viewingPayslip) {
+        setViewingAttendance([]);
+        return;
+      }
+      try {
+        const empCode = viewingPayslip.employee;
+        const targetMonthName = viewingPayslip.month || monthsList[new Date().getMonth()];
+        const targetMonthIdx = monthsList.indexOf(targetMonthName);
+
+        const filterByMonth = (list) => {
+          return list.filter(att => {
+            if (!att.date) return false;
+            const parts = att.date.split('-');
+            if (parts.length < 2) return false;
+            const monthVal = parseInt(parts[1], 10) - 1; // 0-indexed
+            return monthVal === targetMonthIdx;
+          });
+        };
+
+        let attData = await hrService.fetchEmployeeAttendance(empCode).catch(() => []);
+        let filtered = filterByMonth(attData);
+
+        if (filtered.length === 0) {
+          // Try fetching by database numeric ID if empCode didn't return anything
+          const selectedEmp = employees.find(
+            emp => String(emp.employee_id) === String(empCode) || String(emp.id) === String(empCode)
+          );
+          if (selectedEmp) {
+            const attDataById = await hrService.fetchEmployeeAttendance(selectedEmp.id).catch(() => []);
+            filtered = filterByMonth(attDataById);
+          }
+        }
+
+        filtered.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+        setViewingAttendance(filtered);
+      } catch (err) {
+        console.error("Error fetching viewing attendance:", err);
+      }
+    };
+    fetchViewingAttendance();
+  }, [viewingPayslip, employees]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [payrollData, empData, loanData] = await Promise.all([
+      const [payrollData, empData, loanData, settingsRes] = await Promise.all([
         fetchPayroll(),
         fetchEmployees(),
-        fetchLoans().catch(() => [])
+        fetchLoans().catch(() => []),
+        companySettingAPI.get().catch(() => null)
       ]);
       setRows(payrollData || []);
       setEmployees(empData || []);
       setLoans(loanData || []);
+      if (settingsRes && settingsRes.data) {
+        setCompanySettings(settingsRes.data);
+      }
     } catch (err) {
       console.error('Failed to load payroll:', err);
       setError('Failed to load data');
@@ -61,7 +114,7 @@ const Payroll = () => {
 
   const computeSalary = (r) => {
     const gross = (Number(r.basic) || 0) + (Number(r.allowances) || 0) + ((Number(r.ot_hours) || 0) * 200);
-    const totalDeductions = (Number(r.deductions) || 0) + (((Number(r.basic) || 0) / 26) * (Number(r.lop_days) || 0)) + (Number(r.loan_amount) || 0);
+    const totalDeductions = (Number(r.deductions) || 0) + (((Number(r.basic) || 0) / 26) * (Number(r.lop_days) || 0)) + (Number(r.loan_amount) || 0) + (Number(r.advance) || 0);
     return { gross, deductions: totalDeductions, net: gross - totalDeductions };
   };
 
@@ -100,7 +153,7 @@ const Payroll = () => {
     return { gross: totalGross, deductions: totalDeductions, net: totalNet, pending };
   }, [rows]);
 
-  const handleEmployeeChange = async (employeeValue) => {
+  const handleEmployeeChange = (employeeValue) => {
     if (!employeeValue) {
       setForm(prev => ({
         ...prev,
@@ -110,7 +163,8 @@ const Payroll = () => {
         deductions: 0,
         lop_days: 0,
         ot_hours: 0,
-        loan_amount: 0
+        loan_amount: 0,
+        advance: 0
       }));
       return;
     }
@@ -120,9 +174,6 @@ const Payroll = () => {
     );
 
     if (selectedEmp) {
-      const empId = selectedEmp.id;
-      const empCode = selectedEmp.employee_id;
-      
       const empLoans = loans.filter(l => 
         (selectedEmp.id && Number(l.employee_id) === Number(selectedEmp.id)) ||
         (selectedEmp.name && l.employee_name && l.employee_name.toLowerCase() === selectedEmp.name.toLowerCase())
@@ -137,48 +188,143 @@ const Payroll = () => {
         basic: selectedEmp.basic_salary || 0,
         allowances: selectedEmp.allowances || 0,
         deductions: selectedEmp.deductions || 0,
-        lop_days: 0,
-        ot_hours: 0,
-        loan_amount: activeLoansTotal
+        loan_amount: activeLoansTotal,
+        advance: 0
       }));
+    } else {
+      setForm(prev => ({ ...prev, employee: employeeValue, loan_amount: 0, advance: 0 }));
+    }
+  };
 
+  const getLop = (filteredList, leaveDays) => {
+    const pCount = filteredList.length;
+    // Absent days: standard 26 working days minus present minus approved leaves
+    const absDays = Math.max(0, 26 - pCount - leaveDays);
+    // 1 absent day per month is paid (with salary); second absent day and onwards are LOP
+    const absLop = Math.max(0, absDays - 1);
+    
+    // Half day checkouts: check if check_out is before 17:00 (5:00 PM)
+    let hdLop = 0;
+    filteredList.forEach(att => {
+      const co = att.check_out || att.checkout;
+      if (co) {
+        const parts = co.split(':');
+        if (parts.length >= 2) {
+          const hours = parseInt(parts[0], 10);
+          const minutes = parseInt(parts[1], 10);
+          // 17:00 is 17 * 60 = 1020 minutes
+          if (hours * 60 + minutes < 1020) {
+            hdLop += 0.5;
+          }
+        }
+      }
+    });
+    return absLop + hdLop;
+  };
+
+  useEffect(() => {
+    const fetchAndCalculate = async () => {
+      if (!form.employee) return;
+      
+      const selectedEmp = employees.find(
+        emp => String(emp.employee_id) === String(form.employee) || String(emp.id) === String(form.employee)
+      );
+      if (!selectedEmp) return;
+      
       try {
+        const employeeValue = form.employee;
         const [attData, leavesData] = await Promise.all([
           hrService.fetchEmployeeAttendance(employeeValue).catch(() => []),
           hrService.fetchEmployeeLeaves(employeeValue).catch(() => [])
         ]);
-
-        let attLop = attData.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
-        let attOt = attData.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
-
+        
+        const targetMonthName = form.month || monthsList[new Date().getMonth()];
+        const targetMonthIdx = monthsList.indexOf(targetMonthName); // 0-11
+        
+        const filterByMonth = (list) => {
+          return list.filter(att => {
+            if (!att.date) return false;
+            const parts = att.date.split('-');
+            if (parts.length < 2) return false;
+            const monthVal = parseInt(parts[1], 10) - 1; // 0-indexed
+            return monthVal === targetMonthIdx;
+          });
+        };
+        
+        let filtered = filterByMonth(attData);
+        let presentCount = filtered.length;
+        
+        const filterLeavesByMonth = (list) => {
+          return list.filter(leave => {
+            if (leave.status !== 'Approved') return false;
+            const sDate = leave.start_date || leave.from_date || '';
+            if (!sDate) return false;
+            const parts = sDate.split('-');
+            if (parts.length < 2) return false;
+            const monthVal = parseInt(parts[1], 10) - 1; // 0-indexed
+            return monthVal === targetMonthIdx;
+          });
+        };
+        const approvedLeaves = filterLeavesByMonth(leavesData);
+        const approvedLeaveDays = approvedLeaves.reduce((sum, leave) => {
+          const days = Number(leave.days || leave.total_days || leave.number_of_days || 1);
+          return sum + days;
+        }, 0);
+        
+        let attLop = getLop(filtered, approvedLeaveDays);
+        let attOt = filtered.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
+        
         if (attData.length === 0) {
           const fallbackId = selectedEmp.id;
-          const attDataById = await hrService.fetchEmployeeAttendance(fallbackId).catch(() => []);
+          const [attDataById, leavesDataById] = await Promise.all([
+            hrService.fetchEmployeeAttendance(fallbackId).catch(() => []),
+            hrService.fetchEmployeeLeaves(fallbackId).catch(() => [])
+          ]);
+          const filteredById = filterByMonth(attDataById);
+          const approvedLeavesById = filterLeavesByMonth(leavesDataById);
+          const approvedLeaveDaysById = approvedLeavesById.reduce((sum, leave) => {
+            const days = Number(leave.days || leave.total_days || leave.number_of_days || 1);
+            return sum + days;
+          }, 0);
+          
           if (attDataById.length > 0) {
-            attLop = attDataById.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
-            attOt = attDataById.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
+            presentCount = filteredById.length;
+            attLop = getLop(filteredById, approvedLeaveDaysById);
+            attOt = filteredById.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
           } else if (selectedEmp.employee_id) {
-            const attDataByCode = await hrService.fetchEmployeeAttendance(selectedEmp.employee_id).catch(() => []);
-            attLop = attDataByCode.reduce((sum, att) => sum + (Number(att.lop_days) || 0), 0);
-            attOt = attDataByCode.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
+            const [attDataByCode, leavesDataByCode] = await Promise.all([
+              hrService.fetchEmployeeAttendance(selectedEmp.employee_id).catch(() => []),
+              hrService.fetchEmployeeLeaves(selectedEmp.employee_id).catch(() => [])
+            ]);
+            const filteredByCode = filterByMonth(attDataByCode);
+            const approvedLeavesByCode = filterLeavesByMonth(leavesDataByCode);
+            const approvedLeaveDaysByCode = approvedLeavesByCode.reduce((sum, leave) => {
+              const days = Number(leave.days || leave.total_days || leave.number_of_days || 1);
+              return sum + days;
+            }, 0);
+            
+            presentCount = filteredByCode.length;
+            attLop = getLop(filteredByCode, approvedLeaveDaysByCode);
+            attOt = filteredByCode.reduce((sum, att) => sum + (Number(att.ot_hours) || 0), 0);
           }
         }
-
+        
         setForm(prev => ({
           ...prev,
           lop_days: attLop,
           ot_hours: attOt
         }));
       } catch (err) {
-        console.error("Error fetching employee details:", err);
+        console.error("Error recalculating payroll fields:", err);
       }
-    } else {
-      setForm(prev => ({ ...prev, employee: employeeValue, loan_amount: 0 }));
-    }
-  };
+    };
+    
+    fetchAndCalculate();
+  }, [form.employee, form.month, employees, loans]);
 
   const resetForm = () => {
     setForm(initialForm);
+    setEmpSearch('');
     setEditingId(null);
     setShowForm(false);
     setError('');
@@ -194,8 +340,15 @@ const Payroll = () => {
       deductions: r.deductions || 0,
       lop_days: r.lop_days || 0,
       ot_hours: r.ot_hours || 0,
-      loan_amount: r.loan_amount || 0
+      loan_amount: r.loan_amount || 0,
+      advance: r.advance || 0
     });
+    const emp = employees.find(e => String(e.employee_id) === String(r.employee) || String(e.id) === String(r.employee));
+    if (emp) {
+      setEmpSearch(`${emp.name} (${emp.employee_id || emp.id})`);
+    } else {
+      setEmpSearch(r.employee);
+    }
     setEditingId(r.id);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -220,7 +373,8 @@ const Payroll = () => {
         deductions: Number(form.deductions) || 0,
         lop_days: Number(form.lop_days) || 0,
         ot_hours: Number(form.ot_hours) || 0,
-        loan_amount: Number(form.loan_amount) || 0
+        loan_amount: Number(form.loan_amount) || 0,
+        advance: Number(form.advance) || 0
       };
 
       if (editingId) {
@@ -252,77 +406,159 @@ const Payroll = () => {
     setTimeout(() => { setSuccess(''); setError(''); }, 3000);
   };
 
+  const viewingEmpDetails = useMemo(() => {
+    if (!viewingPayslip) return {};
+    return employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee)) || {};
+  }, [viewingPayslip, employees]);
+
+  const viewingValues = useMemo(() => {
+    if (!viewingPayslip) return { basicPayDa: 0, otAmt: 0, computedGross: 0, computedDeductions: 0, computedNet: 0, basicVal: 0, allowancesVal: 0, deductionsVal: 0, lopDaysVal: 0, loanAmt: 0, advanceVal: 0 };
+    const basicVal = viewingPayslip.basic || 0;
+    const allowancesVal = viewingPayslip.allowances || 0;
+    const otHoursVal = viewingPayslip.ot_hours || 0;
+    const otAmt = otHoursVal * 200;
+    const deductionsVal = viewingPayslip.deductions || 0;
+    const lopDaysVal = viewingPayslip.lop_days || 0;
+    const lopAmt = Math.round((basicVal / 26) * lopDaysVal);
+    const loanAmt = viewingPayslip.loan_amount || 0;
+    const advanceVal = viewingPayslip.advance || 0;
+
+    const basicPayDa = basicVal - lopAmt;
+    const computedGross = basicPayDa + allowancesVal + otAmt;
+    const computedDeductions = deductionsVal + loanAmt + advanceVal;
+    const computedNet = computedGross - computedDeductions;
+
+    return { basicVal, allowancesVal, otAmt, deductionsVal, lopDaysVal, loanAmt, advanceVal, basicPayDa, computedGross, computedDeductions, computedNet };
+  }, [viewingPayslip]);
+
   const handlePrint = () => {
     if (!viewingPayslip) return;
     const printWindow = window.open('', '_blank');
-    const salary = computeSalary(viewingPayslip);
-    const employeeName = employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee;
+    const empDetails = viewingEmpDetails;
+    const employeeName = empDetails.name || viewingPayslip.employee;
+    const { basicVal, allowancesVal, otAmt, deductionsVal, lopDaysVal, loanAmt, advanceVal, basicPayDa, computedGross, computedDeductions, computedNet } = viewingValues;
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Payslip - ${viewingPayslip.employee}</title>
+        <title>Payslip - ${employeeName}</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-          .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
-          .header h1 { margin: 0; color: #1e293b; font-size: 28px; }
-          .header p { margin: 5px 0; color: #64748b; }
-          .info-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
-          .info-box { flex: 1; }
-          .info-box h3 { margin: 0 0 10px 0; color: #475569; font-size: 14px; text-transform: uppercase; }
-          .info-box p { margin: 3px 0; color: #1e293b; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #f1f5f9; padding: 12px; text-align: left; color: #475569; font-weight: 600; }
-          td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-          .amount { text-align: right; font-weight: 600; }
-          .total-row { background: #ecfdf5; font-weight: bold; font-size: 18px; }
-          .total-row td { color: #10b981; border-top: 2px solid #10b981; }
-          .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px; }
-          .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-          .status-approved { background: #d1fae5; color: #065f46; }
-          .status-pending { background: #fef3c7; color: #92400e; }
-          @media print { body { padding: 20px; } }
+          body { font-family: monospace, Courier, sans-serif; padding: 20px; color: #000; background: #fff; }
+          .payslip-container { max-width: 900px; margin: 0 auto; border: 1.5px solid #000; padding: 20px; }
+          .header { text-align: center; margin-bottom: 15px; }
+          .header h1 { margin: 0; font-size: 20px; font-weight: bold; text-transform: uppercase; }
+          .header p { margin: 4px 0; font-size: 12px; }
+          .header h2 { margin: 10px 0 0 0; font-size: 14px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 5px 0; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-top: 10px; font-size: 12px; }
+          td { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; }
+          .font-bold { font-weight: bold; }
+          .text-right { text-align: right; }
+          .bg-light { background-color: #f8fafc; }
+          .bg-total { background-color: #ecfdf5; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 30px; }
+          .sig-box { text-align: center; }
+          .sig-line { border-top: 1px dashed #000; width: 180px; padding-top: 5px; font-weight: bold; font-size: 11px; }
+          @media print {
+            body { padding: 0; }
+            .payslip-container { border: 1.5px solid #000; }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <h1>PAYSLIP</h1>
-          <p>Universe Enterprise v2.0</p>
-        </div>
-        <div class="info-section">
-          <div class="info-box">
-            <h3>Employee Details</h3>
-            <p><strong>Name:</strong> ${employeeName}</p>
-            <p><strong>Employee ID:</strong> ${viewingPayslip.employee}</p>
-            <p><strong>Period:</strong> ${viewingPayslip.period}${viewingPayslip.month ? ' (' + viewingPayslip.month + ')' : ''}</p>
+        <div class="payslip-container">
+          <div class="header">
+            <h1>${companySettings?.company_name || 'Dinesh Exports Pvt Ltd'}</h1>
+            <p>${companySettings?.address || '1/6-A, Aiyndhupanai, Kadachanallur, Pallipalayam Road, Komarapalayam Tk, Namakkal Dt - 638008'}</p>
+            <h2>Pay in Slip for the Period of ${viewingPayslip.month || 'May'} ${viewingPayslip.year || '2026'}</h2>
           </div>
-          <div class="info-box" style="text-align: right;">
-            <h3>Payslip Details</h3>
-            <p><strong>Date:</strong> ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-            <p><strong>Status:</strong> <span class="status-badge ${viewingPayslip.status === 'Approved' ? 'status-approved' : 'status-pending'}">${viewingPayslip.status}</span></p>
+          <table>
+            <tbody>
+              <tr>
+                <td class="font-bold" style="width: 15%;">Employee ID</td>
+                <td style="width: 15%;">${empDetails.employee_id || viewingPayslip.employee}</td>
+                <td class="font-bold" style="width: 15%;">Name</td>
+                <td style="width: 20%;">${employeeName}</td>
+                <td class="font-bold bg-light" style="width: 15%;">Earnings</td>
+                <td class="font-bold text-right bg-light" style="width: 10%;">Amount</td>
+                <td class="font-bold bg-light" style="width: 15%;">Deductions</td>
+                <td class="font-bold text-right bg-light" style="width: 10%;">Amount</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Department</td>
+                <td>${empDetails.department || '—'}</td>
+                <td class="font-bold">Designation</td>
+                <td>${empDetails.designation || '—'}</td>
+                <td>Basic Pay & DA</td>
+                <td class="text-right">${Math.max(0, basicPayDa).toLocaleString()}</td>
+                <td>ESI</td>
+                <td class="text-right">0</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Date of Joining</td>
+                <td>${empDetails.date_of_joining ? new Date(empDetails.date_of_joining).toLocaleDateString('en-IN') : '—'}</td>
+                <td class="font-bold">PF Account Number</td>
+                <td>${empDetails.pf_account || empDetails.pan_number || '—'}</td>
+                <td>HRA</td>
+                <td class="text-right">0</td>
+                <td>Provident Fund</td>
+                <td class="text-right">${deductionsVal.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Days Worked</td>
+                <td>${(26 - lopDaysVal).toFixed(2)}</td>
+                <td class="font-bold">UAN</td>
+                <td>${empDetails.uan_number || '—'}</td>
+                <td>Incentive</td>
+                <td class="text-right">${otAmt.toLocaleString()}</td>
+                <td>Professional Tax</td>
+                <td class="text-right">0</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Leave Days</td>
+                <td>${lopDaysVal.toFixed(2)}</td>
+                <td class="font-bold">Father's/Hus Name</td>
+                <td>${empDetails.family_details || empDetails.emergency_contact_name || '—'}</td>
+                <td>Other Allowance</td>
+                <td class="text-right">${allowancesVal.toLocaleString()}</td>
+                <td>TDS</td>
+                <td class="text-right">0</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Bank Account No.</td>
+                <td>${empDetails.account_number || '—'}</td>
+                <td class="font-bold">IFSC Code</td>
+                <td>${empDetails.ifsc_code || '—'}</td>
+                <td class="font-bold bg-light">Total Earnings</td>
+                <td class="font-bold text-right bg-light">${computedGross.toLocaleString()}</td>
+                <td>Advance</td>
+                <td class="text-right">${loanAmt.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td colspan="2"></td>
+                <td colspan="2"></td>
+                <td class="font-bold bg-light">Previous Balance</td>
+                <td class="text-right bg-light">0</td>
+                <td class="font-bold bg-light">Total Deductions</td>
+                <td class="font-bold text-right bg-light">${computedDeductions.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td colspan="2"></td>
+                <td colspan="2"></td>
+                <td colspan="2"></td>
+                <td class="font-bold bg-total" style="font-size: 13px;">Net Pay</td>
+                <td class="font-bold text-right bg-total" style="font-size: 13px; color: #16a34a;">₹${computedNet.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="signatures">
+            <div class="sig-box">
+              <div class="sig-line">Employer's Signature</div>
+            </div>
+            <div class="sig-box">
+              <div class="sig-line">Employee's Signature</div>
+            </div>
           </div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th class="amount">Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Basic Salary</td><td class="amount">${(viewingPayslip.basic || 0).toLocaleString()}</td></tr>
-            <tr><td>Allowances</td><td class="amount">${(viewingPayslip.allowances || 0).toLocaleString()}</td></tr>
-            <tr><td>Overtime (${viewingPayslip.ot_hours || 0}h × ₹200)</td><td class="amount">${((viewingPayslip.ot_hours || 0) * 200).toLocaleString()}</td></tr>
-            <tr style="background: #f8fafc;"><td><strong>Gross Salary</strong></td><td class="amount"><strong>${salary.gross.toLocaleString()}</strong></td></tr>
-            <tr><td>Deductions</td><td class="amount" style="color: #dc2626;">-${(viewingPayslip.deductions || 0).toLocaleString()}</td></tr>
-            <tr><td>Loss of Pay (${viewingPayslip.lop_days || 0} days)</td><td class="amount" style="color: #dc2626;">-${Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0)).toLocaleString()}</td></tr>
-            <tr class="total-row"><td>NET PAY</td><td class="amount">₹${salary.net.toLocaleString()}</td></tr>
-          </tbody>
-        </table>
-        <div class="footer">
-          <p>This is a computer-generated payslip and does not require a signature.</p>
-          <p>© 2026 Universe Enterprise. All rights reserved.</p>
         </div>
       </body>
       </html>
@@ -333,143 +569,123 @@ const Payroll = () => {
 
   const handleDownloadPDF = () => {
     if (!viewingPayslip) return;
-    const salary = computeSalary(viewingPayslip);
-    const employeeName = employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee;
+    const empDetails = viewingEmpDetails;
+    const employeeName = empDetails.name || viewingPayslip.employee;
+    const { basicVal, allowancesVal, otAmt, deductionsVal, lopDaysVal, loanAmt, advanceVal, basicPayDa, computedGross, computedDeductions, computedNet } = viewingValues;
 
-    const doc = new jsPDF();
-
-    // Color theme
-    const primaryColor = '#1e293b'; // Slate 800
-    const secondaryColor = '#0f766e'; // Teal 700
-    const lightBg = '#f8fafc'; // Slate 50
+    const doc = new jsPDF('l', 'mm', 'a4');
 
     // Header Title
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(primaryColor);
-    doc.text("PAYSLIP", 14, 25);
+    doc.setFont("courier", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor("#000000");
+    doc.text(companySettings?.company_name || "DINESH EXPORTS PVT LTD", 148, 20, { align: 'center' });
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont("courier", "normal");
     doc.setFontSize(10);
-    doc.setTextColor("#64748b");
-    doc.text("Dinesh Exports", 14, 30);
-    doc.text("The House of Fabrics", 14, 34);
-
-    // Header Right
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(primaryColor);
-    doc.text("PAYSLIP DETAILS", 140, 20);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 140, 25);
-    doc.text(`Status: ${viewingPayslip.status}`, 140, 30);
-
-    // Divider
-    doc.setDrawColor('#cbd5e1');
-    doc.setLineWidth(0.5);
-    doc.line(14, 38, 196, 38);
-
-    // Employee Details Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(primaryColor);
-    doc.text("EMPLOYEE INFORMATION", 14, 46);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor('#334155');
-    doc.text(`Employee Name:`, 14, 53);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${employeeName}`, 50, 53);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(`Employee ID:`, 14, 59);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${viewingPayslip.employee}`, 50, 59);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(`Pay Period:`, 14, 65);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${viewingPayslip.period}${viewingPayslip.month ? ' (' + viewingPayslip.month + ')' : ''}`, 50, 65);
-
-    // Earnings & Deductions Table
-    const tableColumn = ["Earnings Description", "Amount (INR)", "Deductions Description", "Amount (INR)"];
+    doc.text(companySettings?.address || "1/6-A, Aiyndhupanai, Kadachanallur, Pallipalayam Road, Komarapalayam Tk, Namakkal Dt - 638008", 148, 26, { align: 'center' });
     
-    const basicVal = viewingPayslip.basic || 0;
-    const allowancesVal = viewingPayslip.allowances || 0;
-    const otHoursVal = viewingPayslip.ot_hours || 0;
-    const otAmt = otHoursVal * 200;
-    
-    const deductionsVal = viewingPayslip.deductions || 0;
-    const lopDaysVal = viewingPayslip.lop_days || 0;
-    const lopAmt = Math.round((basicVal / 26) * lopDaysVal);
+    doc.setFont("courier", "bold");
+    doc.text(`Pay in Slip for the Period of ${viewingPayslip.month || 'May'} 2026`, 148, 34, { align: 'center' });
 
-    const tableRows = [
+    const tableBody = [
       [
-        "Basic Salary", 
-        basicVal.toLocaleString(), 
-        "Deductions", 
-        deductionsVal.toLocaleString()
+        { content: "Employee ID", styles: { fontStyle: 'bold' } },
+        empDetails.employee_id || viewingPayslip.employee,
+        { content: "Name", styles: { fontStyle: 'bold' } },
+        employeeName,
+        { content: "Earnings", styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: "Amount", styles: { fontStyle: 'bold', halign: 'right', fillColor: [240, 240, 240] } },
+        { content: "Deductions", styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+        { content: "Amount", styles: { fontStyle: 'bold', halign: 'right', fillColor: [240, 240, 240] } },
       ],
       [
-        "Allowances", 
-        allowancesVal.toLocaleString(), 
-        `Loss of Pay (${lopDaysVal} days)`, 
-        lopAmt.toLocaleString()
+        { content: "Department", styles: { fontStyle: 'bold' } },
+        empDetails.department || '—',
+        { content: "Designation", styles: { fontStyle: 'bold' } },
+        empDetails.designation || '—',
+        "Basic Pay & DA",
+        { content: Math.max(0, basicPayDa).toLocaleString(), styles: { halign: 'right' } },
+        "ESI",
+        { content: "0", styles: { halign: 'right' } },
       ],
       [
-        `Overtime (${otHoursVal}h x 200)`, 
-        otAmt.toLocaleString(), 
-        viewingPayslip.loan_amount > 0 ? "Loan Deduction" : "-", 
-        viewingPayslip.loan_amount > 0 ? (viewingPayslip.loan_amount || 0).toLocaleString() : "-"
+        { content: "Date of Joining", styles: { fontStyle: 'bold' } },
+        empDetails.date_of_joining ? new Date(empDetails.date_of_joining).toLocaleDateString('en-IN') : '—',
+        { content: "PF Account Number", styles: { fontStyle: 'bold' } },
+        empDetails.pf_account || empDetails.pan_number || '—',
+        "HRA",
+        { content: "0", styles: { halign: 'right' } },
+        "Provident Fund",
+        { content: deductionsVal.toLocaleString(), styles: { halign: 'right' } },
       ],
       [
-        "Gross Salary", 
-        salary.gross.toLocaleString(), 
-        "Total Deductions", 
-        salary.deductions.toLocaleString()
-      ]
+        { content: "Days Worked", styles: { fontStyle: 'bold' } },
+        (26 - lopDaysVal).toFixed(2),
+        { content: "UAN", styles: { fontStyle: 'bold' } },
+        empDetails.uan_number || '—',
+        "Incentive",
+        { content: otAmt.toLocaleString(), styles: { halign: 'right' } },
+        "Professional Tax",
+        { content: "0", styles: { halign: 'right' } },
+      ],
+      [
+        { content: "Leave Days", styles: { fontStyle: 'bold' } },
+        lopDaysVal.toFixed(2),
+        { content: "Father's/Hus Name", styles: { fontStyle: 'bold' } },
+        empDetails.family_details || empDetails.emergency_contact_name || '—',
+        "Other Allowance",
+        { content: allowancesVal.toLocaleString(), styles: { halign: 'right' } },
+        "TDS",
+        { content: "0", styles: { halign: 'right' } },
+      ],
+      [
+        { content: "Bank Account No.", styles: { fontStyle: 'bold' } },
+        empDetails.account_number || '—',
+        { content: "IFSC Code", styles: { fontStyle: 'bold' } },
+        empDetails.ifsc_code || '—',
+        { content: "Total Earnings", styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
+        { content: computedGross.toLocaleString(), styles: { halign: 'right', fontStyle: 'bold', fillColor: [248, 250, 252] } },
+        "Advance",
+        { content: (loanAmt + advanceVal).toLocaleString(), styles: { halign: 'right' } },
+      ],
+      [
+        "", "", "", "",
+        { content: "Previous Balance", styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
+        { content: "0", styles: { halign: 'right', fillColor: [248, 250, 252] } },
+        { content: "Total Deductions", styles: { fontStyle: 'bold', fillColor: [248, 250, 252] } },
+        { content: computedDeductions.toLocaleString(), styles: { halign: 'right', fontStyle: 'bold', fillColor: [248, 250, 252] } },
+      ],
+      [
+        "", "", "", "", "", "",
+        { content: "Net Pay", styles: { fontStyle: 'bold', fillColor: [236, 253, 245] } },
+        { content: `INR ${computedNet.toLocaleString()}`, styles: { halign: 'right', fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [22, 163, 74] } },
+      ],
     ];
 
     autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 75,
+      body: tableBody,
+      startY: 42,
       theme: 'grid',
-      headStyles: {
-        fillColor: primaryColor,
-        textColor: '#ffffff',
-        fontStyle: 'bold',
-        fontSize: 10
-      },
       styles: {
+        font: 'courier',
         fontSize: 9,
-        cellPadding: 6
+        cellPadding: 4,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.2,
       },
-      columnStyles: {
-        1: { halign: 'right' },
-        3: { halign: 'right' }
-      }
+      margin: { left: 14, right: 14 }
     });
 
-    // Net Pay Block
-    const finalY = doc.lastAutoTable.finalY + 12;
-    doc.setFillColor(lightBg);
-    doc.rect(14, finalY, 182, 18, "F");
+    const finalY = doc.lastAutoTable.finalY + 25;
     
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(secondaryColor);
-    doc.text("NET TAKE-HOME PAY:", 18, finalY + 11);
-    doc.setFontSize(14);
-    doc.text(`INR ${salary.net.toLocaleString()}`, 145, finalY + 11);
+    doc.setFont("courier", "bold");
+    doc.setFontSize(10);
+    doc.line(20, finalY, 80, finalY);
+    doc.text("Employer's Signature", 50, finalY + 5, { align: 'center' });
 
-    // Footer note
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    doc.setTextColor("#94a3b8");
-    doc.text("This is a computer-generated document and does not require a signature.", 14, finalY + 28);
-    doc.text("© 2026 Dinesh Exports. All rights reserved.", 14, finalY + 34);
+    doc.line(210, finalY, 270, finalY);
+    doc.text("Employee's Signature", 240, finalY + 5, { align: 'center' });
 
     doc.save(`Payslip_${employeeName.replace(/\s+/g, '_')}_${viewingPayslip.month || 'payroll'}.pdf`);
   };
@@ -503,6 +719,9 @@ const Payroll = () => {
 
     if (viewingPayslip.loan_amount > 0) {
       excelRows.push(['Loan Deduction', `-${viewingPayslip.loan_amount}`]);
+    }
+    if (viewingPayslip.advance > 0) {
+      excelRows.push(['Advance Deduction', `-${viewingPayslip.advance}`]);
     }
 
     excelRows.push(['NET PAY', salary.net]);
@@ -628,45 +847,162 @@ const Payroll = () => {
 
         {/* View Payslip Modal */}
         {viewingPayslip && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-            <div className="card" style={{ width: '100%', maxWidth: 500, padding: 0 }}>
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center animate-fade">
+            <div className="card" style={{ width: '100%', maxWidth: 880, padding: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Payslip Details</h2>
                 <button onClick={() => setViewingPayslip(null)} className="btn btn-secondary" style={{ padding: 6, borderRadius: '50%' }}><X className="w-5 h-5" /></button>
               </div>
-              <div className="p-6 space-y-6" ref={payslipRef}>
-                <div style={{ textAlign: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ display: 'inline-flex', padding: 12, background: '#10b98118', borderRadius: '50%', color: '#10b981', marginBottom: 12 }}>
-                    <DollarSign className="w-6 h-6" />
+              <div className="p-6 space-y-6" ref={payslipRef} style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 120px)' }}>
+                <div style={{ border: '1.5px solid #000', padding: 24, fontFamily: 'monospace, Courier, sans-serif', color: '#000', backgroundColor: '#fff', fontSize: 13, borderRadius: 8 }}>
+                  {/* Header */}
+                  <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    <h2 style={{ margin: '0 0 4px 0', fontSize: 18, fontWeight: 'bold', color: '#000', textTransform: 'uppercase' }}>
+                      {companySettings?.company_name || 'DINESH EXPORTS PVT LTD'}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: 11, lineHeight: '1.4', opacity: 0.8 }}>
+                      {companySettings?.address || '1/6-A, Aiyndhupanai, Kadachanallur, Pallipalayam Road, Komarapalayam Tk, Namakkal Dt - 638008'}
+                    </p>
+                    <h3 style={{ margin: '12px 0 0 0', fontSize: 14, fontWeight: 'bold', borderTop: '1px solid #000', borderBottom: '1px solid #000', padding: '6px 0' }}>
+                      Pay in Slip for the Period of {viewingPayslip.month || 'May'} {viewingPayslip.year || '2026'}
+                    </h3>
                   </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text-primary)' }}>
-                    {employees.find(e => e.employee_id === viewingPayslip.employee || e.id === parseInt(viewingPayslip.employee))?.name || viewingPayslip.employee}
-                  </h3>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Employee ID: {viewingPayslip.employee}</p>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{viewingPayslip.period}{viewingPayslip.month ? ` (${viewingPayslip.month})` : ''}</p>
-                  <span style={{ 
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: 12,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    marginTop: 12,
-                    backgroundColor: viewingPayslip.status === 'Approved' ? '#10b98118' : viewingPayslip.status === 'Pending Finance' ? '#3b82f618' : '#f59e0b18',
-                    color: viewingPayslip.status === 'Approved' ? '#047857' : viewingPayslip.status === 'Pending Finance' ? '#1d4ed8' : '#b45309'
-                  }}>{viewingPayslip.status}</span>
-                </div>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between"><span className="text-slate-500">Basic</span><span className="font-semibold text-slate-800">₹{(viewingPayslip.basic || 0).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Allowances</span><span className="font-semibold text-slate-800">₹{(viewingPayslip.allowances || 0).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">OT ({viewingPayslip.ot_hours || 0}h × ₹200)</span><span className="font-semibold text-slate-800">₹{((viewingPayslip.ot_hours || 0) * 200).toLocaleString()}</span></div>
-                  <div className="flex justify-between text-emerald-600 font-semibold border-t pt-3"><span>Gross</span><span>₹{computeSalary(viewingPayslip).gross.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Deductions</span><span className="font-semibold text-red-600">-₹{(viewingPayslip.deductions || 0).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">LOP ({viewingPayslip.lop_days || 0}d)</span><span className="font-semibold text-red-600">-₹{Math.round(((viewingPayslip.basic || 0) / 26) * (viewingPayslip.lop_days || 0)).toLocaleString()}</span></div>
-                  {viewingPayslip.loan_amount > 0 && (
-                    <div className="flex justify-between"><span className="text-slate-500">Loan Deduction</span><span className="font-semibold text-red-600">-₹{(viewingPayslip.loan_amount || 0).toLocaleString()}</span></div>
+
+                  {/* Main Grid Table */}
+                  <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', color: '#000', fontSize: '12px' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', width: '15%' }}>Employee ID</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', width: '15%' }}>{viewingEmpDetails.employee_id || viewingPayslip.employee}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', width: '15%' }}>Name</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', width: '20%' }}>{viewingEmpDetails.name || viewingPayslip.employee}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', width: '15%', backgroundColor: '#f1f5f9' }}>Earnings</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', width: '10%', textAlign: 'right', backgroundColor: '#f1f5f9' }}>Amount</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', width: '15%', backgroundColor: '#f1f5f9' }}>Deductions</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', width: '10%', textAlign: 'right', backgroundColor: '#f1f5f9' }}>Amount</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Department</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.department || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Designation</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.designation || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>Basic Pay & DA</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{Math.max(0, viewingValues.basicPayDa).toLocaleString()}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>ESI</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>0</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Date of Joining</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.date_of_joining ? new Date(viewingEmpDetails.date_of_joining).toLocaleDateString('en-IN') : '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>PF Account Number</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.pf_account || viewingEmpDetails.pan_number || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>HRA</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>0</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>Provident Fund</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{viewingValues.deductionsVal.toLocaleString()}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Days Worked</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{(26 - viewingValues.lopDaysVal).toFixed(2)}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>UAN</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.uan_number || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>Incentive</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{viewingValues.otAmt.toLocaleString()}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>Professional Tax</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>0</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Leave Days</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingValues.lopDaysVal.toFixed(2)}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Father's/Hus Name</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.family_details || viewingEmpDetails.emergency_contact_name || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>Other Allowance</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{viewingValues.allowancesVal.toLocaleString()}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>TDS</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>0</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>Bank Account No.</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.account_number || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold' }}>IFSC Code</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{viewingEmpDetails.ifsc_code || '—'}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Total Earnings</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', backgroundColor: '#f8fafc' }}>{viewingValues.computedGross.toLocaleString()}</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }}>Advance</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{viewingValues.loanAmt.toLocaleString()}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }} colSpan="2"></td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }} colSpan="2"></td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Previous Balance</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right', backgroundColor: '#f8fafc' }}>0</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', fontWeight: 'bold', backgroundColor: '#f8fafc' }}>Total Deductions</td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', backgroundColor: '#f8fafc' }}>{viewingValues.computedDeductions.toLocaleString()}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }} colSpan="2"></td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }} colSpan="2"></td>
+                        <td style={{ border: '1px solid #000', padding: '6px 8px' }} colSpan="2"></td>
+                        <td style={{ border: '1px solid #000', padding: '8px 10px', fontWeight: 'bold', backgroundColor: '#ecfdf5', fontSize: '13px' }}>Net Pay</td>
+                        <td style={{ border: '1px solid #000', padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', backgroundColor: '#ecfdf5', fontSize: '13px', color: '#16a34a' }}>₹{viewingValues.computedNet.toLocaleString()}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  {/* Signatures */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 40, padding: '0 20px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ borderTop: '1px dashed #000', width: 200, paddingTop: 8, fontSize: 11, fontWeight: 'bold' }}>Employer's Signature</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ borderTop: '1px dashed #000', width: 200, paddingTop: 8, fontSize: 11, fontWeight: 'bold' }}>Employee's Signature</div>
+                    </div>
+                  </div>
+
+                  {/* Daily Attendance Logs */}
+                  {viewingAttendance && viewingAttendance.length > 0 && (
+                    <div style={{ marginTop: 32, borderTop: '2px solid #000', paddingTop: 20 }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>
+                        Daily Attendance Logs ({viewingPayslip.month})
+                      </h4>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000', fontSize: '11px', color: '#000' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f1f5f9' }}>
+                            <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'left' }}>Date</th>
+                            <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>Check-In</th>
+                            <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>Check-Out</th>
+                            <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>OT Hours</th>
+                            <th style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'left' }}>Status / Info</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewingAttendance.map((att, idx) => {
+                            const co = att.check_out || att.checkout;
+                            let isHalfDay = false;
+                            if (co) {
+                              const parts = co.split(':');
+                              if (parts.length >= 2) {
+                                isHalfDay = (parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10)) < 1020;
+                              }
+                            }
+                            return (
+                              <tr key={idx} style={{ backgroundColor: isHalfDay ? '#fffbeb' : 'transparent' }}>
+                                <td style={{ border: '1px solid #000', padding: '6px 8px' }}>{att.date || '—'}</td>
+                                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>{att.check_in || att.checkin || '—'}</td>
+                                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'center' }}>{att.check_out || att.checkout || '—'}</td>
+                                <td style={{ border: '1px solid #000', padding: '6px 8px', textAlign: 'right' }}>{att.ot_hours || 0}</td>
+                                <td style={{ border: '1px solid #000', padding: '6px 8px', color: isHalfDay ? '#d97706' : 'inherit', fontWeight: isHalfDay ? 'bold' : 'normal' }}>
+                                  {att.status || 'Present'} {isHalfDay ? '(Half Day Checkout - LOP)' : ''}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
-                  <div className="flex justify-between text-xl font-bold text-emerald-600 border-t pt-3"><span>Net Pay</span><span>₹{computeSalary(viewingPayslip).net.toLocaleString()}</span></div>
                 </div>
+
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', borderTop: '1px solid var(--border)', paddingTop: 20 }}>
                   <button onClick={handlePrint} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Printer className="w-4 h-4" /> Print
@@ -786,6 +1122,7 @@ const Payroll = () => {
                         {r.deductions > 0 && <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded border border-red-100">- ₹{r.deductions.toLocaleString()}</span>}
                         {r.lop_days > 0 && <span className="bg-orange-50 text-orange-700 px-2 py-0.5 rounded border border-orange-100">LOP: {r.lop_days}d</span>}
                         {r.loan_amount > 0 && <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-100">Loan: -₹{r.loan_amount.toLocaleString()}</span>}
+                        {r.advance > 0 && <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-100">Advance: -₹{r.advance.toLocaleString()}</span>}
                       </div>
                     </td>
                     <td className="px-6 py-4 font-bold text-emerald-600">
@@ -886,17 +1223,124 @@ const Payroll = () => {
             </legend>
 
             <div className="form-row">
-              <div className="form-group" style={{ gridColumn: 'span 3' }}>
+              <div className="form-group" style={{ gridColumn: 'span 3', position: 'relative' }}>
                 <label>Employee *</label>
-                <select className="form-control"
-                  value={form.employee} onChange={(e) => handleEmployeeChange(e.target.value)} required>
-                  <option value="">Select Employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.employee_id || emp.id}>
-                      {emp.name} ({emp.employee_id})
-                    </option>
-                  ))}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Search by Employee Name or ID..."
+                    value={empSearch}
+                    onFocus={() => setIsOpen(true)}
+                    onChange={(e) => {
+                      setEmpSearch(e.target.value);
+                      setIsOpen(true);
+                      if (!e.target.value) {
+                        handleEmployeeChange('');
+                      }
+                    }}
+                    required={!form.employee}
+                  />
+                  {form.employee && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleEmployeeChange('');
+                        setEmpSearch('');
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: 12,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 4
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                {isOpen && (
+                  <>
+                    <div 
+                      onClick={() => setIsOpen(false)}
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 40,
+                        cursor: 'default'
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: 8,
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        maxHeight: 250,
+                        overflowY: 'auto',
+                        zIndex: 50,
+                        marginTop: 4
+                      }}
+                    >
+                      {employees
+                        .filter(emp => {
+                          const query = empSearch.toLowerCase();
+                          return (
+                            emp.name?.toLowerCase().includes(query) ||
+                            (emp.employee_id || '').toString().toLowerCase().includes(query)
+                          );
+                        })
+                        .map(emp => (
+                          <div
+                            key={emp.id}
+                            onClick={() => {
+                              handleEmployeeChange(emp.employee_id || emp.id);
+                              setEmpSearch(`${emp.name} (${emp.employee_id || emp.id})`);
+                              setIsOpen(false);
+                            }}
+                            style={{
+                              padding: '10px 16px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f1f5f9',
+                              color: '#1e293b',
+                              textAlign: 'left'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <div style={{ fontWeight: 600 }}>{emp.name}</div>
+                            <div style={{ fontSize: 12, color: '#64748b' }}>ID: {emp.employee_id || emp.id}</div>
+                          </div>
+                        ))}
+                      {employees.filter(emp => {
+                        const query = empSearch.toLowerCase();
+                        return (
+                          emp.name?.toLowerCase().includes(query) ||
+                          (emp.employee_id || '').toString().toLowerCase().includes(query)
+                        );
+                      }).length === 0 && (
+                        <div style={{ padding: '12px 16px', color: '#64748b', fontSize: 13, textAlign: 'center' }}>
+                          No employees found
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -954,6 +1398,11 @@ const Payroll = () => {
                 <input type="number" min="0" className="form-control"
                   value={form.loan_amount} onChange={(e) => setForm({ ...form, loan_amount: e.target.value })} />
               </div>
+              <div className="form-group">
+                <label>Advance</label>
+                <input type="number" min="0" className="form-control"
+                  value={form.advance} onChange={(e) => setForm({ ...form, advance: e.target.value })} />
+              </div>
             </div>
 
             {/* Preview */}
@@ -965,6 +1414,9 @@ const Payroll = () => {
               )}
               {Number(form.loan_amount) > 0 && (
                 <div className="flex justify-between"><span className="text-amber-700 font-semibold">Loan Deduction</span><span className="font-semibold text-amber-700">-₹{Number(form.loan_amount).toLocaleString()}</span></div>
+              )}
+              {Number(form.advance) > 0 && (
+                <div className="flex justify-between"><span className="text-amber-700 font-semibold">Advance Deduction</span><span className="font-semibold text-amber-700">-₹{Number(form.advance).toLocaleString()}</span></div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--border)', paddingTop: 8 }}><span className="font-bold text-slate-700">Net Pay</span><span className="font-bold text-emerald-600 text-base">₹{computeSalary(form).net.toLocaleString()}</span></div>
             </div>

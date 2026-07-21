@@ -46,6 +46,8 @@ class TwistingDoublingPOCreate(BaseModel):
     remarks: Optional[str] = None
 
     ref_no_1: Optional[str] = None
+    buyer_order_no: Optional[str] = None
+    design_no: Optional[str] = None
     entry_against: Optional[str] = None
     packing_type: Optional[str] = None
 
@@ -102,6 +104,8 @@ async def create_twisting_doubling_po(data: TwistingDoublingPOCreate, db: AsyncS
         remarks=data.remarks,
 
         ref_no_1=data.ref_no_1,
+        buyer_order_no=data.buyer_order_no,
+        design_no=data.design_no,
         entry_against=data.entry_against,
         packing_type=data.packing_type,
 

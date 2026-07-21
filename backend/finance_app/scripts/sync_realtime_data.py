@@ -29,6 +29,29 @@ def sync_data():
 
     # 1. Establish SQLite DB Session
     db = SessionLocal()
+    
+    # 1.5 Auto-migrate missing columns in SQLite (prevents crash on startup)
+    from sqlalchemy import text
+    try:
+        db.execute(text("SELECT cin FROM companies LIMIT 1"))
+    except Exception:
+        try:
+            print("  → Adding missing cin and currency columns to SQLite database...")
+            db.execute(text("ALTER TABLE companies ADD COLUMN cin TEXT"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_symbol TEXT DEFAULT '₹'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_name TEXT DEFAULT 'INR'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_iso_code TEXT DEFAULT 'INR'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_decimal_places INTEGER DEFAULT 2"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_show_in_millions BOOLEAN DEFAULT 0"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_suffix_symbol BOOLEAN DEFAULT 0"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_space_between_amount_and_symbol BOOLEAN DEFAULT 0"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_unit TEXT DEFAULT 'Rupees'"))
+            db.execute(text("ALTER TABLE companies ADD COLUMN currency_amount_words_decimal TEXT DEFAULT 'Paise'"))
+            db.commit()
+            print("  → Successfully added missing columns.")
+        except Exception as e:
+            print(f"  → Migration warning: {e}")
+            db.rollback()
 
     # 2. Establish PostgreSQL Connection
     from dotenv import load_dotenv
@@ -153,7 +176,7 @@ def sync_data():
             if not p.company_name:
                 continue
             # Map party_type
-            if p.party_type == 'Sales':
+            if p.party_type and 'Sales' in p.party_type:
                 group_name = 'Sundry Debtors'
                 bal_type = 'Dr'
             else:
@@ -206,11 +229,12 @@ def sync_data():
 
         # 9. Sync Yarn Inwards -> Purchase Vouchers (for BOTH FYs)
         print("  → Syncing Yarn Inward Entries into Purchase Vouchers...")
-        inwards = pg_conn.execute(sa.text("SELECT id, inward_date, received_from, net_amount, cgst_pct, sgst_pct, igst_pct, gross_amount, ref_no FROM yarn_inwards")).fetchall()
+        raw_inwards = pg_conn.execute(sa.text("SELECT id, inward_date, received_from, net_amount, cgst_pct, sgst_pct, igst_pct, gross_amount, ref_no FROM yarn_inwards")).fetchall()
+        inwards = raw_inwards if raw_inwards is not None else []
         
         purchase_no_seq = 1
         for inw in inwards:
-            if not inw.received_from:
+            if inw is None or not inw.received_from:
                 continue
             gross = float(inw.gross_amount or 0)
             net = float(inw.net_amount or 0)
@@ -269,11 +293,12 @@ def sync_data():
 
         # 10. Sync Sales Invoices -> Sales Vouchers (for BOTH FYs)
         print("  → Syncing Sales Invoices into Sales Vouchers...")
-        sales = pg_conn.execute(sa.text("SELECT id, invoice_no, invoice_date, party_name, gross_amount, cgst, sgst, igst, net_amount FROM sales_invoices")).fetchall()
+        raw_sales = pg_conn.execute(sa.text("SELECT id, invoice_no, invoice_date, party_name, gross_amount, cgst, sgst, igst, net_amount FROM sales_invoices")).fetchall()
+        sales = raw_sales if raw_sales is not None else []
         
         sales_no_seq = 1
         for sal in sales:
-            if not sal.party_name:
+            if sal is None or not sal.party_name:
                 continue
             gross = float(sal.gross_amount or 0)
             net = float(sal.net_amount or 0)
@@ -338,7 +363,7 @@ def sync_data():
         for fy in [fy25, fy26]:
             # Simulate a bank payment for each Purchase to keep creditors balanced
             for inw in inwards:
-                if not inw.received_from:
+                if inw is None or not inw.received_from:
                     continue
                 net = float(inw.net_amount or 0)
                 sup_id = ledger_map[inw.received_from]
@@ -374,7 +399,7 @@ def sync_data():
 
             # Simulate a bank receipt for each Sale to keep debtors balanced
             for sal in sales:
-                if not sal.party_name:
+                if sal is None or not sal.party_name:
                     continue
                 net = float(sal.net_amount or 0)
                 buy_id = ledger_map[sal.party_name]

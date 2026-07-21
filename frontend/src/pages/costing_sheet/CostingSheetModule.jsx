@@ -529,66 +529,80 @@ export default function CostingSheetModule() {
             </div>
           </div>
 
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <Search size={20} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  placeholder="Search by Costing No, Buyer or Product..." 
-                  style={{ paddingLeft: 40, width: '100%' }}
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
+          <div className="card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Costing Sheets ({sheets.length})</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div className="search-bar" style={{ position: 'relative', width: 300 }}>
+                  <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by Costing No, Buyer or Product..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="form-control"
+                    style={{ paddingLeft: 36, width: '100%' }}
+                  />
+                </div>
               </div>
             </div>
-            <table className="table" style={{ width: '100%', textAlign: 'left' }}>
-              <thead>
-                <tr>
-                  <th>Costing No</th>
-                  <th>Buyer</th>
-                  <th>Product</th>
-                  <th>Est. Cost</th>
-                  <th>Act. Cost</th>
-                  <th>Margin</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sheets.filter(s => 
-                  (s.costing_no || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  (s.buyer || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  (s.product || '').toLowerCase().includes(searchTerm.toLowerCase())
-                ).map(s => (
-                  <tr key={s.id}>
-                    <td><strong>{s.costing_no}</strong></td>
-                    <td>{s.buyer}</td>
-                    <td>{s.product}</td>
-                    <td><IndianRupee size={12}/>{s.estimated_cost?.toFixed(2)}</td>
-                    <td><IndianRupee size={12}/>{s.actual_cost?.toFixed(2)}</td>
-                    <td style={{ color: s.profit_margin_pct >= 10 ? 'green' : s.profit_margin_pct > 0 ? 'orange' : 'red' }}>
-                      {s.profit_margin_pct?.toFixed(1)}%
-                    </td>
-                    <td>
-                      <span style={{
-                        padding: '4px 8px', borderRadius: '12px', fontSize: '12px',
-                        background: s.status === 'Approved' ? '#dcfce7' : s.status === 'Draft' ? '#f1f5f9' : '#fef9c3',
-                        color: s.status === 'Approved' ? '#166534' : s.status === 'Draft' ? '#475569' : '#854d0e'
-                      }}>
-                        {s.status}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="btn btn-secondary" style={{ padding: '6px 12px' }} onClick={() => { setFormData(s); setView('form'); }}>
-                        <Eye size={16} /> View
-                      </button>
-                    </td>
+
+            <div className="table-responsive" style={{ flex: 1 }}>
+              <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: 'var(--bg-secondary)' }}>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Costing No</th>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Buyer</th>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Product</th>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Est. Cost</th>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Act. Cost</th>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Margin</th>
+                    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, color: 'var(--text-primary)' }}>Status</th>
+                    <th style={{ padding: '16px', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)' }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sheets.filter(s => 
+                    (s.costing_no || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    (s.buyer || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (s.product || '').toLowerCase().includes(searchTerm.toLowerCase())
+                  ).length === 0 ? (
+                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No records found</td></tr>
+                  ) : sheets.filter(s => 
+                    (s.costing_no || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    (s.buyer || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (s.product || '').toLowerCase().includes(searchTerm.toLowerCase())
+                  ).map(s => (
+                    <tr key={s.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{s.costing_no}</td>
+                      <td style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{s.buyer}</td>
+                      <td style={{ padding: '16px', fontWeight: 600 }}>{s.product}</td>
+                      <td style={{ padding: '16px', fontWeight: 600 }}><IndianRupee size={12}/>{s.estimated_cost?.toFixed(2)}</td>
+                      <td style={{ padding: '16px', fontWeight: 600 }}><IndianRupee size={12}/>{s.actual_cost?.toFixed(2)}</td>
+                      <td style={{ padding: '16px', fontWeight: 600, color: s.profit_margin_pct >= 10 ? '#047857' : s.profit_margin_pct > 0 ? '#c2410c' : '#b91c1c' }}>
+                        {s.profit_margin_pct?.toFixed(1)}%
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        <span style={{
+                          padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
+                          background: s.status === 'Approved' ? '#10b98120' : s.status === 'Draft' ? '#f1f5f9' : '#fef9c3',
+                          color: s.status === 'Approved' ? '#047857' : s.status === 'Draft' ? '#475569' : '#854d0e'
+                        }}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button style={{ padding: '4px 6px', border: '1px solid #e2e8f0', borderRadius: 4, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => { setFormData(s); setView('form'); }} title="View">
+                            <Eye size={16} style={{ color: 'var(--text-secondary)' }} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       ) : (

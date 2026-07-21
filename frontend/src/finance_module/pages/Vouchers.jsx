@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { vouchers, ledgers as ledgersApi, companies } from '../api';
+import { vouchers, ledgers as ledgersApi, companies, stockItems as stockItemsApi, locations as locationsApi } from '../api';
 import useCompanyStore from '../store/companyStore';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import VoucherForm from '../components/VoucherForm';
@@ -49,6 +49,18 @@ export default function Vouchers() {
   const { data: ledgersList = [] } = useQuery({
     queryKey: ['ledgers', activeCompany?.id],
     queryFn:  () => ledgersApi.list({ company_id: activeCompany.id }),
+    enabled:  !!activeCompany,
+  });
+
+  const { data: stockItemsList = [] } = useQuery({
+    queryKey: ['stockItems', activeCompany?.id],
+    queryFn:  () => stockItemsApi.list(activeCompany.id),
+    enabled:  !!activeCompany,
+  });
+
+  const { data: locationsList = [] } = useQuery({
+    queryKey: ['locations', activeCompany?.id],
+    queryFn:  () => locationsApi.list(activeCompany.id),
     enabled:  !!activeCompany,
   });
 
@@ -138,12 +150,12 @@ export default function Vouchers() {
 
         <VoucherForm
           type={voucherType}
-          companyId={activeCompany?.id}
+          companyId={activeCompany.id}
           ledgers={ledgersList}
+          stockItems={stockItemsList}
+          locations={locationsList}
           onClose={closeForm}
-          onSaved={() => {
-            queryClient.invalidateQueries();
-          }}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: ['vouchers'] })}
         />
       </div>
     );

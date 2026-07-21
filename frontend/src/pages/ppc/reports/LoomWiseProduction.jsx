@@ -26,43 +26,50 @@ export default function LoomWiseProduction() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const loomRes = await ppcAPI.getLooms().catch(() => ({ data: [] }));
-      const activeLooms = loomRes.data || Array.from({length: 8}).map((_, i) => ({ id: `LM-00${i+1}`, loom_name: `Loom ${i+1}` }));
+      const [loomRes, logsRes] = await Promise.all([
+        ppcAPI.getLooms().catch(() => ({ data: [] })),
+        ppcAPI.getDailyEntries().catch(() => ({ data: [] }))
+      ]);
+      const activeLooms = loomRes.data || [];
       setLooms(activeLooms);
       
-      // Generate realistic mock data for the report
-      const mockData = activeLooms.map((l, i) => {
-        const day = Math.floor(Math.random() * 50 + 180);
-        const night = Math.floor(Math.random() * 50 + 170);
-        const total = day + night;
-        const target = 425;
+      const logs = logsRes.data || [];
+      
+      const realReportData = activeLooms.map((l, i) => {
+        const loomLogs = logs.filter(log => String(log.loom_id) === String(l.id));
+        const total = loomLogs.reduce((sum, log) => sum + (log.meters_produced || 0), 0);
+        const downtime = loomLogs.reduce((sum, log) => sum + (log.downtime_minutes || 0), 0) / 60;
+        
+        // Target: capacity * (efficiency / 100)
+        const target = l.capacity_per_day * (l.efficiency_pct / 100) || 425;
         const variance = total - target;
-        const eff = (total / target) * 100;
-        const defect = Math.floor(Math.random() * 10);
-        const good = total - defect;
+        const eff = target > 0 ? (total / target) * 100 : 0;
+        
+        // Find associated orders
+        const ordersList = Array.from(new Set(loomLogs.map(log => log.order_id).filter(Boolean)));
         
         return {
-          id: i,
-          loom_id: l.id || `LM-00${i+1}`,
-          loom_name: l.loom_name || `Loom ${i+1}`,
-          order_id: `ORD-2024-${String(Math.floor(Math.random() * 5) + 1).padStart(3, '0')}`,
-          buyer_name: Math.random() > 0.5 ? 'H&M Sweden' : 'Zara Spain',
-          fabric_type: 'Cotton Poplin',
-          day_meters: day,
-          night_meters: night,
+          id: l.id,
+          loom_id: l.id,
+          loom_name: l.loom_name,
+          order_id: ordersList.join(', ') || '-',
+          buyer_name: '-',
+          fabric_type: '-',
+          day_meters: total,
+          night_meters: 0,
           total_meters: total,
           target_meters: target,
-          variance: variance,
+          variance: parseFloat(variance.toFixed(1)),
           efficiency: eff,
-          defect_meters: defect,
-          good_meters: good,
-          downtime: Math.floor(Math.random() * 30)/10,
-          yarn_consumed: Math.floor(total * 0.08),
-          status: eff > 90 ? '✅ On Track' : '⚠️ At Risk'
+          defect_meters: 0,
+          good_meters: total,
+          downtime: parseFloat(downtime.toFixed(1)),
+          yarn_consumed: parseFloat((total * 0.08).toFixed(1)),
+          status: eff >= 80 ? '✅ On Track' : '⚠️ At Risk'
         };
       });
       
-      setData(mockData);
+      setData(realReportData);
     } catch (err) {
       console.error(err);
     } finally {

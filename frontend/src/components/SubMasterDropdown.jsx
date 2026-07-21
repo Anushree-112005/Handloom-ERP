@@ -21,6 +21,7 @@ export default function SubMasterDropdown({
   onKeyDown,
   filterFn,
   allowCustom = true,
+  multiple = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +33,7 @@ export default function SubMasterDropdown({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const containerRef = useRef(null);
 
+  const selectedValues = multiple ? (value ? value.split(', ') : []) : [];
   const withIdsList = options?.masters_with_ids?.[entity] || [];
 
   // Reset highlighted index when dropdown is toggled or search term changes
@@ -69,10 +71,15 @@ export default function SubMasterDropdown({
         name: addingText.trim(),
         is_active: true,
       });
-      onChange(name, addingText.trim());
+      if (multiple) {
+        const newValues = [...selectedValues, addingText.trim()];
+        onChange(name, newValues.join(', '));
+      } else {
+        onChange(name, addingText.trim());
+        setIsOpen(false);
+      }
       setAddingMode(false);
       setAddingText('');
-      setIsOpen(false);
       if (onOptionsRefresh) onOptionsRefresh();
     } catch (err) {
       console.error('Failed to add', err);
@@ -94,8 +101,15 @@ export default function SubMasterDropdown({
       });
       // If we are updating the currently selected value, update parent form state
       const record = withIdsList.find(r => r.id === id);
-      if (record && record.name === value) {
-        onChange(name, editingText.trim());
+      if (record) {
+        if (multiple) {
+          if (selectedValues.includes(record.name)) {
+            const newValues = selectedValues.map(v => v === record.name ? editingText.trim() : v);
+            onChange(name, newValues.join(', '));
+          }
+        } else if (record.name === value) {
+          onChange(name, editingText.trim());
+        }
       }
       setEditingId(null);
       setEditingText('');
@@ -114,7 +128,12 @@ export default function SubMasterDropdown({
       setBusy(true);
       try {
         await subMasterAPI.delete(entity, item.id);
-        if (value === item.name) {
+        if (multiple) {
+          if (selectedValues.includes(item.name)) {
+            const newValues = selectedValues.filter(v => v !== item.name);
+            onChange(name, newValues.join(', '));
+          }
+        } else if (value === item.name) {
           onChange(name, '');
         }
         if (onOptionsRefresh) onOptionsRefresh();
@@ -153,15 +172,33 @@ export default function SubMasterDropdown({
       e.preventDefault();
       e.stopPropagation();
       if (highlightedIndex >= 0 && highlightedIndex < filteredList.length) {
-        onChange(name, filteredList[highlightedIndex].name);
-        setIsOpen(false);
+        const item = filteredList[highlightedIndex];
+        if (multiple) {
+          const isSelected = selectedValues.includes(item.name);
+          const newValues = isSelected
+            ? selectedValues.filter(v => v !== item.name)
+            : [...selectedValues, item.name];
+          onChange(name, newValues.join(', '));
+        } else {
+          onChange(name, item.name);
+          setIsOpen(false);
+        }
       }
     } else if (e.key === ' ') {
       if (highlightedIndex >= 0 && highlightedIndex < filteredList.length) {
         e.preventDefault();
         e.stopPropagation();
-        onChange(name, filteredList[highlightedIndex].name);
-        setIsOpen(false);
+        const item = filteredList[highlightedIndex];
+        if (multiple) {
+          const isSelected = selectedValues.includes(item.name);
+          const newValues = isSelected
+            ? selectedValues.filter(v => v !== item.name)
+            : [...selectedValues, item.name];
+          onChange(name, newValues.join(', '));
+        } else {
+          onChange(name, item.name);
+          setIsOpen(false);
+        }
       } else {
         // If not navigating/highlighting, let the space key type a character but stop propagation
         e.stopPropagation();
@@ -219,7 +256,7 @@ export default function SubMasterDropdown({
         <div
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
               e.preventDefault();
             }
           }}
@@ -281,8 +318,16 @@ export default function SubMasterDropdown({
                     }}
                     onClick={() => {
                       if (editingId !== item.id) {
-                        onChange(name, item.name);
-                        setIsOpen(false);
+                        if (multiple) {
+                          const isSelected = selectedValues.includes(item.name);
+                          const newValues = isSelected
+                            ? selectedValues.filter(v => v !== item.name)
+                            : [...selectedValues, item.name];
+                          onChange(name, newValues.join(', '));
+                        } else {
+                          onChange(name, item.name);
+                          setIsOpen(false);
+                        }
                       }
                     }}
                     style={{
@@ -293,7 +338,7 @@ export default function SubMasterDropdown({
                       cursor: 'pointer',
                       fontSize: '13px',
                       borderBottom: '1px solid #f3f4f6',
-                      background: isHighlighted ? '#e0e7ff' : (value === item.name ? '#f3f4f6' : '#fff')
+                      background: isHighlighted ? '#e0e7ff' : ((multiple ? selectedValues.includes(item.name) : value === item.name) ? '#f3f4f6' : '#fff')
                     }}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     onMouseLeave={() => setHighlightedIndex(-1)}
@@ -308,7 +353,10 @@ export default function SubMasterDropdown({
                           onChange={(e) => setEditingText(e.target.value)}
                           onKeyDown={(e) => {
                             e.stopPropagation();
-                            if (e.key === 'Enter') handleSaveEdit(item.id);
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveEdit(item.id);
+                            }
                             if (e.key === 'Escape') setEditingId(null);
                           }}
                         />
@@ -334,7 +382,17 @@ export default function SubMasterDropdown({
                       </div>
                     ) : (
                       <>
-                        <span style={{ fontWeight: value === item.name ? 600 : 400 }}>{item.name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {multiple && (
+                            <input
+                              type="checkbox"
+                              checked={selectedValues.includes(item.name)}
+                              onChange={() => {}}
+                              style={{ cursor: 'pointer', pointerEvents: 'none' }}
+                            />
+                          )}
+                          <span style={{ fontWeight: (multiple ? selectedValues.includes(item.name) : value === item.name) ? 600 : 400 }}>{item.name}</span>
+                        </div>
                         {allowCustom && (
                           <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
                             <button
@@ -404,7 +462,10 @@ export default function SubMasterDropdown({
                     onChange={(e) => setAddingText(e.target.value)}
                     onKeyDown={(e) => {
                       e.stopPropagation();
-                      if (e.key === 'Enter') handleSaveNew();
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveNew();
+                      }
                       if (e.key === 'Escape') setAddingMode(false);
                     }}
                   />
