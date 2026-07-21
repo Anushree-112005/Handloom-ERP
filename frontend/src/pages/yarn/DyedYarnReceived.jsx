@@ -914,11 +914,6 @@ export default function DyedYarnReceived() {
         title="DYED YARN RECEIPT"
         documentNumber={viewModalReceipt?.inv_no}
         status="Received"
-        onDownloadPdf={() => {
-          const doc = new jsPDF();
-          doc.text("Dinesh Textile - Dyed Yarn Receipt Details", 14, 15);
-          doc.save(`Receipt_${viewModalReceipt?.inv_no}.pdf`);
-        }}
         sections={viewModalReceipt ? [
           {
             title: "RECEIPT INFO",

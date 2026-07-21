@@ -1276,7 +1276,6 @@ export default function YarnPurchaseOrder() {
             title="YARN PURCHASE ORDER"
             documentNumber={selectedViewOrder?.po_number}
             status={selectedViewOrder?.status || 'Active'}
-            onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
             sections={selectedViewOrder ? [
               {
                 title: "GENERAL INFO",

@@ -160,6 +160,20 @@ export default function YarnInward() {
     }
   };
 
+  // Terms & Conditions
+  const defaultTerms = [
+    'Material not meeting our specification and standards will be returned',
+    'Demanded Qty to be supplied in whole and excess/short supply will not be accepted.',
+    'Send Invoice along with Material.',
+    'Defective and damage pieces will not be accepted.',
+    'Start bulk production only after getting the sample Approval.',
+    'Subject to Namakkal Jurisdiction.'
+  ];
+
+  const [editingTermIdx, setEditingTermIdx] = useState(null);
+  const [editingTermVal, setEditingTermVal] = useState('');
+  const [newTermVal, setNewTermVal] = useState('');
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
@@ -182,7 +196,7 @@ export default function YarnInward() {
     other_remarks: '', packing: '', freight: 0, gross_amount: 0, tax_type: 'GST',
     cgst_pct: 0, sgst_pct: 0, igst_pct: 0, tax_value: 0, tcs_value: 0, tds_pct: 0,
     total_tax: 0, round_off: 0, net_amount: 0, remarks: '',
-    terms_conditions: [...defaultInwardTerms],
+    terms_conditions: [...defaultTerms],
     
     items: [{
       yarn_count: '', mill_name: '', colour: '', color_code: '', lot_no: '',
@@ -1108,8 +1122,8 @@ export default function YarnInward() {
                     </table>
                   </div>
 
-                  {/* Section 3: Summary & Terms */}
-                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Terms & Summary</h4>
+                  {/* Section 3: Terms & Conditions */}
+                  <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Terms & Conditions</h4>
                   <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
                       
@@ -1119,33 +1133,33 @@ export default function YarnInward() {
                           <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)' }}>Terms & Conditions</span>
                         </div>
                         <div style={{ padding: '16px 18px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-                            {(form.terms_conditions || []).map((term, idx) => (
-                              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)' }}>
-                                <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 12, minWidth: 20 }}>{idx + 1}.</span>
+                          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {(form.terms_conditions || defaultTerms).map((term, idx) => (
+                              <li key={idx} style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                                 {editingTermIdx === idx ? (
-                                  <div style={{ flex: 1, display: 'flex', gap: 8 }}>
-                                    <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
-                                    <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...form.terms_conditions]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} value={editingTermVal} onChange={e => setEditingTermVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') { const updated = [...(form.terms_conditions || defaultTerms)]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}} />
+                                    <button type="button" className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={() => { const updated = [...(form.terms_conditions || defaultTerms)]; updated[idx] = editingTermVal; setForm({ ...form, terms_conditions: updated }); setEditingTermIdx(null); }}><CheckCircle size={14} /></button>
+                                    <button type="button" className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setEditingTermIdx(null)}><X size={14} /></button>
                                   </div>
                                 ) : (
-                                  <span style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{term}</span>
-                                )}
-                                {!isReadOnly && (
-                                  <div style={{ display: 'flex', gap: 4 }}>
-                                    {editingTermIdx !== idx && (
-                                      <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                                    <span>{term}</span>
+                                    {!isReadOnly && (
+                                      <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 2 }} onClick={() => { setEditingTermIdx(idx); setEditingTermVal(term); }} title="Edit"><Edit2 size={13} /></button>
+                                        <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: (form.terms_conditions || defaultTerms).filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
+                                      </div>
                                     )}
-                                    <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2 }} onClick={() => setForm({ ...form, terms_conditions: form.terms_conditions.filter((_, i) => i !== idx) })} title="Delete"><Trash2 size={13} /></button>
                                   </div>
                                 )}
-                              </div>
+                              </li>
                             ))}
-                          </div>
+                          </ol>
                           {!isReadOnly && (
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} placeholder="Add new term or condition..." value={newTermVal} onChange={e => setNewTermVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || []), newTermVal.trim()] }); setNewTermVal(''); }}} />
-                              <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || []), newTermVal.trim()] }); setNewTermVal(''); }}}><Plus size={14} /> Add</button>
+                            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                              <input type="text" className="form-control" style={{ flex: 1, margin: 0, fontSize: 13 }} placeholder="Add new term or condition..." value={newTermVal} onChange={e => setNewTermVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || defaultTerms), newTermVal.trim()] }); setNewTermVal(''); }}} />
+                              <button type="button" className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (newTermVal.trim()) { setForm({ ...form, terms_conditions: [...(form.terms_conditions || defaultTerms), newTermVal.trim()] }); setNewTermVal(''); }}}><Plus size={14} /> Add</button>
                             </div>
                           )}
                         </div>
@@ -1202,7 +1216,6 @@ export default function YarnInward() {
         title="YARN INWARD RECEIPT"
         documentNumber={viewModalInward?.ref_no}
         status={viewModalInward?.status}
-        onDownloadPdf={() => alert('PDF Download for Yarn Inward triggered')}
         sections={viewModalInward ? [
           {
             title: "LOGISTICS & SUPPLIER",
@@ -1224,30 +1237,34 @@ export default function YarnInward() {
             headers: ["S.No", "Yarn Count", "Colour", "Lot No", "Bags", "Kgs", "Rate", "Amount"],
             rows: (viewModalInward.items || []).map((item, idx) => [
               idx + 1,
-              item.yarn_count,
-              item.colour,
+              item.yarn_count || '-',
+              item.colour || '-',
               item.lot_no || '-',
-              item.bags,
-              item.kgs,
-              `₹ ${item.rate}`,
-              `₹ ${Number(item.amount).toFixed(2)}`
+              item.bags || 0,
+              item.kgs || 0,
+              `₹ ${item.rate || 0}`,
+              `₹ ${Number(item.amount || 0).toFixed(2)}`
             ])
           },
           {
-            title: "TERMS & SUMMARY",
+            title: "TERMS & ORDER SUMMARY",
             icon: "FileText",
-            type: "split",
-            leftData: (viewModalInward.terms_conditions || defaultInwardTerms).map((term, i) => ({
-              label: `Term ${i + 1}`,
-              value: term
-            })),
-            rightTitle: "ORDER SUMMARY",
-            rightData: [
-              { label: "Total Bags", value: viewModalInward.total_bags || 0 },
-              { label: "Received Kgs", value: (viewModalInward.received_kgs || 0).toLocaleString('en-IN') },
-              { label: "Bill No", value: viewModalInward.bill_no || '-' },
-              { label: "Bill Amount", value: `₹ ${Number(viewModalInward.bill_amount || 0).toFixed(2)}` },
-              { label: "Grand Total", value: `INR ${Number(viewModalInward.net_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, isTotal: true }
+            type: "split_terms_summary",
+            terms: viewModalInward.terms_conditions && viewModalInward.terms_conditions.length > 0 ? viewModalInward.terms_conditions : defaultTerms,
+            summary: [
+              { label: "Gross Amount", value: `₹ ${(viewModalInward.gross_amount || 0).toFixed(2)}` },
+              { label: "Freight Charges", value: `₹ ${(viewModalInward.freight || 0).toFixed(2)}` },
+              ...(viewModalInward.tax_type === 'GST' ? [
+                { label: `SGST (${viewModalInward.sgst_pct || 0}%)`, value: `₹ ${(((parseFloat(viewModalInward.gross_amount) || 0) + (parseFloat(viewModalInward.freight) || 0)) * (viewModalInward.sgst_pct || 0) / 100).toFixed(2)}` },
+                { label: `CGST (${viewModalInward.cgst_pct || 0}%)`, value: `₹ ${(((parseFloat(viewModalInward.gross_amount) || 0) + (parseFloat(viewModalInward.freight) || 0)) * (viewModalInward.cgst_pct || 0) / 100).toFixed(2)}` }
+              ] : viewModalInward.tax_type === 'IGST' ? [
+                { label: `IGST (${viewModalInward.igst_pct || 0}%)`, value: `₹ ${(((parseFloat(viewModalInward.gross_amount) || 0) + (parseFloat(viewModalInward.freight) || 0)) * (viewModalInward.igst_pct || 0) / 100).toFixed(2)}` }
+              ] : []),
+              { label: "TCS Value", value: `₹ ${(viewModalInward.tcs_value || 0).toFixed(2)}` },
+              { label: "Round Off", value: `₹ ${(viewModalInward.round_off || 0).toFixed(2)}` },
+              { label: "Total Bags", value: `${viewModalInward.total_bags || 0}` },
+              { label: "Received Kgs", value: `${(viewModalInward.received_kgs || 0).toLocaleString('en-IN')}` },
+              { label: "Net Amount", value: `₹ ${(viewModalInward.net_amount || 0).toFixed(2)}`, isTotal: true }
             ]
           }
         ] : []}

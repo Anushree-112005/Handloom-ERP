@@ -71,8 +71,9 @@ api_router.include_router(warehouse_stock.router, prefix="/warehouse-stock", tag
 from app.api.v1.endpoints import chat
 api_router.include_router(chat.router)
 
-from app.api.v1.endpoints import reports
+from app.api.v1.endpoints import reports, rbac
 api_router.include_router(reports.router)
+api_router.include_router(rbac.router)
 
 from app.modules.hr.router import router as hr_router
 from app.modules.vehicle_management.router import router as fleet_router

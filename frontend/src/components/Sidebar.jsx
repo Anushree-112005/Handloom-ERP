@@ -16,18 +16,30 @@ import defaultLogo from '../assets/logo.svg';
 
 
 const jobWorkRoutes = [
-  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
-  { path: '/dyed-yarn/received', label: 'Dyed Yarn Receipt', icon: Palette },
-  { path: '/warp/delivery', label: 'Warping Delivery', icon: Truck },
-  { path: '/warp/beam-receipt', label: 'Warping Receipt', icon: Box },
-  // { path: '/warp/transaction/entries?tab=beam_delivery', label: 'Sizing Delivery', icon: Truck },
-  // { path: '/warp/transaction/entries?tab=beam_received', label: 'Sizing Receipt', icon: Box },
-  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
-  { path: '/cloth/inward', label: 'Grey Fabric Receipt', icon: ArrowDownLeft },
-  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
-  { path: '/jobwork/dyed-fabric-receipt', label: 'Dyed Fabric Receipt', icon: Palette },
-  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
-  { path: '/jobwork/finished-fabric-receipt', label: 'Finished Fabric Receipt', icon: Box },
+  { section: 'Yarn Dyeing' },
+  { path: '/dyed-yarn/delivery', label: 'Delivery', icon: Truck },
+  { path: '/dyed-yarn/received', label: 'Receipt', icon: Palette },
+
+  { section: 'Warping & Sizing' },
+  { path: '/warp/delivery', label: 'Delivery', icon: Truck },
+  { path: '/warp/beam-receipt', label: 'Receipt', icon: Box },
+  { path: '/warp/production-entry', label: 'Warping Production Entry', icon: Factory },
+  { path: '/warp/sizing-production-entry', label: 'Sizing Production Entry', icon: Settings },
+
+  { section: 'Weaving' },
+  { path: '/weaving/delivery', label: 'Delivery', icon: Truck },
+  { path: '/cloth/inward', label: 'Receipt', icon: ArrowDownLeft },
+
+  { section: 'Fabric Dyeing' },
+  { path: '/jobwork/fabric-dyeing-delivery', label: 'Delivery', icon: Truck },
+  { path: '/jobwork/dyed-fabric-receipt', label: 'Receipt', icon: Palette },
+
+  { section: 'Finishing' },
+  { path: '/jobwork/finishing-delivery', label: 'Delivery', icon: Truck },
+  { path: '/jobwork/finished-fabric-receipt', label: 'Receipt', icon: Box },
+
+  { section: 'Job Work Services' },
+  { path: '/jobwork/bill', label: 'Job Work Bill Entry', icon: FileText },
   { path: '/jobwork/status', label: 'Job Work Status', icon: Activity },
 ];
 
@@ -36,8 +48,6 @@ const modules = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/overview', label: 'Overview', icon: PieChart },
   { path: '/calendar', label: 'Calendar', icon: Calendar },
-  // { path: '/my-approvals', label: 'My Approvals', icon: Shield, badge: 'Active', badgeColor: '#e11d48' },
-
 
   { section: 'Textile Operations' },
   {
@@ -80,27 +90,12 @@ const modules = [
       { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
       { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
       { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
-      { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
       { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
       { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
-
-      { section: 'Warehouse Operations' },
-      { path: '/warehouse/stock', label: 'Warehouse Stock', icon: Box },
       { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
 
       { section: 'Packing' },
       { path: '/packing', label: 'Packing Slip', icon: Box },
-
-      { section: 'Quality Control' },
-      { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
-      { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
-      { section: 'Warehouse & Inventory' },
-      { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-      { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
-      { path: '/warehouse-stock', label: 'Warehouse Stock Photos', icon: Box },
-      { path: '/inventory/stock-summary', label: 'Stock Summary', icon: PieChart },
-      { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: FileText },
-      { path: '/inventory/stock-sheet', label: 'Stock Sheet', icon: FileText },
 
       { section: 'Reports & MIS' },
       { path: '/reports-dashboard', label: 'Reports', icon: FileText }

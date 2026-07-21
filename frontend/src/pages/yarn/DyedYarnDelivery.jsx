@@ -1197,7 +1197,6 @@ export default function DyedYarnDelivery() {
         title="YARN DYEING DELIVERY"
         documentNumber={viewModalDelivery?.dc_no}
         status={viewModalDelivery?.status}
-        onDownloadPdf={() => alert('PDF Download for Yarn Dyeing Delivery triggered')}
         sections={viewModalDelivery ? [
           {
             title: "DELIVERY INFORMATION",

@@ -231,6 +231,76 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     if not files:
         return {"rows": []}
 
+    file = files[0]
+    content = await file.read()
+    encoded = base64.b64encode(content).decode("utf-8")
+
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    
+    import time
+    import re
+
+    def parse_json_from_llm(raw_content: str) -> dict:
+        if not raw_content:
+            return {}
+        cleaned = re.sub(r'<think>.*?</think>', '', raw_content, flags=re.DOTALL).strip()
+        match = re.search(r'\{.*\}', cleaned, flags=re.DOTALL)
+        if match:
+            cleaned = match.group(0)
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            return {}
+
+    def call_llm_with_retry(groq_client, **kwargs):
+        for attempt in range(4):
+            try:
+                return groq_client.chat.completions.create(**kwargs)
+            except Exception as e:
+                err_msg = str(e).lower()
+                if "429" in err_msg or "rate limit" in err_msg or "too many requests" in err_msg:
+                    if attempt < 3:
+                        time.sleep(2 * (attempt + 1))
+                        continue
+                raise e
+
+    # Step 1: LLM classification for standard templates
+    template_type = "other"
+    classification_prompt = """
+Analyze this image of a textile design sheet.
+Classify it into one of the following categories:
+1. "olive_white" if it contains ONLY "OLIVE" (or Greenish-Olive) and "WHITE" (or H.White) yarn repeat tables.
+2. "navy_red" if it contains ONLY "NAVY", "RED", and "WHITE" (or H.White) yarn repeat tables (strictly no other colors like brown, blue, yellow, etc.).
+3. "other" if it is a custom handwritten paper, notebook page, or other general design sheet with a different color/pattern layout (such as containing brown, black, grey, etc., or having a different structure).
+
+Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
+"""
+    try:
+        completion = call_llm_with_retry(
+            client,
+            model="qwen/qwen3.6-27b",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": classification_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{encoded}",
+                            },
+                        },
+                    ],
+                }
+            ],
+            temperature=0.0
+        )
+        if completion and hasattr(completion, 'choices') and completion.choices:
+            res_data = parse_json_from_llm(completion.choices[0].message.content or "")
+            template_type = res_data.get("type", "other")
+    except Exception:
+        template_type = "other"
+
     combined_warp = []
     combined_weft = []
 
@@ -241,94 +311,31 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
         # Local OpenCV and rule-based template classification
         template_type = "navy_red"  # default fallback
         try:
-            file_bytes = np.frombuffer(content, dtype=np.uint8)
-            img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            
-            if img is not None:
-                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                # Olive/green mask: H in [30, 75]
-                olive_mask = cv2.inRange(hsv, (30, 20, 20), (75, 255, 255))
-                # Navy/blue mask: H in [90, 130]
-                navy_mask = cv2.inRange(hsv, (90, 20, 20), (130, 255, 255))
-                
-                olive_pixels = np.sum(olive_mask > 0)
-                navy_pixels = np.sum(navy_mask > 0)
-                
-                filename_lower = file.filename.lower() if file.filename else ""
-                size = len(content)
-                
-                if "12.01.51" in filename_lower or "olive" in filename_lower or (170000 <= size <= 185000) or olive_pixels > navy_pixels:
-                    template_type = "olive_white"
-                else:
-                    template_type = "navy_red"
-        except Exception:
-            template_type = "navy_red"
-
-        # Extract warp/weft based on template type
-        if template_type == "olive_white":
-            for i in range(28):
-                times_val = "17" if (0 <= i <= 1 or 14 <= i <= 15) else "1"
-                if i % 2 == 0:
-                    combined_warp.append({"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": times_val})
-                else:
-                    combined_warp.append({"yarn_count": "40s", "color": "OLIVE", "threads": 2, "times": times_val})
-
-            combined_weft.extend([
-                {"yarn_count": "2/40s", "color": "WHITE", "threads": 1},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 1},
-                {"yarn_count": "2/40s", "color": "WHITE", "threads": 1},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3},
-                {"yarn_count": "2/40s", "color": "OLIVE", "threads": 1},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 1},
-                {"yarn_count": "2/40s", "color": "OLIVE", "threads": 1},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 48}
-            ])
-
-        else:
-            combined_warp.extend([
-                {"yarn_count": "40s", "color": "NAVY", "threads": 68, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 28, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 28, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 68, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 6, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 34, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 14, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 14, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 34, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 6, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"}
-            ])
-            combined_weft.extend([
-                {"yarn_count": "40s", "color": "NAVY", "threads": 84, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 8, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 40, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 10, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 5, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 10, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 40, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 8, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 13, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 84, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 34, "times": "1"},
-                {"yarn_count": "40s", "color": "RED", "threads": 3, "times": "1"},
-                {"yarn_count": "40s", "color": "NAVY", "threads": 34, "times": "1"},
-                {"yarn_count": "40s", "color": "WHITE", "threads": 3, "times": "1"}
-            ])
+            completion = call_llm_with_retry(
+                client,
+                model="qwen/qwen3.6-27b",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": extraction_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoded}",
+                                },
+                            },
+                        ],
+                    }
+                ],
+                temperature=0.0
+            )
+            if completion and hasattr(completion, 'choices') and completion.choices:
+                res_data = parse_json_from_llm(completion.choices[0].message.content or "")
+                combined_warp.extend(res_data.get("warp", []))
+                combined_weft.extend(res_data.get("weft", []))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"AI extraction failed for file {file.filename}: {str(e)}")
 
     # Format output rows for the frontend table
     formatted_rows = []

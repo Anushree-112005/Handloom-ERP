@@ -1415,14 +1415,15 @@ export default function BuyerOrder() {
                         </select>
                       )}
                     </div>
-                    <div className="form-group">
-                      <label>Order Type</label>
-                      <select className="form-control" name="order_type" value={form.order_type || ''} onChange={handleChange}>
-                        <option value="">-- Select Order Type --</option>
-                        <option value="Domestic">Domestic</option>
-                        <option value="Export">Export</option>
-                      </select>
-                    </div>
+                    <SubMasterDropdown
+                      label="Order Type"
+                      name="order_type"
+                      value={form.order_type || ''}
+                      entity="order_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <SubMasterDropdown
                       label="Certified Type"
                       name="certified_type"
@@ -1654,7 +1655,6 @@ export default function BuyerOrder() {
         title="BUYER ORDER"
         documentNumber={viewModalOrder?.ibpo_number}
         status={viewModalOrder?.status}
-        onDownloadPdf={() => alert('PDF Download for Buyer Order triggered')}
         sections={viewModalOrder ? [
           {
             title: "ORDER & BUYER",
