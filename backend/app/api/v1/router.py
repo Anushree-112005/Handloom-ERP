@@ -26,6 +26,7 @@ api_router.include_router(eway_bills.router)
 api_router.include_router(company_settings.router)
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 
+
 # Newly registered missing routers
 api_router.include_router(design_entries.router)
 from app.api.v1.endpoints import racks
@@ -38,6 +39,7 @@ api_router.include_router(warp_beam_receipts.router)
 api_router.include_router(warp_deliveries.router)
 api_router.include_router(sub_masters.router)
 api_router.include_router(fleet.router)
+api_router.include_router(twisting_doubling_po.router, prefix="/twisting-doubling-po", tags=["Twisting Doubling PO"])
 
 api_router.include_router(twisting_doubling_po.router, prefix="/purchase/twisting-doubling", tags=["Purchase Orders - Twisting & Doubling"])
 api_router.include_router(calendar_events.router, prefix="/calendar-events", tags=["Calendar Events"])

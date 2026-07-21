@@ -208,6 +208,9 @@ const modules = [
   { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
   { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
+  { section: 'Yarn Management' },
+  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
+  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
 
   { isJobWorkDynamic: true },
 
@@ -327,6 +330,8 @@ const modules = [
       { path: '/ppc/master/loom-master', label: 'Master Setup', icon: Settings },
       { path: '/ppc/planning/availability', label: 'Loom Planning', icon: ClipboardList },
       { path: '/ppc/scheduling/start-end', label: 'Scheduling', icon: Calendar },
+      //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
+      { path: '/ppc/monitoring/target-actual', label: 'Daily Monitor', icon: BarChart2 },
       { path: '/costing-sheet', label: 'Costing Sheet', icon: Calculator },
       //{ path: '/ppc/execubtion/loom-start', label: 'Execution', icon: PlayCircle },
       { path: '/ppc/monitoring', label: 'Daily Monitor', icon: BarChart2 },
