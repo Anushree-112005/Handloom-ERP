@@ -246,115 +246,8 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
         return re.sub(r'<think>.*?(?:</think>|$)', '', raw_content, flags=re.DOTALL).strip()
 
     def get_fallback_template_rows(content: bytes, filename: str = ""):
-        fname = filename or ""
-        filename_lower = fname.lower()
-        olive_pixels = 0
-        navy_pixels = 0
-        try:
-            import numpy as np
-            import cv2
-            nparr = np.frombuffer(content, np.uint8)
-            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-            if img is not None:
-                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                olive_mask = cv2.inRange(hsv, np.array([30, 20, 20], dtype=np.uint8), np.array([75, 255, 255], dtype=np.uint8))
-                navy_mask = cv2.inRange(hsv, np.array([90, 20, 20], dtype=np.uint8), np.array([130, 255, 255], dtype=np.uint8))
-                olive_pixels = int(np.sum(olive_mask > 0))
-                navy_pixels = int(np.sum(navy_mask > 0))
-        except Exception:
-            pass
-
-        # Check aspect ratio and layout properties
-        aspect_ratio = 1.0
-        is_card = False
-        try:
-            if img is not None:
-                h, w = img.shape[:2]
-                aspect_ratio = w / float(h)
-                # Small square or horizontal card aspect ratio
-                if aspect_ratio > 1.15 or "card" in filename_lower:
-                    is_card = True
-        except Exception:
-            pass
-
-        # Handwritten design card (Image 3) - strictly square/landscape card or card keyword
-        if is_card or ("whatsapp" in filename_lower and aspect_ratio > 1.15):
-            warp = [
-                {"yarn_count": "20S CTN", "color": "Navy", "threads": 300, "times": "11"},
-                {"yarn_count": "20S CTN", "color": "White", "threads": 12, "times": "11"},
-                {"yarn_count": "20S CTN", "color": "Red", "threads": 58, "times": "11"}
-            ]
-            weft = [
-                {"yarn_count": "20S CTN", "color": "Navy", "threads": 352, "times": "1"},
-                {"yarn_count": "20S CTN", "color": "White", "threads": 12, "times": "1"},
-                {"yarn_count": "20S CTN", "color": "Red", "threads": 60, "times": "1"}
-            ]
-            return warp, weft
-        elif "olive" in filename_lower or olive_pixels > (navy_pixels * 1.2 + 500):
-            warp = []
-            for i in range(28):
-                times_val = "17" if (0 <= i <= 1 or 14 <= i <= 15) else "1"
-                color = "White" if i % 2 == 0 else "Olive"
-                threads = 3 if i % 2 == 0 else 2
-                warp.append({"yarn_count": "40S CTN", "color": color, "threads": threads, "times": times_val})
-            weft = [
-                {"yarn_count": "2/40S CTN", "color": "White", "threads": 1, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 1, "times": "1"},
-                {"yarn_count": "2/40S CTN", "color": "White", "threads": 1, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "1"},
-                {"yarn_count": "2/40S CTN", "color": "Olive", "threads": 1, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 1, "times": "1"},
-                {"yarn_count": "2/40S CTN", "color": "Olive", "threads": 1, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 48, "times": "1"}
-            ]
-            return warp, weft
-        else:
-            # Notebook handwritten design sheet (Image 1) - Navy 370 x 11R Warp, 424 Weft
-            warp = [
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 68, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 28, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 3, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 28, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 68, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 6, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 34, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 14, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 3, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 14, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 34, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 6, "times": "11"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "11"}
-            ]
-            weft = [
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 84, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 8, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 40, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 10, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 5, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 10, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 40, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 8, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 13, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 84, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 34, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Red", "threads": 3, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "Navy", "threads": 34, "times": "1"},
-                {"yarn_count": "40S CTN", "color": "White", "threads": 3, "times": "1"}
-            ]
-            return warp, weft
+        # Pure dynamic extraction fallback: returns empty arrays so no hardcoded data overwrites AI extractions
+        return [], []
 
     def extract_fallback_from_raw_text(text: str) -> dict:
         text_clean = clean_llm_text(text)
@@ -383,6 +276,17 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                     weft_rows.append(row)
         return {"warp": warp_rows[:20], "weft": weft_rows[:20]}
 
+    def normalize_extracted_times(warp_list, weft_list, raw_text=""):
+        for r in warp_list or []:
+            if not r.get("times") or str(r.get("times")).strip() in ["", "None"]:
+                r["times"] = "1"
+                    
+        for r in weft_list or []:
+            if not r.get("times") or str(r.get("times")).strip() in ["", "None"]:
+                r["times"] = "1"
+                
+        return warp_list, weft_list
+
     def parse_json_from_llm(raw_content: str) -> dict:
         if not raw_content:
             return {}
@@ -396,12 +300,15 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                 if isinstance(data, dict) and ("warp" in data or "weft" in data):
                     w = data.get("warp", [])
                     wf = data.get("weft", [])
-                    return {"warp": w[:20] if len(w) > 20 else w, "weft": wf[:20] if len(wf) > 20 else wf}
+                    w_norm, wf_norm = normalize_extracted_times(w[:20], wf[:20], raw_content)
+                    return {"warp": w_norm, "weft": wf_norm}
             except Exception as e:
                 print(f"[EXTRACT WARNING] Direct JSON parse failed: {e}")
         
         print("[EXTRACT INFO] Running fallback text parser on raw LLM output...")
-        return extract_fallback_from_raw_text(raw_content)
+        res = extract_fallback_from_raw_text(raw_content)
+        w_norm, wf_norm = normalize_extracted_times(res.get("warp", []), res.get("weft", []), raw_content)
+        return {"warp": w_norm, "weft": wf_norm}
 
     def call_llm_with_retry(groq_client, **kwargs):
         for attempt in range(3):
@@ -416,26 +323,28 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                 raise e
 
     extraction_prompt = """
-Analyze this handwritten textile design sheet image.
-Extract all yarn specification entries for BOTH the WARP and WEFT design sections.
+You are analyzing a handwritten textile design sheet image.
+Your job is to extract ALL yarn specification entries from BOTH the WARP and WEFT sections.
 
-Strict Instructions:
-1. Extract yarn entries from WARP and WEFT sections. Note: 'NANY' or 'NAVY' means Navy.
-2. For each entry extract:
-   - yarn_count: string (e.g. "40s", default "40s CTN")
-   - color: string (e.g. "Navy", "White", "Red", "Olive")
-   - threads: integer (the main thread count)
-   - times: string (multiplier string like "11" from "370x11R", default "1")
-3. Keep reasoning inside <think> concise and under 50 words. Do NOT write math proofs.
-4. Maximum 20 rows for WARP section and 20 rows for WEFT section.
+IMPORTANT RULES:
+1. Read the EXACT yarn count written in the image (e.g. "20s", "40s", "2/40s"). Do NOT assume or default.
+2. WARP section comes first. WEFT section follows (may be labeled "WEFT", "WEFTS", or listed after a dividing line).
+3. For each entry extract:
+   - yarn_count: read exactly from image (e.g. "20s CTN", "40s CTN", "2/40s CTN"). Default: "20s CTN"
+   - color: exact color name (e.g. "Navy", "White", "Red", "Olive"). Note: "NANY" or "NAVY" both mean "Navy".
+   - threads: the integer thread count next to the color (e.g. "68", "300", "84").
+   - times: multiplier value if written (e.g. "11" from "370x11R" or "x11"). Default: "1" if not shown.
+4. Extract ALL rows - do not skip any color/thread entries.
+5. Maximum 20 rows for WARP, 20 rows for WEFT.
+6. Keep any <think> reasoning under 30 words.
 
-Return ONLY a JSON object:
+Return ONLY valid JSON (no markdown, no explanation):
 {
   "warp": [
-    {"yarn_count": "40s CTN", "color": "Navy", "threads": 68, "times": "11"}
+    {"yarn_count": "20s CTN", "color": "Navy", "threads": 68, "times": "1"}
   ],
   "weft": [
-    {"yarn_count": "40s CTN", "color": "Navy", "threads": 84, "times": "1"}
+    {"yarn_count": "20s CTN", "color": "Navy", "threads": 84, "times": "1"}
   ]
 }
 """
@@ -443,19 +352,19 @@ Return ONLY a JSON object:
     combined_warp = []
     combined_weft = []
 
-    # Process ALL uploaded files with hybrid fail-safe AI & template classifier
+    # Process ALL uploaded files — pure Groq AI extraction, no hardcoded data
     for file in files:
         content = await file.read()
         if not content:
             continue
             
         fname = file.filename or ""
-        # Resize image to (800, 800) thumbnail to retain clarity of handwriting while saving tokens
+        # Resize image to (1024, 1024) to preserve handwriting clarity
         try:
             im = Image.open(io.BytesIO(content))
-            im.thumbnail((800, 800))
+            im.thumbnail((1024, 1024))
             buf = io.BytesIO()
-            im.save(buf, format="JPEG", quality=90)
+            im.save(buf, format="JPEG", quality=92)
             encoded_file = base64.b64encode(buf.getvalue()).decode("utf-8")
         except Exception:
             encoded_file = base64.b64encode(content).decode("utf-8")
@@ -493,28 +402,49 @@ Return ONLY a JSON object:
                     warp_list = fallback_res.get("warp", [])[:20]
                     weft_list = fallback_res.get("weft", [])[:20]
 
-                if not warp_list and not weft_list:
-                    print(f"[EXTRACT INFO] AI returned 0 rows for {fname}, executing fail-safe sheet template fallback...")
-                    fb_warp, fb_weft = get_fallback_template_rows(content, fname)
-                    warp_list, weft_list = fb_warp, fb_weft
-
                 print(f"[EXTRACT DEBUG] Extracted warp count: {len(warp_list)}, weft count: {len(weft_list)}")
                 combined_warp.extend(warp_list)
                 combined_weft.extend(weft_list)
         except Exception as e:
-            print(f"[EXTRACT ERROR] AI call error for file {fname}: {e}, executing fail-safe sheet template fallback...")
-            fb_warp, fb_weft = get_fallback_template_rows(content, fname)
-            combined_warp.extend(fb_warp)
-            combined_weft.extend(fb_weft)
+            err_str = str(e)
+            print(f"[EXTRACT ERROR] AI call error for file {fname}: {err_str}")
+            if "rate_limit" in err_str.lower() or "429" in err_str or "tokens per day" in err_str.lower() or "tpd" in err_str.lower():
+                # Extract retry time if available
+                retry_info = ""
+                import re as _re
+                m = _re.search(r"try again in ([^\.']+)", err_str)
+                if m:
+                    retry_info = f" Please try again in {m.group(1).strip()}."
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"AI extraction API daily limit reached.{retry_info} The Groq free tier allows 200,000 tokens/day. Please try again after midnight (IST) when the quota resets."
+                )
+            raise HTTPException(status_code=500, detail=f"AI extraction failed: {err_str[:200]}")
 
-    # Final safety net: If all extraction steps returned 0 rows, use template fallback for first file content
-    if not combined_warp and not combined_weft and files:
-        first_file = files[0]
-        first_content = await first_file.read() if first_file else b""
-        first_fname = first_file.filename if first_file and first_file.filename else ""
-        fb_warp, fb_weft = get_fallback_template_rows(first_content, first_fname)
-        combined_warp.extend(fb_warp)
-        combined_weft.extend(fb_weft)
+    def normalize_yarn_count(yc_raw: str) -> str:
+        """Map extracted yarn count string to standard display label."""
+        yc = str(yc_raw or "").strip().upper().replace(" ", "")
+        if "2/40" in yc:
+            return "2/40S CTN"
+        if "2/20" in yc:
+            return "2/20S CTN"
+        if "2/60" in yc:
+            return "2/60S CTN"
+        if "2/30" in yc:
+            return "2/30S CTN"
+        if "80" in yc:
+            return "80S CTN"
+        if "60" in yc:
+            return "60S CTN"
+        if "40" in yc:
+            return "40S CTN"
+        if "30" in yc:
+            return "30S CTN"
+        if "20" in yc:
+            return "20S CTN"
+        if "10" in yc:
+            return "10S CTN"
+        return yc_raw.strip() if yc_raw.strip() else "20S CTN"
 
     # Format output rows for the frontend table
     formatted_rows = []
@@ -522,23 +452,7 @@ Return ONLY a JSON object:
     # Process Warp
     for item in combined_warp:
         color_val = str(item.get("color") or "White").strip().title()
-        yc_val = str(item.get("yarn_count") or "").strip().upper()
-        if "2/40" in yc_val:
-            yarn_count = "2/40S CTN"
-        elif "2/20" in yc_val:
-            yarn_count = "2/20S CTN"
-        elif "40" in yc_val:
-            yarn_count = "40S CTN"
-        elif "20" in yc_val:
-            yarn_count = "20S CTN"
-        elif "30" in yc_val:
-            yarn_count = "30S CTN"
-        elif "60" in yc_val:
-            yarn_count = "60S CTN"
-        elif "80" in yc_val:
-            yarn_count = "80S CTN"
-        else:
-            yarn_count = yc_val or "20S CTN"
+        yarn_count = normalize_yarn_count(item.get("yarn_count", ""))
             
         formatted_rows.append({
             "type": "Warp",
@@ -557,23 +471,7 @@ Return ONLY a JSON object:
     # Process Weft
     for item in combined_weft:
         color_val = str(item.get("color") or "White").strip().title()
-        yc_val = str(item.get("yarn_count") or "").strip().upper()
-        if "2/40" in yc_val:
-            yarn_count = "2/40S CTN"
-        elif "2/20" in yc_val:
-            yarn_count = "2/20S CTN"
-        elif "40" in yc_val:
-            yarn_count = "40S CTN"
-        elif "20" in yc_val:
-            yarn_count = "20S CTN"
-        elif "30" in yc_val:
-            yarn_count = "30S CTN"
-        elif "60" in yc_val:
-            yarn_count = "60S CTN"
-        elif "80" in yc_val:
-            yarn_count = "80S CTN"
-        else:
-            yarn_count = yc_val or "20S CTN"
+        yarn_count = normalize_yarn_count(item.get("yarn_count", ""))
 
         formatted_rows.append({
             "type": "Weft",

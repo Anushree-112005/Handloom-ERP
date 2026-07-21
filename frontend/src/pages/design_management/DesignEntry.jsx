@@ -131,9 +131,10 @@ const parseEqCount = (lbl) => {
     "2/60S CTN": 30.0,
     "2/80S CTN": 40.0,
   };
-  if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+  const key = (lbl || '').trim().toUpperCase();
+  if (YARN_COUNTS[key] !== undefined) return YARN_COUNTS[key];
   if (!lbl) return 20.0;
-  let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+  let cleaned = key.replace(/\s+/g, '');
   if (cleaned.includes('/')) {
     const parts = cleaned.split('/');
     const ply = parseFloat(parts[0]) || 1.0;
