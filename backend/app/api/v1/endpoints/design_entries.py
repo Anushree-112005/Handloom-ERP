@@ -229,25 +229,61 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     import base64
     import time
     import re
+    import io
+    from PIL import Image
 
     if not files:
         return {"rows": []}
 
     client = Groq(api_key=settings.GROQ_API_KEY)
 
+    def extract_fallback_from_raw_text(text: str) -> dict:
+        warp_rows = []
+        weft_rows = []
+        lines = text.split("\n")
+        current_section = "warp"
+        
+        for line in lines:
+            line_lower = line.lower()
+            if "weft" in line_lower:
+                current_section = "weft"
+            elif "warp" in line_lower:
+                current_section = "warp"
+                
+            m = re.search(r"(navy|white|red|olive|l\.brown|brown|blue|black|green|yellow|d\.blue|h\.white)\s*[-:]?\s*(\d+)(?:\s*x\s*(\d+))?", line, re.IGNORECASE)
+            if m:
+                color = m.group(1).title()
+                threads = int(m.group(2))
+                times = m.group(3) if m.group(3) else "1"
+                row = {"yarn_count": "20s CTN", "color": color, "threads": threads, "times": times}
+                if current_section == "warp":
+                    warp_rows.append(row)
+                else:
+                    weft_rows.append(row)
+        return {"warp": warp_rows, "weft": weft_rows}
+
     def parse_json_from_llm(raw_content: str) -> dict:
         if not raw_content:
             return {}
-        cleaned = re.sub(r'<think>.*?(?:</think>|$)', '', raw_content, flags=re.DOTALL).strip()
-        cleaned = re.sub(r'```(?:json)?', '', cleaned).strip()
-        match = re.search(r'\{.*\}', cleaned, flags=re.DOTALL)
+        
+        text_to_parse = raw_content
+        if "</think>" in raw_content:
+            text_to_parse = raw_content.split("</think>")[-1].strip()
+        else:
+            text_to_parse = re.sub(r'<think>.*?(?:</think>|$)', '', raw_content, flags=re.DOTALL).strip()
+            
+        cleaned = re.sub(r'```(?:json)?', '', text_to_parse).strip()
+        match = re.search(r'\{[\s\S]*\}', cleaned)
         if match:
-            cleaned = match.group(0)
-        try:
-            return json.loads(cleaned)
-        except Exception as e:
-            print(f"[EXTRACT ERROR] JSON parse error: {e}, cleaned: {cleaned[:300]}")
-            return {}
+            try:
+                data = json.loads(match.group(0))
+                if isinstance(data, dict) and ("warp" in data or "weft" in data):
+                    return data
+            except Exception as e:
+                print(f"[EXTRACT WARNING] Direct JSON parse failed: {e}")
+        
+        print("[EXTRACT INFO] Running fallback text parser on raw LLM output...")
+        return extract_fallback_from_raw_text(raw_content)
 
     def call_llm_with_retry(groq_client, **kwargs):
         for attempt in range(4):
@@ -255,34 +291,32 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                 return groq_client.chat.completions.create(**kwargs)
             except Exception as e:
                 err_msg = str(e).lower()
-                if "429" in err_msg or "rate limit" in err_msg or "too many requests" in err_msg:
+                if "429" in err_msg or "rate limit" in err_msg or "too many requests" in err_msg or "413" in err_msg:
                     if attempt < 3:
-                        time.sleep(2 * (attempt + 1))
+                        time.sleep(3 * (attempt + 1))
                         continue
                 raise e
 
     extraction_prompt = """
-Analyze this handwritten textile design sheet.
-Extract all yarn specification entries for BOTH the Warp and Weft design sections.
+Analyze this handwritten textile design sheet image.
+Extract all yarn specification entries for BOTH the WARP and WEFT design sections.
 
-Strict Rules:
-1. Only extract entries from the "WARP DESIGN" (or "WARP DESIGN:-") and "WEFT DESIGN" (or "WEFT DESIGN:-") sections.
-2. Do NOT extract any entries from the subsequent "WARP:" or "WEFT:" sections (which list calculated values like "1512", "189.000", "216.000", "kgs" or totals). Those are calculations/ratios and must be completely ignored.
-3. For individual rows, the "times" field is the sub-repeat/bracket multiplier. Set "times" to "1" for all rows unless there are explicit brackets grouping specific rows with a multiplier (e.g. "[ Navy - 3, White - 2 ] x 17" would have a multiplier of "17").
-4. Note: If there is a multiplier written at the bottom of the section (such as "81 x 56 = 4536" or similar), this is a block-level repeat count (the number of repeats of the entire warp pattern) and is NOT a row-level repeat multiplier. In this case, there are no brackets, so the "times" field for ALL rows (including L.Brown, Navy, H.White) MUST strictly be "1". Under no circumstances should "56" (or the block-level repeat count) be assigned to the "times" field of any row.
-5. For each entry, extract:
-   - yarn_count: e.g. "40s", "20s", "2/40s". If the yarn count is only written at the top of the column or on the first item, apply/carry it down to subsequent items in that block.
-   - color: e.g. "H.White", "Navy", "L.Brown", "Olive", "Red".
-   - threads: The number of threads/ends/picks (integer).
-   - times: The sub-repeat/bracket multiplier (string, default to "1").
+Strict Instructions:
+1. Extract yarn entries from WARP and WEFT sections.
+2. For each entry extract:
+   - yarn_count: string (e.g. "20s", default "20s CTN")
+   - color: string (e.g. "Navy", "White", "Red", "Olive")
+   - threads: integer (the main thread count)
+   - times: string (multiplier string like "11" from "300x11", default "1")
+3. Keep reasoning inside <think> concise and under 100 words. Do NOT write math proofs.
 
-Return ONLY a JSON object of this structure:
+Return ONLY a JSON object:
 {
   "warp": [
-    {"yarn_count": "20s", "color": "H.White", "threads": 27, "times": "1"}
+    {"yarn_count": "20s CTN", "color": "Navy", "threads": 300, "times": "11"}
   ],
   "weft": [
-    {"yarn_count": "20s", "color": "H.White", "threads": 23}
+    {"yarn_count": "20s CTN", "color": "Navy", "threads": 352, "times": "1"}
   ]
 }
 """
@@ -295,7 +329,16 @@ Return ONLY a JSON object of this structure:
         content = await file.read()
         if not content:
             continue
-        encoded_file = base64.b64encode(content).decode("utf-8")
+            
+        # Resize image to (600, 600) thumbnail to save thousands of tokens and prevent 413/429 rate limit errors
+        try:
+            im = Image.open(io.BytesIO(content))
+            im.thumbnail((600, 600))
+            buf = io.BytesIO()
+            im.save(buf, format="JPEG", quality=85)
+            encoded_file = base64.b64encode(buf.getvalue()).decode("utf-8")
+        except Exception:
+            encoded_file = base64.b64encode(content).decode("utf-8")
 
         try:
             completion = call_llm_with_retry(
@@ -316,15 +359,23 @@ Return ONLY a JSON object of this structure:
                     }
                 ],
                 temperature=0.0,
-                max_tokens=4096
+                max_tokens=4000
             )
             if completion and hasattr(completion, 'choices') and completion.choices:
                 raw_text = completion.choices[0].message.content or ""
                 print(f"[EXTRACT DEBUG] File {file.filename} raw response length: {len(raw_text)}")
                 res_data = parse_json_from_llm(raw_text)
-                print(f"[EXTRACT DEBUG] Extracted warp count: {len(res_data.get('warp', []))}, weft count: {len(res_data.get('weft', []))}")
-                combined_warp.extend(res_data.get("warp", []))
-                combined_weft.extend(res_data.get("weft", []))
+                
+                warp_list = res_data.get("warp", [])
+                weft_list = res_data.get("weft", [])
+                if not warp_list and not weft_list:
+                    fallback_res = extract_fallback_from_raw_text(raw_text)
+                    warp_list = fallback_res.get("warp", [])
+                    weft_list = fallback_res.get("weft", [])
+                    
+                print(f"[EXTRACT DEBUG] Final Extracted warp count: {len(warp_list)}, weft count: {len(weft_list)}")
+                combined_warp.extend(warp_list)
+                combined_weft.extend(weft_list)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"AI extraction failed for file {file.filename}: {str(e)}")
 
@@ -333,27 +384,24 @@ Return ONLY a JSON object of this structure:
     
     # Process Warp
     for item in combined_warp:
-        color_val = str(item.get("color") or "White")
-        color_val = color_val.strip().title()
-        
-        yc_val = str(item.get("yarn_count") or "")
-        yc_upper = yc_val.strip().upper()
-        if "2/40" in yc_upper:
+        color_val = str(item.get("color") or "White").strip().title()
+        yc_val = str(item.get("yarn_count") or "").strip().upper()
+        if "2/40" in yc_val:
             yarn_count = "2/40S CTN"
-        elif "2/20" in yc_upper:
+        elif "2/20" in yc_val:
             yarn_count = "2/20S CTN"
-        elif "40" in yc_upper:
+        elif "40" in yc_val:
             yarn_count = "40S CTN"
-        elif "20" in yc_upper:
+        elif "20" in yc_val:
             yarn_count = "20S CTN"
-        elif "30" in yc_upper:
+        elif "30" in yc_val:
             yarn_count = "30S CTN"
-        elif "60" in yc_upper:
+        elif "60" in yc_val:
             yarn_count = "60S CTN"
-        elif "80" in yc_upper:
+        elif "80" in yc_val:
             yarn_count = "80S CTN"
         else:
-            yarn_count = yc_val or "40S CTN"
+            yarn_count = yc_val or "20S CTN"
             
         formatted_rows.append({
             "type": "Warp",
@@ -371,24 +419,21 @@ Return ONLY a JSON object of this structure:
 
     # Process Weft
     for item in combined_weft:
-        color_val = str(item.get("color") or "White")
-        color_val = color_val.strip().title()
-        
-        yc_val = str(item.get("yarn_count") or "")
-        yc_upper = yc_val.strip().upper()
-        if "2/40" in yc_upper:
+        color_val = str(item.get("color") or "White").strip().title()
+        yc_val = str(item.get("yarn_count") or "").strip().upper()
+        if "2/40" in yc_val:
             yarn_count = "2/40S CTN"
-        elif "2/20" in yc_upper:
+        elif "2/20" in yc_val:
             yarn_count = "2/20S CTN"
-        elif "40" in yc_upper:
+        elif "40" in yc_val:
             yarn_count = "40S CTN"
-        elif "20" in yc_upper:
+        elif "20" in yc_val:
             yarn_count = "20S CTN"
-        elif "30" in yc_upper:
+        elif "30" in yc_val:
             yarn_count = "30S CTN"
-        elif "60" in yc_upper:
+        elif "60" in yc_val:
             yarn_count = "60S CTN"
-        elif "80" in yc_upper:
+        elif "80" in yc_val:
             yarn_count = "80S CTN"
         else:
             yarn_count = yc_val or "20S CTN"
@@ -398,7 +443,7 @@ Return ONLY a JSON object of this structure:
             "yarn_count": yarn_count,
             "color": color_val,
             "threads": int(item.get("threads") or 1),
-            "times": "1",
+            "times": str(item.get("times") or "1"),
             "line": "",
             "pick": "",
             "drawing_order": "",
