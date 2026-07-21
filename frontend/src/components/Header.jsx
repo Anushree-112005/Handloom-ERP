@@ -307,19 +307,7 @@ export default function Header() {
           background-color: #f1f5f9 !important;
         }
       `}</style>
-      <div style={{ flex: '0 0 260px', overflow: 'hidden', marginRight: '16px' }}>
-        <h2 className="header-title" style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '15px' }}>
-          <marquee behavior="scroll" direction="left" scrollamount="6">
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', verticalAlign: 'middle' }}>
-              <img src={companyProfile.logo || defaultLogo} alt="Logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
-              <span style={{ fontWeight: 600 }}>{companyProfile.company_name} - {companyProfile.description}</span>
-            </div>
-          </marquee>
-        </h2>
-      </div>
 
-      {/* Central Global Search Bar */}
-      <div style={{ flex: 1, position: 'relative', maxWidth: '380px', margin: '0 16px' }}>
       <div style={{ flex: '0 0 260px', marginRight: '16px', position: 'relative', zIndex: 2 }} />
 
       {/* Background Running Marquee across topbar (stops before administrator) */}
@@ -530,7 +518,6 @@ export default function Header() {
         )}
       </div>
 
-      <div className="header-actions">
       <div className="header-actions" style={{ position: 'relative', zIndex: 2 }}>
         {/* Dynamic Notification Dropdown */}
         <div ref={notificationRef} style={{ position: 'relative' }}>

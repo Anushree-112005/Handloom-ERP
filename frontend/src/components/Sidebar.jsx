@@ -208,9 +208,6 @@ const modules = [
   { path: '/purchase-order/processing', label: 'Processing PO', icon: Scissors },
   { path: '/purchase-order/cloth', label: 'Cloth Purchase PO', icon: Package },
 
-  { section: 'Yarn Management' },
-  { path: '/yarn/inward', label: 'Yarn Inward', icon: ArrowRightLeft },
-  { path: '/yarn/stock', label: 'Yarn Stock', icon: Box },
 
   { isJobWorkDynamic: true },
 
