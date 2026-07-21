@@ -187,12 +187,13 @@ async def approve_design_entry(entry_id: int, db: AsyncSession = Depends(get_db)
     if not entry:
         raise HTTPException(status_code=404, detail="Design Entry not found")
 
-    entry.status = "Approved"
+    setattr(entry, "status", "Approved")
     
     # Create notification for Purchase Team
+    design_no = getattr(entry, "design_no", "") or ""
     notif = Notification(
         user_role="Purchase Team",
-        message=f"Yarn Procurement Required for Design No: {entry.design_no}"
+        message=f"Yarn Procurement Required for Design No: {design_no}"
     )
     db.add(notif)
     
