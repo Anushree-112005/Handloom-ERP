@@ -238,10 +238,18 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
 
     client = Groq(api_key=settings.GROQ_API_KEY)
 
+    def clean_llm_text(raw_content: str) -> str:
+        if not raw_content:
+            return ""
+        if "</think>" in raw_content:
+            return raw_content.split("</think>")[-1].strip()
+        return re.sub(r'<think>.*?(?:</think>|$)', '', raw_content, flags=re.DOTALL).strip()
+
     def extract_fallback_from_raw_text(text: str) -> dict:
+        text_clean = clean_llm_text(text)
         warp_rows = []
         weft_rows = []
-        lines = text.split("\n")
+        lines = text_clean.split("\n")
         current_section = "warp"
         
         for line in lines:
@@ -261,25 +269,22 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                     warp_rows.append(row)
                 else:
                     weft_rows.append(row)
-        return {"warp": warp_rows, "weft": weft_rows}
+        return {"warp": warp_rows[:20], "weft": weft_rows[:20]}
 
     def parse_json_from_llm(raw_content: str) -> dict:
         if not raw_content:
             return {}
         
-        text_to_parse = raw_content
-        if "</think>" in raw_content:
-            text_to_parse = raw_content.split("</think>")[-1].strip()
-        else:
-            text_to_parse = re.sub(r'<think>.*?(?:</think>|$)', '', raw_content, flags=re.DOTALL).strip()
-            
+        text_to_parse = clean_llm_text(raw_content)
         cleaned = re.sub(r'```(?:json)?', '', text_to_parse).strip()
         match = re.search(r'\{[\s\S]*\}', cleaned)
         if match:
             try:
                 data = json.loads(match.group(0))
                 if isinstance(data, dict) and ("warp" in data or "weft" in data):
-                    return data
+                    w = data.get("warp", [])
+                    wf = data.get("weft", [])
+                    return {"warp": w[:20] if len(w) > 20 else w, "weft": wf[:20] if len(wf) > 20 else wf}
             except Exception as e:
                 print(f"[EXTRACT WARNING] Direct JSON parse failed: {e}")
         
@@ -309,7 +314,8 @@ Strict Instructions:
    - color: string (e.g. "Navy", "White", "Red", "Olive")
    - threads: integer (the main thread count)
    - times: string (multiplier string like "11" from "300x11", default "1")
-3. Keep reasoning inside <think> concise and under 100 words. Do NOT write math proofs.
+3. Keep reasoning inside <think> concise and under 50 words. Do NOT write math proofs.
+4. Maximum 20 rows for WARP section and 20 rows for WEFT section.
 
 Return ONLY a JSON object:
 {
@@ -368,12 +374,12 @@ Return ONLY a JSON object:
                 print(f"[EXTRACT DEBUG] File {fname} raw response length: {len(raw_text)}")
                 res_data = parse_json_from_llm(raw_text)
                 
-                warp_list = res_data.get("warp", [])
-                weft_list = res_data.get("weft", [])
+                warp_list = res_data.get("warp", [])[:20]
+                weft_list = res_data.get("weft", [])[:20]
                 if not warp_list and not weft_list:
                     fallback_res = extract_fallback_from_raw_text(raw_text)
-                    warp_list = fallback_res.get("warp", [])
-                    weft_list = fallback_res.get("weft", [])
+                    warp_list = fallback_res.get("warp", [])[:20]
+                    weft_list = fallback_res.get("weft", [])[:20]
 
                 print(f"[EXTRACT DEBUG] Extracted warp count: {len(warp_list)}, weft count: {len(weft_list)}")
                 combined_warp.extend(warp_list)
