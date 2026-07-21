@@ -4,9 +4,11 @@ from sqlalchemy import select, func
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, datetime
-import os, uuid
+import os, uuid, json
+from groq import Groq
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.models.design_entry import DesignEntry
 from app.models.notification import Notification
 
@@ -225,20 +227,13 @@ async def upload_design_entry_image(entry_id: int, file: UploadFile = File(...),
 @router.post("/extract-design")
 async def extract_design_from_images(files: List[UploadFile] = File(...)):
     import base64
-    import cv2
-    import numpy as np
+    import time
+    import re
 
     if not files:
         return {"rows": []}
 
-    file = files[0]
-    content = await file.read()
-    encoded = base64.b64encode(content).decode("utf-8")
-
     client = Groq(api_key=settings.GROQ_API_KEY)
-    
-    import time
-    import re
 
     def parse_json_from_llm(raw_content: str) -> dict:
         if not raw_content:
@@ -264,52 +259,42 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
                         continue
                 raise e
 
-    # Step 1: LLM classification for standard templates
-    template_type = "other"
-    classification_prompt = """
-Analyze this image of a textile design sheet.
-Classify it into one of the following categories:
-1. "olive_white" if it contains ONLY "OLIVE" (or Greenish-Olive) and "WHITE" (or H.White) yarn repeat tables.
-2. "navy_red" if it contains ONLY "NAVY", "RED", and "WHITE" (or H.White) yarn repeat tables (strictly no other colors like brown, blue, yellow, etc.).
-3. "other" if it is a custom handwritten paper, notebook page, or other general design sheet with a different color/pattern layout (such as containing brown, black, grey, etc., or having a different structure).
+    extraction_prompt = """
+Analyze this handwritten textile design sheet.
+Extract all yarn specification entries for BOTH the Warp and Weft design sections.
 
-Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
+Strict Rules:
+1. Only extract entries from the "WARP DESIGN" (or "WARP DESIGN:-") and "WEFT DESIGN" (or "WEFT DESIGN:-") sections.
+2. Do NOT extract any entries from the subsequent "WARP:" or "WEFT:" sections (which list calculated values like "1512", "189.000", "216.000", "kgs" or totals). Those are calculations/ratios and must be completely ignored.
+3. For individual rows, the "times" field is the sub-repeat/bracket multiplier. Set "times" to "1" for all rows unless there are explicit brackets grouping specific rows with a multiplier (e.g. "[ Navy - 3, White - 2 ] x 17" would have a multiplier of "17").
+4. Note: If there is a multiplier written at the bottom of the section (such as "81 x 56 = 4536" or similar), this is a block-level repeat count (the number of repeats of the entire warp pattern) and is NOT a row-level repeat multiplier. In this case, there are no brackets, so the "times" field for ALL rows (including L.Brown, Navy, H.White) MUST strictly be "1". Under no circumstances should "56" (or the block-level repeat count) be assigned to the "times" field of any row.
+5. For each entry, extract:
+   - yarn_count: e.g. "40s", "20s", "2/40s". If the yarn count is only written at the top of the column or on the first item, apply/carry it down to subsequent items in that block.
+   - color: e.g. "H.White", "Navy", "L.Brown", "Olive", "Red".
+   - threads: The number of threads/ends/picks (integer).
+   - times: The sub-repeat/bracket multiplier (string, default to "1").
+
+Return ONLY a JSON object of this structure:
+{
+  "warp": [
+    {"yarn_count": "20s", "color": "H.White", "threads": 27, "times": "1"}
+  ],
+  "weft": [
+    {"yarn_count": "20s", "color": "H.White", "threads": 23}
+  ]
+}
 """
-    try:
-        completion = call_llm_with_retry(
-            client,
-            model="qwen/qwen3.6-27b",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": classification_prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{encoded}",
-                            },
-                        },
-                    ],
-                }
-            ],
-            temperature=0.0
-        )
-        if completion and hasattr(completion, 'choices') and completion.choices:
-            res_data = parse_json_from_llm(completion.choices[0].message.content or "")
-            template_type = res_data.get("type", "other")
-    except Exception:
-        template_type = "other"
 
     combined_warp = []
     combined_weft = []
 
-    # Process ALL uploaded files — each file is classified locally
+    # Process ALL uploaded files
     for file in files:
         content = await file.read()
-        
-        # Local OpenCV and rule-based template classification
-        template_type = "navy_red"  # default fallback
+        if not content:
+            continue
+        encoded_file = base64.b64encode(content).decode("utf-8")
+
         try:
             completion = call_llm_with_retry(
                 client,
@@ -322,7 +307,7 @@ Return ONLY a JSON object: {"type": "olive_white" | "navy_red" | "other"}
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoded}",
+                                    "url": f"data:image/jpeg;base64,{encoded_file}",
                                 },
                             },
                         ],
