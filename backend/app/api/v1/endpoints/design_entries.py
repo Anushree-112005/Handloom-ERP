@@ -237,8 +237,9 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
 
     client = Groq(api_key=settings.GROQ_API_KEY)
 
-    def get_fallback_template_rows(content: bytes, filename: str):
-        filename_lower = (filename or "").lower()
+    def get_fallback_template_rows(content: bytes, filename: str = ""):
+        fname = filename or ""
+        filename_lower = fname.lower()
         olive_pixels = 0
         navy_pixels = 0
         red_pixels = 0
@@ -249,10 +250,10 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             if img is not None:
                 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                olive_mask = cv2.inRange(hsv, (30, 20, 20), (75, 255, 255))
-                navy_mask = cv2.inRange(hsv, (90, 20, 20), (130, 255, 255))
-                red_mask1 = cv2.inRange(hsv, (0, 50, 50), (10, 255, 255))
-                red_mask2 = cv2.inRange(hsv, (170, 50, 50), (180, 255, 255))
+                olive_mask = cv2.inRange(hsv, np.array([30, 20, 20], dtype=np.uint8), np.array([75, 255, 255], dtype=np.uint8))
+                navy_mask = cv2.inRange(hsv, np.array([90, 20, 20], dtype=np.uint8), np.array([130, 255, 255], dtype=np.uint8))
+                red_mask1 = cv2.inRange(hsv, np.array([0, 50, 50], dtype=np.uint8), np.array([10, 255, 255], dtype=np.uint8))
+                red_mask2 = cv2.inRange(hsv, np.array([170, 50, 50], dtype=np.uint8), np.array([180, 255, 255], dtype=np.uint8))
                 olive_pixels = int(np.sum(olive_mask > 0))
                 navy_pixels = int(np.sum(navy_mask > 0))
                 red_pixels = int(np.sum(red_mask1 > 0) + np.sum(red_mask2 > 0))
@@ -432,6 +433,7 @@ Return ONLY a JSON object:
         if not content:
             continue
             
+        fname = file.filename or ""
         # Resize image to (600, 600) thumbnail to save thousands of tokens and prevent 413/429 rate limit errors
         try:
             im = Image.open(io.BytesIO(content))
@@ -465,7 +467,7 @@ Return ONLY a JSON object:
             )
             if completion and hasattr(completion, 'choices') and completion.choices:
                 raw_text = completion.choices[0].message.content or ""
-                print(f"[EXTRACT DEBUG] File {file.filename} raw response length: {len(raw_text)}")
+                print(f"[EXTRACT DEBUG] File {fname} raw response length: {len(raw_text)}")
                 res_data = parse_json_from_llm(raw_text)
                 
                 warp_list = res_data.get("warp", [])
@@ -476,23 +478,25 @@ Return ONLY a JSON object:
                     weft_list = fallback_res.get("weft", [])
                     
                 if not warp_list and not weft_list:
-                    print(f"[EXTRACT INFO] LLM returned 0 rows for {file.filename}, using template fallback classifier...")
-                    fb_warp, fb_weft = get_fallback_template_rows(content, file.filename)
+                    print(f"[EXTRACT INFO] LLM returned 0 rows for {fname}, using template fallback classifier...")
+                    fb_warp, fb_weft = get_fallback_template_rows(content, fname)
                     warp_list, weft_list = fb_warp, fb_weft
 
                 print(f"[EXTRACT DEBUG] Final Extracted warp count: {len(warp_list)}, weft count: {len(weft_list)}")
                 combined_warp.extend(warp_list)
                 combined_weft.extend(weft_list)
         except Exception as e:
-            print(f"[EXTRACT ERROR] AI call error for file {file.filename}: {e}, using template fallback classifier...")
-            fb_warp, fb_weft = get_fallback_template_rows(content, file.filename)
+            print(f"[EXTRACT ERROR] AI call error for file {fname}: {e}, using template fallback classifier...")
+            fb_warp, fb_weft = get_fallback_template_rows(content, fname)
             combined_warp.extend(fb_warp)
             combined_weft.extend(fb_weft)
 
     # If all extraction steps returned 0 rows, use template fallback for first file content
     if not combined_warp and not combined_weft and files:
-        first_content = await files[0].read() if files[0] else b""
-        fb_warp, fb_weft = get_fallback_template_rows(first_content, files[0].filename)
+        first_file = files[0]
+        first_content = await first_file.read() if first_file else b""
+        first_fname = first_file.filename if first_file and first_file.filename else ""
+        fb_warp, fb_weft = get_fallback_template_rows(first_content, first_fname)
         combined_warp.extend(fb_warp)
         combined_weft.extend(fb_weft)
 
