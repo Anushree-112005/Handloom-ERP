@@ -14,6 +14,7 @@ from app.models.buyer_order import BuyerOrder, BuyerOrderItem
 from app.api.v1.endpoints.auth import get_current_user
 from app.core.authorization import require_permission
 from app.models.employee import Employee
+from app.models.production_status import ProductionStatus, ProductionStatusHistory
 
 router = APIRouter(prefix="/buyer-orders", tags=["Buyer Orders"])
 
@@ -311,9 +312,13 @@ async def list_status_update_orders(
         select(BuyerOrder)
         .options(selectinload(BuyerOrder.items))
         .order_by(BuyerOrder.id.desc())
-        .offset(skip)
-        .limit(limit)
     )
+    
+    if current_user.user_type not in ["Super Admin", "Admin", "Module Manager"]:
+        q = q.where(BuyerOrder.merchandiser == current_user.name)
+        
+    q = q.offset(skip).limit(limit)
+    
     result = await db.execute(q)
     return result.scalars().all()
 
@@ -418,3 +423,125 @@ async def delete_order(order_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(order)
     await db.commit()
     return None
+
+
+class ProductionStatusUpdate(BaseModel):
+    stage_name: str
+    status: str
+    completed_qty: int = 0
+    remarks: Optional[str] = None
+    attachment: Optional[str] = None
+
+
+@router.get("/{order_id}/status")
+async def get_order_status(
+    order_id: int, 
+    db: AsyncSession = Depends(get_db),
+    current_user: Employee = Depends(require_permission("status_update", "View"))
+):
+    result = await db.execute(
+        select(ProductionStatus).where(ProductionStatus.buyer_order_id == order_id)
+    )
+    statuses = result.scalars().all()
+    
+    history_result = await db.execute(
+        select(ProductionStatusHistory)
+        .where(ProductionStatusHistory.buyer_order_id == order_id)
+        .order_by(ProductionStatusHistory.id.desc())
+    )
+    history = history_result.scalars().all()
+    
+    return {
+        "statuses": [
+            {
+                "id": s.id,
+                "stage_name": s.stage_name,
+                "status": s.status,
+                "completed_qty": s.completed_qty,
+                "pending_qty": s.pending_qty,
+                "remarks": s.remarks,
+                "attachment": s.attachment,
+                "updated_by": s.updated_by,
+                "updated_at": s.updated_at
+            } for s in statuses
+        ],
+        "history": [
+            {
+                "id": h.id,
+                "stage_name": h.stage_name,
+                "prev_status": h.prev_status,
+                "new_status": h.new_status,
+                "remarks": h.remarks,
+                "updated_by": h.updated_by,
+                "updated_at": h.updated_at
+            } for h in history
+        ]
+    }
+
+
+@router.post("/{order_id}/status")
+async def update_order_status(
+    order_id: int, 
+    data: ProductionStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Employee = Depends(require_permission("status_update", "Edit"))
+):
+    # 1. Access Control Check
+    result = await db.execute(select(BuyerOrder).options(selectinload(BuyerOrder.items)).where(BuyerOrder.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    if current_user.user_type not in ["Super Admin", "Admin", "Module Manager"]:
+        if order.merchandiser != current_user.name:
+            raise HTTPException(status_code=403, detail="Forbidden: You are not authorized to update this order's status.")
+            
+    # 2. Update logic
+    status_res = await db.execute(
+        select(ProductionStatus).where(
+            ProductionStatus.buyer_order_id == order_id, 
+            ProductionStatus.stage_name == data.stage_name
+        )
+    )
+    st = status_res.scalar_one_or_none()
+    
+    prev_status = st.status if st else "Not Started"
+    
+    total_qty = sum(item.order_mtrs or 0 for item in order.items)
+    pending = total_qty - data.completed_qty
+    if pending < 0: pending = 0
+    
+    if not st:
+        st = ProductionStatus(
+            buyer_order_id=order_id,
+            stage_name=data.stage_name,
+            status=data.status,
+            completed_qty=data.completed_qty,
+            pending_qty=pending,
+            remarks=data.remarks,
+            attachment=data.attachment,
+            updated_by=current_user.name
+        )
+        db.add(st)
+    else:
+        st.status = data.status
+        st.completed_qty = data.completed_qty
+        st.pending_qty = pending
+        st.remarks = data.remarks
+        st.attachment = data.attachment
+        st.updated_by = current_user.name
+        
+    # 3. Add History log
+    hist = ProductionStatusHistory(
+        buyer_order_id=order_id,
+        stage_name=data.stage_name,
+        prev_status=prev_status,
+        new_status=data.status,
+        remarks=data.remarks,
+        updated_by=current_user.name
+    )
+    db.add(hist)
+    
+    await db.commit()
+    
+    return {"message": "Stage updated successfully"}
