@@ -61,7 +61,7 @@ class DesignEntryCreate(DesignEntryBase):
 class DesignEntryOut(DesignEntryBase):
     id: int
     ds_ref_no: str
-    status: str
+    status: Optional[str] = "Pending"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
