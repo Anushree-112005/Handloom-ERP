@@ -412,7 +412,6 @@ export default function WarpBeamReceipt() {
             title="WARP BEAM RECEIPT"
             documentNumber={selectedViewEntry?.ref_no}
             status={selectedViewEntry?.status || 'Active'}
-            onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
             sections={selectedViewEntry ? [
               {
                 title: "GENERAL INFO",

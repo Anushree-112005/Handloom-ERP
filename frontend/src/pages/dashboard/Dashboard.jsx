@@ -190,18 +190,6 @@ export default function Dashboard() {
     } else {
       setBuyerQty(baseBuyerQtyData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
     }
-
-    if (stats?.quality_compliance) {
-      setQualityCompliance(stats.quality_compliance.map(d => ({ ...d, value: Math.min(100, Math.round(d.value * (factor > 1 ? 1 : factor))) })));
-    } else {
-      setQualityCompliance(baseQualityCompliance.map(d => ({ ...d, value: Math.min(100, Math.round(d.value * (factor > 1 ? 1 : factor))) })));
-    }
-
-    if (stats?.dispatch_by_transporter) {
-      setDispatchByTransporter(stats.dispatch_by_transporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    } else {
-      setDispatchByTransporter(baseDispatchByTransporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
-    }
   }, [stats, dateFilter]);
 
   const exportToExcel = () => {

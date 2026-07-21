@@ -44,16 +44,16 @@ const AttendanceLeave = () => {
 
   // Biometric integration state
   const BIOMETRIC_MACHINES = [
-    { id: 'machine1', name: 'Machine 1', ip: '192.168.0.202', port: 4370, serial: 'CEXJ233960759' },
-    { id: 'machine2', name: 'Machine 2', ip: '192.168.0.201', port: 4370, serial: 'CEXJ233960836' },
-    { id: 'machine3', name: 'Machine 3', ip: '192.168.1.203', port: 4370, serial: 'CEXJ232161690' },
+    { id: 'machine1', name: 'Machine 1', ip: '192.168.0.203', port: 4370, serial: 'CEXJ232161690', direction: 'both' },
+    { id: 'machine2', name: 'Machine 2', ip: '192.168.0.202', port: 4370, serial: 'CEXJ233960759', direction: 'in' },
+    { id: 'machine3', name: 'Machine 3', ip: '192.168.0.201', port: 4370, serial: 'CEXJ233960836', direction: 'out' },
     { id: 'custom', name: 'Custom Configuration...', ip: '', port: 4370, serial: '' }
   ];
 
   const getDeviceName = (ip) => {
-    if (ip === '192.168.0.202') return 'Machine 1';
-    if (ip === '192.168.0.201') return 'Machine 2';
-    if (ip === '192.168.1.203') return 'Machine 3';
+    if (ip === '192.168.0.203' || ip === '192.168.1.203') return 'Machine 1';
+    if (ip === '192.168.0.202') return 'Machine 2';
+    if (ip === '192.168.0.201') return 'Machine 3';
     return ip || '—';
   };
 
@@ -73,10 +73,23 @@ const AttendanceLeave = () => {
   };
 
   const [selectedMachineId, setSelectedMachineId] = useState('machine1');
-  const [deviceIp, setDeviceIp] = useState('192.168.0.202');
+  const [deviceIp, setDeviceIp] = useState('192.168.0.203');
   const [devicePort, setDevicePort] = useState(4370);
-  const [filterMachineIp, setFilterMachineIp] = useState('all');
+  const [machineDirections, setMachineDirections] = useState({
+    '192.168.0.202': 'in',
+    '192.168.0.201': 'out',
+    '192.168.1.203': 'both',
+    '192.168.0.203': 'both'
+  });
+  const [selectedFilterMachineIps, setSelectedFilterMachineIps] = useState([
+    '192.168.0.203',
+    '192.168.0.202',
+    '192.168.0.201'
+  ]);
   const [filterDate, setFilterDate] = useState('');
+  const [filterRawMonth, setFilterRawMonth] = useState('');
+  const [showCheckInLogs, setShowCheckInLogs] = useState(true);
+  const [showCheckOutLogs, setShowCheckOutLogs] = useState(true);
   const [filterAttendanceDate, setFilterAttendanceDate] = useState(getTodayDateString());
   const [filterAttendanceMonth, setFilterAttendanceMonth] = useState(getCurrentMonth());
   const [attendanceViewMode, setAttendanceViewMode] = useState('daily');
@@ -89,7 +102,7 @@ const AttendanceLeave = () => {
 
   useEffect(() => {
     setLogsPage(1);
-  }, [filterMachineIp, filterDate]);
+  }, [selectedFilterMachineIps, filterDate, filterEmployee, filterRawMonth, showCheckInLogs, showCheckOutLogs]);
 
   const loadRawLogs = async () => {
     try {
@@ -138,6 +151,21 @@ const AttendanceLeave = () => {
   const getEmployeeBiometricId = (employeeId) => {
     const emp = employees.find(e => e.employee_id === employeeId || e.id === employeeId || String(e.id) === String(employeeId));
     return emp ? (emp.biometric_id || '—') : '—';
+  };
+
+  const getPunchDirection = (status, timestamp, deviceIp) => {
+    const ip = deviceIp || '';
+    const mode = machineDirections[ip] || 'both';
+    if (mode === 'in') return 'Check In';
+    if (mode === 'out') return 'Check Out';
+
+    if (timestamp) {
+      try {
+        const hour = new Date(timestamp).getHours();
+        return hour < 12 ? 'Check In' : 'Check Out';
+      } catch (e) {}
+    }
+    return status === 0 ? 'Check In' : 'Check Out';
   };
 
   const calculateOT = (checkIn, checkOut, shiftName) => {
@@ -235,14 +263,38 @@ const AttendanceLeave = () => {
       doc.save(`${typeLabel}_Attendance_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     } else if (activeTab === 'biometric') {
       const logsToExport = rawLogs.filter(log => {
-        if (filterMachineIp !== 'all') {
-          const logIp = log.device_ip || '192.168.0.202';
-          if (logIp !== filterMachineIp) return false;
-        }
+        // Filter by machines checkboxes
+        const logIp = log.device_ip || '192.168.0.203';
+        if (!selectedFilterMachineIps.includes(logIp)) return false;
+
+        // Filter by Date
         if (filterDate) {
           const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
           if (logDateStr !== filterDate) return false;
         }
+
+        // Filter by Month
+        if (filterRawMonth) {
+          const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+          if (logMonthStr !== filterRawMonth) return false;
+        }
+
+        // Filter by search query
+        if (filterEmployee) {
+          const query = filterEmployee.toLowerCase();
+          const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+          const empId = (log.employee_id || '').toString().toLowerCase();
+          const bioId = (log.biometric_id || '').toString().toLowerCase();
+          if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+            return false;
+          }
+        }
+
+        // Filter by direction checkboxes
+        const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+        if (dir === 'Check In' && !showCheckInLogs) return false;
+        if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
         return true;
       });
 
@@ -256,7 +308,7 @@ const AttendanceLeave = () => {
         const bioId = details.biometric_id || '-';
         const devName = `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`;
         const timestampStr = details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
-        const direction = details.status === 0 ? 'Check In' : 'Check Out';
+        const direction = getPunchDirection(details.status, details.timestamp, details.device_ip);
         const punchType = details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other';
 
         tableRows.push([
@@ -312,14 +364,38 @@ const AttendanceLeave = () => {
       filename = `${typeLabel}_Attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
     } else if (activeTab === 'biometric') {
       const logsToExport = rawLogs.filter(log => {
-        if (filterMachineIp !== 'all') {
-          const logIp = log.device_ip || '192.168.0.202';
-          if (logIp !== filterMachineIp) return false;
-        }
+        // Filter by machines checkboxes
+        const logIp = log.device_ip || '192.168.0.203';
+        if (!selectedFilterMachineIps.includes(logIp)) return false;
+
+        // Filter by Date
         if (filterDate) {
           const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
           if (logDateStr !== filterDate) return false;
         }
+
+        // Filter by Month
+        if (filterRawMonth) {
+          const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+          if (logMonthStr !== filterRawMonth) return false;
+        }
+
+        // Filter by search query
+        if (filterEmployee) {
+          const query = filterEmployee.toLowerCase();
+          const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+          const empId = (log.employee_id || '').toString().toLowerCase();
+          const bioId = (log.biometric_id || '').toString().toLowerCase();
+          if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+            return false;
+          }
+        }
+
+        // Filter by direction checkboxes
+        const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+        if (dir === 'Check In' && !showCheckInLogs) return false;
+        if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
         return true;
       });
 
@@ -334,7 +410,7 @@ const AttendanceLeave = () => {
           "Biometric ID": details.biometric_id || '-',
           "Device": `${getDeviceName(details.device_ip)} (${details.device_ip || '-'})`,
           "Punch Timestamp": timestampStr,
-          "Direction": details.status === 0 ? 'Check In' : 'Check Out',
+          "Direction": getPunchDirection(details.status, details.timestamp, details.device_ip),
           "Punch Type": details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'
         };
       });
@@ -1128,16 +1204,34 @@ const AttendanceLeave = () => {
 
         {activeTab === 'biometric' && (() => {
           const filteredRawLogs = rawLogs.filter(log => {
-            // Filter by machine IP
-            if (filterMachineIp !== 'all') {
-              const logIp = log.device_ip || '192.168.0.202';
-              if (logIp !== filterMachineIp) return false;
-            }
+            // Filter by machine IP checkboxes
+            const logIp = log.device_ip || '192.168.0.203';
+            if (!selectedFilterMachineIps.includes(logIp)) return false;
             // Filter by Date
             if (filterDate) {
               const logDateStr = log.timestamp ? log.timestamp.split('T')[0] : '';
               if (logDateStr !== filterDate) return false;
             }
+            // Filter by Month
+            if (filterRawMonth) {
+              const logMonthStr = log.timestamp ? log.timestamp.slice(0, 7) : '';
+              if (logMonthStr !== filterRawMonth) return false;
+            }
+            // Filter by search query
+            if (filterEmployee) {
+              const query = filterEmployee.toLowerCase();
+              const empName = (getEmployeeName(log.employee_id || log.biometric_id) || '').toLowerCase();
+              const empId = (log.employee_id || '').toString().toLowerCase();
+              const bioId = (log.biometric_id || '').toString().toLowerCase();
+              if (!empName.includes(query) && !empId.includes(query) && !bioId.includes(query)) {
+                return false;
+              }
+            }
+            // Filter by direction checkboxes
+            const dir = getPunchDirection(log.status, log.timestamp, log.device_ip);
+            if (dir === 'Check In' && !showCheckInLogs) return false;
+            if (dir === 'Check Out' && !showCheckOutLogs) return false;
+
             return true;
           });
 
@@ -1224,6 +1318,39 @@ const AttendanceLeave = () => {
                       </div>
                     </div>
                   )}
+                  <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <span style={{ fontWeight: 600, color: '#475569', fontSize: 12 }}>Punch Mode Config:</span>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(machineDirections[deviceIp] || 'both') === 'in'} 
+                          onChange={(e) => {
+                            setMachineDirections(prev => ({
+                              ...prev,
+                              [deviceIp]: e.target.checked ? 'in' : 'both'
+                            }));
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Inward Only
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={(machineDirections[deviceIp] || 'both') === 'out'} 
+                          onChange={(e) => {
+                            setMachineDirections(prev => ({
+                              ...prev,
+                              [deviceIp]: e.target.checked ? 'out' : 'both'
+                            }));
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Outward Only
+                      </label>
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <input type="checkbox" id="syncMock" checked={syncMock} onChange={(e) => setSyncMock(e.target.checked)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
                     <label htmlFor="syncMock" style={{ fontSize: 13, fontWeight: 500, color: '#475569', cursor: 'pointer' }}>
@@ -1356,17 +1483,93 @@ const AttendanceLeave = () => {
                         </button>
                       )}
                     </div>
-                    <select
-                      className="form-control"
-                      style={{ width: 200, height: 36, fontSize: 13, padding: '0 10px' }}
-                      value={filterMachineIp}
-                      onChange={(e) => setFilterMachineIp(e.target.value)}
-                    >
-                      <option value="all">All Machines</option>
-                      <option value="192.168.0.202">Machine 1 (192.168.0.202)</option>
-                      <option value="192.168.0.201">Machine 2 (192.168.0.201)</option>
-                      <option value="192.168.1.203">Machine 3 (192.168.1.203)</option>
-                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Filter Month:</span>
+                      <input
+                        type="month"
+                        className="form-control"
+                        style={{ width: 140, height: 36, fontSize: 13, padding: '0 8px' }}
+                        value={filterRawMonth}
+                        onChange={(e) => setFilterRawMonth(e.target.value)}
+                      />
+                      {filterRawMonth && (
+                        <button
+                          onClick={() => setFilterRawMonth('')}
+                          className="btn btn-secondary"
+                          style={{ height: 36, padding: '0 8px', fontSize: 12 }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={showCheckInLogs}
+                          onChange={(e) => setShowCheckInLogs(e.target.checked)}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Check In
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={showCheckOutLogs}
+                          onChange={(e) => setShowCheckOutLogs(e.target.checked)}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        Check Out
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e2e8f0', borderRadius: 6, padding: '6px 12px', background: '#fff' }}>
+                      <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>Machines:</span>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.203')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.203']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.203'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M1 (203)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.202')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.202']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.202'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M2 (202)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#475569', fontWeight: 500, cursor: 'pointer', margin: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedFilterMachineIps.includes('192.168.0.201')}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFilterMachineIps(prev => [...prev, '192.168.0.201']);
+                            } else {
+                              setSelectedFilterMachineIps(prev => prev.filter(ip => ip !== '192.168.0.201'));
+                            }
+                          }}
+                          style={{ cursor: 'pointer', width: 14, height: 14 }}
+                        />
+                        M3 (201)
+                      </label>
+                    </div>
                     <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200">
                       {filteredRawLogs.length} events
                     </span>
@@ -1406,9 +1609,14 @@ const AttendanceLeave = () => {
                               {details.timestamp ? new Date(details.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${details.status === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                {details.status === 0 ? 'Check In' : 'Check Out'}
-                              </span>
+                              {(() => {
+                                const dir = getPunchDirection(details.status, details.timestamp, details.device_ip);
+                                return (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${dir === 'Check In' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {dir}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="px-6 py-4 text-xs text-slate-500">
                               {details.punch_type === 0 ? 'Fingerprint' : details.punch_type === 1 ? 'Card' : details.punch_type === 4 ? 'Face' : 'Other'}

@@ -511,7 +511,6 @@ export default function WarpDelivery() {
             title="WARP DELIVERY"
             documentNumber={selectedViewEntry?.dc_no}
             status={selectedViewEntry?.status || 'Delivered'}
-            onDownloadPdf={() => alert('PDF Export functionality to be implemented')}
             sections={selectedViewEntry ? [
               {
                 title: "GENERAL INFO",

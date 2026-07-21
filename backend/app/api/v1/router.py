@@ -1,7 +1,6 @@
 """Aggregated API router — includes all module endpoints."""
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet, twisting_doubling_po, yarn_dyeing_po, fabric_dyeing_po, warping_sizing_po, weaving_po, processing_po, cloth_purchase_po, inventory, calendar_events, costing_sheet, stock_sheet, notifications
-
+from app.api.v1.endpoints import auth, dashboard, parties, buyer_orders, yarn_purchase_orders, dropdowns, employees, despatch_planning, sales_invoices, goods_releases, packing_slips, finished_fabrics, cloth_deliveries, on_table_checking, cloth_inwards, log_reports, eway_bills, company_settings, design_entries, yarn_inwards, grey_yarn_deliveries, dyed_yarn_receipts, dyed_yarn_deliveries, warp_beam_receipts, warp_deliveries, sub_masters, fleet, twisting_doubling_po, yarn_dyeing_po, fabric_dyeing_po, warping_sizing_po, weaving_po, processing_po, cloth_purchase_po, inventory, calendar_events, costing_sheet, stock_sheet, notifications, proforma_invoice, buyer_order_schedule, buyer_order_amendment, buyer_order_completion, order_expenses
 
 api_router = APIRouter()
 
@@ -74,8 +73,9 @@ api_router.include_router(warehouse_stock.router, prefix="/warehouse-stock", tag
 from app.api.v1.endpoints import chat
 api_router.include_router(chat.router)
 
-from app.api.v1.endpoints import reports
+from app.api.v1.endpoints import reports, rbac
 api_router.include_router(reports.router)
+api_router.include_router(rbac.router)
 
 from app.modules.hr.router import router as hr_router
 from app.modules.vehicle_management.router import router as fleet_router
@@ -91,6 +91,10 @@ api_router.include_router(generic_po.router)
 
 from app.api.v1.endpoints import warehouse
 api_router.include_router(warehouse.router, prefix="/warehouse", tags=["Warehouse"])
-
 from app.api.v1.endpoints import approvals
 api_router.include_router(approvals.router, prefix="/approvals", tags=["Approvals"])
+api_router.include_router(proforma_invoice.router)
+api_router.include_router(buyer_order_schedule.router)
+api_router.include_router(buyer_order_amendment.router)
+api_router.include_router(buyer_order_completion.router)
+api_router.include_router(order_expenses.router)

@@ -201,20 +201,20 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public: Login */}
-      <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/login" element={isLoggedIn ? <Navigate to="/cubebook/dashboard" replace /> : <Login />} />
       <Route path="/company/create" element={<CompanyCreate />} />
       <Route path="/company/alter"  element={<CompanyCreate />} />
 
       {!isLoggedIn && (
         <>
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/cubebook/login" replace />} />
         </>
       )}
 
       {isLoggedIn && !company && (
         <>
           <Route path="/setup" element={<Gateway />} />
-          <Route path="*" element={<Navigate to="/setup" replace />} />
+          <Route path="*" element={<Navigate to="/cubebook/setup" replace />} />
         </>
       )}
 

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Users, Plus, Save, ArrowLeft, Edit2, Search, Filter, Eye, Trash2, X, ShoppingCart, Briefcase, CheckCircle, Download, FileText, User, Phone, MapPin, IndianRupee, Mail, Globe, Box } from 'lucide-react';
 import { partyAPI, dropdownAPI, subMasterAPI } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
+import { downloadElementAsPdf } from '../../components/A4DocumentPreview';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -91,6 +92,7 @@ export default function PartyMaster() {
 
   // Split view state
   const [selectedViewParty, setSelectedViewParty] = useState(null);
+  const partyPreviewRef = useRef(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -486,6 +488,11 @@ export default function PartyMaster() {
   };
 
   const generatePartyPDF = async (party) => {
+    if (partyPreviewRef.current) {
+      const safeName = (party?.company_name || 'Party').replace(/[^a-zA-Z0-9_-]/g, '_');
+      await downloadElementAsPdf(partyPreviewRef.current, `Party_Profile_${safeName}.pdf`);
+      return;
+    }
     const doc = new jsPDF('p', 'pt', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 40;
@@ -1568,7 +1575,7 @@ export default function PartyMaster() {
             <div style={{ padding: '40px 20px', background: '#cbd5e1', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flex: 1, overflowY: 'auto' }}>
               
               {/* A4 Paper */}
-              <div style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
+              <div ref={partyPreviewRef} style={{ background: '#fff', width: '100%', maxWidth: 850, padding: 0, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', borderRadius: 4, position: 'relative', marginBottom: 20, overflow: 'hidden' }}>
                 
                 {/* Top Header Section */}
                 <div style={{ padding: '32px 40px 20px 40px' }}>

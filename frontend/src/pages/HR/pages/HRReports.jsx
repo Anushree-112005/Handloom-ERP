@@ -428,14 +428,15 @@ export default function HRReports() {
           const allowances = parseFloat(p.allowances) || 0;
           const deductions = parseFloat(p.deductions) || 0;
           const loanDeduct = parseFloat(p.loan_amount || p.loan_deduct) || 0;
-          const netSalary = basic + allowances - deductions - loanDeduct;
+          const advanceDeduct = parseFloat(p.advance) || 0;
+          const netSalary = basic + allowances - deductions - loanDeduct - advanceDeduct;
           return {
             employee_id: emp?.employee_id || p.employee || '-',
             name: emp?.name || p.employee_name || 'Employee',
             month: p.month || '-',
             basic_salary: basic,
             allowances: allowances,
-            deductions: deductions + loanDeduct,
+            deductions: deductions + loanDeduct + advanceDeduct,
             net_salary: netSalary,
             status: p.status || 'Paid',
             raw_emp: emp
@@ -850,7 +851,8 @@ export default function HRReports() {
       const allowances = parseFloat(p.allowances) || 0;
       const deductions = parseFloat(p.deductions) || 0;
       const loanDeduct = parseFloat(p.loan_amount || p.loan_deduct) || 0;
-      return sum + (basic + allowances - deductions - loanDeduct);
+      const advanceDeduct = parseFloat(p.advance) || 0;
+      return sum + (basic + allowances - deductions - loanDeduct - advanceDeduct);
     }, 0);
 
     const claimsCount = expenseClaims.length;

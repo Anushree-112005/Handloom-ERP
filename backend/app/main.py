@@ -98,11 +98,12 @@ async def lifespan(app: FastAPI):
         from sqlalchemy import select
 
         async with AsyncSessionLocal() as session:
-            result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
-            admin = result.scalar_one_or_none()
-            if not admin:
+            result = await session.execute(select(Employee).where((Employee.employee_code == "admin") | (Employee.username == "admin")))
+            existing_admin = result.scalar_one_or_none()
+            if not existing_admin:
                 admin = Employee(
                     employee_code="admin",
+                    username="admin",
                     name="Administrator",
                     user_type="Admin",
                     email="admin@dinesh-textile.com",
@@ -118,11 +119,12 @@ async def lifespan(app: FastAPI):
                     },
                 )
                 session.add(admin)
+                await session.commit()
             else:
-                # Force reset password to ensure login works
-                admin.password_hash = get_password_hash("admin123")
-                session.add(admin)
-            await session.commit()
+                existing_admin.username = "admin"
+                existing_admin.password_hash = get_password_hash("admin123")
+                existing_admin.status = "Active"
+                await session.commit()
 
             # Seed default departments and designations
             from app.models.sub_master import SubMaster

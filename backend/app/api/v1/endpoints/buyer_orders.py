@@ -158,73 +158,6 @@ class OrderOut(OrderCreate):
     class Config:
         from_attributes = True
 
-class ScheduleCreate(BaseModel):
-    order_id_ref: Optional[str] = None
-    buyer_ref: Optional[str] = None
-    shipment_date: Optional[date] = None
-    delivery_place: Optional[str] = None
-    delivery_terms: Optional[str] = None
-    qty: Optional[str] = None
-    fabric_type: Optional[str] = None
-    shade: Optional[str] = None
-    lot_no: Optional[str] = None
-    packing_type: Optional[str] = None
-    transporter_name: Optional[str] = None
-    transport_mode: Optional[str] = None
-    remarks: Optional[str] = None
-    status: Optional[str] = "Scheduled"
-
-class ScheduleOut(ScheduleCreate):
-    id: int
-    schedule_id: str
-    created_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-from app.models.buyer_order import BuyerOrderSchedule
-
-@router.get("/schedules/", response_model=List[ScheduleOut])
-async def list_schedules(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderSchedule).order_by(BuyerOrderSchedule.id.desc()))
-    return result.scalars().all()
-
-@router.post("/schedules/", response_model=ScheduleOut, status_code=201)
-async def create_schedule(data: ScheduleCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(BuyerOrderSchedule.id)))
-    max_id = max_id_q.scalar() or 0
-    sch_id = f"SCH-{max_id + 1:05d}"
-    
-    sch_dict = data.model_dump()
-    schedule = BuyerOrderSchedule(**sch_dict, schedule_id=sch_id)
-    db.add(schedule)
-    await db.commit()
-    await db.refresh(schedule)
-    return schedule
-
-@router.put("/schedules/{sch_id}", response_model=ScheduleOut)
-async def update_schedule(sch_id: int, data: ScheduleCreate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderSchedule).where(BuyerOrderSchedule.id == sch_id))
-    schedule = result.scalar_one_or_none()
-    if not schedule:
-        raise HTTPException(status_code=404, detail="Schedule not found")
-    
-    sch_dict = data.model_dump()
-    for key, value in sch_dict.items():
-        setattr(schedule, key, value)
-        
-    await db.commit()
-    await db.refresh(schedule)
-    return schedule
-
-@router.delete("/schedules/{sch_id}", status_code=204)
-async def delete_schedule(sch_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderSchedule).where(BuyerOrderSchedule.id == sch_id))
-    schedule = result.scalar_one_or_none()
-    if not schedule:
-        raise HTTPException(status_code=404, detail="Schedule not found")
-    await db.delete(schedule)
-    await db.commit()
-    return None
 
 class SequenceCreate(BaseModel):
     order_id_ref: Optional[str] = None
@@ -291,140 +224,9 @@ async def delete_sequence(seq_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return None
 
-class AmendmentCreate(BaseModel):
-    order_id_ref: Optional[str] = None
-    amd_date: Optional[date] = None
-    field_changed: Optional[str] = None
-    old_value: Optional[str] = None
-    new_value: Optional[str] = None
-    remarks: Optional[str] = None
-    approved_by: Optional[str] = None
-    effective_date: Optional[date] = None
-    buyer_ref: Optional[str] = None
-    fabric_details: Optional[str] = None
-    shade: Optional[str] = None
-
-class AmendmentOut(AmendmentCreate):
-    id: int
-    amendment_id: str
-    created_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-from app.models.buyer_order import BuyerOrderAmendment
-
-@router.get("/amendments/", response_model=List[AmendmentOut])
-async def list_amendments(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderAmendment).order_by(BuyerOrderAmendment.id.desc()))
-    return result.scalars().all()
-
-@router.post("/amendments/", response_model=AmendmentOut, status_code=201)
-async def create_amendment(data: AmendmentCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(BuyerOrderAmendment.id)))
-    max_id = max_id_q.scalar() or 0
-    amd_id = f"AMD-{max_id + 1:05d}"
-    
-    amd_dict = data.model_dump()
-    amendment = BuyerOrderAmendment(**amd_dict, amendment_id=amd_id)
-    db.add(amendment)
-    await db.commit()
-    await db.refresh(amendment)
-    return amendment
-
-@router.put("/amendments/{amd_id}", response_model=AmendmentOut)
-async def update_amendment(amd_id: int, data: AmendmentCreate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderAmendment).where(BuyerOrderAmendment.id == amd_id))
-    amendment = result.scalar_one_or_none()
-    if not amendment:
-        raise HTTPException(status_code=404, detail="Amendment not found")
-    
-    amd_dict = data.model_dump()
-    for key, value in amd_dict.items():
-        setattr(amendment, key, value)
-        
-    await db.commit()
-    await db.refresh(amendment)
-    return amendment
-
-@router.delete("/amendments/{amd_id}", status_code=204)
-async def delete_amendment(amd_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderAmendment).where(BuyerOrderAmendment.id == amd_id))
-    amd = result.scalar_one_or_none()
-    if not amd:
-        raise HTTPException(status_code=404, detail="Amendment not found")
-    await db.delete(amd)
-    await db.commit()
-    return None
-
-class CompletionCreate(BaseModel):
-    order_id_ref: Optional[str] = None
-    completion_date: Optional[date] = None
-    status: Optional[str] = "Closed"
-    final_dispatch_qty: Optional[str] = None
-    balance_qty: Optional[str] = None
-    fabric_type: Optional[str] = None
-    shade: Optional[str] = None
-    lot_no: Optional[str] = None
-    packing_type: Optional[str] = None
-    delivery_place: Optional[str] = None
-    transporter_name: Optional[str] = None
-    buyer_ref: Optional[str] = None
-    remarks: Optional[str] = None
-
-class CompletionOut(CompletionCreate):
-    id: int
-    cmp_id: str
-    created_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
-
-from app.models.buyer_order import BuyerOrderCompletion
-
-@router.get("/completions/", response_model=List[CompletionOut])
-async def list_completions(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderCompletion).order_by(BuyerOrderCompletion.id.desc()))
-    return result.scalars().all()
-
-@router.post("/completions/", response_model=CompletionOut, status_code=201)
-async def create_completion(data: CompletionCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(BuyerOrderCompletion.id)))
-    max_id = max_id_q.scalar() or 0
-    cmp_id = f"CMP-{max_id + 1:05d}"
-    
-    cmp_dict = data.model_dump()
-    completion = BuyerOrderCompletion(**cmp_dict, cmp_id=cmp_id)
-    db.add(completion)
-    await db.commit()
-    await db.refresh(completion)
-    return completion
-
-@router.put("/completions/{cmp_id}", response_model=CompletionOut)
-async def update_completion(cmp_id: int, data: CompletionCreate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderCompletion).where(BuyerOrderCompletion.id == cmp_id))
-    completion = result.scalar_one_or_none()
-    if not completion:
-        raise HTTPException(status_code=404, detail="Completion not found")
-    
-    cmp_dict = data.model_dump()
-    for key, value in cmp_dict.items():
-        setattr(completion, key, value)
-        
-    await db.commit()
-    await db.refresh(completion)
-    return completion
-
-@router.delete("/completions/{cmp_id}", status_code=204)
-async def delete_completion(cmp_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderCompletion).where(BuyerOrderCompletion.id == cmp_id))
-    completion = result.scalar_one_or_none()
-    if not completion:
-        raise HTTPException(status_code=404, detail="Completion not found")
-    await db.delete(completion)
-    await db.commit()
-    return None
 
 from decimal import Decimal
-from app.models.buyer_order import BuyerOrderDispatch, BuyerOrderExpense
+from app.models.buyer_order import BuyerOrderDispatch
 
 class DispatchCreate(BaseModel):
     order_id_ref: Optional[str] = None
@@ -446,22 +248,7 @@ class DispatchOut(DispatchCreate):
     class Config:
         from_attributes = True
 
-class ExpenseCreate(BaseModel):
-    order_id_ref: Optional[str] = None
-    expense_type: Optional[str] = None
-    amount: Optional[Decimal] = None
-    currency: Optional[str] = "INR"
-    payment_mode: Optional[str] = None
-    vendor_name: Optional[str] = None
-    invoice_ref: Optional[str] = None
-    remarks: Optional[str] = None
 
-class ExpenseOut(ExpenseCreate):
-    id: int
-    expense_id: str
-    created_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
 
 @router.get("/dispatches/", response_model=List[DispatchOut])
 async def list_dispatches(db: AsyncSession = Depends(get_db)):
@@ -504,47 +291,6 @@ async def delete_dispatch(dispatch_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return None
 
-
-@router.get("/expenses/", response_model=List[ExpenseOut])
-async def list_expenses(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderExpense).order_by(BuyerOrderExpense.id.desc()))
-    return result.scalars().all()
-
-@router.post("/expenses/", response_model=ExpenseOut, status_code=201)
-async def create_expense(data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
-    max_id_q = await db.execute(select(func.max(BuyerOrderExpense.id)))
-    max_id = max_id_q.scalar() or 0
-    expense_id = f"EXP-{max_id + 1:05d}"
-    
-    expense = BuyerOrderExpense(**data.model_dump(), expense_id=expense_id)
-    db.add(expense)
-    await db.commit()
-    await db.refresh(expense)
-    return expense
-
-@router.put("/expenses/{expense_id}", response_model=ExpenseOut)
-async def update_expense(expense_id: int, data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderExpense).where(BuyerOrderExpense.id == expense_id))
-    expense = result.scalar_one_or_none()
-    if not expense:
-        raise HTTPException(status_code=404, detail="Expense not found")
-    
-    for key, value in data.model_dump().items():
-        setattr(expense, key, value)
-        
-    await db.commit()
-    await db.refresh(expense)
-    return expense
-
-@router.delete("/expenses/{expense_id}", status_code=204)
-async def delete_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BuyerOrderExpense).where(BuyerOrderExpense.id == expense_id))
-    expense = result.scalar_one_or_none()
-    if not expense:
-        raise HTTPException(status_code=404, detail="Expense not found")
-    await db.delete(expense)
-    await db.commit()
-    return None
 
 @router.get("/", response_model=List[OrderOut])
 async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):

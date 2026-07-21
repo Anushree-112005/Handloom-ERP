@@ -159,8 +159,13 @@ def calculate_hours_and_ot(
     actual_work_minutes = elapsed_minutes - break_duration_mins
     actual_work_hours = max(0.0, round(actual_work_minutes / 60.0, 2))
     
-    # Calculate OT (hours worked beyond the standard shift working hours)
-    ot_hours = max(0.0, round(actual_work_hours - shift_working_hours, 2))
+    # Calculate OT (only for checkout after 8:00 PM)
+    checkout_limit = datetime.combine(check_out.date(), time(20, 0))
+    if check_out > checkout_limit:
+        ot_start = max(checkout_limit, check_in)
+        ot_hours = max(0.0, round((check_out - ot_start).total_seconds() / 3600.0, 2))
+    else:
+        ot_hours = 0.0
     
     # Check if late
     try:

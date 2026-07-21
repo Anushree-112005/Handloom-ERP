@@ -10,13 +10,16 @@ import ApprovalPage from './pages/dashboard/ApprovalPage';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import OrderSubModule from './pages/buyer_order/OrderSubModule';
-
-import DispatchExpenseSubModule from './pages/buyer_order/DispatchExpenseSubModule';
-import IPOInvoice from './pages/buyer_order/IPOInvoice';
+import BuyerOrderSchedule from './pages/buyer_order/BuyerOrderSchedule';
+import OrderExpenses from './pages/buyer_order/OrderExpenses';
+import ProformaInvoice from './pages/buyer_order/ProformaInvoice';
+import BuyerOrderAmendment from './pages/buyer_order/BuyerOrderAmendment';
+import BuyerOrderCompletion from './pages/buyer_order/BuyerOrderCompletion';
 import WorkOrderDesk from './pages/buyer_order/WorkOrderDesk';
 import CalendarModule from './pages/calendar/CalendarModule';
 import EmployeeMaster from './pages/employee_master/EmployeeMaster';
 import UserManagement from './pages/user_management/UserManagement';
+import RoleManagement from './pages/user_management/RoleManagement';
 import DespatchPlanning from './pages/despatch/DespatchPlanning';
 import DespatchForm from './pages/despatch/DespatchForm';
 import SalesInvoice from './pages/sales_invoice/SalesInvoice';
@@ -45,6 +48,9 @@ import VoucherEntry from './pages/accounts/VoucherEntry';
 import AccountsTransaction from './pages/accounts/AccountsTransaction';
 import SubMasterPage from './pages/masters/SubMasterPage';
 import RackMaster from './pages/rack_master/RackMaster';
+import WarpingProductionEntry from './pages/warp/WarpingProductionEntry';
+import SizingProductionEntry from './pages/warp/SizingProductionEntry';
+import JobWorkBillEntry from './pages/jobwork/JobWorkBillEntry';
 
 
 
@@ -147,28 +153,134 @@ import {
   FileText, Shield, Activity, ArrowRightLeft, Users, Info
 } from 'lucide-react';
 
+const routeModuleMapping = {
+  '/party-master': 'textile_operations',
+  '/buyer-order': 'textile_operations',
+  '/design-entry': 'textile_operations',
+  '/design-ai': 'textile_operations',
+  '/yarn': 'textile_operations',
+  '/purchase-order': 'textile_operations',
+  '/jobwork': 'textile_operations',
+  '/cloth': 'textile_operations',
+  '/fabric': 'textile_operations',
+  '/packing': 'textile_operations',
+  '/warehouse': 'textile_operations',
+  '/inventory': 'textile_operations',
+  '/my-approvals': 'dashboard',
+  '/user-management': 'admin',
+  '/role-management': 'admin',
+  '/log-report': 'admin',
+  '/company-settings': 'system',
+  '/about': 'system',
+  '/hr': 'hr',
+  '/fleet': 'vehicle',
+  '/stores-consumables': 'stores',
+  '/cubebook': 'finance',
+  '/status-update': 'status_update',
+  '/ppc': 'ppc',
+  '/costing-sheet': 'ppc'
+};
+
+const moduleDefaultPaths = {
+  'dashboard': '/',
+  'overview': '/overview',
+  'calendar': '/calendar',
+  'textile_operations': '/party-master',
+  'finance': '/cubebook/dashboard',
+  'status_update': '/status-update/dashboard',
+  'ppc': '/ppc/tracking/live-dashboard',
+  'hr': '/hr',
+  'vehicle': '/fleet/dashboard',
+  'stores': '/stores-consumables/dashboard',
+  'admin': '/user-management',
+  'system': '/company-settings'
+};
+
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
   const suToken = localStorage.getItem('status_update_token');
+  const userStr = localStorage.getItem('user');
   const location = useLocation();
 
-  if (token) return children;
+  if (!token && !suToken) {
+    if (location.pathname.startsWith('/status-update/login')) {
+      return children;
+    }
+    return <Navigate to="/login" replace />;
+  }
 
-  // If they have the status update token, only allow them to access status-update routes
-  if (suToken) {
+  if (suToken && !token) {
     if (location.pathname.startsWith('/status-update')) {
       return children;
     }
     return <Navigate to="/status-update/dashboard" replace />;
   }
 
-  // Otherwise, kick to login
-  // Note: /status-update/login itself should ideally be outside ProtectedRoute or handled gracefully
-  if (location.pathname.startsWith('/status-update/login')) {
-    return children;
+  // If we have a user, apply strict RBAC guarding
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.module_permissions && user.module_permissions.permissions) {
+        const perms = user.module_permissions.permissions;
+
+        let requiredModule = null;
+        
+        if (location.pathname === '/') {
+          requiredModule = 'dashboard';
+        } else if (location.pathname === '/overview') {
+          requiredModule = 'overview';
+        } else if (location.pathname === '/calendar') {
+          requiredModule = 'calendar';
+        } else {
+          for (const [prefix, modKey] of Object.entries(routeModuleMapping)) {
+            if (location.pathname.startsWith(prefix)) {
+              requiredModule = modKey;
+              break;
+            }
+          }
+        }
+
+        if (requiredModule) {
+          if (!perms[requiredModule] || perms[requiredModule]['View'] !== true) {
+            
+            // Special UX: if trying to access dashboard but don't have permission,
+            // automatically route to the first module they DO have access to.
+            if (location.pathname === '/') {
+              const firstPermittedModule = Object.keys(perms).find(k => perms[k]['View'] === true);
+              if (firstPermittedModule && moduleDefaultPaths[firstPermittedModule]) {
+                return <Navigate to={moduleDefaultPaths[firstPermittedModule]} replace />;
+              }
+            }
+
+            console.warn(`Access Denied: Missing View permission for module ${requiredModule}`);
+            return (
+              <div style={{ padding: 40, textAlign: 'center' }}>
+                <h1 style={{ fontSize: 24, color: '#ef4444', marginBottom: 16 }}>Access Denied</h1>
+                <p style={{ color: 'var(--text-secondary)' }}>You do not have permission to access this module.</p>
+                <div style={{ marginTop: 24, display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <a href="/" style={{ color: 'var(--primary)', padding: '8px 16px', border: '1px solid var(--primary)', borderRadius: '6px', textDecoration: 'none' }}>Return to Dashboard</a>
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('user');
+                      window.location.href = '/login';
+                    }}
+                    style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}
+                  >
+                    Logout & Re-Authenticate
+                  </button>
+                </div>
+              </div>
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("RBAC Route parsing error", e);
+    }
   }
 
-  return <Navigate to="/login" replace />;
+  return children;
 }
 
 function MockDbSyncWrapper({ children }) {
@@ -281,16 +393,17 @@ export default function App() {
 
         <Route path="buyer-order" element={<BuyerOrder />} />
 
-        <Route path="buyer-order/processing" element={<OrderSubModule />} />
-        <Route path="buyer-order/dispatch-expense" element={<DispatchExpenseSubModule />} />
-        <Route path="ipo-invoice" element={<IPOInvoice />} />
+        <Route path="buyer-order/processing" element={<BuyerOrderSchedule />} />
+        <Route path="buyer-order/completion" element={<BuyerOrderCompletion />} />
+        <Route path="buyer-order/dispatch-expense" element={<OrderExpenses />} />
+        <Route path="ipo-invoice" element={<ProformaInvoice />} />
         <Route path="work-order/desk" element={<WorkOrderDesk defaultSection="Transactions" />} />
         <Route path="work-order/transaction" element={<Navigate to="/work-order/transaction/design" replace />} />
         <Route path="work-order/transaction/design" element={<WorkOrderDesk defaultSection="Design & Development" />} />
         <Route path="work-order/transaction/management" element={<WorkOrderDesk defaultSection="Order Management" />} />
         <Route path="work-order/transaction/processing" element={<WorkOrderDesk defaultSection="Processing" />} />
         <Route path="work-order/transaction/prep" element={<WorkOrderDesk defaultSection="Yarn & Fabric Prep" />} />
-        <Route path="work-order/transaction/amendments" element={<WorkOrderDesk defaultSection="Amendments & Codes" />} />
+        <Route path="work-order/transaction/amendments" element={<BuyerOrderAmendment />} />
         <Route path="work-order/completion" element={<Navigate to="/work-order/completion/vendor-purchase" replace />} />
         <Route path="work-order/completion/vendor-purchase" element={<WorkOrderDesk defaultSection="Vendor & Purchase Completion" />} />
         <Route path="work-order/completion/processing-fabric" element={<WorkOrderDesk defaultSection="Processing & Fabric Completion" />} />
@@ -330,11 +443,10 @@ export default function App() {
 
         <Route path="dyed-yarn/received" element={<DyedYarnReceived />} />
 
-        <Route path="dyed-yarn/delivery" element={<DyedYarnDelivery />} />
-
-        <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
-
+        <Route path="dyed-yarn/delivery" element={<DyedYarnDelivery />} />        <Route path="warp/beam-receipt" element={<WarpBeamReceipt />} />
         <Route path="warp/delivery" element={<WarpDelivery />} />
+        <Route path="warp/production-entry" element={<WarpingProductionEntry />} />
+        <Route path="warp/sizing-production-entry" element={<SizingProductionEntry />} />
         <Route path="warp/transaction" element={<Navigate to="/warp/transaction/entries" replace />} />
         <Route path="warp/transaction/entries" element={<WarpSizingTransaction defaultSection="Beam & Transaction Entries" />} />
         <Route path="warp/transaction/reports" element={<WarpSizingTransaction defaultSection="Reports, Bills & Amendments" />} />
@@ -357,6 +469,7 @@ export default function App() {
         <Route path="jobwork/printed-fabric-receipt" element={<PrintedFabricReceipt />} />
         <Route path="jobwork/finishing-delivery" element={<FinishingDelivery />} />
         <Route path="jobwork/finished-fabric-receipt" element={<FinishedFabricReceipt />} />
+        <Route path="jobwork/bill" element={<JobWorkBillEntry />} />
 
         <Route path="fabric/transaction" element={<Navigate to="/fabric/transaction/checking" replace />} />
         <Route path="fabric/transaction/checking" element={<FabricTransaction defaultSection="Fabric Checking" />} />
@@ -420,6 +533,7 @@ export default function App() {
         </Route>
 
         <Route path="user-management" element={<UserManagement />} />
+        <Route path="role-management" element={<RoleManagement />} />
 
         <Route path="log-report" element={<LogReport />} />
 

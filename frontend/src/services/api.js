@@ -476,3 +476,8 @@ export const rackAPI = {
 };
 
 export default api;
+export const proformaInvoiceAPI = createAPI('/proforma-invoices');
+export const buyerOrderScheduleAPI = createAPI('/buyer-order-schedules');
+export const buyerOrderAmendmentAPI = createAPI('/buyer-order-amendments');
+export const buyerOrderCompletionAPI = createAPI('/buyer-order-completions');
+export const orderExpenseAPI = createAPI('/order-expenses');
