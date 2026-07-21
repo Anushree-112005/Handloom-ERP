@@ -89,3 +89,6 @@ api_router.include_router(generic_po.router)
 
 from app.api.v1.endpoints import warehouse
 api_router.include_router(warehouse.router, prefix="/warehouse", tags=["Warehouse"])
+
+from app.api.v1.endpoints import approvals
+api_router.include_router(approvals.router, prefix="/approvals", tags=["Approvals"])

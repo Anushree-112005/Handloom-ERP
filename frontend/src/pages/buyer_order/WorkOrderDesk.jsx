@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Layers, Search, Plus, Trash2, Edit, Check, X, Download, 
-  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle, 
-  PlusCircle, FileText, CheckSquare, Truck, Globe, Printer, BookOpen, 
+import {
+  Layers, Search, Plus, Trash2, Edit, Check, X, Download,
+  Settings, FolderKanban, ShoppingBag, Factory, AlertTriangle,
+  PlusCircle, FileText, CheckSquare, Truck, Globe, Printer, BookOpen,
   MapPin, HelpCircle, Sparkles, Database, Shield, Scissors, ShoppingCart,
   Percent, DollarSign, Activity, Palette, Box
 } from 'lucide-react';
@@ -19,7 +19,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
   useEffect(() => {
     const targetSection = defaultSection === 'Transactions' ? 'Design & Development' : defaultSection;
     setActiveSection(targetSection);
-    
+
     // Automatically select the first sub-module
     const firstSubModule = Object.values(PAGES_METADATA).find(p => p.category === targetSection || p.section === targetSection);
     if (firstSubModule) {
@@ -149,7 +149,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
     try {
       const res = await workOrderTransactionAPI.list();
       const allTxns = res.data;
-      
+
       const mapTxn = (t) => ({ db_id: t.id, id: t.transaction_no, date: t.date, status: t.status, buyerName: t.buyer_name, ...t.details });
 
       setDesignOrders(allTxns.filter(t => t.module_type === 'design_create').map(mapTxn));
@@ -164,7 +164,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
       setClothProcessingOrders(allTxns.filter(t => t.module_type === 'cloth_dyeing_order').map(mapTxn));
       setBulkOrders(allTxns.filter(t => t.module_type === 'dev_bulk_order').map(mapTxn));
       setOrderFollowups(allTxns.filter(t => t.module_type === 'dev_bulk_followup').map(mapTxn));
-      
+
       setVendorCompletions(allTxns.filter(t => t.module_type === 'vendor_order_comp').map(mapTxn));
       setClothPoCompletions(allTxns.filter(t => t.module_type === 'cloth_po_comp').map(mapTxn));
       setDyeingCompletions(allTxns.filter(t => t.module_type === 'dyeing_order_comp').map(mapTxn));
@@ -226,7 +226,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
     buyer_order_app: { key: 'buyer_order_app', label: "Buyer Order Approval", section: 'Approvals', category: 'External Order Approvals', desc: "Formally approve buyer orders before production starts", icon: CheckSquare, color: '#6366f1' },
     pi_app: { key: 'pi_app', label: "PI Approval", section: 'Approvals', category: 'External Order Approvals', desc: "Approve Proforma Invoice before sending to buyer", icon: CheckSquare, color: '#6366f1' },
     vendor_work_app: { key: 'vendor_work_app', label: "Vendor Work Order Approval", section: 'Approvals', category: 'External Order Approvals', desc: "Approve work orders issued to vendors before release", icon: CheckSquare, color: '#6366f1' },
-    
+
     internal_fabric_app: { key: 'internal_fabric_app', label: "Internal Fabric Request Approval", section: 'Approvals', category: 'Material & Yarn Approvals', desc: "Approve internal fabric requests from departments", icon: CheckSquare, color: '#0d9488' },
     yarn_req_app: { key: 'yarn_req_app', label: "Yarn Requirement Approval", section: 'Approvals', category: 'Material & Yarn Approvals', desc: "Approve yarn requirement requests before purchase/issue", icon: CheckSquare, color: '#0d9488' },
     yarn_work_app: { key: 'yarn_work_app', label: "Yarn Work Orders Approval", section: 'Approvals', category: 'Material & Yarn Approvals', desc: "Approve work orders for yarn processing (dyeing/twisting)", icon: CheckSquare, color: '#0d9488' },
@@ -234,7 +234,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
     // 3. WORK ORDER COMPLETION
     vendor_order_comp: { key: 'vendor_order_comp', label: "Vendor Order Completion", section: 'Completions', category: 'Vendor & Purchase Completion', desc: "Mark vendor weaving orders as complete after fabric received", icon: CheckSquare, color: '#10b981' },
     cloth_po_comp: { key: 'cloth_po_comp', label: "Cloth Purchase Order Completion", section: 'Completions', category: 'Vendor & Purchase Completion', desc: "Mark cloth purchase orders complete after full receipt", icon: CheckSquare, color: '#10b981' },
-    
+
     dyeing_order_comp: { key: 'dyeing_order_comp', label: "Dyeing Order Completion", section: 'Completions', category: 'Processing & Fabric Completion', desc: "Mark dyeing orders complete after dyed material received", icon: CheckSquare, color: '#3b82f6' },
     warp_sizing_comp: { key: 'warp_sizing_comp', label: "Warping/Sizing Order Completion", section: 'Completions', category: 'Processing & Fabric Completion', desc: "Mark warping/sizing orders complete", icon: CheckSquare, color: '#3b82f6' },
     cloth_dyeing_comp: { key: 'cloth_dyeing_comp', label: "Cloth Dyeing/Processing Order Completion", section: 'Completions', category: 'Processing & Fabric Completion', desc: "Mark cloth dyeing/processing orders complete", icon: CheckSquare, color: '#3b82f6' },
@@ -1635,7 +1635,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                     <div>
                       <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</h3>
                       <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                         <span style={{ fontWeight: 800, color: cardColor }}>{getSubModuleCount(p.key)}</span> Records
+                        <span style={{ fontWeight: 800, color: cardColor }}>{getSubModuleCount(p.key)}</span> Records
                       </p>
                     </div>
                   </div>
@@ -1687,8 +1687,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {designOrders.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -1737,8 +1737,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {bulkOrders.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -1786,8 +1786,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {orderFollowups.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -1816,255 +1816,255 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                   </div>
                 )}
 
-              {/* SHORT AMD TABLE */}
-              {activePage === 'short_amd' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                    <thead>
-                      <tr>
-                        <th>AMENDMENT NO</th>
-                        <th>DATE</th>
-                        <th>AMENDMENT TYPE</th>
-                        <th>ORDER/INV REF</th>
-                        <th>BUYER NAME</th>
-                        <th style={{ textAlign: 'right' }}>ORIGINAL QTY</th>
-                        <th style={{ textAlign: 'right' }}>REVISED QTY</th>
-                        <th style={{ textAlign: 'right' }}>SHORT QTY</th>
-                        <th>STATUS</th>
-                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shortAmendments.map(row => (
-                        <tr 
-                          key={row.id}
-                          onClick={() => setSelectedRecord(row)}
-                          style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
-                        >
-                          <td style={{ fontWeight: 700 }}>{row.id}</td>
-                          <td>{row.amendmentDate || row.date}</td>
-                          <td>{row.amendmentType || '-'}</td>
-                          <td>{row.buyerOrderNo || row.workOrderNo || row.invoiceNo || row.dispatchNo || '-'}</td>
-                          <td style={{ fontWeight: 650 }}>{row.buyerName}</td>
-                          <td style={{ textAlign: 'right' }}>{row.originalQuantity ? `${row.originalQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
-                          <td style={{ textAlign: 'right' }}>{row.revisedQuantity ? `${row.revisedQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--danger)' }}>{row.shortQuantity ? `${row.shortQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
-                          <td>
-                            <span className={`badge badge-${(row.approvalStatus || 'Pending').toLowerCase().replace(' ', '-')}`}>
-                              {row.approvalStatus || 'Pending'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
-                            </div>
-                          </td>
+                {/* SHORT AMD TABLE */}
+                {activePage === 'short_amd' && (
+                  <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                    <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>AMENDMENT NO</th>
+                          <th>DATE</th>
+                          <th>AMENDMENT TYPE</th>
+                          <th>ORDER/INV REF</th>
+                          <th>BUYER NAME</th>
+                          <th style={{ textAlign: 'right' }}>ORIGINAL QTY</th>
+                          <th style={{ textAlign: 'right' }}>REVISED QTY</th>
+                          <th style={{ textAlign: 'right' }}>SHORT QTY</th>
+                          <th>STATUS</th>
+                          <th style={{ textAlign: 'center' }}>ACTIONS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {shortAmendments.map(row => (
+                          <tr
+                            key={row.id}
+                            onClick={() => setSelectedRecord(row)}
+                            style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
+                          >
+                            <td style={{ fontWeight: 700 }}>{row.id}</td>
+                            <td>{row.amendmentDate || row.date}</td>
+                            <td>{row.amendmentType || '-'}</td>
+                            <td>{row.buyerOrderNo || row.workOrderNo || row.invoiceNo || row.dispatchNo || '-'}</td>
+                            <td style={{ fontWeight: 650 }}>{row.buyerName}</td>
+                            <td style={{ textAlign: 'right' }}>{row.originalQuantity ? `${row.originalQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
+                            <td style={{ textAlign: 'right' }}>{row.revisedQuantity ? `${row.revisedQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--danger)' }}>{row.shortQuantity ? `${row.shortQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
+                            <td>
+                              <span className={`badge badge-${(row.approvalStatus || 'Pending').toLowerCase().replace(' ', '-')}`}>
+                                {row.approvalStatus || 'Pending'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
-              {/* HSN CODE AMD TABLE */}
-              {activePage === 'hsn_amd' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                    <thead>
-                      <tr>
-                        <th>HSN AMD NO</th>
-                        <th>DATE</th>
-                        <th>CATEGORY</th>
-                        <th>REF NAME/NO</th>
-                        <th>OLD HSN</th>
-                        <th>NEW HSN</th>
-                        <th style={{ textAlign: 'right' }}>OLD GST %</th>
-                        <th style={{ textAlign: 'right' }}>NEW GST %</th>
-                        <th>STATUS</th>
-                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {hsnAmendments.map(row => (
-                        <tr 
-                          key={row.id}
-                          onClick={() => setSelectedRecord(row)}
-                          style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
-                        >
-                          <td style={{ fontWeight: 700 }}>{row.id}</td>
-                          <td>{row.amendmentDate || row.date}</td>
-                          <td>{row.amendmentCategory || '-'}</td>
-                          <td>{row.productName || row.fabricName || row.invoiceNo || row.poNo || '-'}</td>
-                          <td style={{ fontWeight: 650 }}>{row.oldHsnCode || '-'}</td>
-                          <td style={{ fontWeight: 650, color: 'var(--primary)' }}>{row.newHsnCode || '-'}</td>
-                          <td style={{ textAlign: 'right' }}>{row.oldGstPct || '0'}%</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.newGstPct || '0'}%</td>
-                          <td>
-                            <span className={`badge badge-${(row.approvalStatus || 'Pending').toLowerCase().replace(' ', '-')}`}>
-                              {row.approvalStatus || 'Pending'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
-                            </div>
-                          </td>
+                {/* HSN CODE AMD TABLE */}
+                {activePage === 'hsn_amd' && (
+                  <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                    <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>HSN AMD NO</th>
+                          <th>DATE</th>
+                          <th>CATEGORY</th>
+                          <th>REF NAME/NO</th>
+                          <th>OLD HSN</th>
+                          <th>NEW HSN</th>
+                          <th style={{ textAlign: 'right' }}>OLD GST %</th>
+                          <th style={{ textAlign: 'right' }}>NEW GST %</th>
+                          <th>STATUS</th>
+                          <th style={{ textAlign: 'center' }}>ACTIONS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {hsnAmendments.map(row => (
+                          <tr
+                            key={row.id}
+                            onClick={() => setSelectedRecord(row)}
+                            style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
+                          >
+                            <td style={{ fontWeight: 700 }}>{row.id}</td>
+                            <td>{row.amendmentDate || row.date}</td>
+                            <td>{row.amendmentCategory || '-'}</td>
+                            <td>{row.productName || row.fabricName || row.invoiceNo || row.poNo || '-'}</td>
+                            <td style={{ fontWeight: 650 }}>{row.oldHsnCode || '-'}</td>
+                            <td style={{ fontWeight: 650, color: 'var(--primary)' }}>{row.newHsnCode || '-'}</td>
+                            <td style={{ textAlign: 'right' }}>{row.oldGstPct || '0'}%</td>
+                            <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.newGstPct || '0'}%</td>
+                            <td>
+                              <span className={`badge badge-${(row.approvalStatus || 'Pending').toLowerCase().replace(' ', '-')}`}>
+                                {row.approvalStatus || 'Pending'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
-              {/* WARPING / SIZING ORDER TABLE */}
-              {/* DOUBLING/TWISTING ORDER TABLE */}
-              {activePage === 'doubling_twisting' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                    <thead>
-                      <tr>
-                        <th>TWISTING NO</th>
-                        <th>ORDER DATE</th>
-                        <th>PROCESS TYPE</th>
-                        <th>TWISTING UNIT</th>
-                        <th>YARN TYPE</th>
-                        <th style={{ textAlign: 'right' }}>INPUT QTY</th>
-                        <th>EXPECTED RETURN</th>
-                        <th>STATUS</th>
-                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {twistingOrders.map(row => (
-                        <tr 
-                          key={row.id}
-                          onClick={() => setSelectedRecord(row)}
-                          style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
-                        >
-                          <td style={{ fontWeight: 700 }}>{row.id}</td>
-                          <td>{row.orderDate || row.date}</td>
-                          <td>{row.processType || '-'}</td>
-                          <td style={{ fontWeight: 650 }}>{row.twistingUnitName}</td>
-                          <td>{row.yarnType || '-'}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.inputQuantity ? `${row.inputQuantity} ${row.uom || 'Kgs'}` : '-'}</td>
-                          <td>{row.expectedDeliveryDate || '-'}</td>
-                          <td>
-                            <span className={`badge badge-${(row.orderStatus || 'Pending').toLowerCase()}`}>
-                              {row.orderStatus || 'Pending'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
-                            </div>
-                          </td>
+                {/* WARPING / SIZING ORDER TABLE */}
+                {/* DOUBLING/TWISTING ORDER TABLE */}
+                {activePage === 'doubling_twisting' && (
+                  <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                    <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>TWISTING NO</th>
+                          <th>ORDER DATE</th>
+                          <th>PROCESS TYPE</th>
+                          <th>TWISTING UNIT</th>
+                          <th>YARN TYPE</th>
+                          <th style={{ textAlign: 'right' }}>INPUT QTY</th>
+                          <th>EXPECTED RETURN</th>
+                          <th>STATUS</th>
+                          <th style={{ textAlign: 'center' }}>ACTIONS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {twistingOrders.map(row => (
+                          <tr
+                            key={row.id}
+                            onClick={() => setSelectedRecord(row)}
+                            style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
+                          >
+                            <td style={{ fontWeight: 700 }}>{row.id}</td>
+                            <td>{row.orderDate || row.date}</td>
+                            <td>{row.processType || '-'}</td>
+                            <td style={{ fontWeight: 650 }}>{row.twistingUnitName}</td>
+                            <td>{row.yarnType || '-'}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.inputQuantity ? `${row.inputQuantity} ${row.uom || 'Kgs'}` : '-'}</td>
+                            <td>{row.expectedDeliveryDate || '-'}</td>
+                            <td>
+                              <span className={`badge badge-${(row.orderStatus || 'Pending').toLowerCase()}`}>
+                                {row.orderStatus || 'Pending'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
-              {/* WARPING/SIZING ORDER TABLE */}
-              {activePage === 'warp_sizing_order' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                    <thead>
-                      <tr>
-                        <th>WARPING NO</th>
-                        <th>ORDER DATE</th>
-                        <th>PROCESS TYPE</th>
-                        <th>WARPING UNIT</th>
-                        <th>DESIGN NO</th>
-                        <th style={{ textAlign: 'right' }}>TOTAL ENDS</th>
-                        <th style={{ textAlign: 'right' }}>WARP METER</th>
-                        <th>STATUS</th>
-                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {warpingOrders.map(row => (
-                        <tr 
-                          key={row.id}
-                          onClick={() => setSelectedRecord(row)}
-                          style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
-                        >
-                          <td style={{ fontWeight: 700 }}>{row.id}</td>
-                          <td>{row.orderDate || row.date}</td>
-                          <td>{row.processType || '-'}</td>
-                          <td style={{ fontWeight: 650 }}>{row.warpingUnitName}</td>
-                          <td>{row.designNo || '-'}</td>
-                          <td style={{ textAlign: 'right' }}>{row.totalEnds || '-'}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.warpMeter || '-'} Mtr</td>
-                          <td>
-                            <span className={`badge badge-${(row.orderStatus || 'Pending').toLowerCase()}`}>
-                              {row.orderStatus || 'Pending'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
-                            </div>
-                          </td>
+                {/* WARPING/SIZING ORDER TABLE */}
+                {activePage === 'warp_sizing_order' && (
+                  <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                    <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>WARPING NO</th>
+                          <th>ORDER DATE</th>
+                          <th>PROCESS TYPE</th>
+                          <th>WARPING UNIT</th>
+                          <th>DESIGN NO</th>
+                          <th style={{ textAlign: 'right' }}>TOTAL ENDS</th>
+                          <th style={{ textAlign: 'right' }}>WARP METER</th>
+                          <th>STATUS</th>
+                          <th style={{ textAlign: 'center' }}>ACTIONS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {warpingOrders.map(row => (
+                          <tr
+                            key={row.id}
+                            onClick={() => setSelectedRecord(row)}
+                            style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
+                          >
+                            <td style={{ fontWeight: 700 }}>{row.id}</td>
+                            <td>{row.orderDate || row.date}</td>
+                            <td>{row.processType || '-'}</td>
+                            <td style={{ fontWeight: 650 }}>{row.warpingUnitName}</td>
+                            <td>{row.designNo || '-'}</td>
+                            <td style={{ textAlign: 'right' }}>{row.totalEnds || '-'}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.warpMeter || '-'} Mtr</td>
+                            <td>
+                              <span className={`badge badge-${(row.orderStatus || 'Pending').toLowerCase()}`}>
+                                {row.orderStatus || 'Pending'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
-              {/* INTERNAL FABRIC REQUEST TABLE */}
-              {activePage === 'internal_fabric_req' && (
-                <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
-                  <table className="data-table" style={{ width: '100%', margin: 0 }}>
-                    <thead>
-                      <tr>
-                        <th>REQUEST NO</th>
-                        <th>REQUEST DATE</th>
-                        <th>REQUEST TYPE</th>
-                        <th>DEPARTMENT</th>
-                        <th>FABRIC NAME</th>
-                        <th style={{ textAlign: 'right' }}>REQUESTED QTY</th>
-                        <th>REQUIRED DATE</th>
-                        <th>STATUS</th>
-                        <th style={{ textAlign: 'center' }}>ACTIONS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {fabricRequests.map(row => (
-                        <tr 
-                          key={row.id}
-                          onClick={() => setSelectedRecord(row)}
-                          style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
-                        >
-                          <td style={{ fontWeight: 700 }}>{row.id}</td>
-                          <td>{row.requestDate || row.date}</td>
-                          <td>{row.requestType || '-'}</td>
-                          <td style={{ fontWeight: 650 }}>{row.requestedDepartment}</td>
-                          <td>{row.fabricName || '-'}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.requestedQuantity ? `${row.requestedQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
-                          <td>{row.requiredDate || '-'}</td>
-                          <td>
-                            <span className={`badge badge-${(row.requestStatus || 'Pending').toLowerCase()}`}>
-                              {row.requestStatus || 'Pending'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
-                              <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
-                            </div>
-                          </td>
+                {/* INTERNAL FABRIC REQUEST TABLE */}
+                {activePage === 'internal_fabric_req' && (
+                  <div className="card" style={{ padding: 0, overflow: 'hidden', background: 'white' }}>
+                    <table className="data-table" style={{ width: '100%', margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>REQUEST NO</th>
+                          <th>REQUEST DATE</th>
+                          <th>REQUEST TYPE</th>
+                          <th>DEPARTMENT</th>
+                          <th>FABRIC NAME</th>
+                          <th style={{ textAlign: 'right' }}>REQUESTED QTY</th>
+                          <th>REQUIRED DATE</th>
+                          <th>STATUS</th>
+                          <th style={{ textAlign: 'center' }}>ACTIONS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {fabricRequests.map(row => (
+                          <tr
+                            key={row.id}
+                            onClick={() => setSelectedRecord(row)}
+                            style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
+                          >
+                            <td style={{ fontWeight: 700 }}>{row.id}</td>
+                            <td>{row.requestDate || row.date}</td>
+                            <td>{row.requestType || '-'}</td>
+                            <td style={{ fontWeight: 650 }}>{row.requestedDepartment}</td>
+                            <td>{row.fabricName || '-'}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 700 }}>{row.requestedQuantity ? `${row.requestedQuantity} ${row.uom || 'Mtrs'}` : '-'}</td>
+                            <td>{row.requiredDate || '-'}</td>
+                            <td>
+                              <span className={`badge badge-${(row.requestStatus || 'Pending').toLowerCase()}`}>
+                                {row.requestStatus || 'Pending'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => handleEdit(row)}><Edit size={12} /> Edit</button>
+                                <button className="btn btn-secondary" style={{ padding: '4px 8px', color: 'var(--danger)' }} onClick={() => handleDelete(row.id, row.db_id)}><Trash2 size={12} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 {/* VENDOR ORDER TABLE */}
                 {activePage === 'vendor_order' && (
@@ -2085,8 +2085,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {vendorOrders.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2134,8 +2134,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {clothPurchaseOrders.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2184,8 +2184,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {vendorCompletions.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2234,8 +2234,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {clothPoCompletions.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2283,8 +2283,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {dyeingOrders.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2332,8 +2332,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {clothProcessingOrders.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2382,8 +2382,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {dyeingCompletions.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2436,8 +2436,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {warpSizingCompletions.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2486,8 +2486,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {clothDyeingCompletions.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2540,8 +2540,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {buyerOrderApprovals.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2588,8 +2588,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {piApprovals.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2636,8 +2636,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {vendorWorkApprovals.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2684,8 +2684,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {internalFabricApprovals.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2731,8 +2731,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {yarnReqApprovals.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2778,8 +2778,8 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                       </thead>
                       <tbody>
                         {yarnWorkApprovals.map(row => (
-                          <tr 
-                            key={row.id} 
+                          <tr
+                            key={row.id}
                             onClick={() => setSelectedRecord(row)}
                             style={{ cursor: 'pointer', background: selectedRecord?.id === row.id ? 'var(--bg-secondary)' : 'transparent' }}
                           >
@@ -2817,7 +2817,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                     </p>
                   </div>
                 )}
-              
+
               </div>
 
               {/* RECORD DETAILS SIDE PANEL */}
@@ -2842,7 +2842,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
                             <span style={{ color: 'var(--text-muted)', fontWeight: 500, textTransform: 'capitalize', fontSize: '13px' }}>{k.replace(/([A-Z])/g, ' $1').trim()}</span>
                             <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%', fontSize: '13px', wordBreak: 'break-word' }}>{v || '-'}</span>
                           </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -3155,7 +3155,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* SHORT AMD FORM */}
               {activePage === 'short_amd' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Amendment Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -3417,7 +3417,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* HSN CODE AMD FORM */}
               {activePage === 'hsn_amd' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Amendment Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -3671,7 +3671,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* DEVELOPMENT / BULK ORDER FORM */}
               {activePage === 'dev_bulk_order' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Order Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -3947,7 +3947,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* DEVELOPMENT / BULK FOLLOWUP FORM */}
               {activePage === 'dev_bulk_followup' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Followup Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -4175,7 +4175,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* VENDOR ORDER FORM */}
               {activePage === 'vendor_order' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Order Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -4492,7 +4492,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* CLOTH PURCHASE ORDER FORM */}
               {activePage === 'cloth_po' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Purchase Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -4823,7 +4823,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* DYEING ORDER FORM */}
               {activePage === 'dyeing_order' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Order Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -5194,7 +5194,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* CLOTH DYEING/PROCESSING ORDER FORM */}
               {activePage === 'cloth_dyeing_order' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Order Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -5598,7 +5598,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* DOUBLING/TWISTING ORDER FORM */}
               {activePage === 'doubling_twisting' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Order Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -5925,7 +5925,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* WARPING/SIZING ORDER FORM */}
               {activePage === 'warp_sizing_order' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Order Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -6282,7 +6282,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* INTERNAL FABRIC REQUEST FORM */}
               {activePage === 'internal_fabric_req' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Request Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -6575,7 +6575,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* VENDOR ORDER COMPLETION FORM */}
               {activePage === 'vendor_order_comp' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Completion Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -6909,7 +6909,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* CLOTH PURCHASE ORDER COMPLETION FORM */}
               {activePage === 'cloth_po_comp' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Completion Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -7265,7 +7265,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* DYEING ORDER COMPLETION FORM */}
               {activePage === 'dyeing_order_comp' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Completion Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -7615,7 +7615,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* WARPING/SIZING ORDER COMPLETION FORM */}
               {activePage === 'warp_sizing_comp' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Completion Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -7983,7 +7983,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* CLOTH DYEING/PROCESSING ORDER COMPLETION FORM */}
               {activePage === 'cloth_dyeing_comp' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Completion Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -8402,7 +8402,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* BUYER ORDER APPROVAL FORM */}
               {activePage === 'buyer_order_app' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Approval Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -8735,7 +8735,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* PI APPROVAL FORM */}
               {activePage === 'pi_app' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: PI Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -9050,7 +9050,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* VENDOR WORK ORDER APPROVAL FORM */}
               {activePage === 'vendor_work_app' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Approval Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -9370,7 +9370,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* INTERNAL FABRIC REQUEST APPROVAL FORM */}
               {activePage === 'internal_fabric_app' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Approval Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -9702,7 +9702,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* YARN REQUIREMENT APPROVAL FORM */}
               {activePage === 'yarn_req_app' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Approval Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
@@ -10010,7 +10010,7 @@ export default function WorkOrderDesk({ defaultSection = 'Transactions' }) {
               {/* YARN WORK ORDERS APPROVAL FORM */}
               {activePage === 'yarn_work_app' && (
                 <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  
+
                   {/* CARD 1: Approval Information */}
                   <div className="card" style={{ padding: '20px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>

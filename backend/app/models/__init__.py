@@ -1,4 +1,5 @@
 # Models package - imports all models for Alembic discovery
+from app.models.approval import ApprovalWorkflow
 from app.models.employee import Employee
 from app.models.party_master import PartyMaster, PartyAddress
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem

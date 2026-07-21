@@ -148,6 +148,22 @@ const modules = [
   { section: 'Order Management' },
   { path: '/buyer-order', label: 'Buyer Order Form', icon: ShoppingCart },
 
+  {
+    label: 'Approval',
+    icon: CheckSquare,
+    children: [
+      { section: 'Work Order Approvel' },
+      { path: '/work-order/approval/buyer-order', label: 'Buyer Order Approvel', icon: ClipboardList },
+      { path: '/work-order/approval/pi', label: 'PI Approvel', icon: FileText },
+      { path: '/work-order/approval/vendor-workorder', label: 'Vendor Workorder Approvel', icon: ShoppingCart },
+      { path: '/work-order/approval/internal-fabric', label: 'Intrenal Fabric Request Approval', icon: Package },
+      
+      { section: 'DC Approvel' },
+      { path: '/dc-approval/gra', label: 'GRA Approvel', icon: ClipboardList },
+      { path: '/dc-approval/surplus', label: 'Surplus DC Approval', icon: FileText }
+    ]
+  },
+
   // {
   //   label: 'Work Order Transaction',
   //   icon: Layers,

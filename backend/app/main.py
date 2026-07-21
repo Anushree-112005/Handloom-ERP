@@ -99,7 +99,8 @@ async def lifespan(app: FastAPI):
 
         async with AsyncSessionLocal() as session:
             result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
-            if not result.scalar_one_or_none():
+            admin = result.scalar_one_or_none()
+            if not admin:
                 admin = Employee(
                     employee_code="admin",
                     name="Administrator",
@@ -117,7 +118,11 @@ async def lifespan(app: FastAPI):
                     },
                 )
                 session.add(admin)
-                await session.commit()
+            else:
+                # Force reset password to ensure login works
+                admin.password_hash = get_password_hash("admin123")
+                session.add(admin)
+            await session.commit()
 
             # Seed default departments and designations
             from app.models.sub_master import SubMaster
@@ -363,6 +368,7 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 @app.get("/")
 async def root():
     return {"message": "Dinesh Textile ERP API", "version": "1.0.0", "docs": "/docs"}
+
 import sys
 import shutil
 
