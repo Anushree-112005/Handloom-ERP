@@ -2,6 +2,72 @@ import { useState, useEffect } from 'react';
 import { Users, Plus, Save, ArrowLeft, Edit2, Search, Trash2, Key, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { employeeAPI } from '../../services/api';
 
+const SearchableSelect = ({ options, value, onChange, disabled, placeholder }) => {
+  const [search, setSearch] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  const selectedOption = options.find(o => o.value === value);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div 
+        className="form-control" 
+        style={{ 
+          cursor: disabled ? 'not-allowed' : 'pointer', 
+          backgroundColor: disabled ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          minHeight: '38px', margin: 0
+        }}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span>{selectedOption ? selectedOption.label : placeholder}</span>
+        <span style={{ fontSize: 10 }}>▼</span>
+      </div>
+      
+      {isOpen && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setIsOpen(false)} />
+          <div style={{ 
+            position: 'absolute', top: '100%', left: 0, right: 0, 
+            zIndex: 10, background: 'var(--bg-primary)', border: '1px solid var(--border)', 
+            borderRadius: 4, marginTop: 4, maxHeight: 250, overflowY: 'auto',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}>
+            <input 
+              type="text" 
+              className="form-control" 
+              style={{ margin: '8px', width: 'calc(100% - 16px)' }}
+              placeholder="Search..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onClick={e => e.stopPropagation()}
+              autoFocus
+            />
+            {options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())).map(o => (
+              <div 
+                key={o.value} 
+                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+                onClick={() => {
+                  onChange(o.value);
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+                onMouseEnter={e => e.target.style.backgroundColor = 'var(--bg-secondary)'}
+                onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+              >
+                {o.label}
+              </div>
+            ))}
+            {options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+              <div style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>No employees found</div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export default function UserManagement() {
   const [view, setView] = useState('list');
   const [users, setUsers] = useState([]);
@@ -14,8 +80,10 @@ export default function UserManagement() {
   const [pageSize, setPageSize] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
 
+  const [allEmployees, setAllEmployees] = useState([]);
+
   const initialForm = {
-    employee_code: '', username: '', name: '', user_type: 'User', status: 'Active',
+    id: '', employee_code: '', username: '', name: '', user_type: 'User', status: 'Active',
     web_access: 'Allow', department: '', designation: '', email: '',
     mobile: '', password: '', company_depl: false, company_mtm: false,
     access_expiry_date: '', unit: '', role_id: ''
@@ -58,8 +126,18 @@ export default function UserManagement() {
     }
   };
 
+  const fetchAllEmployees = async () => {
+    try {
+      const { data } = await employeeAPI.list({ limit: 10000 });
+      setAllEmployees(data?.data || data || []);
+    } catch (err) {
+      console.error("Failed to fetch all employees", err);
+    }
+  };
+
   useEffect(() => {
     fetchRoles();
+    fetchAllEmployees();
   }, []);
 
   useEffect(() => {
@@ -87,6 +165,7 @@ export default function UserManagement() {
     } else {
       setFormData(initialForm);
       setEditingId(null);
+      fetchAllEmployees();
     }
     setView('form');
   };
@@ -105,7 +184,11 @@ export default function UserManagement() {
         await employeeAPI.update(editingId, payload);
       } else {
         payload.created_by = "Admin"; // In a real app, from context
-        await employeeAPI.create(payload);
+        if (!payload.id) {
+          alert("Please select an employee.");
+          return;
+        }
+        await employeeAPI.update(payload.id, payload);
       }
       setView('list');
       fetchUsers();
@@ -155,17 +238,38 @@ export default function UserManagement() {
         <div className="card" style={{ padding: 32 }}>
           <form id="userForm" onSubmit={handleSubmit}>
             <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-              <div className="form-group">
-                <label>User ID (Employee Code) *</label>
-                <input className="form-control" name="employee_code" value={formData.employee_code} onChange={handleChange} required disabled={!!editingId} />
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Employee Name *</label>
+                <SearchableSelect 
+                  options={allEmployees.map(e => ({ value: e.id, label: `${e.employee_code} - ${e.name}` }))}
+                  value={formData.id}
+                  onChange={(val) => {
+                    if (!val) return;
+                    const emp = allEmployees.find(x => x.id === val);
+                    if (emp) {
+                      if (emp.username) {
+                        alert("A user account already exists for this employee.");
+                        return;
+                      }
+                      setFormData(prev => ({
+                        ...prev,
+                        id: emp.id,
+                        employee_code: emp.employee_code,
+                        name: emp.name,
+                        email: emp.email || '',
+                        mobile: emp.mobile || '',
+                        department: emp.department || '',
+                        designation: emp.designation || '',
+                      }));
+                    }
+                  }}
+                  disabled={!!editingId}
+                  placeholder="Select Employee..."
+                />
               </div>
               <div className="form-group">
                 <label>Login Username *</label>
                 <input className="form-control" name="username" value={formData.username || ''} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label>User Name (Full name) *</label>
-                <input className="form-control" name="name" value={formData.name} onChange={handleChange} required />
               </div>
               <div className="form-group">
                 <label>User Type (Role)</label>
@@ -178,11 +282,11 @@ export default function UserManagement() {
               </div>
               <div className="form-group">
                 <label>Email ID</label>
-                <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} />
+                <input type="email" className="form-control" name="email" value={formData.email} onChange={handleChange} readOnly />
               </div>
               <div className="form-group">
                 <label>Mobile Number</label>
-                <input className="form-control" name="mobile" value={formData.mobile} onChange={handleChange} />
+                <input className="form-control" name="mobile" value={formData.mobile} onChange={handleChange} readOnly />
               </div>
               <div className="form-group">
                 <label>Password {editingId && '(Leave blank to keep current)'}</label>
@@ -190,11 +294,11 @@ export default function UserManagement() {
               </div>
               <div className="form-group">
                 <label>Department</label>
-                <input className="form-control" name="department" value={formData.department} onChange={handleChange} />
+                <input className="form-control" name="department" value={formData.department} onChange={handleChange} readOnly />
               </div>
               <div className="form-group">
                 <label>Designation</label>
-                <input className="form-control" name="designation" value={formData.designation} onChange={handleChange} />
+                <input className="form-control" name="designation" value={formData.designation} onChange={handleChange} readOnly />
               </div>
               <div className="form-group">
                 <label>Branch / Unit Access</label>
@@ -364,78 +468,51 @@ export default function UserManagement() {
         
         {/* Pagination Footer */}
         {!loading && totalRecords > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} results
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-primary)', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Items per page:</span>
-                <select 
-                  className="form-control" 
-                  style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }}
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-              
-              <div style={{ display: 'flex', gap: 4 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button 
                   className="btn btn-secondary" 
-                  style={{ padding: '4px 12px', fontSize: 13 }}
+                  style={{ padding: '6px 16px', fontSize: 13, fontWeight: 500, opacity: currentPage === 1 ? 0.6 : 1 }}
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 >
                   Previous
                 </button>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  {Array.from({ length: Math.ceil(totalRecords / pageSize) }).map((_, idx) => {
-                    const page = idx + 1;
-                    // Show current page, first, last, and pages immediately surrounding current
-                    const totalPages = Math.ceil(totalRecords / pageSize);
-                    if (
-                      page === 1 || 
-                      page === totalPages || 
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    ) {
-                      return (
-                        <button
-                          key={page}
-                          className={`btn ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`}
-                          style={{ padding: '4px 10px', fontSize: 13, minWidth: 32 }}
-                          onClick={() => setCurrentPage(page)}
-                        >
-                          {page}
-                        </button>
-                      );
-                    } else if (
-                      page === currentPage - 2 || 
-                      page === currentPage + 2
-                    ) {
-                      return <span key={page} style={{ display: 'flex', alignItems: 'flex-end', padding: '0 4px', color: 'var(--text-muted)' }}>...</span>;
-                    }
-                    return null;
-                  })}
-                </div>
                 <button 
                   className="btn btn-secondary" 
-                  style={{ padding: '4px 12px', fontSize: 13 }}
+                  style={{ padding: '6px 16px', fontSize: 13, fontWeight: 500, opacity: currentPage >= Math.ceil(totalRecords / pageSize) ? 0.6 : 1 }}
                   disabled={currentPage >= Math.ceil(totalRecords / pageSize)}
                   onClick={() => setCurrentPage(prev => prev + 1)}
                 >
                   Next
                 </button>
               </div>
+              
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                Showing <strong>{((currentPage - 1) * pageSize) + 1}</strong> to <strong>{Math.min(currentPage * pageSize, totalRecords)}</strong> of <strong>{totalRecords}</strong> results
+              </div>
             </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Items per page:</span>
+              <select 
+                className="form-control" 
+                style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }}
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
           </div>
         )}
       </div>
