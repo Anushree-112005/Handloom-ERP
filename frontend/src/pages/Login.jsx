@@ -31,6 +31,7 @@ export default function Login() {
         user_id: res.data.user_id,
         user_name: res.data.user_name,
         user_type: res.data.user_type,
+        module_permissions: res.data.module_permissions
       }));
       navigate('/');
     } catch (err) {
