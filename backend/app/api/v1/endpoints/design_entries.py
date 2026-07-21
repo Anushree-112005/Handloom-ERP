@@ -238,13 +238,15 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     def parse_json_from_llm(raw_content: str) -> dict:
         if not raw_content:
             return {}
-        cleaned = re.sub(r'<think>.*?</think>', '', raw_content, flags=re.DOTALL).strip()
+        cleaned = re.sub(r'<think>.*?(?:</think>|$)', '', raw_content, flags=re.DOTALL).strip()
+        cleaned = re.sub(r'```(?:json)?', '', cleaned).strip()
         match = re.search(r'\{.*\}', cleaned, flags=re.DOTALL)
         if match:
             cleaned = match.group(0)
         try:
             return json.loads(cleaned)
-        except Exception:
+        except Exception as e:
+            print(f"[EXTRACT ERROR] JSON parse error: {e}, cleaned: {cleaned[:300]}")
             return {}
 
     def call_llm_with_retry(groq_client, **kwargs):
@@ -313,10 +315,14 @@ Return ONLY a JSON object of this structure:
                         ],
                     }
                 ],
-                temperature=0.0
+                temperature=0.0,
+                max_tokens=4096
             )
             if completion and hasattr(completion, 'choices') and completion.choices:
-                res_data = parse_json_from_llm(completion.choices[0].message.content or "")
+                raw_text = completion.choices[0].message.content or ""
+                print(f"[EXTRACT DEBUG] File {file.filename} raw response length: {len(raw_text)}")
+                res_data = parse_json_from_llm(raw_text)
+                print(f"[EXTRACT DEBUG] Extracted warp count: {len(res_data.get('warp', []))}, weft count: {len(res_data.get('weft', []))}")
                 combined_warp.extend(res_data.get("warp", []))
                 combined_weft.extend(res_data.get("weft", []))
         except Exception as e:
