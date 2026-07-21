@@ -194,22 +194,11 @@ const moduleDefaultPaths = {
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
-  const suToken = localStorage.getItem('status_update_token');
   const userStr = localStorage.getItem('user');
   const location = useLocation();
 
-  if (!token && !suToken) {
-    if (location.pathname.startsWith('/status-update/login')) {
-      return children;
-    }
+  if (!token) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (suToken && !token) {
-    if (location.pathname.startsWith('/status-update')) {
-      return children;
-    }
-    return <Navigate to="/status-update/dashboard" replace />;
   }
 
   // If we have a user, apply strict RBAC guarding
@@ -513,11 +502,7 @@ export default function App() {
         <Route path="employee" element={<EmployeeMaster />} />
 
         {/* Status Update Routes */}
-        <Route path="status-update">
-          <Route index element={<Navigate to="login" replace />} />
-          <Route path="login" element={<StatusUpdateLogin />} />
-          <Route path="dashboard" element={<StatusUpdateDashboard />} />
-        </Route>
+        <Route path="status-update/dashboard" element={<StatusUpdateDashboard />} />
 
         <Route path="user-management" element={<UserManagement />} />
         <Route path="role-management" element={<RoleManagement />} />

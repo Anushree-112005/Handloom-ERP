@@ -41,12 +41,12 @@ export default function StatusUpdateDashboard() {
 
   // Verify Auth & Load Data
   useEffect(() => {
-    const token = localStorage.getItem('status_update_token');
+    const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/status-update/login');
+      navigate('/login');
       return;
     }
-    const u = localStorage.getItem('su_user');
+    const u = localStorage.getItem('user');
     if (u) setUser(JSON.parse(u));
     
     // Fetch orders for this user
@@ -140,11 +140,7 @@ export default function StatusUpdateDashboard() {
 
 
 
-  const handleLogout = () => {
-    localStorage.removeItem('status_update_token');
-    localStorage.removeItem('su_user');
-    navigate('/status-update/login');
-  };
+  // Removed custom handleLogout since we use standard auth now
 
   const handleEditStage = (stage) => {
     setEditingStage(stage);
@@ -279,11 +275,8 @@ export default function StatusUpdateDashboard() {
         </div>
         <div className="su-header-actions" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Logged in as: <strong>{user?.empId || 'Employee'}</strong>
+            User: <strong>{user?.user_name || user?.user_id || 'Employee'}</strong>
           </div>
-          <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '6px 12px' }}>
-            <LogOut size={16} /> Exit Module
-          </button>
         </div>
       </div>
 

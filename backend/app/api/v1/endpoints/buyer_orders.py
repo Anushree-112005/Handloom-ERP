@@ -12,6 +12,7 @@ import uuid
 from app.core.database import get_db
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
 from app.api.v1.endpoints.auth import get_current_user
+from app.core.authorization import require_permission
 from app.models.employee import Employee
 
 router = APIRouter(prefix="/buyer-orders", tags=["Buyer Orders"])
@@ -304,16 +305,12 @@ async def list_status_update_orders(
     skip: int = 0, 
     limit: int = 100, 
     db: AsyncSession = Depends(get_db),
-    current_user: Employee = Depends(get_current_user)
+    current_user: Employee = Depends(require_permission("status_update", "View"))
 ):
-    perms = current_user.module_permissions or {}
-    if not perms.get("status_update"):
-        raise HTTPException(status_code=403, detail="Access Denied")
-        
     q = (
         select(BuyerOrder)
         .options(selectinload(BuyerOrder.items))
-        .where(BuyerOrder.merchandiser == current_user.name)
+        .order_by(BuyerOrder.id.desc())
         .offset(skip)
         .limit(limit)
     )
