@@ -236,7 +236,62 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
     if not files:
         return {"rows": []}
 
-    client = Groq(api_key=settings.GROQ_API_KEY)
+    # ── Multi-API-key rotation ──────────────────────────────────────────────
+    # Load all keys from config; exhausted keys are tracked per-request
+    all_api_keys = settings.get_groq_api_keys()
+    if not all_api_keys:
+        raise HTTPException(status_code=500, detail="No Groq API keys configured. Add GROQ_API_KEYS to .env")
+
+    # Track which keys are exhausted (rate-limited) this request
+    exhausted_keys: set = set()
+
+    def is_rate_limit_error(err_str: str) -> bool:
+        return (
+            "rate_limit" in err_str.lower()
+            or "429" in err_str
+            or "tokens per day" in err_str.lower()
+            or "tpd" in err_str.lower()
+            or "rate limit" in err_str.lower()
+        )
+
+    def call_vision_with_key_rotation(messages: list, max_tokens: int = 4000):
+        """Try each API key in order; skip exhausted keys immediately."""
+        last_error = None
+        for api_key in all_api_keys:
+            if api_key in exhausted_keys:
+                print(f"[GROQ] Skipping exhausted key ...{api_key[-6:]}")
+                continue
+            try:
+                c = Groq(api_key=api_key)
+                result = c.chat.completions.create(
+                    model="qwen/qwen3.6-27b",
+                    messages=messages,
+                    temperature=0.0,
+                    max_tokens=max_tokens
+                )
+                print(f"[GROQ] Success with key ...{api_key[-6:]}")
+                return result
+            except Exception as e:
+                err_str = str(e)
+                if is_rate_limit_error(err_str):
+                    print(f"[GROQ] Key ...{api_key[-6:]} rate-limited. Switching to next key.")
+                    exhausted_keys.add(api_key)
+                    last_error = err_str
+                    continue  # immediately try next key
+                else:
+                    # Non-rate-limit error (bad request, network, etc) — raise immediately
+                    raise
+        # All keys exhausted
+        retry_info = ""
+        if last_error:
+            m_obj = re.search(r"try again in ([^\.']+)", last_error)
+            if m_obj:
+                retry_info = f" Try again in {m_obj.group(1).strip()}."
+        raise HTTPException(
+            status_code=503,
+            detail=f"All {len(all_api_keys)} Groq API key(s) have reached their daily token limit.{retry_info} Add more API keys to GROQ_API_KEYS in .env, or wait until midnight (IST) for quota reset."
+        )
+    # ── End rotation setup ──────────────────────────────────────────────────
 
     def clean_llm_text(raw_content: str) -> str:
         if not raw_content:
@@ -250,103 +305,110 @@ async def extract_design_from_images(files: List[UploadFile] = File(...)):
         return [], []
 
     def extract_fallback_from_raw_text(text: str) -> dict:
-        text_clean = clean_llm_text(text)
         warp_rows = []
         weft_rows = []
-        lines = text_clean.split("\n")
         current_section = "warp"
         
-        for line in lines:
+        for line in text.split("\n"):
             line_lower = line.lower()
-            if "weft" in line_lower:
+            if "loops" in line_lower or "weft" in line_lower:
                 current_section = "weft"
             elif "warp" in line_lower:
                 current_section = "warp"
                 
-            m = re.search(r"(navy|nany|white|red|olive|l\.brown|brown|blue|black|green|yellow|d\.blue|h\.white)\s*[-:]?\s*(\d+)(?:\s*x\s*(\d+))?", line, re.IGNORECASE)
+            m = re.search(r"([A-Za-z\.]+)\s*[-:]\s*(\d+)", line)
             if m:
-                raw_color = m.group(1).lower()
-                color = "Navy" if raw_color in ["navy", "nany"] else m.group(1).title()
-                threads = int(m.group(2))
-                times = m.group(3) if m.group(3) else "1"
-                row = {"yarn_count": "20s CTN", "color": color, "threads": threads, "times": times}
-                if current_section == "warp":
-                    warp_rows.append(row)
-                else:
-                    weft_rows.append(row)
-        return {"warp": warp_rows[:20], "weft": weft_rows[:20]}
-
-    def normalize_extracted_times(warp_list, weft_list, raw_text=""):
-        for r in warp_list or []:
-            if not r.get("times") or str(r.get("times")).strip() in ["", "None"]:
-                r["times"] = "1"
-                    
-        for r in weft_list or []:
-            if not r.get("times") or str(r.get("times")).strip() in ["", "None"]:
-                r["times"] = "1"
-                
-        return warp_list, weft_list
+                raw_color = m.group(1).strip().title()
+                if raw_color.lower() in ["nany", "nava"]:
+                    raw_color = "Navy"
+                if raw_color.lower() not in ["warp", "weft", "loops", "total", "subtotal", "ends", "entries", "repeat", "read", "pick", "table", "loom", "blend", "extract", "column", "the", "and"]:
+                    threads = int(m.group(2))
+                    row = {"yarn_count": "20s CTN", "color": raw_color, "threads": threads, "times": "1"}
+                    if current_section == "warp":
+                        warp_rows.append(row)
+                    else:
+                        weft_rows.append(row)
+        return {"warp": warp_rows[:50], "weft": weft_rows[:50]}
 
     def parse_json_from_llm(raw_content: str) -> dict:
         if not raw_content:
-            return {}
+            return {"warp": [], "weft": []}
         
-        text_to_parse = clean_llm_text(raw_content)
-        cleaned = re.sub(r'```(?:json)?', '', text_to_parse).strip()
-        match = re.search(r'\{[\s\S]*\}', cleaned)
-        if match:
+        warp_rows = []
+        weft_rows = []
+
+        # 1. Look for ```json ... ``` code block
+        json_match = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", raw_content, re.IGNORECASE)
+        if not json_match:
+            # 2. Look for raw JSON object containing "warp"
+            json_match = re.search(r"(\{[\s\S]*\"warp\"[\s\S]*\})", raw_content, re.IGNORECASE)
+
+        if json_match:
             try:
-                data = json.loads(match.group(0))
-                if isinstance(data, dict) and ("warp" in data or "weft" in data):
-                    w = data.get("warp", [])
-                    wf = data.get("weft", [])
-                    w_norm, wf_norm = normalize_extracted_times(w[:20], wf[:20], raw_content)
-                    return {"warp": w_norm, "weft": wf_norm}
+                raw_json_str = json_match.group(1)
+                data = json.loads(raw_json_str)
+                for section in ["warp", "weft"]:
+                    raw_list = data.get(section, [])
+                    dest = warp_rows if section == "warp" else weft_rows
+                    for item in raw_list:
+                        if isinstance(item, dict):
+                            color = str(item.get("color", "Navy")).strip().title()
+                            if color.lower() in ["ends", "entries", "repeat", "read", "pick", "total", "subtotal", "table", "loom"]:
+                                continue
+                            if color.lower() in ["nany", "nava"]:
+                                color = "Navy"
+                            threads_raw = item.get("threads", 0)
+                            try:
+                                threads = int(re.sub(r"\D", "", str(threads_raw)))
+                            except Exception:
+                                threads = 0
+                            if threads <= 0:
+                                continue
+                            times = str(item.get("times", "1")).strip()
+                            if not times or times == "None":
+                                times = "1"
+                            yc = str(item.get("yarn_count", "20s CTN")).strip()
+                            dest.append({
+                                "yarn_count": yc if yc else "20s CTN",
+                                "color": color,
+                                "threads": threads,
+                                "times": times
+                            })
             except Exception as e:
-                print(f"[EXTRACT WARNING] Direct JSON parse failed: {e}")
-        
-        print("[EXTRACT INFO] Running fallback text parser on raw LLM output...")
-        res = extract_fallback_from_raw_text(raw_content)
-        w_norm, wf_norm = normalize_extracted_times(res.get("warp", []), res.get("weft", []), raw_content)
-        return {"warp": w_norm, "weft": wf_norm}
+                print(f"[EXTRACT WARNING] JSON parse failed: {e}")
 
-    def call_llm_with_retry(groq_client, **kwargs):
-        for attempt in range(3):
-            try:
-                return groq_client.chat.completions.create(**kwargs)
-            except Exception as e:
-                err_msg = str(e).lower()
-                if "429" in err_msg or "rate limit" in err_msg or "too many requests" in err_msg or "413" in err_msg:
-                    if attempt < 2:
-                        time.sleep(2 * (attempt + 1))
-                        continue
-                raise e
+        # 3. If JSON parse produced no rows, execute fallback line parser on whole text
+        if not warp_rows and not weft_rows:
+            print("[EXTRACT INFO] Running fallback text parser on raw LLM output...")
+            fb = extract_fallback_from_raw_text(raw_content)
+            warp_rows = fb.get("warp", [])
+            weft_rows = fb.get("weft", [])
 
-    extraction_prompt = """
-You are analyzing a handwritten textile design sheet image.
-Your job is to extract ALL yarn specification entries from BOTH the WARP and WEFT sections.
+        return {"warp": warp_rows[:50], "weft": weft_rows[:50]}
 
-IMPORTANT RULES:
-1. Read the EXACT yarn count written in the image (e.g. "20s", "40s", "2/40s"). Do NOT assume or default.
-2. WARP section comes first. WEFT section follows (may be labeled "WEFT", "WEFTS", or listed after a dividing line).
-3. For each entry extract:
-   - yarn_count: read exactly from image (e.g. "20s CTN", "40s CTN", "2/40s CTN"). Default: "20s CTN"
-   - color: exact color name (e.g. "Navy", "White", "Red", "Olive"). Note: "NANY" or "NAVY" both mean "Navy".
-   - threads: the integer thread count next to the color (e.g. "68", "300", "84").
-   - times: multiplier value if written (e.g. "11" from "370x11R" or "x11"). Default: "1" if not shown.
-4. Extract ALL rows - do not skip any color/thread entries.
-5. Maximum 20 rows for WARP, 20 rows for WEFT.
-6. Keep any <think> reasoning under 30 words.
+    extraction_prompt = """DO NOT REASON OR THINK. OUTPUT JSON DIRECTLY.
+Extract ALL design rows ONLY from the WARP DESIGN and WEFT DESIGN sections of the textile sheet image.
 
-Return ONLY valid JSON (no markdown, no explanation):
+CRITICAL INSTRUCTIONS:
+1. Locate the section titled "WARP DESIGN" (or WARP DESIGN table/column). Extract each yarn color and thread count row (e.g. 20s H.White - 27, Navy - 27, L.Brown - 27).
+2. Locate the section titled "WEFT DESIGN" (or WEFT DESIGN table/column). Extract each yarn color and thread count row (e.g. 20s H.White - 23, Navy - 23, L.Brown - 23).
+3. IGNORE and DO NOT extract rows from lower calculation/requirement summary sections (such as "WARP:- 1512 - 216.000 KGS" or "WEFT:- 189.000" or footer totals like "81 x 56 = 4536", "69", "Weft Ends", "Total Ends").
+4. Extract the yarn count if written next to the color (e.g., "20s", "20S CTN", "2/40S CTN").
+
+Return ONLY valid JSON in this exact structure:
 {
   "warp": [
-    {"yarn_count": "20s CTN", "color": "Navy", "threads": 68, "times": "1"}
+    {"yarn_count": "20S CTN", "color": "H.White", "threads": 27, "times": "1"}
   ],
   "weft": [
-    {"yarn_count": "20s CTN", "color": "Navy", "threads": 84, "times": "1"}
+    {"yarn_count": "20S CTN", "color": "H.White", "threads": 23, "times": "1"}
   ]
 }
+RULES:
+1. Extract ONLY rows under WARP DESIGN and WEFT DESIGN. Do not double-count or extract lower yarn requirement calculation rows.
+2. Read the integer thread count (e.g. 27, 23, 60, 12) next to each color name.
+3. Clean color names nicely (e.g. "H.White" -> "H.White", "L.Brown" -> "L.Brown", "Navy" -> "Navy").
+4. Return up to 50 rows for WARP and 50 rows for WEFT.
 """
 
     combined_warp = []
@@ -370,55 +432,43 @@ Return ONLY valid JSON (no markdown, no explanation):
             encoded_file = base64.b64encode(content).decode("utf-8")
 
         try:
-            completion = call_llm_with_retry(
-                client,
-                model="qwen/qwen3.6-27b",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": extraction_prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoded_file}",
-                                },
+            messages = [
+                {
+                    "role": "system",
+                    "content": "/no_think\nOutput strictly raw valid JSON. Do not perform long math calculations."
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": extraction_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{encoded_file}",
                             },
-                        ],
-                    }
-                ],
-                temperature=0.0,
-                max_tokens=4000
-            )
+                        },
+                    ],
+                }
+            ]
+            # call_vision_with_key_rotation automatically tries each API key,
+            # skips exhausted keys, and raises HTTPException only when all keys fail
+            completion = call_vision_with_key_rotation(messages)
             if completion and hasattr(completion, 'choices') and completion.choices:
                 raw_text = completion.choices[0].message.content or ""
                 print(f"[EXTRACT DEBUG] File {fname} raw response length: {len(raw_text)}")
                 res_data = parse_json_from_llm(raw_text)
                 
-                warp_list = res_data.get("warp", [])[:20]
-                weft_list = res_data.get("weft", [])[:20]
-                if not warp_list and not weft_list:
-                    fallback_res = extract_fallback_from_raw_text(raw_text)
-                    warp_list = fallback_res.get("warp", [])[:20]
-                    weft_list = fallback_res.get("weft", [])[:20]
+                warp_list = res_data.get("warp", [])[:50]
+                weft_list = res_data.get("weft", [])[:50]
 
                 print(f"[EXTRACT DEBUG] Extracted warp count: {len(warp_list)}, weft count: {len(weft_list)}")
                 combined_warp.extend(warp_list)
                 combined_weft.extend(weft_list)
+        except HTTPException:
+            raise  # Re-raise rate-limit / all-keys-failed errors directly
         except Exception as e:
             err_str = str(e)
-            print(f"[EXTRACT ERROR] AI call error for file {fname}: {err_str}")
-            if "rate_limit" in err_str.lower() or "429" in err_str or "tokens per day" in err_str.lower() or "tpd" in err_str.lower():
-                # Extract retry time if available
-                retry_info = ""
-                import re as _re
-                m = _re.search(r"try again in ([^\.']+)", err_str)
-                if m:
-                    retry_info = f" Please try again in {m.group(1).strip()}."
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"AI extraction API daily limit reached.{retry_info} The Groq free tier allows 200,000 tokens/day. Please try again after midnight (IST) when the quota resets."
-                )
+            print(f"[EXTRACT ERROR] Unexpected error for file {fname}: {err_str}")
             raise HTTPException(status_code=500, detail=f"AI extraction failed: {err_str[:200]}")
 
     def normalize_yarn_count(yc_raw: str) -> str:
