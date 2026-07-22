@@ -141,6 +141,14 @@ async def lifespan(app: FastAPI):
                 existing_admin.status = "Active"
                 await session.commit()
 
+            # Seed RBAC roles and permissions automatically
+            try:
+                from seed_rbac import seed_data
+                await seed_data()
+                logger.info("Successfully seeded RBAC data in lifespan.")
+            except Exception as e:
+                logger.error(f"Failed to seed RBAC data in lifespan: {e}")
+
             # Seed default departments and designations
             from app.models.sub_master import SubMaster
             
