@@ -289,69 +289,90 @@ export default function RoleManagement() {
       {/* Role Permissions Modal */}
       {isPermsModalOpen && activeRole && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ width: '800px', maxHeight: '90vh' }}>
-            <div className="modal-header">
-              <h3>Edit Permissions: {activeRole.name}</h3>
-              <button className="icon-btn" onClick={() => setIsPermsModalOpen(false)}>&times;</button>
+          <div className="modal-content" style={{ width: '950px', maxWidth: '95vw', maxHeight: '90vh', border: 'none', borderRadius: '8px' }}>
+            <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0 }}>Edit Permissions: {activeRole.name}</h3>
+              <button 
+                className="icon-btn" 
+                onClick={() => setIsPermsModalOpen(false)}
+                style={{ 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '24px', height: '24px', background: 'white', 
+                  border: '1px solid #d1d5db', borderRadius: '4px', 
+                  color: '#4b5563', fontSize: '16px', cursor: 'pointer' 
+                }}
+              >
+                &times;
+              </button>
             </div>
-            <div className="modal-body" style={{ flex: '1', overflowY: 'auto' }}>
-              <table className="data-table">
-                <thead>
+            <div className="modal-body" style={{ flex: '1', overflowY: 'auto', padding: '0' }}>
+              <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: '#f8fafc' }}>
                   <tr>
-                    <th style={{ width: '200px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <th style={{ width: '220px', padding: '16px 24px', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '600', fontSize: '13px', letterSpacing: '0.05em' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <input 
                           type="checkbox" 
                           onChange={(e) => handleToggleGlobalAll(e.target.checked)}
-                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                          style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#4f46e5', borderRadius: '4px' }}
                         />
-                        Module
+                        MODULE
                       </div>
                     </th>
                     {actions.map(a => (
-                      <th key={a.id} className="text-center" style={{ fontSize: '11px', padding: '8px 4px' }}>
+                      <th key={a.id} className="text-center" style={{ padding: '16px 8px', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '600', fontSize: '13px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         {a.name}
                       </th>
                     ))}
-                    <th className="text-center" style={{ fontSize: '11px', padding: '8px 4px', width: '80px' }}>
-                      Select All
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {modules.map(mod => {
                     const modPerms = rolePerms[mod.id] || [];
-                    const isAllSelected = modPerms.length === actions.length && actions.length > 0;
                     return (
-                      <tr key={mod.id}>
-                        <td style={{ fontWeight: 500 }}>{mod.name}</td>
+                      <tr key={mod.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '20px 24px', color: '#334155', fontWeight: '500', fontSize: '15px' }}>
+                          {mod.name}
+                        </td>
                         {actions.map(a => (
-                          <td key={a.id} className="text-center">
+                          <td key={a.id} className="text-center" style={{ padding: '20px 8px' }}>
                             <input 
                               type="checkbox" 
                               checked={modPerms.includes(a.id)}
                               onChange={() => handleTogglePermission(mod.id, a.id)}
-                              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#4f46e5', borderRadius: '4px' }}
                             />
                           </td>
                         ))}
-                        <td className="text-center">
-                          <input 
-                            type="checkbox" 
-                            checked={isAllSelected}
-                            onChange={(e) => handleToggleModuleAll(mod.id, e.target.checked)}
-                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                          />
-                        </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button type="button" className="btn btn-outline" onClick={() => setIsPermsModalOpen(false)}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={handleSavePermissions} disabled={savingPerms}>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', padding: '20px 24px', background: '#f8fafc', borderTop: 'none', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+              <button 
+                type="button" 
+                onClick={() => setIsPermsModalOpen(false)}
+                style={{ 
+                  background: '#f1f5f9', color: '#0f172a', border: 'none', 
+                  fontWeight: '600', padding: '10px 24px', borderRadius: '6px', 
+                  cursor: 'pointer', fontSize: '15px' 
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={handleSavePermissions} 
+                disabled={savingPerms}
+                style={{ 
+                  background: '#4f46e5', color: 'white', border: 'none', 
+                  fontWeight: '600', padding: '10px 24px', borderRadius: '6px', 
+                  cursor: savingPerms ? 'not-allowed' : 'pointer', fontSize: '15px',
+                  opacity: savingPerms ? 0.7 : 1
+                }}
+              >
                 {savingPerms ? 'Saving...' : 'Save Permissions'}
               </button>
             </div>
