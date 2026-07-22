@@ -38,6 +38,7 @@ export default function Vouchers() {
   const [typeFilter,  setTypeFilter]  = useState('');
   const [isFormOpen,  setIsFormOpen]  = useState(false);
   const [voucherType, setVoucherType] = useState('Payment');
+  const [editingVoucherId, setEditingVoucherId] = useState(null);
   const [seeding,     setSeeding]     = useState(false);
 
   const { data: vouchersList = [], isLoading } = useQuery({
@@ -54,13 +55,13 @@ export default function Vouchers() {
 
   const { data: stockItemsList = [] } = useQuery({
     queryKey: ['stockItems', activeCompany?.id],
-    queryFn:  () => stockItemsApi.list(activeCompany.id),
+    queryFn:  () => stockItemsApi.list({ company_id: activeCompany.id }),
     enabled:  !!activeCompany,
   });
 
   const { data: locationsList = [] } = useQuery({
     queryKey: ['locations', activeCompany?.id],
-    queryFn:  () => locationsApi.list(activeCompany.id),
+    queryFn:  () => locationsApi.list({ company_id: activeCompany.id }),
     enabled:  !!activeCompany,
   });
 
@@ -73,14 +74,16 @@ export default function Vouchers() {
     }
   }, [searchParams]);
 
-  const openVoucher = (type) => {
+  const openVoucher = (type, voucherId = null) => {
     setVoucherType(type);
+    setEditingVoucherId(voucherId);
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const closeForm = () => {
     setIsFormOpen(false);
+    setEditingVoucherId(null);
     searchParams.delete('type');
     setSearchParams(searchParams);
     navigate('/vouchers', { replace: true });
@@ -150,6 +153,7 @@ export default function Vouchers() {
 
         <VoucherForm
           type={voucherType}
+          voucherId={editingVoucherId}
           companyId={activeCompany.id}
           ledgers={ledgersList}
           stockItems={stockItemsList}
@@ -198,7 +202,7 @@ export default function Vouchers() {
             {seeding ? 'Generating…' : 'Seed Textile Vouchers'}
           </button>
           <button
-            onClick={() => openVoucher('Payment')}
+            onClick={() => openVoucher(typeFilter || 'Sales', null)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 16px', fontSize: 13, fontWeight: 600,
@@ -209,7 +213,7 @@ export default function Vouchers() {
             onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-md)'}
             onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow-sm)'}
           >
-            <Plus size={15} /> New Voucher
+            <Plus size={15} /> New {typeFilter ? typeFilter : 'Voucher'}
           </button>
         </div>
       </div>
@@ -270,7 +274,7 @@ export default function Vouchers() {
                   title={`Create New ${t} Voucher`}
                   onClick={e => {
                     e.stopPropagation();
-                    openVoucher(t);
+                    openVoucher(t, null);
                   }}
                   style={{
                     width: 24, height: 24,
@@ -391,7 +395,7 @@ export default function Vouchers() {
                     <Receipt size={36} style={{ color: 'var(--border-light)', margin: '0 auto 10px' }} />
                     <p style={{ color: 'var(--text-muted)', fontWeight: 600, marginBottom: 8 }}>No vouchers found</p>
                     <button
-                      onClick={() => openVoucher('Payment')}
+                      onClick={() => openVoucher(typeFilter || 'Sales', null)}
                       style={{ fontSize: 13, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                     >
                       + Create your first voucher
@@ -407,7 +411,7 @@ export default function Vouchers() {
                     <tr
                       key={v.id}
                       style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.12s' }}
-                      onClick={() => openVoucher(v.voucher_type)}
+                      onClick={() => openVoucher(v.voucher_type, v.id)}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
@@ -477,16 +481,7 @@ export default function Vouchers() {
         </div>
       </div>
 
-      {/* ── Keyboard Shortcuts ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', paddingLeft: 4 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-muted)' }}>Shortcuts:</span>
-        {[['F4','Contra'],['F5','Payment'],['F6','Receipt'],['F7','Journal'],['F8','Sales'],['F9','Purchase']].map(([k, t]) => (
-          <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-muted)' }}>
-            <kbd style={{ padding: '2px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, fontSize: 10, fontFamily: 'monospace', fontWeight: 700, boxShadow: 'var(--shadow-sm)' }}>{k}</kbd>
-            {t}
-          </span>
-        ))}
-      </div>
+
     </div>
   );
 }

@@ -375,19 +375,7 @@ export default function Vouchers() {
         </div>
       </div>
 
-      {/* ── Keyboard Shortcuts Hint ── */}
-      <div className="flex items-center gap-3.5 flex-wrap px-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mr-1">Shortcuts:</span>
-        {[
-          ['F4','Contra'], ['F5','Payment'], ['F6','Receipt'],
-          ['F7','Journal'], ['F8','Sales'], ['F9','Purchase'],
-        ].map(([k, t]) => (
-          <span key={k} className="flex items-center gap-1.5 text-xs text-slate-400">
-            <kbd className="btn btn-secondary">{k}</kbd>
-            <span className="font-medium text-slate-500">{t}</span>
-          </span>
-        ))}
-      </div>
+
     </div>
   );
 

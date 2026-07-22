@@ -20,19 +20,7 @@ const masterSections = [
       { id: 'scenarios', label: 'Scenarios', icon: Compass, description: 'Financial scenarios.', color: '#8b5cf6' },
     ],
   },
-  {
-    title: 'Inventory Masters',
-    color: '#10b981',
-    gradient: 'linear-gradient(90deg, #10b981, #14b8a6)',
-    icon: Package,
-    items: [
-      { id: 'stockGroups', label: 'Stock Groups', icon: Grid, description: 'Stock grouping categories.', color: '#10b981' },
-      { id: 'stockCategories', label: 'Stock Categories', icon: Box, description: 'Inventory item categories.', color: '#06b6d4' },
-      { id: 'stockItems', label: 'Stock Items', icon: Package, description: 'Base stock items.', color: '#3b82f6' },
-      { id: 'units', label: 'Units', icon: Scale, description: 'Units of measure.', color: '#6366f1' },
-      { id: 'locations', label: 'Locations', icon: MapPin, description: 'Storage locations.', color: '#ef4444' },
-    ],
-  }
+
 ];
 
 const ALL_TABS = masterSections.flatMap(s => s.items);

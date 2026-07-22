@@ -9,7 +9,7 @@ import {
   CreditCard, DollarSign, Target, Percent, BookOpen, Building, Hash, Sparkles, Plus,
   Award, RefreshCw, Clock3, FolderOpen, Calendar, AlertTriangle, LayoutGrid, Menu,
   Clock, TrendingUp, TrendingDown, Grid, Bell, ArrowRight, Map as MapIcon, Eye,
-  Brain, PlayCircle, BarChart2
+  Brain, PlayCircle, BarChart2, Printer, BarChart3
 } from 'lucide-react';
 import { companySettingAPI } from '../services/api';
 import defaultLogo from '../assets/logo.svg';
@@ -82,21 +82,13 @@ const modules = [
       { section: 'JOB WORK MANAGEMENT' },
       ...jobWorkRoutes,
 
-      {
-        label: 'Approval',
-        icon: CheckSquare,
-        children: [
-          { section: 'Work Order Approvel' },
-          { path: '/work-order/approval/buyer-order', label: 'Buyer Order Approvel', icon: ClipboardList },
-          { path: '/work-order/approval/pi', label: 'PI Approvel', icon: FileText },
-          { path: '/work-order/approval/vendor-workorder', label: 'Vendor Workorder Approvel', icon: ShoppingCart },
-          { path: '/work-order/approval/internal-fabric', label: 'Intrenal Fabric Request Approval', icon: Package },
-          
-          { section: 'DC Approvel' },
-          { path: '/dc-approval/gra', label: 'GRA Approvel', icon: ClipboardList },
-          { path: '/dc-approval/surplus', label: 'Surplus DC Approval', icon: FileText }
-        ]
-      },
+      { section: 'Approval' },
+      { path: '/work-order/approval/buyer-order', label: 'Buyer Order Approval', icon: ClipboardList },
+      { path: '/work-order/approval/pi', label: 'PI Approval', icon: FileText },
+      { path: '/work-order/approval/vendor-workorder', label: 'Vendor Workorder Approval', icon: ShoppingCart },
+      { path: '/work-order/approval/internal-fabric', label: 'Internal Fabric Request Approval', icon: Package },
+      { path: '/dc-approval/gra', label: 'GRA Approval', icon: ClipboardList },
+      { path: '/dc-approval/surplus', label: 'Surplus DC Approval', icon: FileText },
       { section: 'Quality Control' },
       { path: '/cloth/checking', label: 'Grey Inspection', icon: CheckSquare },
       { path: '/fabric/transaction/checking', label: 'Final Inspection', icon: CheckSquare },
@@ -314,7 +306,11 @@ const modules = [
 
 
       { section: 'REPORTS & ANALYTICS' },
-      { path: '/stores-consumables/report-stock', label: 'Stock Inventory', icon: PieChart },
+      { path: '/stores-consumables/reports/po-print', label: 'Purchase Order / DC Printing', icon: Printer },
+      { path: '/stores-consumables/reports/po-status', label: 'Purchase Order & Request Status', icon: FileText },
+      { path: '/stores-consumables/reports/purchase-received', label: 'Purchase & Received Reports', icon: Receipt },
+      { path: '/stores-consumables/reports/consumption', label: 'Consumption Reports', icon: BarChart3 },
+      { path: '/stores-consumables/reports/stock', label: 'Stock Reports', icon: Layers },
 
       { section: 'APPROVALS' },
       { path: '/stores-consumables/approve-request', label: 'Request Approval', icon: Shield },

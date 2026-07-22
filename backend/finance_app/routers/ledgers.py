@@ -21,6 +21,8 @@ class LedgerCreate(BaseModel):
     pan:                Optional[str] = None
     address:            Optional[str] = None
     state_code:         Optional[str] = None
+    pin_code:           Optional[str] = None
+    contact_number:     Optional[str] = None
     bank_name:          Optional[str] = None
     account_number:     Optional[str] = None
     ifsc_code:          Optional[str] = None
@@ -192,6 +194,7 @@ def _ledger_out(l: Ledger):
         "opening_balance": l.opening_balance, "balance_type": l.balance_type,
         "party_type": l.party_type, "gstin": l.gstin, "pan": l.pan,
         "address": l.address, "state_code": l.state_code,
+        "pin_code": l.pin_code, "contact_number": l.contact_number,
         "bank_name": l.bank_name, "account_number": l.account_number,
         "ifsc_code": l.ifsc_code,
         "gst_registration_type": l.gst_registration_type,

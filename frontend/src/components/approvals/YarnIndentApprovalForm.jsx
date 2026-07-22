@@ -17,10 +17,10 @@ export default function YarnIndentApprovalForm() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', background: '#fff' }}>
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', padding: '24px' }}>
       
       {/* Top Header */}
-      <div style={{ background: '#0f766e', color: 'white', padding: '8px 16px', textAlign: 'center', fontWeight: 'bold', fontSize: '18px', borderRadius: '4px' }}>
+      <div style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '12px 16px', fontWeight: 'bold', fontSize: '18px', borderRadius: '4px 4px 0 0' }}>
         Yarn Requirement Indent - Approval Entry
       </div>
 
@@ -73,30 +73,31 @@ export default function YarnIndentApprovalForm() {
             </div>
             <textarea 
                 className="form-control" 
-                style={{ flex: 1, minHeight: '120px', border: '2px solid #8b5cf6', background: '#f5f3ff' }}
+                style={{ flex: 1, minHeight: '120px' }}
                 value={formData.remarksText}
                 onChange={handleChange}
                 name="remarksText"
+                placeholder="Remarks..."
             />
         </div>
       </div>
 
       {/* Middle Table */}
       <div style={{ border: '1px solid var(--border)', borderRadius: '4px', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ background: '#b45309', color: 'white', padding: '4px 8px', fontSize: '12px', fontWeight: 'bold' }}>
+        <div style={{ background: 'var(--bg-secondary)', padding: '8px 12px', fontSize: '14px', fontWeight: 'bold', borderBottom: '1px solid var(--border)' }}>
             Countwise Required Details
         </div>
-        <div style={{ display: 'flex', background: '#f8fafc', padding: '8px', gap: '8px', borderBottom: '1px solid var(--border)' }}>
-            <button className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981', padding: '4px 16px', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', padding: '12px', gap: '8px', borderBottom: '1px solid var(--border)' }}>
+            <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
                 <Plus size={14} /> Add
             </button>
-            <button className="btn btn-primary" style={{ background: '#e2e8f0', color: '#334155', borderColor: '#cbd5e1', padding: '4px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Eye size={14} /> View Indent
             </button>
         </div>
         <div style={{ overflowX: 'auto', flex: 1 }}>
             <table className="data-table" style={{ width: '100%', fontSize: '12px' }}>
-                <thead style={{ background: '#6366f1', color: 'white' }}>
+                <thead>
                     <tr>
                         <th style={{ width: '40px', textAlign: 'center' }}>S.No</th>
                         <th>Yarn Count</th>
@@ -113,14 +114,14 @@ export default function YarnIndentApprovalForm() {
                     {tableData.map((row, i) => (
                         <tr key={row.id}>
                             <td style={{ textAlign: 'center' }}>{i + 1}</td>
-                            <td><select className="form-control" style={{ padding: '2px', height: '24px' }}><option>-</option></select></td>
-                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '24px', textAlign: 'right' }} /></td>
-                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '24px', textAlign: 'right' }} /></td>
-                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '24px', textAlign: 'right' }} /></td>
-                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '24px', textAlign: 'right', background: '#f1f5f9' }} readOnly /></td>
-                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '24px', textAlign: 'right', background: '#fdf4ff' }} /></td>
-                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '24px', textAlign: 'right' }} /></td>
-                            <td style={{ textAlign: 'center' }}><input type="checkbox" /></td>
+                            <td><select className="form-control" style={{ padding: '2px', height: '28px' }}><option>-</option></select></td>
+                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '28px', textAlign: 'right' }} /></td>
+                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '28px', textAlign: 'right' }} /></td>
+                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '28px', textAlign: 'right' }} /></td>
+                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '28px', textAlign: 'right', background: 'var(--bg-secondary)' }} readOnly /></td>
+                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '28px', textAlign: 'right' }} /></td>
+                            <td><input type="text" className="form-control" style={{ padding: '2px', height: '28px', textAlign: 'right' }} /></td>
+                            <td style={{ textAlign: 'center' }}><input type="checkbox" style={{ cursor: 'pointer' }} /></td>
                         </tr>
                     ))}
                 </tbody>
@@ -137,12 +138,12 @@ export default function YarnIndentApprovalForm() {
         <input type="text" className="form-control" style={{ flex: 1 }} />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '16px', background: '#f8fafc', borderTop: '1px solid var(--border)', borderRadius: '4px' }}>
-        <button className="btn btn-primary" style={{ background: '#fff', color: '#334155', borderColor: '#cbd5e1', padding: '8px 24px' }}>Save</button>
-        <button className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981', padding: '8px 24px' }}>Print</button>
-        <button className="btn btn-primary" style={{ background: '#0ea5e9', borderColor: '#0ea5e9', padding: '8px 24px' }}>Edit</button>
-        <button className="btn btn-primary" style={{ background: '#f59e0b', borderColor: '#f59e0b', padding: '8px 24px' }}>Delete</button>
-        <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444', padding: '8px 24px' }}>Close</button>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Save size={16} /> Save</button>
+        <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Printer size={16} /> Print</button>
+        <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Edit2 size={16} /> Edit</button>
+        <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e11d48', borderColor: '#fecdd3' }}><Trash2 size={16} /> Delete</button>
+        <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><XCircle size={16} /> Close</button>
       </div>
 
     </div>

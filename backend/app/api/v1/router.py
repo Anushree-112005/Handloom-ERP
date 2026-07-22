@@ -81,10 +81,12 @@ from app.modules.hr.router import router as hr_router
 from app.modules.vehicle_management.router import router as fleet_router
 from app.modules.stationary.router import router as stationary_router
 from app.modules.stores_consumables.router import router as stores_consumables_router
+from app.modules.stores_consumables.reports_router import router as stores_reports_router
 api_router.include_router(hr_router)
 api_router.include_router(fleet_router)
 api_router.include_router(stationary_router)
 api_router.include_router(stores_consumables_router)
+api_router.include_router(stores_reports_router)
 
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)

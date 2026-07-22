@@ -154,9 +154,9 @@ export default function GstClassification() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25">
-            <Tag size={20} className="text-white" />
+        <div className="flex items-center gap-5">
+          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 transform hover:scale-105 transition-all duration-300">
+            <Tag size={24} className="text-white" />
           </div>
           <div>
             <h1 className="cb-page-title">
@@ -288,16 +288,16 @@ export default function GstClassification() {
 
       {/* ── 2. FORM VIEW ── */}
       {(viewMode === "create" || viewMode === "alter") && (
-        <form onSubmit={handleSave} className="cb-card max-w-2xl bg-white p-6 space-y-6 mx-auto">
+        <form onSubmit={handleSave} className="bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 space-y-6 max-w-2xl mx-auto transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
           
           {/* Classification Name */}
-          <label className="flex flex-col gap-1.5">
-            <span className="cb-label font-bold text-slate-500">Name</span>
+          <label className="flex flex-col gap-2 group">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wide group-hover:text-purple-600 transition-colors">Name</span>
             <input
               type="text"
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className="cb-input font-medium"
+              className="cb-input font-medium bg-white/50 border-slate-200 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-400/10 transition-all duration-300 rounded-xl px-4 py-3"
               placeholder="e.g. Cotton Fabrics 5%"
               required
               autoFocus
@@ -305,8 +305,11 @@ export default function GstClassification() {
           </label>
 
           {/* HSN/SAC & Related Details */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">HSN/SAC & Related Details</h3>
+          <div className="space-y-4 pt-6 border-t border-slate-100/50">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="h-6 w-1.5 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full"></div>
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">HSN/SAC & Related Details</h3>
+            </div>
             
             <label className="flex flex-col gap-1.5">
               <span className="cb-label">HSN/SAC Details Option</span>
@@ -348,8 +351,11 @@ export default function GstClassification() {
           </div>
 
           {/* GST Rate & Related Details */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">GST Rate & Related Details</h3>
+          <div className="space-y-4 pt-6 border-t border-slate-100/50">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="h-6 w-1.5 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">GST Rate & Related Details</h3>
+            </div>
 
             <label className="flex flex-col gap-1.5">
               <span className="cb-label">GST Rate Details Option</span>
@@ -396,12 +402,12 @@ export default function GstClassification() {
           </div>
 
           {/* Action buttons */}
-          <div className="pt-6 border-t border-slate-100 flex justify-between items-center gap-3">
+          <div className="pt-8 border-t border-slate-100/50 flex justify-between items-center gap-3">
             {viewMode === "alter" ? (
               <button
                 type="button"
                 onClick={() => setShowConfirmDelete(true)}
-                className="px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
+                className="px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-2 shadow-sm hover:shadow"
               >
                 <Trash2 size={14} />
                 Delete Classification
@@ -414,13 +420,13 @@ export default function GstClassification() {
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className="cb-btn-secondary"
+                className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="cb-btn-primary"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/30 flex items-center gap-2 transform hover:-translate-y-0.5"
               >
                 <Save size={15} />
                 Accept / Save

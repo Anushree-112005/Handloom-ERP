@@ -19,7 +19,7 @@ export default function PIApprovalTable() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
       {/* Top Controls Bar */}
-      <div className="card" style={{ display: 'flex', gap: '16px', padding: '12px 16px', alignItems: 'center', flexWrap: 'wrap', background: 'var(--bg-secondary)', borderBottom: '2px solid #0f766e' }}>
+      <div className="card" style={{ display: 'flex', gap: '16px', padding: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Search By</label>
           <select 
@@ -43,19 +43,19 @@ export default function PIApprovalTable() {
           onChange={e => setSearchTerm(e.target.value)}
         />
         
-        <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button className="btn btn-primary" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           Search
         </button>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>PINo</label>
             <input type="text" className="form-control" style={{ width: '150px', padding: '6px' }} />
-            <button className="btn btn-primary" style={{ background: '#f87171', borderColor: '#f87171', padding: '6px 12px' }}>
+            <button className="btn btn-primary" style={{ padding: '6px 12px' }}>
                 <FileText size={16} />
             </button>
         </div>
         
-        <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button className="btn btn-outline" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           Close
         </button>
       </div>
@@ -64,7 +64,7 @@ export default function PIApprovalTable() {
       <div className="card" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
           <table className="data-table" style={{ width: '100%', fontSize: '13px' }}>
-            <thead style={{ background: '#0f766e', color: 'white' }}>
+            <thead>
               <tr>
                 <th style={{ width: '100px', textAlign: 'center' }}>Action</th>
                 <th style={{ width: '60px' }}>PI.No</th>
@@ -76,19 +76,19 @@ export default function PIApprovalTable() {
               </tr>
             </thead>
             <tbody>
-              {mockData.map((row, index) => (
-                <tr key={row.id} style={{ background: index % 2 === 0 ? '#f8fafc' : '#ffffff' }}>
+              {mockData.map((row) => (
+                <tr key={row.id}>
                   <td style={{ textAlign: 'center', padding: '4px' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', background: '#3b82f6', color: 'white', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
                         Action <ChevronDown size={14} style={{ marginLeft: '4px' }} />
                     </div>
                   </td>
                   <td style={{ fontWeight: '600' }}>{row.piNo}</td>
                   <td>{row.piDate}</td>
                   <td style={{ fontWeight: '500' }}>{row.party}</td>
-                  <td style={{ color: '#334155', fontSize: '12px', lineHeight: '1.4' }}>{row.details}</td>
+                  <td style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.4' }}>{row.details}</td>
                   <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.meters}</td>
-                  <td style={{ textAlign: 'right', fontWeight: '600', color: '#0f766e' }}>{row.amount}</td>
+                  <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.amount}</td>
                 </tr>
               ))}
             </tbody>

@@ -20,7 +20,7 @@ export default function BuyerOrderApprovalTable() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
       {/* Top Controls Bar */}
-      <div className="card" style={{ display: 'flex', gap: '16px', padding: '12px 16px', alignItems: 'center', flexWrap: 'wrap', background: 'var(--bg-secondary)', borderBottom: '2px solid #0f766e' }}>
+      <div className="card" style={{ display: 'flex', gap: '16px', padding: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Search By</label>
           <select className="form-control" style={{ width: '150px', padding: '6px' }}>
@@ -50,13 +50,13 @@ export default function BuyerOrderApprovalTable() {
           <option value="All">All</option>
         </select>
         
-        <button className="btn btn-primary" style={{ background: '#0369a1', borderColor: '#0369a1', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button className="btn btn-primary" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Search size={16} /> Search
         </button>
         <button className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <CheckCircle size={16} /> Verify
         </button>
-        <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button className="btn btn-outline" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <XCircle size={16} /> Exit
         </button>
       </div>
@@ -65,7 +65,7 @@ export default function BuyerOrderApprovalTable() {
       <div className="card" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
           <table className="data-table" style={{ width: '100%', whiteSpace: 'nowrap', fontSize: '13px' }}>
-            <thead style={{ background: '#0f766e', color: 'white' }}>
+            <thead>
               <tr>
                 <th style={{ width: '40px', textAlign: 'center' }}>Select</th>
                 <th style={{ width: '40px', textAlign: 'center' }}>Action</th>
@@ -85,17 +85,17 @@ export default function BuyerOrderApprovalTable() {
               </tr>
             </thead>
             <tbody>
-              {mockData.map((row, index) => (
-                <tr key={row.id} style={{ background: index % 2 === 0 ? '#f8fafc' : '#ffffff' }}>
+              {mockData.map((row) => (
+                <tr key={row.id}>
                   <td style={{ textAlign: 'center' }}><input type="checkbox" style={{ cursor: 'pointer' }} /></td>
                   <td style={{ textAlign: 'center' }}>
-                    <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#d97706' }}>
+                    <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                       <Edit2 size={16} />
                     </button>
                   </td>
-                  <td style={{ fontWeight: '600', color: '#0369a1' }}>
+                  <td style={{ fontWeight: '600' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <FileText size={14} style={{ color: '#94a3b8' }} /> {row.refNo}
+                      <FileText size={14} style={{ color: 'var(--text-muted)' }} /> {row.refNo}
                     </div>
                   </td>
                   <td>{row.piDate}</td>
@@ -106,10 +106,10 @@ export default function BuyerOrderApprovalTable() {
                   <td style={{ textAlign: 'right' }}>{row.comPercent}</td>
                   <td style={{ textAlign: 'right' }}>{row.comMtr}</td>
                   <td>{row.shortNo}</td>
-                  <td style={{ color: '#334155' }}>{row.qlty}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{row.qlty}</td>
                   <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.mtrs}</td>
                   <td style={{ textAlign: 'right' }}>{row.rate}</td>
-                  <td style={{ textAlign: 'right', fontWeight: '600', color: '#0f766e' }}>{row.amount}</td>
+                  <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.amount}</td>
                 </tr>
               ))}
             </tbody>
@@ -119,3 +119,4 @@ export default function BuyerOrderApprovalTable() {
     </div>
   );
 }
+

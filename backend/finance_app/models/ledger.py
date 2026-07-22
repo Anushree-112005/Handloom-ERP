@@ -26,6 +26,8 @@ class Ledger(Base):
     pan: Mapped[Optional[str]]        = mapped_column(String)
     address: Mapped[Optional[str]]    = mapped_column(Text)
     state_code: Mapped[Optional[str]] = mapped_column(String(2))
+    pin_code: Mapped[Optional[str]]   = mapped_column(String)
+    contact_number: Mapped[Optional[str]] = mapped_column(String)
     # Bank details
     bank_name: Mapped[Optional[str]]  = mapped_column(String)
     account_number: Mapped[Optional[str]] = mapped_column(String)

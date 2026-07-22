@@ -22,7 +22,7 @@ export default function VendorOrderApprovalTable() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
       {/* Top Controls Bar */}
-      <div className="card" style={{ display: 'flex', gap: '16px', padding: '12px 16px', alignItems: 'center', flexWrap: 'wrap', background: 'var(--bg-secondary)', borderBottom: '2px solid #0f766e' }}>
+      <div className="card" style={{ display: 'flex', gap: '16px', padding: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
         
         <select 
           className="form-control" 
@@ -43,12 +43,12 @@ export default function VendorOrderApprovalTable() {
           onChange={e => setSearchTerm(e.target.value)}
         />
         
-        <button className="btn btn-primary" style={{ background: '#3b82f6', borderColor: '#3b82f6', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          Search
+        <button className="btn btn-primary" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Search size={16} /> Search
         </button>
         
         <button className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          Verify
+          <CheckCircle size={16} /> Verify
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
@@ -62,8 +62,8 @@ export default function VendorOrderApprovalTable() {
             />
         </div>
         
-        <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          Unverify
+        <button className="btn btn-outline" style={{ padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <XCircle size={16} /> Unverify
         </button>
       </div>
 
@@ -71,7 +71,7 @@ export default function VendorOrderApprovalTable() {
       <div className="card" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
           <table className="data-table" style={{ width: '100%', whiteSpace: 'nowrap', fontSize: '13px' }}>
-            <thead style={{ background: '#0f766e', color: 'white' }}>
+            <thead>
               <tr>
                 <th style={{ width: '100px', textAlign: 'center' }}>Action</th>
                 <th>Order No</th>
@@ -85,21 +85,21 @@ export default function VendorOrderApprovalTable() {
               </tr>
             </thead>
             <tbody>
-              {mockData.map((row, index) => (
-                <tr key={row.id} style={{ background: index % 2 === 0 ? '#f8fafc' : '#ffffff' }}>
+              {mockData.map((row) => (
+                <tr key={row.id}>
                   <td style={{ textAlign: 'center', padding: '4px' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', background: '#3b82f6', color: 'white', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
                         Action <ChevronDown size={14} style={{ marginLeft: '4px' }} />
                     </div>
                   </td>
-                  <td style={{ fontWeight: '600', color: '#0369a1' }}>{row.orderNo}</td>
+                  <td style={{ fontWeight: '600' }}>{row.orderNo}</td>
                   <td>{row.orderDate}</td>
                   <td style={{ fontWeight: '500' }}>{row.vendor}</td>
                   <td>{row.designNo}</td>
-                  <td style={{ color: '#334155' }}>{row.construction}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{row.construction}</td>
                   <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.warpMtr}</td>
                   <td style={{ textAlign: 'right' }}>{row.pickRate}</td>
-                  <td style={{ textAlign: 'right', fontWeight: '600', color: '#0f766e' }}>{row.orderMtr}</td>
+                  <td style={{ textAlign: 'right', fontWeight: '600' }}>{row.orderMtr}</td>
                 </tr>
               ))}
             </tbody>

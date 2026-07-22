@@ -151,7 +151,7 @@ function FieldRow({ label, hint, children }) {
   );
 }
 
-export default function VoucherForm({ type: initialType, companyId, ledgers = [], stockItems = [], locations = [], onClose, onSaved }) {
+export default function VoucherForm({ type: initialType, voucherId, companyId, ledgers = [], stockItems = [], locations = [], onClose, onSaved }) {
   const [voucherType,           setVoucherType]           = useState(initialType || "Payment");
   const [date,                  setDate]                  = useState(new Date().toISOString().split("T")[0]);
   const [narration,             setNarration]             = useState("");
@@ -168,17 +168,108 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
   const [saving,                setSaving]                = useState(false);
   const [saved,                 setSaved]                 = useState(false);
   const [ledgerCreateTarget,    setLedgerCreateTarget]    = useState(null);
+  const [initialLoading,        setInitialLoading]        = useState(false);
 
   const style        = TYPE_STYLE[voucherType] || TYPE_STYLE.Payment;
   const isSalesPurchase = SALES_PURCHASE.includes(voucherType);
   const isDr         = DR_TYPES.includes(voucherType);
 
-  /* ── When type changes from outside ── */
+  /* ── Fetch Voucher if editing ── */
   useEffect(() => {
-    setVoucherType(initialType || "Payment");
-    setError(null);
-    setSaved(false);
-  }, [initialType]);
+    if (voucherId) {
+      setInitialLoading(true);
+      api.get(`/vouchers/${voucherId}`).then(res => {
+        const v = res;
+        setVoucherType(v.voucher_type);
+        setDate(v.date);
+        setNarration(v.narration || "");
+        if (v.voucher_type === "Purchase") {
+          setSupplierInvNo(v.reference_no || "");
+        } else {
+          setRefNo(v.reference_no || "");
+        }
+
+        const isSP = SALES_PURCHASE.includes(v.voucher_type);
+        const isD = DR_TYPES.includes(v.voucher_type);
+
+        const topAmountField = isD ? 'cr_amount' : 'dr_amount';
+        const tableAmountField = isD ? 'dr_amount' : 'cr_amount';
+
+        let topEntry = v.entries.find(e => e[topAmountField] > 0 && e.ledger_id === v.party_id);
+        if (!topEntry) {
+            const topSideEntries = v.entries.filter(e => e[topAmountField] > 0);
+            if (topSideEntries.length > 0) {
+                topSideEntries.sort((a, b) => b[topAmountField] - a[topAmountField]);
+                topEntry = topSideEntries[0];
+            }
+        }
+
+        if (topEntry) {
+          const accLedger = ledgers.find(l => l.id === topEntry.ledger_id);
+          if (accLedger) {
+            setAccount(accLedger);
+            setAccountSearch(accLedger.name);
+          } else {
+            setAccount({ id: topEntry.ledger_id, name: topEntry.ledger_name, group: "" });
+            setAccountSearch(topEntry.ledger_name);
+          }
+        }
+
+        const itemEntries = v.entries.filter(e => e.id !== topEntry?.id);
+
+        if (isSP) {
+          if (itemEntries.length > 0) {
+            const mainItem = itemEntries.find(e => !e.is_gst_entry) || itemEntries[0];
+            const slLedger = ledgers.find(l => l.id === mainItem.ledger_id);
+            if (slLedger) {
+              setSalesLedger(slLedger);
+              setSalesLedgerSearch(slLedger.name);
+            } else {
+              setSalesLedger({ id: mainItem.ledger_id, name: mainItem.ledger_name, group: "" });
+              setSalesLedgerSearch(mainItem.ledger_name);
+            }
+            setItemLines(itemEntries.map(e => ({
+              name: e.ledger_name,
+              stock_item_id: e.stock_item_id || "",
+              location_id: e.location_id || "",
+              qty: e.qty || "",
+              rate: e.rate || "",
+              per: "Nos",
+              amount: e[tableAmountField].toString()
+            })));
+          }
+        } else {
+          if (itemEntries.length > 0) {
+            setEntries(itemEntries.map(e => ({
+              ledger_id: e.ledger_id,
+              ledger_name: e.ledger_name,
+              search: e.ledger_name,
+              amount: e[tableAmountField].toString()
+            })));
+          }
+        }
+      }).catch(err => {
+        console.error("Failed to load voucher", err);
+        setError("Failed to load voucher details.");
+      }).finally(() => {
+        setInitialLoading(false);
+      });
+    } else {
+      setVoucherType(initialType || "Payment");
+      setDate(new Date().toISOString().split("T")[0]);
+      setNarration("");
+      setRefNo("");
+      setAccount(null);
+      setAccountSearch("");
+      setSalesLedger(null);
+      setSalesLedgerSearch("");
+      setSupplierInvNo("");
+      setItemLines([{ name: "", stock_item_id: "", location_id: "", qty: "", rate: "", per: "Nos", amount: "" }]);
+      setEntries([{ ledger_id: "", ledger_name: "", amount: "", search: "" }]);
+      setError(null);
+      setSaved(false);
+    }
+  }, [voucherId, initialType]);
 
   /* ── Item line helpers ── */
   const updateItem = (idx, field, val) => {
@@ -268,7 +359,11 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
 
     try {
       setSaving(true);
-      await api.post("/vouchers/", payload);
+      if (voucherId) {
+        await api.put(`/vouchers/${voucherId}`, payload);
+      } else {
+        await api.post("/vouchers/", payload);
+      }
       setSaved(true);
       onSaved?.();
       setTimeout(() => onClose(), 1200);
@@ -321,7 +416,7 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0, animation: "fadeIn 0.3s ease-out" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, animation: "fadeIn 0.3s ease-out", opacity: initialLoading ? 0.6 : 1, pointerEvents: initialLoading ? 'none' : 'auto' }}>
       {/* ── Card wrapper ── */}
       <div style={{
         background: "var(--bg-card)",
@@ -359,7 +454,7 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
               color: style.accent,
               border: `1px solid ${style.accent}40`,
             }}>
-              {voucherType} Voucher
+              {voucherType} Voucher {voucherId && '(Edit)'}
             </span>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>Accounting Voucher Creation</div>
@@ -410,16 +505,6 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
                   boxShadow: active ? "var(--shadow-sm)" : "none",
                 }}
               >
-                {key && (
-                  <span style={{
-                    fontSize: 9, fontWeight: 700, padding: "1px 4px", borderRadius: 3,
-                    background: active ? "rgba(255,255,255,0.5)" : "var(--bg-secondary)",
-                    color: active ? ts.accent : "var(--text-muted)",
-                    border: "1px solid rgba(0,0,0,0.06)",
-                  }}>
-                    {key}
-                  </span>
-                )}
                 {type}
               </button>
             );
@@ -753,7 +838,7 @@ export default function VoucherForm({ type: initialType, companyId, ledgers = []
               }}
             >
               <Save size={15} style={{ animation: saving ? "spin 1s linear infinite" : "none" }} />
-              {saving ? "Saving…" : saved ? "Saved!" : "Accept Voucher"}
+              {saving ? "Saving…" : saved ? "Saved!" : voucherId ? "Update Voucher" : "Accept Voucher"}
             </button>
           </div>
         </div>

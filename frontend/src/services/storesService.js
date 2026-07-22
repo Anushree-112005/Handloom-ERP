@@ -395,6 +395,28 @@ export const storesService = {
   },
   deleteReturnableDC: async (id) => {
     await api.delete(`/stores-consumables/returnable-dc/${id}`);
+  },
+
+  // ─── REPORTS ENDPOINTS ───
+  getPOPrintReport: async (params) => {
+    const response = await api.get('/stores-consumables/reports/po-print', { params });
+    return response.data;
+  },
+  getPOStatusReport: async (params) => {
+    const response = await api.get('/stores-consumables/reports/po-status', { params });
+    return response.data;
+  },
+  getPurchaseReceivedReport: async (params) => {
+    const response = await api.get('/stores-consumables/reports/purchase-received', { params });
+    return response.data;
+  },
+  getConsumptionReport: async (params) => {
+    const response = await api.get('/stores-consumables/reports/consumption', { params });
+    return response.data;
+  },
+  getStockReport: async (params) => {
+    const response = await api.get('/stores-consumables/reports/stock', { params });
+    return response.data;
   }
 };
 

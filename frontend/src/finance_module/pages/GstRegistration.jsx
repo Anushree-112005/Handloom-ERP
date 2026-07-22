@@ -234,9 +234,9 @@ export default function GstRegistration() {
       {/* ── Page Header (Only visible if not in prompt dialog mode) ── */}
       {viewMode !== "prompt" && (
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25">
-              <Building size={20} className="text-white" />
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 transform hover:scale-105 transition-all duration-300">
+              <Building size={24} className="text-white" />
             </div>
             <div>
               <h1 className="cb-page-title">
@@ -421,13 +421,13 @@ export default function GstRegistration() {
         <form onSubmit={handleSave} className="grid gap-6 lg:grid-cols-12 items-start">
           
           {/* Left Column (Statutory details) */}
-          <div className="lg:col-span-6 cb-card p-6 space-y-6 bg-white">
+          <div className="lg:col-span-6 bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 space-y-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
             
             {/* Status Info */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <CheckCircle size={16} className="text-purple-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Statutory Status</h3>
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="h-6 w-1.5 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full"></div>
+                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">Statutory Status</h3>
               </div>
               <label className="flex flex-col gap-1.5">
                 <span className="cb-label">Registration status</span>
@@ -443,10 +443,10 @@ export default function GstRegistration() {
             </div>
 
             {/* GST Registration Details */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <Building size={16} className="text-purple-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">GST Registration Details</h3>
+            <div className="space-y-4 pt-6 border-t border-slate-100/50">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="h-6 w-1.5 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
+                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">GST Registration Details</h3>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -518,10 +518,10 @@ export default function GstRegistration() {
             </div>
 
             {/* Connected Details */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <HelpCircle size={16} className="text-purple-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Connected GST Details</h3>
+            <div className="space-y-4 pt-6 border-t border-slate-100/50">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="h-6 w-1.5 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-full"></div>
+                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">Connected GST Details</h3>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -554,13 +554,13 @@ export default function GstRegistration() {
           </div>
 
           {/* Right Column (e-Way & e-Invoicing Details) */}
-          <div className="lg:col-span-6 cb-card p-6 space-y-6 bg-white">
+          <div className="lg:col-span-6 bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 space-y-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
             
             {/* e-Way Bill Details */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <FileText size={16} className="text-purple-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">e-Way Bill Details</h3>
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="h-6 w-1.5 bg-gradient-to-b from-amber-400 to-orange-500 rounded-full"></div>
+                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">e-Way Bill Details</h3>
               </div>
 
               <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer">
@@ -658,10 +658,10 @@ export default function GstRegistration() {
             </div>
 
             {/* e-Invoice Details */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <FileText size={16} className="text-purple-600" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">e-Invoice Details</h3>
+            <div className="space-y-4 pt-6 border-t border-slate-100/50">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="h-6 w-1.5 bg-gradient-to-b from-rose-400 to-pink-500 rounded-full"></div>
+                <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">e-Invoice Details</h3>
               </div>
 
               <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer">
@@ -719,12 +719,12 @@ export default function GstRegistration() {
             </div>
 
             {/* Actions Form Section */}
-            <div className="pt-6 border-t border-slate-100 flex flex-wrap justify-between items-center gap-3">
+            <div className="pt-8 border-t border-slate-100/50 flex flex-wrap justify-between items-center gap-3 mt-auto">
               {viewMode === "alter" ? (
                 <button
                   type="button"
                   onClick={() => setShowConfirmDelete(true)}
-                  className="px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-2"
+                  className="px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-2 shadow-sm hover:shadow"
                 >
                   <Trash2 size={14} />
                   Delete Registration
@@ -743,13 +743,13 @@ export default function GstRegistration() {
                       navigate("/masters");
                     }
                   }}
-                  className="cb-btn-secondary"
+                  className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="cb-btn-primary"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/30 flex items-center gap-2 transform hover:-translate-y-0.5"
                 >
                   <Save size={15} />
                   Accept / Save

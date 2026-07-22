@@ -4,11 +4,22 @@ from datetime import date
 
 class CompanyCreate(BaseModel):
     name: str
+    legal_name: Optional[str] = None
     gstin: Optional[str] = None
     pan: Optional[str] = None
     cin: Optional[str] = None
+    state_code: Optional[str] = None
     address: Optional[str] = None
-    financial_year_start: Optional[date] = None
+    city: Optional[str] = None
+    pincode: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    
+    maintain_accounts: Optional[bool] = True
+    maintain_inventory: Optional[bool] = False
+    is_active: Optional[bool] = True
+
+    fy_start: Optional[date] = date(2026, 4, 1)
 
     # Currency configurations
     currency_symbol: Optional[str] = "₹"
