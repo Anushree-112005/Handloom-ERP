@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, Palette, Users, FileText, Layers, CheckSquare, Download, ChevronDown, ArrowLeft, CheckCircle } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI, dropdownAPI } from '../../services/api';
+import { designEntryAPI, partyAPI, employeeAPI, buyerOrderAPI, subMasterAPI, textileDesignAPI, dropdownAPI, getBackendURL } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -131,9 +131,10 @@ const parseEqCount = (lbl) => {
     "2/60S CTN": 30.0,
     "2/80S CTN": 40.0,
   };
-  if (YARN_COUNTS[lbl] !== undefined) return YARN_COUNTS[lbl];
+  const key = (lbl || '').trim().toUpperCase();
+  if (YARN_COUNTS[key] !== undefined) return YARN_COUNTS[key];
   if (!lbl) return 20.0;
-  let cleaned = lbl.toUpperCase().replace(/\s+/g, '');
+  let cleaned = key.replace(/\s+/g, '');
   if (cleaned.includes('/')) {
     const parts = cleaned.split('/');
     const ply = parseFloat(parts[0]) || 1.0;
@@ -598,10 +599,10 @@ function DesignSheetModal({ isOpen, onClose, design, colorMasters }) {
                   <div style={{ width: 120, border: '1px solid #aaa', borderRadius: 4, padding: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#fff', flexShrink: 0, marginTop: -40 }}>
                     <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: 2 }}>Fabric Sample</span>
                     <img 
-                      src={`http://localhost:8000${design.image_path}`} 
+                      src={getBackendURL(design.image_path)} 
                       alt="Fabric Sample" 
                       style={{ width: '100%', height: 95, objectFit: 'cover', borderRadius: 2, border: '1px solid #e2e8f0', cursor: 'pointer' }}
-                      onClick={() => window.open(`http://localhost:8000${design.image_path}`, '_blank')}
+                      onClick={() => window.open(getBackendURL(design.image_path), '_blank')}
                     />
                   </div>
                 )}
@@ -838,6 +839,7 @@ export default function DesignEntry() {
     yarn_count: '',
     act_count: '',
     ends: '',
+    pick: '',
     crimp_pct: ''
   });
   const [isCustomYarnTypeMode, setIsCustomYarnTypeMode] = useState(false);
@@ -942,6 +944,7 @@ export default function DesignEntry() {
       yarn_count: '',
       act_count: '',
       ends: '',
+      pick: '',
       crimp_pct: ''
     });
   };
@@ -978,7 +981,7 @@ export default function DesignEntry() {
   const handleWarpSummaryChange = (index, field, value) => {
     setIsSummaryManuallyEdited(true);
     const updated = [...warpSummary];
-    const parsedVal = field === 'ends' || field === 'noD' || field === 'extra' || field === 'total_ends' ? (parseInt(value) || 0) : field === 'req_kg' ? (parseFloat(value) || 0) : value;
+    const parsedVal = value === '' ? '' : (field === 'req_kg' ? (parseFloat(value) || 0) : (parseInt(value) || 0));
     updated[index] = { ...updated[index], [field]: parsedVal };
     
     if (field === 'ends' || field === 'noD' || field === 'extra') {
@@ -987,14 +990,41 @@ export default function DesignEntry() {
       const extra = parseInt(field === 'extra' ? value : updated[index].extra) || 0;
       updated[index].total_ends = ends * noD + extra;
     }
+
+    if (field !== 'req_kg') {
+      const eqCount = updated[index].actCount || parseEqCount(updated[index].count);
+      const totalMtr = parseFloat(form.total_mtr) || 0;
+      const crimpPct = parseFloat(form.crimp_pct) || 0;
+      const skgPct = parseFloat(form.skg_pct) || 0;
+      const dyeingPct = parseFloat(form.dyeing_loss_pct) || 0;
+      const warpLength = Math.round(parseFloat(form.warp_mtr) || (totalMtr * (1 + crimpPct/100) * (1 + skgPct/100)));
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+
+      const req_kg_raw = eqCount > 0 ? ((parseInt(updated[index].total_ends) || 0) * 1.094 * warpLength) / (1848 * eqCount) : 0;
+      updated[index].req_kg = Math.round(req_kg_raw / lossFactor);
+    }
+
     setWarpSummary(updated);
   };
 
   const handleWeftSummaryChange = (index, field, value) => {
     setIsSummaryManuallyEdited(true);
     const updated = [...weftSummary];
-    const parsedVal = field === 'ends' || field === 'total_ends' ? (parseInt(value) || 0) : field === 'req_kg' ? (parseFloat(value) || 0) : value;
+    const parsedVal = value === '' ? '' : (field === 'req_kg' ? (parseFloat(value) || 0) : (parseInt(value) || 0));
     updated[index] = { ...updated[index], [field]: parsedVal };
+
+    if (field !== 'req_kg') {
+      const eqCount = updated[index].actCount || parseEqCount(updated[index].count);
+      const totalMtr = parseFloat(form.total_mtr) || 0;
+      const skgPct = parseFloat(form.skg_pct) || 0;
+      const dyeingPct = parseFloat(form.dyeing_loss_pct) || 0;
+      const weftProMtrVal = Math.round(parseFloat(form.weft_pro_mtr) || (totalMtr * (1 + skgPct/100)));
+      const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
+
+      const req_kg_raw = eqCount > 0 ? ((parseInt(updated[index].total_ends) || 0) * weftProMtrVal) / (1690 * eqCount) : 0;
+      updated[index].req_kg = req_kg_raw > 0 ? Math.max(1, Math.round(req_kg_raw / lossFactor)) : 0;
+    }
+
     setWeftSummary(updated);
   };
 
@@ -1106,8 +1136,20 @@ export default function DesignEntry() {
     const warpColorAgg = {};
     warpRows.forEach((item, index) => {
       const cname = item.color || 'White';
-      const yc = item.yarn_count || '40S CTN';
-      const key = `${yc}_${cname}`;
+      const itemType = item.type || 'Warp beam1';
+      
+      // Match yarn spec from yarnRows for this beam type
+      const matchingSpec = (yarnRows || []).find(y => 
+        y.type && (y.type.trim().toLowerCase() === itemType.trim().toLowerCase() || (!y.type.toLowerCase().includes('weft') && !itemType.toLowerCase().includes('weft')))
+      );
+
+      const yc = (item.yarn_count && item.yarn_count !== '40S CTN') ? item.yarn_count : (matchingSpec?.yarn_count || item.yarn_count || '20S CTN');
+      const actCount = (matchingSpec && matchingSpec.act_count && parseFloat(matchingSpec.act_count) > 0)
+        ? parseFloat(matchingSpec.act_count)
+        : parseEqCount(yc);
+
+      const beamLabel = item.type || matchingSpec?.type || 'Warp beam1';
+      const key = `${beamLabel}_${yc}_${cname}`;
       const itemEnds = parseInt(item.threads) || 0;
       const itemExtra = extraEnds[index] || 0;
       const itemTotalEnds = (itemEnds * noD) + itemExtra;
@@ -1119,8 +1161,9 @@ export default function DesignEntry() {
       } else {
         const colorCode = getColorHex(cname, colorMasters);
         warpColorAgg[key] = {
-          beam_type: item.type || 'Warp',
+          beam_type: beamLabel,
           count: yc,
+          actCount: actCount,
           color: cname,
           hex: colorCode,
           ends: itemEnds,
@@ -1132,10 +1175,11 @@ export default function DesignEntry() {
     });
 
     const computedWarpSummary = Object.values(warpColorAgg).map(row => {
-      const eqCount = parseEqCount(row.count);
+      const eqCount = row.actCount || parseEqCount(row.count);
+      // REQ KGS = Ends x 1.094 / 1848 / Warp Count x Warp Mtr (or Ends x Warp Mtr / (1690 * Count))
       const req_kg_raw = eqCount > 0 ? (row.total_ends * 1.094 * warpLength) / (1848 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
-      const req_kg = Math.ceil(req_kg_raw / lossFactor);
+      const req_kg = Math.round(req_kg_raw / lossFactor);
       return { ...row, req_kg };
     });
 
@@ -1143,7 +1187,12 @@ export default function DesignEntry() {
     const weftColorAgg = {};
     weftRows.forEach(item => {
       const cname = item.color || 'White';
-      const yc = item.yarn_count || '40S CTN';
+      const matchingSpec = (yarnRows || []).find(y => y.type && y.type.toLowerCase().includes('weft'));
+      const yc = (item.yarn_count && item.yarn_count !== '40S CTN') ? item.yarn_count : (matchingSpec?.yarn_count || item.yarn_count || '20S CTN');
+      const actCount = (matchingSpec && matchingSpec.act_count && parseFloat(matchingSpec.act_count) > 0)
+        ? parseFloat(matchingSpec.act_count)
+        : parseEqCount(yc);
+
       const key = `${yc}_${cname}`;
       const itemEnds = parseInt(item.threads) || 0;
 
@@ -1154,6 +1203,7 @@ export default function DesignEntry() {
         weftColorAgg[key] = {
           beam_type: 'Weft',
           count: yc,
+          actCount: actCount,
           color: cname,
           hex: colorCode,
           ends: itemEnds,
@@ -1171,7 +1221,7 @@ export default function DesignEntry() {
     const computedWeftSummary = Object.values(weftColorAgg).map(row => {
       const ratio = totalWeftThreads > 0 ? row.ends / totalWeftThreads : 0;
       const groupEnds = Math.round(totalWeftEndsCalculated * ratio);
-      const eqCount = parseEqCount(row.count);
+      const eqCount = row.actCount || parseEqCount(row.count);
       
       const req_kg_raw = eqCount > 0 ? (groupEnds * weftProMtrVal) / (1690 * eqCount) : 0;
       const lossFactor = dyeingPct >= 100 ? 1.0 : (1 - dyeingPct / 100);
@@ -1335,13 +1385,30 @@ export default function DesignEntry() {
             return !yTypeLower.includes('weft');
           }
         });
+        const finalCount = (row.yarn_count && row.yarn_count !== '40S CTN') ? row.yarn_count : (matchingSpec ? matchingSpec.yarn_count : '20S CTN');
         return {
           ...row,
           type: matchingSpec ? matchingSpec.type : row.type,
-          yarn_count: matchingSpec ? matchingSpec.yarn_count : row.yarn_count,
+          yarn_count: finalCount,
           id: Date.now() + idx
         };
       });
+
+      // Update yarnRows if extracted count is 20S CTN
+      const firstWarpExtracted = extractedRows.find(r => !r.type?.toLowerCase().includes('weft'));
+      if (firstWarpExtracted && firstWarpExtracted.yarn_count) {
+        setYarnRows(prev => prev.map(y => {
+          if (!y.type?.toLowerCase().includes('weft')) {
+            return {
+              ...y,
+              yarn_count: firstWarpExtracted.yarn_count,
+              act_count: parseEqCount(firstWarpExtracted.yarn_count)
+            };
+          }
+          return y;
+        }));
+      }
+
       setFabricDesignRows([...fabricDesignRows, ...extractedRows]);
       alert(`Successfully extracted ${extractedRows.length} design lines from the image(s)!`);
     } catch (err) {
@@ -1846,10 +1913,10 @@ export default function DesignEntry() {
                       <div style={{ marginTop: 12 }}>
                         <h4 style={{ margin: '8px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Design Image</h4>
                         <img
-                          src={`http://localhost:8000${selectedViewEntry.image_path}`}
+                          src={getBackendURL(selectedViewEntry.image_path)}
                           alt="Design Preview"
                           style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)', marginTop: 4, cursor: 'pointer' }}
-                          onClick={() => window.open(`http://localhost:8000${selectedViewEntry.image_path}`, '_blank')}
+                          onClick={() => window.open(getBackendURL(selectedViewEntry.image_path), '_blank')}
                         />
                       </div>
                     )}
@@ -1943,10 +2010,10 @@ export default function DesignEntry() {
                         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 12, alignSelf: 'flex-start' }}>IBPO Design Image</span>
                         {form.ibpo_image ? (
                           <img 
-                            src={form.ibpo_image.startsWith('http') ? form.ibpo_image : `http://localhost:8000${form.ibpo_image}`} 
+                            src={getBackendURL(form.ibpo_image)} 
                             alt="IBPO Design" 
                             style={{ width: '100%', maxHeight: 230, objectFit: 'contain', borderRadius: 6, border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'transform 0.2s' }}
-                            onClick={() => window.open(form.ibpo_image.startsWith('http') ? form.ibpo_image : `http://localhost:8000${form.ibpo_image}`, '_blank')}
+                            onClick={() => window.open(getBackendURL(form.ibpo_image), '_blank')}
                             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                             onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
                           />
@@ -2031,6 +2098,7 @@ export default function DesignEntry() {
                               <th>Yarn Count</th>
                               <th>Act Count</th>
                               <th>End's</th>
+                              <th>PICK</th>
                               <th>Crimp %</th>
                               <th>Actions</th>
                             </tr>
@@ -2094,6 +2162,16 @@ export default function DesignEntry() {
                                         type="text"
                                         className="form-control"
                                         style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 60 }}
+                                        placeholder="Pick"
+                                        value={editingYarnRow.pick || ''}
+                                        onChange={e => setEditingYarnRow({ ...editingYarnRow, pick: e.target.value })}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="text"
+                                        className="form-control"
+                                        style={{ padding: '2px 4px', fontSize: 11, margin: 0, height: 26, width: 60 }}
                                         value={editingYarnRow.crimp_pct}
                                         onChange={e => setEditingYarnRow({ ...editingYarnRow, crimp_pct: e.target.value })}
                                       />
@@ -2131,6 +2209,7 @@ export default function DesignEntry() {
                                   <td>{row.yarn_count}</td>
                                   <td>{row.act_count}</td>
                                   <td>{row.ends}</td>
+                                  <td>{row.pick || '-'}</td>
                                   <td>{row.crimp_pct}%</td>
                                   <td>
                                     {!isReadOnly && (
@@ -2261,6 +2340,16 @@ export default function DesignEntry() {
                                     type="text"
                                     className="form-control"
                                     style={{ padding: '4px 6px', margin: 0 }}
+                                    placeholder="Pick"
+                                    value={newYarnRow.pick || ''}
+                                    onChange={e => setNewYarnRow({ ...newYarnRow, pick: e.target.value })}
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{ padding: '4px 6px', margin: 0 }}
                                     placeholder="Crimp"
                                     value={newYarnRow.crimp_pct}
                                     onChange={e => setNewYarnRow({ ...newYarnRow, crimp_pct: e.target.value })}
@@ -2368,7 +2457,7 @@ export default function DesignEntry() {
                         className="btn"
                         style={{ padding: '4px 12px', background: '#f59e0b', color: '#fff', fontWeight: 600 }}
                         onClick={() => {
-                          window.open(imagePreviewUrl.startsWith('blob:') ? imagePreviewUrl : `http://localhost:8000${imagePreviewUrl}`, '_blank');
+                          window.open(getBackendURL(imagePreviewUrl), '_blank');
                         }}
                       >
                         View Image

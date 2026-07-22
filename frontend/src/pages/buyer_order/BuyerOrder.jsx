@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, Eye, Trash2, Save, X, Edit2, ShoppingCart, Activity, CheckCircle, Package, Clock, Download, FileText, ChevronDown, MessageSquare, CreditCard, ClipboardList, Settings, Truck, Star, Filter, ArrowLeft } from 'lucide-react';
 import A4DocumentPreview from '../../components/A4DocumentPreview';
-import { buyerOrderAPI, partyAPI, employeeAPI, dropdownAPI, subMasterAPI } from '../../services/api';
+import { buyerOrderAPI, partyAPI, employeeAPI, dropdownAPI, subMasterAPI, getBackendURL } from '../../services/api';
 import SubMasterDropdown from '../../components/SubMasterDropdown';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -997,7 +997,7 @@ export default function BuyerOrder() {
           />
           {item.image_design_path && (
             <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
-              Uploaded: <a href={`http://localhost:8000${item.image_design_path}`} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
+              Uploaded: <a href={getBackendURL(item.image_design_path)} target="_blank" rel="noopener noreferrer">{item.image_design_path.split('/').pop()}</a>
             </div>
           )}
         </div>
@@ -1415,14 +1415,15 @@ export default function BuyerOrder() {
                         </select>
                       )}
                     </div>
-                    <div className="form-group">
-                      <label>Order Type</label>
-                      <select className="form-control" name="order_type" value={form.order_type || ''} onChange={handleChange}>
-                        <option value="">-- Select Order Type --</option>
-                        <option value="Domestic">Domestic</option>
-                        <option value="Export">Export</option>
-                      </select>
-                    </div>
+                    <SubMasterDropdown
+                      label="Order Type"
+                      name="order_type"
+                      value={form.order_type || ''}
+                      entity="order_type_master"
+                      options={options}
+                      onChange={handleDropdownChange}
+                      onOptionsRefresh={refreshDropdownOptions}
+                    />
                     <SubMasterDropdown
                       label="Certified Type"
                       name="certified_type"
@@ -1530,7 +1531,7 @@ export default function BuyerOrder() {
                       />
                       {form.payment_file_path && (
                         <div style={{ marginTop: 4, fontSize: 12, color: 'var(--primary)' }}>
-                          Uploaded: <a href={`http://localhost:8000${form.payment_file_path}`} target="_blank" rel="noopener noreferrer">{form.payment_file_path.split('/').pop()}</a>
+                          Uploaded: <a href={getBackendURL(form.payment_file_path)} target="_blank" rel="noopener noreferrer">{form.payment_file_path.split('/').pop()}</a>
                         </div>
                       )}
                     </div>
@@ -1654,7 +1655,6 @@ export default function BuyerOrder() {
         title="BUYER ORDER"
         documentNumber={viewModalOrder?.ibpo_number}
         status={viewModalOrder?.status}
-        onDownloadPdf={() => alert('PDF Download for Buyer Order triggered')}
         sections={viewModalOrder ? [
           {
             title: "ORDER & BUYER",
@@ -1688,12 +1688,12 @@ export default function BuyerOrder() {
               idx + 1,
               item.image_design_path ? (
                 <img 
-                  src={item.image_design_path.startsWith('http') ? item.image_design_path : `http://localhost:8000${item.image_design_path}`} 
+                  src={getBackendURL(item.image_design_path)} 
                   alt="Design" 
                   style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 4, border: '1px solid #cbd5e1', cursor: 'pointer' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(item.image_design_path.startsWith('http') ? item.image_design_path : `http://localhost:8000${item.image_design_path}`, '_blank');
+                    window.open(getBackendURL(item.image_design_path), '_blank');
                   }}
                 />
               ) : '-',

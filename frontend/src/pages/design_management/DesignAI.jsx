@@ -3,7 +3,7 @@ import {
   Sparkles, Upload, Cpu, Download, Plus, Trash2, ArrowRight, ArrowLeft, CheckCircle,
   AlertCircle, RefreshCw, Layers, Settings, ChevronDown, Eye, Database
 } from 'lucide-react';
-import { textileDesignAPI, subMasterAPI } from '../../services/api';
+import { textileDesignAPI, subMasterAPI, getBackendURL } from '../../services/api';
 import './DesignAI.css';
 
 const YARN_COUNTS = {
@@ -650,7 +650,7 @@ export default function DesignAI() {
         const uploadRes = await textileDesignAPI.uploadImage(designRes.data.id, file);
         setImagePath(uploadRes.data.image_path);
         // Refresh preview with actual server image path
-        setImagePreviewUrl(`http://localhost:8000${uploadRes.data.image_path}`);
+        setImagePreviewUrl(getBackendURL(uploadRes.data.image_path));
       }
 
     } catch (err) {
@@ -685,7 +685,7 @@ export default function DesignAI() {
     } else {
       setWeftDesignType('Solid (100% Background Color)');
     }
-    setImagePreviewUrl(design.image_path ? `http://localhost:8000${design.image_path}` : null);
+    setImagePreviewUrl(getBackendURL(design.image_path));
     setImagePath(design.image_path || null);
     
     if (design.weft_items && design.weft_items.length > 0) {

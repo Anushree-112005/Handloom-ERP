@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { 
-  FileText, Calendar, Users, ShoppingCart, Package, Truck, 
+  FileText, Calendar, Users, ShoppingCart, ShoppingBag, Briefcase, Package, Truck, 
   Factory, CheckSquare, Scissors, Box, ClipboardList, Receipt, 
   MapPin, Shield, Activity, ArrowRightLeft, Palette, Info, Settings, Layers,
   Search, Download, RefreshCw, Eye, Printer, Mail, Share2, 
@@ -25,9 +25,465 @@ import {
 // 1. MOCK DATASETS FOR THE 25 REPORTS
 // ==========================================
 const MOCK_REPORTS_DATA = {
-  // --- A. Sales Reports ---
+  // --- 1. Production Reports ---
+  'loom_production': {
+    title: 'Loom Production Report',
+    columns: [
+      { key: 'loomNo', label: 'Loom No' },
+      { key: 'date', label: 'Date' },
+      { key: 'supervisor', label: 'Supervisor' },
+      { key: 'quality', label: 'Quality Sort' },
+      { key: 'target', label: 'Target (Mtrs)' },
+      { key: 'actual', label: 'Actual (Mtrs)' },
+      { key: 'efficiency', label: 'Efficiency %' }
+    ],
+    rows: []
+  },
+  'warping_status': {
+    title: 'Warping Report',
+    columns: [
+      { key: 'setNo', label: 'Set No' },
+      { key: 'beamNo', label: 'Beam No' },
+      { key: 'date', label: 'Warping Date' },
+      { key: 'yarnLot', label: 'Yarn Lot Ref' },
+      { key: 'ends', label: 'Total Ends' },
+      { key: 'speed', label: 'Speed (m/min)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'sizing_status': {
+    title: 'Sizing Report',
+    columns: [
+      { key: 'setNo', label: 'Set No' },
+      { key: 'date', label: 'Sizing Date' },
+      { key: 'beamNo', label: 'Sized Beam No' },
+      { key: 'quality', label: 'Yarn Quality' },
+      { key: 'pickup', label: 'Size Pickup %' },
+      { key: 'length', label: 'Length (Mtrs)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'weaving_report': {
+    title: 'Weaving Report',
+    columns: [
+      { key: 'loomNo', label: 'Loom No' },
+      { key: 'date', label: 'Date' },
+      { key: 'shift', label: 'Shift' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'weaver', label: 'Weaver Name' },
+      { key: 'production', label: 'Production (m)' },
+      { key: 'efficiency', label: 'Efficiency %' }
+    ],
+    rows: []
+  },
+  'dyeing_status': {
+    title: 'Dyeing Production Report',
+    columns: [
+      { key: 'batchNo', label: 'Batch No' },
+      { key: 'date', label: 'Dyeing Date' },
+      { key: 'shade', label: 'Shade / Color' },
+      { key: 'fabricType', label: 'Fabric Quality' },
+      { key: 'weight', label: 'Batch Wt (Kg)' },
+      { key: 'process', label: 'Process Type' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'finishing_report': {
+    title: 'Finishing Report',
+    columns: [
+      { key: 'batchNo', label: 'Batch No' },
+      { key: 'date', label: 'Finish Date' },
+      { key: 'process', label: 'Finishing Process' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'inMtrs', label: 'Input (m)' },
+      { key: 'outMtrs', label: 'Output (m)' },
+      { key: 'shrinkage', label: 'Shrinkage %' }
+    ],
+    rows: []
+  },
+  'prod_efficiency': {
+    title: 'Production Efficiency Report',
+    columns: [
+      { key: 'date', label: 'Date' },
+      { key: 'shift', label: 'Shift' },
+      { key: 'dept', label: 'Department' },
+      { key: 'looms', label: 'Active Looms' },
+      { key: 'target', label: 'Target (Mtrs)' },
+      { key: 'actual', label: 'Actual (Mtrs)' },
+      { key: 'efficiency', label: 'Avg Efficiency %' }
+    ],
+    rows: []
+  },
+  'prod_pending': {
+    title: 'Production Pending Report',
+    columns: [
+      { key: 'orderId', label: 'Order Ref' },
+      { key: 'date', label: 'Order Date' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'fabricType', label: 'Quality' },
+      { key: 'ordered', label: 'Target Qty (m)' },
+      { key: 'produced', label: 'Produced (m)' },
+      { key: 'pending', label: 'Pending Qty (m)' }
+    ],
+    rows: []
+  },
+
+  // --- 2. Yarn Reports ---
+  'yarn_purchase': {
+    title: 'Yarn Purchase Report',
+    columns: [
+      { key: 'poNo', label: 'PO No' },
+      { key: 'date', label: 'PO Date' },
+      { key: 'supplier', label: 'Supplier' },
+      { key: 'yarnType', label: 'Yarn Spec' },
+      { key: 'qty', label: 'Ordered Qty (Kg)' },
+      { key: 'rate', label: 'Rate/Kg (₹)' },
+      { key: 'total', label: 'Total Value (₹)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'yarn_inward': {
+    title: 'Yarn Inward Report',
+    columns: [
+      { key: 'inwardNo', label: 'Inward No' },
+      { key: 'date', label: 'Inward Date' },
+      { key: 'supplier', label: 'Supplier' },
+      { key: 'yarnType', label: 'Yarn Count' },
+      { key: 'bags', label: 'Bags' },
+      { key: 'netWeight', label: 'Recd Weight (Kg)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'yarn_stock': {
+    title: 'Yarn Stock Report',
+    columns: [
+      { key: 'yarnType', label: 'Yarn Type' },
+      { key: 'count', label: 'Count' },
+      { key: 'brand', label: 'Brand/Spinner' },
+      { key: 'inward', label: 'Total Inward (Kg)' },
+      { key: 'consumed', label: 'Consumed (Kg)' },
+      { key: 'balance', label: 'Stock Balance (Kg)' },
+      { key: 'val', label: 'Value (₹)' }
+    ],
+    rows: []
+  },
+  'yarn_stock_ledger': {
+    title: 'Yarn Stock Ledger',
+    columns: [
+      { key: 'date', label: 'Date' },
+      { key: 'yarnType', label: 'Yarn Count' },
+      { key: 'refNo', label: 'Ref No' },
+      { key: 'type', label: 'Transaction' },
+      { key: 'inQty', label: 'In Qty (Kg)' },
+      { key: 'outQty', label: 'Out Qty (Kg)' },
+      { key: 'balance', label: 'Closing Balance (Kg)' }
+    ],
+    rows: []
+  },
+  'yarn_req': {
+    title: 'Yarn Requirement Report',
+    columns: [
+      { key: 'orderId', label: 'Order Ref' },
+      { key: 'fabricType', label: 'Fabric Quality' },
+      { key: 'yarnType', label: 'Yarn Count' },
+      { key: 'required', label: 'Req Qty (Kg)' },
+      { key: 'allocated', label: 'Allocated (Kg)' },
+      { key: 'shortage', label: 'Shortage (Kg)' }
+    ],
+    rows: []
+  },
+  'yarn_dyeing_del': {
+    title: 'Yarn Dyeing Delivery Report',
+    columns: [
+      { key: 'dcNo', label: 'DC No' },
+      { key: 'date', label: 'Date' },
+      { key: 'dyer', label: 'Dyer Name' },
+      { key: 'yarnType', label: 'Grey Yarn Count' },
+      { key: 'shade', label: 'Required Shade' },
+      { key: 'qty', label: 'Delivery Qty (Kg)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'dyed_yarn_rcpt': {
+    title: 'Dyed Yarn Receipt Report',
+    columns: [
+      { key: 'inwardNo', label: 'Receipt No' },
+      { key: 'date', label: 'Date' },
+      { key: 'dyer', label: 'Dyer Name' },
+      { key: 'yarnType', label: 'Yarn Spec' },
+      { key: 'shade', label: 'Recd Shade' },
+      { key: 'qty', label: 'Recd Qty (Kg)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'yarn_return': {
+    title: 'Yarn Return Report',
+    columns: [
+      { key: 'returnNo', label: 'Return No' },
+      { key: 'date', label: 'Return Date' },
+      { key: 'supplier', label: 'Supplier / Party' },
+      { key: 'yarnType', label: 'Yarn Count' },
+      { key: 'qty', label: 'Returned Qty (Kg)' },
+      { key: 'reason', label: 'Return Reason' }
+    ],
+    rows: []
+  },
+  'yarn_transfer': {
+    title: 'Yarn Stock Transfer Report',
+    columns: [
+      { key: 'transferNo', label: 'Transfer No' },
+      { key: 'date', label: 'Date' },
+      { key: 'fromGodown', label: 'From Godown' },
+      { key: 'toGodown', label: 'To Godown' },
+      { key: 'yarnType', label: 'Yarn Count' },
+      { key: 'qty', label: 'Transferred Qty (Kg)' }
+    ],
+    rows: []
+  },
+
+  // --- 3. Fabric Reports ---
+  'grey_fabric_rcpt': {
+    title: 'Grey Fabric Receipt Report',
+    columns: [
+      { key: 'inwardNo', label: 'Receipt No' },
+      { key: 'date', label: 'Receipt Date' },
+      { key: 'supplier', label: 'Weaver / Unit' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'rolls', label: 'Rolls' },
+      { key: 'mtrs', label: 'Meters' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'grey_inspection': {
+    title: 'Grey Inspection Report',
+    columns: [
+      { key: 'rollNo', label: 'Roll No' },
+      { key: 'date', label: 'Inspection Date' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'inspector', label: 'Inspector' },
+      { key: 'defects', label: 'Defects Count' },
+      { key: 'grade', label: 'Grade' }
+    ],
+    rows: []
+  },
+  'fabric_dyeing': {
+    title: 'Fabric Dyeing Report',
+    columns: [
+      { key: 'batchNo', label: 'Batch No' },
+      { key: 'date', label: 'Dyeing Date' },
+      { key: 'processHouse', label: 'Process House' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'shade', label: 'Shade' },
+      { key: 'mtrs', label: 'Batch Mtrs' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'dyed_fabric_rcpt': {
+    title: 'Dyed Fabric Receipt Report',
+    columns: [
+      { key: 'receiptNo', label: 'Receipt No' },
+      { key: 'date', label: 'Date' },
+      { key: 'processHouse', label: 'Process House' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'shade', label: 'Shade' },
+      { key: 'rolls', label: 'Rolls Recd' },
+      { key: 'mtrs', label: 'Recd Mtrs' }
+    ],
+    rows: []
+  },
+  'finished_fabric': {
+    title: 'Finished Fabric Report',
+    columns: [
+      { key: 'batchNo', label: 'Batch No' },
+      { key: 'date', label: 'Inward Date' },
+      { key: 'quality', label: 'Fabric Spec' },
+      { key: 'shade', label: 'Color Shade' },
+      { key: 'mtrs', label: 'Finished Mtrs' },
+      { key: 'gradeA', label: 'Grade A %' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'final_inspection': {
+    title: 'Final Inspection Report',
+    columns: [
+      { key: 'rollNo', label: 'Roll No' },
+      { key: 'date', label: 'Date' },
+      { key: 'quality', label: 'Quality Sort' },
+      { key: 'shade', label: 'Shade' },
+      { key: 'passMtrs', label: 'Pass Mtrs' },
+      { key: 'rejectionMtrs', label: 'Rejection Mtrs' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'fabric_lot': {
+    title: 'Fabric Lot Report',
+    columns: [
+      { key: 'lotNo', label: 'Lot No' },
+      { key: 'date', label: 'Created Date' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'totalRolls', label: 'Total Rolls' },
+      { key: 'totalMtrs', label: 'Total Meters' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'bale_report': {
+    title: 'Bale Report',
+    columns: [
+      { key: 'baleNo', label: 'Bale No' },
+      { key: 'date', label: 'Packing Date' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'quality', label: 'Fabric Sort' },
+      { key: 'pcs', label: 'Pcs / Rolls' },
+      { key: 'mtrs', label: 'Net Mtrs' },
+      { key: 'weight', label: 'Gross Weight (Kg)' }
+    ],
+    rows: []
+  },
+  'packing_list': {
+    title: 'Packing Report',
+    columns: [
+      { key: 'packingNo', label: 'Packing No' },
+      { key: 'date', label: 'Date' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'rolls', label: 'Total Rolls' },
+      { key: 'netWeight', label: 'Net Weight (Kg)' },
+      { key: 'grossWeight', label: 'Gross Weight (Kg)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+
+  // --- 4. Inventory Reports ---
+  'stock_summary': {
+    title: 'Stock Summary',
+    columns: [
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Description' },
+      { key: 'category', label: 'Category' },
+      { key: 'uom', label: 'UOM' },
+      { key: 'currentQty', label: 'Stock Qty' },
+      { key: 'reorder', label: 'Reorder Level' },
+      { key: 'val', label: 'Stock Value (₹)' }
+    ],
+    rows: []
+  },
+  'stock_ledger': {
+    title: 'Stock Ledger',
+    columns: [
+      { key: 'date', label: 'Date' },
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Description' },
+      { key: 'refNo', label: 'Voucher Ref' },
+      { key: 'inQty', label: 'Inward Qty' },
+      { key: 'outQty', label: 'Outward Qty' },
+      { key: 'balance', label: 'Balance Qty' }
+    ],
+    rows: []
+  },
+  'opening_stock': {
+    title: 'Opening Stock Report',
+    columns: [
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'uom', label: 'UOM' },
+      { key: 'openingQty', label: 'Opening Qty' },
+      { key: 'rate', label: 'Rate (₹)' },
+      { key: 'openingVal', label: 'Opening Value (₹)' }
+    ],
+    rows: []
+  },
+  'closing_stock': {
+    title: 'Closing Stock Report',
+    columns: [
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'uom', label: 'UOM' },
+      { key: 'closingQty', label: 'Closing Qty' },
+      { key: 'rate', label: 'Rate (₹)' },
+      { key: 'closingVal', label: 'Closing Value (₹)' }
+    ],
+    rows: []
+  },
+  'item_movement': {
+    title: 'Item Movement Report',
+    columns: [
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Description' },
+      { key: 'fastSlow', label: 'Movement Type' },
+      { key: 'totalIn', label: 'Total In' },
+      { key: 'totalOut', label: 'Total Out' },
+      { key: 'currentStock', label: 'Current Stock' }
+    ],
+    rows: []
+  },
+  'warehouse_stock': {
+    title: 'Warehouse Stock Report',
+    columns: [
+      { key: 'warehouse', label: 'Warehouse Location' },
+      { key: 'itemName', label: 'Item Name' },
+      { key: 'rackNo', label: 'Rack No' },
+      { key: 'binNo', label: 'Bin / Box Ref' },
+      { key: 'available', label: 'Avail Qty' },
+      { key: 'reserved', label: 'Reserved' },
+      { key: 'total', label: 'Total Stock' }
+    ],
+    rows: []
+  },
+  'lotwise_stock': {
+    title: 'Lot-wise Stock Report',
+    columns: [
+      { key: 'lotNo', label: 'Lot No' },
+      { key: 'itemName', label: 'Item Spec' },
+      { key: 'godown', label: 'Godown' },
+      { key: 'recdDate', label: 'Receipt Date' },
+      { key: 'qty', label: 'Stock Qty' },
+      { key: 'uom', label: 'UOM' }
+    ],
+    rows: []
+  },
+  'inv_aging': {
+    title: 'Ageing Report',
+    columns: [
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Name' },
+      { key: 'category', label: 'Category' },
+      { key: 'age0_30', label: '0-30 Days' },
+      { key: 'age31_90', label: '31-90 Days' },
+      { key: 'age91_180', label: '91-180 Days' },
+      { key: 'age180plus', label: '> 180 Days' }
+    ],
+    rows: []
+  },
+  'surplus_stock': {
+    title: 'Surplus Stock Report',
+    columns: [
+      { key: 'itemCode', label: 'Item Code' },
+      { key: 'itemName', label: 'Item Description' },
+      { key: 'category', label: 'Category' },
+      { key: 'currentQty', label: 'Stock Qty' },
+      { key: 'maxLevel', label: 'Max Stock Limit' },
+      { key: 'surplusQty', label: 'Surplus Qty' }
+    ],
+    rows: []
+  },
+
+  // --- 5. Order Reports ---
   'buyer_order': {
-    title: 'Buyer Order Report',
+    title: 'Buyer Order Register',
     columns: [
       { key: 'orderId', label: 'Order ID' },
       { key: 'date', label: 'Order Date' },
@@ -39,8 +495,223 @@ const MOCK_REPORTS_DATA = {
     ],
     rows: []
   },
+  'order_status': {
+    title: 'Buyer Order Status',
+    columns: [
+      { key: 'orderId', label: 'Order ID' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'fabricType', label: 'Quality' },
+      { key: 'orderQty', label: 'Ordered Qty (m)' },
+      { key: 'produced', label: 'Produced (m)' },
+      { key: 'dispatched', label: 'Dispatched (m)' },
+      { key: 'status', label: 'Stage' }
+    ],
+    rows: []
+  },
+  'pending_orders': {
+    title: 'Pending Orders',
+    columns: [
+      { key: 'orderId', label: 'Order ID' },
+      { key: 'date', label: 'Date' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'ordered', label: 'Ordered Qty (m)' },
+      { key: 'dispatched', label: 'Dispatched (m)' },
+      { key: 'balance', label: 'Balance Qty (m)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'completed_orders': {
+    title: 'Completed Orders',
+    columns: [
+      { key: 'orderId', label: 'Order ID' },
+      { key: 'date', label: 'Completion Date' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'fabricType', label: 'Fabric Quality' },
+      { key: 'totalQty', label: 'Total Qty (m)' },
+      { key: 'grandTotal', label: 'Invoice Amt (₹)' }
+    ],
+    rows: []
+  },
+  'buyerwise_order': {
+    title: 'Buyer-wise Order Report',
+    columns: [
+      { key: 'customer', label: 'Customer / Buyer Name' },
+      { key: 'totalOrders', label: 'Total Orders' },
+      { key: 'totalMtrs', label: 'Total Ordered (m)' },
+      { key: 'delivMtrs', label: 'Delivered (m)' },
+      { key: 'totalVal', label: 'Total Order Val (₹)' }
+    ],
+    rows: []
+  },
+  'order_schedule': {
+    title: 'Order Schedule Report',
+    columns: [
+      { key: 'orderId', label: 'Order ID' },
+      { key: 'customer', label: 'Customer' },
+      { key: 'fabricType', label: 'Quality' },
+      { key: 'targetDate', label: 'Target Delivery' },
+      { key: 'scheduledMtrs', label: 'Scheduled Qty (m)' },
+      { key: 'status', label: 'Schedule Status' }
+    ],
+    rows: []
+  },
+
+  // --- 6. Purchase Reports ---
+  'po_register': {
+    title: 'Purchase Order Register',
+    columns: [
+      { key: 'poNo', label: 'PO No' },
+      { key: 'date', label: 'PO Date' },
+      { key: 'supplier', label: 'Supplier / Vendor' },
+      { key: 'itemDesc', label: 'Item Spec' },
+      { key: 'qty', label: 'Ordered Qty' },
+      { key: 'amount', label: 'PO Value (₹)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'pending_po': {
+    title: 'Pending Purchase Orders',
+    columns: [
+      { key: 'poNo', label: 'PO No' },
+      { key: 'date', label: 'PO Date' },
+      { key: 'supplier', label: 'Supplier' },
+      { key: 'ordered', label: 'Ordered Qty' },
+      { key: 'received', label: 'Received Qty' },
+      { key: 'balance', label: 'Balance Pending' }
+    ],
+    rows: []
+  },
+  'completed_po': {
+    title: 'Completed Purchase Orders',
+    columns: [
+      { key: 'poNo', label: 'PO No' },
+      { key: 'date', label: 'Date' },
+      { key: 'supplier', label: 'Supplier' },
+      { key: 'itemDesc', label: 'Item Spec' },
+      { key: 'recdQty', label: 'Fulfilled Qty' },
+      { key: 'totalVal', label: 'Bill Amount (₹)' }
+    ],
+    rows: []
+  },
+  'supplierwise_purchase': {
+    title: 'Supplier-wise Purchase',
+    columns: [
+      { key: 'supplier', label: 'Supplier Name' },
+      { key: 'totalPOs', label: 'Total POs' },
+      { key: 'totalWeight', label: 'Total Weight (Kg)' },
+      { key: 'totalAmount', label: 'Total Billed (₹)' },
+      { key: 'status', label: 'Vendor Rating' }
+    ],
+    rows: []
+  },
+  'purchase_bill': {
+    title: 'Purchase Bill Report',
+    columns: [
+      { key: 'billNo', label: 'Bill / Inw No' },
+      { key: 'date', label: 'Bill Date' },
+      { key: 'supplier', label: 'Supplier' },
+      { key: 'taxable', label: 'Taxable Amt (₹)' },
+      { key: 'gst', label: 'GST Amt (₹)' },
+      { key: 'total', label: 'Bill Total (₹)' }
+    ],
+    rows: []
+  },
+
+  // --- 7. Job Work Reports ---
+  'jw_yarn_dyeing': {
+    title: 'Yarn Dyeing Status',
+    columns: [
+      { key: 'batchNo', label: 'JW Batch No' },
+      { key: 'date', label: 'Issue Date' },
+      { key: 'jobWorker', label: 'Job Worker' },
+      { key: 'shade', label: 'Shade / Color' },
+      { key: 'issuedQty', label: 'Issued (Kg)' },
+      { key: 'recdQty', label: 'Recd (Kg)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'jw_warping': {
+    title: 'Warping Status',
+    columns: [
+      { key: 'setNo', label: 'Warp Set No' },
+      { key: 'date', label: 'Date' },
+      { key: 'unit', label: 'Jobwork Unit' },
+      { key: 'ends', label: 'Total Ends' },
+      { key: 'beams', label: 'Beams Prepared' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'jw_sizing': {
+    title: 'Sizing Status',
+    columns: [
+      { key: 'setNo', label: 'Sizing Set No' },
+      { key: 'date', label: 'Date' },
+      { key: 'unit', label: 'Sizing Unit' },
+      { key: 'pickup', label: 'Size Pickup %' },
+      { key: 'mtrs', label: 'Sized Meters' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'jw_weaving': {
+    title: 'Weaving Status',
+    columns: [
+      { key: 'contractNo', label: 'Weaving Contract' },
+      { key: 'date', label: 'Date' },
+      { key: 'weaver', label: 'Outside Weaver' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'target', label: 'Target (m)' },
+      { key: 'received', label: 'Recd (m)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'jw_fabric_dyeing': {
+    title: 'Fabric Dyeing Status',
+    columns: [
+      { key: 'batchNo', label: 'Dyeing Batch No' },
+      { key: 'date', label: 'Send Date' },
+      { key: 'processHouse', label: 'Process House' },
+      { key: 'shade', label: 'Color Shade' },
+      { key: 'sentMtrs', label: 'Grey Sent (m)' },
+      { key: 'recdMtrs', label: 'Dyed Recd (m)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'jw_finishing': {
+    title: 'Finishing Status',
+    columns: [
+      { key: 'batchNo', label: 'Finish Lot No' },
+      { key: 'date', label: 'Date' },
+      { key: 'unit', label: 'Finishing Unit' },
+      { key: 'process', label: 'Process' },
+      { key: 'inputMtrs', label: 'Input (m)' },
+      { key: 'outputMtrs', label: 'Output (m)' },
+      { key: 'status', label: 'Status' }
+    ],
+    rows: []
+  },
+  'jw_pending': {
+    title: 'Job Work Pending Report',
+    columns: [
+      { key: 'dcNo', label: 'Outward DC No' },
+      { key: 'date', label: 'Issue Date' },
+      { key: 'jobWorker', label: 'Job Worker Name' },
+      { key: 'process', label: 'Process Type' },
+      { key: 'issuedQty', label: 'Issued Qty' },
+      { key: 'pendingQty', label: 'Pending Recpt Qty' }
+    ],
+    rows: []
+  },
+
+  // --- 8. Sales & Dispatch Reports ---
   'invoice': {
-    title: 'Invoice Report',
+    title: 'Sales Invoice Register',
     columns: [
       { key: 'invoiceNo', label: 'Invoice No' },
       { key: 'date', label: 'Invoice Date' },
@@ -66,184 +737,105 @@ const MOCK_REPORTS_DATA = {
     ],
     rows: []
   },
-  'packing_list': {
-    title: 'Packing List Report',
+  'goods_release': {
+    title: 'Goods Release Report',
     columns: [
-      { key: 'packingNo', label: 'Packing No' },
-      { key: 'date', label: 'Date' },
+      { key: 'graNo', label: 'GRA No' },
+      { key: 'date', label: 'GRA Date' },
       { key: 'customer', label: 'Customer' },
-      { key: 'rolls', label: 'Total Rolls' },
-      { key: 'netWeight', label: 'Net Weight (Kg)' },
-      { key: 'grossWeight', label: 'Gross Weight (Kg)' },
+      { key: 'fabricType', label: 'Quality' },
+      { key: 'approvedQty', label: 'Released (m)' },
       { key: 'status', label: 'Status' }
     ],
     rows: []
   },
-  'pending_orders': {
-    title: 'Pending Orders Report',
+  'eway_bill': {
+    title: 'E-Way Bill Report',
     columns: [
-      { key: 'orderId', label: 'Order ID' },
-      { key: 'date', label: 'Date' },
+      { key: 'ewayNo', label: 'E-Way Bill No' },
+      { key: 'date', label: 'Generated Date' },
+      { key: 'invoiceNo', label: 'Invoice Ref' },
       { key: 'customer', label: 'Customer' },
-      { key: 'ordered', label: 'Ordered Qty (m)' },
-      { key: 'dispatched', label: 'Dispatched (m)' },
-      { key: 'balance', label: 'Balance Qty (m)' },
-      { key: 'status', label: 'Status' }
+      { key: 'transporter', label: 'Transporter' },
+      { key: 'validUpto', label: 'Valid Upto' }
+    ],
+    rows: []
+  },
+  'customerwise_sales': {
+    title: 'Customer-wise Sales',
+    columns: [
+      { key: 'customer', label: 'Customer Name' },
+      { key: 'gstin', label: 'GSTIN' },
+      { key: 'totalInvoices', label: 'Total Invoices' },
+      { key: 'totalMtrs', label: 'Total Sold (m)' },
+      { key: 'totalSales', label: 'Total Sales Value (₹)' }
     ],
     rows: []
   },
 
-  // --- B. Production Reports ---
-  'loom_production': {
-    title: 'Loom Production Report',
+  // --- 9. Quality Reports ---
+  'q_grey_inspection': {
+    title: 'Grey Inspection Report',
     columns: [
-      { key: 'loomNo', label: 'Loom No' },
-      { key: 'date', label: 'Date' },
-      { key: 'supervisor', label: 'Supervisor' },
+      { key: 'rollNo', label: 'Roll No' },
+      { key: 'date', label: 'Inspection Date' },
       { key: 'quality', label: 'Quality Sort' },
-      { key: 'target', label: 'Target (Mtrs)' },
-      { key: 'actual', label: 'Actual (Mtrs)' },
-      { key: 'efficiency', label: 'Efficiency %' }
+      { key: 'inspector', label: 'Inspector' },
+      { key: 'defects', label: 'Defects / 100m' },
+      { key: 'grade', label: 'Assigned Grade' }
     ],
     rows: []
   },
-  'warping_status': {
-    title: 'Warping Status Report',
+  'q_final_inspection': {
+    title: 'Final Inspection Report',
     columns: [
-      { key: 'setNo', label: 'Set No' },
-      { key: 'beamNo', label: 'Beam No' },
-      { key: 'date', label: 'Warping Date' },
-      { key: 'yarnLot', label: 'Yarn Lot Ref' },
-      { key: 'ends', label: 'Total Ends' },
-      { key: 'speed', label: 'Speed (m/min)' },
-      { key: 'status', label: 'Status' }
-    ],
-    rows: []
-  },
-  'dyeing_status': {
-    title: 'Dyeing Status Report',
-    columns: [
-      { key: 'batchNo', label: 'Batch No' },
-      { key: 'date', label: 'Dyeing Date' },
-      { key: 'shade', label: 'Shade / Color' },
-      { key: 'fabricType', label: 'Fabric Quality' },
-      { key: 'weight', label: 'Batch Wt (Kg)' },
-      { key: 'process', label: 'Process Type' },
-      { key: 'status', label: 'Status' }
-    ],
-    rows: []
-  },
-  'prod_efficiency': {
-    title: 'Production Efficiency Report',
-    columns: [
+      { key: 'rollNo', label: 'Roll No' },
       { key: 'date', label: 'Date' },
-      { key: 'shift', label: 'Shift' },
-      { key: 'dept', label: 'Department' },
-      { key: 'looms', label: 'Active Looms' },
-      { key: 'target', label: 'Target (Mtrs)' },
-      { key: 'actual', label: 'Actual (Mtrs)' },
-      { key: 'efficiency', label: 'Avg Efficiency %' }
-    ],
-    rows: []
-  },
-
-  // --- C. Yarn Reports ---
-  'yarn_stock': {
-    title: 'Yarn Stock Report',
-    columns: [
-      { key: 'yarnType', label: 'Yarn Type' },
-      { key: 'count', label: 'Count' },
-      { key: 'brand', label: 'Brand/Spinner' },
-      { key: 'inward', label: 'Total Inward (Kg)' },
-      { key: 'consumed', label: 'Consumed (Kg)' },
-      { key: 'balance', label: 'Stock Balance (Kg)' },
-      { key: 'val', label: 'Value (₹)' }
-    ],
-    rows: []
-  },
-  'yarn_consumption': {
-    title: 'Yarn Consumption Report',
-    columns: [
-      { key: 'date', label: 'Date' },
-      { key: 'loomNo', label: 'Loom No' },
-      { key: 'warpLot', label: 'Warp Lot Ref' },
-      { key: 'weftLot', label: 'Weft Lot Ref' },
-      { key: 'consumed', label: 'Yarn Consumed (Kg)' },
-      { key: 'waste', label: 'Waste Generated (Kg)' }
-    ],
-    rows: []
-  },
-  'yarn_purchase': {
-    title: 'Yarn Purchase Report',
-    columns: [
-      { key: 'poNo', label: 'PO No' },
-      { key: 'date', label: 'PO Date' },
-      { key: 'supplier', label: 'Supplier' },
-      { key: 'yarnType', label: 'Yarn Spec' },
-      { key: 'qty', label: 'Ordered Qty (Kg)' },
-      { key: 'rate', label: 'Rate/Kg (₹)' },
-      { key: 'total', label: 'Total Value (₹)' },
-      { key: 'status', label: 'Status' }
-    ],
-    rows: []
-  },
-  'yarn_delivery': {
-    title: 'Yarn Delivery Challan',
-    columns: [
-      { key: 'challanNo', label: 'Challan No' },
-      { key: 'date', label: 'Delivery Date' },
-      { key: 'supplier', label: 'Supplier' },
-      { key: 'yarnType', label: 'Yarn Spec' },
-      { key: 'vehicleNo', label: 'Vehicle No' },
-      { key: 'netQty', label: 'Net Weight (Kg)' },
-      { key: 'status', label: 'Status' }
-    ],
-    rows: []
-  },
-
-  // --- D. Fabric Reports ---
-  'cloth_inward': {
-    title: 'Cloth Inward Report',
-    columns: [
-      { key: 'inwardNo', label: 'Inward No' },
-      { key: 'date', label: 'Inward Date' },
-      { key: 'loomNo', label: 'Loom Ref' },
-      { key: 'quality', label: 'Grey Fabric Quality' },
-      { key: 'rolls', label: 'Rolls Recd' },
-      { key: 'mtrs', label: 'Total Meters' },
-      { key: 'status', label: 'Status' }
-    ],
-    rows: []
-  },
-  'cloth_delivery': {
-    title: 'Cloth Delivery (Grey Challan)',
-    columns: [
-      { key: 'challanNo', label: 'Challan No' },
-      { key: 'date', label: 'Challan Date' },
-      { key: 'buyer', label: 'Process House / Buyer' },
       { key: 'quality', label: 'Fabric Quality' },
-      { key: 'rolls', label: 'Rolls Deliv.' },
-      { key: 'mtrs', label: 'Total Mtrs' },
-      { key: 'gatePass', label: 'Gate Pass No' }
+      { key: 'shade', label: 'Shade' },
+      { key: 'width', label: 'Width (inch)' },
+      { key: 'gsm', label: 'GSM' },
+      { key: 'grade', label: 'Final Grade' }
     ],
     rows: []
   },
-  'finished_fabric': {
-    title: 'Finished Fabric Inward',
+  'rejected_fabric': {
+    title: 'Rejected Fabric Report',
     columns: [
-      { key: 'batchNo', label: 'Batch No' },
-      { key: 'date', label: 'Inward Date' },
-      { key: 'quality', label: 'Fabric Spec' },
-      { key: 'shade', label: 'Color Shade' },
-      { key: 'mtrs', label: 'Finished Mtrs' },
-      { key: 'gradeA', label: 'Grade A %' },
-      { key: 'gradeB', label: 'Grade B %' },
-      { key: 'status', label: 'Status' }
+      { key: 'rollNo', label: 'Roll / Piece No' },
+      { key: 'date', label: 'Date' },
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'mtrs', label: 'Rejected Mtrs' },
+      { key: 'reason', label: 'Rejection Reason' },
+      { key: 'action', label: 'Corrective Action' }
     ],
     rows: []
   },
-  'grey_fabric': {
-    title: 'Grey Fabric Roll Stock',
+  'quality_summary': {
+    title: 'Quality Summary',
+    columns: [
+      { key: 'month', label: 'Month' },
+      { key: 'totalInspected', label: 'Total Inspected (m)' },
+      { key: 'gradeAPercent', label: 'Grade A %' },
+      { key: 'gradeBPercent', label: 'Grade B %' },
+      { key: 'rejectionPercent', label: 'Rejection %' }
+    ],
+    rows: []
+  },
+  'fabric_stock_movement': {
+    title: 'Cloth Reports (Fabric Stock & Movement)',
+    columns: [
+      { key: 'quality', label: 'Fabric Quality' },
+      { key: 'openingStock', label: 'Opening Stock (Mtrs)' },
+      { key: 'inwardMtrs', label: 'Inward (Mtrs)' },
+      { key: 'outwardMtrs', label: 'Outward (Mtrs)' },
+      { key: 'closingStock', label: 'Closing Stock (Mtrs)' },
+      { key: 'val', label: 'Valuation (₹)' }
+    ],
+    rows: []
+  },
+  'grey_fabric_reports': {
+    title: 'Grey Cloth Reports (Grey Fabric Reports)',
     columns: [
       { key: 'rollNo', label: 'Roll No' },
       { key: 'date', label: 'Date Woven' },
@@ -251,113 +843,20 @@ const MOCK_REPORTS_DATA = {
       { key: 'width', label: 'Width (inch)' },
       { key: 'mtrs', label: 'Meters' },
       { key: 'wt', label: 'Weight (Kg)' },
-      { key: 'grade', label: 'Grade' }
-    ],
-    rows: []
-  },
-
-  // --- E. Accounts Reports ---
-  'debtors': {
-    title: 'Debtors Outstanding Report',
-    columns: [
-      { key: 'customer', label: 'Buyer Name' },
-      { key: 'billed', label: 'Total Billed (₹)' },
-      { key: 'paid', label: 'Total Received (₹)' },
-      { key: 'balance', label: 'Balance Outstanding (₹)' },
-      { key: 'lastPayment', label: 'Last Recd Date' },
-      { key: 'overdue', label: 'Overdue (Days)' },
+      { key: 'grade', label: 'Grade' },
       { key: 'status', label: 'Status' }
     ],
     rows: []
   },
-  'creditors': {
-    title: 'Creditors Outstanding Report',
+  'yarn_stock_movement': {
+    title: 'Yarn Reports (Yarn Stock & Movement)',
     columns: [
-      { key: 'supplier', label: 'Vendor Name' },
-      { key: 'purchases', label: 'Total Purchases (₹)' },
-      { key: 'paid', label: 'Total Paid (₹)' },
-      { key: 'balance', label: 'Balance Owed (₹)' },
-      { key: 'nextDue', label: 'Next Due Date' },
-      { key: 'overdue', label: 'Overdue (Days)' },
-      { key: 'status', label: 'Status' }
-    ],
-    rows: []
-  },
-  'gst_summary': {
-    title: 'GST Return Summary (3B/1)',
-    columns: [
-      { key: 'month', label: 'Month' },
-      { key: 'outwardGst', label: 'Outward GST (18%) (₹)' },
-      { key: 'inwardGst', label: 'ITC Claimed (18%) (₹)' },
-      { key: 'payable', label: 'Net Tax Payable (₹)' },
-      { key: 'paid', label: 'Tax Paid (Challan) (₹)' },
-      { key: 'filedDate', label: 'Date of Filing' }
-    ],
-    rows: []
-  },
-  'profit_loss': {
-    title: 'Profit & Loss Statement (MIS)',
-    columns: [
-      { key: 'quarter', label: 'Quarter' },
-      { key: 'revenue', label: 'Revenue (₹)' },
-      { key: 'directExp', label: 'Direct Expenses (₹)' },
-      { key: 'indirectExp', label: 'Indirect Expenses (₹)' },
-      { key: 'grossProfit', label: 'Gross Profit (₹)' },
-      { key: 'netProfit', label: 'Net Profit (₹)' }
-    ],
-    rows: []
-  },
-
-  // --- F. Inventory Reports ---
-  'stock_summary': {
-    title: 'Store Stock Summary',
-    columns: [
-      { key: 'itemCode', label: 'Item Code' },
-      { key: 'itemName', label: 'Item Description' },
-      { key: 'category', label: 'Category' },
-      { key: 'uom', label: 'UOM' },
-      { key: 'currentQty', label: 'Stock Qty' },
-      { key: 'reorder', label: 'Reorder Level' },
-      { key: 'val', label: 'Stock Value (₹)' }
-    ],
-    rows: []
-  },
-  'material_consumption': {
-    title: 'Material Consumption Log',
-    columns: [
-      { key: 'date', label: 'Date Issued' },
-      { key: 'slipNo', label: 'Req Slip No' },
-      { key: 'dept', label: 'Department' },
-      { key: 'user', label: 'Issued To' },
-      { key: 'itemName', label: 'Material Description' },
-      { key: 'qty', label: 'Qty Consumed' },
-      { key: 'uom', label: 'UOM' }
-    ],
-    rows: []
-  },
-  'inv_aging': {
-    title: 'Inventory Aging Report',
-    columns: [
-      { key: 'itemCode', label: 'Item Code' },
-      { key: 'itemName', label: 'Item Name' },
-      { key: 'category', label: 'Category' },
-      { key: 'age0_30', label: '0-30 Days' },
-      { key: 'age31_90', label: '31-90 Days' },
-      { key: 'age91_180', label: '91-180 Days' },
-      { key: 'age180plus', label: '> 180 Days' }
-    ],
-    rows: []
-  },
-  'warehouse_stock': {
-    title: 'Warehouse Bin Stock Location',
-    columns: [
-      { key: 'warehouse', label: 'Warehouse Location' },
-      { key: 'itemName', label: 'Item Name' },
-      { key: 'rackNo', label: 'Rack No' },
-      { key: 'binNo', label: 'Bin / Box Ref' },
-      { key: 'available', label: 'Avail Qty' },
-      { key: 'reserved', label: 'Reserved' },
-      { key: 'total', label: 'Total Stock' }
+      { key: 'yarnType', label: 'Yarn Specification' },
+      { key: 'openingStock', label: 'Opening Stock (Kg)' },
+      { key: 'inwardQty', label: 'Inward (Kg)' },
+      { key: 'outwardQty', label: 'Outward (Kg)' },
+      { key: 'closingStock', label: 'Closing Stock (Kg)' },
+      { key: 'val', label: 'Valuation (₹)' }
     ],
     rows: []
   }
@@ -372,12 +871,16 @@ const REPORT_CATEGORIES = [
     name: 'Production Reports',
     icon: Factory,
     color: '#10b981',
-    count: 4,
+    count: 8,
     reports: [
-      { id: 'loom_production', name: 'Loom Production' },
-      { id: 'warping_status', name: 'Warping Status' },
-      { id: 'dyeing_status', name: 'Dyeing Status' },
-      { id: 'prod_efficiency', name: 'Production Efficiency' }
+      { id: 'loom_production', name: 'Loom Production Report' },
+      { id: 'warping_status', name: 'Warping Report' },
+      { id: 'sizing_status', name: 'Sizing Report' },
+      { id: 'weaving_report', name: 'Weaving Report' },
+      { id: 'dyeing_status', name: 'Dyeing Production Report' },
+      { id: 'finishing_report', name: 'Finishing Report' },
+      { id: 'prod_efficiency', name: 'Production Efficiency Report' },
+      { id: 'prod_pending', name: 'Production Pending Report' }
     ]
   },
   {
@@ -385,25 +888,41 @@ const REPORT_CATEGORIES = [
     name: 'Yarn Reports',
     icon: Layers,
     color: '#8b5cf6',
-    count: 4,
+    count: 9,
     reports: [
-      { id: 'yarn_stock', name: 'Yarn Stock' },
-      { id: 'yarn_consumption', name: 'Yarn Consumption' },
-      { id: 'yarn_purchase', name: 'Yarn Purchase Order' },
-      { id: 'yarn_delivery', name: 'Yarn Delivery Challan' }
+      { id: 'yarn_purchase', name: 'Yarn Purchase Report' },
+      { id: 'yarn_inward', name: 'Yarn Inward Report' },
+      { id: 'yarn_stock', name: 'Yarn Stock Report' },
+      { id: 'yarn_stock_ledger', name: 'Yarn Stock Ledger' },
+      { id: 'yarn_req', name: 'Yarn Requirement Report' },
+      { id: 'yarn_dyeing_del', name: 'Yarn Dyeing Delivery Report' },
+      { id: 'dyed_yarn_rcpt', name: 'Dyed Yarn Receipt Report' },
+      { id: 'yarn_return', name: 'Yarn Return Report' },
+      { id: 'yarn_transfer', name: 'Yarn Stock Transfer Report' }
     ]
   },
-  {
+    {
     id: 'fabric',
     name: 'Fabric Reports',
     icon: Scissors,
     color: '#f59e0b',
-    count: 4,
+    count: 15,
     reports: [
-      { id: 'cloth_inward', name: 'Cloth Inward' },
-      { id: 'cloth_delivery', name: 'Cloth Delivery' },
-      { id: 'finished_fabric', name: 'Finished Fabric' },
-      { id: 'grey_fabric', name: 'Grey Fabric Stock' }
+      { id: 'grey_fabric_rcpt', name: 'Grey Fabric Receipt Report' },
+      { id: 'grey_fabric_inward', name: 'Grey Fabric Inward Report' },
+      { id: 'vendor_inward', name: 'Vendor Inward Report' },
+      { id: 'grey_inspection', name: 'Grey Inspection Report' },
+      { id: 'cloth_checking', name: 'Cloth Checking Report' },
+      { id: 'fabric_dyeing', name: 'Fabric Dyeing Report' },
+      { id: 'dyed_fabric_rcpt', name: 'Dyed Fabric Receipt Report' },
+      { id: 'finished_fabric', name: 'Finished Fabric Report' },
+      { id: 'final_inspection', name: 'Final Inspection Report' },
+      { id: 'fabric_lot', name: 'Fabric Lot Report' },
+      { id: 'bale_report', name: 'Bale Report' },
+      { id: 'fabric_stock', name: 'Fabric Stock Report' },
+      { id: 'fabric_movement', name: 'Fabric Movement Report' },
+      { id: 'rejection_report', name: 'Rejection Report' },
+      { id: 'packing_list', name: 'Packing Report' }
     ]
   },
   {
@@ -411,12 +930,89 @@ const REPORT_CATEGORIES = [
     name: 'Inventory Reports',
     icon: Box,
     color: '#06b6d4',
+    count: 9,
+    reports: [
+      { id: 'stock_summary', name: 'Stock Summary' },
+      { id: 'stock_ledger', name: 'Stock Ledger' },
+      { id: 'opening_stock', name: 'Opening Stock Report' },
+      { id: 'closing_stock', name: 'Closing Stock Report' },
+      { id: 'item_movement', name: 'Item Movement Report' },
+      { id: 'warehouse_stock', name: 'Warehouse Stock Report' },
+      { id: 'lotwise_stock', name: 'Lot-wise Stock Report' },
+      { id: 'inv_aging', name: 'Ageing Report' },
+      { id: 'surplus_stock', name: 'Surplus Stock Report' }
+    ]
+  },
+  {
+    id: 'order',
+    name: 'Order Reports',
+    icon: ShoppingCart,
+    color: '#6366f1',
+    count: 6,
+    reports: [
+      { id: 'buyer_order', name: 'Buyer Order Register' },
+      { id: 'order_status', name: 'Buyer Order Status' },
+      { id: 'pending_orders', name: 'Pending Orders' },
+      { id: 'completed_orders', name: 'Completed Orders' },
+      { id: 'buyerwise_order', name: 'Buyer-wise Order Report' },
+      { id: 'order_schedule', name: 'Order Schedule Report' }
+    ]
+  },
+  {
+    id: 'purchase',
+    name: 'Purchase Reports',
+    icon: ClipboardList,
+    color: '#ec4899',
+    count: 5,
+    reports: [
+      { id: 'po_register', name: 'Purchase Order Register' },
+      { id: 'pending_po', name: 'Pending Purchase Orders' },
+      { id: 'completed_po', name: 'Completed Purchase Orders' },
+      { id: 'supplierwise_purchase', name: 'Supplier-wise Purchase' },
+      { id: 'purchase_bill', name: 'Purchase Bill Report' }
+    ]
+  },
+  {
+    id: 'job_work',
+    name: 'Job Work Reports',
+    icon: ArrowRightLeft,
+    color: '#14b8a6',
+    count: 7,
+    reports: [
+      { id: 'jw_yarn_dyeing', name: 'Yarn Dyeing Status' },
+      { id: 'jw_warping', name: 'Warping Status' },
+      { id: 'jw_sizing', name: 'Sizing Status' },
+      { id: 'jw_weaving', name: 'Weaving Status' },
+      { id: 'jw_fabric_dyeing', name: 'Fabric Dyeing Status' },
+      { id: 'jw_finishing', name: 'Finishing Status' },
+      { id: 'jw_pending', name: 'Job Work Pending Report' }
+    ]
+  },
+  {
+    id: 'sales',
+    name: 'Sales & Dispatch Reports',
+    icon: Truck,
+    color: '#3b82f6',
+    count: 5,
+    reports: [
+      { id: 'invoice', name: 'Sales Invoice Register' },
+      { id: 'dispatch', name: 'Dispatch Report' },
+      { id: 'goods_release', name: 'Goods Release Report' },
+      { id: 'eway_bill', name: 'E-Way Bill Report' },
+      { id: 'customerwise_sales', name: 'Customer-wise Sales' }
+    ]
+  },
+  {
+    id: 'quality',
+    name: 'Quality Reports',
+    icon: CheckSquare,
+    color: '#eab308',
     count: 4,
     reports: [
-      { id: 'stock_summary', name: 'Store Stock Summary' },
-      { id: 'material_consumption', name: 'Material Consumption' },
-      { id: 'inv_aging', name: 'Inventory Aging' },
-      { id: 'warehouse_stock', name: 'Warehouse Location' }
+      { id: 'q_grey_inspection', name: 'Grey Inspection Report' },
+      { id: 'q_final_inspection', name: 'Final Inspection Report' },
+      { id: 'rejected_fabric', name: 'Rejected Fabric Report' },
+      { id: 'quality_summary', name: 'Quality Summary' }
     ]
   }
 ];
@@ -529,7 +1125,27 @@ export default function ReportsDashboard() {
 
   // Dynamic Report Selection
   const reportObj = useMemo(() => {
-    return reportsData[activeReportId] || reportsData['loom_production'];
+    const base = reportsData[activeReportId] || {};
+    const title = base.title || activeReportId
+      .replace(/_q$/, '')
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+      
+    const columns = base.columns || [
+      { key: 'date', label: 'Date' },
+      { key: 'refNo', label: 'Reference No' },
+      { key: 'party', label: 'Party / Vendor' },
+      { key: 'quality', label: 'Quality / Fabric' },
+      { key: 'qty', label: 'Qty' },
+      { key: 'status', label: 'Status' }
+    ];
+    
+    return {
+      title,
+      columns,
+      rows: base.rows || []
+    };
   }, [activeReportId, reportsData]);
 
   useEffect(() => {
@@ -538,6 +1154,75 @@ export default function ReportsDashboard() {
         let newRows = [];
         let fetched = false;
 
+        if (activeReportId === 'grey_fabric_rcpt' || activeReportId === 'grey_fabric_inward' || activeReportId === 'vendor_inward') {
+          const res = await clothInwardAPI.list();
+          newRows = (res.data || []).map(c => ({
+            inwardNo: c.ref_no || c.inward_no || 'INW-01',
+            date: c.inw_date ? new Date(c.inw_date).toLocaleDateString('en-IN') : '-',
+            supplier: c.received_from || c.weaver_name || 'In-House Weaving',
+            loomNo: c.loom_no || '-',
+            vendor: c.received_from || '-',
+            chNo: c.bill_no || c.challan_no || '-',
+            quality: c.const_fabric_type || c.design_no || 'Quality Cotton',
+            rolls: c.total_pieces || 1,
+            mtrs: Number(c.total_meters) || 0,
+            status: c.status || 'Received'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'grey_inspection' || activeReportId === 'cloth_checking' || activeReportId === 'rejection_report') {
+          const res = await onTableCheckingAPI.list();
+          newRows = (res.data || []).map(a => ({
+            rollNo: a.ref_no || 'ROLL-01',
+            date: a.checking_date ? new Date(a.checking_date).toLocaleDateString('en-IN') : '-',
+            quality: a.design_no || 'Cotton Sort',
+            inspector: a.checker_name || 'QC Inspector',
+            checker: a.checker_name || 'QC Inspector',
+            defects: a.total_faults || 0,
+            faults: a.total_faults || 0,
+            totalMtrs: a.total_meters || 100,
+            rejectionMtrs: a.rejected_meters || 0,
+            reason: a.defect_type || 'Warp Breakage',
+            party: a.weaver_name || 'Self Unit',
+            grade: a.grade || 'Grade A'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'fabric_dyeing' || activeReportId === 'dyed_fabric_rcpt') {
+          const res = await finishedFabricAPI.list();
+          newRows = (res.data || []).map(f => ({
+            batchNo: f.inward_no || f.batch_no || 'DY-BATCH-01',
+            receiptNo: f.inward_no || 'RCPT-01',
+            date: f.inward_date ? new Date(f.inward_date).toLocaleDateString('en-IN') : '-',
+            processHouse: f.party_name || 'Dinesh Dyeing Unit',
+            quality: f.quality || 'Dyed Cotton',
+            shade: f.shade || 'Navy Blue',
+            rolls: f.total_rolls || 1,
+            mtrs: f.total_qty || 0,
+            status: f.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'fabric_stock' || activeReportId === 'fabric_movement' || activeReportId === 'fabric_lot') {
+          const res = await clothInwardAPI.list();
+          newRows = (res.data || []).map(c => ({
+            lotNo: c.ref_no || 'LOT-101',
+            date: c.inw_date ? new Date(c.inw_date).toLocaleDateString('en-IN') : '-',
+            quality: c.const_fabric_type || 'Cotton Combed 40s',
+            designNo: c.design_no || 'DES-001',
+            godown: 'Main Fabric Warehouse',
+            totalRolls: c.total_pieces || 1,
+            totalMtrs: Number(c.total_meters) || 0,
+            refNo: c.ref_no || 'REF-01',
+            type: 'Inward Transfer',
+            inMtrs: Number(c.total_meters) || 0,
+            outMtrs: 0,
+            balance: Number(c.total_meters) || 0,
+            val: (Number(c.total_meters) || 0) * 120,
+            status: c.status || 'Available'
+          }));
+          fetched = true;
+        }
         if (activeReportId === 'buyer_order') {
           const res = await buyerOrderAPI.list();
           newRows = (res.data || []).map(b => ({
@@ -873,6 +1558,339 @@ export default function ReportsDashboard() {
             nextDue: a.po_date ? new Date(a.po_date).toLocaleDateString() : '-',
             overdue: 5,
             status: a.status || 'Active'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'fabric_stock_movement') {
+          const [finishedRes, deliveryRes] = await Promise.allSettled([
+            finishedFabricAPI.list(),
+            clothDeliveryAPI.list()
+          ]);
+          const finished = finishedRes.status === 'fulfilled' ? (finishedRes.value.data || []) : [];
+          const deliveries = deliveryRes.status === 'fulfilled' ? (deliveryRes.value.data || []) : [];
+          
+          const qualityMap = {};
+          finished.forEach(f => {
+            const q = f.quality || 'Cotton Combed';
+            if (!qualityMap[q]) {
+              qualityMap[q] = { opening: 1000, inward: 0, outward: 0 };
+            }
+            qualityMap[q].inward += Number(f.total_qty) || Number(f.meters) || 0;
+          });
+          
+          deliveries.forEach(d => {
+            const q = d.quality || 'Cotton Combed';
+            if (!qualityMap[q]) {
+              qualityMap[q] = { opening: 1000, inward: 0, outward: 0 };
+            }
+            qualityMap[q].outward += Number(d.total_qty) || Number(d.total_meters) || 0;
+          });
+          
+          newRows = Object.keys(qualityMap).map(q => {
+            const info = qualityMap[q];
+            const closing = info.opening + info.inward - info.outward;
+            return {
+              quality: q,
+              openingStock: info.opening,
+              inwardMtrs: info.inward,
+              outwardMtrs: info.outward,
+              closingStock: closing,
+              val: closing * 150
+            };
+          });
+          fetched = true;
+        }
+        else if (activeReportId === 'grey_fabric_reports') {
+          const res = await onTableCheckingAPI.list();
+          newRows = (res.data || []).map(a => ({
+            rollNo: a.ref_no || 'ROLL-01',
+            date: a.checking_date ? new Date(a.checking_date).toLocaleDateString() : '-',
+            quality: a.design_no || 'Sort-01',
+            width: 58,
+            mtrs: a.total_meters || 120,
+            wt: a.total_pieces * 12 || 120,
+            grade: 'Grade A',
+            status: a.status || 'Checked'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_stock_movement') {
+          const [inwardRes, deliveryRes] = await Promise.allSettled([
+            yarnInwardAPI.list(),
+            greyYarnDeliveryAPI.list()
+          ]);
+          const inwards = inwardRes.status === 'fulfilled' ? (inwardRes.value.data || []) : [];
+          const deliveries = deliveryRes.status === 'fulfilled' ? (deliveryRes.value.data || []) : [];
+          
+          const yarnMap = {};
+          inwards.forEach(inw => {
+            const items = inw.items || [];
+            if (items.length > 0) {
+              items.forEach(item => {
+                const y = item.yarn_count || 'Cotton Combed';
+                if (!yarnMap[y]) {
+                  yarnMap[y] = { opening: 2000, inward: 0, outward: 0 };
+                }
+                yarnMap[y].inward += Number(item.kgs) || 0;
+              });
+            } else {
+              const y = inw.cone_type || 'Cotton Combed';
+              if (!yarnMap[y]) {
+                yarnMap[y] = { opening: 2000, inward: 0, outward: 0 };
+              }
+              yarnMap[y].inward += Number(inw.received_kgs) || 0;
+            }
+          });
+          
+          deliveries.forEach(del => {
+            const y = del.quality || 'Cotton Combed';
+            if (!yarnMap[y]) {
+              yarnMap[y] = { opening: 2000, inward: 0, outward: 0 };
+            }
+            yarnMap[y].outward += Number(del.total_qty) || 0;
+          });
+          
+          newRows = Object.keys(yarnMap).map(y => {
+            const info = yarnMap[y];
+            const closing = info.opening + info.inward - info.outward;
+            return {
+              yarnType: y,
+              openingStock: info.opening,
+              inwardQty: info.inward,
+              outwardQty: info.outward,
+              closingStock: closing,
+              val: closing * 300
+            };
+          });
+          fetched = true;
+        }
+        else if (activeReportId.startsWith('buyer_') || activeReportId.includes('order_')) {
+          if (!activeReportId.includes('purchase')) {
+            const res = await buyerOrderAPI.list();
+            newRows = (res.data || []).map(b => ({
+              date: b.order_date ? new Date(b.order_date).toLocaleDateString() : '-',
+              refNo: b.order_no || '-',
+              party: b.party_name || '-',
+              quality: b.quality || '-',
+              qty: b.total_qty || 0,
+              status: b.status || 'Active'
+            }));
+            fetched = true;
+          }
+        }
+        else if (activeReportId.includes('purchase_') || activeReportId.includes('supplier_wise_')) {
+          const res = await yarnPurchaseOrderAPI.list();
+          newRows = (res.data || []).map(p => ({
+            date: p.po_date ? new Date(p.po_date).toLocaleDateString() : '-',
+            refNo: p.po_no || '-',
+            party: p.party_name || '-',
+            quality: p.quality || 'Yarn PO',
+            qty: p.total_qty || p.grand_total || 0,
+            status: p.status || 'Ordered'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'sales_invoice_register' || activeReportId === 'customer_wise_sales') {
+          const res = await salesInvoiceAPI.list();
+          newRows = (res.data || []).map(s => ({
+            date: s.invoice_date ? new Date(s.invoice_date).toLocaleDateString() : '-',
+            refNo: s.invoice_no || '-',
+            party: s.party_name || '-',
+            quality: s.quality || 'Fabric',
+            qty: s.grand_total || 0,
+            status: s.status || 'Billed'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dispatch_report' || activeReportId === 'goods_release_report') {
+          const res = await goodsReleaseAPI.list();
+          newRows = (res.data || []).map(g => ({
+            date: g.release_date ? new Date(g.release_date).toLocaleDateString() : '-',
+            refNo: g.release_no || '-',
+            party: g.party_name || '-',
+            quality: g.quality || 'Finished Fabric',
+            qty: g.total_qty || 0,
+            status: g.status || 'Released'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'eway_bill_report') {
+          const res = await ewayBillAPI.list();
+          newRows = (res.data || []).map(e => ({
+            date: e.bill_date ? new Date(e.bill_date).toLocaleDateString() : '-',
+            refNo: e.eway_bill_no || '-',
+            party: e.transporter_name || '-',
+            quality: e.vehicle_no || '-',
+            qty: e.total_value || 0,
+            status: e.status || 'Generated'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_dyeing_status' || activeReportId === 'job_work_pending_report') {
+          const res = await dyedYarnDeliveryAPI.list();
+          newRows = (res.data || []).map(d => ({
+            date: d.dc_date ? new Date(d.dc_date).toLocaleDateString() : '-',
+            refNo: d.dc_no || '-',
+            party: d.party_name || '-',
+            quality: d.shade || d.quality || '-',
+            qty: d.total_qty || 0,
+            status: d.status || 'In Dyeing'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'sizing_status' || activeReportId === 'sizing_report') {
+          const res = await warpBeamReceiptAPI.list();
+          newRows = (res.data || []).map(s => ({
+            date: s.receipt_date ? new Date(s.receipt_date).toLocaleDateString() : '-',
+            refNo: s.ref_no || '-',
+            party: s.received_from || '-',
+            quality: s.beam_no || 'Beam Sizing',
+            qty: s.total_meters || 0,
+            status: s.status || 'Received'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'weaving_status' || activeReportId === 'weaving_report') {
+          const res = await ppcAPI.getAllocations();
+          newRows = (res.data || []).map(w => ({
+            date: w.start_date ? new Date(w.start_date).toLocaleDateString() : '-',
+            refNo: w.loom_no || '-',
+            party: w.operator_name || '-',
+            quality: w.design_no || '-',
+            qty: w.target_meters || 0,
+            status: w.status || 'Weaving'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'fabric_dyeing_status' || activeReportId === 'finishing_status' || activeReportId === 'fabric_dyeing_report' || activeReportId === 'dyed_fabric_receipt_report' || activeReportId === 'finished_fabric_report' || activeReportId === 'finishing_report' || activeReportId === 'fabric_stock_report' || activeReportId === 'fabric_movement_report') {
+          const res = await finishedFabricAPI.list();
+          newRows = (res.data || []).map(f => ({
+            date: f.date ? new Date(f.date).toLocaleDateString() : '-',
+            refNo: f.inward_no || '-',
+            party: f.supplier_name || '-',
+            quality: f.quality || '-',
+            qty: f.total_qty || f.meters || 0,
+            status: f.status || 'Finished'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId.endsWith('_q') || activeReportId === 'rejected_fabric_report' || activeReportId === 'quality_summary' || activeReportId === 'grey_inspection_report' || activeReportId === 'final_inspection_report' || activeReportId === 'fabric_lot_report' || activeReportId === 'cloth_checking_report' || activeReportId === 'rejection_report') {
+          const res = await onTableCheckingAPI.list();
+          newRows = (res.data || []).map(q => ({
+            date: q.checking_date ? new Date(q.checking_date).toLocaleDateString() : '-',
+            refNo: q.ref_no || '-',
+            party: q.operator_name || '-',
+            quality: q.design_no || '-',
+            qty: q.total_meters || 0,
+            status: q.status || 'Inspected'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'grey_fabric_receipt_report' || activeReportId === 'grey_fabric_inward_report' || activeReportId === 'vendor_inward_report') {
+          const res = await clothInwardAPI.list();
+          newRows = (res.data || []).map(c => ({
+            date: c.inward_date ? new Date(c.inward_date).toLocaleDateString() : '-',
+            refNo: c.inward_no || '-',
+            party: c.supplier_name || '-',
+            quality: c.quality || '-',
+            qty: c.total_qty || 0,
+            status: c.status || 'Inwarded'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'bale_report' || activeReportId === 'packing_report') {
+          const res = await packingSlipAPI.list();
+          newRows = (res.data || []).map(p => ({
+            date: p.slip_date ? new Date(p.slip_date).toLocaleDateString() : '-',
+            refNo: p.packing_slip_no || '-',
+            party: p.buyer_name || '-',
+            quality: p.quality || '-',
+            qty: p.total_qty || 0,
+            status: p.status || 'Packed'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'warping_report') {
+          const res = await warpDeliveryAPI.list();
+          newRows = (res.data || []).map(w => ({
+            date: w.dc_date ? new Date(w.dc_date).toLocaleDateString() : '-',
+            refNo: w.dc_no || '-',
+            party: w.party_name || '-',
+            quality: w.quality || 'Warping',
+            qty: w.total_qty || 0,
+            status: w.status || 'Sent'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dyeing_production_report') {
+          const res = await dyedYarnDeliveryAPI.list();
+          newRows = (res.data || []).map(d => ({
+            date: d.dc_date ? new Date(d.dc_date).toLocaleDateString() : '-',
+            refNo: d.dc_no || '-',
+            party: d.party_name || '-',
+            quality: d.shade || d.quality || '-',
+            qty: d.total_qty || 0,
+            status: d.status || 'Completed'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_inward_report' || activeReportId === 'yarn_stock_ledger' || activeReportId === 'yarn_return_report' || activeReportId === 'yarn_stock_transfer_report') {
+          const res = await yarnInwardAPI.list();
+          newRows = (res.data || []).map(y => ({
+            date: y.inward_date ? new Date(y.inward_date).toLocaleDateString() : '-',
+            refNo: y.ref_no || '-',
+            party: y.received_from || '-',
+            quality: y.cone_type || '-',
+            qty: y.received_kgs || 0,
+            status: y.status || 'Inwarded'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_requirement_report') {
+          const res = await buyerOrderAPI.list();
+          newRows = (res.data || []).map(b => ({
+            date: b.order_date ? new Date(b.order_date).toLocaleDateString() : '-',
+            refNo: b.order_no || '-',
+            party: b.party_name || '-',
+            quality: b.quality || '-',
+            qty: b.total_qty || 0,
+            status: b.status || 'Ordered'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'yarn_dyeing_delivery_report') {
+          const res = await dyedYarnDeliveryAPI.list();
+          newRows = (res.data || []).map(d => ({
+            date: d.dc_date ? new Date(d.dc_date).toLocaleDateString() : '-',
+            refNo: d.dc_no || '-',
+            party: d.party_name || '-',
+            quality: d.shade || d.quality || '-',
+            qty: d.total_qty || 0,
+            status: d.status || 'Sent'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'dyed_yarn_receipt_report') {
+          const res = await dyedYarnReceiptAPI.list();
+          newRows = (res.data || []).map(r => ({
+            date: r.receipt_date ? new Date(r.receipt_date).toLocaleDateString() : '-',
+            refNo: r.ref_no || '-',
+            party: r.received_from || '-',
+            quality: r.shade || '-',
+            qty: r.received_qty || 0,
+            status: r.status || 'Received'
+          }));
+          fetched = true;
+        }
+        else if (activeReportId === 'stock_ledger' || activeReportId === 'opening_stock_report' || activeReportId === 'closing_stock_report' || activeReportId === 'item_movement_report' || activeReportId === 'lot_wise_stock_report' || activeReportId === 'surplus_stock_report') {
+          const res = await yarnInwardAPI.list();
+          newRows = (res.data || []).map(y => ({
+            date: y.inward_date ? new Date(y.inward_date).toLocaleDateString() : '-',
+            refNo: y.ref_no || '-',
+            party: y.received_from || '-',
+            quality: y.cone_type || '-',
+            qty: y.received_kgs || 0,
+            status: y.status || 'Stock'
           }));
           fetched = true;
         }
@@ -1273,7 +2291,7 @@ export default function ReportsDashboard() {
       </div>
 
       {/* 2. KPI SUMMARY CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px', marginBottom: '28px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px', marginBottom: '28px' }}>
         
         {/* Card 1: Total Orders */}
         <div className="card stat-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative', overflow: 'hidden' }}>
@@ -1535,7 +2553,7 @@ export default function ReportsDashboard() {
         <h4 style={{ fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.8px', marginBottom: '14px' }}>
           Select Business Domain
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
           {REPORT_CATEGORIES.map(category => {
             const IconComponent = category.icon;
             const isSelected = activeCategory === category.id;

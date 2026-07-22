@@ -238,20 +238,57 @@ def _describe_filters(filters: dict) -> str:
 
 async def _handle_general_query(db: AsyncSession, message: str) -> str:
     """Handle general/unclassified questions with helpful guidance, using Groq if available.
-    Supports natural language database queries (Text-to-SQL) for accurate business metrics."""
+    Supports natural language database queries (Text-to-SQL) for accurate business metrics.
+    Uses multi-API-key rotation: tries each key in sequence, skips exhausted keys instantly."""
     from app.core.config import settings
-    if settings.GROQ_API_KEY:
-        try:
-            from groq import Groq
-            import json
-            from sqlalchemy import text
+    from groq import Groq
+    import json
+    import re as _re
+    from sqlalchemy import text
 
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            
-            # Formulate the system prompt describing the schema
-            today_str = datetime.now().strftime("%Y-%m-%d")
-            
-            schema_prompt = f"""You are a database expert for Dinesh Exports Textile ERP.
+    all_api_keys = settings.get_groq_api_keys()
+    if not all_api_keys:
+        return _chatbot_fallback_reply(message)
+
+    # ── Key rotation helper ────────────────────────────────────────────────
+    exhausted_keys: set = set()
+
+    def _is_rate_limit(err_str: str) -> bool:
+        s = err_str.lower()
+        return "rate_limit" in s or "429" in s or "tokens per day" in s or "tpd" in s or "rate limit" in s
+
+    def _call_llm(messages_list: list, response_format=None, temperature: float = 0.0, max_tokens: int = 2048) -> str | None:
+        """Try each API key; skip rate-limited ones. Returns content string or None if all fail."""
+        for api_key in all_api_keys:
+            if api_key in exhausted_keys:
+                continue
+            try:
+                c = Groq(api_key=api_key)
+                kwargs = dict(messages=messages_list, model=settings.GROQ_MODEL, temperature=temperature)
+                if response_format:
+                    kwargs["response_format"] = response_format
+                else:
+                    kwargs["max_tokens"] = max_tokens
+                result = c.chat.completions.create(**kwargs)
+                logger.info(f"[GROQ Chatbot] Success with key ...{api_key[-6:]}")
+                return result.choices[0].message.content
+            except Exception as e:
+                err_str = str(e)
+                if _is_rate_limit(err_str):
+                    logger.warning(f"[GROQ Chatbot] Key ...{api_key[-6:]} rate-limited. Trying next.")
+                    exhausted_keys.add(api_key)
+                    continue
+                logger.error(f"[GROQ Chatbot] Key ...{api_key[-6:]} error: {err_str[:100]}")
+                return None  # non-rate-limit error, stop trying
+        logger.warning("[GROQ Chatbot] All API keys exhausted — falling back to rule-based reply.")
+        return None
+    # ── End rotation helper ────────────────────────────────────────────────
+
+    try:
+        # Formulate the system prompt describing the schema
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
+        schema_prompt = f"""You are a database expert for Dinesh Exports Textile ERP.
 Your task is to convert the user's natural language question into a valid, single, read-only PostgreSQL SELECT query.
 Do NOT modify database state. Only generate SELECT queries.
 
@@ -335,33 +372,6 @@ Database Schema:
      - `data->>'currentStock'` (numeric stock level)
      - `data->>'rate'` (numeric price per unit)
      - `data->>'vendor'` (vendor name)
-   * For ledger entries (category = 'consumables_ledger'):
-     - `data->>'itemId'` (item ID referencing item, e.g. 'ITM001')
-     - `data->>'refType'` (reference type, e.g. 'Opening', 'Issue', 'GRN', 'Adjustment', 'Return', 'Transfer')
-     - `data->>'refId'` (reference ID, e.g. 'ISS001')
-     - `data->>'inQty'` (quantity inward)
-     - `data->>'outQty'` (quantity outward)
-     - `data->>'balance'` (balance after transaction)
-   * For requisitions (category = 'consumables_requisitions'):
-     - `data->>'id'` (requisition ID, e.g. 'PRQ001')
-     - `data->>'date'` (date)
-     - `data->>'requestedBy'` (requisitioner name)
-     - `data->>'status'` (Pending, Approved, Rejected)
-   * For purchase orders (category = 'consumables_pos'):
-     - `data->>'id'` (PO ID, e.g. 'PO001')
-     - `data->>'date'` (date)
-     - `data->>'vendorId'` (vendor ID)
-     - `data->>'status'` (Pending, Approved, Completed)
-   * For GRNs (category = 'consumables_grns'):
-     - `data->>'id'` (GRN ID, e.g. 'GRN001')
-     - `data->>'date'` (date)
-     - `data->>'poId'` (PO ID)
-     - `data->>'status'` (Completed, etc.)
-   * For issues (category = 'consumables_issues'):
-     - `data->>'id'` (Issue ID, e.g. 'ISS001')
-     - `data->>'date'` (date)
-     - `data->>'department'` (department name)
-     - `data->>'status'` (Pending, Approved, Rejected)
    * To query ledger for a specific item name (like 'A4 Paper'), resolve the name by subquerying category = 'consumables_items':
      `SELECT * FROM stationary_items WHERE category = 'consumables_ledger' AND data->>'itemId' = (SELECT data->>'id' FROM stationary_items WHERE category = 'consumables_items' AND data->>'name' ILIKE '%A4 Paper%' LIMIT 1)`
 
@@ -387,39 +397,39 @@ Rules:
 10. Return ONLY the JSON object. No conversational text, no markdown block.
 """
 
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": schema_prompt},
-                    {"role": "user", "content": message}
-                ],
-                model=settings.GROQ_MODEL,
-                response_format={"type": "json_object"},
-                temperature=0.0
-            )
-            
-            res_json = json.loads(chat_completion.choices[0].message.content)
-            
-            if res_json.get("is_db_query") and res_json.get("sql"):
-                sql_query = res_json["sql"]
-                
-                # Security sanity check
-                sql_lower = sql_query.lower().strip()
-                forbidden_keywords = ["insert", "update", "delete", "drop", "truncate", "alter", "create", "grant", "revoke", "replace"]
-                if not sql_lower.startswith("select") or any(kw in sql_lower for kw in forbidden_keywords):
-                    logger.warning(f"Blocked unsafe SQL query: {sql_query}")
-                    return "Sorry, for safety reasons I cannot execute write or schema operations on the database."
-                
-                logger.info(f"Chatbot Text-to-SQL query: {sql_query}")
-                try:
-                    # Execute read-only SELECT query on a separate connection to avoid aborting the session transaction
-                    from app.core.database import engine
-                    async with engine.connect() as conn:
-                        db_res = await conn.execute(text(sql_query))
-                        columns = list(db_res.keys())
-                        rows = [dict(zip(columns, row)) for row in db_res.fetchall()]
-                    
-                    # Format response using the LLM
-                    answer_prompt = f"""You are the Dinesh Exports ERP Assistant.
+        # Step 1: Text-to-SQL
+        sql_content = _call_llm(
+            [
+                {"role": "system", "content": schema_prompt},
+                {"role": "user", "content": message}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0
+        )
+
+        if sql_content:
+            try:
+                res_json = json.loads(sql_content)
+                if res_json.get("is_db_query") and res_json.get("sql"):
+                    sql_query = res_json["sql"]
+
+                    # Security sanity check
+                    sql_lower = sql_query.lower().strip()
+                    forbidden_keywords = ["insert", "update", "delete", "drop", "truncate", "alter", "create", "grant", "revoke", "replace"]
+                    if not sql_lower.startswith("select") or any(kw in sql_lower for kw in forbidden_keywords):
+                        logger.warning(f"Blocked unsafe SQL query: {sql_query}")
+                        return "Sorry, for safety reasons I cannot execute write or schema operations on the database."
+
+                    logger.info(f"Chatbot Text-to-SQL query: {sql_query}")
+                    try:
+                        from app.core.database import engine
+                        async with engine.connect() as conn:
+                            db_res = await conn.execute(text(sql_query))
+                            columns = list(db_res.keys())
+                            rows = [dict(zip(columns, row)) for row in db_res.fetchall()]
+
+                        # Step 2: Format DB results into natural language
+                        answer_prompt = f"""You are the Dinesh Exports ERP Assistant.
 The user asked: "{message}"
 We executed this SQL query: {sql_query}
 And got these results from the database: {json.dumps(rows, default=str)}
@@ -428,40 +438,45 @@ Please write a clear, accurate, and concise natural language answer to the user'
 If the result is null or empty, explain that no matching records were found.
 Format numbers nicely (e.g. currency as ₹XX,XXX, meters as XX,XXX mtrs). Use markdown for table or bullet points if needed.
 """
-                    chat_completion2 = client.chat.completions.create(
-                        messages=[
-                            {"role": "system", "content": answer_prompt}
-                        ],
-                        model=settings.GROQ_MODEL,
-                        temperature=0.3
-                    )
-                    return chat_completion2.choices[0].message.content
-                except Exception as db_err:
-                    logger.error(f"Failed executing Text-to-SQL query: {db_err}", exc_info=True)
-                    # Fallback to general LLM response below if SQL execution failed
+                        answer = _call_llm(
+                            [{"role": "system", "content": answer_prompt}],
+                            temperature=0.3
+                        )
+                        if answer:
+                            return answer
+                    except Exception as db_err:
+                        logger.error(f"Failed executing Text-to-SQL query: {db_err}", exc_info=True)
+                        # Fallthrough to general conversational reply
+            except Exception as parse_err:
+                logger.warning(f"Failed to parse SQL JSON response: {parse_err}")
 
-            # Fallback/General conversational prompt
-            system_prompt = (
-                "You are an assistant for Dinesh Exports, a leading textile manufacturer. "
-                "Help the user with ERP-related questions, explain options, and converse professionally. "
-                "Keep responses concise and well-formatted using markdown. "
-                "If they ask to generate or download a report, guide them on what they can ask (e.g. 'Generate a Buyer Order report as PDF')."
-            )
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": message}
-                ],
-                model=settings.GROQ_MODEL,
-                temperature=0.7,
-            )
-            return chat_completion.choices[0].message.content
+        # Step 3: General conversational prompt (fallback if no DB query needed)
+        system_prompt = (
+            "You are an assistant for Dinesh Exports, a leading textile manufacturer. "
+            "Help the user with ERP-related questions, explain options, and converse professionally. "
+            "Keep responses concise and well-formatted using markdown. "
+            "If they ask to generate or download a report, guide them on what they can ask (e.g. 'Generate a Buyer Order report as PDF')."
+        )
+        conv_answer = _call_llm(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message}
+            ],
+            temperature=0.7
+        )
+        if conv_answer:
+            return conv_answer
 
-        except Exception as e:
-            logger.error(f"Failed to generate LLM response: {e}", exc_info=True)
+    except Exception as e:
+        logger.error(f"Failed to generate LLM response: {e}", exc_info=True)
 
+    # All keys exhausted or error — rule-based fallback
+    return _chatbot_fallback_reply(message)
+
+
+def _chatbot_fallback_reply(message: str) -> str:
+    """Rule-based fallback when all Groq keys are exhausted or unavailable."""
     msg = message.lower()
-
     if any(w in msg for w in ["help", "what can you do", "capabilities"]):
         return (
             "🤖 I'm your **Dinesh Exports ERP Intelligence Assistant**. Here's what I can do:\n\n"
@@ -474,10 +489,8 @@ Format numbers nicely (e.g. currency as ₹XX,XXX, meters as XX,XXX mtrs). Use m
             "• \"Export employee list as Excel\"\n"
             "• \"Show yarn purchase orders for last week\""
         )
-
     if any(w in msg for w in ["thank", "thanks", "great", "awesome", "perfect"]):
         return "You're welcome! 😊 Let me know if you need anything else."
-
     return (
         "I'm not sure I understand that query. Here are some things I can help with:\n\n"
         "• **\"Download buyer order report as PDF\"** — Generate a report\n"

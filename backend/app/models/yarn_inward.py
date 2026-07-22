@@ -1,5 +1,5 @@
 """Yarn Inward Entry models."""
-from sqlalchemy import Column, Integer, String, Date, DateTime, Float, Text, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Date, DateTime, Float, Text, ForeignKey, func, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -58,6 +58,7 @@ class YarnInward(Base):
     round_off = Column(Float, default=0.0)
     net_amount = Column(Float, default=0.0)
     remarks = Column(Text)
+    terms_conditions = Column(JSON, default=list)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

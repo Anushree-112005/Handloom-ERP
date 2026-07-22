@@ -19,6 +19,16 @@ def require_permission(module_key: str, action_name: str):
         current_user: Employee = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
     ):
+        # Check Super Admin bypass
+        user_roles_res = await db.execute(
+            select(Role)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == current_user.id)
+        )
+        roles = user_roles_res.scalars().all()
+        if any(r.name == "Super Admin" for r in roles):
+            return current_user
+
         # Get module ID and Action ID
         module_res = await db.execute(select(Module).where(Module.key == module_key))
         module = module_res.scalar_one_or_none()
@@ -48,13 +58,6 @@ def require_permission(module_key: str, action_name: str):
                 raise HTTPException(status_code=403, detail="Permission denied (User override).")
                 
         # Check RolePermissions
-        user_roles = await db.execute(
-            select(Role)
-            .join(UserRole, UserRole.role_id == Role.id)
-            .where(UserRole.user_id == current_user.id)
-        )
-        roles = user_roles.scalars().all()
-        
         role_ids = [r.id for r in roles]
         if not role_ids:
             raise HTTPException(status_code=403, detail="No roles assigned.")
@@ -89,54 +92,60 @@ async def get_user_rbac_context(user_id: int, db: AsyncSession):
     all_modules = modules_res.scalars().all()
     
     assigned_modules = []
-    # Get modules explicitly assigned via UserPermission
-    um_res = await db.execute(
-        select(Module)
-        .join(UserPermission, UserPermission.module_id == Module.id)
-        .where(UserPermission.user_id == user_id)
-        .distinct()
-    )
-    user_assigned = um_res.scalars().all()
-        
-    role_assigned = []
-    if roles:
-        rm_res = await db.execute(
-            select(Module)
-            .join(RolePermission, RolePermission.module_id == Module.id)
-            .where(RolePermission.role_id.in_([r.id for r in roles]))
-            .distinct()
-        )
-        role_assigned = rm_res.scalars().all()
-    
-    assigned_modules = list(set([m.key for m in user_assigned + role_assigned]))
-        
     # Build Permissions mapping: module_key -> action -> boolean
     permissions_map = {}
     actions_res = await db.execute(select(PermissionAction))
     all_actions = actions_res.scalars().all()
     action_dict = {a.id: a.name for a in all_actions}
-    
-    # role permissions
-    rp_res = await db.execute(
-        select(RolePermission, Module)
-        .join(Module)
-        .where(RolePermission.role_id.in_([r.id for r in roles]))
-    )
-    for rp, mod in rp_res.all():
-        if mod.key not in permissions_map:
-            permissions_map[mod.key] = {}
-        permissions_map[mod.key][action_dict[rp.action_id]] = True
+
+    if is_super_admin:
+        assigned_modules = list(set([m.key for m in all_modules]))
+        for mod in all_modules:
+            permissions_map[mod.key] = {a.name: True for a in all_actions}
+    else:
+        # Get modules explicitly assigned via UserPermission
+        um_res = await db.execute(
+            select(Module)
+            .join(UserPermission, UserPermission.module_id == Module.id)
+            .where(UserPermission.user_id == user_id)
+            .distinct()
+        )
+        user_assigned = um_res.scalars().all()
+        role_assigned = []
+        if roles:
+            rm_res = await db.execute(
+                select(Module)
+                .join(RolePermission, RolePermission.module_id == Module.id)
+                .where(RolePermission.role_id.in_([r.id for r in roles]))
+                .distinct()
+            )
+            role_assigned = rm_res.scalars().all()
+
+        assigned_user_keys = [m.key for m in user_assigned]
+        assigned_role_keys = [m.key for m in role_assigned]
+        assigned_modules = list(set(assigned_user_keys + assigned_role_keys))
         
-    # user overrides
-    up_res = await db.execute(
-        select(UserPermission, Module)
-        .join(Module)
-        .where(UserPermission.user_id == user_id)
-    )
-    for up, mod in up_res.all():
-        if mod.key not in permissions_map:
-            permissions_map[mod.key] = {}
-        permissions_map[mod.key][action_dict[up.action_id]] = up.is_allowed
+        # role permissions
+        rp_res = await db.execute(
+            select(RolePermission, Module)
+            .join(Module)
+            .where(RolePermission.role_id.in_([r.id for r in roles]))
+        )
+        for rp, mod in rp_res.all():
+            if mod.key not in permissions_map:
+                permissions_map[mod.key] = {}
+            permissions_map[mod.key][action_dict[rp.action_id]] = True
+            
+        # user overrides
+        up_res = await db.execute(
+            select(UserPermission, Module)
+            .join(Module)
+            .where(UserPermission.user_id == user_id)
+        )
+        for up, mod in up_res.all():
+            if mod.key not in permissions_map:
+                permissions_map[mod.key] = {}
+            permissions_map[mod.key][action_dict[up.action_id]] = up.is_allowed
 
     return {
         "roles": [r.name for r in roles],

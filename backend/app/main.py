@@ -46,6 +46,19 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             
+            # Ensure state_code column exists in party_addresses table
+            from sqlalchemy import text
+            try:
+                if "postgresql" in str(engine.url):
+                    await conn.execute(text("ALTER TABLE party_addresses ADD COLUMN IF NOT EXISTS state_code VARCHAR(10)"))
+                else:
+                    try:
+                        await conn.execute(text("ALTER TABLE party_addresses ADD COLUMN state_code VARCHAR(10)"))
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.info(f"Adding state_code column info: {e}")
+            
             def sync_database_schema(connection):
                 from sqlalchemy import inspect, text
                 try:
@@ -58,8 +71,10 @@ async def lifespan(app: FastAPI):
                             if col_name.lower() not in db_columns:
                                 type_str = str(column.type.compile(dialect=connection.dialect))
                                 default_val = "NULL"
-                                if column.default is not None and not callable(column.default.arg):
-                                    val = column.default.arg
+                                default_obj = column.default
+                                default_arg = getattr(default_obj, "arg", None) if default_obj is not None else None
+                                if default_arg is not None and not callable(default_arg):
+                                    val = default_arg
                                     if isinstance(val, str):
                                         escaped_val = val.replace("'", "''")
                                         default_val = f"'{escaped_val}'"
@@ -98,10 +113,12 @@ async def lifespan(app: FastAPI):
         from sqlalchemy import select
 
         async with AsyncSessionLocal() as session:
-            result = await session.execute(select(Employee).where(Employee.employee_code == "admin"))
-            if not result.scalar_one_or_none():
+            result = await session.execute(select(Employee).where((Employee.employee_code == "admin") | (Employee.username == "admin")))
+            existing_admin = result.scalar_one_or_none()
+            if not existing_admin:
                 admin = Employee(
                     employee_code="admin",
+                    username="admin",
                     name="Administrator",
                     user_type="Admin",
                     email="admin@dinesh-textile.com",
@@ -118,6 +135,19 @@ async def lifespan(app: FastAPI):
                 )
                 session.add(admin)
                 await session.commit()
+            else:
+                existing_admin.username = "admin"
+                existing_admin.password_hash = get_password_hash("admin123")
+                existing_admin.status = "Active"
+                await session.commit()
+
+            # Seed RBAC roles and permissions automatically
+            try:
+                from seed_rbac import seed_data
+                await seed_data()
+                logger.info("Successfully seeded RBAC data in lifespan.")
+            except Exception as e:
+                logger.error(f"Failed to seed RBAC data in lifespan: {e}")
 
             # Seed default departments and designations
             from app.models.sub_master import SubMaster
@@ -278,7 +308,7 @@ import asyncio
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.security import decode_access_token
 
-async def log_audit_trail(method: str, path: str, auth_header: str):
+async def log_audit_trail(method: str, path: str, auth_header: str | None = None):
     if "auth/login" in path or "log-reports" in path:
         return
         

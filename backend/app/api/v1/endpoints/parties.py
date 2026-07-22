@@ -149,63 +149,71 @@ async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_
     db.add(db_party)
     await db.commit()
     await db.refresh(db_party)
+    sqlite_db = None
+    try:
+        from finance_app.database import SessionLocal
+        from finance_app.models.ledger import Ledger
+        from finance_app.models.ledger_group import LedgerGroup
+        from finance_app.models.inventory import Location
 
-    # --- Cross-Module Integration: Auto-create Ledger, Location, and Log ---
-    from finance_app.database import SessionLocal
-    from finance_app.models.ledger import Ledger
-    from finance_app.models.ledger_group import LedgerGroup
-    from finance_app.models.inventory import Location
+        sqlite_db = SessionLocal()
+        
+        DEFAULT_COMPANY_ID = 1
 
-    sqlite_db = SessionLocal()
-    
-    DEFAULT_COMPANY_ID = 1
+        # Determine Ledger Group
+        ptype = db_party.party_type.lower() if db_party.party_type else ""
+        pgroup = db_party.party_group.lower() if db_party.party_group else ""
+        
+        ledger_group_name = "Sundry Creditors"
+        if "sales" in ptype or "buyer" in ptype or "debtor" in pgroup:
+            ledger_group_name = "Sundry Debtors"
 
-    # Determine Ledger Group
-    ptype = db_party.party_type.lower() if db_party.party_type else ""
-    pgroup = db_party.party_group.lower() if db_party.party_group else ""
-    
-    ledger_group_name = "Sundry Creditors"
-    if "sales" in ptype or "buyer" in ptype or "debtor" in pgroup:
-        ledger_group_name = "Sundry Debtors"
+        # Find the LedgerGroup to get group_id (if exists)
+        ledger_group_obj = sqlite_db.query(LedgerGroup).filter(LedgerGroup.name == ledger_group_name, LedgerGroup.company_id == DEFAULT_COMPANY_ID).first()
+        group_id = ledger_group_obj.id if ledger_group_obj else None
 
-    # Find the LedgerGroup to get group_id (if exists)
-    ledger_group_obj = sqlite_db.query(LedgerGroup).filter(LedgerGroup.name == ledger_group_name, LedgerGroup.company_id == DEFAULT_COMPANY_ID).first()
-    group_id = ledger_group_obj.id if ledger_group_obj else None
+        # Auto-create Ledger
+        new_ledger = Ledger(
+            name=db_party.company_name,
+            group=ledger_group_name,
+            group_id=group_id,
+            party_type=db_party.party_type,
+            gstin=db_party.gst_no,
+            pan=db_party.pan_no,
+            address=db_party.address,
+            state_code=db_party.state_code,
+            company_id=DEFAULT_COMPANY_ID
+        )
+        sqlite_db.add(new_ledger)
 
-    # Auto-create Ledger
-    new_ledger = Ledger(
-        name=db_party.company_name,
-        group=ledger_group_name,
-        group_id=group_id,
-        party_type=db_party.party_type,
-        gstin=db_party.gst_no,
-        pan=db_party.pan_no,
-        address=db_party.address,
-        state_code=db_party.state_code,
-        company_id=DEFAULT_COMPANY_ID
-    )
-    sqlite_db.add(new_ledger)
+        # Auto-create Inventory Location
+        new_location = Location(
+            name=db_party.company_name,
+            company_id=DEFAULT_COMPANY_ID
+        )
+        sqlite_db.add(new_location)
 
-    # Auto-create Inventory Location
-    new_location = Location(
-        name=db_party.company_name,
-        company_id=DEFAULT_COMPANY_ID
-    )
-    sqlite_db.add(new_location)
+        # Auto-create Log Report
+        new_log = LogReport(
+            user_name="System",
+            user_id="sys",
+            mode="Save",
+            module="Party Master",
+            remarks=f"New Party Added: {db_party.company_name} ({db_party.party_type})"
+        )
+        db.add(new_log)
 
-    # Auto-create Log Report
-    new_log = LogReport(
-        user_name="System",
-        user_id="sys",
-        mode="Save",
-        module="Party Master",
-        remarks=f"New Party Added: {db_party.company_name} ({db_party.party_type})"
-    )
-    db.add(new_log)
-
-    await db.commit()
-    sqlite_db.commit()
-    sqlite_db.close()
+        await db.commit()
+        sqlite_db.commit()
+        sqlite_db.close()
+    except Exception as e:
+        import logging
+        logging.getLogger("app").warning(f"Cross-module integration failed when creating party: {e}")
+        if sqlite_db:
+            try:
+                sqlite_db.close()
+            except:
+                pass
     
     # Reload party with addresses
     result = await db.execute(
