@@ -21,6 +21,7 @@ export default function StatusUpdateDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [apiOrders, setApiOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState('');
   const [orderData, setOrderData] = useState(null);
   
@@ -41,28 +42,31 @@ export default function StatusUpdateDashboard() {
 
   // Verify Auth & Load Data
   useEffect(() => {
-    const token = localStorage.getItem('status_update_token');
+    const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/status-update/login');
+      navigate('/login');
       return;
     }
-    const u = localStorage.getItem('su_user');
+    const u = localStorage.getItem('user');
     if (u) setUser(JSON.parse(u));
     
     // Fetch orders for this user
+    setLoadingOrders(true);
     buyerOrderAPI.statusUpdateOrders()
       .then(res => setApiOrders(res.data))
-      .catch(err => console.error('Failed to load orders', err));
+      .catch(err => console.error('Failed to load orders', err))
+      .finally(() => setLoadingOrders(false));
   }, [navigate]);
 
-  // Auto-save to localStorage whenever data changes
+  // We no longer auto-save to localStorage.
+  // Saves are explicit via handleSaveStage.
+  
+  // Custom stage names can still be local if desired, but we'll stick to productionStages for now.
   useEffect(() => {
     if (selectedOrder) {
       localStorage.setItem(`su_stages_${selectedOrder}`, JSON.stringify(stages));
-      localStorage.setItem(`su_statuses_${selectedOrder}`, JSON.stringify(stageStatuses));
-      localStorage.setItem(`su_history_${selectedOrder}`, JSON.stringify(history));
     }
-  }, [stages, stageStatuses, history, selectedOrder]);
+  }, [stages, selectedOrder]);
 
   // Handle Order Selection
   const handleOrderChange = (e) => {
@@ -70,37 +74,71 @@ export default function StatusUpdateDashboard() {
     setSelectedOrder(ordId);
     
     if (ordId) {
-      // Use apiOrders instead of mockOrders, matching on id
       const order = apiOrders.find(o => String(o.id) === ordId);
       setOrderData(order);
-      const orderQty = order.items?.reduce((sum, item) => sum + (item.order_mtrs || 0), 0) || 0;
+      const orderQty = order?.items?.reduce((sum, item) => sum + (item.order_mtrs || 0), 0) || 0;
       
-      // Load from localStorage or initialize defaults
       const storedStages = localStorage.getItem(`su_stages_${ordId}`);
       const loadedStages = storedStages ? JSON.parse(storedStages) : productionStages;
       setStages(loadedStages);
-
-      const storedStatuses = localStorage.getItem(`su_statuses_${ordId}`);
-      if (storedStatuses) {
-        setStageStatuses(JSON.parse(storedStatuses));
-      } else {
-        const initialStatuses = {};
-        loadedStages.forEach(stage => {
-          initialStatuses[stage] = {
-            status: 'Not Started',
-            completedQty: 0,
-            pendingQty: orderQty,
-            updatedBy: '-',
-            updatedTime: '-',
-            expectedDate: '-',
-            remarks: ''
-          };
-        });
-        setStageStatuses(initialStatuses);
-      }
       
-      const storedHistory = localStorage.getItem(`su_history_${ordId}`);
-      setHistory(storedHistory ? JSON.parse(storedHistory) : []);
+      // Initialize synchronously to prevent "Cannot read properties of undefined (reading 'status')"
+      const defaultStatuses = {};
+      loadedStages.forEach(stage => {
+        defaultStatuses[stage] = {
+          status: 'Not Started',
+          completedQty: 0,
+          pendingQty: orderQty,
+          updatedBy: '-',
+          updatedTime: '-',
+          remarks: ''
+        };
+      });
+      setStageStatuses(defaultStatuses);
+
+      // Fetch from API
+      buyerOrderAPI.getStatus(ordId)
+        .then(res => {
+          const { statuses, history } = res.data;
+          
+          const initialStatuses = {};
+          loadedStages.forEach(stage => {
+            const found = statuses.find(s => s.stage_name === stage);
+            if (found) {
+              initialStatuses[stage] = {
+                status: found.status,
+                completedQty: found.completed_qty,
+                pendingQty: found.pending_qty,
+                updatedBy: found.updated_by || '-',
+                updatedTime: new Date(found.updated_at).toLocaleString(),
+                remarks: found.remarks || '',
+                attachment: found.attachment || ''
+              };
+            } else {
+              initialStatuses[stage] = {
+                status: 'Not Started',
+                completedQty: 0,
+                pendingQty: orderQty,
+                updatedBy: '-',
+                updatedTime: '-',
+                remarks: ''
+              };
+            }
+          });
+          setStageStatuses(initialStatuses);
+          
+          setHistory(history.map(h => ({
+            id: h.id,
+            date: new Date(h.updated_at).toLocaleString(),
+            stage: h.stage_name,
+            prevStatus: h.prev_status || 'Not Started',
+            newStatus: h.new_status,
+            by: h.updated_by || '-',
+            remarks: h.remarks || ''
+          })));
+        })
+        .catch(err => console.error("Failed to fetch order status", err));
+        
     } else {
       setOrderData(null);
       setStageStatuses({});
@@ -140,11 +178,7 @@ export default function StatusUpdateDashboard() {
 
 
 
-  const handleLogout = () => {
-    localStorage.removeItem('status_update_token');
-    localStorage.removeItem('su_user');
-    navigate('/status-update/login');
-  };
+  // Removed custom handleLogout since we use standard auth now
 
   const handleEditStage = (stage) => {
     setEditingStage(stage);
@@ -169,58 +203,73 @@ export default function StatusUpdateDashboard() {
       return;
     }
     
-    // Determine previous status for history
-    const prevStatus = stageStatuses[editingStage].status;
-    const newPending = orderQty - qty;
-    
-    // Update Stage
-    const updatedStages = {
-      ...stageStatuses,
-      [editingStage]: {
-        ...stageStatuses[editingStage],
-        status: stageForm.status,
-        completedQty: qty,
-        pendingQty: newPending,
-        updatedBy: user?.empId || 'System',
-        updatedTime: new Date().toLocaleString(),
-        remarks: stageForm.remarks,
-        attachment: stageForm.attachment
-      }
+    const updatePayload = {
+      stage_name: editingStage,
+      status: stageForm.status,
+      completed_qty: qty,
+      remarks: stageForm.remarks,
+      attachment: stageForm.attachment
     };
     
-    setStageStatuses(updatedStages);
-    
-    // Add History
-    setHistory(prev => [
-      {
-        id: Date.now(),
-        date: new Date().toLocaleString(),
-        stage: editingStage,
-        prevStatus,
-        newStatus: stageForm.status,
-        by: user?.empId || 'System',
-        remarks: stageForm.remarks
-      },
-      ...prev
-    ]);
-    
-
-    // Fire real-time notification to the backend
-    try {
-      notificationAPI.create({
-        ibpo_id: orderData.ibpo_number || String(orderData.id),
-        buyer_order_no: orderData.items?.[0]?.party_po_no || '-',
-        buyer_name: orderData.buyer_name || '-',
-        updated_by: user?.name || user?.empId || 'System',
-        stage: editingStage,
-        status: stageForm.status,
-        date_time: new Date().toLocaleString()
+    buyerOrderAPI.updateStatus(selectedOrder, updatePayload)
+      .then(() => {
+        // Optimistic update locally
+        const prevStatus = stageStatuses[editingStage].status;
+        const newPending = orderQty - qty;
+        
+        setStageStatuses(prev => ({
+          ...prev,
+          [editingStage]: {
+            ...prev[editingStage],
+            status: stageForm.status,
+            completedQty: qty,
+            pendingQty: newPending < 0 ? 0 : newPending,
+            updatedBy: user?.name || user?.empId || 'System',
+            updatedTime: new Date().toLocaleString(),
+            remarks: stageForm.remarks,
+            attachment: stageForm.attachment
+          }
+        }));
+        
+        setHistory(prev => [
+          {
+            id: Date.now(),
+            date: new Date().toLocaleString(),
+            stage: editingStage,
+            prevStatus,
+            newStatus: stageForm.status,
+            by: user?.name || user?.empId || 'System',
+            remarks: stageForm.remarks
+          },
+          ...prev
+        ]);
+        
+        // Fire real-time notification to the backend
+        try {
+          notificationAPI.create({
+            ibpo_id: orderData.ibpo_number || String(orderData.id),
+            buyer_order_no: orderData.items?.[0]?.party_po_no || '-',
+            buyer_name: orderData.buyer_name || '-',
+            updated_by: user?.name || user?.empId || 'System',
+            stage: editingStage,
+            status: stageForm.status,
+            date_time: new Date().toLocaleString()
+          });
+        } catch (notifErr) {
+          console.error('Failed to send real-time notification', notifErr);
+        }
+      })
+      .catch(err => {
+        if (err.response?.status === 403) {
+          alert("Forbidden: You are not authorized to update this order's status.");
+        } else {
+          alert("Failed to update status on server.");
+        }
+        console.error("Failed to update status", err);
+      })
+      .finally(() => {
+        setEditingStage(null);
       });
-    } catch (err) {
-      console.error('Failed to send real-time notification', err);
-    }
-    
-    setEditingStage(null);
   };
 
   // Calculations for Progress Summary
@@ -279,37 +328,50 @@ export default function StatusUpdateDashboard() {
         </div>
         <div className="su-header-actions" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Logged in as: <strong>{user?.empId || 'Employee'}</strong>
+            User: <strong>{user?.user_name || user?.user_id || 'Employee'}</strong>
           </div>
-          <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '6px 12px' }}>
-            <LogOut size={16} /> Exit Module
-          </button>
         </div>
       </div>
 
 
       <div className="su-content" style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
         
-        {/* Order Selection */}
-        <div className="card mb-4 su-order-select-card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-            Select Order to Update:
+        {/* Order Selection or Empty State */}
+        {loadingOrders ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+            Loading assigned orders...
           </div>
-          <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <select 
-              className="form-control" 
-              value={selectedOrder} 
-              onChange={handleOrderChange}
-              style={{ paddingLeft: '36px' }}
-            >
-              <option value="">-- Select Order --</option>
-              {apiOrders.map(o => (
-                <option key={o.id} value={o.id}>{o.ibpo_number || o.id} - {o.buyer_name}</option>
-              ))}
-            </select>
+        ) : apiOrders.length === 0 ? (
+          <div className="card mb-4 su-order-select-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '40px', textAlign: 'center' }}>
+            <AlertTriangle size={48} color="var(--warning)" style={{ opacity: 0.8 }} />
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '16px' }}>
+              No Buyer Orders have been assigned to you.
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '13px', maxWidth: '400px' }}>
+              You can only view and update production statuses for Buyer Orders where you are assigned as the Merchandiser. Please contact your manager if you believe this is a mistake.
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="card mb-4 su-order-select-card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+              Select Order to Update:
+            </div>
+            <div style={{ flex: 1, maxWidth: '400px', position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <select 
+                className="form-control" 
+                value={selectedOrder} 
+                onChange={handleOrderChange}
+                style={{ paddingLeft: '36px' }}
+              >
+                <option value="">-- Select Order --</option>
+                {apiOrders.map(o => (
+                  <option key={o.id} value={o.id}>{o.ibpo_number || o.id} - {o.buyer_name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
         {orderData ? (
           <div className="animate-fade">

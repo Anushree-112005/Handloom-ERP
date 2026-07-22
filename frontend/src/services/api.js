@@ -17,12 +17,7 @@ const createAPI = (endpoint) => ({
 
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  let token = null;
-  if (window.location.pathname.startsWith('/status-update')) {
-    token = localStorage.getItem('status_update_token') || localStorage.getItem('token');
-  } else {
-    token = localStorage.getItem('token');
-  }
+  const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -34,13 +29,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('status_update_token');
-      localStorage.removeItem('su_user');
-      if (window.location.pathname.startsWith('/status-update')) {
-        window.location.href = '/status-update/login';
-      } else {
-        window.location.href = '/login';
-      }
+      window.location.href = '/login';
     }
     return Promise.reject(err);
   }
@@ -73,6 +62,8 @@ export const partyAPI = {
 export const buyerOrderAPI = {
   list: (params) => api.get('/buyer-orders/', { params }),
   statusUpdateOrders: () => api.get('/buyer-orders/status-update/orders'),
+  getStatus: (id) => api.get(`/buyer-orders/${id}/status`),
+  updateStatus: (id, data) => api.post(`/buyer-orders/${id}/status`, data),
   get: (id) => api.get(`/buyer-orders/${id}`),
   create: (data) => api.post('/buyer-orders/', data),
   update: (id, data) => api.put(`/buyer-orders/${id}`, data),
