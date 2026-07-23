@@ -160,6 +160,8 @@ export default function VoucherForm({ type: initialType, voucherId, companyId, l
   const [accountSearch,         setAccountSearch]         = useState("");
   const [salesLedger,           setSalesLedger]           = useState(null);
   const [salesLedgerSearch,     setSalesLedgerSearch]     = useState("");
+  const [billingAddressId,      setBillingAddressId]      = useState("");
+  const [shippingAddressId,     setShippingAddressId]     = useState("");
   const [supplierInvNo,         setSupplierInvNo]         = useState("");
   const [supplierInvDate,       setSupplierInvDate]       = useState("");
   const [itemLines,             setItemLines]             = useState([{ name: "", stock_item_id: "", location_id: "", qty: "", rate: "", per: "Nos", amount: "" }]);
@@ -263,6 +265,8 @@ export default function VoucherForm({ type: initialType, voucherId, companyId, l
       setAccountSearch("");
       setSalesLedger(null);
       setSalesLedgerSearch("");
+      setBillingAddressId("");
+      setShippingAddressId("");
       setSupplierInvNo("");
       setItemLines([{ name: "", stock_item_id: "", location_id: "", qty: "", rate: "", per: "Nos", amount: "" }]);
       setEntries([{ ledger_id: "", ledger_name: "", amount: "", search: "" }]);
@@ -354,6 +358,8 @@ export default function VoucherForm({ type: initialType, voucherId, companyId, l
       reference_no: voucherType === "Purchase" ? supplierInvNo : refNo,
       company_id: companyId,
       party_id: account.id,
+      billing_address_id: billingAddressId || null,
+      shipping_address_id: shippingAddressId || null,
       entries: apiEntries,
     };
 
@@ -569,16 +575,48 @@ export default function VoucherForm({ type: initialType, voucherId, companyId, l
             <FieldRow label="Party A/c Name" hint="(balancing ledger)">
               <LedgerDropdown
                 search={accountSearch}
-                onSearchChange={v => { setAccountSearch(v); setAccount(null); }}
+                onSearchChange={v => { setAccountSearch(v); setAccount(null); setBillingAddressId(""); setShippingAddressId(""); }}
                 onSelect={l => { setAccount(l); setAccountSearch(l.name); }}
                 ledgers={ledgers}
                 placeholder="Search party / account…"
                 onCreateNew={() => setLedgerCreateTarget("account")}
               />
               {account && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: 12, color: "var(--text-muted)" }}>
-                  <CheckCircle size={11} style={{ color: "var(--success)" }} />
-                  <span><strong>{account.name}</strong> · {account.group}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
+                    <CheckCircle size={11} style={{ color: "var(--success)" }} />
+                    <span><strong>{account.name}</strong> · {account.group}</span>
+                  </div>
+                  {account.addresses && account.addresses.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 4 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Billing Address</label>
+                        <select
+                          value={billingAddressId}
+                          onChange={e => setBillingAddressId(e.target.value)}
+                          style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", fontSize: 12, background: "var(--bg-input)" }}
+                        >
+                          <option value="">- Default (Ledger) -</option>
+                          {account.addresses.map(a => (
+                            <option key={a.id} value={a.id}>{a.alias || a.address_type} - {a.city}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Shipping Address</label>
+                        <select
+                          value={shippingAddressId}
+                          onChange={e => setShippingAddressId(e.target.value)}
+                          style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", fontSize: 12, background: "var(--bg-input)" }}
+                        >
+                          <option value="">- Default (Ledger) -</option>
+                          {account.addresses.map(a => (
+                            <option key={a.id} value={a.id}>{a.alias || a.address_type} - {a.city}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </FieldRow>

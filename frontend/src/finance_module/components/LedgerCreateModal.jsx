@@ -13,7 +13,32 @@ export default function LedgerCreateModal({ onClose, onSuccess }) {
     group: 'Capital Account',
     opening_balance: 0,
     balance_type: 'Dr',
+    pan: '',
+    addresses: [],
   });
+  const [formError, setFormError] = useState('');
+
+  const handleAddAddress = () => {
+    setForm(prev => ({
+      ...prev,
+      addresses: [...prev.addresses, { address_type: 'Bill', alias: '', city: '', state: '', pincode: '', gst_no: '', contact_number: '' }]
+    }));
+  };
+
+  const handleAddressChange = (index, field, value) => {
+    setForm(prev => {
+      const newAddresses = [...prev.addresses];
+      newAddresses[index] = { ...newAddresses[index], [field]: value };
+      return { ...prev, addresses: newAddresses };
+    });
+  };
+
+  const handleRemoveAddress = (index) => {
+    setForm(prev => {
+      const newAddresses = prev.addresses.filter((_, i) => i !== index);
+      return { ...prev, addresses: newAddresses };
+    });
+  };
 
   const { data: groups = [] } = useQuery({
     queryKey: ['ledger-groups', activeCompany?.id],
@@ -31,7 +56,34 @@ export default function LedgerCreateModal({ onClose, onSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError('');
     if (!form.name.trim()) return;
+
+    const isPartyLedger = form.group === 'Sundry Debtors' || form.group === 'Sundry Creditors';
+    
+    if (isPartyLedger) {
+      if (!form.pan?.trim()) {
+        setFormError('PAN Number is mandatory for Party Ledgers.');
+        return;
+      }
+      
+      for (let i = 0; i < form.addresses.length; i++) {
+        const addr = form.addresses[i];
+        if (!addr.pincode?.trim()) {
+          setFormError(`PIN Code is mandatory for address ${i + 1} (E-way bill requirement).`);
+          return;
+        }
+        if (!addr.gst_no?.trim()) {
+          setFormError(`GST Number is mandatory for address ${i + 1}.`);
+          return;
+        }
+        if (!addr.contact_number?.trim()) {
+          setFormError(`Contact Number is mandatory for address ${i + 1}.`);
+          return;
+        }
+      }
+    }
+
     createMutation.mutate({ ...form, company_id: activeCompany.id });
   };
 
@@ -53,6 +105,13 @@ export default function LedgerCreateModal({ onClose, onSuccess }) {
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
+          {formError && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-xl text-xs font-medium border border-red-100">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <span>{formError}</span>
+            </div>
+          )}
+
           <label className="flex flex-col gap-1.5">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ledger Name *</span>
             <input
@@ -112,6 +171,74 @@ export default function LedgerCreateModal({ onClose, onSuccess }) {
                 <option value="Cr">Cr</option>
               </select>
             </label>
+          </div>
+
+          {(form.group === 'Sundry Debtors' || form.group === 'Sundry Creditors') && (
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PAN Number *</span>
+              <input
+                type="text"
+                value={form.pan}
+                onChange={(e) => handleChange('pan', e.target.value)}
+                className="cb-input py-2 uppercase"
+                placeholder="ABCDE1234F"
+              />
+            </label>
+          )}
+
+          {/* Multiple Addresses Section */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Addresses</span>
+              <button type="button" onClick={handleAddAddress} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                <Plus size={12} /> Add Address
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {form.addresses.map((addr, idx) => (
+                <div key={idx} className="p-3 bg-slate-50 border border-slate-100 rounded-lg space-y-2 relative">
+                  <button type="button" onClick={() => handleRemoveAddress(idx)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500">
+                    <X size={14} />
+                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Type</span>
+                      <select value={addr.address_type} onChange={e => handleAddressChange(idx, 'address_type', e.target.value)} className="cb-input py-1 text-xs">
+                        <option value="Bill">Bill</option>
+                        <option value="Ship">Ship</option>
+                        <option value="Branch">Branch</option>
+                        <option value="Head Office">Head Office</option>
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Alias (1, 2, etc.)</span>
+                      <input type="text" value={addr.alias} onChange={e => handleAddressChange(idx, 'alias', e.target.value)} className="cb-input py-1 text-xs" placeholder="Alias" />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">City</span>
+                      <input type="text" value={addr.city} onChange={e => handleAddressChange(idx, 'city', e.target.value)} className="cb-input py-1 text-xs" placeholder="City" />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">State</span>
+                      <input type="text" value={addr.state} onChange={e => handleAddressChange(idx, 'state', e.target.value)} className="cb-input py-1 text-xs" placeholder="State" />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Pincode {(form.group === 'Sundry Debtors' || form.group === 'Sundry Creditors') ? '*' : ''}</span>
+                      <input type="text" value={addr.pincode} onChange={e => handleAddressChange(idx, 'pincode', e.target.value)} className="cb-input py-1 text-xs" placeholder="Pincode" />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">GST No {(form.group === 'Sundry Debtors' || form.group === 'Sundry Creditors') ? '*' : ''}</span>
+                      <input type="text" value={addr.gst_no} onChange={e => handleAddressChange(idx, 'gst_no', e.target.value)} className="cb-input py-1 text-xs" placeholder="GSTIN" />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Contact {(form.group === 'Sundry Debtors' || form.group === 'Sundry Creditors') ? '*' : ''}</span>
+                      <input type="text" value={addr.contact_number} onChange={e => handleAddressChange(idx, 'contact_number', e.target.value)} className="cb-input py-1 text-xs" placeholder="Phone" />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {createMutation.isError && (

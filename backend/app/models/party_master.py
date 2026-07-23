@@ -34,6 +34,7 @@ class PartyMaster(Base):
     pan_no = Column(String(20))
     tin_no = Column(String(50))
     cst_no = Column(String(50))
+    tally_ledger_name = Column(String(150))
     tally_no = Column(String(100))
     address_sno = Column(String(50))
     tcs_applicable = Column(String(10))
@@ -80,5 +81,11 @@ class PartyAddress(Base):
     country = Column(String(100), default="India")
     sales_region = Column(String(100))
     address_type = Column(String(50), default="Bill")  # Bill, Ship, Branch, Head Office
+    
+    alias = Column(String(50))  # Tally Address Name/Code (e.g., 1, 2, Branch-A)
+    gst_no = Column(String(50))
+    pan_no = Column(String(20))
+    contact_number = Column(String(50))
+    contact_person = Column(String(150))
 
     party = relationship("PartyMaster", back_populates="addresses")

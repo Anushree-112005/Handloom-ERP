@@ -62,6 +62,9 @@ export default function SalesInvoice() {
 
   const [isCustomInvoiceType, setIsCustomInvoiceType] = useState(false);
   const [customInvoiceType, setCustomInvoiceType] = useState('');
+  
+  const [selectedPartyData, setSelectedPartyData] = useState(null);
+  const [selectedDeliveryPartyData, setSelectedDeliveryPartyData] = useState(null);
 
   // Main Form State
   const initialForm = {
@@ -77,6 +80,8 @@ export default function SalesInvoice() {
     delivery: '',
     invoice_address: '',
     delivery_address: '',
+    billing_address_alias: '',
+    shipping_address_alias: '',
     state: '',
     state_code: '',
     dly_state_code: '',
@@ -88,7 +93,9 @@ export default function SalesInvoice() {
     payment: '',
     pmt_ref_no: '',
     transport: '',
+    transport_id: '',
     truck_no: '',
+    vehicle_type: 'Regular',
     transport_mode: '',
     freight_mode: '',
     lr_no: '',
@@ -285,12 +292,15 @@ export default function SalesInvoice() {
           due_days: party.credit_days || prev.due_days,
           transport: party.transport_name || prev.transport
         }));
+        setSelectedPartyData(party);
       } else {
         setFormData(prev => ({ ...prev, pay_name: partyName }));
+        setSelectedPartyData(null);
       }
     } catch (err) {
       console.error("Error setting party fields:", err);
       setFormData(prev => ({ ...prev, pay_name: partyName }));
+      setSelectedPartyData(null);
     }
   };
 
@@ -323,12 +333,15 @@ export default function SalesInvoice() {
           transport: party.transport_name || prev.transport,
           payment: party.payment_terms || prev.payment
         }));
+        setSelectedDeliveryPartyData(party);
       } else {
         setFormData(prev => ({ ...prev, delivery: deliveryPartyName }));
+        setSelectedDeliveryPartyData(null);
       }
     } catch (err) {
       console.error("Error setting delivery fields:", err);
       setFormData(prev => ({ ...prev, delivery: deliveryPartyName }));
+      setSelectedDeliveryPartyData(null);
     }
   };
 
@@ -545,6 +558,24 @@ export default function SalesInvoice() {
     setItems(prev => prev.filter((_, idx) => idx !== index));
   };
 
+  const handleGenerateEwayBill = async () => {
+    if (!editingId) return;
+    try {
+      const response = await salesInvoiceAPI.generateEwayBillJson(editingId);
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `eway_bill_${formData.invoice_no}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      alert("E-Way Bill JSON generated successfully. You can now upload this to the NIC portal.");
+    } catch (err) {
+      console.error(err);
+      alert("Error generating E-Way Bill JSON: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isReadOnly) return;
@@ -571,7 +602,9 @@ export default function SalesInvoice() {
       payment: formData.payment,
       pmt_ref_no: formData.pmt_ref_no,
       transport: formData.transport,
+      transport_id: formData.transport_id,
       truck_no: formData.truck_no,
+      vehicle_type: formData.vehicle_type,
       transport_mode: formData.transport_mode,
       freight_mode: formData.freight_mode,
       lr_no: formData.lr_no,
@@ -594,6 +627,8 @@ export default function SalesInvoice() {
       party_name: formData.pay_name || null,
       billing_address: formData.invoice_address || null,
       delivery_address: formData.delivery_address || null,
+      billing_address_alias: formData.billing_address_alias || null,
+      shipping_address_alias: formData.shipping_address_alias || null,
       state: formData.state || null,
       state_code: formData.state_code ? formData.state_code.substring(0, 10) : null,
       gst_no: formData.gst_no || null,
@@ -681,6 +716,27 @@ export default function SalesInvoice() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Invoices");
     XLSX.writeFile(workbook, `Sales_Invoices_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const exportTallyXml = async () => {
+    const selectedIds = filteredInvoices.map(inv => inv.id).join(',');
+    if (!selectedIds) {
+      alert("No invoices available to export.");
+      return;
+    }
+    try {
+      const response = await salesInvoiceAPI.exportTallyXml(selectedIds);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/xml' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Tally_Sales_Invoices_${new Date().toISOString().split('T')[0]}.xml`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to export Tally XML");
+    }
   };
 
   const filteredInvoices = invoices.filter(inv => {
@@ -840,16 +896,30 @@ export default function SalesInvoice() {
                         <label>GST No</label>
                         <input className="form-control" name="gst_no" value={formData.gst_no} onChange={handleInputChange} />
                       </div>
+                      <div className="form-group">
+                        <label>Billing Address Alias (Tally)</label>
+                        <select className="form-control" name="billing_address_alias" value={formData.billing_address_alias} onChange={handleInputChange}>
+                          <option value="">-- Default/Primary --</option>
+                          {selectedPartyData?.addresses?.map(a => a.alias ? <option key={a.alias} value={a.alias}>{a.alias}</option> : null)}
+                        </select>
+                      </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                        <label>Invoice Address</label>
+                        <label>Invoice Address (Full)</label>
                         <input className="form-control" name="invoice_address" value={formData.invoice_address} onChange={handleInputChange} />
                       </div>
                       <div className="form-group">
                         <label>State / Code</label>
                         <input className="form-control" name="state_code" value={formData.state_code} onChange={handleInputChange} />
                       </div>
+                      <div className="form-group">
+                        <label>Shipping Address Alias (Tally)</label>
+                        <select className="form-control" name="shipping_address_alias" value={formData.shipping_address_alias} onChange={handleInputChange}>
+                          <option value="">-- Default/Primary --</option>
+                          {(selectedDeliveryPartyData || selectedPartyData)?.addresses?.map(a => a.alias ? <option key={a.alias} value={a.alias}>{a.alias}</option> : null)}
+                        </select>
+                      </div>
                       <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                        <label>Delivery Address</label>
+                        <label>Delivery Address (Full)</label>
                         <input className="form-control" name="delivery_address" value={formData.delivery_address} onChange={handleInputChange} />
                       </div>
                       <div className="form-group">
@@ -938,8 +1008,19 @@ export default function SalesInvoice() {
                         )}
                       </div>
                       <div className="form-group">
+                        <label>Transport ID (GSTIN)</label>
+                        <input className="form-control" name="transport_id" value={formData.transport_id} onChange={handleInputChange} placeholder="For E-way bill" />
+                      </div>
+                      <div className="form-group">
                         <label>Truck No</label>
                         <input className="form-control" name="truck_no" value={formData.truck_no} onChange={handleInputChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Vehicle Type</label>
+                        <select className="form-control" name="vehicle_type" value={formData.vehicle_type} onChange={handleInputChange}>
+                          <option value="Regular">Regular</option>
+                          <option value="ODC">ODC</option>
+                        </select>
                       </div>
                       <div className="form-group">
                         <label>Transport Mode</label>
@@ -1292,6 +1373,11 @@ export default function SalesInvoice() {
                   <button type="button" className="btn btn-secondary" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <X size={16} /> Close
                   </button>
+                  {editingId && (
+                    <button type="button" className="btn" onClick={handleGenerateEwayBill} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f59e0b', color: 'white' }}>
+                      <FileSpreadsheet size={16} /> Generate E-Way Bill JSON
+                    </button>
+                  )}
                   {!isReadOnly && (
                     <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Save size={16} /> {editingId ? 'Update Invoice' : 'Save Invoice'}
@@ -1343,11 +1429,19 @@ export default function SalesInvoice() {
                 </button>
                 <button
                   onClick={() => { exportExcel(); setShowExportMenu(false); }}
-                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}
                   onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
                   onMouseOut={(e) => e.currentTarget.style.background = 'none'}
                 >
                   <FileSpreadsheet size={16} color="#10b981" /> Excel Sheet
+                </button>
+                <button
+                  onClick={() => { exportTallyXml(); setShowExportMenu(false); }}
+                  style={{ width: '100%', padding: '10px 12px', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'none'}
+                >
+                  <FileText size={16} color="#8b5cf6" /> Tally XML
                 </button>
               </div>
             )}

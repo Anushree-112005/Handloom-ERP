@@ -10,6 +10,22 @@ from finance_app.models.voucher import Voucher, VoucherEntry
 router = APIRouter()
 
 # ── Schemas ────────────────────────────────────────────────────────────────
+class LedgerAddressSchema(BaseModel):
+    address_type:       str = "Bill"
+    alias:              Optional[str] = None
+    address:            Optional[str] = None
+    city:               Optional[str] = None
+    district:           Optional[str] = None
+    state:              Optional[str] = None
+    state_code:         Optional[str] = None
+    pin_code:           Optional[str] = None
+    country:            str = "India"
+    sales_region:       Optional[str] = None
+    gst_no:             Optional[str] = None
+    pan_no:             Optional[str] = None
+    contact_number:     Optional[str] = None
+    contact_person:     Optional[str] = None
+
 class LedgerCreate(BaseModel):
     name:               str
     alias:              Optional[str] = None
@@ -30,6 +46,7 @@ class LedgerCreate(BaseModel):
     default_gst_rate:   float = 0.0
     hsn_sac_code:       Optional[str] = None
     company_id:         int
+    addresses:          Optional[List[LedgerAddressSchema]] = []
 
 # ── Endpoints ──────────────────────────────────────────────────────────────
 @router.post("/")
@@ -46,8 +63,14 @@ def create_ledger(payload: LedgerCreate, db: Session = Depends(get_db)):
         LedgerGroup.company_id == payload.company_id
     ).first()
     data = payload.model_dump()
+    addresses_data = data.pop("addresses", [])
     data["group_id"] = grp.id if grp else None
     ledger = Ledger(**data)
+    
+    from finance_app.models.ledger_address import LedgerAddress
+    for addr in addresses_data:
+        ledger.addresses.append(LedgerAddress(**addr))
+
     db.add(ledger)
     db.commit()
     db.refresh(ledger)
@@ -93,10 +116,20 @@ def update_ledger(ledger_id: int, payload: LedgerCreate, db: Session = Depends(g
         raise HTTPException(404, "Ledger not found")
     if l.is_system:
         raise HTTPException(400, "Cannot edit system ledgers")
-    for k, v in payload.model_dump().items():
+    payload_data = payload.model_dump()
+    addresses_data = payload_data.pop("addresses", [])
+    for k, v in payload_data.items():
         if hasattr(l, k):
             setattr(l, k, v)
+
+    # Update addresses (replace all)
+    from finance_app.models.ledger_address import LedgerAddress
+    l.addresses.clear()
+    for addr in addresses_data:
+        l.addresses.append(LedgerAddress(**addr))
+
     db.commit()
+    db.refresh(l)
     return _ledger_out(l)
 
 @router.delete("/{ledger_id}")
@@ -202,6 +235,16 @@ def _ledger_out(l: Ledger):
         "hsn_sac_code": l.hsn_sac_code,
         "is_active": l.is_active, "is_system": l.is_system,
         "company_id": l.company_id,
+        "addresses": [
+            {
+                "id": a.id, "address_type": a.address_type, "alias": a.alias,
+                "address": a.address, "city": a.city, "district": a.district,
+                "state": a.state, "state_code": a.state_code, "pin_code": a.pin_code,
+                "country": a.country, "sales_region": a.sales_region,
+                "gst_no": a.gst_no, "pan_no": a.pan_no,
+                "contact_number": a.contact_number, "contact_person": a.contact_person
+            } for a in getattr(l, "addresses", [])
+        ]
     }
 
 def _calc_balance(l: Ledger, db: Session):

@@ -100,3 +100,6 @@ api_router.include_router(buyer_order_schedule.router)
 api_router.include_router(buyer_order_amendment.router)
 api_router.include_router(buyer_order_completion.router)
 api_router.include_router(order_expenses.router)
+
+from app.api.v1.endpoints import vouchers
+api_router.include_router(vouchers.router, prefix="/vouchers", tags=["Vouchers"])

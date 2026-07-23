@@ -112,7 +112,7 @@ export default function PartyMaster() {
     party_type: '', customer_grade: '', status: 'Active',
     company_name: '', party_group: '', address: '', state: '',
     pin_code: '', city: '', district: '', phone: '', sales_region: '', country: '',
-    currency: '', contact_person: '', email: '', tally_no: '',
+    currency: '', contact_person: '', email: '', tally_no: '', tally_ledger_name: '',
     address_sno: '1', tcs_applicable: 'No', tin_no: '', cst_no: '',
     gst_no: '', gst_type: '', pan_no: '', tds: '', tds_percent: 0,
     pc_id: '', merchandiser: '', manager: '', credit_days: 30,
@@ -283,7 +283,22 @@ export default function PartyMaster() {
               <option value="Head Office">Head Office</option>
             </select>
           </div>
-          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+          <div className="form-group">
+            <label>Address Alias (Tally)</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.alias || ''}
+              placeholder="e.g., Branch 1, Unit A"
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].alias = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group" style={{ gridColumn: 'span 1' }}>
             <label>Complete Address</label>
             <input
               type="text"
@@ -389,6 +404,62 @@ export default function PartyMaster() {
               <option value="">-- Select Country --</option>
               {renderOptions('country')}
             </select>
+          </div>
+          <div className="form-group">
+            <label>GSTIN</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.gst_no || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].gst_no = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group">
+            <label>PAN No</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.pan_no || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].pan_no = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group">
+            <label>Contact Person</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.contact_person || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].contact_person = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="form-group">
+            <label>Contact Number</label>
+            <input
+              type="text"
+              className="form-control"
+              value={addr.contact_number || ''}
+              onChange={(e) => {
+                const updated = [...formData.addresses];
+                updated[idx].contact_number = e.target.value;
+                setFormData(prev => ({ ...prev, addresses: updated }));
+              }}
+              disabled={isReadOnly}
+            />
           </div>
         </div>
       </div>
@@ -901,7 +972,7 @@ export default function PartyMaster() {
                           style={{ padding: '4px 12px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}
                           onClick={() => {
                             const newAddress = {
-                              address: '', city: '', district: '', state: '', state_code: '', pin_code: '', country: 'India', sales_region: '', address_type: 'Delivery'
+                              address: '', city: '', district: '', state: '', state_code: '', pin_code: '', country: 'India', sales_region: '', address_type: 'Delivery', alias: '', gst_no: '', pan_no: '', contact_number: '', contact_person: ''
                             };
                             setFormData(prev => ({
                               ...prev,
@@ -1021,6 +1092,10 @@ export default function PartyMaster() {
                       <div className="form-group">
                         <label>PAN No</label>
                         <input className="form-control" name="pan_no" value={formData.pan_no} onChange={handleChange} />
+                      </div>
+                      <div className="form-group">
+                        <label>Tally Ledger Name *</label>
+                        <input className="form-control" name="tally_ledger_name" value={formData.tally_ledger_name} onChange={handleChange} placeholder="Exact name in Tally" />
                       </div>
                       <div className="form-group">
                         <label>Tally No</label>
@@ -1444,11 +1519,26 @@ export default function PartyMaster() {
                     <h4 style={{ margin: '16px 0 4px', color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Other Addresses</h4>
                     {selectedViewParty.addresses.map((addr, idx) => (
                       <div key={idx} style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 8, fontSize: 12, background: 'var(--bg-primary)' }}>
-                        <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: 2 }}>{addr.address_type} Address</div>
+                        <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{addr.address_type} Address</span>
+                          {addr.alias && <span style={{ color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 6px', borderRadius: 12, fontSize: 10 }}>Alias: {addr.alias}</span>}
+                        </div>
                         <div style={{ color: 'var(--text-primary)' }}>{addr.address}</div>
                         <div style={{ color: 'var(--text-secondary)' }}>
-                          {addr.city}, {addr.district}, {addr.state} {addr.sales_region ? `(${addr.sales_region})` : ''} - {addr.pin_code}
+                          {addr.city}, {addr.district}, {addr.state} - {addr.pin_code}
                         </div>
+                        {(addr.gst_no || addr.pan_no) && (
+                          <div style={{ display: 'flex', gap: 12, marginTop: 4, paddingTop: 4, borderTop: '1px dashed var(--border)' }}>
+                            {addr.gst_no && <div><span style={{color: 'var(--text-muted)'}}>GST:</span> {addr.gst_no}</div>}
+                            {addr.pan_no && <div><span style={{color: 'var(--text-muted)'}}>PAN:</span> {addr.pan_no}</div>}
+                          </div>
+                        )}
+                        {(addr.contact_person || addr.contact_number) && (
+                          <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
+                            {addr.contact_person && <div><span style={{color: 'var(--text-muted)'}}>Contact:</span> {addr.contact_person}</div>}
+                            {addr.contact_number && <div><span style={{color: 'var(--text-muted)'}}>Phone:</span> {addr.contact_number}</div>}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </>

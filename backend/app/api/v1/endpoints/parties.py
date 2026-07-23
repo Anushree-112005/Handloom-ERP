@@ -184,6 +184,24 @@ async def create_party(party: PartyMasterCreate, db: AsyncSession = Depends(get_
         state_code=db_party.state_code,
         company_id=DEFAULT_COMPANY_ID
     )
+    from finance_app.models.ledger_address import LedgerAddress
+    for p_addr in db_party.addresses:
+        new_ledger.addresses.append(LedgerAddress(
+            address_type=p_addr.address_type or "Bill",
+            alias=p_addr.alias,
+            address=p_addr.address,
+            city=p_addr.city,
+            district=p_addr.district,
+            state=p_addr.state,
+            state_code=p_addr.state_code,
+            pin_code=p_addr.pin_code,
+            country=p_addr.country or "India",
+            sales_region=p_addr.sales_region,
+            gst_no=p_addr.gst_no,
+            pan_no=p_addr.pan_no,
+            contact_number=p_addr.contact_number,
+            contact_person=p_addr.contact_person
+        ))
     sqlite_db.add(new_ledger)
 
     # Auto-create Inventory Location
@@ -240,6 +258,40 @@ async def update_party(party_id: int, party: PartyMasterUpdate, db: AsyncSession
         
     await db.commit()
     await db.refresh(db_party)
+    
+    # Sync addresses to Finance Ledger
+    from finance_app.database import SessionLocal
+    from finance_app.models.ledger import Ledger
+    from finance_app.models.ledger_address import LedgerAddress
+    sqlite_db = SessionLocal()
+    ledger = sqlite_db.query(Ledger).filter(Ledger.name == db_party.company_name, Ledger.company_id == 1).first()
+    if ledger:
+        ledger.party_type = db_party.party_type
+        ledger.gstin = db_party.gst_no
+        ledger.pan = db_party.pan_no
+        ledger.address = db_party.address
+        ledger.state_code = db_party.state_code
+        # Sync addresses
+        ledger.addresses.clear()
+        for p_addr in db_party.addresses:
+            ledger.addresses.append(LedgerAddress(
+                address_type=p_addr.address_type or "Bill",
+                alias=p_addr.alias,
+                address=p_addr.address,
+                city=p_addr.city,
+                district=p_addr.district,
+                state=p_addr.state,
+                state_code=p_addr.state_code,
+                pin_code=p_addr.pin_code,
+                country=p_addr.country or "India",
+                sales_region=p_addr.sales_region,
+                gst_no=p_addr.gst_no,
+                pan_no=p_addr.pan_no,
+                contact_number=p_addr.contact_number,
+                contact_person=p_addr.contact_person
+            ))
+        sqlite_db.commit()
+    sqlite_db.close()
     
     # Reload party with addresses
     result = await db.execute(
