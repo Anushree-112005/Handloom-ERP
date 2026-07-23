@@ -25,11 +25,13 @@ class WarpDeliveryItemBase(BaseModel):
 class WarpDeliveryCreate(BaseModel):
     dc_no: Optional[str] = None
     ref_no: Optional[str] = None
+    dc_sno: Optional[str] = None
     dc_date: Optional[date] = None
     delivery_type: Optional[str] = None
     sizing_name: Optional[str] = None
     party_name: Optional[str] = None
     entry_type: Optional[str] = None
+    delivery_beam: Optional[str] = None
     bpo_no: Optional[str] = None
     design_no: Optional[str] = None
     order_no: Optional[str] = None

@@ -38,8 +38,8 @@ export default function WarpDelivery() {
 
   const initialForm = {
     po_no_base: '',
-    dc_no: '', ref_no: '', dc_date: new Date().toISOString().split('T')[0], delivery_type: 'Direct',
-    sizing_name: '', party_name: '', entry_type: '', bpo_no: '', design_no: '', order_no: '',
+    dc_no: '', ref_no: '', dc_sno: '', dc_date: new Date().toISOString().split('T')[0], delivery_type: 'Direct',
+    sizing_name: '', party_name: '', entry_type: '', delivery_beam: '', bpo_no: '', design_no: '', order_no: '',
     address: '', set_id: '', warp_ends: 0, yarn_count: '', vendor_po_no: '', po_date: new Date().toISOString().split('T')[0],
     order_mtrs: 0, with_crimp: '', delivered_mtrs: 0, transport: '', vehicle_no: '',
     
@@ -519,6 +519,8 @@ export default function WarpDelivery() {
                 data: [
                   { label: "DC No", value: selectedViewEntry.dc_no },
                   { label: "DC Date", value: selectedViewEntry.dc_date },
+                  { label: "Ref No", value: selectedViewEntry.ref_no || '-' },
+                  { label: "DC SNo", value: selectedViewEntry.dc_sno || '-' },
                   { label: "Vendor", value: selectedViewEntry.party_name || '-' },
                   { label: "Delivery Type", value: selectedViewEntry.delivery_type }
                 ]
@@ -530,7 +532,8 @@ export default function WarpDelivery() {
                 data: [
                   { label: "Total Mtrs", value: selectedViewEntry.total_meters },
                   { label: "Order No", value: selectedViewEntry.order_no || '-' },
-                  { label: "Vehicle No", value: selectedViewEntry.vehicle_no || '-' }
+                  { label: "Vehicle No", value: selectedViewEntry.vehicle_no || '-' },
+                  { label: "Delivery Beam", value: selectedViewEntry.delivery_beam || '-' }
                 ]
               },
               {
@@ -602,6 +605,17 @@ export default function WarpDelivery() {
                         {warpingSizingPOs.filter(p => p.po_no).map(p => <option key={p.id} value={p.po_no}>{p.po_no} ({p.supplier_job_worker || p.party_name || 'No Vendor'})</option>)}
                       </select>
                     </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>Ref No / DC SNo</label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input className="form-control" placeholder="Ref No" name="ref_no" value={form.ref_no || ''} onChange={handleChange} style={{ flex: 1, margin: 0 }} />
+                        <input className="form-control" placeholder="DC SNo" name="dc_sno" value={form.dc_sno || ''} onChange={handleChange} style={{ flex: 1, margin: 0 }} />
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                      <label>DC No.</label>
+                      <input className="form-control" name="dc_no" value={form.dc_no || ''} onChange={handleChange} />
+                    </div>
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Dely Type</label>
                       <select className="form-control" name="delivery_type" value={form.delivery_type} onChange={handleChange}>
                         <option>Direct</option><option>Against Order</option>
@@ -610,19 +624,19 @@ export default function WarpDelivery() {
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>DC Date</label><input type="date" className="form-control" name="dc_date" value={form.dc_date} onChange={handleChange} /></div>
 
                     <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Sizing Name</label><input className="form-control" name="sizing_name" value={form.sizing_name} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Party Name</label>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Vendor Name</label>
                       <select className="form-control" name="party_name" value={form.party_name} onChange={handleChange}>
-                        <option value="">Select Party...</option>
+                        <option value="">Select Vendor...</option>
                         {parties.map(p => <option key={p.id} value={p.company_name}>{p.company_name}</option>)}
                       </select>
                     </div>
 
                     <div className="form-group"><label>Entry Type</label><input className="form-control" name="entry_type" value={form.entry_type} onChange={handleChange} /></div>
-                    <div className="form-group"><label>BPO No</label><input className="form-control" name="bpo_no" value={form.bpo_no} onChange={handleChange} /></div>
+                    <div className="form-group"><label>IBPO No.</label><input className="form-control" name="bpo_no" value={form.bpo_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Design No</label><input className="form-control" name="design_no" value={form.design_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Order No</label><input className="form-control" name="order_no" value={form.order_no} onChange={handleChange} /></div>
 
-                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Address</label><input className="form-control" name="address" value={form.address} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Address</label><textarea className="form-control" name="address" value={form.address || ''} onChange={handleChange} style={{ height: '38px', resize: 'vertical' }} /></div>
                     <div className="form-group"><label>SET ID (No.)</label><input className="form-control" name="set_id" value={form.set_id} onChange={handleChange} /></div>
                     <div className="form-group"><label>Warp Ends</label><input type="number" className="form-control" name="warp_ends" value={form.warp_ends} onChange={handleChange} /></div>
 
@@ -639,15 +653,16 @@ export default function WarpDelivery() {
                     <div className="form-group"><label>Total Beams</label><input type="number" className="form-control" name="total_beams" value={form.total_beams} onChange={handleChange} /></div>
                     <div className="form-group"><label>Transport</label><input className="form-control" name="transport" value={form.transport} onChange={handleChange} /></div>
                     <div className="form-group"><label>Vehicle No</label><input className="form-control" name="vehicle_no" value={form.vehicle_no} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
+                    <div className="form-group"><label>Delivery Beam</label><input className="form-control" name="delivery_beam" value={form.delivery_beam || ''} onChange={handleChange} /></div>
                     
+                    <div className="form-group"><label>Driver Name</label><input className="form-control" name="driver_name" value={form.driver_name} onChange={handleChange} /></div>
                     <div className="form-group"><label>Mobile No</label><input className="form-control" name="mobile_no" value={form.mobile_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>LR No / Challan No</label><input className="form-control" name="lr_no" value={form.lr_no} onChange={handleChange} /></div>
                     <div className="form-group"><label>Delivery Time</label><input type="time" className="form-control" name="delivery_time" value={form.delivery_time} onChange={handleChange} /></div>
-                    <div className="form-group"><label>Total Warp Mtrs</label><input type="number" className="form-control" name="total_meters" value={form.total_meters} onChange={handleChange} /></div>
                     
+                    <div className="form-group"><label>Total Warp Mtrs</label><input type="number" className="form-control" name="total_meters" value={form.total_meters} onChange={handleChange} /></div>
                     <div className="form-group"><label>Total Exptd Mtrs</label><input type="number" className="form-control" name="total_exptd_mtrs" value={form.total_exptd_mtrs} onChange={handleChange} /></div>
-                    <div className="form-group" style={{ gridColumn: 'span 3' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
+                    <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Remarks</label><input className="form-control" name="remarks" value={form.remarks} onChange={handleChange} /></div>
                   </div>
 
                   {/* Section 2: Table Section (Beams) */}
