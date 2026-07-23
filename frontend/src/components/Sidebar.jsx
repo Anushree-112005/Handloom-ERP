@@ -17,26 +17,26 @@ import defaultLogo from '../assets/logo.svg';
 
 const jobWorkRoutes = [
   { section: 'Yarn Dyeing' },
-  { path: '/dyed-yarn/delivery', label: 'Delivery', icon: Truck },
-  { path: '/dyed-yarn/received', label: 'Receipt', icon: Palette },
+  { path: '/dyed-yarn/delivery', label: 'Yarn Dyeing Delivery', icon: Truck },
+  { path: '/dyed-yarn/received', label: 'Yarn Dyeing Receipt', icon: Palette },
 
   { section: 'Warping & Sizing' },
-  { path: '/warp/delivery', label: 'Delivery', icon: Truck },
-  { path: '/warp/beam-receipt', label: 'Receipt', icon: Box },
+  { path: '/warp/delivery', label: 'Warping & Sizing Delivery', icon: Truck },
+  { path: '/warp/beam-receipt', label: 'Warping & Sizing Receipt', icon: Box },
   { path: '/warp/production-entry', label: 'Warping Production Entry', icon: Factory },
   { path: '/warp/sizing-production-entry', label: 'Sizing Production Entry', icon: Settings },
 
   { section: 'Weaving' },
-  { path: '/weaving/delivery', label: 'Delivery', icon: Truck },
-  { path: '/cloth/inward', label: 'Receipt', icon: ArrowDownLeft },
+  { path: '/weaving/delivery', label: 'Weaving Delivery', icon: Truck },
+  { path: '/cloth/inward', label: 'Weaving Receipt', icon: ArrowDownLeft },
 
   { section: 'Fabric Dyeing' },
-  { path: '/jobwork/fabric-dyeing-delivery', label: 'Delivery', icon: Truck },
-  { path: '/jobwork/dyed-fabric-receipt', label: 'Receipt', icon: Palette },
+  { path: '/jobwork/fabric-dyeing-delivery', label: 'Fabric Dyeing Delivery', icon: Truck },
+  { path: '/jobwork/dyed-fabric-receipt', label: 'Fabric Dyeing Receipt', icon: Palette },
 
   { section: 'Finishing' },
-  { path: '/jobwork/finishing-delivery', label: 'Delivery', icon: Truck },
-  { path: '/jobwork/finished-fabric-receipt', label: 'Receipt', icon: Box },
+  { path: '/jobwork/finishing-delivery', label: 'Finishing Delivery', icon: Truck },
+  { path: '/jobwork/finished-fabric-receipt', label: 'Finishing Receipt', icon: Box },
 
   { section: 'Job Work Services' },
   { path: '/jobwork/bill', label: 'Job Work Bill Entry', icon: FileText },
