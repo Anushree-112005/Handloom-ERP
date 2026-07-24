@@ -53,11 +53,17 @@ class SalesInvoice(Base):
     buyer_po_no = Column(String(50))
     dispatch_date = Column(String(50))
     transporter_name = Column(String(150))
+    transport_id = Column(String(50)) # E-way bill: Transporter GSTIN
     lr_no = Column(String(100))
     vehicle_no = Column(String(50))
+    vehicle_type = Column(String(50), default="Regular") # E-way bill: Regular, ODC, etc. (Or Road/Rail)
     payment_terms = Column(String(255))
     delivery_terms = Column(String(255))
     insurance_charges = Column(Numeric(10, 2), default=0)
+    
+    # Address Aliases (Tally Mapping)
+    billing_address_alias = Column(String(100))
+    shipping_address_alias = Column(String(100))
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

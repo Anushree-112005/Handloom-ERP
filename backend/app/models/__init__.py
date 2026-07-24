@@ -1,4 +1,5 @@
 # Models package - imports all models for Alembic discovery
+from app.models.approval import ApprovalWorkflow
 from app.models.employee import Employee
 from app.models.party_master import PartyMaster, PartyAddress
 from app.models.buyer_order import BuyerOrder, BuyerOrderItem
@@ -34,7 +35,7 @@ from app.models.processing_po import ProcessingPO, ProcessingPOItem
 from app.models.cloth_purchase_po import ClothPurchasePO, ClothPurchasePOItem
 from app.modules.hr.models import HRItem
 from app.modules.vehicle_management.models import FleetItem
-from app.modules.stationary.models import MaterialCategory, UOMMaster, Warehouse, WarehouseRack, WarehouseBin, MaterialMaster, MaterialStock, StockLedger, GoodsReceiptNote, GRNItem, StockIssue, StockIssueItem, SwatchCard, FabricInspectionRoll, ReturnableDC
+from app.modules.stationary.models import StationaryItem, MaterialCategory, UOMMaster, Warehouse, WarehouseRack, WarehouseBin, MaterialMaster, MaterialStock, StockLedger, GoodsReceiptNote, GRNItem, StockIssue, StockIssueItem, SwatchCard, FabricInspectionRoll, ReturnableDC
 from app.modules.stores_consumables.models import (
     StoresCategory, StoresUOM, StoresVendor, StoresDepartment, StoresItem,
     StoresMaterialRequest, StoresSubcategory, StoresWarehouse, StoresCostCenter,
@@ -67,3 +68,4 @@ from app.models.rbac import (
     Role, PermissionAction, Module, RolePermission, UserRole, UserModule, UserPermission, AuditLog
 )
 from app.models.rack import Rack
+from app.models.voucher import LedgerGroup, Ledger, VoucherType, Voucher, VoucherEntry, StockItem, VoucherItemEntry

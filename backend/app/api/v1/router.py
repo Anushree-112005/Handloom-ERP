@@ -25,6 +25,7 @@ api_router.include_router(eway_bills.router)
 api_router.include_router(company_settings.router)
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 
+
 # Newly registered missing routers
 api_router.include_router(design_entries.router)
 from app.api.v1.endpoints import racks
@@ -37,6 +38,7 @@ api_router.include_router(warp_beam_receipts.router)
 api_router.include_router(warp_deliveries.router)
 api_router.include_router(sub_masters.router)
 api_router.include_router(fleet.router)
+api_router.include_router(twisting_doubling_po.router, prefix="/twisting-doubling-po", tags=["Twisting Doubling PO"])
 
 api_router.include_router(twisting_doubling_po.router, prefix="/purchase/twisting-doubling", tags=["Purchase Orders - Twisting & Doubling"])
 api_router.include_router(calendar_events.router, prefix="/calendar-events", tags=["Calendar Events"])
@@ -79,18 +81,25 @@ from app.modules.hr.router import router as hr_router
 from app.modules.vehicle_management.router import router as fleet_router
 from app.modules.stationary.router import router as stationary_router
 from app.modules.stores_consumables.router import router as stores_consumables_router
+from app.modules.stores_consumables.reports_router import router as stores_reports_router
 api_router.include_router(hr_router)
 api_router.include_router(fleet_router)
 api_router.include_router(stationary_router)
 api_router.include_router(stores_consumables_router)
+api_router.include_router(stores_reports_router)
 
 from app.api.v1.endpoints import generic_po
 api_router.include_router(generic_po.router)
 
 from app.api.v1.endpoints import warehouse
 api_router.include_router(warehouse.router, prefix="/warehouse", tags=["Warehouse"])
+from app.api.v1.endpoints import approvals
+api_router.include_router(approvals.router, prefix="/approvals", tags=["Approvals"])
 api_router.include_router(proforma_invoice.router)
 api_router.include_router(buyer_order_schedule.router)
 api_router.include_router(buyer_order_amendment.router)
 api_router.include_router(buyer_order_completion.router)
 api_router.include_router(order_expenses.router)
+
+from app.api.v1.endpoints import vouchers
+api_router.include_router(vouchers.router, prefix="/vouchers", tags=["Vouchers"])

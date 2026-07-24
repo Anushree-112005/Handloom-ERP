@@ -20,6 +20,8 @@ def require_permission(module_key: str, action_name: str):
         db: AsyncSession = Depends(get_db)
     ):
         # Check Super Admin bypass
+        if current_user.user_type == "Admin":
+            return current_user
         user_roles_res = await db.execute(
             select(Role)
             .join(UserRole, UserRole.role_id == Role.id)
@@ -80,12 +82,16 @@ def require_permission(module_key: str, action_name: str):
     return dependency
 
 async def get_user_rbac_context(user_id: int, db: AsyncSession):
+    # Fetch User
+    user_res = await db.execute(select(Employee).where(Employee.id == user_id))
+    user = user_res.scalar_one_or_none()
+
     # Get Roles
     user_roles_res = await db.execute(
         select(Role).join(UserRole, UserRole.role_id == Role.id).where(UserRole.user_id == user_id)
     )
     roles = user_roles_res.scalars().all()
-    is_super_admin = any(r.name == "Super Admin" for r in roles)
+    is_super_admin = (user and user.user_type == "Admin") or any(r.name == "Super Admin" for r in roles)
     
     # Get Modules
     modules_res = await db.execute(select(Module))

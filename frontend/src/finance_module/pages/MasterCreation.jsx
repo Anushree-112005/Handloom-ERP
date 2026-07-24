@@ -20,19 +20,7 @@ const masterSections = [
       { label: 'Voucher Type', icon: Receipt, description: 'Numbering and prefixes.', route: '/cubebook/masters/voucher-type/create', color: '#f59e0b' },
     ],
   },
-  {
-    title: 'Inventory Masters',
-    color: '#10b981',
-    gradient: 'linear-gradient(90deg, #10b981, #14b8a6)',
-    icon: Package,
-    items: [
-      { label: 'Stock Group', icon: Grid, description: 'Stock grouping categories.', route: '/cubebook/inventory/stock-groups/create', color: '#10b981' },
-      { label: 'Stock Category', icon: Box, description: 'Inventory item categories.', route: '/cubebook/inventory/stock-categories/create', color: '#06b6d4' },
-      { label: 'Stock Item', icon: Package, description: 'Base stock items.', route: '/cubebook/inventory/stock-items/create', color: '#3b82f6' },
-      { label: 'Unit', icon: Scale, description: 'Units of measure.', route: '/cubebook/inventory/units/create', color: '#6366f1' },
-      { label: 'Location', icon: MapPin, description: 'Storage locations.', route: '/cubebook/inventory/locations/create', color: '#ef4444' },
-    ],
-  },
+
   {
     title: 'Statutory Masters',
     color: '#f59e0b',

@@ -78,9 +78,9 @@ export default function CompanyGstDetails() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 bg-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-600/25">
-            <FileText size={20} className="text-white" />
+        <div className="flex items-center gap-5">
+          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 transform hover:scale-105 transition-all duration-300">
+            <FileText size={24} className="text-white" />
           </div>
           <div>
             <h1 className="cb-page-title">Company GST Details</h1>
@@ -105,9 +105,12 @@ export default function CompanyGstDetails() {
 
       <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-12 items-start">
         {/* Left Column: HSN/SAC & GST Rates (6 cols) */}
-        <div className="lg:col-span-6 cb-card p-6 space-y-6 bg-white">
+        <div className="lg:col-span-6 bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 space-y-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-3">HSN/SAC & Related Details</h3>
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="h-6 w-1.5 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full"></div>
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">HSN/SAC & Related Details</h3>
+            </div>
             
             <label className="flex flex-col gap-1.5">
               <span className="cb-label">HSN/SAC Details Option</span>
@@ -148,8 +151,11 @@ export default function CompanyGstDetails() {
             )}
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-3">GST Rate & Related Details</h3>
+          <div className="space-y-4 pt-6 border-t border-slate-100/50">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="h-6 w-1.5 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full"></div>
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">GST Rate & Related Details</h3>
+            </div>
 
             <label className="flex flex-col gap-1.5">
               <span className="cb-label">GST Rate Details Option</span>
@@ -197,9 +203,12 @@ export default function CompanyGstDetails() {
         </div>
 
         {/* Right Column: e-Way Bill & Configurations (6 cols) */}
-        <div className="lg:col-span-6 cb-card p-6 space-y-6 bg-white">
+        <div className="lg:col-span-6 bg-white/70 backdrop-blur-xl border border-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-8 space-y-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-3">e-Way Bill Details</h3>
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="h-6 w-1.5 bg-gradient-to-b from-amber-400 to-orange-500 rounded-full"></div>
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">e-Way Bill Details</h3>
+            </div>
 
             <label className="flex flex-col gap-1.5">
               <span className="cb-label">Interstate Threshold Limit (₹)</span>
@@ -235,8 +244,11 @@ export default function CompanyGstDetails() {
             </label>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-3">Additional Configuration</h3>
+          <div className="space-y-4 pt-6 border-t border-slate-100/50">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="h-6 w-1.5 bg-gradient-to-b from-rose-400 to-pink-500 rounded-full"></div>
+              <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-700">Additional Configuration</h3>
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer">
@@ -277,17 +289,17 @@ export default function CompanyGstDetails() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+          <div className="pt-6 border-t border-slate-100/50 flex justify-end gap-3 mt-auto">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="cb-btn-secondary"
+              className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="cb-btn-primary"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/30 flex items-center gap-2 transform hover:-translate-y-0.5"
             >
               <Save size={15} />
               Accept

@@ -12,6 +12,9 @@ class VoucherType(str, Enum):
     CREDIT_NOTE = "Credit Note"
     DEBIT_NOTE  = "Debit Note"
     CONTRA      = "Contra"
+    PURCHASE_ORDER = "Purchase Order"
+    GOODS_RECEIPT_NOTE = "Goods Receipt Note"
+    DELIVERY_CHALLAN = "Delivery Challan"
 
 class VoucherEntryIn(BaseModel):
     ledger_id:   int
@@ -33,6 +36,19 @@ class VoucherCreate(BaseModel):
     reference_no: Optional[str] = None
     company_id:   int
     party_id:     Optional[int] = None
+    
+    category: Optional[str] = "Financial"
+    billing_address: Optional[str] = None
+    shipping_address: Optional[str] = None
+    
+    transport_name: Optional[str] = None
+    transport_id: Optional[str] = None
+    vehicle_number: Optional[str] = None
+    vehicle_type: Optional[str] = "Road"
+    
+    work_order_number: Optional[str] = None
+    job_order_number: Optional[str] = None
+    
     entries:      List[VoucherEntryIn]
 
     @field_validator("entries")

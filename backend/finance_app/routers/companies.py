@@ -97,31 +97,39 @@ def _create_default_ledgers(company_id: int, db: Session):
 # ── Endpoints ──────────────────────────────────────────────────────────────
 @router.post("/")
 def create_company(payload: CompanyCreate, db: Session = Depends(get_db)):
-    if db.query(Company).filter(Company.name == payload.name).first():
-        raise HTTPException(400, "Company name already exists")
-    data = payload.model_dump()
-    fy_start = data.pop("fy_start")
-    company = Company(**data)
-    db.add(company)
-    db.flush()
+    try:
+        if db.query(Company).filter(Company.name == payload.name).first():
+            raise HTTPException(400, "Company name already exists")
+        data = payload.model_dump()
+        fy_start = data.pop("fy_start")
+        company = Company(**data)
+        db.add(company)
+        db.flush()
 
-    # Auto-create financial year
-    fy = FinancialYear(
-        company_id=company.id,
-        label=f"FY {fy_start.year}-{str(fy_start.year + 1)[2:]}",
-        start_date=fy_start,
-        end_date=date(fy_start.year + 1, 3, 31),
-        is_current=True,
-    )
-    db.add(fy)
+        # Auto-create financial year
+        fy = FinancialYear(
+            company_id=company.id,
+            label=f"FY {fy_start.year}-{str(fy_start.year + 1)[2:]}",
+            start_date=fy_start,
+            end_date=date(fy_start.year + 1, 3, 31),
+            is_current=True,
+        )
+        db.add(fy)
 
-    # Auto-create default ledger groups and ledgers
-    _create_default_groups(company.id, db)  # pyrefly: ignore[bad-argument-type]
-    _create_default_ledgers(company.id, db)  # pyrefly: ignore[bad-argument-type]
+        # Auto-create default ledger groups and ledgers
+        _create_default_groups(company.id, db)
+        _create_default_ledgers(company.id, db)
 
-    db.commit()
-    db.refresh(company)
-    return _company_out(company, db)
+        db.commit()
+        db.refresh(company)
+        return _company_out(company, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+        raise HTTPException(500, f"Error creating company: {str(e)}")
 
 
 @router.post("/seed-textile")

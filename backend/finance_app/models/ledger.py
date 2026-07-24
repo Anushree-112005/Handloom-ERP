@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from finance_app.models.company import Company
     from finance_app.models.ledger_group import LedgerGroup
     from finance_app.models.voucher import VoucherEntry
-
+    from finance_app.models.ledger_address import LedgerAddress
 
 class Ledger(Base):
     __tablename__ = "ledgers"
@@ -26,6 +26,8 @@ class Ledger(Base):
     pan: Mapped[Optional[str]]        = mapped_column(String)
     address: Mapped[Optional[str]]    = mapped_column(Text)
     state_code: Mapped[Optional[str]] = mapped_column(String(2))
+    pin_code: Mapped[Optional[str]]   = mapped_column(String)
+    contact_number: Mapped[Optional[str]] = mapped_column(String)
     # Bank details
     bank_name: Mapped[Optional[str]]  = mapped_column(String)
     account_number: Mapped[Optional[str]] = mapped_column(String)
@@ -42,5 +44,5 @@ class Ledger(Base):
     company: Mapped["Company"]   = relationship("Company", back_populates="ledgers")
     group_obj: Mapped[Optional["LedgerGroup"]] = relationship("LedgerGroup", back_populates="ledgers")
     entries: Mapped[List["VoucherEntry"]]   = relationship("VoucherEntry", back_populates="ledger")
-
+    addresses: Mapped[List["LedgerAddress"]] = relationship("LedgerAddress", back_populates="ledger", cascade="all, delete-orphan")
 

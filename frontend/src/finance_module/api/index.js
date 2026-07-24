@@ -4,7 +4,13 @@ import * as reports from './reports';
 import * as companies from './companies';
 
 const createCRUD = (endpoint) => ({
-  list: (params) => api.get(endpoint, { params }),
+  list: (params) => {
+    // If a primitive is passed instead of an object, assume it's company_id
+    if (typeof params === 'number' || typeof params === 'string') {
+      params = { company_id: params };
+    }
+    return api.get(endpoint, { params });
+  },
   get: (id) => api.get(`${endpoint}${id}`),
   create: (data) => api.post(endpoint, data),
   update: (id, data) => api.put(`${endpoint}${id}`, data),
@@ -23,11 +29,11 @@ const vouchers = {
 
 const ledgers = createCRUD('/ledgers/');
 const ledgerGroups = createCRUD('/ledger-groups/');
-const stockGroups = createCRUD('/stock-groups/');
-const stockCategories = createCRUD('/stock-categories/');
+const stockGroups = createCRUD('/inventory/stock-groups/');
+const stockCategories = createCRUD('/inventory/stock-categories/');
 const stockItems = createCRUD('/stock-items/');
-const units = createCRUD('/units/');
-const locations = createCRUD('/locations/');
+const units = createCRUD('/inventory/units/');
+const locations = createCRUD('/inventory/locations/');
 const users = createCRUD('/users/');
 const payroll = createCRUD('/payroll/');
 const banking = createCRUD('/banking/');

@@ -393,6 +393,7 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 @app.get("/")
 async def root():
     return {"message": "Dinesh Textile ERP API", "version": "1.0.0", "docs": "/docs"}
+
 import sys
 import shutil
 

@@ -311,6 +311,7 @@ export default function Header() {
           background-color: #f1f5f9 !important;
         }
       `}</style>
+
       <div style={{ flex: '0 0 260px', marginRight: '16px', position: 'relative', zIndex: 2 }} />
 
       {/* Background Running Marquee across topbar (stops before administrator) */}

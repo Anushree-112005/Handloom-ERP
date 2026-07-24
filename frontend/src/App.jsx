@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/dashboard/Dashboard';
 import Overview from './pages/dashboard/Overview';
 import MyApprovals from './pages/dashboard/MyApprovals';
+import ApprovalPage from './pages/dashboard/ApprovalPage';
 import PartyMaster from './pages/party_master/PartyMaster';
 import BuyerOrder from './pages/buyer_order/BuyerOrder';
 import OrderSubModule from './pages/buyer_order/OrderSubModule';
@@ -110,6 +111,11 @@ import RequestApproval from './pages/stationary and consumptions/RequestApproval
 import POApproval from './pages/stationary and consumptions/POApproval';
 import IssueApproval from './pages/stationary and consumptions/IssueApproval';
 import StoresReport from './pages/stationary and consumptions/StoresReport';
+import POPrintReport from './pages/stationary and consumptions/reports/POPrintReport';
+import POStatusReport from './pages/stationary and consumptions/reports/POStatusReport';
+import PurchaseReceivedReport from './pages/stationary and consumptions/reports/PurchaseReceivedReport';
+import ConsumptionReport from './pages/stationary and consumptions/reports/ConsumptionReport';
+import StockReport from './pages/stationary and consumptions/reports/StockReport';
 import SwatchCardManagement from './pages/stationary and consumptions/SwatchCardManagement';
 import ReturnableDCManagement from './pages/stationary and consumptions/ReturnableDCManagement';
 import FabricInspectionBook from './pages/stationary and consumptions/FabricInspectionBook';
@@ -210,11 +216,13 @@ function ProtectedRoute({ children }) {
       const user = JSON.parse(userStr);
       if (user.module_permissions && user.module_permissions.permissions) {
         const perms = user.module_permissions.permissions;
+        const isSuperAdmin = user.module_permissions.is_super_admin || user.user_type === 'Admin' || user.user_type === 'Super Admin';
 
         let requiredModule = null;
         
         if (location.pathname === '/') {
-          requiredModule = 'dashboard';
+          // Everyone with a valid login can see the basic dashboard
+          requiredModule = null; 
         } else if (location.pathname === '/overview') {
           requiredModule = 'overview';
         } else if (location.pathname === '/calendar') {
@@ -228,18 +236,9 @@ function ProtectedRoute({ children }) {
           }
         }
 
-        if (requiredModule) {
+        if (requiredModule && !isSuperAdmin) {
           if (!perms[requiredModule] || perms[requiredModule]['View'] !== true) {
             
-            // Special UX: if trying to access dashboard but don't have permission,
-            // automatically route to the first module they DO have access to.
-            if (location.pathname === '/') {
-              const firstPermittedModule = Object.keys(perms).find(k => perms[k]['View'] === true);
-              if (firstPermittedModule && moduleDefaultPaths[firstPermittedModule]) {
-                return <Navigate to={moduleDefaultPaths[firstPermittedModule]} replace />;
-              }
-            }
-
             console.warn(`Access Denied: Missing View permission for module ${requiredModule}`);
             return (
               <div style={{ padding: 40, textAlign: 'center' }}>
@@ -399,6 +398,15 @@ export default function App() {
         <Route path="work-order/approval" element={<Navigate to="/work-order/approval/external" replace />} />
         <Route path="work-order/approval/external" element={<WorkOrderDesk defaultSection="External Order Approvals" />} />
         <Route path="work-order/approval/material-yarn" element={<WorkOrderDesk defaultSection="Material & Yarn Approvals" />} />
+        
+        {/* New Approval Routes mapping to generic ApprovalPage */}
+        <Route path="work-order/approval/buyer-order" element={<ApprovalPage title="Buyer Order Approval" approvalType="Buyer Order" />} />
+        <Route path="work-order/approval/pi" element={<ApprovalPage title="PI Approval" approvalType="PI" />} />
+        <Route path="work-order/approval/vendor-workorder" element={<ApprovalPage title="Vendor Workorder Approval" approvalType="Vendor Workorder" />} />
+        <Route path="work-order/approval/internal-fabric" element={<ApprovalPage title="Internal Fabric Request Approval" approvalType="Internal Fabric Request" />} />
+        <Route path="dc-approval/gra" element={<ApprovalPage title="GRA Approval" approvalType="GRA" />} />
+        <Route path="dc-approval/surplus" element={<ApprovalPage title="Surplus DC Approval" approvalType="Surplus DC" />} />
+
 
         <Route path="design-entry" element={<DesignEntry />} />
         <Route path="design-ai" element={<DesignAI />} />
@@ -584,12 +592,11 @@ export default function App() {
         <Route path="stores-consumables/approve-request" element={<MockDbSyncWrapper><RequestApproval /></MockDbSyncWrapper>} />
         <Route path="stores-consumables/approve-po" element={<MockDbSyncWrapper><POApproval /></MockDbSyncWrapper>} />
         <Route path="stores-consumables/approve-issue" element={<MockDbSyncWrapper><IssueApproval /></MockDbSyncWrapper>} />
-        <Route path="stores-consumables/report-stock" element={<MockDbSyncWrapper><StoresReport defaultTab="stock" /></MockDbSyncWrapper>} />
-        <Route path="stores-consumables/report-ledger" element={<MockDbSyncWrapper><StoresReport defaultTab="ledger" /></MockDbSyncWrapper>} />
-        <Route path="stores-consumables/report-consumption" element={<MockDbSyncWrapper><StoresReport defaultTab="consumption" /></MockDbSyncWrapper>} />
-        <Route path="stores-consumables/report-purchase" element={<MockDbSyncWrapper><StoresReport defaultTab="purchase" /></MockDbSyncWrapper>} />
-        <Route path="stores-consumables/report-reorder" element={<MockDbSyncWrapper><StoresReport defaultTab="reorder" /></MockDbSyncWrapper>} />
-        <Route path="stores-consumables/report-audit" element={<MockDbSyncWrapper><StoresReport defaultTab="audit" /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/reports/po-print" element={<MockDbSyncWrapper><POPrintReport /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/reports/po-status" element={<MockDbSyncWrapper><POStatusReport /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/reports/purchase-received" element={<MockDbSyncWrapper><PurchaseReceivedReport /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/reports/consumption" element={<MockDbSyncWrapper><ConsumptionReport /></MockDbSyncWrapper>} />
+        <Route path="stores-consumables/reports/stock" element={<MockDbSyncWrapper><StockReport /></MockDbSyncWrapper>} />
         <Route path="stores-consumables/swatch-cards" element={<MockDbSyncWrapper><SwatchCardManagement /></MockDbSyncWrapper>} />
         <Route path="stores-consumables/returnable-dc" element={<MockDbSyncWrapper><ReturnableDCManagement /></MockDbSyncWrapper>} />
         <Route path="stores-consumables/fabric-inspection" element={<MockDbSyncWrapper><FabricInspectionBook /></MockDbSyncWrapper>} />

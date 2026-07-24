@@ -24,6 +24,24 @@ class Voucher(Base):
     status: Mapped[str]                 = mapped_column(String, default="Posted")   # Draft / Posted / Cancelled
     total_amount: Mapped[float]         = mapped_column(Float, default=0.0)
     is_optional: Mapped[bool]           = mapped_column(Boolean, default=False)
+    
+    # Financial vs Operational
+    category: Mapped[str]               = mapped_column(String, default="Financial")
+    
+    # Address Selection
+    billing_address: Mapped[Optional[str]]  = mapped_column(Text)
+    shipping_address: Mapped[Optional[str]] = mapped_column(Text)
+    
+    # Logistics Details (For Sales/Delivery Challans)
+    transport_name: Mapped[Optional[str]] = mapped_column(String)
+    transport_id: Mapped[Optional[str]]   = mapped_column(String)
+    vehicle_number: Mapped[Optional[str]] = mapped_column(String)
+    vehicle_type: Mapped[str]             = mapped_column(String, default="Road")
+    
+    # Operational Order details (For PO, etc)
+    work_order_number: Mapped[Optional[str]] = mapped_column(String)
+    job_order_number: Mapped[Optional[str]]  = mapped_column(String)
+    
     company_id: Mapped[int]             = mapped_column(Integer, ForeignKey("companies.id"), nullable=False)
     fy_id: Mapped[Optional[int]]        = mapped_column(Integer, ForeignKey("financial_years.id"), nullable=True)
     party_id: Mapped[Optional[int]]     = mapped_column(Integer, ForeignKey("ledgers.id"), nullable=True)

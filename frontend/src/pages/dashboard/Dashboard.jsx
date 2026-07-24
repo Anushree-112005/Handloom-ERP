@@ -30,6 +30,7 @@ const baseBuyerQtyData = [];
 const baseQualityCompliance = [];
 const baseDispatchByTransporter = [];
 
+
 const COLORS = ['#0ea5e9', '#0284c7', '#0369a1', '#38bdf8', '#7dd3fc', '#bae6fd'];
 
 export default function Dashboard() {
@@ -49,13 +50,25 @@ export default function Dashboard() {
   const [prodVsDispatch, setProdVsDispatch] = useState(baseProdVsDispatchData);
   const [bottleneckData, setBottleneckData] = useState(baseBottleneckData);
   const [buyerQty, setBuyerQty] = useState(baseBuyerQtyData);
-  const [qualityCompliance, setQualityCompliance] = useState([]);
-  const [dispatchByTransporter, setDispatchByTransporter] = useState([]);
+  const [qualityCompliance, setQualityCompliance] = useState(baseQualityCompliance);
+  const [dispatchByTransporter, setDispatchByTransporter] = useState(baseDispatchByTransporter);
 
   // Dropdown UI state
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
 
   useEffect(() => {
+    dashboardAPI.stats()
+      .then((r) => setStats(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const applyFilters = () => {
+    let factor = 1.0;
+    if (dateFilter === 'This Week') factor = 0.45;
+    else if (dateFilter === 'This Year') factor = 8.5;
+    else if (dateFilter === 'Custom Range') factor = 0.7;
+
     let start_date = '';
     let end_date = '';
     const today = new Date();
@@ -85,8 +98,7 @@ export default function Dashboard() {
       .then((r) => setStats(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [dateFilter, fromDate, toDate]);
-
+  };
   useEffect(() => {
     let factor = 1.0;
     if (dateFilter === 'This Week') factor = 0.45;
@@ -105,16 +117,54 @@ export default function Dashboard() {
 
     // 1. Update Daily Operations Panel
     setOperations([
-      { label: 'Vendor Inward', value: `${vendorInward} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
-      { label: 'Purchase Inward', value: `${purchaseInward.toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
-      { label: 'Process Delivery', value: `${processDelivery} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
-      { label: 'Process Inward', value: `${processInward} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
-      { label: 'Sales Delivery', value: `${salesDelivery} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
-      { label: 'IMPO', value: `${impoVal} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
-      { label: 'IMBO', value: `${imboVal} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
-      { label: 'Total DC', value: `${totalDC} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
-      { label: 'Total Qty', value: `${totalQty.toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
+      { label: 'Vendor Inward', value: `${Math.round(vendorInward * factor)} Rolls`, path: '/cloth/inward', color: '#10b981', icon: Factory },
+      { label: 'Purchase Inward', value: `${Math.round(purchaseInward * factor).toLocaleString()} Kgs`, path: '/yarn/inward', color: '#22c55e', icon: Layers },
+      { label: 'Process Delivery', value: `${Math.round(processDelivery * factor)} Batches`, path: '/yarn/grey-delivery', color: '#64748b', icon: Clock },
+      { label: 'Process Inward', value: `${Math.round(processInward * factor)} Bags`, path: '/dyed-yarn/received', color: '#ec4899', icon: Layers },
+      { label: 'Sales Delivery', value: `${Math.round(salesDelivery * factor)} Deliveries`, path: '/despatch', color: '#3b82f6', icon: MapPin },
+      { label: 'IMPO', value: `${Math.round(impoVal * factor)} Orders`, path: '/yarn/inward', color: '#ea580c', icon: ShoppingCart },
+      { label: 'IMBO', value: `${Math.round(imboVal * factor)} Lots`, path: '/cloth/inward', color: '#a855f7', icon: Package },
+      { label: 'Total DC', value: `${Math.round(totalDC * factor)} Challans`, path: '/despatch', color: '#06b6d4', icon: Receipt },
+      { label: 'Total Qty', value: `${Math.round(totalQty * factor).toLocaleString()} Mtrs`, path: '/sales-invoice', color: '#10b981', icon: BarChart3 }
     ]);
+
+    // 2. Update Charts
+    if (stats?.daily_production) {
+      setDailyProduction(stats.daily_production.map(d => ({ ...d, Vendor: Math.round(d.Vendor * factor), Checking: Math.round(d.Checking * factor), GreyDelivery: Math.round(d.GreyDelivery * factor) })));
+    } else {
+      setDailyProduction(baseDailyProductionData.map(d => ({ ...d, Vendor: Math.round(d.Vendor * factor), Checking: Math.round(d.Checking * factor), GreyDelivery: Math.round(d.GreyDelivery * factor) })));
+    }
+
+    if (stats?.production_vs_dispatch) {
+      setProdVsDispatch(stats.production_vs_dispatch.map(d => ({ ...d, Production: Math.round(d.Production * factor), Dispatch: Math.round(d.Dispatch * factor) })));
+    } else {
+      setProdVsDispatch(baseProdVsDispatchData.map(d => ({ ...d, Production: Math.round(d.Production * factor), Dispatch: Math.round(d.Dispatch * factor) })));
+    }
+
+    if (stats?.process_bottlenecks) {
+      setBottleneckData(stats.process_bottlenecks.map(d => ({ ...d, value: Math.round(d.value * factor) })));
+    } else {
+      setBottleneckData(baseBottleneckData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
+    }
+
+    if (stats?.buyer_order_volumes) {
+      setBuyerQty(stats.buyer_order_volumes.map(d => ({ ...d, value: Math.round(d.value * factor) })));
+    } else {
+      setBuyerQty(baseBuyerQtyData.map(d => ({ ...d, value: Math.round(d.value * factor) })));
+    }
+
+    if (stats?.quality_compliance) {
+      setQualityCompliance(stats.quality_compliance.map(d => ({ ...d, value: Math.min(100, Math.round(d.value * (factor > 1 ? 1 : factor))) })));
+    } else {
+      setQualityCompliance(baseQualityCompliance.map(d => ({ ...d, value: Math.min(100, Math.round(d.value * (factor > 1 ? 1 : factor))) })));
+    }
+
+    if (stats?.dispatch_by_transporter) {
+      setDispatchByTransporter(stats.dispatch_by_transporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
+    } else {
+      setDispatchByTransporter(baseDispatchByTransporter.map(d => ({ ...d, value: Math.round(d.value * factor) })));
+    }
+
 
     // 2. Update Charts
     if (stats?.daily_production) {
@@ -350,6 +400,46 @@ export default function Dashboard() {
         </ChartCard>
       </div>
 
+      {/* Row 2: 3 Columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
+        <ChartCard title="Quality Compliance %" subtitle="Pass rate per process step">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={qualityCompliance} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={20}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
+              <Tooltip cursor={{fill: 'transparent'}} />
+              <Bar dataKey="value" fill="#0284c7" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Dispatch by Transporter" subtitle="Volume distributed (Meters)">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={dispatchByTransporter} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }} barSize={20}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={80} />
+              <Tooltip cursor={{fill: 'transparent'}} />
+              <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Dispatch Target vs Actual" subtitle="Last 4 Weeks Analysis">
+           <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={prodVsDispatch.slice(-4)} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <Tooltip cursor={{fill: 'transparent'}} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="Dispatch" name="Actual Dispatch" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Production" name="Target Dispatch" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
       {/* Row 3: 1 Full-width Column (Daily Activity) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
         <ChartCard title="Daily Factory Activity" subtitle="Past 7 days overview of inward and output processes">

@@ -46,6 +46,7 @@ export const authAPI = {
 
 // ---- Dashboard ----
 export const dashboardAPI = {
+  stats: () => api.get('/dashboard/stats'),
   stats: (params) => api.get('/dashboard/stats', { params }),
 };
 
@@ -306,6 +307,8 @@ export const salesInvoiceAPI = {
   create: (data) => api.post('/sales-invoices/', data),
   update: (id, data) => api.put(`/sales-invoices/${id}`, data),
   delete: (id) => api.delete(`/sales-invoices/${id}`),
+  exportTallyXml: (invoiceIds) => api.get('/sales-invoices/export-tally-xml/', { params: { invoice_ids: invoiceIds }, responseType: 'blob' }),
+  generateEwayBillJson: (id) => api.get(`/sales-invoices/${id}/eway-bill-json`),
 };
 
 // ---- Goods Release ----
