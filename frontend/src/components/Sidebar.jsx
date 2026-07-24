@@ -299,6 +299,7 @@ const modules = [
 
   { section: 'Administration & Security' },
   { path: '/user-management', label: 'User Management', icon: Users },
+  { path: '/role-management', label: 'Role & Permission', icon: Shield },
   { path: '/log-report', label: 'Log Report', icon: Activity },
 
 
