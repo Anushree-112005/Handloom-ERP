@@ -3,13 +3,9 @@ import { Plus, Search, Eye, Trash2, Save, X, Edit2, Calendar as CalendarIcon, Do
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { buyerOrderScheduleAPI } from '../../services/api';
+import { buyerOrderScheduleAPI, buyerOrderAPI } from '../../services/api';
 
-// Mock Data for Auto Fetch
-const MOCK_IBPOS = [
-  { ibpo: 'IBPO-2023-001', party: 'TexCorp International', po_date: '2023-10-01', design_no: 'SP-101', quality: '100% Cotton 40s', order_mtr: 5000, start_date: '2023-10-15', delivery_start: '2023-11-01', party_comp: '2023-11-15', company_comp: '2023-11-10' },
-  { ibpo: 'IBPO-2023-002', party: 'Global Fabrics Ltd', po_date: '2023-10-05', design_no: 'SP-205', quality: 'Poly Viscose Blend', order_mtr: 3000, start_date: '2023-10-20', delivery_start: '2023-11-05', party_comp: '2023-11-20', company_comp: '2023-11-15' },
-];
+// Mock Data removed
 
 export default function BuyerOrderSchedule() {
   const [schedules, setSchedules] = useState([]);
@@ -22,6 +18,10 @@ export default function BuyerOrderSchedule() {
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+
+  const [buyerOrders, setBuyerOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
 
   // Calendar State
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -52,7 +52,22 @@ export default function BuyerOrderSchedule() {
 
   useEffect(() => {
     fetchSchedules();
+    fetchBuyerOrders();
   }, []);
+
+  const fetchBuyerOrders = async () => {
+    setLoadingOrders(true);
+    setOrdersError('');
+    try {
+      const res = await buyerOrderAPI.list();
+      setBuyerOrders(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch buyer orders', e);
+      setOrdersError('Failed to load IBPO numbers');
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const fetchSchedules = async () => {
     try {
@@ -92,24 +107,24 @@ export default function BuyerOrderSchedule() {
 
     // Auto-fetch logic when IBPO is selected
     if (name === 'ibpo_ref_no') {
-      const matchedOrder = MOCK_IBPOS.find(o => o.ibpo === value);
+      const matchedOrder = buyerOrders.find(o => o.ibpo_number === value);
       if (matchedOrder) {
+        const designNo = matchedOrder.items?.map(i => i.design_no).filter(Boolean).join(', ') || '';
+        const quality = matchedOrder.items?.map(i => i.fabric_type).filter(Boolean).join(', ') || '';
+        const orderMtr = matchedOrder.items?.reduce((sum, i) => sum + (parseFloat(i.order_mtrs) || 0), 0) || 0;
+        const poDate = matchedOrder.items?.[0]?.po_date ? matchedOrder.items[0].po_date.substring(0, 10) : (matchedOrder.order_date ? matchedOrder.order_date.substring(0, 10) : '');
+
         updatedForm = {
           ...updatedForm,
-          party_name: matchedOrder.party,
-          po_date: matchedOrder.po_date,
-          design_no: matchedOrder.design_no,
-          quality_print_name: matchedOrder.quality,
-          order_mtr: matchedOrder.order_mtr,
-          production_start_date: matchedOrder.start_date,
-          delivery_starting: matchedOrder.delivery_start,
-          party_completion_date: matchedOrder.party_comp,
-          company_completion_date: matchedOrder.company_comp
+          party_name: matchedOrder.party_name || '',
+          po_date: poDate,
+          design_no: designNo,
+          quality_print_name: quality,
+          order_mtr: orderMtr,
+          delivery_starting: matchedOrder.delivery_starting ? matchedOrder.delivery_starting.substring(0, 10) : '',
+          party_completion_date: matchedOrder.party_comp_date ? matchedOrder.party_comp_date.substring(0, 10) : '',
+          company_completion_date: matchedOrder.exfactory_date ? matchedOrder.exfactory_date.substring(0, 10) : ''
         };
-
-        if (matchedOrder.start_date) {
-          setCurrentMonth(new Date(matchedOrder.start_date));
-        }
       }
     }
 
@@ -569,24 +584,27 @@ export default function BuyerOrderSchedule() {
                     <label>IBPO Reference No *</label>
                     <select className="form-control" name="ibpo_ref_no" value={form.ibpo_ref_no} onChange={handleChange} required>
                       <option value="">Select IBPO...</option>
-                      {MOCK_IBPOS.map(o => <option key={o.ibpo} value={o.ibpo}>{o.ibpo} - {o.party}</option>)}
+                      {loadingOrders && <option disabled>Loading...</option>}
+                      {ordersError && <option disabled>{ordersError}</option>}
+                      {!loadingOrders && buyerOrders.length === 0 && <option disabled>No Buyer Orders Available.</option>}
+                      {buyerOrders.map(o => <option key={o.ibpo_number} value={o.ibpo_number}>{o.ibpo_number} - {o.party_name}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
                     <label>PO Date</label>
-                    <input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ gridColumn: 'span 2' }}>
                     <label>Party Name</label>
-                    <input type="text" className="form-control" name="party_name" value={form.party_name} onChange={handleChange} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="text" className="form-control" name="party_name" value={form.party_name} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Design No (SP No)</label>
-                    <input type="text" className="form-control" name="design_no" value={form.design_no} onChange={handleChange} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="text" className="form-control" name="design_no" value={form.design_no} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ gridColumn: 'span 2' }}>
                     <label>Quality / Print Name</label>
-                    <input type="text" className="form-control" name="quality_print_name" value={form.quality_print_name} onChange={handleChange} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="text" className="form-control" name="quality_print_name" value={form.quality_print_name} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Order MTR</label>

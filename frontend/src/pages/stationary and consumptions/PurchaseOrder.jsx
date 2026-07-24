@@ -8,7 +8,7 @@ import {
   Plus, Trash2, Download, FileText, CheckCircle, Clock, Search,
   AlertCircle, RefreshCw, Loader2, TrendingUp, Users, Building2,
   ShieldCheck, UploadCloud, X, Tag, IndianRupee, Package, Save, Printer,
-  FileSpreadsheet, Box
+  FileSpreadsheet, Box, ArrowLeft
 } from 'lucide-react';
 
 export default function PurchaseOrder() {
@@ -19,7 +19,7 @@ export default function PurchaseOrder() {
   const [vendors, setVendors] = useState([]);
   const [procurementQuotations, setProcurementQuotations] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
-  
+
   // Modal toggle state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('order_info'); // order_info, item_details, tax_logistics
@@ -61,7 +61,7 @@ export default function PurchaseOrder() {
       setVendors(vens || []);
       setProcurementQuotations(quotes || []);
       setWarehouses(whs || []);
-      
+
       // Select default warehouse if available
       if (whs && whs.length > 0 && !formData.delivery_warehouse_id) {
         setFormData(prev => ({ ...prev, delivery_warehouse_id: whs[0].id.toString() }));
@@ -125,32 +125,32 @@ export default function PurchaseOrder() {
   // Item field editing handler
   const handleItemFieldChange = (index, field, value) => {
     const updated = [...formData.items];
-    
+
     if (field === 'quantity' || field === 'unit_price' || field === 'gst' || field === 'discount_percentage') {
       const numVal = value === '' ? '' : (parseFloat(value) || 0);
       updated[index][field] = numVal;
-      
+
       const qty = field === 'quantity' ? numVal : updated[index].quantity;
       const price = field === 'unit_price' ? numVal : updated[index].unit_price;
       const discountPct = field === 'discount_percentage' ? numVal : updated[index].discount_percentage;
       const gstVal = field === 'gst' ? numVal : updated[index].gst;
-      
+
       const subtotal = (qty || 0) * (price || 0);
       const discAmt = subtotal * ((discountPct || 0) / 100);
       const taxable = subtotal - discAmt;
       const total = taxable * (1 + ((gstVal || 0) / 100));
-      
+
       updated[index].discount_amount = value === '' ? '' : (Math.round(discAmt * 100) / 100);
       updated[index].total = value === '' ? '' : (Math.round(total * 100) / 100);
     } else if (field === 'total') {
       const numVal = value === '' ? '' : (parseFloat(value) || 0);
       updated[index].total = numVal;
-      
+
       // Back calculate price
       const qty = updated[index].quantity || 1;
       const gst = updated[index].gst || 0;
       const discountPct = updated[index].discount_percentage || 0;
-      
+
       // total = qty * price * (1 - disc/100) * (1 + gst/100)
       // price = total / [qty * (1 - disc/100) * (1 + gst/100)]
       const factor = (1 - (discountPct / 100)) * (1 + (gst / 100));
@@ -167,16 +167,16 @@ export default function PurchaseOrder() {
   // Math totals
   const subTotalAmount = formData.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
   const itemsDiscountAmount = formData.items.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
-  
+
   // Use either line item discounts or overall override discount
   const finalDiscount = parseFloat(formData.discount_amount) > 0 ? parseFloat(formData.discount_amount) : itemsDiscountAmount;
-  
+
   // Allow manual override for taxable subtotal
   const finalTaxableSubtotal = formData.taxable_subtotal_override !== undefined ? formData.taxable_subtotal_override : subTotalAmount;
-  
+
   // Calculate taxable amount after discounts
   const totalTaxable = Math.max(0, finalTaxableSubtotal - finalDiscount);
-  
+
   // Calculate GST amount
   const calculatedGst = formData.items.reduce((sum, item) => {
     const itemSub = item.quantity * item.unit_price;
@@ -184,9 +184,9 @@ export default function PurchaseOrder() {
     const itemTaxable = Math.max(0, itemSub - itemDisc);
     return sum + (itemTaxable * (item.gst / 100));
   }, 0);
-  
+
   const gstAmountVal = formData.gst_amount_override !== undefined ? formData.gst_amount_override : calculatedGst;
-  
+
   const grandTotal = formData.grand_total_override !== undefined ? formData.grand_total_override : Math.round((totalTaxable + gstAmountVal) * 100) / 100;
 
   // Submit PO
@@ -290,41 +290,41 @@ export default function PurchaseOrder() {
       const doc = new jsPDF();
       const selectedVen = vendors.find(v => v.vendor_id === parseInt(formData.vendor_id));
       const selectedWh = warehouses.find(w => w.id === parseInt(formData.delivery_warehouse_id));
-      
+
       // Header
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(20);
       doc.setTextColor(30, 27, 75);
       doc.text("Dinesh Exports Private Limited", 14, 20);
-      
+
       doc.setFontSize(10);
       doc.setFont("Helvetica", "normal");
       doc.setTextColor(100, 116, 139);
       doc.text("OFFICIAL PURCHASE ORDER (PO)", 14, 26);
-      
+
       // Divider
       doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(1);
       doc.line(14, 30, 196, 30);
-      
+
       // Info Details
       doc.setFontSize(11);
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(71, 85, 105);
       doc.text("PO COORDINATES", 14, 40);
       doc.text("VENDOR DETAILS", 110, 40);
-      
+
       doc.setFont("Helvetica", "normal");
       doc.setTextColor(51, 65, 85);
       doc.text(`Warehouse: ${selectedWh ? selectedWh.warehouse_name : 'Default Main Store'}`, 14, 46);
       doc.text(`Expected Delivery: ${formData.expected_delivery_date || 'Immediate'}`, 14, 52);
       doc.text(`Payment Terms: ${formData.payment_terms}`, 14, 58);
-      
+
       doc.text(selectedVen ? selectedVen.vendor_name : 'No Vendor Selected', 110, 46);
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
       doc.text(selectedVen?.contact_info || 'No contact details', 110, 52);
-      
+
       // Items Table
       const tableRows = formData.items.map((item, idx) => {
         const sub = item.quantity * item.unit_price;
@@ -338,7 +338,7 @@ export default function PurchaseOrder() {
           `INR ${item.total.toFixed(2)}`
         ];
       });
-      
+
       autoTable(doc, {
         startY: 68,
         head: [['SNo', 'Item Description', 'Qty', 'Unit Price', 'Disc %', 'GST %', 'Total']],
@@ -355,32 +355,32 @@ export default function PurchaseOrder() {
           6: { cellWidth: 25, halign: 'right' }
         }
       });
-      
+
       // Totals Summary block
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(10);
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(71, 85, 105);
-      
+
       doc.text("Taxable Subtotal:", 130, finalY);
       doc.setFont("Helvetica", "normal");
       doc.text(`INR ${subTotalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY, { align: 'right' });
-      
+
       doc.setFont("Helvetica", "bold");
       doc.text("Discount Applied:", 130, finalY + 6);
       doc.setFont("Helvetica", "normal");
       doc.text(`INR ${finalDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY + 6, { align: 'right' });
-      
+
       doc.setFont("Helvetica", "bold");
       doc.text("Total GST Value:", 130, finalY + 12);
       doc.setFont("Helvetica", "normal");
       doc.text(`INR ${gstAmountVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY + 12, { align: 'right' });
-      
+
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(99, 102, 241);
       doc.text("GRAND TOTAL:", 130, finalY + 18);
       doc.text(`INR ${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY + 18, { align: 'right' });
-      
+
       doc.save(`PO_${selectedVen?.vendor_name.replace(/\s+/g, '_') || 'Vendor'}.pdf`);
       showToast('PDF PO downloaded successfully!');
     } catch (err) {
@@ -400,17 +400,17 @@ export default function PurchaseOrder() {
         "GST %": item.gst,
         "Subtotal": item.total
       }));
-      
+
       dataRows.push({});
       dataRows.push({ "Item Name": "Taxable Subtotal", "Subtotal": subTotalAmount });
       dataRows.push({ "Item Name": "Discount Amount", "Subtotal": finalDiscount });
       dataRows.push({ "Item Name": "GST Amount", "Subtotal": gstAmountVal });
       dataRows.push({ "Item Name": "GRAND TOTAL", "Subtotal": grandTotal });
-      
+
       const ws = XLSX.utils.json_to_sheet(dataRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Purchase Order");
-      
+
       ws["!cols"] = [
         { wch: 6 },
         { wch: 30 },
@@ -420,7 +420,7 @@ export default function PurchaseOrder() {
         { wch: 10 },
         { wch: 18 }
       ];
-      
+
       XLSX.writeFile(wb, `PO_${formData.quotation_id || 'PO'}.xlsx`);
       showToast('Excel PO exported successfully!');
     } catch (err) {
@@ -429,7 +429,7 @@ export default function PurchaseOrder() {
     }
   };
 
-  const filteredPOs = pos.filter(po => 
+  const filteredPOs = pos.filter(po =>
     po.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (po.vendor_name && po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -446,7 +446,7 @@ export default function PurchaseOrder() {
 
   return (
     <div className="animate-fade flex flex-col gap-6 h-full p-4" style={{ fontFamily: 'Inter, sans-serif' }}>
-      
+
       {/* Toast */}
       {toast.show && (
         <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-xs font-semibold ${toast.ok ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -456,9 +456,9 @@ export default function PurchaseOrder() {
       )}
 
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: "24px",
         background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
@@ -480,22 +480,22 @@ export default function PurchaseOrder() {
             <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Track purchase order requests, discounts, and dispatch orders to suppliers.</p>
           </div>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => {
-            setFormData({ 
-              quotation_id: '', 
-              vendor_id: vendors[0]?.vendor_id || '', 
-              expected_delivery_date: '', 
-              delivery_warehouse_id: warehouses[0]?.id.toString() || '', 
-              payment_terms: '30 Days Credit', 
-              delivery_instructions: '', 
+            setFormData({
+              quotation_id: '',
+              vendor_id: vendors[0]?.vendor_id || '',
+              expected_delivery_date: '',
+              delivery_warehouse_id: warehouses[0]?.id.toString() || '',
+              payment_terms: '30 Days Credit',
+              delivery_instructions: '',
               discount_amount: 0,
-              items: [] 
+              items: []
             });
             setActiveTab('order_info');
             setIsModalOpen(true);
-          }} 
+          }}
           className="btn btn-primary font-semibold" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}
         >
           <Plus size={16} /> Create PO
@@ -626,7 +626,7 @@ export default function PurchaseOrder() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl flex flex-col my-8 border border-slate-200 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-            
+
             {/* Modal Header */}
             <div style={{
               display: 'flex',
@@ -636,16 +636,19 @@ export default function PurchaseOrder() {
               borderBottom: '1px solid var(--border)',
               background: '#f8fafc'
             }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e1b4b', margin: 0 }}>
-                New Purchase Order
-              </h2>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  <X size={16} /> Close
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)} 
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                >
+                  <ArrowLeft size={24} />
                 </button>
-                <button className="btn btn-primary" onClick={handleSubmit}>
-                  {submitLoading ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save PO</>}
-                </button>
+                <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1e1b4b', margin: 0 }}>
+                  New Purchase Order
+                </h2>
               </div>
             </div>
 
@@ -676,17 +679,17 @@ export default function PurchaseOrder() {
 
             {/* Modal Body */}
             <div style={{ padding: 24, background: '#fff', maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
-              
+
               {/* Tab 1: Order Info */}
               {activeTab === 'order_info' && (
                 <div className="animate-fade flex flex-col gap-6">
                   <div>
                     <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>Order Info</h4>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-                      
+
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Link Vendor Quotation</label>
-                        <select 
+                        <select
                           value={formData.quotation_id}
                           onChange={(e) => handleQuotationChange(e.target.value)}
                           className="form-control"
@@ -700,7 +703,7 @@ export default function PurchaseOrder() {
 
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Supplier Name *</label>
-                        <select 
+                        <select
                           value={formData.vendor_id}
                           onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
                           required
@@ -715,7 +718,7 @@ export default function PurchaseOrder() {
 
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Expected Delivery Date</label>
-                        <input 
+                        <input
                           type="date"
                           value={formData.expected_delivery_date}
                           onChange={(e) => setFormData({ ...formData, expected_delivery_date: e.target.value })}
@@ -725,7 +728,7 @@ export default function PurchaseOrder() {
 
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Delivery At *</label>
-                        <select 
+                        <select
                           value={formData.delivery_warehouse_id}
                           onChange={(e) => setFormData({ ...formData, delivery_warehouse_id: e.target.value })}
                           required
@@ -743,7 +746,7 @@ export default function PurchaseOrder() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Payment Terms</label>
-                        <input 
+                        <input
                           type="text"
                           value={formData.payment_terms}
                           onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
@@ -752,7 +755,7 @@ export default function PurchaseOrder() {
                       </div>
                       <div className="form-group">
                         <label className="font-semibold text-slate-700 text-xs mb-1.5 block">Delivery Instructions</label>
-                        <input 
+                        <input
                           type="text"
                           value={formData.delivery_instructions}
                           onChange={(e) => setFormData({ ...formData, delivery_instructions: e.target.value })}
@@ -913,7 +916,7 @@ export default function PurchaseOrder() {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 24 }}>
-                    
+
                     {/* Invoice block */}
                     <div ref={printAreaRef} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 30, background: '#fff' }}>
                       <div className="header" style={{ textAlign: 'center', borderBottom: '2px solid #6366f1', paddingBottom: 20, marginBottom: 30 }}>
@@ -928,7 +931,7 @@ export default function PurchaseOrder() {
                           <div style={{ fontSize: 13, color: '#334155', marginBottom: 4 }}><b>Delivery Instructions:</b> {formData.delivery_instructions || 'None'}</div>
                           <div style={{ fontSize: 13, color: '#334155' }}><b>Payment Terms:</b> {formData.payment_terms}</div>
                         </div>
-                        
+
                         <div className="details-block" style={{ border: '1px solid #e2e8f0', padding: 15, borderRadius: 8, backgroundColor: '#f8fafc' }}>
                           <div className="details-title" style={{ fontWeight: 'bold', fontSize: 11, color: '#475569', marginBottom: 6, textTransform: 'uppercase' }}>Vendor Info</div>
                           <div style={{ fontSize: 13, color: '#334155', fontWeight: 'bold' }}>{selectedVendorObj?.vendor_name || 'No Vendor Selected'}</div>
@@ -997,7 +1000,7 @@ export default function PurchaseOrder() {
                       <div className="flex flex-col gap-3 text-xs">
                         <div className="flex justify-between border-b border-dashed border-slate-200 pb-2 items-center">
                           <span className="text-slate-500">Taxable Subtotal</span>
-                          <input 
+                          <input
                             type="number"
                             className="form-control text-right font-bold"
                             style={{ width: 110, padding: '4px 8px' }}
@@ -1007,7 +1010,7 @@ export default function PurchaseOrder() {
                         </div>
                         <div className="flex justify-between border-b border-dashed border-slate-200 pb-2 items-center">
                           <span className="text-red-500">Override Discount</span>
-                          <input 
+                          <input
                             type="number"
                             className="form-control text-right text-red-500 font-bold"
                             style={{ width: 110, padding: '4px 8px' }}
@@ -1021,7 +1024,7 @@ export default function PurchaseOrder() {
                         </div>
                         <div className="flex justify-between border-b border-dashed border-slate-200 pb-2 items-center">
                           <span className="text-slate-500">GST Value (18%)</span>
-                          <input 
+                          <input
                             type="number"
                             className="form-control text-right font-bold"
                             style={{ width: 110, padding: '4px 8px' }}
@@ -1031,7 +1034,7 @@ export default function PurchaseOrder() {
                         </div>
                         <div className="flex justify-between pt-2 items-center">
                           <span className="text-indigo-600 font-extrabold text-sm uppercase">Grand Total</span>
-                          <input 
+                          <input
                             type="number"
                             className="form-control text-right font-bold text-indigo-700"
                             style={{ width: 110, padding: '4px 8px' }}
@@ -1057,11 +1060,11 @@ export default function PurchaseOrder() {
               borderTop: '1px solid var(--border)',
               background: '#f8fafc'
             }}>
-              <button className="btn btn-secondary font-semibold" onClick={() => setIsModalOpen(false)}>
-                Cancel
+              <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
+                <X size={16} /> Close
               </button>
-              <button className="btn btn-primary font-semibold" onClick={handleSubmit}>
-                {submitLoading ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Place Purchase Order</>}
+              <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={submitLoading}>
+                {submitLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save & Close
               </button>
             </div>
 

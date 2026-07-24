@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
-import { Plus, Save, Edit2, Trash2, Search, X, Loader, Users, AlertCircle } from 'lucide-react';
+import { Plus, Save, Edit2, Trash2, Search, X, Loader, Users, AlertCircle, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 
 export default function VendorMaster() {
   const [view, setView] = useState('list');
@@ -20,10 +20,10 @@ export default function VendorMaster() {
     address: '',
     city: '',
     state: '',
-    country: 'India',
-    payment_terms: '30 Days',
-    vendor_type: 'Raw Material Supplier',
-    status: 'Active'
+    country: '',
+    payment_terms: '',
+    vendor_type: '',
+    status: ''
   });
 
   const paymentTermsList = ["Immediate", "15 Days", "30 Days", "45 Days", "60 Days", "LC 90 Days"];
@@ -51,8 +51,8 @@ export default function VendorMaster() {
     setError('');
     if (vendor) {
       setFormData({
-        vendor_code: vendor.vendor_code,
-        vendor_name: vendor.vendor_name,
+        vendor_code: vendor.vendor_code || '',
+        vendor_name: vendor.vendor_name || '',
         contact_person: vendor.contact_person || '',
         phone: vendor.phone || '',
         email: vendor.email || '',
@@ -60,10 +60,10 @@ export default function VendorMaster() {
         address: vendor.address || '',
         city: vendor.city || '',
         state: vendor.state || '',
-        country: vendor.country || 'India',
-        payment_terms: vendor.payment_terms || '30 Days',
-        vendor_type: vendor.vendor_type || 'Raw Material Supplier',
-        status: vendor.status || 'Active'
+        country: vendor.country || '',
+        payment_terms: vendor.payment_terms || '',
+        vendor_type: vendor.vendor_type || '',
+        status: vendor.status || ''
       });
       setEditingId(vendor.id);
     } else {
@@ -77,10 +77,10 @@ export default function VendorMaster() {
         address: '',
         city: '',
         state: '',
-        country: 'India',
-        payment_terms: '30 Days',
-        vendor_type: 'Consumables Supplier',
-        status: 'Active'
+        country: '',
+        payment_terms: '',
+        vendor_type: '',
+        status: ''
       });
       setEditingId(null);
     }
@@ -114,10 +114,13 @@ export default function VendorMaster() {
     try {
       if (editingId) {
         await storesService.updateVendor(editingId, formData);
+        alert('Vendor updated successfully!');
       } else {
         await storesService.createVendor(formData);
+        alert('Vendor saved successfully!');
       }
       setView('list');
+      await fetchVendors();
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || 'An error occurred while saving the vendor. Code might be duplicate.');
@@ -126,37 +129,47 @@ export default function VendorMaster() {
     }
   };
 
+  const stats = [
+    { label: 'Total Vendors', value: vendors.length, icon: <Users size={24} />, color: '#6366f1' },
+    { label: 'Active Vendors', value: vendors.filter(v => v.status === 'Active').length, icon: <CheckCircle size={24} />, color: '#10b981' },
+    { label: 'Inactive Vendors', value: vendors.filter(v => v.status !== 'Active').length, icon: <XCircle size={24} />, color: '#ef4444' }
+  ];
+
   return (
-    <div className="animate-fade">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users style={{ color: '#6366f1' }} /> Vendor Master
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Manage suppliers of stationery, safety and office supplies</p>
+        </div>
+        {view === 'list' && (
+          <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={16} /> Add Vendor
+          </button>
+        )}
+        {view === 'form' && (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
+      </div>
+
       {view === 'list' ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* Header Card */}
-          <div className="card" style={{ 
-            padding: "24px", 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            marginBottom: 0,
-            background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-            border: "1px solid var(--border)"
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                background: 'rgba(99, 102, 241, 0.1)',
-                color: 'rgb(99, 102, 241)',
-                padding: '12px',
-                borderRadius: '12px'
-              }}>
-                <Users size={24} />
+        <>
+          <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {stats.map((s, i) => (
+              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+                <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
+                  {s.icon}
+                </div>
+                <div className="stat-info">
+                  <h3>{s.value}</h3>
+                  <p>{s.label}</p>
+                </div>
               </div>
-              <div>
-                <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Vendor Master</h1>
-                <p style={{ color: "var(--text-muted)", fontSize: 14, margin: '4px 0 0 0' }}>Manage suppliers of stationery, safety and office supplies</p>
-              </div>
-            </div>
-            <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
-              <Plus size={16} /> Add Vendor
-            </button>
+            ))}
           </div>
 
           {/* Search & Table Card */}
@@ -164,12 +177,12 @@ export default function VendorMaster() {
             <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
               <div style={{ position: "relative", flex: 1, minWidth: 250, maxWidth: 350 }}>
                 <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search vendors..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="form-control" style={{ paddingLeft: 38 }} 
+                <input
+                  type="text"
+                  placeholder="Search vendors..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control" style={{ paddingLeft: 38 }}
                 />
               </div>
               {loading && <Loader className="animate-spin" size={18} style={{ color: 'var(--primary)' }} />}
@@ -238,190 +251,208 @@ export default function VendorMaster() {
               </table>
             </div>
           </div>
-        </div>
+        </>
       ) : (
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {editingId ? 'Edit Vendor' : 'New Vendor'}
+        <div className="animate-fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Vendor Details' : 'Add New Vendor'}
             </h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-primary" type="submit" disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                {submitting ? <Loader className="animate-spin" size={16} /> : <Save size={16} />}
-                {editingId ? 'Update' : 'Save'}
-              </button>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                <X size={16} /> Close
-              </button>
-            </div>
           </div>
 
-          {error && (
-            <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <AlertCircle size={18} />
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
-            </div>
-          )}
-
-          {/* Form Content - Multi Columns */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Section 1: Basic Information */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '16px 24px', background: '#fff',
+                  border: 'none', borderBottom: '3px solid var(--primary)',
+                  fontWeight: 600, color: 'var(--primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
                 Basic Information
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Vendor Code *</label>
-                  <input 
-                    type="text" required disabled={!!editingId} value={formData.vendor_code} 
-                    onChange={(e) => setFormData({...formData, vendor_code: e.target.value.toUpperCase().replace(/\s+/g, '-')})} 
-                    placeholder="E.g. VEN-ABC"
-                    className="form-control" 
-                  />
-                  <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Unique identifier (uppercase, no spaces)</small>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Vendor Name *</label>
-                  <input 
-                    type="text" required value={formData.vendor_name} 
-                    onChange={(e) => setFormData({...formData, vendor_name: e.target.value})} 
-                    placeholder="E.g. ABC Chemical Suppliers"
-                    className="form-control" 
-                  />
-                </div>
-              </div>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginTop: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>GST Number</label>
-                  <input 
-                    type="text" value={formData.gst_number} 
-                    onChange={(e) => setFormData({...formData, gst_number: e.target.value.toUpperCase()})} 
-                    placeholder="E.g. 33AABCC1234F1Z1"
-                    className="form-control" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Vendor Type *</label>
-                  <select 
-                    value={formData.vendor_type} 
-                    onChange={(e) => setFormData({...formData, vendor_type: e.target.value})} 
-                    className="form-control"
-                  >
-                    {vendorTypeList.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Status *</label>
-                  <select 
-                    value={formData.status} 
-                    onChange={(e) => setFormData({...formData, status: e.target.value})} 
-                    className="form-control"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-            </fieldset>
+              </button>
+            </div>
 
-            {/* Section 2: Contact & Payments */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Contact & Payment Information
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Contact Person</label>
-                  <input 
-                    type="text" value={formData.contact_person} 
-                    onChange={(e) => setFormData({...formData, contact_person: e.target.value})} 
-                    placeholder="E.g. John Doe"
-                    className="form-control" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Mobile Number</label>
-                  <input 
-                    type="text" value={formData.phone} 
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})} 
-                    placeholder="E.g. 9876543210"
-                    className="form-control" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Email Address</label>
-                  <input 
-                    type="email" value={formData.email} 
-                    onChange={(e) => setFormData({...formData, email: e.target.value})} 
-                    placeholder="E.g. info@vendor.com"
-                    className="form-control" 
-                  />
-                </div>
-              </div>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Payment Terms *</label>
-                  <select 
-                    value={formData.payment_terms} 
-                    onChange={(e) => setFormData({...formData, payment_terms: e.target.value})} 
-                    className="form-control"
-                  >
-                    {paymentTermsList.map(term => <option key={term} value={term}>{term}</option>)}
-                  </select>
-                </div>
-              </div>
-            </fieldset>
+            <div style={{ padding: 24, background: '#fff' }}>
+              <form onSubmit={handleSubmit}>
+                {error && (
+                  <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                    <AlertCircle size={18} />
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
+                  </div>
+                )}
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <div className="animate-fade">
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Vendor Code *</label>
+                        <input
+                          type="text" required disabled={!!editingId} value={formData.vendor_code}
+                          onChange={(e) => setFormData({ ...formData, vendor_code: e.target.value.toUpperCase().replace(/\s+/g, '-') })}
+                          placeholder="Enter Vendor Code"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Vendor Name *</label>
+                        <input
+                          type="text" required value={formData.vendor_name}
+                          onChange={(e) => setFormData({ ...formData, vendor_name: e.target.value })}
+                          placeholder="Enter Vendor Name"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>GST Number</label>
+                        <input
+                          type="text" value={formData.gst_number}
+                          onChange={(e) => setFormData({ ...formData, gst_number: e.target.value.toUpperCase() })}
+                          placeholder="Enter GST Number"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Vendor Type *</label>
+                        <select
+                          value={formData.vendor_type}
+                          onChange={(e) => setFormData({ ...formData, vendor_type: e.target.value })}
+                          className="form-control"
+                          required
+                        >
+                          <option value="">-- Select Vendor Type --</option>
+                          {vendorTypeList.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Status *</label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          className="form-control"
+                          required
+                        >
+                          <option value="">-- Select Status --</option>
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
 
-            {/* Section 3: Address details */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Address Details
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>City</label>
-                  <input 
-                    type="text" value={formData.city} 
-                    onChange={(e) => setFormData({...formData, city: e.target.value})} 
-                    placeholder="E.g. Coimbatore"
-                    className="form-control" 
-                  />
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Contact & Payment Information
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Contact Person</label>
+                        <input
+                          type="text" value={formData.contact_person}
+                          onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                          placeholder="Enter Contact Person"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Mobile Number</label>
+                        <input
+                          type="text" value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="Enter Mobile Number"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                          type="email" value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="Enter Email Address"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Payment Terms *</label>
+                        <select
+                          value={formData.payment_terms}
+                          onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
+                          className="form-control"
+                          required
+                        >
+                          <option value="">-- Select Payment Terms --</option>
+                          {paymentTermsList.map(term => <option key={term} value={term}>{term}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Address Details
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>City</label>
+                        <input
+                          type="text" value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          placeholder="Enter City"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>State</label>
+                        <input
+                          type="text" value={formData.state}
+                          onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                          placeholder="Enter State"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Country</label>
+                        <input
+                          type="text" value={formData.country}
+                          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                          placeholder="Enter Country"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                        <label>Full Address</label>
+                        <textarea
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          placeholder="Enter Full Address"
+                          className="form-control"
+                          rows="3"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                    <X size={16} /> Close
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? <Loader className="animate-spin" size={16} /> : <Save size={16} />} Save
+                  </button>
                 </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>State</label>
-                  <input 
-                    type="text" value={formData.state} 
-                    onChange={(e) => setFormData({...formData, state: e.target.value})} 
-                    placeholder="E.g. Tamil Nadu"
-                    className="form-control" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Country</label>
-                  <input 
-                    type="text" value={formData.country} 
-                    onChange={(e) => setFormData({...formData, country: e.target.value})} 
-                    className="form-control" 
-                  />
-                </div>
-              </div>
-              <div className="form-row" style={{ marginTop: 20 }}>
-                <div className="form-group" style={{ width: '100%' }}>
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Full Address</label>
-                  <textarea 
-                    value={formData.address} 
-                    onChange={(e) => setFormData({...formData, address: e.target.value})} 
-                    placeholder="Building name, street, road, landmark..."
-                    className="form-control" 
-                    rows="3"
-                  />
-                </div>
-              </div>
-            </fieldset>
+              </form>
+            </div>
           </div>
-        </form>
+        </div>
       )}
     </div>
   );
 }
+

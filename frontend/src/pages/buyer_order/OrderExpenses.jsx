@@ -3,13 +3,11 @@ import { Save, Plus, Trash2, Eye, Printer, Search, Download, FileText, ArrowLeft
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { orderExpenseAPI } from '../../services/api';
+import { orderExpenseAPI, buyerOrderAPI, dropdownAPI } from '../../services/api';
+import SubMasterDropdown from '../../components/SubMasterDropdown';
 
 // Mock Data
-const MOCK_IBPOS = [
-  { ibpo_number: 'IBPO-2023-001', ibpo_date: '2023-10-01', party_name: 'TexCorp International', quality: '100% Cotton 40s', order_mtr: 5000, fabric_type: 'Woven', order_type: 'Export', merchandiser: 'Rahul M' },
-  { ibpo_number: 'IBPO-2023-002', ibpo_date: '2023-10-05', party_name: 'Global Fabrics Ltd', quality: 'Poly Viscose Blend', order_mtr: 3000, fabric_type: 'Knitted', order_type: 'Domestic', merchandiser: 'Priya S' }
-];
+// MOCK_IBPOS removed
 
 const MOCK_EXPENSE_TYPES = ['Freight', 'Commission', 'Testing Charges', 'Courier', 'Miscellaneous'];
 const MOCK_UNITS = ['Kgs', 'Mtrs', 'Pcs', 'Lumps', 'Fixed'];
@@ -19,10 +17,34 @@ export default function OrderExpenses() {
   const [expensesHistory, setExpensesHistory] = useState([]);
   const [mainSearch, setMainSearch] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [buyerOrders, setBuyerOrders] = useState([]);
+  const [options, setOptions] = useState({});
 
   useEffect(() => {
     fetchExpenses();
+    fetchBuyerOrders();
+    fetchOptions();
   }, []);
+
+  const fetchOptions = async () => {
+    try {
+      const res = await dropdownAPI.getAll();
+      setOptions(res.data || {});
+    } catch (e) {
+      console.error('Failed to fetch options', e);
+    }
+  };
+
+  const refreshDropdownOptions = () => fetchOptions();
+
+  const fetchBuyerOrders = async () => {
+    try {
+      const res = await buyerOrderAPI.list();
+      setBuyerOrders(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch buyer orders', e);
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -55,19 +77,23 @@ export default function OrderExpenses() {
   // Handle IBPO Selection
   const handleIbpoChange = (e) => {
     const selectedIbpo = e.target.value;
-    const ibpoData = MOCK_IBPOS.find(ibpo => ibpo.ibpo_number === selectedIbpo);
+    const ibpoData = buyerOrders.find(ibpo => ibpo.ibpo_number === selectedIbpo);
 
     if (ibpoData) {
+      const orderMtr = ibpoData.items?.reduce((sum, i) => sum + (parseFloat(i.order_mtrs) || 0), 0) || 0;
+      const qualityStr = ibpoData.items?.map(i => i.fabric_type || '').filter(Boolean).join(', ') || '';
+      const weaveStr = ibpoData.items?.map(i => i.weaving_type || '').filter(Boolean).join(', ') || '';
+
       setForm(prev => ({
         ...prev,
         ibpo_number: selectedIbpo,
-        ibpo_date: ibpoData.ibpo_date,
-        party_name: ibpoData.party_name,
-        quality: ibpoData.quality,
-        order_mtr: ibpoData.order_mtr,
-        fabric_type: ibpoData.fabric_type,
-        order_type: ibpoData.order_type,
-        merchandiser: ibpoData.merchandiser
+        ibpo_date: ibpoData.order_date ? ibpoData.order_date.substring(0, 10) : '',
+        party_name: ibpoData.party_name || '',
+        quality: qualityStr,
+        order_mtr: orderMtr,
+        fabric_type: weaveStr,
+        order_type: ibpoData.order_type || '',
+        merchandiser: ibpoData.merchandiser || ''
       }));
     } else {
       setForm(prev => ({
@@ -104,14 +130,14 @@ export default function OrderExpenses() {
     setExpenseRows(expenseRows.map(row => {
       if (row.id === id) {
         const updatedRow = { ...row, [field]: value };
-        
+
         // Auto calculate amount
         if (field === 'quantity' || field === 'rate') {
           const qty = field === 'quantity' ? (parseFloat(value) || 0) : row.quantity;
           const rate = field === 'rate' ? (parseFloat(value) || 0) : row.rate;
           updatedRow.amount = parseFloat((qty * rate).toFixed(2));
         }
-        
+
         return updatedRow;
       }
       return row;
@@ -197,10 +223,10 @@ export default function OrderExpenses() {
   const exportPDF = () => {
     const doc = new jsPDF();
     doc.text("Order Expenses Report", 14, 15);
-    autoTable(doc, { 
-      head: [["Ref No", "Date", "IBPO No", "Party", "Net Amount"]], 
-      body: expensesHistory.map(c => [c.reference_no, c.date, c.ibpo_number, c.party_name, c.net_amount.toFixed(2)]), 
-      startY: 20 
+    autoTable(doc, {
+      head: [["Ref No", "Date", "IBPO No", "Party", "Net Amount"]],
+      body: expensesHistory.map(c => [c.reference_no, c.date, c.ibpo_number, c.party_name, c.net_amount.toFixed(2)]),
+      startY: 20
     });
     doc.save(`Order_Expenses_${new Date().toISOString().split('T')[0]}.pdf`);
   };
@@ -212,7 +238,7 @@ export default function OrderExpenses() {
     XLSX.writeFile(wb, `Order_Expenses_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const filteredHistory = expensesHistory.filter(h => 
+  const filteredHistory = expensesHistory.filter(h =>
     h.reference_no.toLowerCase().includes(mainSearch.toLowerCase()) ||
     h.ibpo_number.toLowerCase().includes(mainSearch.toLowerCase()) ||
     h.party_name.toLowerCase().includes(mainSearch.toLowerCase())
@@ -329,9 +355,9 @@ export default function OrderExpenses() {
         <div className="card" style={{ padding: 0 }}>
           {/* Form Header */}
           <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16, background: 'var(--bg-secondary)' }}>
-            <button 
+            <button
               type="button"
-              onClick={() => setShowForm(false)} 
+              onClick={() => setShowForm(false)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
               onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -350,10 +376,10 @@ export default function OrderExpenses() {
 
           <div style={{ padding: 24, background: '#fff' }}>
             <fieldset disabled={isReadOnly} style={{ border: 'none', padding: 0, margin: 0 }}>
-              
+
               {/* SECTION 1: Expense Information */}
               <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', fontSize: 16, fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>Expense Information</h4>
-              
+
               <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 <div className="form-group">
                   <label>Reference No *</label>
@@ -367,41 +393,41 @@ export default function OrderExpenses() {
                   <label>IBPO Number *</label>
                   <select className="form-control" name="ibpo_number" value={form.ibpo_number} onChange={handleIbpoChange} required>
                     <option value="">Select IBPO...</option>
-                    {MOCK_IBPOS.map(ibpo => (
-                      <option key={ibpo.ibpo_number} value={ibpo.ibpo_number}>{ibpo.ibpo_number}</option>
+                    {buyerOrders.map(ibpo => (
+                      <option key={ibpo.id} value={ibpo.ibpo_number}>{ibpo.ibpo_number}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>IBPO Date</label>
-                  <input type="date" className="form-control" name="ibpo_date" value={form.ibpo_date} disabled style={{ background: '#f8fafc' }} />
+                  <input type="date" className="form-control" name="ibpo_date" value={form.ibpo_date} onChange={handleFormChange} />
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 3' }}>
                   <label>Party Name</label>
-                  <input type="text" className="form-control" name="party_name" value={form.party_name} disabled style={{ background: '#f8fafc' }} />
+                  <input type="text" className="form-control" name="party_name" value={form.party_name} onChange={handleFormChange} />
                 </div>
 
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Quality (Finished)</label>
-                  <input type="text" className="form-control" name="quality" value={form.quality} disabled style={{ background: '#f8fafc' }} />
+                  <input type="text" className="form-control" name="quality" value={form.quality} onChange={handleFormChange} />
                 </div>
                 <div className="form-group">
                   <label>Order MTR</label>
-                  <input type="number" className="form-control" name="order_mtr" value={form.order_mtr} disabled style={{ background: '#f8fafc' }} />
+                  <input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleFormChange} />
                 </div>
                 <div className="form-group">
                   <label>Fabric Type</label>
-                  <input type="text" className="form-control" name="fabric_type" value={form.fabric_type} disabled style={{ background: '#f8fafc' }} />
+                  <input type="text" className="form-control" name="fabric_type" value={form.fabric_type} onChange={handleFormChange} />
                 </div>
 
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Order Type</label>
-                  <input type="text" className="form-control" name="order_type" value={form.order_type} disabled style={{ background: '#f8fafc' }} />
+                  <input type="text" className="form-control" name="order_type" value={form.order_type} onChange={handleFormChange} />
                 </div>
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Merchandiser</label>
-                  <input type="text" className="form-control" name="merchandiser" value={form.merchandiser} disabled style={{ background: '#f8fafc' }} />
+                  <input type="text" className="form-control" name="merchandiser" value={form.merchandiser} onChange={handleFormChange} />
                 </div>
               </div>
 
@@ -431,11 +457,19 @@ export default function OrderExpenses() {
                     {expenseRows.map((row, index) => (
                       <tr key={row.id}>
                         <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                        <td>
-                          <select className="form-control" style={{ margin: 0 }} value={row.expense_type} onChange={e => handleRowChange(row.id, 'expense_type', e.target.value)} required>
-                            <option value="">Select...</option>
-                            {MOCK_EXPENSE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
+                        <td style={{ minWidth: 150 }}>
+                          <SubMasterDropdown
+                            name="expense_type"
+                            value={row.expense_type}
+                            entity="expense_type_master"
+                            category="Expense Type"
+                            options={options}
+                            onChange={(name, val) => handleRowChange(row.id, 'expense_type', val)}
+                            onOptionsRefresh={refreshDropdownOptions}
+                            allowCustom={true}
+                            disabled={isReadOnly}
+                            placeholder="Select Expense Type..."
+                          />
                         </td>
                         <td>
                           <input type="text" className="form-control" style={{ margin: 0 }} value={row.remarks} onChange={e => handleRowChange(row.id, 'remarks', e.target.value)} placeholder="Remarks..." />
@@ -443,10 +477,19 @@ export default function OrderExpenses() {
                         <td>
                           <input type="number" className="form-control" style={{ margin: 0, textAlign: 'right' }} value={row.quantity} onChange={e => handleRowChange(row.id, 'quantity', e.target.value)} min="0" step="any" required />
                         </td>
-                        <td>
-                          <select className="form-control" style={{ margin: 0 }} value={row.unit} onChange={e => handleRowChange(row.id, 'unit', e.target.value)}>
-                            {MOCK_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                          </select>
+                        <td style={{ minWidth: 150 }}>
+                          <SubMasterDropdown
+                            name="unit"
+                            value={row.unit}
+                            entity="unit_master"
+                            category="Unit"
+                            options={options}
+                            onChange={(name, val) => handleRowChange(row.id, 'unit', val)}
+                            onOptionsRefresh={refreshDropdownOptions}
+                            allowCustom={true}
+                            disabled={isReadOnly}
+                            placeholder="Select Unit..."
+                          />
                         </td>
                         <td>
                           <input type="number" className="form-control" style={{ margin: 0, textAlign: 'right' }} value={row.rate} onChange={e => handleRowChange(row.id, 'rate', e.target.value)} min="0" step="any" required />

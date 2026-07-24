@@ -130,12 +130,30 @@ export default function ProformaInvoice() {
     if (field === 'ibpo_no') {
       const bo = buyerOrders.find(b => b.ibpo_number === val);
       if (bo) {
-        newItems[index].style = bo.style_no || '';
-        newItems[index].description = bo.description || '';
-        newItems[index].pattern = bo.pattern || '';
-        newItems[index].composition = bo.composition || '';
-        newItems[index].po_number = bo.buyer_po_number || '';
-        newItems[index].delivery_date = bo.delivery_date || '';
+        if (bo.items && bo.items.length > 0) {
+          const generatedItems = bo.items.map(bi => ({
+            ibpo_no: bo.ibpo_number,
+            style: bi.buyer_style || '',
+            description: [bi.fabric_type, bi.design_no, bi.print_name].filter(Boolean).join(' - ') || '',
+            pattern: bi.pattern || '',
+            composition: bi.fabric_content || '',
+            po_number: bi.party_po_no || '',
+            delivery_date: bo.delivery_starting ? bo.delivery_starting.substring(0, 10) : '',
+            quantity: parseFloat(bi.order_mtrs) || 0,
+            rate: parseFloat(bi.rate) || parseFloat(bi.price) || 0,
+            amount: (parseFloat(bi.order_mtrs) || 0) * (parseFloat(bi.rate) || parseFloat(bi.price) || 0)
+          }));
+          
+          newItems.splice(index, 1, ...generatedItems);
+        } else {
+          newItems[index].style = '';
+          newItems[index].description = '';
+          newItems[index].pattern = '';
+          newItems[index].composition = '';
+          newItems[index].po_number = '';
+          newItems[index].delivery_date = bo.delivery_starting ? bo.delivery_starting.substring(0, 10) : '';
+        }
+
         if (!form.consignee) {
           setForm(prev => ({ ...prev, consignee: bo.buyer_name || bo.party_name || '' }));
         }

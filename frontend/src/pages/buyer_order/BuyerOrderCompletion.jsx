@@ -3,7 +3,8 @@ import { Search, Save, Edit2, Download, Printer, Filter, Eye, Trash2, X, Plus, C
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { buyerOrderCompletionAPI, buyerOrderAPI, partyAPI } from '../../services/api';
+import { buyerOrderCompletionAPI, buyerOrderAPI, partyAPI, dropdownAPI } from '../../services/api';
+import SubMasterDropdown from '../../components/SubMasterDropdown';
 
 // Mock Data
 // const MOCK_PARTIES = ['TexCorp International', 'Global Fabrics Ltd', 'Apex Textiles'];
@@ -25,12 +26,32 @@ export default function BuyerOrderCompletion() {
 
   const [buyerOrders, setBuyerOrders] = useState([]);
   const [parties, setParties] = useState([]);
+  const [options, setOptions] = useState({});
 
   useEffect(() => {
     fetchCompletions();
     fetchBuyerOrders();
     fetchParties();
+    fetchOptions();
   }, []);
+
+  const fetchOptions = async () => {
+    try {
+      const res = await dropdownAPI.getAll();
+      setOptions(res.data || {});
+    } catch (e) {
+      console.error('Failed to fetch options', e);
+    }
+  };
+
+  const refreshDropdownOptions = async () => {
+    try {
+      const res = await dropdownAPI.getAll();
+      setOptions(res.data || {});
+    } catch (e) {
+      console.error('Failed to refresh options', e);
+    }
+  };
 
   const fetchParties = async () => {
     try {
@@ -431,11 +452,18 @@ export default function BuyerOrderCompletion() {
                 <div className="form-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                   <div className="form-group">
                     <label>Select *</label>
-                    <select className="form-control" name="select_status" value={form.select_status} onChange={handleFormChange} required>
-                      <option value="Pending">Pending</option>
-                      <option value="Completed">Completed</option>
-                      <option value="All">All</option>
-                    </select>
+                    <SubMasterDropdown
+                      name="select_status"
+                      value={form.select_status}
+                      entity="completion_status_master"
+                      category="Status"
+                      options={options}
+                      onChange={(name, val) => handleFormChange({ target: { name, value: val } })}
+                      onOptionsRefresh={refreshDropdownOptions}
+                      allowCustom={true}
+                      disabled={isReadOnly}
+                      placeholder="Select Status..."
+                    />
                   </div>
 
                   <div className="form-group">
@@ -448,12 +476,18 @@ export default function BuyerOrderCompletion() {
 
                   <div className="form-group">
                     <label>Update To *</label>
-                    <select className="form-control" name="update_to" value={form.update_to} onChange={handleFormChange} required>
-                      <option value="">Select Update To...</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Short Closed">Short Closed</option>
-                    </select>
+                    <SubMasterDropdown
+                      name="update_to"
+                      value={form.update_to}
+                      entity="completion_status_master"
+                      category="Status"
+                      options={options}
+                      onChange={(name, val) => handleFormChange({ target: { name, value: val } })}
+                      onOptionsRefresh={refreshDropdownOptions}
+                      allowCustom={true}
+                      disabled={isReadOnly}
+                      placeholder="Select Update To..."
+                    />
                   </div>
 
                   <div className="form-group">

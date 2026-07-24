@@ -3,13 +3,10 @@ import { Plus, Search, Eye, Trash2, Save, X, Edit2, FileText, Download, Filter, 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { buyerOrderAmendmentAPI } from '../../services/api';
+import { buyerOrderAmendmentAPI, buyerOrderAPI, dropdownAPI } from '../../services/api';
+import SubMasterDropdown from '../../components/SubMasterDropdown';
 
-// Mock Data for Auto Fetch
-const MOCK_IBPOS = [
-  { ibpo: 'IBPO-2023-001', party: 'TexCorp International', po_date: '2023-10-01', design_no: 'SP-101', quality: '100% Cotton 40s', order_mtr: 5000, tolerance: 5, start_date: '2023-10-15', delivery_start: '2023-11-01', party_comp: '2023-11-15', company_comp: '2023-11-10', last_dispatch_date: '2023-11-05', total_dispatch_mtr: 1000, party_rate: 150 },
-  { ibpo: 'IBPO-2023-002', party: 'Global Fabrics Ltd', po_date: '2023-10-05', design_no: 'SP-205', quality: 'Poly Viscose Blend', order_mtr: 3000, tolerance: 2, start_date: '2023-10-20', delivery_start: '2023-11-05', party_comp: '2023-11-20', company_comp: '2023-11-15', last_dispatch_date: '', total_dispatch_mtr: 0, party_rate: 180 },
-];
+// Mock Data removed
 
 export default function BuyerOrderAmendment() {
   const [amendments, setAmendments] = useState([]);
@@ -22,6 +19,12 @@ export default function BuyerOrderAmendment() {
   const [statusFilter, setStatusFilter] = useState('All Status');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  
+  const [buyerOrders, setBuyerOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
+  
+  const [options, setOptions] = useState({});
 
   const initialForm = {
     amendment_no: '',
@@ -50,7 +53,41 @@ export default function BuyerOrderAmendment() {
 
   useEffect(() => {
     fetchAmendments();
+    fetchBuyerOrders();
+    fetchOptions();
   }, []);
+
+  const fetchOptions = async () => {
+    try {
+      const res = await dropdownAPI.getAll();
+      setOptions(res.data || {});
+    } catch (e) {
+      console.error('Failed to fetch options', e);
+    }
+  };
+
+  const refreshDropdownOptions = async () => {
+    try {
+      const res = await dropdownAPI.getAll();
+      setOptions(res.data || {});
+    } catch (e) {
+      console.error('Failed to refresh options', e);
+    }
+  };
+
+  const fetchBuyerOrders = async () => {
+    setLoadingOrders(true);
+    setOrdersError('');
+    try {
+      const res = await buyerOrderAPI.list();
+      setBuyerOrders(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch buyer orders', e);
+      setOrdersError('Failed to load IBPO numbers');
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const fetchAmendments = async () => {
     try {
@@ -95,23 +132,30 @@ export default function BuyerOrderAmendment() {
 
     // Auto-fetch logic
     if (name === 'ibpo_ref_no') {
-      const selected = MOCK_IBPOS.find(o => o.ibpo === value);
+      const selected = buyerOrders.find(o => o.ibpo_number === value);
       if (selected) {
+        const designNo = selected.items?.map(i => i.design_no).filter(Boolean).join(', ') || '';
+        const quality = selected.items?.map(i => i.fabric_type).filter(Boolean).join(', ') || '';
+        const orderMtr = selected.items?.reduce((sum, i) => sum + (parseFloat(i.order_mtrs) || 0), 0) || 0;
+        const poDate = selected.items?.[0]?.po_date ? selected.items[0].po_date.substring(0, 10) : (selected.order_date ? selected.order_date.substring(0, 10) : '');
+        const tolerance = selected.items?.[0]?.tolerance_pct || 0;
+        const rate = selected.items?.[0]?.rate || selected.items?.[0]?.price || 0;
+
         setForm(prev => ({
           ...prev,
           ibpo_ref_no: value,
-          po_date: selected.po_date,
-          party_name: selected.party,
-          design_no: selected.design_no,
-          quality_print_name: selected.quality,
-          order_mtr: selected.order_mtr,
-          tolerance_pct: selected.tolerance,
-          delivery_starting: selected.delivery_start,
-          party_completion_date: selected.party_comp,
-          company_completion_date: selected.company_comp,
-          last_dispatch_date: selected.last_dispatch_date,
-          total_dispatch_mtr: selected.total_dispatch_mtr,
-          party_rate: selected.party_rate,
+          po_date: poDate,
+          party_name: selected.party_name || '',
+          design_no: designNo,
+          quality_print_name: quality,
+          order_mtr: orderMtr,
+          tolerance_pct: tolerance,
+          delivery_starting: selected.delivery_starting ? selected.delivery_starting.substring(0, 10) : '',
+          party_completion_date: selected.party_comp_date ? selected.party_comp_date.substring(0, 10) : '',
+          company_completion_date: selected.exfactory_date ? selected.exfactory_date.substring(0, 10) : '',
+          last_dispatch_date: '',
+          total_dispatch_mtr: 0,
+          party_rate: rate,
         }));
       } else {
         setForm(prev => ({ ...prev, ibpo_ref_no: value }));
@@ -128,7 +172,7 @@ export default function BuyerOrderAmendment() {
       order_date: new Date().toISOString().split('T')[0],
       completion_date: '',
       amendment_order_mtr: 0,
-      amendment_type: 'Quantity',
+      amendment_type: '',
       reason: ''
     };
     setForm(prev => ({ ...prev, amendment_details: [...prev.amendment_details, newDetail] }));
@@ -435,70 +479,73 @@ export default function BuyerOrderAmendment() {
                     <label>Posting Reference No / IBPO *</label>
                     <select className="form-control" name="ibpo_ref_no" value={form.ibpo_ref_no} onChange={handleChange} required>
                       <option value="">Select IBPO...</option>
-                      {MOCK_IBPOS.map(o => <option key={o.ibpo} value={o.ibpo}>{o.ibpo} - {o.party}</option>)}
+                      {loadingOrders && <option disabled>Loading...</option>}
+                      {ordersError && <option disabled>{ordersError}</option>}
+                      {!loadingOrders && buyerOrders.length === 0 && <option disabled>No Buyer Orders Available.</option>}
+                      {buyerOrders.map(o => <option key={o.ibpo_number} value={o.ibpo_number}>{o.ibpo_number} - {o.party_name}</option>)}
                     </select>
                   </div>
                   
                   {/* Buyer Order Details */}
                   <div className="form-group">
                     <label>PO Date</label>
-                    <input type="date" className="form-control" name="po_date" value={form.po_date} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="date" className="form-control" name="po_date" value={form.po_date} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ gridColumn: 'span 2' }}>
                     <label>Party Name</label>
-                    <input type="text" className="form-control" name="party_name" value={form.party_name} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="text" className="form-control" name="party_name" value={form.party_name} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Design No (SP No)</label>
-                    <input type="text" className="form-control" name="design_no" value={form.design_no} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="text" className="form-control" name="design_no" value={form.design_no} onChange={handleChange} />
                   </div>
                   <div className="form-group" style={{ gridColumn: 'span 2' }}>
                     <label>Quality / Print Name</label>
-                    <input type="text" className="form-control" name="quality_print_name" value={form.quality_print_name} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="text" className="form-control" name="quality_print_name" value={form.quality_print_name} onChange={handleChange} />
                   </div>
                   
                   {/* Order Information */}
                   <div className="form-group">
                     <label>Order MTR</label>
-                    <input type="number" className="form-control" name="order_mtr" value={form.order_mtr} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="number" className="form-control" name="order_mtr" value={form.order_mtr} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Tolerance %</label>
-                    <input type="number" className="form-control" name="tolerance_pct" value={form.tolerance_pct} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="number" className="form-control" name="tolerance_pct" value={form.tolerance_pct} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Amendment MTR</label>
-                    <input type="number" className="form-control" name="amendment_mtr" value={form.amendment_mtr} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 600, color: 'var(--primary)' }} />
+                    <input type="number" className="form-control" name="amendment_mtr" value={form.amendment_mtr} onChange={handleChange} style={{ fontWeight: 600, color: 'var(--primary)' }} />
                   </div>
                   <div className="form-group">
                     <label>Total MTR</label>
-                    <input type="number" className="form-control" name="total_mtr" value={form.total_mtr} disabled style={{ background: 'var(--bg-secondary)', fontWeight: 600 }} />
+                    <input type="number" className="form-control" name="total_mtr" value={form.total_mtr} onChange={handleChange} style={{ fontWeight: 600 }} />
                   </div>
                   
                   {/* Delivery Information */}
                   <div className="form-group">
                     <label>Delivery Starting</label>
-                    <input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="date" className="form-control" name="delivery_starting" value={form.delivery_starting} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Party Completion Date</label>
-                    <input type="date" className="form-control" name="party_completion_date" value={form.party_completion_date} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="date" className="form-control" name="party_completion_date" value={form.party_completion_date} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Company Completion Date</label>
-                    <input type="date" className="form-control" name="company_completion_date" value={form.company_completion_date} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="date" className="form-control" name="company_completion_date" value={form.company_completion_date} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Last Dispatch Date</label>
-                    <input type="date" className="form-control" name="last_dispatch_date" value={form.last_dispatch_date} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="date" className="form-control" name="last_dispatch_date" value={form.last_dispatch_date} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Total Dispatch MTRs</label>
-                    <input type="number" className="form-control" name="total_dispatch_mtr" value={form.total_dispatch_mtr} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="number" className="form-control" name="total_dispatch_mtr" value={form.total_dispatch_mtr} onChange={handleChange} />
                   </div>
                   <div className="form-group">
                     <label>Party Rate</label>
-                    <input type="number" className="form-control" name="party_rate" value={form.party_rate} disabled style={{ background: 'var(--bg-secondary)' }} />
+                    <input type="number" className="form-control" name="party_rate" value={form.party_rate} onChange={handleChange} />
                   </div>
                 </div>
 
@@ -512,7 +559,7 @@ export default function BuyerOrderAmendment() {
                   )}
                 </div>
                 
-                <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'visible' }}>
                   <table className="data-table" style={{ margin: 0 }}>
                     <thead>
                       <tr>
@@ -541,24 +588,33 @@ export default function BuyerOrderAmendment() {
                             <td>
                               <input type="number" className="form-control" value={entry.amendment_order_mtr} onChange={(e) => updateAmendmentDetail(entry.id, 'amendment_order_mtr', e.target.value)} style={{ margin: 0, textAlign: 'right' }} />
                             </td>
-                            <td>
-                              <select className="form-control" value={entry.amendment_type} onChange={(e) => updateAmendmentDetail(entry.id, 'amendment_type', e.target.value)} style={{ margin: 0 }}>
-                                <option>Quantity Change</option>
-                                <option>Delivery Date Change</option>
-                                <option>Price Revision</option>
-                                <option>Design/Style Change</option>
-                                <option>Other</option>
-                              </select>
+                            <td style={{ minWidth: 160 }}>
+                              <SubMasterDropdown
+                                name="amendment_type"
+                                value={entry.amendment_type}
+                                entity="amendment_type_master"
+                                category="Amendment Type"
+                                options={options}
+                                onChange={(name, val) => updateAmendmentDetail(entry.id, 'amendment_type', val)}
+                                onOptionsRefresh={refreshDropdownOptions}
+                                allowCustom={true}
+                                disabled={isReadOnly}
+                                placeholder="Select Mode..."
+                              />
                             </td>
-                            <td>
-                              <select className="form-control" value={entry.reason} onChange={(e) => updateAmendmentDetail(entry.id, 'reason', e.target.value)} style={{ margin: 0 }}>
-                                <option value="">Select Reason...</option>
-                                <option>Buyer Request</option>
-                                <option>Production Issue</option>
-                                <option>Material Shortage</option>
-                                <option>Quality Issue</option>
-                                <option>Logistics Delay</option>
-                              </select>
+                            <td style={{ minWidth: 160 }}>
+                              <SubMasterDropdown
+                                name="reason"
+                                value={entry.reason}
+                                entity="amendment_reason_master"
+                                category="Amendment Reason"
+                                options={options}
+                                onChange={(name, val) => updateAmendmentDetail(entry.id, 'reason', val)}
+                                onOptionsRefresh={refreshDropdownOptions}
+                                allowCustom={true}
+                                disabled={isReadOnly}
+                                placeholder="Select Reason..."
+                              />
                             </td>
                             {!isReadOnly && (
                               <td style={{ textAlign: 'center' }}>

@@ -8,31 +8,31 @@ import {
   Plus, Trash2, Download, FileText, CheckCircle, Clock, Search,
   AlertCircle, RefreshCw, Loader2, TrendingUp, Users, Building2,
   ShieldCheck, UploadCloud, X, Tag, IndianRupee, Package, Save, Printer,
-  FileSpreadsheet
+  FileSpreadsheet, ArrowLeft
 } from 'lucide-react';
 
 /* ─── helpers ─── */
 const statusColor = {
   Submitted: 'bg-blue-50 text-blue-600',
-  Pending:   'bg-amber-50 text-amber-600',
-  Approved:  'bg-emerald-50 text-emerald-600',
-  Rejected:  'bg-red-50 text-red-500',
+  Pending: 'bg-amber-50 text-amber-600',
+  Approved: 'bg-emerald-50 text-emerald-600',
+  Rejected: 'bg-red-50 text-red-500',
 };
 
 export default function QuotationEntry() {
-  const [loading, setLoading]         = useState(false);
+  const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [quotations, setQuotations]   = useState([]);
-  const [vendors, setVendors]         = useState([]);
-  const [searchTerm, setSearchTerm]   = useState('');
-  const [toast, setToast]             = useState({ show: false, msg: '', ok: true });
-  const [mainView, setMainView]       = useState('bids'); // bids, vendors
+  const [quotations, setQuotations] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [toast, setToast] = useState({ show: false, msg: '', ok: true });
+  const [mainView, setMainView] = useState('bids'); // bids, vendors
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
-  
+
   // Modal toggle state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab]     = useState('order_info'); // order_info, item_details, tax_logistics
-  
+  const [activeTab, setActiveTab] = useState('order_info'); // order_info, item_details, tax_logistics
+
   // New Vendor Form inside modal
   const [showAddVendorForm, setShowAddVendorForm] = useState(false);
   const [newVendorData, setNewVendorData] = useState({ vendor_name: '', contact_info: '' });
@@ -69,7 +69,7 @@ export default function QuotationEntry() {
         storesService.getVendors().catch(() => [])
       ]);
       setQuotations(quotes || []);
-      
+
       const mappedVendors = (mainVens || []).map(v => ({
         vendor_id: v.id,
         vendor_name: v.vendor_name,
@@ -103,23 +103,23 @@ export default function QuotationEntry() {
 
   const handleItemFieldChange = (index, field, value) => {
     const updated = [...formData.items];
-    
+
     if (field === 'quantity' || field === 'unit_price' || field === 'gst_percentage') {
       const numVal = value === '' ? '' : (parseFloat(value) || 0);
       updated[index][field] = numVal;
-      
+
       // Automatically calculate line total with GST
       const qty = field === 'quantity' ? numVal : updated[index].quantity;
       const price = field === 'unit_price' ? numVal : updated[index].unit_price;
       const gst = field === 'gst_percentage' ? numVal : updated[index].gst_percentage;
-      
+
       // total = qty * price * (1 + GST%)
       const lineTotal = (qty || 0) * (price || 0) * (1 + ((gst || 0) / 100));
       updated[index].total = value === '' ? '' : (Math.round(lineTotal * 100) / 100);
     } else if (field === 'total') {
       const numVal = value === '' ? '' : (parseFloat(value) || 0);
       updated[index].total = numVal;
-      
+
       // Back calculate unit price
       const qty = updated[index].quantity || 1;
       const gst = updated[index].gst_percentage || 0;
@@ -298,40 +298,40 @@ export default function QuotationEntry() {
   const handleExportPDF = () => {
     try {
       const doc = new jsPDF();
-      
+
       // Header
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(20);
       doc.setTextColor(30, 27, 75); // Dark blue / indigo
       doc.text(formData.company_name, 14, 20);
-      
+
       doc.setFontSize(10);
       doc.setFont("Helvetica", "normal");
       doc.setTextColor(100, 116, 139);
       doc.text("PROCUREMENT & VENDOR BID QUOTATION INVOICE", 14, 26);
-      
+
       // Divider line
       doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(1);
       doc.line(14, 30, 196, 30);
-      
+
       // Info section
       doc.setFontSize(11);
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(71, 85, 105);
       doc.text("QUOTATION DETAILS", 14, 40);
       doc.text("VENDOR INFO", 110, 40);
-      
+
       doc.setFont("Helvetica", "normal");
       doc.setTextColor(51, 65, 85);
       doc.text(`Date: ${new Date(formData.date).toLocaleDateString('en-IN')}`, 14, 46);
       doc.text("Status: Submitted Bid", 14, 52);
-      
+
       doc.text(selectedVendor ? selectedVendor.vendor_name : 'No Vendor Selected', 110, 46);
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
       doc.text(selectedVendor?.contact_info || 'No contact info', 110, 52);
-      
+
       // Items Table
       const tableRows = formData.items.map((item, idx) => [
         idx + 1,
@@ -341,7 +341,7 @@ export default function QuotationEntry() {
         `${item.gst_percentage}%`,
         `INR ${item.total.toFixed(2)}`
       ]);
-      
+
       autoTable(doc, {
         startY: 60,
         head: [['SNo', 'Item Details', 'Qty', 'Unit Price', 'GST %', 'Subtotal']],
@@ -357,27 +357,27 @@ export default function QuotationEntry() {
           5: { cellWidth: 30, halign: 'right' }
         }
       });
-      
+
       // Summary section
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(11);
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(71, 85, 105);
-      
+
       doc.text("Taxable Subtotal:", 135, finalY);
       doc.setFont("Helvetica", "normal");
       doc.text(`INR ${subTotalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY, { align: 'right' });
-      
+
       doc.setFont("Helvetica", "bold");
       doc.text("CGST & SGST / IGST:", 135, finalY + 7);
       doc.setFont("Helvetica", "normal");
       doc.text(`INR ${gstAmountVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY + 7, { align: 'right' });
-      
+
       doc.setFont("Helvetica", "bold");
       doc.setTextColor(99, 102, 241);
       doc.text("GRAND TOTAL:", 135, finalY + 15);
       doc.text(`INR ${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 196, finalY + 15, { align: 'right' });
-      
+
       // Save PDF
       doc.save(`Quotation_${selectedVendor?.vendor_name.replace(/\s+/g, '_') || 'Vendor'}_${formData.date}.pdf`);
       showToast('PDF downloaded successfully!');
@@ -398,17 +398,17 @@ export default function QuotationEntry() {
         "GST %": item.gst_percentage,
         "Total (INR)": item.total
       }));
-      
+
       // Add summary details to the bottom
       dataRows.push({});
       dataRows.push({ "Item Details": "Taxable Subtotal", "Total (INR)": subTotalAmount });
       dataRows.push({ "Item Details": "CGST & SGST / IGST", "Total (INR)": gstAmountVal });
       dataRows.push({ "Item Details": "GRAND TOTAL", "Total (INR)": grandTotal });
-      
+
       const ws = XLSX.utils.json_to_sheet(dataRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Quotation Details");
-      
+
       // Set header info sheet columns width
       ws["!cols"] = [
         { wch: 6 },
@@ -418,7 +418,7 @@ export default function QuotationEntry() {
         { wch: 10 },
         { wch: 18 }
       ];
-      
+
       XLSX.writeFile(wb, `Quotation_${selectedVendor?.vendor_name.replace(/\s+/g, '_') || 'Vendor'}_${formData.date}.xlsx`);
       showToast('Excel file downloaded successfully!');
     } catch (err) {
@@ -448,7 +448,7 @@ export default function QuotationEntry() {
 
   return (
     <div className="animate-fade flex flex-col gap-5 h-full p-4" style={{ fontFamily: 'Inter, sans-serif' }}>
-      
+
       {/* Toast */}
       {toast.show && (
         <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-xs font-semibold ${toast.ok ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -458,9 +458,9 @@ export default function QuotationEntry() {
       )}
 
       {/* ── Page Header ── */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: "24px",
         background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
@@ -723,7 +723,7 @@ export default function QuotationEntry() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl flex flex-col my-8 border border-slate-200 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-            
+
             {/* Modal Header */}
             <div style={{
               display: 'flex',
@@ -733,16 +733,19 @@ export default function QuotationEntry() {
               borderBottom: '1px solid var(--border)',
               background: '#f8fafc'
             }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1e1b4b', margin: 0 }}>
-                Record Vendor Quotation
-              </h2>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
-                  <X size={16} /> Close
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)} 
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                >
+                  <ArrowLeft size={24} />
                 </button>
-                <button className="btn btn-primary" onClick={handleSubmit}>
-                  {submitLoading ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Quotation</>}
-                </button>
+                <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1e1b4b', margin: 0 }}>
+                  Record Vendor Quotation
+                </h2>
               </div>
             </div>
 
@@ -773,7 +776,7 @@ export default function QuotationEntry() {
 
             {/* Modal Body */}
             <div style={{ padding: 24, background: '#fff', maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
-              
+
               {/* Tab 1: Order Info */}
               {activeTab === 'order_info' && (
                 <div className="animate-fade flex flex-col gap-6">
@@ -893,7 +896,7 @@ export default function QuotationEntry() {
                       <Plus size={14} /> Add New Item
                     </button>
                   </div>
-                  
+
                   <div className="overflow-x-auto border border-slate-100 rounded-lg">
                     <table className="w-full text-left">
                       <thead>
@@ -1018,7 +1021,7 @@ export default function QuotationEntry() {
 
                   {/* PDF/Print Layout Container */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 24 }}>
-                    
+
                     {/* Invoice block */}
                     <div ref={printAreaRef} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 30, background: '#fff' }}>
                       <div className="header" style={{ textAlign: 'center', borderBottom: '2px solid #6366f1', paddingBottom: 20, marginBottom: 30 }}>
@@ -1032,7 +1035,7 @@ export default function QuotationEntry() {
                           <div style={{ fontSize: 13, color: '#334155', marginBottom: 4 }}><b>Date:</b> {new Date(formData.date).toLocaleDateString('en-IN')}</div>
                           <div style={{ fontSize: 13, color: '#334155' }}><b>Status:</b> Submitted Bid</div>
                         </div>
-                        
+
                         <div className="details-block" style={{ border: '1px solid #e2e8f0', padding: 15, borderRadius: 8, backgroundColor: '#f8fafc' }}>
                           <div className="details-title" style={{ fontWeight: 'bold', fontSize: 11, color: '#475569', marginBottom: 6, textTransform: 'uppercase' }}>Vendor Info</div>
                           <div style={{ fontSize: 13, color: '#334155', fontWeight: 'bold' }}>{selectedVendor?.vendor_name || 'No Vendor Selected'}</div>
@@ -1132,11 +1135,11 @@ export default function QuotationEntry() {
               borderTop: '1px solid var(--border)',
               background: '#f8fafc'
             }}>
-              <button className="btn btn-secondary font-semibold" onClick={() => setIsModalOpen(false)}>
-                Cancel
+              <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
+                <X size={16} /> Close
               </button>
-              <button className="btn btn-primary font-semibold" onClick={handleSubmit}>
-                {submitLoading ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Place Quotation</>}
+              <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={submitLoading}>
+                {submitLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save & Close
               </button>
             </div>
 
@@ -1156,7 +1159,7 @@ export default function QuotationEntry() {
                 <X size={18} />
               </button>
             </div>
-            
+
             <form onSubmit={async (e) => {
               e.preventDefault();
               await handleSaveVendor(e);

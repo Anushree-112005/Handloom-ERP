@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
-import { Plus, Save, Trash2, X, FileText, Clock, CheckCircle, AlertTriangle, Loader, AlertCircle, Search } from 'lucide-react';
+import { Plus, Save, Trash2, X, FileText, Clock, CheckCircle, AlertTriangle, Loader, AlertCircle, Search, ArrowLeft } from 'lucide-react';
 
 export default function MaterialRequest() {
   const [view, setView] = useState('list');
   const [requests, setRequests] = useState([]);
-  
+
   // Master lists for dropdowns
   const [departments, setDepartments] = useState([]);
   const [categories, setCategories] = useState([]);
   const [uoms, setUoms] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [allItems, setAllItems] = useState([]);
-  
+
   // Loading and error states
   const [loading, setLoading] = useState(false);
   const [dropdownsLoading, setDropdownsLoading] = useState(false);
@@ -27,9 +27,9 @@ export default function MaterialRequest() {
     item_id: '',
     uom_id: '',
     vendor_id: '',
-    quantity: 1.0,
+    quantity: '',
     requested_by: '',
-    priority: 'Medium',
+    priority: '',
     remarks: ''
   });
 
@@ -43,7 +43,7 @@ export default function MaterialRequest() {
         storesService.getVendors(),
         storesService.getItems()
       ]);
-      
+
       // Filter out deleted/inactive masters if status exists
       setDepartments(depts.filter(d => d.status !== 'Inactive'));
       setCategories(cats.filter(c => c.status !== 'Inactive'));
@@ -111,9 +111,9 @@ export default function MaterialRequest() {
       item_id: '',
       uom_id: '',
       vendor_id: '',
-      quantity: 1.0,
+      quantity: '',
       requested_by: '',
-      priority: 'Medium',
+      priority: '',
       remarks: ''
     });
     setView('form');
@@ -167,7 +167,9 @@ export default function MaterialRequest() {
 
     try {
       await storesService.createMaterialRequest(payload);
+      alert('Material Request saved successfully!');
       setView('list');
+      await fetchRequests();
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || 'An error occurred while submitting the request.');
@@ -179,39 +181,35 @@ export default function MaterialRequest() {
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        padding: "24px",
-        background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-        border: "1px solid var(--border)",
-        borderRadius: "12px"
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.1)',
-            color: 'rgb(99, 102, 241)',
-            padding: '12px',
-            borderRadius: '12px'
-          }}>
-            <FileText size={24} />
+      {view === 'list' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: "24px",
+          background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
+          border: "1px solid var(--border)",
+          borderRadius: "12px"
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              background: 'rgba(99, 102, 241, 0.1)',
+              color: 'rgb(99, 102, 241)',
+              padding: '12px',
+              borderRadius: '12px'
+            }}>
+              <FileText size={24} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Material Request</h2>
+              <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Raise and monitor material requisitions for department consumables</p>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Material Request</h2>
-            <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Raise and monitor material requisitions for department consumables</p>
-          </div>
-        </div>
-        {view === 'list' ? (
           <button onClick={handleOpenForm} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
             <Plus size={16} /> Raise Request
           </button>
-        ) : (
-          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
-            Back to List
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {view === 'list' ? (
         <>
@@ -328,11 +326,11 @@ export default function MaterialRequest() {
                         </span>
                       </td>
                       <td style={{ textAlign: "center" }}>
-                        <span style={{ 
-                          color: req.status === 'Pending' ? '#d97706' : req.status === 'Approved' ? '#047857' : '#ef4444', 
-                          fontWeight: 700, 
-                          backgroundColor: req.status === 'Pending' ? '#fef3c7' : req.status === 'Approved' ? '#d1fae5' : '#fef2f2', 
-                          padding: '4px 10px', borderRadius: 12, fontSize: 12 
+                        <span style={{
+                          color: req.status === 'Pending' ? '#d97706' : req.status === 'Approved' ? '#047857' : '#ef4444',
+                          fontWeight: 700,
+                          backgroundColor: req.status === 'Pending' ? '#fef3c7' : req.status === 'Approved' ? '#d1fae5' : '#fef2f2',
+                          padding: '4px 10px', borderRadius: 12, fontSize: 12
                         }}>
                           {req.status}
                         </span>
@@ -350,158 +348,178 @@ export default function MaterialRequest() {
           </div>
         </>
       ) : (
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 850, margin: 0, color: 'var(--text-primary)' }}>Raise New Material Requisition</h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-primary" type="submit" disabled={submitting || dropdownsLoading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                {submitting ? <Loader className="animate-spin" size={16} /> : <Save size={16} />}
-                Submit Request
-              </button>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                <X size={16} /> Cancel
-              </button>
-            </div>
+        <div className="animate-fade">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Add New Material Request
+            </h2>
           </div>
 
-          {error && (
-            <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <AlertCircle size={18} />
-              <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '16px 24px', background: '#fff',
+                  border: 'none', borderBottom: '3px solid var(--primary)',
+                  fontWeight: 600, color: 'var(--primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                Request Details
+              </button>
             </div>
-          )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Section 1: Department Coordinates */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                1. Requisition Info
-              </legend>
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Department *</label>
-                  <select 
-                    value={formData.department_id} 
-                    required
-                    onChange={(e) => setFormData({...formData, department_id: e.target.value})} 
-                    className="form-control"
-                  >
-                    <option value="">-- Select Department --</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Requested By *</label>
-                  <input 
-                    type="text" required value={formData.requested_by} 
-                    onChange={(e) => setFormData({...formData, requested_by: e.target.value})} 
-                    placeholder="E.g. Dinesh Kumar"
-                    className="form-control" 
-                  />
-                </div>
-              </div>
-            </fieldset>
+            <div style={{ padding: 24, background: '#fff' }}>
+              <form onSubmit={handleSubmit}>
+                {error && (
+                  <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                    <AlertCircle size={18} />
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>{error}</span>
+                  </div>
+                )}
 
-            {/* Section 2: Material Selection */}
-            <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-              <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                2. Material Details
-              </legend>
-              
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Material Category *</label>
-                  <select 
-                    value={formData.category_id} 
-                    required
-                    onChange={(e) => setFormData({...formData, category_id: e.target.value, item_id: ''})} 
-                    className="form-control"
-                  >
-                    <option value="">-- Select Category --</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
-                  </select>
-                </div>
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <div className="animate-fade">
+                    
+                    <h4 style={{ color: 'var(--primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Requisition Info
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Department *</label>
+                        <select
+                          value={formData.department_id}
+                          required
+                          onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
+                          className="form-control"
+                        >
+                          <option value="">-- Select Department --</option>
+                          {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Requested By *</label>
+                        <input
+                          type="text" required value={formData.requested_by}
+                          onChange={(e) => setFormData({ ...formData, requested_by: e.target.value })}
+                          placeholder="Enter Requester Name"
+                          className="form-control"
+                        />
+                      </div>
+                    </div>
 
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Material/Item Requested *</label>
-                  <select 
-                    value={formData.item_id} 
-                    required
-                    onChange={(e) => handleItemSelect(e.target.value)} 
-                    className="form-control"
-                  >
-                    <option value="">-- Choose Item --</option>
-                    {filteredItemsDropdown.map(i => (
-                      <option key={i.id} value={i.id}>{i.item_name} [{i.item_code}] (Stock: {i.current_stock})</option>
-                    ))}
-                  </select>
-                  <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Showing active items from the Item Master</small>
-                </div>
-              </div>
+                    <h4 style={{ color: 'var(--primary)', margin: '32px 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 16, fontWeight: 700 }}>
+                      Material Details
+                    </h4>
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Material Category *</label>
+                        <select
+                          value={formData.category_id}
+                          required
+                          onChange={(e) => setFormData({ ...formData, category_id: e.target.value, item_id: '' })}
+                          className="form-control"
+                        >
+                          <option value="">-- Select Category --</option>
+                          {categories.map(c => <option key={c.id} value={c.id}>{c.category_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Material/Item Requested *</label>
+                        <select
+                          value={formData.item_id}
+                          required
+                          onChange={(e) => handleItemSelect(e.target.value)}
+                          className="form-control"
+                        >
+                          <option value="">-- Choose Item --</option>
+                          {filteredItemsDropdown.map(i => (
+                            <option key={i.id} value={i.id}>{i.item_name} [{i.item_code}] (Stock: {i.current_stock})</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Unit of Measure (UOM) *</label>
+                        <select
+                          value={formData.uom_id}
+                          required
+                          onChange={(e) => setFormData({ ...formData, uom_id: e.target.value })}
+                          className="form-control"
+                        >
+                          <option value="">-- Select UOM --</option>
+                          {uoms.map(u => <option key={u.id} value={u.id}>{u.uom_name} ({u.symbol || u.uom_code})</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Suggested Supplier / Vendor</label>
+                        <select
+                          value={formData.vendor_id}
+                          onChange={(e) => setFormData({ ...formData, vendor_id: e.target.value })}
+                          className="form-control"
+                        >
+                          <option value="">-- Select Vendor --</option>
+                          {vendors.map(v => <option key={v.id} value={v.id}>{v.vendor_name}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Priority *</label>
+                        <select
+                          value={formData.priority}
+                          required
+                          onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                          className="form-control"
+                        >
+                          <option value="">-- Select Priority --</option>
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Quantity Requested *</label>
+                        <input
+                          type="number" step="0.01" min="0.01" required value={formData.quantity}
+                          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                          placeholder="Enter Quantity"
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                        <label>Remarks / Reason for Request</label>
+                        <textarea
+                          value={formData.remarks}
+                          onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                          placeholder="Enter Remarks"
+                          className="form-control"
+                          rows="3"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
 
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginTop: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Unit of Measure (UOM) *</label>
-                  <select 
-                    value={formData.uom_id} 
-                    required
-                    onChange={(e) => setFormData({...formData, uom_id: e.target.value})} 
-                    className="form-control"
-                  >
-                    <option value="">-- Select UOM --</option>
-                    {uoms.map(u => <option key={u.id} value={u.id}>{u.uom_name} ({u.symbol || u.uom_code})</option>)}
-                  </select>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                    <X size={16} /> Close
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? <Loader className="animate-spin" size={16} /> : <Save size={16} />} Save
+                  </button>
                 </div>
-
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Suggested Supplier / Vendor</label>
-                  <select 
-                    value={formData.vendor_id} 
-                    onChange={(e) => setFormData({...formData, vendor_id: e.target.value})} 
-                    className="form-control"
-                  >
-                    <option value="">-- Select Vendor (Optional) --</option>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.vendor_name}</option>)}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Priority *</label>
-                  <select 
-                    value={formData.priority} 
-                    onChange={(e) => setFormData({...formData, priority: e.target.value})} 
-                    className="form-control"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row" style={{ gridTemplateColumns: '1fr 2fr', gap: 20, marginTop: 20 }}>
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Quantity Requested *</label>
-                  <input 
-                    type="number" step="0.01" min="0.01" required value={formData.quantity} 
-                    onChange={(e) => setFormData({...formData, quantity: e.target.value})} 
-                    className="form-control" 
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Remarks / Reason for Request</label>
-                  <input 
-                    type="text" value={formData.remarks} 
-                    onChange={(e) => setFormData({...formData, remarks: e.target.value})} 
-                    placeholder="E.g. Urgent loom maintenance replacement..."
-                    className="form-control" 
-                  />
-                </div>
-              </div>
-            </fieldset>
+              </form>
+            </div>
           </div>
-        </form>
+        </div>
       )}
     </div>
   );

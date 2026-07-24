@@ -28,9 +28,9 @@ export default function StockLedger() {
       <div className="card">
         <div className="w-96 flex items-center gap-2">
           <label className="text-xs font-semibold text-slate-500 whitespace-nowrap">Select Item Ledger:</label>
-          <select 
-            value={selectedItem} 
-            onChange={(e) => setSelectedItem(e.target.value)} 
+          <select
+            value={selectedItem}
+            onChange={(e) => setSelectedItem(e.target.value)}
             className="form-control"
           >
             <option value="">-- All Items --</option>
@@ -41,7 +41,7 @@ export default function StockLedger() {
 
       <div className="card" style={{ padding: 0 }}>
         <table className="data-table">
-              <thead>
+          <thead>
             <tr>
               <th >Transaction ID</th>
               <th >Date</th>

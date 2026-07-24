@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { mockDb } from './mockDb';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function RequestApproval() {
   const [requests, setRequests] = useState([]);
@@ -29,11 +29,18 @@ export default function RequestApproval() {
   const [view, setView] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredRequests = requests.filter(req => 
+  const filteredRequests = requests.filter(req =>
     req.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     req.requestedBy?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const stats = [
+    { label: 'Total Requests', value: requests.length, icon: <FileText size={24} />, color: '#6366f1' },
+    { label: 'Pending Approval', value: requests.filter(r => r.status === 'Pending').length, icon: <Clock size={24} />, color: '#f59e0b' },
+    { label: 'Approved', value: requests.filter(r => r.status === 'Approved').length, icon: <CheckCircle size={24} />, color: '#10b981' },
+    { label: 'Rejected', value: requests.filter(r => r.status === 'Rejected').length, icon: <XCircle size={24} />, color: '#ef4444' }
+  ];
 
   return (
     <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
@@ -52,7 +59,22 @@ export default function RequestApproval() {
       </div>
 
       {view === 'list' ? (
-        <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <>
+          <div className="stats-grid">
+            {stats.map((s, i) => (
+              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+                <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
+                  {s.icon}
+                </div>
+                <div className="stat-info">
+                  <h3>{s.value}</h3>
+                  <p>{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Approval Queue ({filteredRequests.length})</h3>
             <div className="search-bar" style={{ position: 'relative', width: 250 }}>
@@ -88,10 +110,10 @@ export default function RequestApproval() {
                     <td style={{ fontWeight: 600 }}>{req.department}</td>
                     <td>{req.requestedBy}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <span style={{ 
-                        background: req.status === 'Approved' ? '#dcfce7' : req.status === 'Pending' ? '#fef3c7' : '#fee2e2', 
-                        color: req.status === 'Approved' ? '#166534' : req.status === 'Pending' ? '#92400e' : '#991b1b', 
-                        padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 600 
+                      <span style={{
+                        background: req.status === 'Approved' ? '#dcfce7' : req.status === 'Pending' ? '#fef3c7' : '#fee2e2',
+                        color: req.status === 'Approved' ? '#166534' : req.status === 'Pending' ? '#92400e' : '#991b1b',
+                        padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 600
                       }}>
                         {req.status}
                       </span>
@@ -115,6 +137,7 @@ export default function RequestApproval() {
             </table>
           </div>
         </div>
+        </>
       ) : (
         <div className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
           {selectedReq && (
@@ -124,10 +147,10 @@ export default function RequestApproval() {
                   <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Review Request: {selectedReq.id}</h3>
                   <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>Review requested quantities before authorizing.</p>
                 </div>
-                <span style={{ 
-                  background: selectedReq.status === 'Approved' ? '#dcfce7' : selectedReq.status === 'Pending' ? '#fef3c7' : '#fee2e2', 
-                  color: selectedReq.status === 'Approved' ? '#166534' : selectedReq.status === 'Pending' ? '#92400e' : '#991b1b', 
-                  padding: '6px 14px', borderRadius: '12px', fontSize: 13, fontWeight: 600 
+                <span style={{
+                  background: selectedReq.status === 'Approved' ? '#dcfce7' : selectedReq.status === 'Pending' ? '#fef3c7' : '#fee2e2',
+                  color: selectedReq.status === 'Approved' ? '#166534' : selectedReq.status === 'Pending' ? '#92400e' : '#991b1b',
+                  padding: '6px 14px', borderRadius: '12px', fontSize: 13, fontWeight: 600
                 }}>
                   {selectedReq.status}
                 </span>

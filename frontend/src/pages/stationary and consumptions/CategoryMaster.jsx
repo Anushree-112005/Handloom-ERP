@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { storesService } from '../../services/storesService';
-import { Plus, Save, Edit2, Trash2, Search, X, Loader, Layers, AlertCircle } from 'lucide-react';
+import { Plus, Save, Edit2, Trash2, Search, X, Loader, Layers, AlertCircle, ArrowLeft, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 
 export default function CategoryMaster() {
   const [view, setView] = useState('list');
@@ -84,10 +84,13 @@ export default function CategoryMaster() {
     try {
       if (editingId) {
         await storesService.updateCategory(editingId, formData);
+        alert('Category updated successfully!');
       } else {
         await storesService.createCategory(formData);
+        alert('Category saved successfully!');
       }
       setView('list');
+      await fetchCategories();
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || 'An error occurred while saving the category. Code might be duplicate.');
@@ -96,37 +99,47 @@ export default function CategoryMaster() {
     }
   };
 
+  const stats = [
+    { label: 'Total Categories', value: categories.length, icon: <Layers size={24} />, color: '#6366f1' },
+    { label: 'Active Categories', value: categories.filter(c => c.status === 'Active').length, icon: <CheckCircle size={24} />, color: '#10b981' },
+    { label: 'Inactive Categories', value: categories.filter(c => c.status !== 'Active').length, icon: <XCircle size={24} />, color: '#ef4444' }
+  ];
+
   return (
-    <div className="animate-fade">
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Layers style={{ color: '#6366f1' }} /> Category Master
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', margin: '4px 0 0 0', fontSize: 14 }}>Group consumable items into logical categories</p>
+        </div>
+        {view === 'list' && (
+          <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={16} /> Add Category
+          </button>
+        )}
+        {view === 'form' && (
+          <button onClick={() => setView('list')} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Back to List
+          </button>
+        )}
+      </div>
+
       {view === 'list' ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* Header Card */}
-          <div className="card" style={{ 
-            padding: "24px", 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            marginBottom: 0,
-            background: "linear-gradient(135deg, var(--bg-surface) 0%, rgba(99, 102, 241, 0.05) 100%)",
-            border: "1px solid var(--border)"
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                background: 'rgba(99, 102, 241, 0.1)',
-                color: 'rgb(99, 102, 241)',
-                padding: '12px',
-                borderRadius: '12px'
-              }}>
-                <Layers size={24} />
+        <>
+          <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {stats.map((s, i) => (
+              <div key={i} className="stat-card" style={{ '--stat-color': s.color }}>
+                <div className="stat-icon" style={{ background: `${s.color}1a`, color: s.color }}>
+                  {s.icon}
+                </div>
+                <div className="stat-info">
+                  <h3>{s.value}</h3>
+                  <p>{s.label}</p>
+                </div>
               </div>
-              <div>
-                <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Category Master</h1>
-                <p style={{ color: "var(--text-muted)", fontSize: 14, margin: '4px 0 0 0' }}>Group consumable items into logical categories</p>
-              </div>
-            </div>
-            <button onClick={() => handleOpenForm()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 18px' }}>
-              <Plus size={16} /> Add Category
-            </button>
+            ))}
           </div>
 
           {/* Search & Table Card */}
@@ -134,12 +147,12 @@ export default function CategoryMaster() {
             <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
               <div style={{ position: "relative", flex: 1, minWidth: 250, maxWidth: 350 }}>
                 <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search categories..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="form-control" style={{ paddingLeft: 38 }} 
+                <input
+                  type="text"
+                  placeholder="Search categories..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control" style={{ paddingLeft: 38 }}
                 />
               </div>
               {loading && <Loader className="animate-spin" size={18} style={{ color: 'var(--primary)' }} />}
@@ -198,22 +211,22 @@ export default function CategoryMaster() {
               </table>
             </div>
           </div>
-        </div>
+        </>
       ) : (
-        <form onSubmit={handleSubmit} className="card animate-fade" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              {editingId ? 'Edit Category' : 'New Category'}
+        <div className="animate-fade flex flex-col gap-4">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+            <button 
+              type="button"
+              onClick={() => setView('list')} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: '50%', color: 'var(--text-muted)', transition: 'all 0.2s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              {editingId ? 'Edit Category Details' : 'Add New Category'}
             </h2>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button className="btn btn-primary" type="submit" disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                {submitting ? <Loader className="animate-spin" size={16} /> : <Save size={16} />}
-                {editingId ? 'Update' : 'Save'}
-              </button>
-              <button className="btn btn-secondary" type="button" onClick={() => setView('list')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px' }}>
-                <X size={16} /> Close
-              </button>
-            </div>
           </div>
 
           {error && (
@@ -223,67 +236,86 @@ export default function CategoryMaster() {
             </div>
           )}
 
-          <fieldset style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '24px 32px', margin: 0 }}>
-            <legend style={{ padding: '0 12px', fontSize: 13, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Category Information
-            </legend>
-            
-            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              <div className="form-group">
-                <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Category Code *</label>
-                <input 
-                  type="text" 
-                  required 
-                  disabled={!!editingId}
-                  value={formData.category_code} 
-                  onChange={(e) => setFormData({...formData, category_code: e.target.value.toUpperCase().replace(/\s+/g, '-')})} 
-                  placeholder="E.g. CAT-CHEM"
-                  className="form-control" 
-                />
-                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Unique identifier (uppercase, no spaces)</small>
-              </div>
-              <div className="form-group">
-                <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Category Name *</label>
-                <input 
-                  type="text" 
-                  required 
-                  value={formData.category_name} 
-                  onChange={(e) => setFormData({...formData, category_name: e.target.value})} 
-                  placeholder="E.g. Chemicals & Dyes"
-                  className="form-control" 
-                />
-              </div>
+          <div className="card" style={{ padding: 0 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', overflowX: 'auto' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '16px 24px', background: '#fff',
+                  border: 'none', borderBottom: '3px solid var(--primary)',
+                  fontWeight: 600, color: 'var(--primary)',
+                  cursor: 'pointer', whiteSpace: 'nowrap'
+                }}
+              >
+                Basic Information
+              </button>
             </div>
 
-            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
-              <div className="form-group">
-                <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Status *</label>
-                <select 
-                  value={formData.status} 
-                  onChange={(e) => setFormData({...formData, status: e.target.value})} 
-                  className="form-control"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
+            <div style={{ padding: 24, background: '#fff' }}>
+              <form onSubmit={handleSubmit}>
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <div className="animate-fade">
+                    <div className="form-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                      <div className="form-group">
+                        <label>Category Code *</label>
+                        <input
+                          type="text"
+                          required
+                          disabled={!!editingId}
+                          value={formData.category_code}
+                          onChange={(e) => setFormData({ ...formData, category_code: e.target.value.toUpperCase().replace(/\s+/g, '-') })}
+                          className="form-control"
+                        />
+                        <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>Unique identifier (uppercase, no spaces)</small>
+                      </div>
+                      <div className="form-group">
+                        <label>Category Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.category_name}
+                          onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
+                          className="form-control"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Status *</label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          className="form-control"
+                        >
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 3' }}>
+                        <label>Description</label>
+                        <textarea
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className="form-control"
+                          rows="4"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
 
-            <div className="form-row" style={{ marginTop: 20 }}>
-              <div className="form-group" style={{ width: '100%' }}>
-                <label style={{ fontWeight: 600, marginBottom: 8, display: 'block' }}>Description</label>
-                <textarea 
-                  value={formData.description} 
-                  onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                  placeholder="Describe the usage or types of items under this category..."
-                  className="form-control" 
-                  rows="4"
-                />
-              </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24, padding: '24px 0 0 0', borderTop: '1px solid var(--border)' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => setView('list')}>
+                    <X size={16} /> Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? <Loader className="animate-spin" size={16} /> : <Save size={16} />} Save Category
+                  </button>
+                </div>
+              </form>
             </div>
-          </fieldset>
-        </form>
+          </div>
+        </div>
       )}
     </div>
   );
 }
+
